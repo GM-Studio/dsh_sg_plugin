@@ -492,12 +492,20 @@ export function parseTestReport(text) {
   const verdict = verdictMatch ? verdictMatch[1].trim().toLowerCase() : null;
   const lineMatch = value.match(/(?:line|行覆盖(?:率)?)\s*[：:]\s*(\d+(?:\.\d+)?)/i);
   const branchMatch = value.match(/(?:branch|分支覆盖(?:率)?)\s*[：:]\s*(\d+(?:\.\d+)?)/i);
+  const failedMatch = value.match(/(?:failed|失败)\s*[：:]\s*(\d+)/i);
+  const p0Match = value.match(/(?:p0|P0)\s*(?:通过率|pass(?:ed)?)?\s*[：:]\s*(\d+(?:\.\d+)?)/);
+  const p1Match = value.match(/(?:p1|P1)\s*(?:通过率|pass(?:ed)?)?\s*[：:]\s*(\d+(?:\.\d+)?)/);
+  const p2Match = value.match(/(?:p2|P2)\s*(?:通过率|pass(?:ed)?)?\s*[：:]\s*(\d+(?:\.\d+)?)/);
   const pass = verdict === 'pass' || verdict === 'passed' || verdict === '通过';
   return {
     pass,
     verdict,
     line: lineMatch ? Number(lineMatch[1]) : null,
     branch: branchMatch ? Number(branchMatch[1]) : null,
+    failed: failedMatch ? Number(failedMatch[1]) : null,
+    p0: p0Match ? Number(p0Match[1]) : null,
+    p1: p1Match ? Number(p1Match[1]) : null,
+    p2: p2Match ? Number(p2Match[1]) : null,
   };
 }
 
@@ -506,8 +514,14 @@ export function validateTestReport(root, name, options = {}) {
   if (!report) return { ok: false, reason: '缺少 tests/test-report.md；先执行 /sg-test <change> run' };
   const parsed = parseTestReport(report);
   if (!parsed.pass) return { ok: false, reason: '测试报告结论不是 pass/通过' };
+  if (parsed.failed !== null && parsed.failed > 0) {
+    return { ok: false, reason: `测试仍有 ${parsed.failed} 个失败用例` };
+  }
   const minLine = Number(options.minLineCoverage) || 80;
   const minBranch = Number(options.minBranchCoverage) || 70;
+  if (parsed.p0 !== null && parsed.p0 < 100) return { ok: false, reason: 'P0 通过率必须为 100%' };
+  if (parsed.p1 !== null && parsed.p1 < 100) return { ok: false, reason: 'P1 通过率必须为 100%' };
+  if (parsed.p2 !== null && parsed.p2 < 90) return { ok: false, reason: 'P2 通过率必须至少 90%' };
   if (parsed.line !== null && parsed.line < minLine) {
     return { ok: false, reason: `行覆盖率 ${parsed.line}% 低于 ${minLine}%` };
   }

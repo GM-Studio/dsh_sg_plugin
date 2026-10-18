@@ -109,7 +109,12 @@ test('test plan and test report validation enforce cases, coverage and verdict',
   assert.equal(validateTestReport(root, 'add-login').ok, false);
   fs.writeFileSync(
     paths.report,
-    'verdict: pass\nline: 85\nbranch: 75\n',
+    'verdict: pass\nP0: 90\nP1: 100\nP2: 95\nline: 85\nbranch: 75\n',
+  );
+  assert.equal(validateTestReport(root, 'add-login').ok, false);
+  fs.writeFileSync(
+    paths.report,
+    'verdict: pass\nP0: 100\nP1: 100\nP2: 95\nline: 85\nbranch: 75\n',
   );
   const report = validateTestReport(root, 'add-login');
   assert.equal(report.ok, true);

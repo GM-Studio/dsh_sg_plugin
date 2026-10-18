@@ -457,8 +457,8 @@ export async function runTestAgent(options) {
       ? 'Read requirements/REQUIREMENTS.md and requirements/changes/<change>/{change.md,design.md,tests/cases.md,tests/matrix.md}.'
       : '阅读 requirements/REQUIREMENTS.md 与 requirements/changes/<change>/ 下的 change.md、design.md、tests/cases.md、tests/matrix.md。',
     en
-      ? 'Do not modify production code. Write or run tests, update cases/matrix and write tests/test-report.md with verdict, line and branch coverage, failures and evidence.'
-      : '不要修改生产代码。编写或执行测试，更新 cases/matrix，并写 tests/test-report.md，包含 verdict、行/分支覆盖率、失败用例和证据。',
+      ? 'Do not modify production code. Write or run tests, update cases/matrix and write tests/test-report.md with verdict, P0/P1/P2 pass rates, failed count, line and branch coverage, failures and evidence.'
+      : '不要修改生产代码。编写或执行测试，更新 cases/matrix，并写 tests/test-report.md，包含 verdict、P0/P1/P2 通过率、失败数、行/分支覆盖率、失败用例和证据。',
     en
       ? `Automation lives in tests/specgate/${change}/. Cases must cover red/green, branches and conditions.`
       : `自动化测试放在 tests/specgate/${change}/。用例必须覆盖红绿、分支和条件。`,
