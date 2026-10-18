@@ -933,4 +933,4 @@
 
 ### C15.6 测试基线
 
-`node --test` → **85 passed / 0 failed**。新增覆盖：迁移 dry-run/force/备份、配置优先级、语言变体选择、双语清单配对、30 Skill + 9 Agent 标识一致。
+`node --test` → **88 passed / 0 failed**。新增覆盖：迁移 dry-run/force/备份、配置优先级、语言变体选择、双语清单配对、30 Skill + 9 Agent 标识一致。

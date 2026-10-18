@@ -314,7 +314,7 @@ CONTEXT.md
 - Output regression: a command in a new session writes a `notice`; an active session does not duplicate history; a running agent writes no messages; failed commands also produce output; automated tests cover "never inject synthetic assistant messages".
 - Idempotency regression: state commands do not replay the cache, append commands deduplicate for 24h, force allows repeats, concurrency locks are mutually exclusive, read-only commands write nothing to disk.
 - Parallel regression: worktree parallelism/waves/dependencies, duplicate dispatch skipping, merge conflicts preserving branches, non-Git degradation, doctor parallel summary.
-- Automated tests: `node --test` → **85 passed / 0 failed**.
+- Automated tests: `node --test` → **88 passed / 0 failed**.
 
 See [verification.md](docs/design/verification.md) for the full record.
 
