@@ -200,7 +200,7 @@ export function nextStepFor(root, name, artifacts, state, paradigm) {
     }
     const report = readIfExists(testPaths(root, name).report);
     if (!report) {
-      return { action: 'run-tests', text: '执行测试 Agent：/sg-test ' + name + ' run' };
+      return { action: 'run-tests', text: '执行测试 Agent：/sg-apply ' + name };
     }
     if (!satisfied('G8')) {
       return { action: 'confirm-gate', gate: 'G8', text: '测试报告通过后确认 G8' };

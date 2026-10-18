@@ -163,3 +163,16 @@ export function diffNames(root, baseCommit, options = {}) {
     return [];
   }
 }
+
+export function workingTreeChanges(root) {
+  try {
+    return git(root, ['status', '--porcelain'])
+      .split(/\r?\n/)
+      .map((line) => line.trim())
+      .filter(Boolean)
+      .map((line) => line.replace(/^\s*[A-Z?]{1,2}\s+/, '').replace(/^.* -> /, '').trim())
+      .filter(Boolean);
+  } catch {
+    return [];
+  }
+}

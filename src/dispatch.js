@@ -29,6 +29,7 @@ import {
   isGitRepo,
   mergeBranch,
   removeWorktree,
+  workingTreeChanges,
 } from './worktree.js';
 import {
   ensureDir,
@@ -617,6 +618,19 @@ export async function runFormatAgent(options) {
     if (!reportText) {
       return { ok: false, text: 'formatter Agent 未生成 format-report.md', worktree, branch: worktree.branch };
     }
+    const reportRelative = path
+      .relative(worktree.path, formatReportPath(worktree.path, change))
+      .replace(/\\/g, '/');
+    const allowed = new Set([...changed.map((file) => file.replace(/\\/g, '/')), reportRelative]);
+    const outside = workingTreeChanges(worktree.path).filter((file) => !allowed.has(file));
+    if (outside.length > 0) {
+      return {
+        ok: false,
+        text: `formatter 修改了范围外文件：${outside.join(', ')}`,
+        worktree,
+        branch: worktree.branch,
+      };
+    }
     const validation = validateFormatReport(worktree.path, change);
     if (useWorktree) {
       const commit = gitAddAndCommit(worktree.path, `chore(specgate): format ${change}`);
@@ -699,6 +713,18 @@ export async function runReviewAgent(options) {
     }
     const text = readIfExists(reviewReportPath(worktree.path, change));
     if (!text) return { ok: false, text: 'reviewer Agent 未生成 review-report.md', worktree, branch: worktree.branch };
+    const reportRelative = path
+      .relative(worktree.path, reviewReportPath(worktree.path, change))
+      .replace(/\\/g, '/');
+    const outside = workingTreeChanges(worktree.path).filter((file) => file !== reportRelative);
+    if (outside.length > 0) {
+      return {
+        ok: false,
+        text: `reviewer 修改了文件（只读审查要求）：${outside.join(', ')}`,
+        worktree,
+        branch: worktree.branch,
+      };
+    }
     ensureDir(path.dirname(reviewReportPath(projectRoot, change)));
     writeFile(reviewReportPath(projectRoot, change), text);
     const validation = validateReviewReport(projectRoot, change);
