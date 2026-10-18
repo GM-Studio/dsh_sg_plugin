@@ -4,13 +4,56 @@ import {
   confirmGate,
   formatGateStatus,
   gateRequiredForParadigm,
+  invalidateFrom,
   missingGates,
   readGate,
   waiveGate,
 } from './gates.js';
 import { gitClean } from './git.js';
 import { loadProject } from './project.js';
+import {
+  applyRequirementChange,
+  currentRequirementChange,
+  isRequirementsProject,
+  validateTestPlan,
+  validateTestReport,
+} from './requirements.js';
 import { invalidateStatusCache } from './status.js';
+
+function requirementPreflight(root, gate, language = 'zh') {
+  if (!isRequirementsProject(root)) return { ok: true };
+  if (gate !== 'G5' && gate !== 'G8') return { ok: true };
+  const change = currentRequirementChange(root);
+  if (!change) {
+    return { ok: false, text: '当前没有需求变更包；先执行 /sg-change <name>。' };
+  }
+  if (gate === 'G5') {
+    const plan = validateTestPlan(root, change.change);
+    if (!plan.ok) return { ok: false, text: plan.reason };
+  }
+  if (gate === 'G8') {
+    const project = loadProject(root);
+    const report = validateTestReport(root, change.change, {
+      minLineCoverage: project.config.minLineCoverage,
+      minBranchCoverage: project.config.minBranchCoverage,
+    });
+    if (!report.ok) return { ok: false, text: report.reason };
+  }
+  return { ok: true, change };
+}
+
+function applyRequirementAfterConfirm(root, gate) {
+  if (!isRequirementsProject(root) || gate !== 'G3') return { ok: true };
+  const change = currentRequirementChange(root);
+  if (!change) return { ok: true };
+  try {
+    const applied = applyRequirementChange(root, change.change);
+    return { ok: true, version: applied.version };
+  } catch (error) {
+    invalidateFrom(root, 'G3');
+    return { ok: false, text: `需求版本落盘失败：${error.message}` };
+  }
+}
 
 function checkGit(root, language = 'zh') {
   const en = String(language || 'zh').toLowerCase().startsWith('en');
@@ -113,6 +156,9 @@ export async function performGateAction(ctx, agent, signal, root, args = {}) {
     const git = checkGit(root, language);
     if (!git.ok) return { ok: false, text: git.text };
 
+    const preflight = requirementPreflight(root, gate, language);
+    if (!preflight.ok) return { ok: false, text: preflight.text };
+
     if (args.interactive === false) {
       if (args.confirmed !== true) {
         return {
@@ -177,9 +223,11 @@ export async function performGateAction(ctx, agent, signal, root, args = {}) {
 
     const status = confirmGate(root, gate);
     invalidateStatusCache(root);
+    const applied = applyRequirementAfterConfirm(root, gate);
+    if (!applied.ok) return { ok: false, text: applied.text };
     return {
       ok: true,
-      text: `${l('已确认', 'Confirmed')} ${gate} ${l(GATES[gate].name, GATES[gate].nameEn || GATES[gate].name)}。${git.warning ? `\n${git.warning}` : ''}`,
+      text: `${l('已确认', 'Confirmed')} ${gate} ${l(GATES[gate].name, GATES[gate].nameEn || GATES[gate].name)}。${applied.version ? `\n${l('需求版本', 'Requirement version')}: ${applied.version}` : ''}${git.warning ? `\n${git.warning}` : ''}`,
       gate: status,
     };
   }

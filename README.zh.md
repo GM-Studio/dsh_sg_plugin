@@ -5,24 +5,48 @@
 - 来源：`AgentKit47-Qoder` 的 `templates/qoder/`（MIT）
 - 目标：DSH `0.2.1-rc.2` 及以上
 - 形态：workspace bundle，安装到当前 DSH profile；**按项目 opt-in 激活**
-- 版本：`1.0.0`
+- 版本：`2.0.0`
 
 ## 能力
 
-- **插件内建初始化**：`/sg-init` 在当前目录生成 `.specgate/`、`openspec/`、`AGENTS.md`、30 个 Skill、9 个 Agent、模板、文档与示例；默认执行 `git init` 并创建初始 commit。
+- **插件内建初始化**：`/sg-init` 在当前目录生成 `.specgate/`、`openspec/`、`AGENTS.md`、30 个 Skill、10 个 Agent、模板、文档与示例；默认执行 `git init` 并创建初始 commit。
 - **新建项目目录**：`/sg-init --path <dir>` 创建目录并初始化。
 - **轻量模式**：`--minimal` 只生成骨架、30 Skill、`openspec/`、精简 AGENTS.md。
 - **完整 AGENTS.md**：已有文件先备份，再合并/替换 SpecGate 段落，不覆盖用户内容。
 - **Git 提交纪律**：门控确认前工作区必须 clean；`/sg-commit` 提交当前变更。
 - G1-G11 门控：写入硬阻断 + 阶段推进软提醒（混合模式）。
 - L1/L2/L3 变更分类：L1 需求驱动、L2 技术实现、L3 缺陷修复。
-- OpenSpec 状态推断：proposal / design / specs / tasks、项目状态、下一步。
+- 需求版本链 + OpenSpec design/specs/tasks 状态、项目状态、下一步。
 - 偏离日志：`.specgate/deviations.log`，跳过门控必须记录。
 - **DSH 输出适配**：命令结果显示为持久命令卡片；空会话额外写入一条 `notice` 上下文消息，避免结果被欢迎页遮住；工具结果显示为工具卡片。**不再向会话注入合成 assistant 消息**，不会破坏 `tool_use` / `tool_result` 配对。
 - **修改命令幂等**：状态检查优先；追加类操作记录 24h 去重；并发锁防止重复执行；只读命令不落盘、不加锁。
-- **多 Agent 并行**：`/sg-apply` 按 `tasks.md` 的 `[P]` / `depends` 分波次，9 个角色 Agent、默认并发 4、每任务独立 worktree；`/sg-doctor` 四维并行体检。
-- 命令：`/sg-init`、`/sg-status`、`/sg-next`、`/sg-gate`、`/sg-commit`、`/sg-deviation`、`/sg-classify`、`/sg-doctor`、`/sg-enable`、`/sg-disable`、`/sg-migrate`、`/sg-propose`、`/sg-apply`、`/sg-archive`、`/sg-explore`
-- 工具：`sg_status`、`sg_next`、`sg_gate`、`sg_commit`、`sg_deviation`、`sg_classify`、`sg_doctor`、`sg_init`、`sg_enable`、`sg_disable`、`sg_migrate`、`sg_propose`、`sg_archive`
+- **多 Agent 并行**：`/sg-apply` 按 `tasks.md` 的 `[P]` / `depends` 分波次，10 个角色 Agent、默认并发 4、每任务独立 dev worktree、每 change 独立 test worktree；`/sg-doctor` 四维并行体检。
+- **需求版本链**：唯一当前 `requirements/REQUIREMENTS.md`；批准的需求变更生成不可变 `history/vX.Y.Z/` 快照和 change 增量包。
+- 命令：`/sg-init`、`/sg-status`、`/sg-next`、`/sg-gate`、`/sg-commit`、`/sg-deviation`、`/sg-classify`、`/sg-doctor`、`/sg-enable`、`/sg-disable`、`/sg-migrate`、`/sg-change`、`/sg-test`、`/sg-requirements-migrate`、`/sg-propose`、`/sg-apply`、`/sg-archive`、`/sg-explore`
+- 工具：`sg_status`、`sg_next`、`sg_gate`、`sg_commit`、`sg_deviation`、`sg_classify`、`sg_doctor`、`sg_init`、`sg_enable`、`sg_disable`、`sg_migrate`、`sg_change`、`sg_test`、`sg_requirements_migrate`、`sg_propose`、`sg_archive`
+
+## 需求与测试工作流（2.x）
+
+新项目使用唯一需求文档 + 版本链：
+
+```text
+requirements/
+├── REQUIREMENTS.md                 # 当前已批准需求
+├── history/vX.Y.Z/REQUIREMENTS.md  # 不可变快照
+└── changes/<change>/
+    ├── change.md / change.json     # 意图、范围与机器可读增量
+    ├── design.md / tasks.md
+    ├── tests/cases.md / matrix.md
+    ├── approval.md
+    └── test-report.md
+```
+
+- `/sg-change <id>` 创建变更包；G3 批准增量并写入下一个版本。
+- `/sg-test <change> plan` 编写/冻结测试；`/sg-test <change> run` 在独立 test worktree 执行。
+- 专用 `sg-agent-tester` 不修改生产代码。
+- G5 冻结测试；G8 要求测试通过，P0/P1 100%、P2 ≥90%、行 ≥80%、分支 ≥70%。
+- 开发任务独立 worktree；每个 change 一个 test worktree；主 Agent 唯一合并者。
+- 老项目保持旧流程，直到显式执行 `/sg-requirements-migrate`。
 
 ## 安装
 
@@ -44,7 +68,7 @@ SpecGate 以公开 Git 仓库分发；发布到 npm 是可选项。仓库本身�
     }
   },
   "dependencies": {
-    "dsh-plugin-specgate": "github:GM-Studio/dsh_sg_plugin#v1.0.0"
+    "dsh-plugin-specgate": "github:GM-Studio/dsh_sg_plugin#v2.0.0"
   }
 }
 ```
@@ -65,14 +89,14 @@ pnpm install
 ```json
 {
   "action": "install_bundle",
-  "target": "github:GM-Studio/dsh_sg_plugin#v1.0.0"
+  "target": "github:GM-Studio/dsh_sg_plugin#v2.0.0"
 }
 ```
 
 等价简写：
 
 ```text
-plugin_manager install_bundle target=github:GM-Studio/dsh_sg_plugin#v1.0.0
+plugin_manager install_bundle target=github:GM-Studio/dsh_sg_plugin#v2.0.0
 ```
 
 管理器接受 `github:`、`git+https://...`、Git 仓库 URL、`.tgz` URL，或**绝对路径**的本地目录。它会执行 `pnpm add`、选中 bundle 并重载 profile。由于改动会跨会话持久化并安装 Host 代码，DSH 可能要求 `danger-full-access` 授权。
@@ -159,6 +183,7 @@ SpecGate 是 Host 插件，没有独立后台进程。“启动/关闭”分两�
 
 ```yaml
 version: 1
+workflowVersion: 2
 enabled: true
 enforcement: hybrid
 paradigm: null
@@ -168,6 +193,8 @@ minimal: false
 maxConcurrency: 4
 materializeSkills: true
 materializeAgents: true
+minLineCoverage: 80
+minBranchCoverage: 70
 ```
 
 优先级：**项目配置 > 全局插件 config > 内置默认值**。全局默认只用于新项目初始化，不会静默改写已有项目。
@@ -199,7 +226,7 @@ SpecGate 资产为双语：英文 `*.md` 与中文 `*.zh.md`。中文为权威�
 /sg-classify 新功能 ...         # 建议 L1/L2/L3（需 G1 已确认）
 /sg-propose add-login          # 创建 OpenSpec change 骨架（需 G1/G2）
 /sg-apply add-login --plan     # 只查看并行任务计划
-/sg-apply add-login            # 执行：按 [P]/depends 并行派发 9 个角色 Agent
+/sg-apply add-login            # 执行：按 [P]/depends 并行派发 10 个角色 Agent
 /sg-migrate --dry-run          # 预览从旧 .ak47/ 项目迁移
 ```
 
@@ -219,12 +246,14 @@ SpecGate 资产为双语：英文 `*.md` 与中文 `*.zh.md`。中文为权威�
 
 | 写入目标 | 前置门控 |
 |----------|----------|
-| `openspec/changes/<c>/proposal.md` | G1 需求确认、G2 分类确认 |
-| `design.md` | G1、G2、G3 proposal 评审 |
-| `specs/**` | G1、G2、G3、G4 design 评审 |
-| `tasks.md` | G1、G2、G3、G4、G5 specs 评审 |
+| `requirements/REQUIREMENTS.md`（通过 `change.json`） | G1 需求、G2 分类、G3 需求增量 |
+| `design.md` | G3 变更增量已批准 |
+| `specs/**`（可选下游） | G4 design 已批准 |
+| `tests/cases.md`、`tests/matrix.md` | G4 design 已批准；G5 评审并冻结 |
+| `tasks.md` | G5 测试计划已冻结 |
 | 源码 | G1-G7（L3 下 G1/G3/G4/G5 可跳过） |
-| 测试文件 | G1-G6（TDD RED 先于 G7） |
+| `test-report.md` | G1-G7 且 `/sg-test run` 已执行；G8 要求通过 |
+| 提交 | G9 审查通过后 |
 
 门控确认有两条 DSH 原生路径：
 
@@ -263,7 +292,7 @@ SpecGate 资产为双语：英文 `*.md` 与中文 `*.zh.md`。中文为权威�
 ## 多 Agent 并行
 
 - `/sg-apply <change>`：读取 `tasks.md`，按 `[P]` / `depends` 分波次；每波最多 4 个 Agent；每个任务独立 Git worktree 和分支。
-- 9 个角色来自 `.specgate/agents/`；任务可用 `role: reviewer|architect|ddd|...` 指定，默认 `developer`。
+- 10 个角色来自 `.specgate/agents/`；任务可用 `role: reviewer|architect|ddd|...` 指定，默认 `developer`。
 - 每波完成后顺序合并；冲突时停止合并并保留全部 worktree/分支，返回冲突文件。
 - 成功任务自动勾选 `tasks.md` 并提交 `chore(specgate): mark <change> tasks done`；失败任务保持未勾选。
 - 非 Git 项目或工作区 dirty：自动降级为串行单写者，并在结果中说明原因。
@@ -313,7 +342,7 @@ CONTEXT.md
 - 输出回归：新会话命令写入 `notice`；活跃会话不重复写历史；运行中的 agent 不写消息；失败命令同样有输出；自动化测试覆盖“绝不注入合成 assistant 消息”。
 - 幂等回归：状态命令不重放缓存、追加命令 24h 去重、force 可重复、并发锁互斥、只读命令不落盘。
 - 并行回归：worktree 并行/波次/依赖、重复派发跳过、合并冲突保留分支、非 Git 降级、doctor 并行汇总。
-- 自动化测试：`node --test` → **89 passed / 0 failed**。
+- 自动化测试：`node --test` → **99 passed / 0 failed**。
 
 完整记录见 [verification.md](docs/design/verification.md)。
 
@@ -325,7 +354,7 @@ CONTEXT.md
 - `commands` / `skills` / `systemPrompt` 是可选服务：插件通过 `ctx.inject` 等待它们就绪；composed 环境缺少某个服务时只跳过对应能力，工具与门控仍可用。
 - 并行 worktree 要求工作区 clean；dirty 或非 Git 项目自动降级串行，不隔离未提交改动。
 - 合并冲突时不会自动解决；worktree 和分支会保留，需人工合并后重新执行 `/sg-apply`。
-- 9 个 Agent 并行会消耗更多模型调用与 token；默认并发 4，可在 `.specgate/config.yaml` 用 `maxConcurrency` 调整。
+- 10 个 Agent 并行会消耗更多模型调用与 token；默认并发 4，可在 `.specgate/config.yaml` 用 `maxConcurrency` 调整。
 - 幂等 `--force` 只对追加类（deviation）开放；状态类命令通过删除目标文件/标记自然重跑。
 - 不替代 AgentKit47 CLI 的 `init/upgrade/doctor/validate`；SpecGate 是 DSH Host 插件，不是独立 CLI。
 - G6.5 Brief 为可选门控，默认不进入“待确认”列表。

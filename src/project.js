@@ -2,6 +2,10 @@ import path from 'node:path';
 import { normalizeLanguage } from './assets.js';
 import { DEFAULT_CONFIG } from './constants.js';
 import {
+  isRequirementsProject,
+  requirementsPath,
+} from './requirements.js';
+import {
   exists,
   parseSimpleYaml,
   readIfExists,
@@ -16,6 +20,7 @@ export function findProjectRoot(start) {
     if (
       exists(path.join(current, '.git')) ||
       exists(path.join(current, '.specgate')) ||
+      exists(path.join(current, 'requirements')) ||
       exists(path.join(current, 'openspec'))
     ) {
       return current;
@@ -45,6 +50,7 @@ export function loadProject(start) {
   const paradigm = normalizeParadigm(config.paradigm);
   const hasGit = exists(path.join(root, '.git'));
   const gitEnabled = parsed.git === true || (parsed.git !== false && hasGit);
+  const isV2 = isRequirementsProject(root);
 
   return {
     root,
@@ -61,6 +67,11 @@ export function loadProject(start) {
     materializeAgents: config.materializeAgents !== false,
     gitEnabled,
     minimal: config.minimal === true,
+    isV2,
+    workflowVersion: isV2 ? 2 : Number(config.workflowVersion) || 1,
+    requirementsDir: path.join(root, 'requirements'),
+    requirementsPath: requirementsPath(root),
+    testsDir: path.join(root, 'tests', 'specgate'),
     specgateDir,
     gatesDir: path.join(specgateDir, 'gates'),
     deviationsPath: path.join(specgateDir, 'deviations.log'),

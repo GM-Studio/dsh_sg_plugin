@@ -67,7 +67,7 @@ export function worktreePaths(root, change, taskId) {
   const task = safeSegment(taskId);
   return {
     path: path.join(base, task),
-    branch: `specgate/${safeSegment(change)}/${task}`,
+    branch: `specgate/${safeSegment(change)}/${task === 'test' ? 'test' : `${task}-dev`}`,
   };
 }
 

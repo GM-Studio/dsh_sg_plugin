@@ -87,6 +87,7 @@ test('plugin registers tools, commands, skills, prompt and guard', () => {
       [...toolNames].sort(),
       [
         'sg_archive',
+        'sg_change',
         'sg_classify',
         'sg_commit',
         'sg_deviation',
@@ -98,9 +99,11 @@ test('plugin registers tools, commands, skills, prompt and guard', () => {
         'sg_migrate',
         'sg_next',
         'sg_propose',
+        'sg_requirements_migrate',
         'sg_status',
+        'sg_test',
       ],
-      'the plugin must register exactly the documented 13 tools',
+      'the plugin must register exactly the documented 16 tools',
     );
     assert.ok(inject.includes('tools'));
     assert.ok(inject.includes('agents'), 'parallel dispatch needs the agents service');
@@ -110,6 +113,7 @@ test('plugin registers tools, commands, skills, prompt and guard', () => {
       [
         'sg-apply',
         'sg-archive',
+        'sg-change',
         'sg-classify',
         'sg-commit',
         'sg-deviation',
@@ -122,9 +126,11 @@ test('plugin registers tools, commands, skills, prompt and guard', () => {
         'sg-migrate',
         'sg-next',
         'sg-propose',
+        'sg-requirements-migrate',
         'sg-status',
+        'sg-test',
       ],
-      'the plugin must register exactly the documented 15 commands',
+      'the plugin must register exactly the documented 18 commands',
     );
     assert.ok(skills.every((skill) => skill.description && skill.description.length > 0));
     assert.equal(new Set(skills.map((skill) => skill.name)).size, 30);

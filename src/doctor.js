@@ -6,6 +6,12 @@ import { readGate } from './gates.js';
 import { findStaleLocks } from './idempotency.js';
 import { listChanges } from './openspec.js';
 import { loadProject } from './project.js';
+import {
+  currentRequirementChange,
+  isRequirementsProject,
+  readRequirements,
+  testPaths,
+} from './requirements.js';
 import { computeStatus } from './status.js';
 import { exists, readIfExists, walkFiles } from './util.js';
 
@@ -22,6 +28,27 @@ export function runDoctor(root) {
   checks.push({ name: 'project-root', ok: true, detail: project.root });
   checks.push({ name: 'specgate-dir', ok: project.hasSpecgate, detail: project.specgateDir });
   checks.push({ name: 'openspec-dir', ok: exists(path.join(project.root, 'openspec')), detail: path.join(project.root, 'openspec') });
+
+  if (isRequirementsProject(project.root)) {
+    const requirements = readRequirements(project.root);
+    checks.push({
+      name: 'requirements-doc',
+      ok: Boolean(requirements),
+      detail: requirements ? `v${requirements.version} (${requirements.status})` : 'missing',
+    });
+    if (!requirements) {
+      issues.push(issue('error', 'REQUIREMENTS_MISSING', '缺少 requirements/REQUIREMENTS.md', '执行 /sg-init --force 或手工创建'));
+    }
+    const active = currentRequirementChange(project.root);
+    if (active) {
+      const report = readIfExists(testPaths(project.root, active.change).report);
+      checks.push({
+        name: 'test-report',
+        ok: Boolean(report),
+        detail: report ? testPaths(project.root, active.change).report : 'missing',
+      });
+    }
+  }
 
   const git = gitStatus(project.root);
   checks.push({

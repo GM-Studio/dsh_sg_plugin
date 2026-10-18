@@ -7,6 +7,13 @@ import {
   readGate,
 } from './gates.js';
 import {
+  isRequirementsProject,
+  listRequirementChangeNames,
+  requirementChangeDir,
+  requirementsChangesDir,
+  testPaths,
+} from './requirements.js';
+import {
   ensureDir,
   exists,
   listDir,
@@ -16,10 +23,13 @@ import {
 } from './util.js';
 
 export function changeDir(root, name) {
-  return path.join(root, 'openspec', 'changes', name);
+  return isRequirementsProject(root)
+    ? requirementChangeDir(root, name)
+    : path.join(root, 'openspec', 'changes', name);
 }
 
 export function listChangeNames(root) {
+  if (isRequirementsProject(root)) return listRequirementChangeNames(root);
   const changesDir = path.join(root, 'openspec', 'changes');
   return listDir(changesDir)
     .filter((entry) => entry.isDirectory() && entry.name !== 'archive')
@@ -45,6 +55,31 @@ function specsStatus(changePath) {
 }
 
 export function artifactStates(changePath) {
+  const requirementChange = readIfExists(path.join(changePath, 'change.md'));
+  if (requirementChange !== null) {
+    const tests = testPaths(path.dirname(changePath), path.basename(changePath));
+    return {
+      proposal: stateOfText(requirementChange, [/##\s+Intent/i, /##\s+Scope/i]),
+      specs: specsStatus(changePath),
+      design: stateOfText(readIfExists(path.join(changePath, 'design.md')), [
+        /##\s+Architecture/i,
+        /##\s+Technical Approach/i,
+      ]),
+      tests: (() => {
+        const cases = readIfExists(tests.cases);
+        const matrix = readIfExists(tests.matrix);
+        if (cases === null && matrix === null) return 'not-started';
+        return cases && /^###\s+TC-\d+/im.test(cases) && matrix ? 'completed' : 'drafting';
+      })(),
+      tasks: (() => {
+        const tasksText = readIfExists(path.join(changePath, 'tasks.md'));
+        if (tasksText === null) return 'not-started';
+        const done = (tasksText.match(/^\s*-\s*\[x\]/gim) || []).length;
+        const open = (tasksText.match(/^\s*-\s*\[ \]/gim) || []).length;
+        return done > 0 && open === 0 ? 'completed' : 'drafting';
+      })(),
+    };
+  }
   const proposal = stateOfText(readIfExists(path.join(changePath, 'proposal.md')), [
     /##\s+Intent/i,
     /##\s+Scope/i,
@@ -71,6 +106,7 @@ export function artifactStates(changePath) {
 export function changeState(artifacts) {
   if (artifacts.tasks === 'completed') return 'implementing';
   if (artifacts.design === 'completed') return 'tasking';
+  if (artifacts.tests === 'completed') return 'designing';
   if (artifacts.specs === 'completed') return 'designing';
   if (artifacts.proposal === 'completed') return 'specing';
   if (artifacts.proposal === 'drafting') return 'proposing';
@@ -107,6 +143,71 @@ export function listChanges(root, paradigm) {
 export function nextStepFor(root, name, artifacts, state, paradigm) {
   const required = (gate) => gateRequiredForParadigm(gate, paradigm);
   const satisfied = (gate) => readGate(root, gate).satisfied || !required(gate);
+
+  if (isRequirementsProject(root)) {
+    if (!satisfied('G1')) {
+      return { action: 'confirm-gate', gate: 'G1', text: '完成需求理解确认（G1）' };
+    }
+    if (!satisfied('G2')) {
+      return { action: 'confirm-gate', gate: 'G2', text: '确认变更分类（G2）' };
+    }
+    if (artifacts.proposal === 'not-started') {
+      return { action: 'create-change', text: '创建需求变更包：/sg-change <name>' };
+    }
+    if (artifacts.proposal !== 'completed') {
+      return { action: 'complete-change', text: '补齐 change.md 的 ## Intent 与 ## Scope' };
+    }
+    if (!satisfied('G3')) {
+      return { action: 'confirm-gate', gate: 'G3', text: '评审需求增量，确认 G3（确认后生成新版本）' };
+    }
+    if (artifacts.design === 'not-started') {
+      return { action: 'create-design', text: '创建 design.md（需 G3 已确认）' };
+    }
+    if (artifacts.design !== 'completed') {
+      return { action: 'complete-design', text: '补齐 design.md 的 ## Architecture 与 ## Technical Approach' };
+    }
+    if (!satisfied('G4')) {
+      return { action: 'confirm-gate', gate: 'G4', text: '评审 design，确认 G4' };
+    }
+    if (artifacts.tests === 'not-started') {
+      return { action: 'create-tests', text: '编写测试用例：/sg-test ' + name + ' plan' };
+    }
+    if (artifacts.tests !== 'completed') {
+      return { action: 'complete-tests', text: '补齐 tests/cases.md 的 TC-* 用例与 tests/matrix.md' };
+    }
+    if (!satisfied('G5')) {
+      return { action: 'confirm-gate', gate: 'G5', text: '评审测试计划/用例，确认 G5' };
+    }
+    if (artifacts.tasks === 'not-started') {
+      return { action: 'create-tasks', text: '创建 tasks.md（需 G5 已确认）' };
+    }
+    if (!satisfied('G6')) {
+      return { action: 'confirm-gate', gate: 'G6', text: '评审 tasks，确认 G6' };
+    }
+    if (!satisfied('G7')) {
+      return { action: 'confirm-gate', gate: 'G7', text: '执行 critical review，确认 G7 后进入实施' };
+    }
+    if (artifacts.tasks !== 'completed' || state !== 'implementing') {
+      return { action: 'implement', text: '按 tasks.md 实施，测试基线已冻结（RED → GREEN）' };
+    }
+    const report = readIfExists(testPaths(root, name).report);
+    if (!report) {
+      return { action: 'run-tests', text: '执行测试 Agent：/sg-test ' + name + ' run' };
+    }
+    if (!satisfied('G8')) {
+      return { action: 'confirm-gate', gate: 'G8', text: '测试报告通过后确认 G8' };
+    }
+    if (!satisfied('G9')) {
+      return { action: 'confirm-gate', gate: 'G9', text: '审查通过后确认 G9 并提交' };
+    }
+    if (!satisfied('G10')) {
+      return { action: 'confirm-gate', gate: 'G10', text: '启动验收测试，确认 G10' };
+    }
+    if (!satisfied('G11')) {
+      return { action: 'confirm-gate', gate: 'G11', text: '处理分支/PR，确认 G11' };
+    }
+    return { action: 'archive', text: '归档 change：/sg-archive ' + name };
+  }
 
   if (!satisfied('G1')) {
     return { action: 'confirm-gate', gate: 'G1', text: '完成需求理解确认（G1）' };
@@ -170,7 +271,10 @@ export function nextStepFor(root, name, artifacts, state, paradigm) {
 
 export function projectState(root, changes) {
   if (changes.length === 0) {
-    const archived = listDir(path.join(root, 'openspec', 'changes', 'archive')).filter((e) => e.isDirectory());
+    const archive = isRequirementsProject(root)
+      ? path.join(requirementsChangesDir(root), 'archive')
+      : path.join(root, 'openspec', 'changes', 'archive');
+    const archived = listDir(archive).filter((e) => e.isDirectory());
     return archived.length > 0 ? 'completed' : 'idle';
   }
   if (changes.some((change) => change.state === 'implementing')) return 'developing';
@@ -200,9 +304,12 @@ export function createChange(root, name, description = '') {
 export function archiveChange(root, name) {
   const source = changeDir(root, name);
   if (!exists(source)) throw new Error(`Change 不存在：${name}`);
-  ensureDir(path.join(root, 'openspec', 'changes', 'archive'));
+  const archiveRoot = isRequirementsProject(root)
+    ? path.join(requirementsChangesDir(root), 'archive')
+    : path.join(root, 'openspec', 'changes', 'archive');
+  ensureDir(archiveRoot);
   const date = new Date().toISOString().slice(0, 10);
-  const target = path.join(root, 'openspec', 'changes', 'archive', `${date}-${name}`);
+  const target = path.join(archiveRoot, `${date}-${name}`);
   if (exists(target)) throw new Error(`归档目标已存在：${target}`);
   fs.renameSync(source, target);
   clearAllGates(root);

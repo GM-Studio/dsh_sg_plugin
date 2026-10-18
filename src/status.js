@@ -5,6 +5,8 @@ import { formatGitStatus, gitStatus } from './git.js';
 import { gateRequiredForParadigm, gateSummary } from './gates.js';
 import { listChanges, projectState } from './openspec.js';
 import { loadProject } from './project.js';
+import { currentRequirementChange, readRequirements, testPaths } from './requirements.js';
+import { readIfExists } from './util.js';
 
 const cache = new Map();
 const CACHE_TTL_MS = 400;
@@ -35,6 +37,11 @@ export function computeStatus(root, options = {}) {
   const changes = listChanges(project.root, paradigm);
   const gateInfo = gateSummary(project.root);
   const currentChange = pickCurrentChange(changes);
+  const requirements = project.isV2 ? readRequirements(project.root) : null;
+  const requirementChange = project.isV2 ? currentRequirementChange(project.root) : null;
+  const testReport = project.isV2 && requirementChange
+    ? readIfExists(testPaths(project.root, requirementChange.change).report)
+    : null;
   const uninitialized = !project.hasSpecgate && !project.hasMaterializedSkills;
   const git = gitStatus(project.root);
 
@@ -61,8 +68,10 @@ export function computeStatus(root, options = {}) {
       action: 'create-change',
       text:
         missing.length > 0
-          ? `先完成 ${missing.join('/')}，然后创建 openspec/changes/<name>/proposal.md`
-          : '创建新 Change：执行 /sg-propose <name>（G1/G2 已确认）',
+          ? `先完成 ${missing.join('/')}，然后创建 ${project.isV2 ? 'requirements/changes/<name>/change.md' : 'openspec/changes/<name>/proposal.md'}`
+          : project.isV2
+            ? '创建新需求变更：执行 /sg-change <name>（G1/G2 已确认）'
+            : '创建新 Change：执行 /sg-propose <name>（G1/G2 已确认）',
     };
   }
 
@@ -81,6 +90,18 @@ export function computeStatus(root, options = {}) {
     git,
     minimal: project.minimal,
     projectState: projectState(project.root, changes),
+    isV2: project.isV2,
+    requirements: requirements
+      ? {
+          version: requirements.version,
+          status: requirements.status,
+          change: requirements.changeId,
+        }
+      : null,
+    requirementChange: requirementChange
+      ? { name: requirementChange.change, version: requirementChange.version || null }
+      : null,
+    testReport: testReport ? { path: testPaths(project.root, requirementChange.change).report } : null,
     changes,
     currentChange,
     gates: gateInfo.gates,
@@ -123,6 +144,13 @@ export function renderStatus(status, language = 'zh') {
       : `启用：${status.enabled ? '是' : '否'} ｜ 范式：${status.paradigm || '未分类'} ｜ 模式：${status.enforcement}`,
   );
   lines.push(formatGitStatus(status.git || { isRepo: false }, language));
+  if (status.requirements) {
+    lines.push(
+      en
+        ? `Requirements: v${status.requirements.version} (${status.requirements.status})${status.requirementChange ? ` | change ${status.requirementChange.name}` : ''}${status.testReport ? ' | test report present' : ''}`
+        : `需求版本：v${status.requirements.version}（${status.requirements.status}）${status.requirementChange ? ` ｜ change ${status.requirementChange.name}` : ''}${status.testReport ? ' ｜ 已有测试报告' : ''}`,
+    );
+  }
   if (status.uninitialized) {
     lines.push(en ? 'Initialization: not initialized (/sg-init)' : '初始化：未初始化（/sg-init）');
   } else if (!status.enabled) {
@@ -203,6 +231,8 @@ export function statusSummary(status) {
     uninitialized: status.uninitialized,
     paradigm: status.paradigm,
     projectState: status.projectState,
+    requirementsVersion: status.requirements?.version || null,
+    requirementChange: status.requirementChange?.name || null,
     currentChange: status.currentChange?.name || null,
     currentGate: gate,
     nextStep: status.nextStep.text,

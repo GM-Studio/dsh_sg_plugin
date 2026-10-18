@@ -13,6 +13,7 @@ import {
   writeAgentsSection,
 } from './assets.js';
 import { gitAddAndCommit, gitInit, gitStatus } from './git.js';
+import { ensureRequirementsSkeleton } from './requirements.js';
 import { loadProject, setEnabled } from './project.js';
 import {
   ensureDir,
@@ -159,6 +160,7 @@ export function initProject(root, options = {}) {
   const force = Boolean(options.force);
   const gitEnabled = options.git !== false;
   const language = normalizeLanguage(options.language);
+  const requirements = options.requirements === true;
   const materializeSkills = options.materializeSkills !== false;
   const materializeAgents = options.materializeAgents !== false;
 
@@ -175,6 +177,7 @@ export function initProject(root, options = {}) {
       configPath,
       renderConfig({
         ...DEFAULT_CONFIG,
+        workflowVersion: requirements ? 2 : 1,
         enabled: options.enabled !== false && options.disabled !== true,
         enforcement: options.enforcement || DEFAULT_CONFIG.enforcement,
         language,
@@ -193,6 +196,8 @@ export function initProject(root, options = {}) {
     skipped.push('.specgate/config.yaml');
   }
   if (configExisted && options.disabled === true) setEnabled(target, false);
+
+  if (requirements) ensureRequirementsSkeleton(target, { language });
 
   const deviationsPath = path.join(target, '.specgate', 'deviations.log');
   if (writeIfAbsent(deviationsPath, '# SpecGate deviations (append-only)\n\n')) {

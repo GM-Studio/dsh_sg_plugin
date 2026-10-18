@@ -1,6 +1,6 @@
 {
   "name": "dsh-plugin-specgate",
-  "version": "1.0.1",
+  "version": "2.0.0",
   "private": false,
   "type": "module",
   "description": "SpecGate — spec-driven gated workflow for DeepSeek Harness: project init, gates, skills, OpenSpec state and parallel agents.",

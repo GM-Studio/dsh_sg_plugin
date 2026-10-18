@@ -1,5 +1,15 @@
 # 变更记录
 
+## 2.0.0
+
+- 新增 v2 需求模型：唯一 `requirements/REQUIREMENTS.md`、不可变 `history/vX.Y.Z/` 快照、change 级 `requirements/changes/<id>/` 增量包。
+- 新增 `/sg-change` 与 `sg_change`；G3 现在应用需求增量并写入下一个已批准版本。
+- 新增专用 `sg-agent-tester`、`tests/cases.md`、`tests/matrix.md`、`tests/test-report.md`，以及 `/sg-test <change> plan|run` 独立 test worktree。
+- G5 校验并冻结测试用例；G8 校验通过的测试报告与覆盖率（P0/P1 100%、P2 90%、行 80%、分支 70%）。
+- 新增 `/sg-requirements-migrate` 与 `sg_requirements_migrate` 显式迁移旧项目；未迁移项目保持旧流程。
+- 开发任务与测试使用独立 worktree；主 Agent 仍是唯一合并者。
+- 新增 10 个 Agent 资产、v2 模板/文档与回归测试。99 项测试通过。
+
 ## 未发布
 
 - `/sg-*` 命令现在通过 `agent.followup` 把完整输出交回 agent（`source.kind=specgate`，消息为 `role=user`），结果以正常对话消息呈现，并可接着追问下一门控，不再只剩折叠的命令卡片或 `notice` 小条。

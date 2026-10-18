@@ -8,6 +8,7 @@ import {
   createAgentRunner,
   resolveMaxConcurrency,
   runDoctorParallel,
+  runTestAgent,
 } from './dispatch.js';
 import { performGateAction } from './gate-actions.js';
 import {
@@ -26,6 +27,7 @@ import { archiveChange, createChange } from './openspec.js';
 import { gitAddAndCommit } from './git.js';
 import { loadProject, setParadigm } from './project.js';
 import { migrateProject } from './migrate.js';
+import { createRequirementChange, migrateRequirements } from './requirements.js';
 import {
   DAY_MS,
   archivedPath,
@@ -334,6 +336,138 @@ export function registerTools(ctx, runtime) {
       },
     },
     {
+      name: 'sg_requirements_migrate',
+      description:
+        'Migrate a legacy openspec/changes project into requirements/REQUIREMENTS.md v1.0.0. Use dryRun to preview; old openspec files are kept.',
+      parameters: {
+        type: 'object',
+        properties: { dryRun: { type: 'boolean' } },
+        additionalProperties: false,
+      },
+      output: textOutput(),
+      async execute(args, exec) {
+        const cwd = runtime.getCwd(exec.agent);
+        if (args?.dryRun === true) {
+          const result = migrateRequirements(cwd, { dryRun: true, language: runtime.language(exec.agent) });
+          return result.ok ? ok(result.text, result) : fail(result.text, result);
+        }
+        return mutateTool(
+          cwd,
+          { command: 'sg_requirements_migrate', args: {}, target: 'requirements', ttlMs: 0 },
+          async () => {
+            const result = migrateRequirements(cwd, { language: runtime.language(exec.agent) });
+            invalidateStatusCache(cwd);
+            return {
+              result: result.ok
+                ? { kind: 'success', text: result.text, data: result }
+                : { kind: 'error', text: result.text, data: result },
+              summary: 'SpecGate requirements migration',
+              record: false,
+            };
+          },
+        );
+      },
+    },
+    {
+      name: 'sg_change',
+      description:
+        'Create a v2 requirement change package under requirements/changes/<name>/ with change.md, change.json, design/tasks and tests templates. Requires a v2 project created by /sg-init or /sg-requirements-migrate.',
+      parameters: {
+        type: 'object',
+        properties: {
+          name: { type: 'string' },
+          description: { type: 'string' },
+        },
+        required: ['name'],
+        additionalProperties: false,
+      },
+      output: textOutput(),
+      async execute(args, exec) {
+        const project = runtime.project(exec.agent);
+        if (!project.isV2) {
+          return fail('当前项目不是 v2 需求项目：先执行 /sg-init（或 /sg-requirements-migrate）。');
+        }
+        return mutateTool(
+          project.root,
+          { command: 'sg_change', args: { name: args?.name, description: args?.description || '' }, target: args?.name, ttlMs: 0 },
+          async () => {
+            try {
+              const result = createRequirementChange(
+                project.root,
+                String(args?.name || ''),
+                String(args?.description || ''),
+              );
+              invalidateStatusCache(project.root);
+              return {
+                result: {
+                  kind: 'success',
+                  text: result.created
+                    ? `已创建需求变更包：${result.dir}`
+                    : `需求变更包已存在，幂等跳过：${args?.name}`,
+                  data: result,
+                },
+                record: false,
+              };
+            } catch (error) {
+              return { result: { kind: 'error', text: error.message }, record: false };
+            }
+          },
+        );
+      },
+    },
+    {
+      name: 'sg_test',
+      description:
+        'Run the dedicated tester Agent for a v2 requirement change. action=plan writes/finalizes test cases and automation; action=run executes the frozen suite in an independent test worktree and writes tests/test-report.md.',
+      parameters: {
+        type: 'object',
+        properties: {
+          change: { type: 'string' },
+          action: { type: 'string', enum: ['plan', 'run'] },
+        },
+        required: ['change'],
+        additionalProperties: false,
+      },
+      output: textOutput(),
+      async execute(args, exec) {
+        const project = runtime.project(exec.agent);
+        if (!project.isV2) return fail('当前项目不是 v2 需求项目。');
+        const action = args?.action === 'plan' ? 'plan' : 'run';
+        const gate = action === 'plan' ? 'G4' : 'G5';
+        if (gateRequiredForParadigm(gate, project.paradigm || 'L1') && !readGate(project.root, gate).satisfied) {
+          return fail(`无法${action === 'plan' ? '编写' : '执行'}测试：${gate} 尚未确认。`);
+        }
+        const runner = createAgentRunner(ctx);
+        if (!runner) return fail('当前 DSH composition 没有可用的 Agent 派发能力。');
+        return mutateTool(
+          project.root,
+          { command: 'sg_test', args: { change: args?.change, action }, target: args?.change, ttlMs: 0 },
+          async () => {
+            try {
+              const result = await runTestAgent({
+                root: project.root,
+                change: String(args?.change || ''),
+                parent: exec.agent,
+                runner,
+                action,
+                language: runtime.language(exec.agent),
+              });
+              invalidateStatusCache(project.root);
+              return {
+                result: result.ok
+                  ? { kind: 'success', text: result.text, data: result }
+                  : { kind: 'error', text: result.text, data: result },
+                summary: `SpecGate ${action} test`,
+                record: false,
+              };
+            } catch (error) {
+              return { result: { kind: 'error', text: error.message }, record: false };
+            }
+          },
+        );
+      },
+    },
+    {
       name: 'sg_propose',
       description:
         'Create a new OpenSpec change skeleton (proposal.md) after G1 and G2 are confirmed. Does not generate design/tasks automatically. Repeated creation is idempotent.',
@@ -349,6 +483,9 @@ export function registerTools(ctx, runtime) {
       output: textOutput(),
       async execute(args, exec) {
         const project = loadProject(runtime.getCwd(exec.agent));
+        if (project.isV2) {
+          return fail('v2 项目使用 sg_change 创建需求变更包；sg_propose 仅用于 legacy 项目。');
+        }
         const name = args?.name;
         const description = args?.description || '';
         const proposalPath = path.join(project.root, 'openspec', 'changes', name, 'proposal.md');
@@ -470,7 +607,7 @@ export function registerTools(ctx, runtime) {
     {
       name: 'sg_init',
       description:
-        'Initialize an SpecGate workflow project. Generates .specgate, openspec/, AGENTS.md, 30 skills, agents/templates/docs and an initial Git commit by default. Use path to create a new project directory; minimal for a lightweight scaffold; no-git via git:false. Repeated calls are idempotent.',
+        'Initialize an SpecGate workflow project. Generates .specgate, requirements/, openspec/, AGENTS.md, 30 skills, agents/templates/docs and an initial Git commit by default. Use path to create a new project directory; minimal for a lightweight scaffold; no-git via git:false; requirements:false for the legacy proposal workflow. Repeated calls are idempotent.',
       parameters: {
         type: 'object',
         properties: {
@@ -481,6 +618,7 @@ export function registerTools(ctx, runtime) {
           example: { type: 'boolean' },
           docs: { type: 'boolean' },
           disabled: { type: 'boolean' },
+          requirements: { type: 'boolean' },
         },
         additionalProperties: false,
       },
@@ -495,6 +633,7 @@ export function registerTools(ctx, runtime) {
           example: args?.example !== false,
           docs: args?.docs !== false,
           disabled: args?.disabled === true,
+          requirements: args?.requirements !== false,
         });
         const targetRoot = options.path ? path.resolve(cwd, options.path) : path.resolve(cwd);
         return mutateTool(
@@ -545,7 +684,7 @@ export function registerTools(ctx, runtime) {
                 record: false,
               };
             }
-            const result = enableProject(cwd, initOptionsFromGlobal(runtime.global, {}));
+            const result = enableProject(cwd, initOptionsFromGlobal(runtime.global, { requirements: true }));
             invalidateStatusCache(project.root);
             if (result.initialized) {
               return {

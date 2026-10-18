@@ -1,7 +1,16 @@
 import { randomUUID } from 'node:crypto';
+import fs from 'node:fs';
 import path from 'node:path';
 import { runDoctor } from './doctor.js';
 import { gitAddAndCommit } from './git.js';
+import { changeDir } from './openspec.js';
+import {
+  currentRequirementChange,
+  readRequirements,
+  testPaths,
+  validateTestPlan,
+  validateTestReport,
+} from './requirements.js';
 import { buildWaves, parseTasks } from './task-graph.js';
 import {
   createWorktree,
@@ -109,6 +118,9 @@ export async function mapLimit(items, limit, fn) {
 }
 
 function roleInstruction(role) {
+  if (role === 'tester') {
+    return 'You are the SpecGate tester role. You own test cases, automation, coverage and reports. Never modify production code; report failures instead of fixing them.';
+  }
   return `You are the SpecGate ${role} role. Work only within the assigned task.`;
 }
 
@@ -235,7 +247,7 @@ export function createAgentRunner(ctx) {
 }
 
 function parseWaves(root, change, maxConcurrency) {
-  const changePath = path.join(path.resolve(root), 'openspec', 'changes', change);
+  const changePath = changeDir(root, change);
   const text = readIfExists(path.join(changePath, 'tasks.md'));
   if (text === null) throw new Error(`tasks.md 不存在：${change}`);
   const tasks = parseTasks(text);
@@ -408,6 +420,118 @@ export async function dispatchChange(options) {
   };
 }
 
+/**
+ * Run the dedicated tester agent in an independent test worktree.
+ * `plan` writes/finalizes cases and automation, then the main agent merges
+ * the test branch. `run` executes against the current integration commit and
+ * copies the report back; it never merges production changes.
+ */
+export async function runTestAgent(options) {
+  const { root, change, parent, runner, action = 'run', language = 'zh' } = options;
+  if (typeof runner !== 'function') {
+    throw new Error('当前 DSH composition 没有可用的 Agent 派发能力（agents 服务不可用）。');
+  }
+  const projectRoot = path.resolve(root);
+  const requirement = readRequirements(projectRoot);
+  if (!requirement) throw new Error('requirements/REQUIREMENTS.md 不存在');
+  const active = currentRequirementChange(projectRoot);
+  if (!active || active.change !== change) {
+    throw new Error(`当前没有匹配的需求变更：${change}`);
+  }
+  const changeInfo = active;
+  const useWorktree = isGitRepo(projectRoot) && !gitDirty(projectRoot);
+  const worktree = useWorktree
+    ? createWorktree(projectRoot, change, { id: 'test' })
+    : { path: projectRoot, branch: null, reused: true };
+  const paths = testPaths(worktree.path, change);
+  const en = String(language || 'zh').toLowerCase().startsWith('en');
+  const prompt = [
+    en ? 'SpecGate tester task' : 'SpecGate 测试 Agent 任务',
+    '',
+    `Change: ${change}`,
+    `Requirement version: ${changeInfo.version || requirement.version}`,
+    `Workspace: ${worktree.path}`,
+    `Action: ${action}`,
+    '',
+    en
+      ? 'Read requirements/REQUIREMENTS.md and requirements/changes/<change>/{change.md,design.md,tests/cases.md,tests/matrix.md}.'
+      : '阅读 requirements/REQUIREMENTS.md 与 requirements/changes/<change>/ 下的 change.md、design.md、tests/cases.md、tests/matrix.md。',
+    en
+      ? 'Do not modify production code. Write or run tests, update cases/matrix and write tests/test-report.md with verdict, line and branch coverage, failures and evidence.'
+      : '不要修改生产代码。编写或执行测试，更新 cases/matrix，并写 tests/test-report.md，包含 verdict、行/分支覆盖率、失败用例和证据。',
+    en
+      ? `Automation lives in tests/specgate/${change}/. Cases must cover red/green, branches and conditions.`
+      : `自动化测试放在 tests/specgate/${change}/。用例必须覆盖红绿、分支和条件。`,
+    en
+      ? 'If action=plan, finish the test plan and automation; do not run the full implementation suite yet.'
+      : 'action=plan 时完成测试计划与自动化测试，不要求跑完整实现套件。',
+    en
+      ? 'If action=run, execute the frozen suite and report pass only when all P0/P1 pass and coverage is adequate.'
+      : 'action=run 时执行已冻结套件；只有 P0/P1 全部通过且覆盖率达标才可写 pass。',
+    en
+      ? 'Reply with a short summary, test command, result and blockers.'
+      : '最终回复：摘要、测试命令、结果和阻塞项。',
+  ].join('\n');
+
+  let outcome;
+  try {
+    outcome = await runner({
+      prompt,
+      cwd: worktree.path,
+      role: 'tester',
+      parent,
+      task: { id: `test-${change}` },
+    });
+    if (!outcome?.ok) {
+      return { ok: false, action, text: outcome?.text || '测试 Agent 失败', worktree, branch: worktree.branch };
+    }
+    if (action === 'plan') {
+      const plan = validateTestPlan(worktree.path, change);
+      if (!plan.ok) return { ok: false, action, text: plan.reason, worktree, branch: worktree.branch };
+      if (useWorktree) {
+        const commit = gitAddAndCommit(worktree.path, `test(specgate): plan ${change}`);
+        if (!commit.committed) {
+          return { ok: false, action, text: '测试 Agent 没有产生可提交的测试变更', worktree, branch: worktree.branch };
+        }
+        const merged = mergeBranch(projectRoot, worktree.branch);
+        if (!merged.ok) {
+          return {
+            ok: false,
+            action,
+            text: `测试分支合并失败：${merged.message}`,
+            conflicts: merged.conflicts,
+            worktree,
+            branch: worktree.branch,
+          };
+        }
+      }
+      return { ok: true, action, text: '测试计划已生成并合入基线', worktree, branch: worktree.branch };
+    }
+
+    const report = readIfExists(paths.report);
+    if (report === null) {
+      return { ok: false, action, text: '测试 Agent 未生成 tests/test-report.md', worktree, branch: worktree.branch };
+    }
+    const target = testPaths(projectRoot, change).report;
+    ensureDir(path.dirname(target));
+    writeFile(target, report);
+    const validation = validateTestReport(projectRoot, change, options);
+    return {
+      ok: validation.ok,
+      action,
+      text: validation.ok ? '测试通过' : validation.reason,
+      report: target,
+      verdict: validation,
+      worktree,
+      branch: worktree.branch,
+    };
+  } finally {
+    if (useWorktree && worktree.path && worktree.path !== projectRoot) {
+      removeWorktree(projectRoot, worktree.path);
+    }
+  }
+}
+
 const DOCTOR_GROUPS = [
   {
     name: '结构 / 配置 / Git',
@@ -437,9 +561,9 @@ const DOCTOR_GROUPS = [
     name: 'Skill / Agent / 文档',
     nameEn: 'Skills / agents / docs',
     prompt:
-      '只读检查 .dsh/skills/specgate 的 30 个 Skill、.specgate/agents 的 9 个 Agent 与 AGENTS.md 是否完整。不要修改任何文件。',
+      '只读检查 .dsh/skills/specgate 的 30 个 Skill、.specgate/agents 的 10 个 Agent 与 AGENTS.md 是否完整。不要修改任何文件。',
     promptEn:
-      'Read-only check that .dsh/skills/specgate has 30 skills, .specgate/agents has 9 agents, and AGENTS.md is complete. Do not modify any file.',
+      'Read-only check that .dsh/skills/specgate has 30 skills, .specgate/agents has 10 agents, and AGENTS.md is complete. Do not modify any file.',
   },
 ];
 

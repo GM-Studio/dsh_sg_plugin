@@ -1,131 +1,107 @@
 # SpecGate 工作流（DSH）
 
-> 本文件由 `dsh-plugin-specgate` 生成。以下规则在当前项目内生效。
+> 由 `dsh-plugin-specgate` 2.x 生成。以下规则在当前项目生效。
 > 状态：`/sg-status`；下一步：`/sg-next`；门控：`/sg-gate <Gx>`；提交：`/sg-commit`。
 
 ## 核心原则
 
 - 用户指令优先；不确定时先提问，不臆想 API、配置或文件内容。
-- 任何修改请求先做入口判定：答疑 / 轻量修改 / 重量修改。
-- **1% 规则**：只要有 1% 可能某个 Skill 适用，就先加载它；认为不需要时必须说明原因并取得用户同意。
-- 不跳过门控；用户说“继续”只表示继续当前讨论，不表示跳过评审。
-- 不按技术组件/层次水平切分 Spec；每个 Spec 必须描述端到端用户价值。
-- 禁止过度设计、表面修复、无目标执行。
+- 任何修改请求先做入口判定：答疑 / 轻量 / 重量；重量修改需要 L1/L2/L3 分类。
+- 项目只有一份当前有效需求：`requirements/REQUIREMENTS.md`。
+- 需求变更必须版本化。禁止静默修改当前需求；用 `/sg-change <id>` 创建变更包，经 G3 批准后生成新版本。
+- `requirements/history/vX.Y.Z/` 中的历史版本只读。
+- design、specs、tasks、tests、report 可以存在，但必须引用需求 ID/版本，不能复制需求正文。
+- **1% 规则**：只要有 1% 可能某个 Skill 适用，就先加载。
+- 不跳过门控；用户说“继续”不等于批准。
+
+## 需求与版本链
+
+```text
+requirements/
+├── REQUIREMENTS.md                 # 当前已批准需求
+├── history/vX.Y.Z/REQUIREMENTS.md  # 不可变快照
+└── changes/<change>/
+    ├── change.md                   # 意图/范围/影响，不复制完整需求
+    ├── change.json                 # added/modified/deprecated/acceptance 增量
+    ├── design.md
+    ├── tasks.md
+    ├── tests/cases.md
+    ├── tests/matrix.md
+    ├── approval.md
+    └── test-report.md
+```
+
+- `/sg-change <id>` 创建变更包。
+- G3 批准增量后写入新版本和快照。
+- G3 之后需求再变，必须新建 change 和版本。
 
 ## 门控
 
-| 门控 | 名称 | 触发 | 通过条件 |
-|------|------|------|----------|
-| G1 | 需求理解确认 | 需求盘问完成 | 用户明确确认理解正确 |
-| G2 | 变更分类确认 | L1/L2/L3 建议完成 | 用户确认范式 |
-| G3 | proposal 评审 | proposal.md 完成 | 用户确认通过 |
-| G4 | design 评审 | design.md 完成 | 用户确认通过 |
-| G5 | specs 评审 | specs/ 完成 | 垂直切片、覆盖需求、用户确认 |
-| G6 | tasks 评审 | tasks.md 完成 | 拆分合理、粒度合适、用户确认 |
-| G6.5 | Brief 生成检查 | 大型变更 | 生成 Brief 或记录偏离 |
-| G7 | 批判性审核/实施 | tasks 通过后 | 用户批准进入实施 |
-| G8 | 代码审查 | 代码完成 | 用户确认启动审查 |
-| G9 | 审查通过/提交 | 审查完成 | 用户确认提交 |
-| G10 | 功能验收 | 开发完成 | 用户确认验收 |
-| G11 | 分支处理 | 测试通过 | 用户确认合并/PR |
+| 门控 | 含义 |
+|---|---|
+| G1 | 需求理解/基线确认 |
+| G2 | 变更分类（L1/L2/L3） |
+| G3 | 需求增量批准与版本落盘 |
+| G4 | design 评审 |
+| G5 | 测试计划/用例评审并冻结 |
+| G6 | tasks 评审 |
+| G7 | 进入实施 |
+| G8 | 测试执行通过 |
+| G9 | 代码审查 + 提交 |
+| G10 | 功能验收 |
+| G11 | 分支处理 |
 
-- 一次只等待一个门控确认；禁止合并询问多个 artifact。
-- 命令通道确认必须显式带 `--yes`：`/sg-gate G1 confirm --yes`；未带时只返回待确认提示。
-- 跳过门控必须：说明原因、告知用户、用户批准、`/sg-gate <Gx> waive --yes <原因>` 并写入 `.specgate/deviations.log`。
+- 一次一个门控；命令确认必须带 `--yes`。
+- G5 冻结测试用例；之后修改预期需重新审批。
+- G8 需要通过的测试报告和覆盖率。
 
-## 范式
+## 测试 Agent 与及格线
 
-| 范式 | 含义 | 门控强度 |
-|------|------|----------|
-| L1 | 需求驱动 | G1-G11 全量 |
-| L2 | 技术实现 | G1-G11 标准 |
-| L3 | 缺陷修复 | 可跳过 G1/G3/G4/G5；G2/G6/G7-G11 必须 |
+- `sg-agent-tester` 与实现者独立。
+- 测试用例和自动化必须在编码前写好。
+- 测试在独立 test worktree 执行；tester 禁止修改生产代码。
+- 及格线：P0/P1 100%，P2 至少 90%，行覆盖至少 80%，分支覆盖至少 70%；构建/类型检查/lint 必须通过；不允许新增回归。
+- 单元测试和集成测试必须做；可自动化的 E2E 必须做；最终人工验收在 G10。
 
-## 技能导航
-
-核心：`sg-skill-entry-guard`、`sg-skill-change-classification`、`sg-skill-requirements-definition`、`sg-skill-critical-review`、`sg-skill-test-driven-development`、`sg-skill-code-review`、`sg-skill-vertical-slicing`、`sg-skill-triage-brief`。
-
-支撑：`sg-skill-architecture-design`、`sg-skill-domain-modeling`、`sg-skill-systematic-debugging`、`sg-skill-writing-plans`、`sg-skill-executing-plans`、`sg-skill-experience-summarization`、`sg-skill-knowledge-retrieval`、`sg-skill-knowledge-research`、`sg-skill-anti-patterns`、`sg-skill-terminology-management`、`sg-skill-prototype`、`sg-skill-zoom-out`。
-
-完整 30 个 Skill 位于 `.dsh/skills/specgate/`，按需通过 `skill` 工具加载。
-
-## Agent 角色
-
-- `sg-agent-po`：需求澄清、验收标准、优先级、评审。
-- `sg-agent-architect`：Spec 拆分、依赖排序、技术路径、架构评审。
-- `sg-agent-ddd`：领域驱动设计、限界上下文、聚合设计。
-- `sg-agent-developer`：Spec Task 实现、代码编写、单元测试。
-- `sg-agent-reviewer`：代码审查、质量评估、反模式检测。
-- `sg-agent-knowledge-engineer`：经验沉淀、ADR 维护、知识冲突裁决。
-- `sg-agent-process-guardian`：范式执行、规则遵守、偏离记录、流程审计。
-- `sg-agent-config-maintainer`：`.specgate/` 目录治理、配置一致性、版本管理。
-- `sg-agent-scaffold-maintainer`：生成资产通用性审计、导入导出验证。
-
-角色文本位于 `.specgate/agents/`；当前版本以主 Agent + Skill 承载，不强制拆独立 subagent。
-
-## Git 工作流
-
-- 初始化默认执行 `git init` 并创建初始 commit。
-- **每个门控确认前，工作区必须 clean**；有未提交改动时先 `/sg-commit` 或手工 commit。
-- 确认门控会写 `.specgate/gates/<Gx>.confirmed`，该标记本身也是变更，需在下一次门控前提交。
-- Commit 使用 Conventional Commits：`<type>(<scope>): <description>`；type 仅限 feat/fix/docs/style/refactor/perf/test/build/ci/chore/revert；description 使用中文，不超过 72 字符，不以句号结尾。
-- 开始新功能前从 `master`/`main` 创建 `feat/`、`fix/`、`refactor/`、`docs/` 分支。
-- 功能完成后处理分支：合并 / PR / 保留 / 丢弃；不得留下孤立开发分支。
-
-## 知识沉淀
-
-- 触发：完成工具/框架调研、解决 P0/P1 Bug、做出重要技术决策、发现可复用最佳实践或反模式。
-- 目录：`.specgate/experiences/{tool-research,best-practices,pitfall-records,decisions}/`。
-- 入口：`.specgate/experiences/index.md`、`trigger-guide.md`。
-- 记录必须包含时间、来源、结论、适用范围、验证状态；禁止记录未经验证的假设。
-
-## 文件布局
+## Worktree 与合并
 
 ```text
-.specgate/
-├── config.yaml
-├── gates/<Gx>.confirmed | <Gx>.waived
-├── deviations.log
-├── agents/
-├── templates/
-├── rules/
-├── briefs/
-├── out-of-scope/
-├── experiences/
-└── reviews/
-.dsh/skills/specgate/<skill>/SKILL.md
-openspec/changes/<change>/{proposal.md,design.md,tasks.md,specs/**}
-openspec/specs/
-.specgate/state/            # 幂等/派发记录，自动忽略
-.specgate/worktrees/        # 并行任务 worktree
-.specgate/reports/          # 并行派发报告
+开发：specgate/<change>/<task>-dev
+测试：specgate/<change>/test
 ```
+
+- 每个开发任务独立 worktree。
+- 每个 change 一个测试 worktree。
+- 主 Agent 是唯一合并者。
+- 测试失败返回开发 Agent 修复，tester 重新执行。
+- tester 不合并、不提交生产代码、不修改测试预期来强行通过。
 
 ## 常用命令
 
-- `/sg-init`：初始化项目；`--path` 新建目录；`--minimal` 轻量；`--no-git` 关闭 Git。
-- `/sg-status`：项目、Change、Artifact、门控、Git 状态。
-- `/sg-next`：下一步建议。
-- `/sg-gate <Gx> [status|confirm --yes|waive --yes <原因>]`：门控操作。
-- `/sg-commit <message>`：提交当前变更。
-- `/sg-classify <描述>`：建议 L1/L2/L3。
-- `/sg-doctor`：健康体检（四维并行）。
-- `/sg-propose <name>`：创建 Change 骨架。
-- `/sg-apply <name> --plan`：查看并行任务计划。
-- `/sg-apply <name>`：执行实现；按 `[P]` / `depends` 分波次，最多 4 个 Agent 并行，每任务独立 worktree。
-- `/sg-archive <name>`：归档。
+- `/sg-init` — 初始化 v2 项目与需求基线。
+- `/sg-change <id>` — 创建需求变更包。
+- `/sg-test <change> plan|run` — 测试 Agent 编写/执行测试。
+- `/sg-status` — 项目、需求版本、change、门控、测试状态。
+- `/sg-next` — 下一步建议。
+- `/sg-gate <Gx> [status|confirm --yes|waive --yes <原因>]`。
+- `/sg-commit <message>`。
+- `/sg-apply <change>` — 按 `[P]`/`depends` 派发开发任务。
+- `/sg-archive <change>`。
+- `/sg-migrate` — `.ak47/` → `.specgate/`。
+- `/sg-requirements-migrate` — 旧 `openspec` → `requirements/REQUIREMENTS.md`。
 
-## 幂等与并行约定
+## Git 与提交
 
-- 修改类命令可安全重复执行：状态已达成会返回“幂等跳过”；不要为了重跑而手工删状态文件。
-- `deviation` 默认 24h 去重；确实要重复记录时加 `--force`。
-- `tasks.md` 中用 `[P]` 标记可并行任务，用 `depends: T1,T2` 声明依赖，用 `role: reviewer` 指定角色；没有标记默认串行。
-- worktree 并行要求工作区 clean；非 Git 或 dirty 会自动降级串行单写者。
-- 合并冲突会停止并保留 worktree/分支，先人工解决冲突，再重新执行。
-- 不要同时手工修改正在被 Agent 派发的文件。
+- 每个门控确认前工作区必须 clean；先提交或 `/sg-commit`。
+- Conventional Commits：`<type>(<scope>): <description>`。
+- G11 后不得留下孤立 dev/test 分支。
 
-## DSH 输出约定
+## Agent
 
-- 工具结果由工具卡片显示；命令结果由持久命令卡片显示。
-- 新会话的第一条命令会额外写入一条 `notice` 上下文消息，确保结果可见并进入历史；不要在工具调用与工具结果之间插入任何消息。
-- 插件不提供 MCP server；MCP 能力由 DSH 独立管理。
+`.specgate/agents/` 共 10 个角色：po、architect、ddd、developer、reviewer、knowledge-engineer、process-guardian、config-maintainer、scaffold-maintainer、tester。
+
+## DSH 输出
+
+- 工具结果显示为工具卡片；命令结果显示为持久命令卡片。
+- 空会话第一条命令可能额外写 `notice`；禁止在 `tool_use` 与 `tool_result` 之间插入消息。
+- SpecGate 不提供 MCP server/tools；MCP 由 DSH 独立管理。

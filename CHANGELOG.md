@@ -1,5 +1,15 @@
 # Changelog
 
+## 2.0.0
+
+- Added the v2 requirements model: one canonical `requirements/REQUIREMENTS.md`, immutable `history/vX.Y.Z/` snapshots and change-scoped `requirements/changes/<id>/` delta packages.
+- Added `/sg-change` and `sg_change`; G3 now applies the requirement delta and writes the next approved version.
+- Added the dedicated `sg-agent-tester`, `tests/cases.md`, `tests/matrix.md`, `tests/test-report.md` and `/sg-test <change> plan|run` with an independent test worktree.
+- G5 now validates/freezes test cases; G8 validates a passing report and coverage thresholds (P0/P1 100%, P2 90%, line 80%, branch 70%).
+- Added `/sg-requirements-migrate` and `sg_requirements_migrate` for explicit legacy migration; old projects keep the legacy flow until migrated.
+- Dev tasks and tests use separate worktrees; the main agent remains the only merger.
+- Added 10-agent assets, v2 templates/docs and regression tests. 99 tests passing.
+
 ## Unreleased
 
 - `/sg-*` commands now hand their complete output back to the agent through `agent.followup` (`source.kind=specgate`, message `role=user`), so results are rendered as normal assistant replies in the conversation and the agent can ask for the next gate instead of leaving only a collapsed command card or `notice` chip.

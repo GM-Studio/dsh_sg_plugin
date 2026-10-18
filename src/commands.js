@@ -11,14 +11,19 @@ import {
   renderDispatch,
   resolveMaxConcurrency,
   runDoctorParallel,
+  runTestAgent,
   writeDispatchReport,
 } from './dispatch.js';
 import { performGateAction } from './gate-actions.js';
-import { missingGates, readGate, requiredGatesFor } from './gates.js';
-import { archiveChange, createChange } from './openspec.js';
+import { gateRequiredForParadigm, missingGates, readGate, requiredGatesFor } from './gates.js';import { archiveChange, createChange } from './openspec.js';
 import { gitAddAndCommit } from './git.js';
 import { loadProject, setParadigm } from './project.js';
 import { migrateProject } from './migrate.js';
+import {
+  createRequirementChange,
+  isRequirementsProject,
+  migrateRequirements,
+} from './requirements.js';
 import {
   DAY_MS,
   archivedPath,
@@ -197,7 +202,7 @@ function withHandoff(name, handler, language = 'zh') {
 
 function parseInitOptions(rawInput) {
   const list = parts(rawInput);
-  const options = {};
+  const options = { requirements: true };
   for (let index = 0; index < list.length; index += 1) {
     const token = list[index];
     if (token === '--path') {
@@ -212,6 +217,7 @@ function parseInitOptions(rawInput) {
     else if (token === '--no-example') options.example = false;
     else if (token === '--no-docs') options.docs = false;
     else if (token === '--disabled') options.disabled = true;
+    else if (token === '--legacy') options.requirements = false;
   }
   return { options };
 }
@@ -240,9 +246,9 @@ export function registerCommands(ctx, runtime) {
   register({
     name: 'sg-init',
     description:
-      d('初始化 SpecGate 项目：/sg-init [--path <dir>] [--minimal] [--force] [--no-git] [--no-example] [--no-docs] [--disabled]', 'Initialize a SpecGate project: /sg-init [--path <dir>] [--minimal] [--force] [--no-git] [--no-example] [--no-docs] [--disabled]'),
+      d('初始化 SpecGate 项目：/sg-init [--path <dir>] [--minimal] [--force] [--no-git] [--no-example] [--no-docs] [--disabled] [--legacy]', 'Initialize a SpecGate project: /sg-init [--path <dir>] [--minimal] [--force] [--no-git] [--no-example] [--no-docs] [--disabled] [--legacy]'),
     input: {
-      hint: '[--path <dir>] [--minimal] [--force] [--no-git] [--no-example] [--no-docs] [--disabled]',
+      hint: '[--path <dir>] [--minimal] [--force] [--no-git] [--no-example] [--no-docs] [--disabled] [--legacy]',
     },
     async handler(inv) {
       const cwd = runtime.getCwd(inv.agent);
@@ -530,7 +536,7 @@ export function registerCommands(ctx, runtime) {
           if (project.enabled) {
             return { result: success('SpecGate 已在当前项目启用，幂等跳过。'), record: false };
           }
-          const result = enableProject(cwd, initOptionsFromGlobal(runtime.global, {}));
+          const result = enableProject(cwd, initOptionsFromGlobal(runtime.global, { requirements: true }));
           if (result.initialized) {
             invalidateStatusCache(project.root);
             return { result: success(renderInitReport(result.report, runtime.language(inv.agent))), record: false };
@@ -598,6 +604,113 @@ export function registerCommands(ctx, runtime) {
   });
 
   register({
+    name: 'sg-requirements-migrate',
+    description: '迁移旧 openspec 项目到 requirements/REQUIREMENTS.md：/sg-requirements-migrate [--dry-run]',
+    input: { hint: '[--dry-run]' },
+    async handler(inv) {
+      const list = parts(inv.rawInput);
+      const dryRun = list.includes('--dry-run');
+      const cwd = runtime.getCwd(inv.agent);
+      if (dryRun) {
+        const result = migrateRequirements(cwd, { dryRun: true, language: runtime.language(inv.agent) });
+        return result.ok ? success(result.text) : failure(result.text);
+      }
+      return runMutation(
+        cwd,
+        { command: 'sg-requirements-migrate', args: {}, target: 'requirements', ttlMs: 0 },
+        async () => {
+          const result = migrateRequirements(cwd, { language: runtime.language(inv.agent) });
+          invalidateStatusCache(cwd);
+          return { result: result.ok ? success(result.text) : failure(result.text), summary: 'SpecGate requirements migration', record: false };
+        },
+      );
+    },
+  });
+
+  register({
+    name: 'sg-change',
+    description: '创建 v2 需求变更包：/sg-change <change-id> [描述]',
+    input: { hint: '<change-id> [描述]' },
+    async handler(inv) {
+      const list = parts(inv.rawInput);
+      if (!list[0]) return failure('用法：/sg-change <kebab-case-change-id> [描述]');
+      const project = loadProject(runtime.getCwd(inv.agent));
+      if (!project.isV2) {
+        return failure('当前项目不是 v2 需求项目：先执行 /sg-init（或 /sg-requirements-migrate）。');
+      }
+      const name = list[0];
+      const description = list.slice(1).join(' ');
+      return runMutation(
+        project.root,
+        { command: 'sg-change', args: { name, description }, target: name, ttlMs: 0 },
+        async () => {
+          try {
+            const result = createRequirementChange(project.root, name, description);
+            invalidateStatusCache(project.root);
+            return {
+              result: success(
+                result.created
+                  ? `已创建需求变更包：${path.join(project.root, 'requirements', 'changes', name)}\n下一步：填写 change.json 的 added/modified/deprecated，然后 /sg-gate G3。`
+                  : `需求变更包已存在，幂等跳过：${name}`,
+              ),
+              record: false,
+            };
+          } catch (error) {
+            return { result: failure(error.message), record: false };
+          }
+        },
+      );
+    },
+  });
+
+  register({
+    name: 'sg-test',
+    description: '运行测试 Agent：/sg-test <change-id> [plan|run]',
+    input: { hint: '<change-id> [plan|run]' },
+    async handler(inv) {
+      const list = parts(inv.rawInput);
+      if (!list[0]) return failure('用法：/sg-test <change-id> [plan|run]');
+      const change = list[0];
+      const action = list[1] === 'plan' ? 'plan' : 'run';
+      const project = loadProject(runtime.getCwd(inv.agent));
+      if (!project.isV2) return failure('当前项目不是 v2 需求项目。');
+      const requiredGate = action === 'plan' ? 'G4' : 'G5';
+      if (
+        gateRequiredForParadigm(requiredGate, project.paradigm || 'L1') &&
+        !readGate(project.root, requiredGate).satisfied
+      ) {
+        return failure(`无法${action === 'plan' ? '编写' : '执行'}测试：${requiredGate} 尚未确认。`);
+      }
+      const runner = createAgentRunner(ctx);
+      if (!runner) return failure('当前 DSH composition 没有可用的 Agent 派发能力。');
+      return runMutation(
+        project.root,
+        { command: 'sg-test', args: { change, action }, target: change, ttlMs: 0 },
+        async () => {
+          try {
+            const result = await runTestAgent({
+              root: project.root,
+              change,
+              parent: inv.agent,
+              runner,
+              action,
+              language: runtime.language(inv.agent),
+            });
+            invalidateStatusCache(project.root);
+            return {
+              result: result.ok ? success(result.text) : failure(result.text),
+              summary: `SpecGate ${action} test`,
+              record: false,
+            };
+          } catch (error) {
+            return { result: failure(error.message), record: false };
+          }
+        },
+      );
+    },
+  });
+
+  register({
     name: 'sg-propose',
     description: d('创建 OpenSpec change 骨架：/sg-propose <name> [描述]', 'Create an OpenSpec change skeleton: /sg-propose <name> [description]'),
     input: { hint: '<kebab-case-name> [描述]' },
@@ -607,6 +720,9 @@ export function registerCommands(ctx, runtime) {
       const name = list[0];
       const description = list.slice(1).join(' ');
       const project = loadProject(runtime.getCwd(inv.agent));
+      if (project.isV2) {
+        return failure('v2 项目使用 /sg-change <name> 创建需求变更包；/sg-propose 仅用于 legacy 项目。');
+      }
       const proposalPath = path.join(project.root, 'openspec', 'changes', name, 'proposal.md');
       const existing = readIfExists(proposalPath);
 

@@ -207,6 +207,7 @@ export const ARTIFACT_PATTERNS = [
 
 export const DEFAULT_CONFIG = {
   version: 1,
+  workflowVersion: 2,
   enabled: true,
   enforcement: 'hybrid',
   paradigm: null,
@@ -216,4 +217,6 @@ export const DEFAULT_CONFIG = {
   maxConcurrency: 4,
   materializeSkills: true,
   materializeAgents: true,
+  minLineCoverage: 80,
+  minBranchCoverage: 70,
 };

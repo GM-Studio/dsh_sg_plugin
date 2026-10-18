@@ -137,6 +137,7 @@ export function parseFrontmatter(text) {
 export function renderConfig(config) {
   const keys = [
     'version',
+    'workflowVersion',
     'enabled',
     'enforcement',
     'paradigm',
@@ -146,6 +147,8 @@ export function renderConfig(config) {
     'maxConcurrency',
     'materializeSkills',
     'materializeAgents',
+    'minLineCoverage',
+    'minBranchCoverage',
   ];
   const lines = [
     '# SpecGate for DSH project configuration',

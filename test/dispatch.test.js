@@ -68,7 +68,7 @@ test('parallel dispatch uses worktrees, merges waves, and skips completed tasks 
     assert.equal(fs.readFileSync(path.join(root, `${id}.txt`), 'utf8'), id);
     assert.equal(fs.existsSync(path.join(root, '.specgate', 'worktrees', 'demo', id)), false);
   }
-  assert.match(git(root, ['branch', '--list', 'specgate/demo/T1']), /specgate\/demo\/T1/);
+  assert.match(git(root, ['branch', '--list', 'specgate/demo/T1-dev']), /specgate\/demo\/T1-dev/);
   assert.ok(fs.existsSync(path.join(root, '.specgate', 'state', 'dispatch.json')));
   const tasksText = fs.readFileSync(path.join(root, 'openspec', 'changes', 'demo', 'tasks.md'), 'utf8');
   assert.equal((tasksText.match(/\[x\]/g) || []).length, 3);
