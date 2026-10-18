@@ -201,5 +201,25 @@ export function renderApplyResult(result, language = 'zh') {
       ...(result.unresolved.length > 0 ? ['', result.text] : []),
     ].join('\n');
   }
-  return result.text || (result.ok ? '完成' : '失败');
+  const lines = [result.text || (result.ok ? '完成' : '失败')];
+  if (result.report) {
+    lines.push(`阶段: ${result.stage}`);
+    lines.push(`任务结果: ${result.report.results?.length || 0}`);
+    for (const item of result.report.results || []) {
+      lines.push(
+        `- ${item.task.id}: ${item.ok ? 'OK' : 'FAIL'}${item.commit ? ` commit=${item.commit}` : ''}${item.text ? ` — ${item.text}` : ''}`,
+      );
+    }
+    for (const conflict of result.report.conflicts || []) {
+      lines.push(`- 冲突 ${conflict.task}: ${conflict.message || conflict.branch}`);
+    }
+    if (result.nextGate) lines.push(`下一门控: ${result.nextGate}`);
+  }
+  if (result.result) {
+    lines.push(`阶段: ${result.stage}`);
+    lines.push(`结果: ${result.result.text}`);
+    if (result.result.report) lines.push(`报告: ${result.result.report}`);
+    if (result.nextGate) lines.push(`下一门控: ${result.nextGate}`);
+  }
+  return lines.join('\n');
 }

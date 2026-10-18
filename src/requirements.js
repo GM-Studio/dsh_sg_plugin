@@ -348,7 +348,7 @@ export function createRequirementChange(root, name, description = '') {
     path.join(dir, 'design.md'),
     '# Design\n\n## Architecture\n\n待补充。\n\n## Technical Approach\n\n待补充。\n',
   );
-  writeFile(path.join(dir, 'tasks.md'), '# Tasks\n\n- [ ] T1 实现变更\n- [ ] T2 编写/执行测试 role: tester\n');
+  writeFile(path.join(dir, 'tasks.md'), '# Tasks\n\n- [ ] T1 实现变更\n');
   writeFile(
     path.join(dir, 'tests', 'cases.md'),
     '# Test Plan\n\n- Requirement version: \n- Change: ' +

@@ -8,7 +8,7 @@
 - Reused `sg-agent-reviewer` as an independent read-only reviewer with `review-report.md`; blocking findings prevent G9.
 - Added `sg-apply` / `sg_apply` stage orchestration: one stage per invocation, stop at the gate; dev → format → test → review.
 - Added per-stage quality retry state with two failed attempts before blocking.
-- Added formatter/reviewer worktrees and bilingual assets. 11 Agents, 17 tools. 111 tests passing.
+- Added formatter/reviewer worktrees and bilingual assets. 11 Agents, 17 tools. 113 tests passing.
 
 ## 2.0.0
 

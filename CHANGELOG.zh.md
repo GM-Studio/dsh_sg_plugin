@@ -8,7 +8,7 @@
 - 复用 `sg-agent-reviewer` 作为独立只读审查者，输出 `review-report.md`；blocking 阻止 G9。
 - 新增 `sg-apply` / `sg_apply` 阶段编排：每次只推进一个阶段并停在门控；dev → format → test → review。
 - 新增按阶段的失败重试状态，同一阶段失败 2 次后阻塞。
-- 新增 formatter/reviewer worktree 与双语资产。11 个 Agent、17 个工具、111 项测试通过。
+- 新增 formatter/reviewer worktree 与双语资产。11 个 Agent、17 个工具、113 项测试通过。
 
 ## 2.0.0
 

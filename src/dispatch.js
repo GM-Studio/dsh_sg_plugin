@@ -84,7 +84,7 @@ function recordTask(root, change, task, data) {
 
 function markTasksDone(root, change, taskIds) {
   if (taskIds.size === 0) return null;
-  const file = path.join(path.resolve(root), 'openspec', 'changes', change, 'tasks.md');
+  const file = path.join(changeDir(root, change), 'tasks.md');
   const text = readIfExists(file);
   if (text === null) return null;
   let changed = false;
@@ -226,6 +226,8 @@ export function createAgentRunner(ctx) {
       });
 
       handle.agent.followup({
+        id: randomUUID(),
+        role: 'user',
         content: [{ type: 'text', text: prompt }],
         source: { kind: 'specgate-dispatch' },
       });
@@ -333,9 +335,19 @@ export async function dispatchChange(options) {
         task,
       });
       const after = headHash(root);
-      const commit = outcome?.commit || (after && after !== before ? after : null);
-      results.push({ task, ok: Boolean(outcome?.ok), text: outcome?.text || '', commit, serial: true });
-      if (!outcome?.ok) stopped = true;
+      let commit = outcome?.commit || (after && after !== before ? after : null);
+      let ok = Boolean(outcome?.ok);
+      let text = outcome?.text || '';
+      if (ok && !commit && isGitRepo(root)) {
+        const auto = gitAddAndCommit(root, `specgate(${change}): ${task.id} ${task.title}`);
+        if (auto.committed) commit = auto.hash;
+      }
+      if (ok && !commit && isGitRepo(root)) {
+        ok = false;
+        text = `${text || 'Agent 未返回文本'}；Agent 没有产生可合并的提交。`;
+      }
+      results.push({ task, ok, text, commit, serial: true });
+      if (!ok) stopped = true;
       else recordTask(root, change, task, {
         commit,
         branch: null,
@@ -378,12 +390,23 @@ export async function dispatchChange(options) {
         task,
       });
       const after = headHash(worktree.path);
+      let commit = outcome?.commit || (after && after !== before ? after : null);
+      let ok = Boolean(outcome?.ok);
+      let text = outcome?.text || '';
+      if (ok && !commit) {
+        const auto = gitAddAndCommit(worktree.path, `specgate(${change}): ${task.id} ${task.title}`);
+        if (auto.committed) commit = auto.hash;
+      }
+      if (ok && !commit) {
+        ok = false;
+        text = `${text || 'Agent 未返回文本'}；Agent 没有产生可合并的提交。`;
+      }
       return {
         task,
         worktree,
-        ok: Boolean(outcome?.ok),
-        text: outcome?.text || '',
-        commit: outcome?.commit || (after && after !== before ? after : null),
+        ok,
+        text,
+        commit,
       };
     });
     results.push(...waveResults);

@@ -7,6 +7,7 @@ import test from 'node:test';
 
 import { createAgentRunner, dispatchChange, runDoctorParallel } from '../src/dispatch.js';
 import { initProject } from '../src/init.js';
+import { createRequirementChange } from '../src/requirements.js';
 
 function git(root, args) {
   return execFileSync('git', args, {
@@ -118,6 +119,52 @@ test('a merge conflict stops the dispatch and preserves the conflicting worktree
   assert.match(git(root, ['branch', '--list', report.conflicts[0].branch]), new RegExp(report.conflicts[0].branch.replace(/\//g, '\\/')));
 });
 
+test('a v2 dispatch marks tasks done in the requirement change', async () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'specgate-dispatch-v2-'));
+  git(root, ['init']);
+  git(root, ['config', 'user.name', 'SpecGate Test']);
+  git(root, ['config', 'user.email', 'specgate-test@example.com']);
+  initProject(root, { requirements: true });
+  createRequirementChange(root, 'demo');
+  const tasksFile = path.join(root, 'requirements', 'changes', 'demo', 'tasks.md');
+  fs.writeFileSync(tasksFile, '# Tasks\n\n- [ ] T1 实现 hello\n');
+  fs.mkdirSync(path.join(root, 'src'), { recursive: true });
+  git(root, ['add', '-A']);
+  git(root, ['commit', '-m', 'test: v2 setup']);
+
+  const report = await dispatchChange({
+    root,
+    change: 'demo',
+    parent: null,
+    runner: async ({ task, cwd }) => {
+      fs.mkdirSync(path.join(cwd, 'src'), { recursive: true });
+      fs.writeFileSync(path.join(cwd, 'src', 'hello.js'), 'export const hello = 1;\n');
+      git(cwd, ['add', '-A']);
+      git(cwd, ['commit', '-m', `specgate(demo): ${task.id}`]);
+      return { ok: true, text: 'done' };
+    },
+  });
+
+  assert.equal(report.ok, true);
+  assert.match(fs.readFileSync(tasksFile, 'utf8'), /\[x\] T1/);
+});
+
+test('a dispatch without a commit is not reported as success', async () => {
+  const root = makeGitProject();
+  writeTasks(root, ['- [ ] T1 写文件']);
+
+  const report = await dispatchChange({
+    root,
+    change: 'demo',
+    parent: null,
+    runner: async () => ({ ok: true, text: 'noop' }),
+  });
+
+  assert.equal(report.ok, false);
+  assert.match(report.results[0].text, /没有产生可合并的提交/);
+  assert.match(fs.readFileSync(path.join(root, 'openspec', 'changes', 'demo', 'tasks.md'), 'utf8'), /\[ \] T1/);
+});
+
 test('non-git projects downgrade to one serial writer', async () => {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'specgate-serial-'));
   fs.mkdirSync(path.join(root, 'openspec', 'changes', 'demo'), { recursive: true });
@@ -170,12 +217,15 @@ test('parallel doctor merges structured results from independent agents', async 
 test('agent runner inherits the parent model route and reads the child answer', async () => {
   const root = makeGitProject();
   let created;
+  let sent;
   const agents = {
     async create(options) {
       created = options;
       return {
         agent: {
-          followup() {},
+          followup(message) {
+            sent = message;
+          },
           async whenIdle() {},
           session: {
             deriveMessages() {
@@ -217,4 +267,7 @@ test('agent runner inherits the parent model route and reads the child answer', 
   assert.equal(created.agentOptions.provider, 'deepseek');
   assert.equal(created.agentOptions.model, 'deepseek-flash');
   assert.equal(created.agentOptions.subagentDepth, 1);
+  assert.ok(sent.id);
+  assert.equal(sent.role, 'user');
+  assert.equal(sent.content[0].text, 'check');
 });
