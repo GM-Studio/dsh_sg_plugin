@@ -86,6 +86,7 @@ test('plugin registers tools, commands, skills, prompt and guard', () => {
     assert.deepEqual(
       [...toolNames].sort(),
       [
+        'sg_apply',
         'sg_archive',
         'sg_change',
         'sg_classify',
@@ -103,7 +104,7 @@ test('plugin registers tools, commands, skills, prompt and guard', () => {
         'sg_status',
         'sg_test',
       ],
-      'the plugin must register exactly the documented 16 tools',
+      'the plugin must register exactly the documented 17 tools',
     );
     assert.ok(inject.includes('tools'));
     assert.ok(inject.includes('agents'), 'parallel dispatch needs the agents service');

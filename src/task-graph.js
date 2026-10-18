@@ -38,8 +38,17 @@ export function parseTasks(text) {
     body = body.replace(/\bdepends(?:\s+on)?\s*:\s*[^\n]+/gi, ' ').trim();
 
     const roleMatch = body.match(/\brole\s*:\s*([a-z][a-z0-9-]*)/i);
-    const role = roleMatch ? roleMatch[1].toLowerCase() : 'developer';
+    const role = roleMatch ? roleMatch[1].toLowerCase() : null;
     body = body.replace(/\brole\s*:\s*[a-z][a-z0-9-]*/gi, ' ').trim();
+
+    const filesMatch = body.match(/\bfiles\s*:\s*([^\n]+)/i);
+    const files = filesMatch
+      ? filesMatch[1]
+          .split(/[,，\s]+/)
+          .map((item) => item.trim())
+          .filter(Boolean)
+      : [];
+    body = body.replace(/\bfiles\s*:\s*[^\n]+/gi, ' ').trim();
 
     const idMatch = body.match(/^([A-Za-z0-9][A-Za-z0-9._-]*)\s+/);
     const id = idMatch ? idMatch[1] : `task-${index}`;
@@ -54,9 +63,10 @@ export function parseTasks(text) {
       parallel,
       depends,
       role,
+      files,
       line: rawLine,
       contentHash: sha256(
-        JSON.stringify({ id, title, depends: [...depends].sort(), role }),
+        JSON.stringify({ id, title, depends: [...depends].sort(), role, files: [...files].sort() }),
       ),
     });
   }

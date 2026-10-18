@@ -8,6 +8,7 @@ import { initProject } from '../src/init.js';
 import { confirmGate } from '../src/gates.js';
 import { performGateAction } from '../src/gate-actions.js';
 import { computeStatus } from '../src/status.js';
+import { formatReportPath, reviewReportPath } from '../src/format.js';
 import {
   applyRequirementChange,
   createRequirementChange,
@@ -142,6 +143,8 @@ test('G5 rejects an unfinished test plan and G8 requires a passing report', asyn
   });
   assert.equal(g5b.ok, true);
   for (const gate of ['G6', 'G7']) confirmGate(root, gate);
+  fs.writeFileSync(formatReportPath(root, 'add-login'), 'verdict: pass\nlint: pass\n');
+  confirmGate(root, 'G7.5');
 
   const g8 = await performGateAction(ctx, null, null, root, {
     gate: 'G8', action: 'confirm', interactive: false, confirmed: true, language: 'zh',
@@ -152,9 +155,20 @@ test('G5 rejects an unfinished test plan and G8 requires a passing report', asyn
     gate: 'G8', action: 'confirm', interactive: false, confirmed: true, language: 'zh',
   });
   assert.equal(g8b.ok, true);
+
+  const g9 = await performGateAction(ctx, null, null, root, {
+    gate: 'G9', action: 'confirm', interactive: false, confirmed: true, language: 'zh',
+  });
+  assert.equal(g9.ok, false);
+  fs.writeFileSync(reviewReportPath(root, 'add-login'), 'verdict: pass\nblocking: []\nnon_blocking: []\n');
+  const g9b = await performGateAction(ctx, null, null, root, {
+    gate: 'G9', action: 'confirm', interactive: false, confirmed: true, language: 'zh',
+  });
+  assert.equal(g9b.ok, true);
 });
 
-test('legacy openspec projects migrate explicitly and are never auto-converted', () => {  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'specgate-legacy-'));
+test('legacy openspec projects migrate explicitly and are never auto-converted', () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'specgate-legacy-'));
   fs.mkdirSync(path.join(root, 'openspec', 'changes', 'old-change'), { recursive: true });
   fs.writeFileSync(
     path.join(root, 'openspec', 'changes', 'old-change', 'proposal.md'),

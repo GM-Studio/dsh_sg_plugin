@@ -1,5 +1,15 @@
 # 变更记录
 
+## 2.1.0
+
+- 新增开发角色推断（architect/ddd/developer）；显式 `role:` 优先，低置信度任务在创建任何 Agent 前停止。
+- 在实施与测试之间新增 `G7.5` 格式化/Lint 门控。
+- 新增独立 `sg-agent-formatter`：只处理变更文件，配置/package.json 命令探测，输出 `format-report.md`。
+- 复用 `sg-agent-reviewer` 作为独立只读审查者，输出 `review-report.md`；blocking 阻止 G9。
+- 新增 `sg-apply` / `sg_apply` 阶段编排：每次只推进一个阶段并停在门控；dev → format → test → review。
+- 新增按阶段的失败重试状态，同一阶段失败 2 次后阻塞。
+- 新增 formatter/reviewer worktree 与双语资产。11 个 Agent、17 个工具、111 项测试通过。
+
 ## 2.0.0
 
 - 新增 v2 需求模型：唯一 `requirements/REQUIREMENTS.md`、不可变 `history/vX.Y.Z/` 快照、change 级 `requirements/changes/<id>/` 增量包。

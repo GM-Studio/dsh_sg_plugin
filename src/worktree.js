@@ -65,9 +65,10 @@ function safeSegment(value) {
 export function worktreePaths(root, change, taskId) {
   const base = path.join(path.resolve(root), '.specgate', 'worktrees', safeSegment(change));
   const task = safeSegment(taskId);
+  const branchTask = ['test', 'format', 'review'].includes(task) ? task : `${task}-dev`;
   return {
     path: path.join(base, task),
-    branch: `specgate/${safeSegment(change)}/${task === 'test' ? 'test' : `${task}-dev`}`,
+    branch: `specgate/${safeSegment(change)}/${branchTask}`,
   };
 }
 
@@ -146,5 +147,19 @@ export function headSubject(root) {
     return git(root, ['log', '-1', '--pretty=%s']);
   } catch {
     return null;
+  }
+}
+
+export function diffNames(root, baseCommit, options = {}) {
+  if (!baseCommit) return [];
+  try {
+    const args = ['diff', '--name-only', `${baseCommit}..HEAD`];
+    if (options.cached) args.splice(1, 0, '--cached');
+    return git(root, args)
+      .split(/\r?\n/)
+      .map((line) => line.trim())
+      .filter(Boolean);
+  } catch {
+    return [];
   }
 }

@@ -11,6 +11,7 @@ import {
   runTestAgent,
 } from './dispatch.js';
 import { performGateAction } from './gate-actions.js';
+import { applyChange, renderApplyResult } from './orchestrator.js';
 import {
   gateRequiredForParadigm,
   missingGates,
@@ -411,6 +412,62 @@ export function registerTools(ctx, runtime) {
             } catch (error) {
               return { result: { kind: 'error', text: error.message }, record: false };
             }
+          },
+        );
+      },
+    },
+    {
+      name: 'sg_apply',
+      description:
+        'Advance a v2 change by one orchestration stage: dev tasks (with inferred roles) → formatter/lint → tester → reviewer. Stops at the corresponding gate; run again after confirming the gate.',
+      parameters: {
+        type: 'object',
+        properties: {
+          change: { type: 'string' },
+          planOnly: { type: 'boolean' },
+        },
+        required: ['change'],
+        additionalProperties: false,
+      },
+      output: textOutput(),
+      async execute(args, exec) {
+        const project = runtime.project(exec.agent);
+        if (!project.isV2) return fail('sg_apply 需要 v2 需求项目。');
+        const change = String(args?.change || '');
+        if (args?.planOnly === true) {
+          const result = await applyChange({
+            root: project.root,
+            change,
+            parent: exec.agent,
+            runner: null,
+            planOnly: true,
+            language: runtime.language(exec.agent),
+            maxConcurrency: project.maxConcurrency,
+          });
+          return ok(renderApplyResult(result, runtime.language(exec.agent)), result);
+        }
+        const runner = createAgentRunner(ctx);
+        if (!runner) return fail('当前 DSH composition 没有可用的 Agent 派发能力。');
+        return mutateTool(
+          project.root,
+          { command: 'sg_apply', args: { change }, target: change, ttlMs: 0 },
+          async () => {
+            const result = await applyChange({
+              root: project.root,
+              change,
+              parent: exec.agent,
+              runner,
+              language: runtime.language(exec.agent),
+              maxConcurrency: project.maxConcurrency,
+            });
+            invalidateStatusCache(project.root);
+            return {
+              result: result.ok
+                ? { kind: 'success', text: renderApplyResult(result, runtime.language(exec.agent)), data: result }
+                : { kind: 'error', text: renderApplyResult(result, runtime.language(exec.agent)), data: result },
+              summary: `Stage advance ${change}`,
+              record: false,
+            };
           },
         );
       },

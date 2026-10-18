@@ -28,7 +28,9 @@ requirements/
     ├── tests/cases.md
     ├── tests/matrix.md
     ├── approval.md
-    └── test-report.md
+    ├── format-report.md
+    ├── test-report.md
+    └── review-report.md
 ```
 
 - `/sg-change <id>` creates the change package.
@@ -46,14 +48,16 @@ requirements/
 | G5 | Test plan/cases review and freeze |
 | G6 | Tasks review |
 | G7 | Implementation entry |
+| G7.5 | Format/lint pass |
 | G8 | Test execution pass |
-| G9 | Code review + commit |
+| G9 | Independent code review + commit |
 | G10 | Acceptance |
 | G11 | Branch handling |
 
 - One gate at a time; command confirmation requires `--yes`.
 - G5 freezes test cases; later expectation changes need re-approval.
-- G8 requires a passing test report with coverage.
+- G7.5 checks only changed files; formatting runs before tests.
+- G8 requires a passing test report with coverage; G9 requires a review report with no blocking items.
 
 ## Test Agent and pass bar
 
@@ -63,15 +67,25 @@ requirements/
 - Pass bar: P0/P1 100%, P2 at least 90%, line coverage at least 80%, branch coverage at least 70%; build/typecheck/lint clean; no new regressions.
 - Unit and integration tests are required; automatable E2E is required; final manual acceptance is G10.
 
+## Formatter and reviewer Agents
+
+- `sg-agent-formatter`: independent format worktree, changed files only, auto-fix and lint.
+- `sg-agent-reviewer`: independent read-only review worktree for diff, requirement/test evidence, security and regression risk.
+- No formatter/lint command means G7.5 stops; never skip.
+- Reviewer reports blocking/non-blocking; blocking prevents G9.
+- The main agent is the only merger; formatter is merged by the main agent, reviewer never merges.
+
 ## Worktrees and merge
 
 ```text
-Dev:  specgate/<change>/<task>-dev
-Test: specgate/<change>/test
+Dev:      specgate/<change>/<task>-dev
+Format:   specgate/<change>/format
+Test:     specgate/<change>/test
+Review:   specgate/<change>/review  (read-only)
 ```
 
 - Each dev task has its own worktree.
-- Each change has one test worktree.
+- Each change has one format and one test worktree.
 - The main agent is the only merger.
 - Test failure returns to the dev agent; the tester re-runs after the fix.
 - The tester does not merge, commit production code, or change test expectations to force a pass.
@@ -85,7 +99,8 @@ Test: specgate/<change>/test
 - `/sg-next` — next step.
 - `/sg-gate <Gx> [status|confirm --yes|waive --yes <reason>]`.
 - `/sg-commit <message>`.
-- `/sg-apply <change>` — dev dispatch by `[P]`/`depends`.
+- `/sg-apply <change>` — advance one stage: dev → format → test → review, then stop at the gate.
+- `/sg-test <change> plan|run` — tester planning/execution.
 - `/sg-archive <change>`.
 - `/sg-migrate` — `.ak47/` → `.specgate/`.
 - `/sg-requirements-migrate` — legacy `openspec` → `requirements/REQUIREMENTS.md`.
@@ -98,7 +113,7 @@ Test: specgate/<change>/test
 
 ## Agents
 
-10 roles ship in `.specgate/agents/`: po, architect, ddd, developer, reviewer, knowledge-engineer, process-guardian, config-maintainer, scaffold-maintainer, tester.
+11 roles ship in `.specgate/agents/`: po, architect, ddd, developer, reviewer, formatter, knowledge-engineer, process-guardian, config-maintainer, scaffold-maintainer, tester.
 
 ## DSH output
 

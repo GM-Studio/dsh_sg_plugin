@@ -1,5 +1,15 @@
 # Changelog
 
+## 2.1.0
+
+- Added development-role inference (`architect`/`ddd`/`developer`); explicit `role:` wins and low-confidence tasks stop before any Agent is created.
+- Added `G7.5` format/lint between implementation and tests.
+- Added the independent `sg-agent-formatter` with changed-files-only formatting, config/package.json command detection and `format-report.md`.
+- Reused `sg-agent-reviewer` as an independent read-only reviewer with `review-report.md`; blocking findings prevent G9.
+- Added `sg-apply` / `sg_apply` stage orchestration: one stage per invocation, stop at the gate; dev → format → test → review.
+- Added per-stage quality retry state with two failed attempts before blocking.
+- Added formatter/reviewer worktrees and bilingual assets. 11 Agents, 17 tools. 111 tests passing.
+
 ## 2.0.0
 
 - Added the v2 requirements model: one canonical `requirements/REQUIREMENTS.md`, immutable `history/vX.Y.Z/` snapshots and change-scoped `requirements/changes/<id>/` delta packages.

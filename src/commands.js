@@ -7,13 +7,11 @@ import { appendDeviation } from './deviations.js';
 import { runDoctor, renderDoctor } from './doctor.js';
 import {
   createAgentRunner,
-  dispatchChange,
-  renderDispatch,
   resolveMaxConcurrency,
   runDoctorParallel,
   runTestAgent,
-  writeDispatchReport,
 } from './dispatch.js';
+import { applyChange, renderApplyResult } from './orchestrator.js';
 import { performGateAction } from './gate-actions.js';
 import { gateRequiredForParadigm, missingGates, readGate, requiredGatesFor } from './gates.js';import { archiveChange, createChange } from './openspec.js';
 import { gitAddAndCommit } from './git.js';
@@ -337,7 +335,7 @@ export function registerCommands(ctx, runtime) {
     name: 'sg-gate',
     description:
       d('查看/确认/跳过门控：/sg-gate G3 status | confirm --yes | waive --yes [原因]', 'Inspect, confirm or waive a gate: /sg-gate G3 status | confirm --yes | waive --yes [reason]'),
-    input: { hint: '<G1-G11> [status|confirm --yes|waive --yes] [原因]' },
+    input: { hint: '<Gx> [status|confirm --yes|waive --yes] [原因]' },
     async handler(inv) {
       const list = parts(inv.rawInput);
       const gate = list[0];
@@ -765,8 +763,8 @@ export function registerCommands(ctx, runtime) {
 
   register({
     name: 'sg-apply',
-    description: d('执行/查看 change：/sg-apply [name] [--plan]', 'Execute or inspect a change: /sg-apply [name] [--plan]'),
-    input: { hint: '[name] [--plan]' },
+    description: d('推进一个阶段：dev → 格式化 → 测试 → 审查：/sg-apply <name> [--plan]', 'Advance one stage: dev → format → test → review: /sg-apply <name> [--plan]'),
+    input: { hint: '<name> [--plan]' },
     async handler(inv) {
       const list = parts(inv.rawInput);
       const planOnly = list.includes('--plan');
@@ -781,15 +779,16 @@ export function registerCommands(ctx, runtime) {
 
       if (planOnly) {
         try {
-          const report = await dispatchChange({
+          const result = await applyChange({
             root: project.root,
             change: name,
             parent: inv.agent,
             runner: null,
-            maxConcurrency: resolveMaxConcurrency(project.root, runtime.global.maxConcurrency),
             planOnly: true,
+            language: runtime.language(inv.agent),
+            maxConcurrency: resolveMaxConcurrency(project.root, runtime.global.maxConcurrency),
           });
-          return success(renderDispatch(report, runtime.language(inv.agent)));
+          return success(renderApplyResult(result, runtime.language(inv.agent)));
         } catch (error) {
           return failure(error instanceof Error ? error.message : String(error));
         }
@@ -811,25 +810,18 @@ export function registerCommands(ctx, runtime) {
         { command: 'sg-apply', args: { name }, target: name, ttlMs: 0 },
         async () => {
           try {
-            const report = await dispatchChange({
+            const result = await applyChange({
               root: project.root,
               change: name,
               parent: inv.agent,
               runner,
+              language: runtime.language(inv.agent),
               maxConcurrency: resolveMaxConcurrency(project.root, runtime.global.maxConcurrency),
             });
-            let reportPath = null;
-            try {
-              reportPath = writeDispatchReport(project.root, report, runtime.language(inv.agent));
-            } catch {
-              reportPath = null;
-            }
             invalidateStatusCache(project.root);
-            const language = runtime.language(inv.agent);
-            const text = renderDispatch(report, language) + (reportPath ? `\n${language === 'en' ? 'Report' : '报告'}: ${reportPath}` : '');
             return {
-              result: report.ok ? success(text) : failure(text),
-              summary: `派发 ${name}`,
+              result: result.ok ? success(renderApplyResult(result, runtime.language(inv.agent))) : failure(renderApplyResult(result, runtime.language(inv.agent))),
+              summary: `阶段推进 ${name}`,
               record: false,
             };
           } catch (error) {

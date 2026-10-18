@@ -25,7 +25,7 @@ test('every bilingual manifest entry has an English base and a Chinese sibling',
   }
 });
 
-test('30 skills and 10 agents exist in both languages with identical identifiers', () => {
+test('30 skills and 11 agents exist in both languages with identical identifiers', () => {
   const zhSkills = listSkillAssets('zh');
   const enSkills = listSkillAssets('en');
   assert.equal(zhSkills.length, 30);
@@ -45,8 +45,8 @@ test('30 skills and 10 agents exist in both languages with identical identifiers
 
   const zhAgents = listAgentAssets('zh');
   const enAgents = listAgentAssets('en');
-  assert.equal(zhAgents.length, 10);
-  assert.equal(enAgents.length, 10);
+  assert.equal(zhAgents.length, 11);
+  assert.equal(enAgents.length, 11);
   assert.deepEqual(
     zhAgents.map((agent) => agent.name),
     enAgents.map((agent) => agent.name),

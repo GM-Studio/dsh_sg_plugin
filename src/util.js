@@ -149,6 +149,8 @@ export function renderConfig(config) {
     'materializeAgents',
     'minLineCoverage',
     'minBranchCoverage',
+    'formatCommand',
+    'lintCommand',
   ];
   const lines = [
     '# SpecGate for DSH project configuration',

@@ -16,7 +16,7 @@ function makeRoot() {
   return root;
 }
 
-test('initProject materializes 30 skills, 10 agents and the SpecGate skeleton', () => {
+test('initProject materializes 30 skills, 11 agents and the SpecGate skeleton', () => {
   const root = makeRoot();
   const report = initProject(root);
 
@@ -48,7 +48,7 @@ test('initProject materializes 30 skills, 10 agents and the SpecGate skeleton', 
   const agentFiles = fs
     .readdirSync(path.join(root, '.specgate', 'agents'))
     .filter((name) => name.endsWith('.md'));
-  assert.equal(agentFiles.length, 10);
+  assert.equal(agentFiles.length, 11);
 
   const agentsMd = fs.readFileSync(path.join(root, 'AGENTS.md'), 'utf8');
   assert.match(agentsMd, /<!-- specgate:begin -->/);

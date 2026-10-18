@@ -5,11 +5,11 @@ A Host plugin that brings AgentKit47's gated development workflow to DeepSeek Ha
 - Source: `templates/qoder/` from `AgentKit47-Qoder` (MIT)
 - Target: DSH `0.2.1-rc.2` and above
 - Form: workspace bundle, installed into the current DSH profile; **activated per project on opt-in**
-- Version: `2.0.0`
+- Version: `2.1.0`
 
 ## Capabilities
 
-- **Built-in plugin initialization**: `/sg-init` generates `.specgate/`, `openspec/`, `AGENTS.md`, 30 Skills, 10 Agents, templates, docs, and examples in the current directory; by default it runs `git init` and creates an initial commit.
+- **Built-in plugin initialization**: `/sg-init` generates `.specgate/`, `openspec/`, `AGENTS.md`, 30 Skills, 11 Agents, templates, docs, and examples in the current directory; by default it runs `git init` and creates an initial commit.
 - **Create a new project directory**: `/sg-init --path <dir>` creates the directory and initializes it.
 - **Minimal mode**: `--minimal` generates only the skeleton, 30 Skills, `openspec/`, and a condensed AGENTS.md.
 - **Full AGENTS.md**: an existing file is backed up first, then the SpecGate sections are merged/replaced without overwriting user content.
@@ -20,10 +20,10 @@ A Host plugin that brings AgentKit47's gated development workflow to DeepSeek Ha
 - Deviation log: `.specgate/deviations.log`; skipping a gate must be recorded there.
 - **DSH output adaptation**: command results render as persistent command cards; an empty session additionally gets a `notice` context message so the result is not hidden behind the welcome page; tool results render as tool cards. **Synthetic assistant messages are no longer injected into the session**, so the `tool_use` / `tool_result` pairing is never broken.
 - **Idempotent mutating commands**: state checks come first; append-type operations are deduplicated for 24h; a concurrency lock prevents duplicate execution; read-only commands write nothing and take no lock.
-- **Multi-Agent parallelism**: `/sg-apply` splits `tasks.md` into waves by `[P]` / `depends`, with 10 role Agents, default concurrency 4, an independent dev worktree per task, and one independent test worktree per change; `/sg-doctor` runs a four-dimension parallel health check.
+- **Multi-Agent parallelism**: `/sg-apply` splits `tasks.md` into waves by `[P]` / `depends`, with 11 role Agents, default concurrency 4, an independent dev worktree per task, and independent format/test/review worktrees; `/sg-doctor` runs a four-dimension parallel health check.
 - **Requirements version chain**: one current `requirements/REQUIREMENTS.md`; approved changes create immutable `history/vX.Y.Z/` snapshots and change-scoped deltas.
 - Commands: `/sg-init`, `/sg-status`, `/sg-next`, `/sg-gate`, `/sg-commit`, `/sg-deviation`, `/sg-classify`, `/sg-doctor`, `/sg-enable`, `/sg-disable`, `/sg-migrate`, `/sg-change`, `/sg-test`, `/sg-requirements-migrate`, `/sg-propose`, `/sg-apply`, `/sg-archive`, `/sg-explore`
-- Tools: `sg_status`, `sg_next`, `sg_gate`, `sg_commit`, `sg_deviation`, `sg_classify`, `sg_doctor`, `sg_init`, `sg_enable`, `sg_disable`, `sg_migrate`, `sg_change`, `sg_test`, `sg_requirements_migrate`, `sg_propose`, `sg_archive`
+- Tools: `sg_status`, `sg_next`, `sg_gate`, `sg_commit`, `sg_deviation`, `sg_classify`, `sg_doctor`, `sg_init`, `sg_enable`, `sg_disable`, `sg_migrate`, `sg_change`, `sg_apply`, `sg_test`, `sg_requirements_migrate`, `sg_propose`, `sg_archive`
 
 ## Requirements and test workflow (2.x)
 
@@ -38,14 +38,19 @@ requirements/
     ├── design.md / tasks.md
     ├── tests/cases.md / matrix.md
     ├── approval.md
-    └── test-report.md
+    ├── format-report.md
+    ├── test-report.md
+    └── review-report.md
 ```
 
 - `/sg-change <id>` creates a change package; G3 approves the delta and writes the next version.
+- `/sg-apply <change>` advances exactly one stage: dev roles → formatter/lint → tester → reviewer, then stops at the gate.
+- Dev roles are inferred from task text/files when `role:` is absent; explicit `role:` wins; low confidence stops before dispatch.
 - `/sg-test <change> plan` writes/freezes tests; `/sg-test <change> run` executes them in an independent test worktree.
-- The dedicated `sg-agent-tester` never changes production code.
-- G5 freezes tests; G8 requires a passing report and P0/P1 100%, P2 ≥90%, line ≥80%, branch ≥70%.
-- Dev tasks use independent worktrees; each change has one test worktree; the main agent is the only merger.
+- G7.5 format/lint runs on changed files only; no command means stop, never skip.
+- G8 requires a passing test report and P0/P1 100%, P2 ≥90%, line ≥80%, branch ≥70%.
+- G9 requires a read-only independent review with no blocking findings.
+- Dev/format/test/review use independent worktrees; the main agent is the only merger.
 - Legacy projects keep the old flow until `/sg-requirements-migrate` is run explicitly.
 
 ## Installation
@@ -68,7 +73,7 @@ Add the bundle and the GitHub dependency to the active profile's `package.json`:
     }
   },
   "dependencies": {
-    "dsh-plugin-specgate": "github:GM-Studio/dsh_sg_plugin#v2.0.0"
+    "dsh-plugin-specgate": "github:GM-Studio/dsh_sg_plugin#v2.1.0"
   }
 }
 ```
@@ -89,14 +94,14 @@ Call the DSH `plugin_manager` tool with:
 ```json
 {
   "action": "install_bundle",
-  "target": "github:GM-Studio/dsh_sg_plugin#v2.0.0"
+  "target": "github:GM-Studio/dsh_sg_plugin#v2.1.0"
 }
 ```
 
 The equivalent shorthand is:
 
 ```text
-plugin_manager install_bundle target=github:GM-Studio/dsh_sg_plugin#v2.0.0
+plugin_manager install_bundle target=github:GM-Studio/dsh_sg_plugin#v2.1.0
 ```
 
 The manager accepts `github:`, `git+https://...`, a Git repository URL, a `.tgz` URL, or an **absolute** local directory. It runs `pnpm add`, selects the bundle, and reloads the profile. DSH may ask for `danger-full-access` approval because the change persists across sessions and installs Host code.
@@ -195,6 +200,8 @@ materializeSkills: true
 materializeAgents: true
 minLineCoverage: 80
 minBranchCoverage: 70
+formatCommand: ""
+lintCommand: ""
 ```
 
 Precedence: **project config > global plugin config > built-in defaults**. Global defaults seed new projects; they never rewrite an existing project config.
@@ -225,9 +232,9 @@ SpecGate ships bilingual assets: English `*.md` files and Chinese `*.zh.md` sibl
 /sg-gate G1                    # inspect G1
 /sg-gate G1 confirm --yes      # explicitly confirm G1 (command channel)
 /sg-classify new feature ...   # recommend L1/L2/L3 (requires G1 confirmed)
-/sg-propose add-login          # create an OpenSpec change skeleton (requires G1/G2)
-/sg-apply add-login --plan     # only inspect the parallel task plan
-/sg-apply add-login            # execute: dispatch 10 role Agents in parallel by [P]/depends
+/sg-propose add-login          # legacy: create an OpenSpec change skeleton (requires G1/G2)
+/sg-apply add-login --plan     # infer roles and show the next stage
+/sg-apply add-login            # advance one stage: dev/format/test/review, then stop at the gate
 /sg-migrate --dry-run          # preview migration from an existing .ak47/ project
 ```
 
@@ -253,7 +260,9 @@ The `sg_init` tool also accepts the same parameters: `path`, `minimal`, `force`,
 | `tests/cases.md`, `tests/matrix.md` | G4 design approved; reviewed and frozen at G5 |
 | `tasks.md` | G5 test plan frozen |
 | Source code | G1-G7 (under L3, G1/G3/G4/G5 may be skipped) |
-| `test-report.md` | G1-G7 and execution by `sg-test run`; G8 requires a pass |
+| `format-report.md` | G7.5: formatter and lint pass on changed files |
+| `test-report.md` | G8: P0/P1/P2 and coverage pass |
+| `review-report.md` | G9: independent review pass, no blocking |
 | Commit | G9 after review |
 
 Gate confirmation has two DSH-native paths:
@@ -292,8 +301,8 @@ Design constraints:
 
 ## Multi-Agent parallelism
 
-- `/sg-apply <change>`: reads `tasks.md` and splits it into waves by `[P]` / `depends`; at most 4 Agents per wave; each task gets its own Git worktree and branch.
-- The 10 roles come from `.specgate/agents/`; a task can specify `role: reviewer|architect|ddd|...`, defaulting to `developer`.
+- `/sg-apply <change>`: advances one stage — dev tasks → formatter/lint → tester → reviewer — and stops at the corresponding gate.
+- The 11 roles come from `.specgate/agents/`; a task can specify `role: reviewer|architect|ddd|...`; otherwise the role is inferred or defaults to `developer`.
 - Each wave is merged sequentially after it completes; on conflict, merging stops and all worktrees/branches are kept, and the conflicting files are returned.
 - Successful tasks are automatically checked off in `tasks.md` and committed as `chore(specgate): mark <change> tasks done`; failed tasks remain unchecked.
 - Non-Git projects or a dirty working tree: automatically degrade to a serial single writer, with the reason stated in the result.
@@ -338,12 +347,12 @@ CONTEXT.md
 - Installed successfully in the current DSH profile (`application: applied`).
 - All 30 Skills appear in the session skill catalog; all 13 `sg_*` tools are callable.
 - Real blocking: writing `design.md` while G1/G2/G3 are unconfirmed is rejected; once the markers are written it is allowed.
-- Real initialization: an empty project yields 30 Skills / 10 Agents / OpenSpec / full AGENTS.md / docs / examples / initial Git commit.
+- Real initialization: an empty project yields 30 Skills / 11 Agents / OpenSpec / full AGENTS.md / docs / examples / initial Git commit.
 - Gate clean: after G1 confirmation the marker makes the working tree dirty, so G2 confirmation is rejected; after committing it passes.
 - Output regression: a command in a new session writes a `notice`; an active session does not duplicate history; a running agent writes no messages; failed commands also produce output; automated tests cover "never inject synthetic assistant messages".
 - Idempotency regression: state commands do not replay the cache, append commands deduplicate for 24h, force allows repeats, concurrency locks are mutually exclusive, read-only commands write nothing to disk.
 - Parallel regression: worktree parallelism/waves/dependencies, duplicate dispatch skipping, merge conflicts preserving branches, non-Git degradation, doctor parallel summary.
-- Automated tests: `node --test` → **99 passed / 0 failed**.
+- Automated tests: `node --test` → **111 passed / 0 failed**.
 
 See [verification.md](docs/design/verification.md) for the full record.
 
@@ -355,7 +364,7 @@ See [verification.md](docs/design/verification.md) for the full record.
 - `commands` / `skills` / `systemPrompt` are optional services: the plugin waits for them via `ctx.inject`; when a composed environment lacks one of them, only the corresponding capability is skipped — tools and gates still work.
 - Parallel worktrees require a clean working tree; dirty or non-Git projects automatically degrade to serial and do not isolate uncommitted changes.
 - Merge conflicts are not resolved automatically; the worktree and branch are kept, and you must merge manually and re-run `/sg-apply`.
-- 10 Agents running in parallel consume more model calls and tokens; default concurrency is 4 and can be adjusted via `maxConcurrency` in `.specgate/config.yaml`.
+- 11 Agents running in parallel consume more model calls and tokens; default concurrency is 4 and can be adjusted via `maxConcurrency` in `.specgate/config.yaml`.
 - Idempotent `--force` is available only for append-type commands (deviation); state-type commands are naturally re-run by deleting the target file/marker.
 - Does not replace the AgentKit47 CLI's `init/upgrade/doctor/validate`; SpecGate is a DSH Host plugin, not a standalone CLI.
 - G6.5 Brief is an optional gate and is not in the "pending confirmation" list by default.

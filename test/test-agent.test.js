@@ -66,6 +66,8 @@ test('tester plan runs in an independent worktree and merges test artifacts', as
 test('tester run copies the report back and validates coverage', async () => {
   const root = makeProject();
   writePlan(root);
+  execFileSync('git', ['add', '-A'], { cwd: root });
+  execFileSync('git', ['commit', '-m', 'test: plan'], { cwd: root });
   const paths = testPaths(root, 'add-login');
 
   const result = await runTestAgent({

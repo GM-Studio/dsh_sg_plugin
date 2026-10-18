@@ -18,11 +18,12 @@ import {
   validateTestPlan,
   validateTestReport,
 } from './requirements.js';
+import { validateFormatReport, validateReviewReport } from './format.js';
 import { invalidateStatusCache } from './status.js';
 
 function requirementPreflight(root, gate, language = 'zh') {
   if (!isRequirementsProject(root)) return { ok: true };
-  if (gate !== 'G5' && gate !== 'G8') return { ok: true };
+  if (!['G5', 'G7.5', 'G8', 'G9'].includes(gate)) return { ok: true };
   const change = currentRequirementChange(root);
   if (!change) {
     return { ok: false, text: '当前没有需求变更包；先执行 /sg-change <name>。' };
@@ -31,6 +32,10 @@ function requirementPreflight(root, gate, language = 'zh') {
     const plan = validateTestPlan(root, change.change);
     if (!plan.ok) return { ok: false, text: plan.reason };
   }
+  if (gate === 'G7.5') {
+    const format = validateFormatReport(root, change.change);
+    if (!format.ok) return { ok: false, text: format.reason };
+  }
   if (gate === 'G8') {
     const project = loadProject(root);
     const report = validateTestReport(root, change.change, {
@@ -38,6 +43,10 @@ function requirementPreflight(root, gate, language = 'zh') {
       minBranchCoverage: project.config.minBranchCoverage,
     });
     if (!report.ok) return { ok: false, text: report.reason };
+  }
+  if (gate === 'G9') {
+    const review = validateReviewReport(root, change.change);
+    if (!review.ok) return { ok: false, text: review.reason };
   }
   return { ok: true, change };
 }

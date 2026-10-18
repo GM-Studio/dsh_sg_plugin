@@ -1,5 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import { headHash } from './worktree.js';
 import {
   ensureDir,
   exists,
@@ -309,6 +310,7 @@ export function createRequirementChange(root, name, description = '') {
     versionBump: 'minor',
     summary: description || '',
     createdAt: nowIso(),
+    baseCommit: headHash(root) || null,
     added: [],
     modified: [],
     deprecated: [],

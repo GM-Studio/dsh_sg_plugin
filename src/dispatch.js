@@ -5,6 +5,14 @@ import { runDoctor } from './doctor.js';
 import { gitAddAndCommit } from './git.js';
 import { changeDir } from './openspec.js';
 import {
+  formatReportPath,
+  resolveFormatCommands,
+  reviewReportPath,
+  validateFormatReport,
+  validateReviewReport,
+} from './format.js';
+import { loadProject } from './project.js';
+import {
   currentRequirementChange,
   readRequirements,
   testPaths,
@@ -15,6 +23,7 @@ import { buildWaves, parseTasks } from './task-graph.js';
 import {
   createWorktree,
   currentBranch,
+  diffNames,
   gitDirty,
   headHash,
   isGitRepo,
@@ -268,6 +277,7 @@ export async function dispatchChange(options) {
     runner,
     maxConcurrency = 4,
     planOnly = false,
+    roleOverrides = {},
   } = options;
   const { tasks, waves } = parseWaves(root, change, maxConcurrency);
   const open = tasks.filter((task) => !task.done);
@@ -312,7 +322,7 @@ export async function dispatchChange(options) {
       ? '项目不是 Git 仓库'
       : '工作区有未提交改动，worktree 不包含这些改动';
     for (const task of open) {
-      const role = task.role || 'developer';
+      const role = roleOverrides[task.id] || task.role || 'developer';
       const before = headHash(root);
       const outcome = await runner({
         prompt: taskPrompt({ change, task, cwd: root, role }),
@@ -357,7 +367,7 @@ export async function dispatchChange(options) {
     });
 
     const waveResults = await mapLimit(prepared, maxConcurrency, async ({ task, worktree }) => {
-      const role = task.role || 'developer';
+      const role = roleOverrides[task.id] || task.role || 'developer';
       const before = headHash(worktree.path);
       const outcome = await runner({
         prompt: taskPrompt({ change, task, cwd: worktree.path, role }),
@@ -440,6 +450,9 @@ export async function runTestAgent(options) {
   }
   const changeInfo = active;
   const useWorktree = isGitRepo(projectRoot) && !gitDirty(projectRoot);
+  if (isGitRepo(projectRoot) && gitDirty(projectRoot)) {
+    return { ok: false, text: '工作区 dirty，无法创建独立测试 worktree；请先提交当前改动。' };
+  }
   const worktree = useWorktree
     ? createWorktree(projectRoot, change, { id: 'test' })
     : { path: projectRoot, branch: null, reused: true };
@@ -522,6 +535,177 @@ export async function runTestAgent(options) {
       text: validation.ok ? '测试通过' : validation.reason,
       report: target,
       verdict: validation,
+      worktree,
+      branch: worktree.branch,
+    };
+  } finally {
+    if (useWorktree && worktree.path && worktree.path !== projectRoot) {
+      removeWorktree(projectRoot, worktree.path);
+    }
+  }
+}
+
+/**
+ * Formatter stage: an independent worktree runs formatter/lint on changed files,
+ * commits fixes and reports pass/fail. The main agent merges only on pass.
+ */
+export async function runFormatAgent(options) {
+  const { root, change, parent, runner, language = 'zh' } = options;
+  if (typeof runner !== 'function') {
+    throw new Error('当前 DSH composition 没有可用的 Agent 派发能力（agents 服务不可用）。');
+  }
+  const projectRoot = path.resolve(root);
+  const project = loadProject(projectRoot);
+  const active = currentRequirementChange(projectRoot);
+  if (!active || active.change !== change) throw new Error(`当前没有匹配的需求变更：${change}`);
+  const commands = resolveFormatCommands(projectRoot, project.config);
+  if (!commands.ok) return { ok: false, text: commands.reason };
+  const changed = diffNames(projectRoot, active.baseCommit);
+  if (changed.length === 0) {
+    const file = formatReportPath(projectRoot, change);
+    ensureDir(path.dirname(file));
+    writeFile(file, 'verdict: pass\nlint: pass\nskipped: true\nchanged_files: []\n');
+    return { ok: true, skipped: true, text: '没有变更文件，格式化跳过' };
+  }
+  const useWorktree = isGitRepo(projectRoot) && !gitDirty(projectRoot);
+  if (isGitRepo(projectRoot) && gitDirty(projectRoot)) {
+    return { ok: false, text: '工作区 dirty，无法创建独立格式化 worktree；请先提交当前改动。' };
+  }
+  const worktree = useWorktree
+    ? createWorktree(projectRoot, change, { id: 'format' })
+    : { path: projectRoot, branch: null, reused: true };
+  const en = String(language || 'zh').toLowerCase().startsWith('en');
+  const fileList = changed.join(' ');
+  const formatCommand = commands.formatCommand
+    ? commands.formatCommand.replaceAll('{files}', fileList)
+    : null;
+  const lintCommand = commands.lintCommand ? commands.lintCommand.replaceAll('{files}', fileList) : null;
+  const prompt = [
+    en ? 'SpecGate formatter task' : 'SpecGate 格式化/Lint 任务',
+    '',
+    `Change: ${change}`,
+    `Workspace: ${worktree.path}`,
+    `Changed files: ${changed.join(', ')}`,
+    `Format command: ${formatCommand || '(skip)'}`,
+    `Lint command: ${lintCommand || '(skip)'}`,
+    '',
+    en
+      ? 'Modify only the changed files. Run the formatter, then lint. Do not modify production logic, tests, requirements, or other files.'
+      : '只修改列出的变更文件。先运行 formatter，再运行 lint；不要修改生产逻辑、测试、需求或其他文件。',
+    en
+      ? 'Write requirements/changes/<change>/format-report.md with verdict: pass|fail, lint: pass|fail, changed_files and fixed_files.'
+      : '写 requirements/changes/<change>/format-report.md，包含 verdict: pass|fail、lint: pass|fail、changed_files 和 fixed_files。',
+    en
+      ? 'If lint has unfixable errors, verdict must be fail and the reasons must be listed.'
+      : '如果 lint 有无法修复的错误，verdict 必须为 fail，并列出原因。',
+  ].join('\n');
+
+  let outcome;
+  let reportText = null;
+  try {
+    outcome = await runner({
+      prompt,
+      cwd: worktree.path,
+      role: 'formatter',
+      parent,
+      task: { id: `format-${change}` },
+    });
+    reportText = readIfExists(formatReportPath(worktree.path, change));
+    if (outcome?.ok === false) {
+      return { ok: false, text: outcome.text || 'formatter Agent 失败', worktree, branch: worktree.branch };
+    }
+    if (!reportText) {
+      return { ok: false, text: 'formatter Agent 未生成 format-report.md', worktree, branch: worktree.branch };
+    }
+    const validation = validateFormatReport(worktree.path, change);
+    if (useWorktree) {
+      const commit = gitAddAndCommit(worktree.path, `chore(specgate): format ${change}`);
+      if (commit.committed) {
+        const merged = mergeBranch(projectRoot, worktree.branch);
+        if (!merged.ok) {
+          ensureDir(path.dirname(formatReportPath(projectRoot, change)));
+          writeFile(formatReportPath(projectRoot, change), reportText);
+          return { ok: false, text: `格式化分支合并失败：${merged.message}`, worktree, branch: worktree.branch };
+        }
+      }
+    } else {
+      ensureDir(path.dirname(formatReportPath(projectRoot, change)));
+      writeFile(formatReportPath(projectRoot, change), reportText);
+    }
+    return {
+      ok: validation.ok,
+      text: validation.ok ? '格式化/Lint 通过' : validation.reason,
+      report: formatReportPath(projectRoot, change),
+      worktree,
+      branch: worktree.branch,
+    };
+  } finally {
+    if (useWorktree && worktree.path && worktree.path !== projectRoot) {
+      removeWorktree(projectRoot, worktree.path);
+    }
+  }
+}
+
+/**
+ * Reviewer stage: a read-only independent worktree reviews the integrated
+ * change. The report is copied back; no production branch is merged.
+ */
+export async function runReviewAgent(options) {
+  const { root, change, parent, runner, language = 'zh' } = options;
+  if (typeof runner !== 'function') {
+    throw new Error('当前 DSH composition 没有可用的 Agent 派发能力（agents 服务不可用）。');
+  }
+  const projectRoot = path.resolve(root);
+  const active = currentRequirementChange(projectRoot);
+  if (!active || active.change !== change) throw new Error(`当前没有匹配的需求变更：${change}`);
+  const useWorktree = isGitRepo(projectRoot) && !gitDirty(projectRoot);
+  if (isGitRepo(projectRoot) && gitDirty(projectRoot)) {
+    return { ok: false, text: '工作区 dirty，无法创建独立审查 worktree；请先提交当前改动。' };
+  }
+  const worktree = useWorktree
+    ? createWorktree(projectRoot, change, { id: 'review' })
+    : { path: projectRoot, branch: null, reused: true };
+  const changed = diffNames(projectRoot, active.baseCommit);
+  const en = String(language || 'zh').toLowerCase().startsWith('en');
+  const prompt = [
+    en ? 'SpecGate reviewer task' : 'SpecGate 代码审查任务',
+    '',
+    `Change: ${change}`,
+    `Workspace: ${worktree.path}`,
+    `Changed files: ${changed.join(', ') || '(none)'}`,
+    '',
+    en
+      ? 'Read requirements/REQUIREMENTS.md, requirements/changes/<change>/{change.md,change.json,design.md}, tests/cases.md, tests/matrix.md, test-report.md, format-report.md and the diff.'
+      : '阅读 requirements/REQUIREMENTS.md、requirements/changes/<change>/{change.md,change.json,design.md}、tests/cases.md、tests/matrix.md、test-report.md、format-report.md 和 diff。',
+    en
+      ? 'Review requirement coverage, boundary/error paths, test quality, security and regression risk. Do not modify production code, tests, requirements or any file except the review report.'
+      : '审查需求覆盖、边界/错误路径、测试质量、安全和回归风险。除审查报告外，不要修改任何文件。',
+    en
+      ? 'Write requirements/changes/<change>/review-report.md with verdict: pass|fail, blocking items and non_blocking items.'
+      : '写 requirements/changes/<change>/review-report.md，包含 verdict: pass|fail、blocking 和 non_blocking。',
+  ].join('\n');
+
+  let outcome;
+  try {
+    outcome = await runner({
+      prompt,
+      cwd: worktree.path,
+      role: 'reviewer',
+      parent,
+      task: { id: `review-${change}` },
+    });
+    if (outcome?.ok === false) {
+      return { ok: false, text: outcome.text || 'reviewer Agent 失败', worktree, branch: worktree.branch };
+    }
+    const text = readIfExists(reviewReportPath(worktree.path, change));
+    if (!text) return { ok: false, text: 'reviewer Agent 未生成 review-report.md', worktree, branch: worktree.branch };
+    ensureDir(path.dirname(reviewReportPath(projectRoot, change)));
+    writeFile(reviewReportPath(projectRoot, change), text);
+    const validation = validateReviewReport(projectRoot, change);
+    return {
+      ok: validation.ok,
+      text: validation.ok ? '代码审查通过' : validation.reason,
+      report: reviewReportPath(projectRoot, change),
       worktree,
       branch: worktree.branch,
     };

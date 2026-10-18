@@ -28,7 +28,9 @@ requirements/
     ├── tests/cases.md
     ├── tests/matrix.md
     ├── approval.md
-    └── test-report.md
+    ├── format-report.md
+    ├── test-report.md
+    └── review-report.md
 ```
 
 - `/sg-change <id>` 创建变更包。
@@ -46,14 +48,16 @@ requirements/
 | G5 | 测试计划/用例评审并冻结 |
 | G6 | tasks 评审 |
 | G7 | 进入实施 |
+| G7.5 | 格式化 / Lint 通过 |
 | G8 | 测试执行通过 |
-| G9 | 代码审查 + 提交 |
+| G9 | 独立代码审查 + 提交 |
 | G10 | 功能验收 |
 | G11 | 分支处理 |
 
 - 一次一个门控；命令确认必须带 `--yes`。
 - G5 冻结测试用例；之后修改预期需重新审批。
-- G8 需要通过的测试报告和覆盖率。
+- G7.5 只检查本次变更文件；格式化在测试之前。
+- G8 需要通过的测试报告和覆盖率；G9 需要独立审查报告且无 blocking。
 
 ## 测试 Agent 与及格线
 
@@ -63,15 +67,25 @@ requirements/
 - 及格线：P0/P1 100%，P2 至少 90%，行覆盖至少 80%，分支覆盖至少 70%；构建/类型检查/lint 必须通过；不允许新增回归。
 - 单元测试和集成测试必须做；可自动化的 E2E 必须做；最终人工验收在 G10。
 
+## 格式化与审查 Agent
+
+- `sg-agent-formatter`：独立 format worktree，只改本次变更文件，自动修复并运行 lint。
+- `sg-agent-reviewer`：独立只读 review worktree，完整审查 diff、需求/测试证据、安全和回归风险。
+- formatter 无命令时停止 G7.5，不跳过。
+- reviewer 输出 blocking/non-blocking；blocking 阻止 G9。
+- 主 Agent 是唯一合并者；formatter 分支由主 Agent 合并，reviewer 不合并。
+
 ## Worktree 与合并
 
 ```text
 开发：specgate/<change>/<task>-dev
+格式化：specgate/<change>/format
 测试：specgate/<change>/test
+审查：specgate/<change>/review（只读）
 ```
 
 - 每个开发任务独立 worktree。
-- 每个 change 一个测试 worktree。
+- 每个 change 一个格式化和一个测试 worktree。
 - 主 Agent 是唯一合并者。
 - 测试失败返回开发 Agent 修复，tester 重新执行。
 - tester 不合并、不提交生产代码、不修改测试预期来强行通过。
@@ -81,11 +95,11 @@ requirements/
 - `/sg-init` — 初始化 v2 项目与需求基线。
 - `/sg-change <id>` — 创建需求变更包。
 - `/sg-test <change> plan|run` — 测试 Agent 编写/执行测试。
+- `/sg-apply <change> [--plan]` — 每次推进一个阶段：开发 → 格式化 → 测试 → 审查，停在门控。
 - `/sg-status` — 项目、需求版本、change、门控、测试状态。
 - `/sg-next` — 下一步建议。
 - `/sg-gate <Gx> [status|confirm --yes|waive --yes <原因>]`。
 - `/sg-commit <message>`。
-- `/sg-apply <change>` — 按 `[P]`/`depends` 派发开发任务。
 - `/sg-archive <change>`。
 - `/sg-migrate` — `.ak47/` → `.specgate/`。
 - `/sg-requirements-migrate` — 旧 `openspec` → `requirements/REQUIREMENTS.md`。
@@ -98,7 +112,7 @@ requirements/
 
 ## Agent
 
-`.specgate/agents/` 共 10 个角色：po、architect、ddd、developer、reviewer、knowledge-engineer、process-guardian、config-maintainer、scaffold-maintainer、tester。
+`.specgate/agents/` 共 11 个角色：po、architect、ddd、developer、reviewer、formatter、knowledge-engineer、process-guardian、config-maintainer、scaffold-maintainer、tester。
 
 ## DSH 输出
 

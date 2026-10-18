@@ -39,7 +39,7 @@ export function projectComplete(root, options = {}) {
     const agents = listDir(path.join(target, '.specgate', 'agents')).filter(
       (entry) => entry.isFile() && entry.name.endsWith('.md'),
     );
-    if (agents.length < (isRequirementsProject(target) ? 10 : 9)) return false;
+    if (agents.length < (isRequirementsProject(target) ? 11 : 9)) return false;
   }
 
   if (options.git !== false && !exists(path.join(target, '.git'))) return false;

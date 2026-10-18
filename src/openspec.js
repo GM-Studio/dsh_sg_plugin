@@ -13,6 +13,7 @@ import {
   requirementsChangesDir,
   testPaths,
 } from './requirements.js';
+import { formatReportPath, reviewReportPath } from './format.js';
 import {
   ensureDir,
   exists,
@@ -190,6 +191,13 @@ export function nextStepFor(root, name, artifacts, state, paradigm) {
     if (artifacts.tasks !== 'completed' || state !== 'implementing') {
       return { action: 'implement', text: '按 tasks.md 实施，测试基线已冻结（RED → GREEN）' };
     }
+    if (!satisfied('G7.5')) {
+      const format = readIfExists(formatReportPath(root, name));
+      if (!format) {
+        return { action: 'run-format', text: '执行格式化/Lint：/sg-apply ' + name };
+      }
+      return { action: 'confirm-gate', gate: 'G7.5', text: '格式化/Lint 已通过，确认 G7.5' };
+    }
     const report = readIfExists(testPaths(root, name).report);
     if (!report) {
       return { action: 'run-tests', text: '执行测试 Agent：/sg-test ' + name + ' run' };
@@ -198,6 +206,10 @@ export function nextStepFor(root, name, artifacts, state, paradigm) {
       return { action: 'confirm-gate', gate: 'G8', text: '测试报告通过后确认 G8' };
     }
     if (!satisfied('G9')) {
+      const review = readIfExists(reviewReportPath(root, name));
+      if (!review) {
+        return { action: 'run-review', text: '执行独立代码审查：/sg-apply ' + name };
+      }
       return { action: 'confirm-gate', gate: 'G9', text: '审查通过后确认 G9 并提交' };
     }
     if (!satisfied('G10')) {
