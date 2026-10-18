@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "SpecGate 工作流",
+    "description": "带门控的 AI 开发工作流：需求确认、OpenSpec 产物、TDD/代码审查门禁与偏离审计。"
+  }
+}

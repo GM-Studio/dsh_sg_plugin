@@ -1,0 +1,9 @@
+node_modules/
+dist/
+.DS_Store
+Thumbs.db
+*.log
+*.tgz
+coverage/
+.ak47_dsh_stage/
+.specgate/

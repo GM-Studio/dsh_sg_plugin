@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "SpecGate Workflow",
+    "description": "Gated AI development workflow: requirement confirmation, OpenSpec artifacts, TDD/code-review gates and deviation audit."
+  }
+}

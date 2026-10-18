@@ -1,0 +1,62 @@
+{
+  "name": "dsh-plugin-specgate",
+  "version": "1.0.0",
+  "private": false,
+  "type": "module",
+  "description": "SpecGate — spec-driven gated workflow for DeepSeek Harness: project init, gates, skills, OpenSpec state and parallel agents.",
+  "keywords": [
+    "dsh",
+    "deepseek-harness",
+    "spec-driven",
+    "workflow",
+    "gates",
+    "openspec",
+    "agents"
+  ],
+  "author": "andy.zx",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/GM-Studio/dsh_sg_plugin.git"
+  },
+  "homepage": "https://github.com/GM-Studio/dsh_sg_plugin",
+  "bugs": {
+    "url": "https://github.com/GM-Studio/dsh_sg_plugin/issues"
+  },
+  "exports": {
+    ".": "./index.js",
+    "./locale/*.json": "./locale/*.json",
+    "./icon": "./icon.svg"
+  },
+  "files": [
+    "index.js",
+    "src",
+    "assets",
+    "docs",
+    "cordis.patch.yml",
+    "locale",
+    "icon.svg",
+    "README.md",
+    "README.zh.md",
+    "CHANGELOG.md",
+    "CHANGELOG.zh.md",
+    "LICENSE"
+  ],
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  },
+  "engines": {
+    "node": ">=20.19.0",
+    "dsh": ">=0.2.1-rc.2"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "test": "node --test",
+    "pack:check": "npm pack --dry-run",
+    "prepublishOnly": "npm test && npm run pack:check"
+  }
+}

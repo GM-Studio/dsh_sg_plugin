@@ -1,0 +1,48 @@
+# Module Architecture Design Template
+
+> Copy this file to `modules/<module-name>.md` as the starting point for a new module's architecture design
+
+## Module Positioning
+
+<!-- Where this module sits in the overall architecture and what it is responsible for -->
+
+## Interface Design
+
+<!-- Externally exposed interfaces / APIs -->
+
+| Interface | Method | Description |
+|-----------|--------|-------------|
+| | | |
+
+## Internal Structure
+
+<!-- How classes/components/functions are organized inside the module -->
+
+## Data Model
+
+<!-- Core data structures used by the module -->
+
+## State Management
+
+<!-- Lifecycle and management strategy of the module's internal state -->
+
+## Error Handling
+
+<!-- Error scenarios and handling strategies -->
+
+## Dependencies
+
+<!-- Other modules this module depends on -->
+
+| Module | Purpose |
+|--------|---------|
+| | |
+
+## Performance Considerations
+
+<!-- Performance-critical paths and optimization strategies -->
+
+## References
+
+- [System Architecture Overview](../01-system-overview.md)
+- [PRD Documents](../../prd/_index.md)

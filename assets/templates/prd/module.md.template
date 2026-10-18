@@ -1,0 +1,45 @@
+# Module PRD Template
+
+> Copy this file to `modules/<module-name>.md` as the starting point for a new module's PRD
+
+## Module Overview
+
+<!-- Module name and a one-sentence description -->
+
+## User Stories
+
+<!-- As a <role>, I want <feature> so that <value> -->
+
+- As a , I want , so that .
+
+## Acceptance Criteria
+
+<!-- Acceptance conditions for each user story -->
+
+- [ ] 
+- [ ] 
+
+## Feature Boundaries
+
+<!-- The module's functional scope, explicitly stating what is included and what is excluded -->
+
+### Included
+
+- 
+
+### Excluded
+
+- 
+
+## Dependencies
+
+<!-- Other modules or external services this module depends on -->
+
+## Non-Functional Requirements
+
+<!-- Performance, security, availability, etc. -->
+
+## References
+
+- [Project Vision](../vision.md)
+- [Architecture Design](../../architecture/_index.md)
