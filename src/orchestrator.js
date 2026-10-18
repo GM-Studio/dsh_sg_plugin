@@ -115,8 +115,10 @@ export async function applyChange(options) {
       ok: report.ok,
       stage: 'dev',
       report,
-      nextGate: 'G7',
-      text: report.ok ? '开发阶段完成；停在 G7，请确认后继续 sg-apply。' : '开发阶段存在失败；查看报告。',
+      nextGate: 'G7.5',
+      text: report.ok
+        ? '开发阶段完成；再次执行 sg-apply 进入格式化/Lint（G7.5）。'
+        : '开发阶段存在失败；查看报告。',
     };
   }
 
