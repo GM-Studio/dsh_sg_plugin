@@ -208,6 +208,7 @@ lintCommand: ""
 
 - `language`：`zh` / `en`，默认 `zh`；选择运行时 Skill/Agent/docs 内容与命令结果/报告语言。
 - `maxConcurrency`：默认 4，供 `/sg-apply` 与 `/sg-doctor` 使用。
+- `formatCommand` / `lintCommand`：必须包含 `{files}`，保证 G7.5 只处理变更文件；为空时回退到 `package.json` scripts。
 - `materializeSkills` / `materializeAgents`：关闭时只用运行时注册，不物化到项目。
 - `defaultEnabled`：`/sg-init` 写入的初始 `enabled`，默认 `true`。
 

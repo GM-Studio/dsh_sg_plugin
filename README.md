@@ -208,6 +208,7 @@ Precedence: **project config > global plugin config > built-in defaults**. Globa
 
 - `language`: `zh` or `en` (default `zh`). It selects the runtime Skill/Agent/docs content and the language of command results/reports.
 - `maxConcurrency`: default 4, used by `/sg-apply` and `/sg-doctor`.
+- `formatCommand` / `lintCommand`: must contain `{files}` so G7.5 only touches changed files; empty values fall back to `package.json` scripts.
 - `materializeSkills` / `materializeAgents`: when false, the project uses runtime registrations only.
 - `defaultEnabled`: the initial `enabled` value written by `/sg-init`; default `true`.
 

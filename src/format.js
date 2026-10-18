@@ -14,11 +14,23 @@ export function resolveFormatCommands(root, config = {}) {
   const formatCommand = String(config.formatCommand || '').trim();
   const lintCommand = String(config.lintCommand || '').trim();
   if (formatCommand || lintCommand) {
+    if (!formatCommand || !lintCommand) {
+      return {
+        ok: false,
+        reason: '需要同时配置 formatCommand 和 lintCommand；只配置一个会导致检查不完整',
+      };
+    }
+    if (!formatCommand.includes('{files}') || !lintCommand.includes('{files}')) {
+      return {
+        ok: false,
+        reason: 'formatCommand/lintCommand 必须包含 {files} 占位符，确保只检查本次变更文件',
+      };
+    }
     return {
       ok: true,
       source: 'config',
-      formatCommand: formatCommand || null,
-      lintCommand: lintCommand || null,
+      formatCommand,
+      lintCommand,
     };
   }
   const packagePath = path.join(path.resolve(root), 'package.json');
@@ -42,6 +54,12 @@ export function resolveFormatCommands(root, config = {}) {
       : null;
   if (!format && !lint) {
     return { ok: false, reason: '未找到 format/lint/check 命令；请在 .specgate/config.yaml 配置 formatCommand/lintCommand' };
+  }
+  if (!format || !lint) {
+    return { ok: false, reason: 'package.json 只探测到 format 或 lint 之一；请同时配置 formatCommand/lintCommand' };
+  }
+  if (!format.includes('{files}') || !lint.includes('{files}')) {
+    return { ok: false, reason: '探测到的命令缺少 {files} 占位符；请显式配置 formatCommand/lintCommand' };
   }
   return { ok: true, source: 'package.json', formatCommand: format, lintCommand: lint };
 }
