@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.0.1
+
+- Fixed `sg_doctor` crashing when the composition does not inject the `agents` service (`cannot get property "agents" without inject`): the runner now resolves via `ctx.get('agents')` first and is built inside the `try` block, falling back to the local deterministic health check when unavailable.
+- Fixed dispatched child Agents not inheriting the parent model route.
+
 ## 1.0.0
 
 First public SpecGate release, derived from AgentKit47-Qoder.
