@@ -127,14 +127,15 @@
 
 命令：`node --test`
 
-结果：**74 passed / 0 failed**。
+结果：**90 passed / 0 failed**。
 
 新增覆盖：
 
-- 新会话命令写入 `notice`（`user/message`、`source.kind=specgate`、`form=notice`）
-- 活跃会话只保留命令卡片，不重复写历史
+- 命令完成后通过 `agent.followup` 把完整输出交回 agent（`source.kind=specgate`、`source.command=<命令名>`，消息本身是 `role=user`），由 agent 在对话里完整呈现并追问下一步
+- 活跃会话同样交回（不再只剩命令卡片），新会话也不再被欢迎页遮住
+- runtime 无 `followup` 或交回被拒时降级为 `notice`（`user/message`、`form=notice`、仅新会话）
 - `agent.status === 'running'` 时绝不写消息（保护 `tool_use`/`tool_result` 配对）
-- 失败命令同样产生错误 `notice`
+- 失败命令同样交回 agent，并附带错误原文供 agent 转述
 - 命令名符合 DSH 语法、无冒号别名、参数命令带 `input.hint`
 - 命令服务晚加载时通过 `ctx.inject` 补注册，不会静默丢失
 - 命令通道门控 `confirm --yes` / `waive --yes` 的显式确认路径

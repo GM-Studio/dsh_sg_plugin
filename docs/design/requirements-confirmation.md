@@ -816,7 +816,7 @@ Generation and merging rules:
 ## C9. DSH Output and Session Adaptation Revision (2026-10-18)
 
 - **Command names**: DSH command syntax is `^[a-z0-9][a-z0-9_-]*$`, so colon aliases can never be registered; remove aliases such as `/specgate:init` and use `/sg-init` consistently in the documentation.
-- **Command output**: Command results are rendered by the DSH persistent command card; in a new session with "only command events", additionally write a `user/message` (`source.kind=specgate`, `form=notice`) as a context message, so the welcome page does not hide the result.
+- **Command output**: When a command finishes, the plugin hands the full output back through `agent.followup` (message `role=user`, `source.kind=specgate`, `source.command=<command>`) so the agent presents it in the conversation and asks for the next step, keeping command and skill output inside the chat; only when the runtime has no `followup` or the hand-off is rejected does it degrade to appending one `user/message` (`form=notice`) context message (see C16).
 - **Do not synthesize assistant messages**: Never inject `assistant/message` into the session log. Inserting any message between a tool call and a tool result causes a 400 error where `tool_use` has no immediately adjacent `tool_result`.
 - **Command-channel gates**: `/sg-gate <Gx> confirm` without `--yes` only returns a pending-confirmation hint; only `--yes` writes the marker. Structured Q&A is reserved for the `sg_gate` tool (executed within a model turn).
 - **Service load order**: `commands`, `skills`, and `systemPrompt` are optional services; use `ctx.inject` to wait until ready, to avoid silently dropping registrations when the plugin loads first.
@@ -934,3 +934,12 @@ Commands and their corresponding tools both apply; read-only types do not create
 ### C15.6 Test Baseline
 
 `node --test` → **89 passed / 0 failed**. New coverage: migration dry-run/force/backup, config precedence, language variant selection, bilingual manifest parity, 30 Skill + 9 Agent identifier parity.
+
+## C16. Command Results Return to the Conversation (2026-10-18, this revision)
+
+- **Motivation**: `/sg-*` and Skill output previously appeared only in the DSH command card or a collapsed `notice` chip, so users could not read the full content or continue interacting from it.
+- **Behavior**: After any `/sg-*` command finishes, when the agent is idle and the runtime exposes `agent.followup`, the plugin hands back the complete `result.text` together with an instruction to present it in full and ask for the next step; the agent's reply becomes a normal conversation message the user can answer.
+- **Boundaries**: Never hand back while `agent.status === 'running'` (protects `tool_use`/`tool_result` pairing); when the runtime has no `followup` or the hand-off throws, it degrades to a `notice` (`form=notice`, fresh sessions only); `appendCommandNotice` stays exported as the fallback and test seam.
+- **No synthesized assistant messages**: `assistant/message` is still never injected; the hand-off uses the `followup` input channel, so the C9 constraint holds.
+- **Cost**: One extra model turn per command — the explicit price of full in-conversation interaction.
+- **Test baseline**: `node --test` → **90 passed / 0 failed**; `test/commands-report.test.js` covers the hand-off, hand-off in active sessions, the running-agent skip, fallback when the hand-off is rejected, and failed commands.

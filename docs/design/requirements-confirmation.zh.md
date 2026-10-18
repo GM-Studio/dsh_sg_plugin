@@ -816,7 +816,7 @@
 ## C9. DSH 输出与会话适配修订（2026-10-18）
 
 - **命令名**：DSH 命令语法为 `^[a-z0-9][a-z0-9_-]*$`，冒号别名永远无法注册；删除 `/specgate:init` 等别名，文档统一使用 `/sg-init`。
-- **命令输出**：命令结果由 DSH 持久命令卡片渲染；在“只有命令事件”的新会话中，额外写入一条 `user/message`（`source.kind=specgate`、`form=notice`）作为上下文消息，避免欢迎页遮住结果。
+- **命令输出**：命令完成后通过 `agent.followup` 把完整输出交回 agent（消息为 `role=user`、`source.kind=specgate`、`source.command=<命令名>`），由 agent 在对话中完整呈现并追问下一步，保证命令与技能的输出全程留在对话框内；仅当 runtime 无 `followup` 或交回被拒时，才降级为追加一条 `user/message`（`form=notice`）作为上下文消息（见 C16）。
 - **禁止合成 assistant 消息**：不得在会话日志中注入 `assistant/message`。在工具调用与工具结果之间插入任何消息都会产生 `tool_use` 无紧邻 `tool_result` 的 400 错误。
 - **命令通道门控**：`/sg-gate <Gx> confirm` 不带 `--yes` 时只返回待确认提示；`--yes` 才写标记。结构化问答仅保留给 `sg_gate` 工具（在模型回合内执行）。
 - **服务加载顺序**：`commands`、`skills`、`systemPrompt` 为可选服务，使用 `ctx.inject` 等待就绪，避免插件先加载时静默丢注册。
@@ -934,3 +934,12 @@
 ### C15.6 测试基线
 
 `node --test` → **89 passed / 0 failed**。新增覆盖：迁移 dry-run/force/备份、配置优先级、语言变体选择、双语清单配对、30 Skill + 9 Agent 标识一致。
+
+## C16. 命令结果回到对话（2026-10-18，本次修订）
+
+- **动机**：`/sg-*` 与 Skill 的输出此前只出现在 DSH 命令卡片或折叠的 `notice` 小条里，用户看不到完整内容，也无法据此继续交互。
+- **行为**：所有 `/sg-*` 命令执行完成后，若 agent 空闲且 runtime 提供 `agent.followup`，则把完整 `result.text` 连同“完整呈现并追问下一步”的指令交回 agent；agent 的回复即成为对话中的正常消息，用户可直接继续回复。
+- **边界**：`agent.status === 'running'` 时绝不交回（保护 `tool_use`/`tool_result` 配对）；runtime 无 `followup` 或交回抛错时，降级为 `notice`（`form=notice`、仅新会话）；`appendCommandNotice` 继续导出，作为兜底与测试入口。
+- **不合成 assistant 消息**：仍然不注入 `assistant/message`；交回走 `followup` 的输入通道，因此不破坏 C9 的约束。
+- **代价**：每次命令多一个模型回合；这是为“全程在对话框内完整交互”显式付出的成本。
+- **测试基线**：`node --test` → **90 passed / 0 failed**；`test/commands-report.test.js` 覆盖交回、活跃会话交回、running 跳过、交回被拒降级、失败命令交回。

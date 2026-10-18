@@ -16,99 +16,157 @@ function captureCommands(root) {
       },
     },
   };
-  registerCommands(ctx, { getCwd: () => root });
+  registerCommands(ctx, { getCwd: () => root, language: () => 'zh' });
   return definitions;
 }
 
 function makeAgent(events, options = {}) {
-  return {
+  const agent = {
     status: options.status || 'idle',
     session: {
       deriveMessages() {
         return options.messages || [];
       },
       append(type, data, opts) {
-        if (options.reject) throw new Error('projection rejected');
-        events.push({ type, data, opts });
+        if (options.rejectAppend) throw new Error('projection rejected');
+        events.push({ channel: 'append', type, data, opts });
       },
     },
   };
+  if (!options.noFollowup) {
+    agent.followup = (payload) => {
+      if (options.rejectFollowup) throw new Error('follow-up rejected');
+      events.push({ channel: 'followup', payload });
+    };
+  }
+  return agent;
 }
 
-test('a fresh session receives one durable notice, never a synthetic assistant message', () => {
+function followups(events) {
+  return events.filter((event) => event.channel === 'followup');
+}
+
+function appends(events) {
+  return events.filter((event) => event.channel === 'append');
+}
+
+function followupText(events) {
+  const [first] = followups(events);
+  assert.ok(first, 'expected one agent hand-off');
+  return first.payload.content[0].text;
+}
+
+function tempRoot(label) {
+  return fs.mkdtempSync(path.join(os.tmpdir(), `specgate-command-report-${label}-`));
+}
+
+test('a completed command hands its full output to the agent instead of a notice', async () => {
+  const root = tempRoot('handoff');
   const events = [];
   const agent = makeAgent(events);
+  const init = captureCommands(root).find((definition) => definition.name === 'sg-init');
 
-  assert.equal(
-    appendCommandNotice({ agent }, { kind: 'success', text: 'SpecGate 初始化完成\n项目：E:\\demo' }),
-    true,
-  );
-  assert.equal(events.length, 1);
-  assert.equal(events[0].type, 'user/message');
-  assert.equal(events[0].data.role, 'user');
-  assert.equal(events[0].data.source.kind, 'specgate');
-  assert.equal(events[0].data.source.form, 'notice');
-  assert.equal(events[0].data.source.summary, 'SpecGate 初始化完成');
-  assert.match(events[0].data.content[0].text, /项目：E:\\demo/);
-  assert.deepEqual(events[0].opts, { surfaceOp: 'append' });
+  const result = await init.handler({ agent, rawInput: '--minimal --no-git' });
+
+  assert.equal(result.kind, 'success');
+  assert.equal(appends(events).length, 0, 'no collapsed notice when the agent took over');
+  assert.equal(followups(events).length, 1);
+
+  const [handoff] = followups(events);
+  assert.equal(handoff.payload.role, 'user', 'followup consumes a real user message');
+  assert.equal(typeof handoff.payload.id, 'string');
+  assert.equal(handoff.payload.source.kind, 'specgate');
+  assert.equal(handoff.payload.source.command, 'sg-init');
+
+  const text = followupText(events);
+  assert.match(text, /\/sg-init 已执行完成/);
+  assert.match(text, /SpecGate 初始化完成/);
+  assert.match(text, /完整呈现给用户/);
 });
 
-test('an active conversation keeps only the DSH command card', () => {
+test('the hand-off also fires in an active conversation, not only in fresh sessions', async () => {
+  const root = tempRoot('active');
   const events = [];
-  const agent = makeAgent(events, { messages: [{ role: 'user' }] });
+  const agent = makeAgent(events, { messages: [{ role: 'user' }, { role: 'assistant' }] });
+  const definitions = captureCommands(root);
+  await definitions.find((definition) => definition.name === 'sg-init').handler({
+    agent,
+    rawInput: '--minimal --no-git',
+  });
 
-  assert.equal(appendCommandNotice({ agent }, { kind: 'success', text: 'SpecGate 状态' }), false);
-  assert.equal(events.length, 0);
+  const status = definitions.find((definition) => definition.name === 'sg-status');
+  const result = await status.handler({ agent, rawInput: '' });
+
+  assert.equal(result.kind, 'success');
+  assert.match(followupText(events), /G1/);
+  assert.equal(appends(events).length, 0);
 });
 
-test('a running agent never receives a notice between tool call and result', () => {
+test('a running agent receives neither a hand-off nor a notice', async () => {
+  const root = tempRoot('running');
   const events = [];
   const agent = makeAgent(events, { status: 'running' });
+  const init = captureCommands(root).find((definition) => definition.name === 'sg-init');
 
-  assert.equal(appendCommandNotice({ agent }, { kind: 'success', text: 'SpecGate 状态' }), false);
+  const result = await init.handler({ agent, rawInput: '--minimal --no-git' });
+
+  assert.equal(result.kind, 'success');
   assert.equal(events.length, 0);
 });
 
-test('sg-init returns the full report and appends it in a fresh session', async () => {
-  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'specgate-command-report-'));
+test('a rejected hand-off falls back to the durable notice', async () => {
+  const root = tempRoot('fallback');
   const events = [];
-  const agent = makeAgent(events);
-  const definitions = captureCommands(root);
-  const init = definitions.find((definition) => definition.name === 'sg-init');
-  assert.ok(init);
-  assert.match(init.input.hint, /--path/);
+  const agent = makeAgent(events, { rejectFollowup: true });
+  const init = captureCommands(root).find((definition) => definition.name === 'sg-init');
 
   const result = await init.handler({ agent, rawInput: '--minimal --no-git' });
 
   assert.equal(result.kind, 'success');
   assert.match(result.text, /SpecGate 初始化完成/);
-  assert.ok(fs.existsSync(path.join(root, '.specgate', 'config.yaml')));
-  assert.equal(events.length, 1);
-  assert.equal(events[0].type, 'user/message');
-  assert.match(events[0].data.content[0].text, /SpecGate 初始化完成/);
-  assert.equal(events[0].data.source.form, 'notice');
+  assert.equal(followups(events).length, 0);
+  assert.equal(appends(events).length, 1);
+  assert.equal(appends(events)[0].data.source.form, 'notice');
 });
 
-test('a failed command also reports its error text in a fresh session', async () => {
-  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'specgate-command-error-'));
+test('appendCommandNotice still reports when the runtime has no followup', () => {
+  const events = [];
+  const agent = makeAgent(events, { noFollowup: true });
+
+  assert.equal(
+    appendCommandNotice({ agent }, { kind: 'success', text: 'SpecGate 初始化完成\n项目：E:\\demo' }),
+    true,
+  );
+  assert.equal(appends(events).length, 1);
+  const [notice] = appends(events);
+  assert.equal(notice.type, 'user/message');
+  assert.equal(notice.data.role, 'user');
+  assert.equal(notice.data.source.kind, 'specgate');
+  assert.equal(notice.data.source.form, 'notice');
+  assert.equal(notice.data.source.summary, 'SpecGate 初始化完成');
+  assert.match(notice.data.content[0].text, /项目：E:\\demo/);
+  assert.deepEqual(notice.opts, { surfaceOp: 'append' });
+});
+
+test('a failed command also reaches the agent with its error text', async () => {
+  const root = tempRoot('error');
   const events = [];
   const agent = makeAgent(events);
-  const definitions = captureCommands(root);
-  const classify = definitions.find((definition) => definition.name === 'sg-classify');
+  const classify = captureCommands(root).find((definition) => definition.name === 'sg-classify');
 
   const result = await classify.handler({ agent, rawInput: '' });
 
   assert.equal(result.kind, 'error');
   assert.match(result.text, /用法/);
-  assert.equal(events.length, 1);
-  assert.match(events[0].data.content[0].text, /用法/);
+  const text = followupText(events);
+  assert.match(text, /已执行失败/);
+  assert.match(text, /用法/);
 });
 
 test('a rejected notice append does not fail the command', async () => {
-  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'specgate-command-fallback-'));
-  const agent = makeAgent([], { reject: true });
-  const definitions = captureCommands(root);
-  const init = definitions.find((definition) => definition.name === 'sg-init');
+  const root = tempRoot('notice-fallback');
+  const agent = makeAgent([], { rejectAppend: true, noFollowup: true });
+  const init = captureCommands(root).find((definition) => definition.name === 'sg-init');
 
   const result = await init.handler({ agent, rawInput: '--minimal --no-git' });
 
@@ -118,10 +176,9 @@ test('a rejected notice append does not fail the command', async () => {
 });
 
 test('repeated /sg-init is a state-level no-op', async () => {
-  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'specgate-command-idem-init-'));
+  const root = tempRoot('idem-init');
   const agent = makeAgent([]);
-  const definitions = captureCommands(root);
-  const init = definitions.find((definition) => definition.name === 'sg-init');
+  const init = captureCommands(root).find((definition) => definition.name === 'sg-init');
 
   const first = await init.handler({ agent, rawInput: '--minimal --no-git' });
   const second = await init.handler({ agent, rawInput: '--minimal --no-git' });
@@ -133,7 +190,7 @@ test('repeated /sg-init is a state-level no-op', async () => {
 });
 
 test('repeated /sg-deviation dedupes for 24h and --force appends again', async () => {
-  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'specgate-command-idem-dev-'));
+  const root = tempRoot('idem-dev');
   const agent = makeAgent([]);
   const definitions = captureCommands(root);
   const init = definitions.find((definition) => definition.name === 'sg-init');
@@ -163,7 +220,7 @@ test('repeated /sg-deviation dedupes for 24h and --force appends again', async (
 });
 
 test('commands use DSH-valid names and expose input hints where arguments are required', () => {
-  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'specgate-command-names-'));
+  const root = tempRoot('names');
   const definitions = captureCommands(root);
   const names = definitions.map((definition) => definition.name);
 

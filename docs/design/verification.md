@@ -127,14 +127,15 @@ Command: `sg_init { path: "demo-app" }` (under the new directory `\.specgate_v11
 
 Command: `node --test`
 
-Result: **74 passed / 0 failed**.
+Result: **90 passed / 0 failed**.
 
 New coverage:
 
-- New-session commands write a `notice` (`user/message`, `source.kind=specgate`, `form=notice`)
-- Active sessions keep only the command card and do not write history again
+- Finished commands hand the full output back through `agent.followup` (`source.kind=specgate`, `source.command=<command>`, message `role=user`), so the agent presents it in the conversation and asks for the next step
+- Active sessions receive the hand-off too (no longer only the command card), and fresh sessions are no longer hidden by the welcome page
+- Without `followup`, or when the hand-off is rejected, it degrades to a `notice` (`user/message`, `form=notice`, fresh sessions only)
 - When `agent.status === 'running'`, no message is ever written (protects `tool_use`/`tool_result` pairing)
-- Failed commands also produce an error `notice`
+- Failed commands are handed back too, carrying the original error text for the agent to relay
 - Command names follow DSH syntax, have no colon aliases, and argument commands include `input.hint`
 - When the command service loads late, `ctx.inject` registers the commands instead of silently losing them
 - Explicit confirmation paths for command-channel gates `confirm --yes` / `waive --yes`

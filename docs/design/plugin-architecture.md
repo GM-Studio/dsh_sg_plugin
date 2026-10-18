@@ -221,7 +221,8 @@ State is inferred in real time on every query, with a 400ms in-process cache; it
 | Git unavailable | Initialization fails and suggests `--no-git`; projects using `--no-git` skip the Git check with a warning |
 | Workspace dirty | Gate confirmation/waiving is rejected; suggests `/sg-commit` |
 | `.specgate/config.yaml` corrupted | Treated as defaults; `doctor` reports it |
-| New session with only a command event | Appends a `notice` context message so the command card is not hidden by the welcome page |
+| Command finished (agent idle) | Hands the full output back through `agent.followup`, so the agent presents it in the conversation and asks for the next step |
+| Runtime has no `followup`, or the hand-off is rejected | Degrades to appending a `notice` context message (fresh sessions only); the report is never lost |
 | Agent is running | Appends no message; only the command card is shown, protecting `tool_use`/`tool_result` pairing |
 
 ## 9. Testing
@@ -237,9 +238,9 @@ State is inferred in real time on every query, with a 400ms in-process cache; it
 - `test/gate-git.test.js`: Git clean check before gates and `--no-git` degradation
 - `test/lifecycle.test.js`: a new Change clears G3-G11; archiving clears all gates
 - `test/plugin.test.js`: simulates the Cordis context and verifies tool/command/skill/prompt/guard registration, the commit tool, and serializable output
-- `test/commands-report.test.js`: command `notice` output, command-level idempotency (init/deviation)
+- `test/commands-report.test.js`: command result hand-off to the agent, `notice` degradation, command-level idempotency (init/deviation)
 - `test/idempotency.test.js`: operation keys, 24h dedupe, force, concurrency lock, read-only commands write nothing
 - `test/task-graph.test.js`: `[P]`/`depends`/`role` parsing, serial default, waves, dependency cycles
 - `test/dispatch.test.js`: worktree parallelism/conflicts/non-Git degradation, task checking, parallel doctor aggregation
 
-Run: `node --test` (currently **74 passed / 0 failed**).
+Run: `node --test` (currently **90 passed / 0 failed**).

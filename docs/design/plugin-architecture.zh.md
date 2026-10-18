@@ -221,7 +221,8 @@ write/edit 调用
 | Git 不可用 | 初始化失败并提示 `--no-git`；`--no-git` 项目门控跳过 Git 检查并警告 |
 | 工作区 dirty | 门控确认/跳过被拒绝；提示 `/sg-commit` |
 | `.specgate/config.yaml` 损坏 | 按默认值处理，`doctor` 报告 |
-| 新会话只有命令事件 | 追加 `notice` 上下文消息，避免命令卡片被欢迎页遮住 |
+| 命令执行完成（agent 空闲） | 通过 `agent.followup` 把完整输出交回 agent，由 agent 在对话中完整呈现并追问下一步 |
+| runtime 无 `followup` 或交回被拒 | 降级为追加 `notice` 上下文消息（仅新会话），结果不丢失 |
 | agent 正在运行 | 不追加任何消息，只显示命令卡片，保护 `tool_use`/`tool_result` 配对 |
 
 ## 9. 测试
@@ -237,9 +238,9 @@ write/edit 调用
 - `test/gate-git.test.js`：门控前 Git clean 检查与 `--no-git` 降级
 - `test/lifecycle.test.js`：新建 Change 清空 G3-G11、归档清空全部门控
 - `test/plugin.test.js`：模拟 Cordis 上下文，验证工具/命令/技能/提示/guard 注册、提交工具与输出可序列化
-- `test/commands-report.test.js`：命令输出 `notice`、命令级幂等（init/deviation）
+- `test/commands-report.test.js`：命令结果交回 agent、`notice` 降级、命令级幂等（init/deviation）
 - `test/idempotency.test.js`：操作键、24h 去重、force、并发锁、只读不落盘
 - `test/task-graph.test.js`：`[P]`/`depends`/`role` 解析、串行默认、波次、依赖环
 - `test/dispatch.test.js`：worktree 并行/冲突/非 Git 降级、任务勾选、doctor 并行汇总
 
-运行：`node --test`（当前 **74 passed / 0 failed**）。
+运行：`node --test`（当前 **90 passed / 0 failed**）。

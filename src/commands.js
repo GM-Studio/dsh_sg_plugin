@@ -116,7 +116,69 @@ export function appendCommandNotice(invocation, result) {
   }
 }
 
-function withNotice(handler) {
+/**
+ * Hand the finished command result back to the agent so the outcome is rendered
+ * as a normal assistant reply inside the conversation, instead of a collapsed
+ * one-line notice chip. The agent then shows the full text and asks for the next
+ * decision, which is what makes `/sg-*` interactive.
+ *
+ * Falls back to `appendCommandNotice` when the runtime has no `followup` (older
+ * DSH) or the hand-off is rejected, so a command never loses its report.
+ */
+export function handoffCommandResult(invocation, result, commandName, language = 'zh') {
+  const agent = invocation?.agent;
+  if (!agent) return false;
+  // Never interleave a message between an assistant tool call and its result.
+  if (agent.status === 'running') return false;
+
+  const text = typeof result?.text === 'string' ? result.text.trim() : '';
+  if (text.length === 0) return false;
+
+  if (typeof agent.followup === 'function') {
+    const en = String(language || 'zh').toLowerCase().startsWith('en');
+    const failed = result.kind === 'error';
+    const prompt = en
+      ? [
+          `SpecGate command /${commandName} ${failed ? 'failed' : 'finished'}. Full output:`,
+          '',
+          text,
+          '',
+          failed
+            ? 'Present the failure reason above in full, give an actionable fix, and wait for the user to decide.'
+            : 'Present the result above in full in the conversation (keep the full gate list, paths and counts; do not compress it into one sentence), then state the next executable action and wait for the user to confirm.',
+        ].join('\n')
+      : [
+          `SpecGate 命令 /${commandName} 已执行${failed ? '失败' : '完成'}，完整输出如下：`,
+          '',
+          text,
+          '',
+          failed
+            ? '请把上面的失败原因完整呈现给用户，给出可执行的修复办法，并等待用户决定。'
+            : '请把上面的结果完整呈现给用户（保留门控清单、路径与计数，不要压缩成一句话），然后说明下一步可执行的动作并等待用户确认。',
+        ].join('\n');
+    try {
+      // `followup` consumes a real user message (see dsh-llm `createUserMessage`):
+      // a bare `{ content, source }` has no id/role and is rejected downstream.
+      agent.followup({
+        id: randomUUID(),
+        role: 'user',
+        content: [{ type: 'text', text: prompt }],
+        source: {
+          kind: 'specgate',
+          command: commandName,
+          summary: noticeSummary(text),
+        },
+      });
+      return true;
+    } catch {
+      // Fall through to the durable notice path below.
+    }
+  }
+
+  return appendCommandNotice(invocation, result);
+}
+
+function withHandoff(name, handler, language = 'zh') {
   return async (invocation) => {
     let result;
     try {
@@ -125,7 +187,7 @@ function withNotice(handler) {
       result = failure(error instanceof Error ? error.message : String(error));
     }
     try {
-      appendCommandNotice(invocation, result);
+      handoffCommandResult(invocation, result, name, language);
     } catch {
       // Reporting is best-effort; it must never replace the command outcome.
     }
@@ -167,7 +229,7 @@ export function registerCommands(ctx, runtime) {
     try {
       const dispose = commands.register({
         ...definition,
-        handler: withNotice(definition.handler),
+        handler: withHandoff(definition.name, definition.handler, language),
       });
       if (typeof dispose === 'function') disposers.push(dispose);
     } catch (error) {

@@ -1,5 +1,12 @@
 # 变更记录
 
+## 未发布
+
+- `/sg-*` 命令现在通过 `agent.followup` 把完整输出交回 agent（`source.kind=specgate`，消息为 `role=user`），结果以正常对话消息呈现，并可接着追问下一门控，不再只剩折叠的命令卡片或 `notice` 小条。
+- 交回在活跃会话中同样生效，不再只限新会话；`agent.status === 'running'` 时仍然跳过，以保护 `tool_use`/`tool_result` 配对。
+- runtime 没有 `followup` 或交回被拒绝时，降级为原有的 `notice`，命令结果不会丢失。
+- 测试：90 项通过（`test/commands-report.test.js` 新增交回覆盖）。
+
 ## 1.0.1
 
 - 修复 `sg_doctor` 在 composition 未注入 `agents` 服务时直接崩溃（`cannot get property "agents" without inject`）：改为优先通过 `ctx.get('agents')` 解析，并在 `try` 内构造 runner；不可用时自动降级为本地确定性体检。
