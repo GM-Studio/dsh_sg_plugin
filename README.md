@@ -34,10 +34,50 @@ plugin_manager install_bundle target=dsh-plugin-specgate
 
 The plugin manager adds `dsh-plugin-specgate` to the current profile. Enable or disable the bundle from the DSH plugin manager, and uninstall it there when no longer needed.
 
+### From GitHub (no npm publish)
+
+The repository is a complete plugin: there is no build step and no npm publish required.
+
+Add it to the active DSH profile's `package.json`:
+
+```json
+{
+  "dsh": {
+    "profile": {
+      "bundles": [
+        "@deepseek-ai/dsh-base",
+        "@deepseek-ai/dsh-web-app",
+        "dsh-plugin-specgate"
+      ]
+    }
+  },
+  "dependencies": {
+    "dsh-plugin-specgate": "github:GM-Studio/dsh_sg_plugin#v1.0.0"
+  }
+}
+```
+
+Then install and restart DSH:
+
+```powershell
+cd C:\Users\<user>\.dsh\profiles\desktop
+pnpm install
+```
+
+Use `#main` for the latest commit, or `#<commit-sha>` for a pinned build.
+
 ### From a local checkout
 
 ```text
-plugin_manager install_bundle target=E:\ai_workflow\specgate
+plugin_manager install_bundle target=D:\plugins\specgate
+```
+
+Or use a `link:` dependency in the profile:
+
+```json
+"dependencies": {
+  "dsh-plugin-specgate": "link:D:/plugins/specgate"
+}
 ```
 
 ### Project-level start / stop

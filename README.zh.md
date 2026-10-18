@@ -34,10 +34,50 @@ plugin_manager install_bundle target=dsh-plugin-specgate
 
 插件管理器会把 `dsh-plugin-specgate` 加入当前 profile。启用、禁用、卸载都在 DSH 插件管理器中完成。
 
+### 从 GitHub 安装（无需 npm 发布）
+
+仓库本身就是完整插件，没有构建步骤，也不需要发布到 npm。
+
+在 DSH profile 的 `package.json` 中加入：
+
+```json
+{
+  "dsh": {
+    "profile": {
+      "bundles": [
+        "@deepseek-ai/dsh-base",
+        "@deepseek-ai/dsh-web-app",
+        "dsh-plugin-specgate"
+      ]
+    }
+  },
+  "dependencies": {
+    "dsh-plugin-specgate": "github:GM-Studio/dsh_sg_plugin#v1.0.0"
+  }
+}
+```
+
+然后在 profile 目录安装并重启 DSH：
+
+```powershell
+cd C:\Users\<用户名>\.dsh\profiles\desktop
+pnpm install
+```
+
+`#main` 表示最新提交；`#<commit-sha>` 可固定构建。
+
 ### 从本地目录安装
 
 ```text
-plugin_manager install_bundle target=E:\ai_workflow\specgate
+plugin_manager install_bundle target=D:\plugins\specgate
+```
+
+也可以在 profile 中使用 `link:`：
+
+```json
+"dependencies": {
+  "dsh-plugin-specgate": "link:D:/plugins/specgate"
+}
 ```
 
 ### 启动与关闭
