@@ -388,7 +388,7 @@ export function registerCommands(ctx, runtime) {
       const apply = list[0] === '--apply';
       const description = (apply ? list.slice(1) : list).join(' ');
       if (!description) return failure('用法：/sg-classify [--apply] <变更描述>');
-      const result = classifyRequest(description);
+      const result = classifyRequest(description, runtime.language(inv.agent));
       const project = loadProject(runtime.getCwd(inv.agent));
 
       if (!apply) {

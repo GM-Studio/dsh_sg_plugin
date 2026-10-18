@@ -244,7 +244,7 @@ export function registerTools(ctx, runtime) {
       output: textOutput(),
       async execute(args, exec) {
         const project = runtime.project(exec.agent);
-        const result = classifyRequest(args?.description || '');
+        const result = classifyRequest(args?.description || '', runtime.language(exec.agent));
         let suffix = '下一步：/sg-gate G2 confirm --yes 确认范式。';
         if (!args?.apply) {
           return ok(
