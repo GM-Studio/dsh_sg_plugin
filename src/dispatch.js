@@ -136,9 +136,14 @@ function taskPrompt({ change, task, cwd, role }) {
  * wait for idle, read its final assistant text, then dispose it.
  */
 export function createAgentRunner(ctx) {
-  const agents =
-    ctx?.agents ||
-    (ctx && typeof ctx.get === 'function' ? ctx.get('agents') : undefined);
+  let agents;
+  try {
+    agents =
+      ctx?.agents ||
+      (ctx && typeof ctx.get === 'function' ? ctx.get('agents') : undefined);
+  } catch {
+    agents = undefined;
+  }
   if (!agents) return null;
   return async ({ prompt, cwd, role, parent }) => {
     const roleFile = path.join(cwd, '.specgate', 'agents', `sg-agent-${role}.md`);

@@ -6,7 +6,7 @@ import { registerSkills } from './src/skills.js';
 import { registerTools } from './src/tools.js';
 
 export const name = 'specgate';
-export const inject = ['tools'];
+export const inject = ['tools', 'agents'];
 
 export function apply(ctx, config = {}) {
   const runtime = createRuntime(ctx, config);

@@ -5,7 +5,7 @@ import os from 'node:os';
 import path from 'node:path';
 import test from 'node:test';
 
-import { apply } from '../index.js';
+import { apply, inject } from '../index.js';
 import { confirmGate } from '../src/gates.js';
 import { initProject } from '../src/init.js';
 import { loadProject } from '../src/project.js';
@@ -83,24 +83,51 @@ test('plugin registers tools, commands, skills, prompt and guard', () => {
     apply(ctx, {});
 
     const toolNames = tools.map((tool) => tool.name);
-    for (const name of [
-      'sg_status',
-      'sg_next',
-      'sg_gate',
-      'sg_deviation',
-      'sg_classify',
-      'sg_doctor',
-      'sg_propose',
-      'sg_archive',
-      'sg_init',
-      'sg_enable',
-      'sg_disable',
-      'sg_migrate',
-      'sg_commit',
-    ]) {
-      assert.ok(toolNames.includes(name), `missing tool ${name}`);
-    }
-    assert.equal(skills.length, 30);
+    assert.deepEqual(
+      [...toolNames].sort(),
+      [
+        'sg_archive',
+        'sg_classify',
+        'sg_commit',
+        'sg_deviation',
+        'sg_disable',
+        'sg_doctor',
+        'sg_enable',
+        'sg_gate',
+        'sg_init',
+        'sg_migrate',
+        'sg_next',
+        'sg_propose',
+        'sg_status',
+      ],
+      'the plugin must register exactly the documented 13 tools',
+    );
+    assert.ok(inject.includes('tools'));
+    assert.ok(inject.includes('agents'), 'parallel dispatch needs the agents service');
+    assert.ok(!toolNames.some((name) => name.startsWith('mcp_')), 'SpecGate does not ship MCP tools');
+    assert.deepEqual(
+      commands.map((command) => command.name).sort(),
+      [
+        'sg-apply',
+        'sg-archive',
+        'sg-classify',
+        'sg-commit',
+        'sg-deviation',
+        'sg-disable',
+        'sg-doctor',
+        'sg-enable',
+        'sg-explore',
+        'sg-gate',
+        'sg-init',
+        'sg-migrate',
+        'sg-next',
+        'sg-propose',
+        'sg-status',
+      ],
+      'the plugin must register exactly the documented 15 commands',
+    );
+    assert.ok(skills.every((skill) => skill.description && skill.description.length > 0));
+    assert.equal(new Set(skills.map((skill) => skill.name)).size, 30);
     assert.equal(guards.length, 1);
     assert.equal(contexts.length, 1);
     assert.equal(listeners.length, 1);

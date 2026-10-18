@@ -41,7 +41,12 @@ function checkGit(root, language = 'zh') {
 }
 
 async function ask(ctx, agent, signal, header, question, options, waitOptions = {}) {
-  const userQuestions = ctx.get('userQuestions');
+  let userQuestions;
+  try {
+    userQuestions = ctx.get('userQuestions');
+  } catch {
+    return { unavailable: true };
+  }
   if (!userQuestions) return { unavailable: true };
   const request = {
     questions: [{ id: 'sg-gate', header, question, options }],

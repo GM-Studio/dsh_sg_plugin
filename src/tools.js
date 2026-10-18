@@ -313,9 +313,11 @@ export function registerTools(ctx, runtime) {
       output: textOutput(),
       async execute(args, exec) {
         const project = runtime.project(exec.agent);
-        const runner = createAgentRunner(ctx);
         let result;
         try {
+          // The agents service is optional: build the runner inside the guard so a
+          // composition without it falls back to the local deterministic doctor.
+          const runner = createAgentRunner(ctx);
           result = runner
             ? await runDoctorParallel({
                 root: project.root,
