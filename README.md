@@ -26,19 +26,11 @@ A Host plugin that brings AgentKit47's gated development workflow to DeepSeek Ha
 
 ## Installation
 
-### From npm
+SpecGate is distributed as a public Git repository; a publish to the npm registry is optional. The repository is a complete plugin with no build step.
 
-```text
-plugin_manager install_bundle target=dsh-plugin-specgate
-```
+### Method A: GitHub dependency in the DSH profile (recommended, tested)
 
-The plugin manager adds `dsh-plugin-specgate` to the current profile. Enable or disable the bundle from the DSH plugin manager, and uninstall it there when no longer needed.
-
-### From GitHub (no npm publish)
-
-The repository is a complete plugin: there is no build step and no npm publish required.
-
-Add it to the active DSH profile's `package.json`:
+Add the bundle and the GitHub dependency to the active profile's `package.json`:
 
 ```json
 {
@@ -64,21 +56,64 @@ cd C:\Users\<user>\.dsh\profiles\desktop
 pnpm install
 ```
 
-Use `#main` for the latest commit, or `#<commit-sha>` for a pinned build.
+Use `#main` for the latest commit, or `#<commit-sha>` for a pinned build. Profiles that use npm can run `npm install` instead.
 
-### From a local checkout
+### Method B: `plugin_manager` install from GitHub (tested against the DSH plugin-manager source)
 
-```text
-plugin_manager install_bundle target=D:\plugins\specgate
+Call the DSH `plugin_manager` tool with:
+
+```json
+{
+  "action": "install_bundle",
+  "target": "github:GM-Studio/dsh_sg_plugin#v1.0.0"
+}
 ```
 
-Or use a `link:` dependency in the profile:
+The equivalent shorthand is:
+
+```text
+plugin_manager install_bundle target=github:GM-Studio/dsh_sg_plugin#v1.0.0
+```
+
+The manager accepts `github:`, `git+https://...`, a Git repository URL, a `.tgz` URL, or an **absolute** local directory. It runs `pnpm add`, selects the bundle, and reloads the profile. DSH may ask for `danger-full-access` approval because the change persists across sessions and installs Host code.
+
+If the manager reports `already-installed`, remove the bundle first or use Method A.
+
+### Method C: local checkout
+
+```text
+plugin_manager action=install_bundle target=D:\plugins\specgate
+```
+
+The local path must be absolute. Alternatively, use a `link:` dependency in the profile:
 
 ```json
 "dependencies": {
   "dsh-plugin-specgate": "link:D:/plugins/specgate"
 }
 ```
+
+### Method D: npm registry (only if published)
+
+```text
+plugin_manager action=install_bundle target=dsh-plugin-specgate
+```
+
+### Verify the installation
+
+After a restart, open a new DSH session and run:
+
+```text
+/sg-status
+```
+
+If the command is missing:
+
+1. Confirm `dsh-plugin-specgate` is in the profile's `dsh.profile.bundles`.
+2. Confirm the dependency resolves (`pnpm install` in the profile directory).
+3. Restart DSH.
+4. Check `~/.dsh/logs` for load errors.
+5. Confirm DSH `>= 0.2.1-rc.2` and Node `>= 20.19.0`.
 
 ### Project-level start / stop
 

@@ -26,19 +26,11 @@
 
 ## 安装
 
-### 从 npm 安装
+SpecGate 以公开 Git 仓库分发；发布到 npm 是可选项。仓库本身就是完整插件，没有构建步骤。
 
-```text
-plugin_manager install_bundle target=dsh-plugin-specgate
-```
+### 方式 A：在 DSH profile 中使用 GitHub 依赖（推荐，已实测）
 
-插件管理器会把 `dsh-plugin-specgate` 加入当前 profile。启用、禁用、卸载都在 DSH 插件管理器中完成。
-
-### 从 GitHub 安装（无需 npm 发布）
-
-仓库本身就是完整插件，没有构建步骤，也不需要发布到 npm。
-
-在 DSH profile 的 `package.json` 中加入：
+在当前 profile 的 `package.json` 中加入：
 
 ```json
 {
@@ -64,21 +56,64 @@ cd C:\Users\<用户名>\.dsh\profiles\desktop
 pnpm install
 ```
 
-`#main` 表示最新提交；`#<commit-sha>` 可固定构建。
+`#main` 表示最新提交；`#<commit-sha>` 可固定构建。使用 npm 的 profile 可执行 `npm install`。
 
-### 从本地目录安装
+### 方式 B：用 `plugin_manager` 从 GitHub 安装（已对照 DSH 插件管理器源码确认支持）
 
-```text
-plugin_manager install_bundle target=D:\plugins\specgate
+调用 DSH 的 `plugin_manager` 工具：
+
+```json
+{
+  "action": "install_bundle",
+  "target": "github:GM-Studio/dsh_sg_plugin#v1.0.0"
+}
 ```
 
-也可以在 profile 中使用 `link:`：
+等价简写：
+
+```text
+plugin_manager install_bundle target=github:GM-Studio/dsh_sg_plugin#v1.0.0
+```
+
+管理器接受 `github:`、`git+https://...`、Git 仓库 URL、`.tgz` URL，或**绝对路径**的本地目录。它会执行 `pnpm add`、选中 bundle 并重载 profile。由于改动会跨会话持久化并安装 Host 代码，DSH 可能要求 `danger-full-access` 授权。
+
+如果提示 `already-installed`，先移除旧 bundle，或改用方式 A。
+
+### 方式 C：本地目录
+
+```text
+plugin_manager action=install_bundle target=D:\plugins\specgate
+```
+
+本地路径必须是绝对路径。也可以在 profile 中使用 `link:`：
 
 ```json
 "dependencies": {
   "dsh-plugin-specgate": "link:D:/plugins/specgate"
 }
 ```
+
+### 方式 D：npm registry（仅当已发布到 npm）
+
+```text
+plugin_manager action=install_bundle target=dsh-plugin-specgate
+```
+
+### 验证安装
+
+重启 DSH，新开会话执行：
+
+```text
+/sg-status
+```
+
+如果命令不存在：
+
+1. 确认 profile 的 `dsh.profile.bundles` 包含 `dsh-plugin-specgate`
+2. 确认依赖能解析（在 profile 目录执行 `pnpm install`）
+3. 重启 DSH
+4. 查看 `~/.dsh/logs` 的加载错误
+5. 确认 DSH `>= 0.2.1-rc.2`、Node `>= 20.19.0`
 
 ### 启动与关闭
 
