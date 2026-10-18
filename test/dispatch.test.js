@@ -5,7 +5,7 @@ import os from 'node:os';
 import path from 'node:path';
 import test from 'node:test';
 
-import { dispatchChange, runDoctorParallel } from '../src/dispatch.js';
+import { createAgentRunner, dispatchChange, runDoctorParallel } from '../src/dispatch.js';
 import { initProject } from '../src/init.js';
 
 function git(root, args) {
@@ -165,4 +165,56 @@ test('parallel doctor merges structured results from independent agents', async 
   assert.equal(result.ok, true);
   assert.ok(result.checks.length >= 4);
   assert.ok(result.checks.some((check) => check.name === 'agent-check'));
+});
+
+test('agent runner inherits the parent model route and reads the child answer', async () => {
+  const root = makeGitProject();
+  let created;
+  const agents = {
+    async create(options) {
+      created = options;
+      return {
+        agent: {
+          followup() {},
+          async whenIdle() {},
+          session: {
+            deriveMessages() {
+              return [
+                {
+                  role: 'assistant',
+                  content: [{ type: 'text', text: 'review result' }],
+                },
+              ];
+            },
+          },
+        },
+        async dispose() {},
+      };
+    },
+  };
+  const ctx = {
+    get(name) {
+      return name === 'agents' ? agents : undefined;
+    },
+  };
+  const runner = createAgentRunner(ctx);
+  const result = await runner({
+    prompt: 'check',
+    cwd: root,
+    role: 'reviewer',
+    parent: {
+      options: { provider: 'deepseek', model: 'deepseek-flash', subagentDepth: 0 },
+      session: {
+        requestHeader() {
+          return { config: { provider: 'deepseek', model: 'deepseek-flash' } };
+        },
+      },
+    },
+  });
+
+  assert.equal(result.ok, true);
+  assert.equal(result.text, 'review result');
+  assert.equal(created.agentOptions.provider, 'deepseek');
+  assert.equal(created.agentOptions.model, 'deepseek-flash');
+  assert.equal(created.agentOptions.subagentDepth, 1);
 });

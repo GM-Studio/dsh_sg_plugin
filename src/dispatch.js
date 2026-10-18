@@ -137,22 +137,54 @@ function taskPrompt({ change, task, cwd, role }) {
  */
 export function createAgentRunner(ctx) {
   let agents;
+  // Resolve through ctx.get() first: a direct `ctx.agents` access on a context
+  // that did not inject the service throws in Cordis instead of returning
+  // undefined, which used to abort sg_doctor before its fallback ran.
   try {
-    agents =
-      ctx?.agents ||
-      (ctx && typeof ctx.get === 'function' ? ctx.get('agents') : undefined);
+    agents = ctx && typeof ctx.get === 'function' ? ctx.get('agents') : undefined;
   } catch {
     agents = undefined;
+  }
+  if (!agents) {
+    try {
+      agents = ctx?.agents;
+    } catch {
+      agents = undefined;
+    }
   }
   if (!agents) return null;
   return async ({ prompt, cwd, role, parent }) => {
     const roleFile = path.join(cwd, '.specgate', 'agents', `sg-agent-${role}.md`);
     const roleText = readIfExists(roleFile) || roleInstruction(role);
+    const parentOptions =
+      parent && typeof parent.options === 'object' && parent.options !== null
+        ? { ...parent.options }
+        : {};
+    const requestConfig =
+      typeof parent?.session?.requestHeader === 'function'
+        ? parent.session.requestHeader()?.config
+        : undefined;
+    const agentOptions = {
+      ...parentOptions,
+      ...(requestConfig
+        ? {
+            provider: requestConfig.provider,
+            model: requestConfig.model,
+            ...(requestConfig.reasoningEffort === undefined
+              ? {}
+              : { reasoningEffort: requestConfig.reasoningEffort }),
+          }
+        : {}),
+      subagentDepth: Number.isSafeInteger(parentOptions.subagentDepth)
+        ? parentOptions.subagentDepth + 1
+        : 1,
+    };
     let handle;
     try {
       handle = await agents.create({
         sessionId: randomUUID(),
         parentAgent: parent,
+        agentOptions,
         meta: {
           cwd,
           ...(parent?.session?.id ? { parentSession: parent.session.id } : {}),

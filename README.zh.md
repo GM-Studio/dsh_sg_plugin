@@ -313,7 +313,7 @@ CONTEXT.md
 - 输出回归：新会话命令写入 `notice`；活跃会话不重复写历史；运行中的 agent 不写消息；失败命令同样有输出；自动化测试覆盖“绝不注入合成 assistant 消息”。
 - 幂等回归：状态命令不重放缓存、追加命令 24h 去重、force 可重复、并发锁互斥、只读命令不落盘。
 - 并行回归：worktree 并行/波次/依赖、重复派发跳过、合并冲突保留分支、非 Git 降级、doctor 并行汇总。
-- 自动化测试：`node --test` → **88 passed / 0 failed**。
+- 自动化测试：`node --test` → **89 passed / 0 failed**。
 
 完整记录见 [verification.md](docs/design/verification.md)。
 

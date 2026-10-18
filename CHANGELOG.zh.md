@@ -12,4 +12,4 @@ SpecGate 首个公开版本，源自 AgentKit47-Qoder。
 - 新增项目级与全局配置（`defaultEnabled`、`enforcement`、`maxConcurrency`、`git`、`language`、`materializeSkills`、`materializeAgents`）。
 - 增加 npm 发布元数据、打包检查、GitHub Actions CI 与 tag 发布流程。
 - 修复 Skill 加载：运行时注册补充必需的 `source` 字段。
-- 88 项测试通过。
+- 89 项测试通过。

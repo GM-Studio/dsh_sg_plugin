@@ -12,4 +12,4 @@ First public SpecGate release, derived from AgentKit47-Qoder.
 - Added project and global configuration (`defaultEnabled`, `enforcement`, `maxConcurrency`, `git`, `language`, `materializeSkills`, `materializeAgents`).
 - Added publish metadata, npm packaging checks, GitHub Actions CI and tag-based release.
 - Fixed Skill loading by adding the required `source` field to every runtime registration.
-- 88 tests passing.
+- 89 tests passing.

@@ -933,4 +933,4 @@ Commands and their corresponding tools both apply; read-only types do not create
 
 ### C15.6 Test Baseline
 
-`node --test` → **88 passed / 0 failed**. New coverage: migration dry-run/force/backup, config precedence, language variant selection, bilingual manifest parity, 30 Skill + 9 Agent identifier parity.
+`node --test` → **89 passed / 0 failed**. New coverage: migration dry-run/force/backup, config precedence, language variant selection, bilingual manifest parity, 30 Skill + 9 Agent identifier parity.
