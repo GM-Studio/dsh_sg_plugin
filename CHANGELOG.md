@@ -9,6 +9,7 @@
 - Requirements enforcement is opt-in via `requirements.enabled`: `sg-change` requires a matching baseline, and `M1` rejects proposals that reference no `REQ-xxx` or an unknown id.
 - Idempotency: re-running `/sg-init` reports an idempotent skip, keeps the phase, and never overwrites `REQ.md`.
 - New `src/v3/notice.js`: the first `/sg-*` command in a session without messages appends a `notice` context message so the result is visible outside the welcome page.
+- `.specgate/init-result.json` is gitignored, so a `/sg-init` command run never leaves an untracked file behind.
 - Fixes: the H0 approval message no longer interpolates the baseline object (`[object Object]`); the H0 gate card reads acceptance criteria from `state.requirements`; `configureSuites` no longer drops the `requirements` block when rewriting the config.
 - 277 tests pass, including 8 new cases in `test/v3/s36.requirements.test.js`.
 

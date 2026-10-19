@@ -10,6 +10,7 @@ export const CHANGE_KEY_PATTERN = /^[a-z0-9][a-z0-9-]{2,63}$/;
 const IGNORE_ENTRIES = [
   '.specgate/state.json',
   '.specgate/run.lock',
+  '.specgate/init-result.json',
   '.specgate/worktrees/',
   '.specgate/evidence/',
   '.specgate/backups/',

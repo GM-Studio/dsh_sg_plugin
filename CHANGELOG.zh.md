@@ -9,6 +9,7 @@
 - 需求校验通过 `requirements.enabled` 按需启用：`sg-change` 要求基线存在且与快照一致，`M1` 拒绝未引用任何 `REQ-xxx` 或引用不存在编号的 proposal。
 - 幂等：重复执行 `/sg-init` 返回“幂等跳过”，保持阶段不变，且绝不覆盖 `REQ.md`。
 - 新增 `src/v3/notice.js`：无消息会话中的第一条 `/sg-*` 命令会追加一条 `notice` 上下文消息，确保结果不停留在欢迎页。
+- `.specgate/init-result.json` 已加入 `.gitignore`，`/sg-init` 命令执行后不再留下未跟踪文件。
 - 修复：H0 批准消息不再把基线对象插值成 `[object Object]`；H0 门控卡从 `state.requirements` 读取验收标准；`configureSuites` 重写配置时不再丢掉 `requirements` 块。
 - 277 个测试通过，其中 `test/v3/s36.requirements.test.js` 新增 8 个用例。
 

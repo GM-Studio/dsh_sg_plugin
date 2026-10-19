@@ -531,7 +531,7 @@ openspec/
 └── specs/<capability>/spec.md   # written only on archive
 ```
 
-`/sg-init` also appends these to `.gitignore`: `.specgate/state.json`, `.specgate/run.lock`, `.specgate/worktrees/`, `.specgate/evidence/`, `.specgate/backups/`, `.specgate/gates/`, `.specgate/runs/`.
+`/sg-init` also appends these to `.gitignore`: `.specgate/state.json`, `.specgate/run.lock`, `.specgate/init-result.json`, `.specgate/worktrees/`, `.specgate/evidence/`, `.specgate/backups/`, `.specgate/gates/`, `.specgate/runs/`.
 
 For a brand-new project, `sg_run` after `H0` additionally writes `openspec/REQ.md`, `openspec/history/v1.0/REQ.md`, `project-context.md`, `AGENTS.md`, `docs/glossary.md`, `docs/adr/0001-initial.md`, `.github/workflows/ci.yml`, and a first sample change. A legacy repo writes only the requirements baseline, its read-only snapshot, and `docs/requirements-scan.md` — no scaffold.
 

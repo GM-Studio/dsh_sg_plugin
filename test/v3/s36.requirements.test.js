@@ -304,7 +304,8 @@ test('老项目：/sg-init 只反推需求不生成脚手架，H0 批准后写�
   const userQuestions = fakeQuestions();
   const { ctx } = setup(root, { userQuestions });
 
-  const init = await callTool(ctx, 'sg_init');
+  const init = await ctx.commandsMap.get('sg-init').handler({ rawInput: '', agent: null });
+  assert.equal(init.kind, 'success');
   assert.match(init.text, /已扫描现有项目/);
   let state = load(root).state;
   assert.equal(state.phase, 'H0_PENDING');

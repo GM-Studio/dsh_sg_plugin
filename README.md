@@ -531,7 +531,7 @@ openspec/
 └── specs/<capability>/spec.md   # 只在归档时写入
 ```
 
-`/sg-init` 还会把以下内容追加进 `.gitignore`：`.specgate/state.json`、`.specgate/run.lock`、`.specgate/worktrees/`、`.specgate/evidence/`、`.specgate/backups/`、`.specgate/gates/`、`.specgate/runs/`。
+`/sg-init` 还会把以下内容追加进 `.gitignore`：`.specgate/state.json`、`.specgate/run.lock`、`.specgate/init-result.json`、`.specgate/worktrees/`、`.specgate/evidence/`、`.specgate/backups/`、`.specgate/gates/`、`.specgate/runs/`。
 
 对全新项目，批准 `H0` 后由 `sg_run` 写入 `openspec/REQ.md`、`openspec/history/v1.0/REQ.md`、`project-context.md`、`AGENTS.md`、`docs/glossary.md`、`docs/adr/0001-initial.md`、`.github/workflows/ci.yml`，以及一个初始示例 change。老项目只写需求基线、只读快照与 `docs/requirements-scan.md`，不生成脚手架。
 
