@@ -13,7 +13,7 @@ const REQUIRED = {
 
 const CONFIGS = {
   'prettier.config.mjs': 'export default { singleQuote: true, semi: true };\n',
-  'eslint.config.js': `import js from '@eslint/js';\nimport prettier from 'eslint-config-prettier';\nexport default [js.configs.recommended, prettier];\n`,
+  'eslint.config.js': 'export default [];\n',
   'ruff.toml': 'line-length = 100\n\n[lint]\nselect = ["E", "F", "I"]\n',
   'mypy.ini': '[mypy]\nignore_missing_imports = True\n',
 };
