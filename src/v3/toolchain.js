@@ -30,6 +30,12 @@ function installCommand(root, packages, managerName) {
   return ['npm', ['install', '-D', ...packages]];
 }
 
+function baseInstallCommand(root, managerName) {
+  if (managerName === 'pnpm') return ['pnpm', ['install', '--frozen-lockfile']];
+  if (managerName === 'yarn') return ['yarn', ['install', '--immutable']];
+  return ['npm', [exists(path.join(root, 'package-lock.json')) ? 'ci' : 'install']];
+}
+
 export function planToolchain(root, worktree = root, stack = null) {
   const pkgFile = path.join(worktree, 'package.json');
   if (!exists(pkgFile)) {
@@ -106,6 +112,35 @@ export function ensureToolchain({
     return { ...plan, generated, installed: true };
   }
   if (plan.packages.length === 0) {
+    if (install && !exists(path.join(worktree, 'node_modules'))) {
+      const [bin, args] = baseInstallCommand(root, managerName || manager(root));
+      const started = Date.now();
+      const run = spawnSync(bin, args, {
+        cwd: worktree,
+        encoding: 'utf8',
+        maxBuffer: 16 * 1024 * 1024,
+        shell: process.platform === 'win32',
+      });
+      appendRun(root, {
+        change,
+        task: task.id,
+        role: 'toolchain',
+        worktree,
+        commit: null,
+        durationMs: Date.now() - started,
+        result: run.status === 0 ? 'pass' : 'fail',
+        error: run.status === 0 ? null : `exit ${run.status}`,
+      });
+      if (run.status !== 0) {
+        return {
+          ok: false,
+          code: 'TOOLCHAIN_INSTALL_FAILED',
+          message: `${bin} ${args.join(' ')} 失败`,
+          stderr: run.stderr,
+        };
+      }
+      return { ...plan, generated, installed: true };
+    }
     appendRun(root, {
       change,
       task: task.id,
