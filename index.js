@@ -1,9 +1,7 @@
-import { registerCommands } from './src/commands.js';
-import { registerGuards } from './src/guards.js';
-import { registerPrompt } from './src/prompt.js';
-import { createRuntime } from './src/runtime.js';
-import { registerSkills } from './src/skills.js';
-import { registerTools } from './src/tools.js';
+import { registerCommands } from './src/v3/commands.js';
+import { registerGuards } from './src/v3/guards.js';
+import { createRuntime } from './src/v3/runtime.js';
+import { registerTools } from './src/v3/tools.js';
 
 export const name = 'specgate';
 export const inject = ['tools', 'agents'];
@@ -28,11 +26,6 @@ export function apply(ctx, config = {}) {
       }
     };
 
-    /**
-     * Registrations behind an optional service must wait for that service.
-     * Registering at apply time with `ctx.get()` silently drops commands,
-     * skills, or prompt sections when the owning plugin loads later.
-     */
     const use = (services, label, register) => {
       safe(label, () => {
         if (typeof ctx.inject === 'function') {
@@ -47,9 +40,7 @@ export function apply(ctx, config = {}) {
 
     safe('tools', () => registerTools(ctx, runtime));
     use(['commands'], 'commands', (child) => registerCommands(child, runtime));
-    use(['systemPrompt'], 'prompt', (child) => registerPrompt(child, runtime));
     safe('guards', () => registerGuards(ctx, runtime));
-    use(['skills'], 'skills', (child) => registerSkills(child, runtime));
 
     return () => {
       for (const dispose of disposers.reverse()) {

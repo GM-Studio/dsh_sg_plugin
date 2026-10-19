@@ -1,11 +1,20 @@
 # SpecGate for DSH
 
+> **v3 MVP (current)**: SpecGate v3 replaces gate-by-gate confirmation with an autonomous loop — AI executes, machine evidence decides, humans approve only **H1 (requirements)**, **H2 (plan)** and **H3 (acceptance)**.
+>
+> - Commands: `/sg-init`, `/sg-change`, `/sg-run`, `/sg-approve`, `/sg-skill`, `/sg-status`, `/sg-abort`
+> - Evidence: orchestrator runs the frozen `test:json` command; tasks only become `[x]` after merge
+> - Scope: one active change, feature/modify/fix/remove, parallel `[P]` tasks, archive with tag
+> - Docs: [`docs/demos/v3-mvp.md`](docs/demos/v3-mvp.md)
+>
+> The v2.1 documentation below is kept for history; the v2 gate runtime and its tests have been removed.
+
 A Host plugin that brings AgentKit47's gated development workflow to DeepSeek Harness (DSH).
 
 - Source: `templates/qoder/` from `AgentKit47-Qoder` (MIT)
 - Target: DSH `0.2.1-rc.2` and above
 - Form: workspace bundle, installed into the current DSH profile; **activated per project on opt-in**
-- Version: `2.1.0`
+- Version: `3.0.0`
 
 ## Capabilities
 
