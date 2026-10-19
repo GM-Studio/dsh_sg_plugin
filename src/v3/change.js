@@ -110,7 +110,8 @@ export const SUITE_KINDS = ['node-test', 'pytest', 'command'];
 /** Normalize configured suites; fall back to the v3.0 single-suite shape. */
 export function readSuites(config) {
   const raw = Array.isArray(config?.suites) ? config.suites : [];
-  const installDefault = config?.install !== false;
+  const installDefault =
+    config?.install === undefined ? null : config.install !== false;
   if (raw.length === 0) {
     const command = Array.isArray(config?.testing?.command) ? config.testing.command : [];
     return [

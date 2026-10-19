@@ -6,6 +6,7 @@ import { runTestCommand } from './testrunner.js';
 import { validateReport } from './report.js';
 import { resolveNode } from './env/node.js';
 import { ensureVenv } from './env/python.js';
+import { installForSuite } from './env/install.js';
 
 /** Frozen suites from state; falls back to the v3.0 single command. */
 export function suitesFromState(state, fallbackCommand) {
@@ -110,6 +111,25 @@ export function runPytestSuite({ suite, worktree, root }) {
       code: venv.code,
     };
   }
+  const installed = installForSuite({
+    root: root || worktree,
+    suite,
+    pythonBin: venv.python,
+    env: {
+      ...process.env,
+      VIRTUAL_ENV: venv.venv,
+      PATH: `${path.dirname(venv.python)}${path.delimiter}${process.env.PATH || ''}`,
+    },
+  });
+  if (!installed.ok) {
+    return {
+      exitCode: -1,
+      stderr: installed.message,
+      report: null,
+      reportError: installed.message,
+      code: 'INSTALL_FAILED',
+    };
+  }
   const cwd = path.join(worktree, suite.cwd || '.');
   const junit = path.join(
     os.tmpdir(),
@@ -165,6 +185,15 @@ export function runOneSuite({
   if (suite.kind === 'pytest') {
     run = runPytestSuite({ suite, worktree, root });
   } else {
+    const installed = installForSuite({ root, suite, env });
+    if (!installed.ok) {
+      return {
+        ok: false,
+        suiteId: suite.id,
+        code: 'INSTALL_FAILED',
+        message: installed.message,
+      };
+    }
     const nodeEnv = resolveNode({ root, suite, env: process.env });
     if (!nodeEnv.ok) {
       return {
