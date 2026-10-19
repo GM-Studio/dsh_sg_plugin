@@ -13,7 +13,11 @@ import { maybeBuildBootstrap } from './bootstrap.js';
 import { startV4Init, summarizeV4Result } from '../v4/init.js';
 import { adoptWorkspace, summarizeAdopt } from '../v4/adopt.js';
 import { readWorkspace } from '../v4/workspace.js';
-import { startWorkspaceChange, summarizeWorkspaceChange } from '../v4/workspace-change.js';
+import {
+  prepareWorkspaceChange,
+  startWorkspaceChange,
+  summarizeWorkspaceChange,
+} from '../v4/workspace-change.js';
 import { digest } from './util/hash.js';
 import { patchState } from './state.js';
 
@@ -213,7 +217,23 @@ export function registerCommands(ctx, runtime) {
             kind: 'error',
             text: '用法：/sg-change <name> [--type feature|modify|fix|remove]',
           };
-        const result = startWorkspaceChange({ root: project.root, name, type });
+        const prepared = await prepareWorkspaceChange({
+          root: project.root,
+          name,
+          type,
+          userQuestions: runtime.service('userQuestions'),
+          agent: inv?.agent,
+          signal: inv?.signal,
+        });
+        if (!prepared.ok) {
+          return { kind: 'error', text: prepared.message || prepared.code };
+        }
+        const result = startWorkspaceChange({
+          root: project.root,
+          name,
+          type,
+          requirements: prepared.requirements,
+        });
         if (!result.ok) return { kind: 'error', text: summarizeWorkspaceChange(result) };
         return { kind: 'success', text: summarizeWorkspaceChange(result) };
       }

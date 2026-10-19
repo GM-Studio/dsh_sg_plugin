@@ -2,6 +2,7 @@ import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { ensureDir, exists, readText, writeText } from '../v3/util/fsx.js';
 import { createChange } from '../v3/change.js';
+import { collectRequirements, answerOf } from '../v3/requirements.js';
 import { load } from '../v3/state.js';
 import { readWorkspace } from './workspace.js';
 
@@ -106,7 +107,84 @@ function selectedSides(workspace, raw) {
  * 根 change：创建 .specgate/changes/<name>.json，并在选定 side 内创建同名 change。
  * Phase 4b：需求盘问与并行门控尚未接入；这里只做 change 编排。
  */
-export function startWorkspaceChange({ root, name, type = 'feature', sides = null }) {
+/**
+ * 先盘问需求并确认；确认前不写任何文件。
+ */
+export async function prepareWorkspaceChange({
+  root,
+  name,
+  type = 'feature',
+  sides = null,
+  userQuestions,
+  agent,
+  signal,
+}) {
+  const workspace = readWorkspace(root);
+  if (!workspace) return { ok: false, code: 'NOT_WORKSPACE', message: '不是 v4 workspace' };
+  const selected = selectedSides(workspace, sides);
+  if (!selected.length) return { ok: false, code: 'NO_SIDES', message: '没有可用的 side' };
+  if (!userQuestions || typeof userQuestions.ask !== 'function') {
+    return {
+      ok: false,
+      code: 'QUESTIONS_UNAVAILABLE',
+      message: '当前宿主没有问答通道；未写入任何文件',
+    };
+  }
+  let requirements;
+  try {
+    requirements = await collectRequirements({ userQuestions, agent, signal });
+  } catch (error) {
+    return { ok: false, code: 'QUESTIONS_UNAVAILABLE', message: String(error?.message || error) };
+  }
+  if (!requirements.functional.length) {
+    return { ok: false, code: 'E_REQ_NO_FUNCTIONAL', message: '没有功能需求；未写入任何文件' };
+  }
+  const summary = [
+    '# SpecGate v4 workspace change 确认',
+    '',
+    'change：' + name + '（' + type + '）',
+    '子模块：' + selected.map((side) => side.path).join('、'),
+    '',
+    '- 功能：' + (requirements.functional.join('；') || '（空）'),
+    '- 非功能：' + (requirements.nonFunctional.join('；') || '（空）'),
+    '- 约束：' + (requirements.constraints.join('；') || '（空）'),
+    '- 验收：' + (requirements.acceptance.join('；') || '（空）'),
+    '',
+    '确认后才会写入 REQ 增量、创建根/子 change。',
+  ].join('\n');
+  let answer;
+  try {
+    answer = await userQuestions.ask({
+      questions: [
+        {
+          id: 'sg-v4-change-confirm',
+          header: 'SpecGate workspace change 确认',
+          question: summary,
+          options: [
+            { label: '确认', description: '写入需求并创建根/子 change' },
+            { label: '取消', description: '不写入任何文件' },
+          ],
+        },
+      ],
+      agent,
+      signal,
+    });
+  } catch (error) {
+    return { ok: false, code: 'CONFIRM_FAILED', message: String(error?.message || error) };
+  }
+  if (answerOf(answer) !== '确认') {
+    return { ok: false, code: 'CANCELLED', message: '用户取消；未写入任何文件' };
+  }
+  return { ok: true, requirements, sides: selected };
+}
+
+export function startWorkspaceChange({
+  root,
+  name,
+  type = 'feature',
+  sides = null,
+  requirements = null,
+}) {
   const workspace = readWorkspace(root);
   if (!workspace) return { ok: false, code: 'NOT_WORKSPACE', message: '不是 v4 workspace' };
   const selected = selectedSides(workspace, sides);
@@ -120,6 +198,21 @@ export function startWorkspaceChange({ root, name, type = 'feature', sides = nul
     const result = createChange(sideRoot, { name, type });
     if (!result.ok) return { ...result, side: side.path };
     created.push(side.path);
+    if (requirements) {
+      const dir = path.join(sideRoot, 'openspec', 'changes', name);
+      writeText(
+        path.join(dir, 'requirements.md'),
+        [
+          '# 需求摘要',
+          '',
+          '- 功能：' + requirements.functional.join('；'),
+          '- 非功能：' + requirements.nonFunctional.join('；'),
+          '- 约束：' + requirements.constraints.join('；'),
+          '- 验收：' + requirements.acceptance.join('；'),
+          '',
+        ].join('\n'),
+      );
+    }
   }
   const dir = path.join(root, '.specgate', 'changes');
   ensureDir(dir);
@@ -132,6 +225,7 @@ export function startWorkspaceChange({ root, name, type = 'feature', sides = nul
         type,
         sides: selected.map((side) => side.path),
         status: 'H1_PENDING',
+        requirements,
         createdAt: new Date().toISOString(),
       },
       null,
