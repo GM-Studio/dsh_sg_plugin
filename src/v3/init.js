@@ -260,11 +260,191 @@ function genericScaffold() {
   };
 }
 
+const UNIT_ADAPTER = `import { spawnSync } from 'node:child_process';
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
+
+const root = process.cwd();
+const out = path.join(os.tmpdir(), \`sg-vitest-\${process.pid}.json\`);
+const run = spawnSync(process.execPath, [
+  path.join(root, 'node_modules', 'vitest', 'vitest.mjs'),
+  'run', '--reporter=json', \`--outputFile=\${out}\`,
+], { encoding: 'utf8', cwd: root });
+const cases = [];
+let failed = run.status !== 0;
+if (fs.existsSync(out)) {
+  const raw = JSON.parse(fs.readFileSync(out, 'utf8'));
+  for (const result of raw.testResults || []) {
+    const file = path.relative(root, result.name).replace(/\\\\/g, '/');
+    for (const assertion of result.assertionResults || []) {
+      const status = assertion.status === 'passed' ? 'pass' : assertion.status === 'failed' ? 'fail' : 'skip';
+      if (status === 'fail') failed = true;
+      const title = assertion.fullName || assertion.title || '';
+      cases.push({
+        id: \`TC-\${String(cases.length + 1).padStart(3, '0')}\`,
+        ac: [...String(title).matchAll(/\\[(AC-\\d{3,})\\]/g)].map((m) => m[1]),
+        status,
+        file,
+      });
+    }
+  }
+}
+fs.writeFileSync(process.env.SG_REPORT, JSON.stringify({ schemaVersion: 1, cases }, null, 2));
+process.exit(failed ? 1 : 0);
+`;
+
+const E2E_ADAPTER = `import { spawnSync } from 'node:child_process';
+import fs from 'node:fs';
+import path from 'node:path';
+
+const root = process.cwd();
+const run = spawnSync(process.execPath, [
+  path.join(root, 'node_modules', '@playwright', 'test', 'cli.js'),
+  'test', '--project=chromium', '--reporter=json',
+], { encoding: 'utf8', cwd: root, maxBuffer: 32 * 1024 * 1024 });
+let raw = { suites: [] };
+try { raw = JSON.parse(run.stdout); } catch { /* keep empty */ }
+const cases = [];
+let failed = run.status !== 0;
+
+function walk(suites) {
+  for (const suite of suites || []) {
+    for (const spec of suite.specs || []) {
+      const results = (spec.tests || []).flatMap((item) => item.results || []);
+      const skipped = results.length > 0 && results.every((item) => item.status === 'skipped');
+      const passed = results.some((item) => item.status === 'passed');
+      const status = skipped ? 'skip' : passed ? 'pass' : 'fail';
+      if (status === 'fail') failed = true;
+      cases.push({
+        id: \`TC-\${String(cases.length + 1).padStart(3, '0')}\`,
+        ac: [...String(spec.title || '').matchAll(/\\[(AC-\\d{3,})\\]/g)].map((m) => m[1]),
+        status,
+        file: spec.file || suite.file || '',
+      });
+    }
+    walk(suite.suites);
+  }
+}
+walk(raw.suites);
+fs.writeFileSync(process.env.SG_REPORT, JSON.stringify({ schemaVersion: 1, cases }, null, 2));
+process.exit(failed ? 1 : 0);
+`;
+
+function prefixFiles(files, prefix) {
+  return Object.fromEntries(Object.entries(files).map(([key, value]) => [`${prefix}${key}`, value]));
+}
+
+function vueScaffold(prefix = '') {
+  return prefixFiles(
+    {
+      'package.json': `${JSON.stringify(
+        {
+          name: 'sg-web',
+          private: true,
+          type: 'module',
+          scripts: {
+            dev: 'vite --port 5173',
+            build: 'vite build',
+            'test:unit': 'vitest run',
+            'test:e2e': 'playwright test',
+          },
+          dependencies: { vue: '^3.5.0' },
+          devDependencies: {
+            '@playwright/test': '^1.50.0',
+            '@vitejs/plugin-vue': '^5.2.0',
+            jsdom: '^25.0.0',
+            vite: '^6.0.0',
+            vitest: '^3.0.0',
+          },
+        },
+        null,
+        2,
+      )}\n`,
+      'index.html': '<div id="app"></div><script type="module" src="/src/main.js"></script>\n',
+      'vite.config.js': `import { defineConfig } from 'vite';
+import vue from '@vitejs/plugin-vue';
+export default defineConfig({ plugins: [vue()], server: { port: 4173, host: '127.0.0.1' } });
+`,
+      'src/main.js': `import { createApp } from 'vue';
+import App from './App.vue';
+createApp(App).mount('#app');
+`,
+      'src/App.vue': `<template>
+  <main>
+    <h1 data-test="app-title">MVP</h1>
+  </main>
+</template>
+`,
+      'src/smoke.test.js': `import { expect, test } from 'vitest';
+test('smoke', () => { expect(1).toBe(1); });
+`,
+      'e2e/home.spec.ts': `import { expect, test } from '@playwright/test';
+test('home title [AC-001]', async ({ page }) => {
+  await page.goto('/');
+  await expect(page.getByTestId('app-title')).toHaveText('MVP');
+});
+`,
+      'playwright.config.ts': `import { defineConfig, devices } from '@playwright/test';
+export default defineConfig({
+  testDir: './e2e',
+  use: { baseURL: 'http://127.0.0.1:4173', testIdAttribute: 'data-test' },
+  webServer: { command: 'npm run dev -- --port 4173 --host 127.0.0.1', url: 'http://127.0.0.1:4173', reuseExistingServer: true },
+  projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],
+});
+`,
+      'sg-test-unit.mjs': UNIT_ADAPTER,
+      'sg-test-e2e.mjs': E2E_ADAPTER,
+    },
+    prefix,
+  );
+}
+
+function reactScaffold(prefix = '') {
+  const files = vueScaffold(prefix);
+  delete files[`${prefix}src/App.vue`];
+  files[`${prefix}src/App.jsx`] = `export default function App() {
+  return <main><h1 data-test="app-title">MVP</h1></main>;
+}
+`;
+  files[`${prefix}src/main.jsx`] =
+    "import React from 'react';\nimport { createRoot } from 'react-dom/client';\nimport App from './App.jsx';\ncreateRoot(document.getElementById('app')).render(<App />);\n";
+  files[`${prefix}index.html`] =
+    '<div id="app"></div><script type="module" src="/src/main.jsx"></script>\n';
+  const pkg = JSON.parse(files[`${prefix}package.json`]);
+  pkg.dependencies = { react: '^19.0.0', 'react-dom': '^19.0.0' };
+  pkg.devDependencies['@vitejs/plugin-react'] = '^4.3.0';
+  files[`${prefix}package.json`] = `${JSON.stringify(pkg, null, 2)}\n`;
+  files[`${prefix}vite.config.js`] = `import { defineConfig } from 'vite';
+import react from '@vitejs/plugin-react';
+export default defineConfig({ plugins: [react()], server: { port: 4173, host: '127.0.0.1' } });
+`;
+  return files;
+}
+
+function monorepoScaffold() {
+  const api = prefixFiles(nodeScaffold(), 'apps/api/');
+  const web = vueScaffold('apps/web/');
+  const rootPkg = {
+    name: 'sg-monorepo',
+    private: true,
+    workspaces: ['apps/*'],
+    scripts: { 'test:e2e': 'npm --workspace apps/web run test:e2e' },
+  };
+  return {
+    ...api,
+    ...web,
+    'package.json': `${JSON.stringify(rootPkg, null, 2)}\n`,
+    'README.md': '# MVP Monorepo\n\napps/api + apps/web。\n',
+  };
+}
+
 export function scaffoldFiles(stack) {
   if (stack === 'python') return pythonScaffold();
-  if (stack === 'generic' || stack === 'vue' || stack === 'react' || stack === 'monorepo') {
-    return { ...genericScaffold(), ...(stack === 'node' ? nodeScaffold() : {}) };
-  }
+  if (stack === 'vue') return { ...genericScaffold(), ...vueScaffold() };
+  if (stack === 'react') return { ...genericScaffold(), ...reactScaffold() };
+  if (stack === 'monorepo') return { ...genericScaffold(), ...monorepoScaffold() };
+  if (stack === 'generic') return genericScaffold();
   return { ...genericScaffold(), ...nodeScaffold() };
 }
 
@@ -368,12 +548,26 @@ export function configureSuites(root, stack) {
       configPath(root),
       `${common}suites:\n  - id: api\n    kind: pytest\n    cwd: "."\n    python: "3.12"\n    pytestArgs: ["-q", "tests"]\n`,
     );
-  } else {
+    return;
+  }
+  if (stack === 'vue' || stack === 'react') {
     writeText(
       configPath(root),
-      `${common}suites:\n  - id: api\n    kind: node-test\n    command: ["node", "sg-test.mjs"]\n    cwd: "."\n`,
+      `${common}suites:\n  - id: web-unit\n    kind: command\n    command: ["node", "sg-test-unit.mjs"]\n    cwd: "."\n  - id: web-e2e\n    kind: command\n    command: ["node", "sg-test-e2e.mjs"]\n    cwd: "."\n`,
     );
+    return;
   }
+  if (stack === 'monorepo') {
+    writeText(
+      configPath(root),
+      `${common}suites:\n  - id: api\n    kind: node-test\n    command: ["node", "sg-test.mjs"]\n    cwd: "apps/api"\n  - id: web-unit\n    kind: command\n    command: ["node", "sg-test-unit.mjs"]\n    cwd: "apps/web"\n  - id: web-e2e\n    kind: command\n    command: ["node", "sg-test-e2e.mjs"]\n    cwd: "apps/web"\n`,
+    );
+    return;
+  }
+  writeText(
+    configPath(root),
+    `${common}suites:\n  - id: api\n    kind: node-test\n    command: ["node", "sg-test.mjs"]\n    cwd: "."\n`,
+  );
 }
 
 export async function initNewProject({ root, userQuestions, agent, signal }) {
