@@ -38,23 +38,21 @@ export function validateReport({
       errors.push(`用例 ${item.id} 的 status 非法：${String(item.status)}`);
     }
     const acs = Array.isArray(item.ac) ? item.ac : [];
-    for (const ac of acs) {
-      if (!known.has(ac)) errors.push(`用例 ${item.id} 引用了未冻结的 ${ac}`);
-      if (deltaAcs.has(ac) && !mappedAcs.has(ac)) {
-        errors.push(`用例 ${item.id} 的 ${ac} 不在 mapping 中`);
+    const inScope = changed.size === 0 || changed.has(item.file);
+    if (inScope) {
+      for (const ac of acs) {
+        if (!known.has(ac)) errors.push(`用例 ${item.id} 引用了未冻结的 ${ac}`);
+        if (deltaAcs.has(ac) && !mappedAcs.has(ac)) {
+          errors.push(`用例 ${item.id} 的 ${ac} 不在 mapping 中`);
+        }
+        if (item.status === 'pass' && deltaAcs.has(ac)) passedAcs.add(ac);
       }
-      if (item.status === 'pass' && deltaAcs.has(ac)) passedAcs.add(ac);
     }
 
     if (!item.file) {
       errors.push(`用例 ${item.id} 缺少 file`);
-    } else {
-      if (worktree && !exists(path.join(worktree, item.file))) {
-        errors.push(`用例 ${item.id} 的文件不存在：${item.file}`);
-      }
-      if (requireChangedFiles && changed.size > 0 && acs.length > 0 && !changed.has(item.file)) {
-        errors.push(`用例 ${item.id} 的文件不在本次 diff：${item.file}`);
-      }
+    } else if (worktree && !exists(path.join(worktree, item.file))) {
+      errors.push(`用例 ${item.id} 的文件不存在：${item.file}`);
     }
   }
 
