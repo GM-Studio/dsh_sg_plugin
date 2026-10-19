@@ -227,7 +227,15 @@ async function continueChild({ runtime, entry, worktree, text, parent }) {
   const subagents = runtime.service('subagents');
   const agents = runtime.service('agents');
   const workingDirectory = runtime.service('workingDirectory');
-  const child = agents?.get?.(entry.childId);
+  let child = agents?.get?.(entry.childId);
+  if (!child) {
+    try {
+      const resolved = await runtime.service('sessionController')?.resolveAgent?.(entry.childId);
+      child = resolved?.agent;
+    } catch {
+      child = undefined;
+    }
+  }
   if (child && workingDirectory?.set) await workingDirectory.set(child, worktree);
   await subagents.sendMessage(parent, entry.childId, [{ type: 'text', text }], {
     signal: new AbortController().signal,
@@ -327,6 +335,7 @@ export async function poolDispatch({
     await acquireChangeSlot(change, config.maxLeasedPerChange);
     try {
       const child = await startChild({ runtime, role, worktree, text, parent });
+      stats.created += 1;
       await child.activation?.dispose?.();
       return { ok: true, text: child.text, agent: { id: child.childId, reused: false, tasks: 1 } };
     } catch (error) {
