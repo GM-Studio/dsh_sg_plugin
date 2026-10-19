@@ -45,5 +45,5 @@ test('有 AC 标记的用例仍要求文件在 diff 中', () => {
     requireChangedFiles: true,
   });
   assert.equal(result.ok, false);
-  assert.match(result.errors.join('; '), /不在本次 diff/);
+  assert.match(result.errors.join('; '), /没有通过的用例/);
 });
