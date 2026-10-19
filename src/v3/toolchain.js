@@ -33,7 +33,7 @@ function installCommand(root, packages, managerName) {
 function baseInstallCommand(root, managerName) {
   if (managerName === 'pnpm') return ['pnpm', ['install', '--frozen-lockfile']];
   if (managerName === 'yarn') return ['yarn', ['install', '--immutable']];
-  return ['npm', [exists(path.join(root, 'package-lock.json')) ? 'ci' : 'install']];
+  return ['npm', ['install']];
 }
 
 export function planToolchain(root, worktree = root, stack = null) {
