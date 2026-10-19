@@ -3,6 +3,7 @@
 // real subagents in between. Not part of the plugin runtime.
 import fs from 'node:fs';
 import path from 'node:path';
+import { spawnSync } from 'node:child_process';
 import { initProject, createChange, readConfig } from '../src/v3/change.js';
 import { load, patchState } from '../src/v3/state.js';
 import {
@@ -17,6 +18,8 @@ import {
   commitChangePackage,
   ensureIntegration,
   ensureTask,
+  worktreePath,
+  removeWorktree,
   diffCheck,
   mergeIntoIntegration,
   headOf,
@@ -210,7 +213,7 @@ switch (command) {
     const task = state.tasks[arg1];
     if (!task) fail(`unknown task ${arg1}`);
     const worktree = path.join(root, '.specgate', 'worktrees', state.change, arg1);
-    const base = task.baseCommit || state.integration?.base;
+    const base = state.type === 'fix' ? task.testHead || task.baseCommit : task.baseCommit;
     const head = headOf(worktree, 'HEAD');
     if (!head || head === base) fail('implementer did not commit');
     const diff = diffCheck({
@@ -249,6 +252,62 @@ switch (command) {
     out({ ok: true, testHead: head, files: diff.entries.map((e) => `${e.status} ${e.path}`) });
     break;
   }
+  case 'test-first': {
+    const state = mustState();
+    const task = state.tasks[arg1];
+    const worktree = path.join(root, '.specgate', 'worktrees', state.change, arg1);
+    const head = headOf(worktree, 'HEAD');
+    if (!head || head === task.baseCommit) fail('tester did not commit repro');
+    const diff = diffCheck({
+      root,
+      branch: `sg/${state.change}/${arg1}`,
+      baseCommit: task.baseCommit,
+      role: 'tester',
+      change: state.change,
+      touched: state.touched,
+    });
+    if (!diff.ok) fail('tester diff rejected', diff);
+    patchState(root, (draft) => {
+      draft.tasks[arg1].testHead = head;
+    });
+    out({ ok: true, testHead: head, files: diff.entries.map((e) => `${e.status} ${e.path}`) });
+    break;
+  }
+  case 'repro': {
+    const state = mustState();
+    const task = state.tasks[arg1];
+    if (!task.testHead) fail('no tester commit recorded');
+    const automation = git(root, ['diff', '--name-only', `${task.baseCommit}..${task.testHead}`])
+      .split('\n')
+      .filter((file) => file.startsWith(`openspec/changes/${state.change}/tests/automation/`));
+    if (automation.length === 0) fail('tester added no automation file');
+    const reproPath = worktreePath(root, state.change, `${arg1}-repro`);
+    git(root, ['worktree', 'add', '--detach', reproPath, task.baseCommit]);
+    try {
+      spawnSync(
+        'npm',
+        ['install', '--no-save', '--no-package-lock', '--ignore-scripts', '--omit=dev'],
+        { cwd: reproPath, stdio: 'ignore', shell: true, windowsHide: true },
+      );
+      git(reproPath, ['checkout', task.testHead, '--', ...automation]);
+      const config = readConfig(root);
+      const commandInfo = discoverCommand(root, config);
+      if (!commandInfo.ok) fail(commandInfo.message, commandInfo);
+      const run = runTestCommand({
+        argv: commandInfo.argv,
+        cwd: path.join(reproPath, commandInfo.cwd || '.'),
+      });
+      if (run.exitCode === 0) fail('repro passed on base — 用例没有鉴别力', { run });
+      const failedCases = (run.report?.cases || []).filter((item) => item.status === 'fail');
+      if (failedCases.length === 0) {
+        fail('repro 在 base 上没有产生失败用例（可能是依赖或环境问题）', { run });
+      }
+      out({ ok: true, exitCode: run.exitCode, failed: failedCases, report: run.report });
+    } finally {
+      removeWorktree(root, reproPath);
+    }
+    break;
+  }
   case 'check': {
     const state = mustState();
     const task = state.tasks[arg1];
@@ -271,6 +330,7 @@ switch (command) {
       changedFiles: git(root, ['diff', '--name-only', `${task.baseCommit}..HEAD`])
         .split('\n')
         .filter(Boolean),
+      requireChangedFiles: state.type !== 'remove',
     });
     out({
       ok: run.exitCode === 0 && validation.ok,
@@ -310,6 +370,7 @@ switch (command) {
       changedFiles: git(root, ['diff', '--name-only', `${task.baseCommit}..HEAD`])
         .split('\n')
         .filter(Boolean),
+      requireChangedFiles: state.type !== 'remove',
     });
     if (!validation.ok) fail('report invalid', validation);
 

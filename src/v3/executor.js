@@ -125,6 +125,7 @@ async function verifyAndFinish({
     mapping: plan.mapping,
     worktree: worktree.path,
     changedFiles: changedFiles(root, base, head),
+    requireChangedFiles: state.type !== 'remove',
   });
   if (!validation.ok) {
     return failure('REPORT_INVALID', validation.errors.join('; '), { validation, run });
