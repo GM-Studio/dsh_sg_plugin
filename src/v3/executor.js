@@ -146,6 +146,17 @@ async function verifyAndFinish({
   const diff = collectDiff({ cwd: worktree.path, base, head });
   const reviewWt = createReviewWorktree({ root, change, commit: head });
   const reviewPath = reviewWt.ok ? reviewWt.path : worktree.path;
+  const reviewToolchain = ensureToolchain({
+    root,
+    worktree: reviewPath,
+    change,
+    task,
+    stack: state.context?.stack || null,
+  });
+  if (!reviewToolchain.ok) {
+    if (reviewWt.ok) removeReviewWorktree({ root, path: reviewWt.path });
+    return failure('TOOLCHAIN_FAILED', reviewToolchain.message, { toolchain: reviewToolchain });
+  }
   const reviewSuite = runTaskSuites({
     root,
     state,
