@@ -186,7 +186,7 @@ async function createEntry({ agents, key, role, worktree, parent, config }) {
     sessionId: randomUUID(),
     parentAgent: parent,
     agentOptions: { ...(parent?.options || {}) },
-    meta: { cwd: worktree, origin: 'specgate-v3' },
+    meta: { cwd: worktree, origin: 'subagent' },
     setup(agentCtx) {
       const systemPrompt = agentCtx.get?.('systemPrompt');
       if (systemPrompt && typeof systemPrompt.context === 'function') {
@@ -291,7 +291,7 @@ async function freshRun({ agents, role, worktree, prompt, skills, parent }) {
     sessionId: randomUUID(),
     parentAgent: parent,
     agentOptions: { ...(parent?.options || {}) },
-    meta: { cwd: worktree, origin: 'specgate-v3' },
+    meta: { cwd: worktree, origin: 'subagent' },
     setup(agentCtx) {
       const systemPrompt = agentCtx.get?.('systemPrompt');
       if (systemPrompt && typeof systemPrompt.context === 'function') {
