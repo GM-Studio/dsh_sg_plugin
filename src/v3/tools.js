@@ -623,6 +623,7 @@ export function registerTools(ctx, runtime) {
               });
               const saved = patchState(project.root, (draft) => {
                 draft.phase = 'H3_PENDING';
+                draft.blockedReason = null;
                 draft.integration = { ...draft.integration, lastGreen: finalCommit };
                 draft.acceptanceHash = digest(acceptance.text);
                 draft.evidence = { headSeq: evidence.seq, headHash: evidence.hash };
@@ -660,6 +661,7 @@ export function registerTools(ctx, runtime) {
               });
               const saved = patchState(project.root, (draft) => {
                 draft.phase = 'DONE';
+                draft.blockedReason = null;
                 draft.evidence = { headSeq: evidence.seq, headHash: evidence.hash };
               });
               if (!saved.ok) return fail(saved.message, saved);

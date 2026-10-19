@@ -5,6 +5,13 @@ import { configPath, parseConfig } from './change.js';
 import { exists, readText } from './util/fsx.js';
 import { appendRun } from './runs.js';
 
+function venvPython(worktree) {
+  const win = path.join(worktree, '.venv', 'Scripts', 'python.exe');
+  if (exists(win)) return win;
+  const posix = path.join(worktree, '.venv', 'bin', 'python');
+  return exists(posix) ? posix : null;
+}
+
 function bin(worktree, name) {
   const base = path.join(worktree, 'node_modules', '.bin', name);
   if (exists(base)) return base;
@@ -22,6 +29,13 @@ function configured(root, stage) {
 
 export function inferStack(worktree) {
   if (
+    exists(path.join(worktree, 'pom.xml')) ||
+    exists(path.join(worktree, 'build.gradle')) ||
+    exists(path.join(worktree, 'build.gradle.kts'))
+  ) {
+    return 'java';
+  }
+  if (
     exists(path.join(worktree, 'pyproject.toml')) ||
     exists(path.join(worktree, 'requirements.txt'))
   ) {
@@ -38,21 +52,47 @@ export function inferStack(worktree) {
   return 'node';
 }
 
+function mavenBase(worktree) {
+  const wrapper = process.platform === 'win32' ? 'mvnw.cmd' : 'mvnw';
+  return exists(path.join(worktree, wrapper)) ? [path.join(worktree, wrapper)] : ['mvn'];
+}
+
+function mavenPlugins(worktree) {
+  const file = path.join(worktree, 'pom.xml');
+  return exists(file) ? readText(file) : '';
+}
+
 export function detectQuality({ root, worktree, stack }) {
   const resolved = stack || inferStack(worktree);
   const stages = {};
-  for (const stage of ['format', 'lint', 'typecheck']) {
+  for (const stage of ['format', 'lint', 'typecheck', 'static']) {
     const override = configured(root, stage);
     if (override) {
       stages[stage] = override;
       continue;
     }
+    if (resolved === 'java' || resolved === 'java-monorepo') {
+      const pom = mavenPlugins(worktree);
+      const base = mavenBase(worktree);
+      if (stage === 'format' && /spotless-maven-plugin/.test(pom)) {
+        stages.format = [...base, '-q', 'spotless:apply'];
+      } else if (stage === 'lint' && /maven-checkstyle-plugin/.test(pom)) {
+        stages.lint = [...base, '-q', 'checkstyle:check'];
+      } else if (stage === 'typecheck') {
+        stages.typecheck = [...base, '-q', '-DskipTests', 'compile'];
+      } else if (
+        stage === 'static' &&
+        (/pmd-maven-plugin/.test(pom) || /spotbugs-maven-plugin/.test(pom))
+      ) {
+        stages.static = [...base, '-q', '-DskipTests', 'verify'];
+      }
+      continue;
+    }
     if (resolved === 'python') {
-      const ruff = bin(worktree, 'ruff');
-      const mypy = bin(worktree, 'mypy');
-      if (stage === 'format' && ruff) stages.format = [ruff, 'format', '.'];
-      if (stage === 'lint' && ruff) stages.lint = [ruff, 'check', '.'];
-      if (stage === 'typecheck' && mypy) stages.typecheck = [mypy, '.'];
+      const python = venvPython(worktree);
+      if (stage === 'format' && python) stages.format = [python, '-m', 'ruff', 'format', '.'];
+      if (stage === 'lint' && python) stages.lint = [python, '-m', 'ruff', 'check', '.'];
+      if (stage === 'typecheck' && python) stages.typecheck = [python, '-m', 'mypy', '.'];
       continue;
     }
     if (stage === 'format') {
