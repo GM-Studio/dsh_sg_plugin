@@ -1,7 +1,7 @@
 import { initProject, createChange } from './change.js';
 import { renderStatus, statusData } from './status.js';
 import { headCommit, isGitRepo } from './util/git.js';
-import { checkM1, computeArtifactHash } from './phase.js';
+import { checkM1, checkM2, checkFrozenH1, computeArtifactHash } from './phase.js';
 import { patchState } from './state.js';
 import { askApproval, issueApproval } from './approvals.js';
 
@@ -152,8 +152,29 @@ export function registerTools(ctx, runtime) {
             if (!m1.ok) return fail(`M1 未通过：\n${formatErrors(m1.errors)}`, m1);
             return ok('M1 通过。请审阅 delta 后执行 /sg-approve H1。', { m1 });
           }
-          case 'PLAN':
-            return ok('方案阶段：写完 design/tasks/cases/mapping 后再次执行 /sg-run（M2 校验在 S3 启用）。');
+          case 'PLAN': {
+            const m2 = checkM2({ root: project.root, state, config: project.config });
+            if (!m2.ok) return fail(`M2 未通过：\n${formatErrors(m2.errors)}`, m2);
+            const saved = patchState(project.root, (draft) => {
+              draft.plan = {
+                designHash: m2.hashes.designHash,
+                casesHash: m2.hashes.casesHash,
+                mappingHash: m2.hashes.mappingHash,
+                touchedHash: m2.hashes.touchedHash,
+                planHash: m2.planHash,
+                cmdHash: m2.cmdHash,
+                argv: m2.command.argv,
+                cwd: m2.command.cwd,
+                approvedAt: null,
+              };
+              draft.phase = 'H2_PENDING';
+            });
+            if (!saved.ok) return fail(`冻结计划失败：${saved.message}`, saved);
+            return ok(
+              `M2 通过，已冻结 planHash ${String(m2.planHash).slice(0, 19)}…。请审阅方案后执行 /sg-approve H2。`,
+              { m2 },
+            );
+          }
           case 'H2_PENDING':
             return ok('等待人执行 /sg-approve H2。');
           case 'EXECUTING':
@@ -198,45 +219,84 @@ export function registerTools(ctx, runtime) {
         if (!state?.change) return fail('没有进行中的 change');
 
         const gate = String(args?.gate || '').toUpperCase();
-        if (gate !== 'H1') {
-          return fail(`${gate} 批准尚未启用（S3/S5）。当前只支持 H1。`);
-        }
-        if (state.phase !== 'H1_PENDING') {
-          return fail(`当前阶段 ${state.phase} 不能批准 H1`);
+        if (!['H1', 'H2'].includes(gate)) {
+          return fail(`${gate} 批准尚未启用（S5 提供 H3）。`);
         }
 
-        const m1 = checkM1({ root: project.root, state });
-        if (!m1.ok) return fail(`M1 未通过，不能批准：\n${formatErrors(m1.errors)}`, m1);
+        if (gate === 'H1') {
+          if (state.phase !== 'H1_PENDING') {
+            return fail(`当前阶段 ${state.phase} 不能批准 H1`);
+          }
 
-        const specsBase = state.baseCommit || 'no-commit';
-        const artifactHash = computeArtifactHash({
-          root: project.root,
-          change: state.change,
-          specsBase,
-        });
+          const m1 = checkM1({ root: project.root, state });
+          if (!m1.ok) return fail(`M1 未通过，不能批准：\n${formatErrors(m1.errors)}`, m1);
+
+          const specsBase = state.baseCommit || 'no-commit';
+          const artifactHash = computeArtifactHash({
+            root: project.root,
+            change: state.change,
+            specsBase,
+          });
+          const asked = await askApproval(runtime, {
+            gate,
+            change: state.change,
+            artifactHash,
+            agent: exec?.agent,
+            signal: exec?.signal,
+          });
+          if (!asked.ok) return fail(asked.message, asked);
+
+          const saved = patchState(project.root, (draft) => {
+            issueApproval(draft, gate, artifactHash, asked.at);
+            draft.baseline = {
+              specsBase,
+              artifactHash,
+              approvedAt: asked.at,
+            };
+            draft.phase = 'PLAN';
+          });
+          if (!saved.ok) return fail(`记录批准失败：${saved.message}`, saved);
+
+          return ok(
+            `H1 已批准，产物指纹 ${artifactHash.slice(0, 19)}…，进入 PLAN。下一步：写 design/tasks/cases/mapping，然后 /sg-run`,
+            { gate, artifactHash, phase: 'PLAN' },
+          );
+        }
+
+        if (state.phase !== 'H2_PENDING') {
+          return fail(`当前阶段 ${state.phase} 不能批准 H2`);
+        }
+        const m2 = checkM2({ root: project.root, state, config: project.config });
+        if (!m2.ok) return fail(`M2 未通过，不能批准：\n${formatErrors(m2.errors)}`, m2);
+        const h1 = checkFrozenH1({ root: project.root, state });
+        if (!h1.ok) return fail(`${h1.message}；请重新走 H1`, h1);
+        if (state.plan?.planHash && state.plan.planHash !== m2.planHash) {
+          return fail('计划在冻结后发生变化，请重新执行 /sg-run 再批准', {
+            frozen: state.plan.planHash,
+            now: m2.planHash,
+          });
+        }
+
         const asked = await askApproval(runtime, {
           gate,
           change: state.change,
-          artifactHash,
+          artifactHash: m2.planHash,
           agent: exec?.agent,
           signal: exec?.signal,
         });
         if (!asked.ok) return fail(asked.message, asked);
 
         const saved = patchState(project.root, (draft) => {
-          issueApproval(draft, gate, artifactHash, asked.at);
-          draft.baseline = {
-            specsBase,
-            artifactHash,
-            approvedAt: asked.at,
-          };
-          draft.phase = 'PLAN';
+          issueApproval(draft, gate, m2.planHash, asked.at);
+          draft.plan.planHash = m2.planHash;
+          draft.plan.approvedAt = asked.at;
+          draft.phase = 'EXECUTING';
         });
         if (!saved.ok) return fail(`记录批准失败：${saved.message}`, saved);
 
         return ok(
-          `H1 已批准，产物指纹 ${artifactHash.slice(0, 19)}…，进入 PLAN。下一步：写 design/tasks/cases/mapping，然后 /sg-run`,
-          { gate, artifactHash, phase: 'PLAN' },
+          `H2 已批准，计划指纹 ${String(m2.planHash).slice(0, 19)}…，进入 EXECUTING。下一步：/sg-run 执行任务`,
+          { gate, planHash: m2.planHash, phase: 'EXECUTING' },
         );
       },
     },

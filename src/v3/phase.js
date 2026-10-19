@@ -1,10 +1,18 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { exists, readText } from './util/fsx.js';
-import { canonicalJson, norm, sha256 } from './util/hash.js';
+import { canonicalJson, digest, norm, sha256 } from './util/hash.js';
 import { git } from './util/git.js';
-import { parseSpec } from './openspec/parser.js';
+import { parseDelta, parseSpec } from './openspec/parser.js';
 import { validateDeltaFiles } from './openspec/validator.js';
+import {
+  discoverCommand,
+  loadPlan,
+  computeCmdHash,
+  computePlanHash,
+  validatePlan,
+} from './plan.js';
+import { checkApprovalHash } from './approvals.js';
 
 const PROPOSAL_SECTIONS = ['问题', '目标', '非目标', '影响面'];
 
@@ -96,4 +104,82 @@ export function computeArtifactHash({ root, change, specsBase }) {
     specsBase: specsBase ?? null,
   };
   return `sha256:${sha256(canonicalJson(payload))}`;
+}
+
+export function collectDeltaIds(root, change) {
+  const acs = new Set();
+  const reqs = new Set();
+  for (const file of collectDelta(root, change)) {
+    const parsed = parseDelta(file.text);
+    for (const kind of ['ADDED', 'MODIFIED', 'REMOVED']) {
+      for (const req of parsed.sections[kind]) {
+        reqs.add(req.id);
+        for (const scenario of req.scenarios) acs.add(scenario.id);
+      }
+    }
+  }
+  return { acs, reqs };
+}
+
+const DESIGN_SECTIONS = ['目标与非目标', '任务图', 'AC 到用例', '风险'];
+
+export function checkM2({ root, state, config }) {
+  if (!state?.change) return { ok: false, errors: ['没有进行中的 change'] };
+  const plan = loadPlan(root, state.change);
+  const errors = [];
+  for (const title of DESIGN_SECTIONS) {
+    if (!new RegExp(`^##\\s*${title}\\s*$`, 'm').test(plan.designText)) {
+      errors.push(`design 缺少「${title}」小节`);
+    }
+  }
+  const { acs, reqs } = collectDeltaIds(root, state.change);
+  const validation = validatePlan({
+    root,
+    change: state.change,
+    plan,
+    deltaAcs: acs,
+    deltaReqs: reqs,
+    config,
+  });
+  errors.push(...validation.errors);
+
+  const planHash = validation.command.ok
+    ? computePlanHash({ plan, command: validation.command })
+    : null;
+  const cmdHash = computeCmdHash(validation.command);
+  return {
+    ok: errors.length === 0,
+    errors,
+    plan,
+    command: validation.command,
+    planHash,
+    cmdHash,
+    hashes: {
+      designHash: digest(plan.designText),
+      casesHash: digest(JSON.stringify(plan.cases)),
+      mappingHash: digest(plan.mapping || {}),
+      touchedHash: digest(plan.touched || {}),
+    },
+  };
+}
+
+export function computePlanHashFor(root, change, config) {
+  const plan = loadPlan(root, change);
+  const command = discoverCommand(root, config);
+  return command.ok ? computePlanHash({ plan, command }) : null;
+}
+
+export function checkFrozenH1({ root, state }) {
+  const specsBase = state?.baseline?.specsBase || state?.baseCommit || 'no-commit';
+  const hash = computeArtifactHash({ root, change: state.change, specsBase });
+  const check = checkApprovalHash(state, 'H1', hash);
+  return check.ok ? { ok: true } : { ok: false, gate: 'H1', message: check.message };
+}
+
+export function checkFrozenH2({ root, state, config }) {
+  if (!state?.change) return { ok: false, gate: 'H2', message: '没有 change' };
+  const hash = computePlanHashFor(root, state.change, config);
+  if (!hash) return { ok: false, gate: 'H2', message: '测试命令不可发现' };
+  const check = checkApprovalHash(state, 'H2', hash);
+  return check.ok ? { ok: true } : { ok: false, gate: 'H2', message: check.message };
 }
