@@ -349,7 +349,7 @@ export async function poolDispatch({
   const agents = runtime.service('agents');
   const workingDirectory = runtime.service('workingDirectory');
 
-  if (role === 'reviewer' || !config.enabled) {
+  if (role === 'reviewer' || !config.enabled || !workingDirectory) {
     await acquireChangeSlot(change, config.maxLeasedPerChange);
     try {
       return await freshRun({ agents, role, worktree, prompt, skills, parent });
