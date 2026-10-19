@@ -56,7 +56,19 @@
   },
   "scripts": {
     "test": "node --test",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "gate": "node scripts/quality-gate.mjs --stage=push",
+    "gate:fix": "node scripts/quality-gate.mjs --stage=all --fix --no-tests",
+    "hooks:install": "node scripts/install-hooks.mjs",
     "pack:check": "npm pack --dry-run",
     "prepublishOnly": "npm test && npm run pack:check"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "eslint": "^10.13.0",
+    "globals": "^17.13.0",
+    "prettier": "^3.9.10"
   }
 }

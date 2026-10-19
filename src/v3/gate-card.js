@@ -214,30 +214,39 @@ function writeDetail(root, gate, text) {
   fs.writeFileSync(path.join(dir, `${gate}.txt`), `${text.join('\n')}\n`, 'utf8');
 }
 
-export function renderGateCard({ gate, root, state, integration }) {
-  let result;
+export function renderGatePages({ gate, root, state, integration }) {
+  let base;
   try {
-    if (gate === 'H0') result = h0(state, false);
-    else if (gate === 'H1') result = h1(root, state, false);
-    else if (gate === 'H2') result = h2(root, state, false);
-    else result = h3(root, state, integration || { path: root, base: state.integration?.base }, false);
+    if (gate === 'H0') base = h0(state, true);
+    else if (gate === 'H1') base = h1(root, state, true);
+    else if (gate === 'H2') base = h2(root, state, true);
+    else base = h3(root, state, integration || { path: root, base: state.integration?.base }, true);
   } catch (error) {
-    result = { card: [`SpecGate ${gate} 审批`, '================', `摘要生成失败：${error.message}`], detail: [] };
+    base = { card: [], detail: [`摘要生成失败：${error.message}`] };
   }
-  const footer = [`详情：.specgate/gates/${gate}.txt`, '----------------', `批准后继续 ${gate === 'H0' ? '初始化' : gate === 'H1' ? 'PLAN' : gate === 'H2' ? 'EXECUTING' : '归档'}`];
-  let text = [...result.card, ...footer].join('\n');
-  if (text.length > MAX_CARD) {
-    text = `${text.slice(0, MAX_CARD - 30)}\n…（已压缩，详情见文件）`;
+  const lines = base.detail
+    .filter((line) => line && !/^=+$/.test(line) && !line.startsWith('SpecGate'))
+    .map((line) => String(line).replace(/\s+/g, ' ').trim());
+  const chunks = Math.max(1, Math.min(3, Math.ceil(lines.length / 3)));
+  const per = Math.max(1, Math.ceil(lines.length / chunks));
+  const pages = [];
+  for (let index = 0; index < lines.length && pages.length < 3; index += per) {
+    const body = lines.slice(index, index + per).join('｜');
+    const label = `${pages.length + 1}/${Math.min(3, Math.ceil(lines.length / per))}`;
+    pages.push({
+      header: `SpecGate ${gate} 审阅 ${pages.length + 1}`,
+      question: `${label} ${body}`.slice(0, 120),
+    });
   }
-  let detailText;
   try {
-    if (gate === 'H0') detailText = h0(state, true).detail;
-    else if (gate === 'H1') detailText = h1(root, state, true).detail;
-    else if (gate === 'H2') detailText = h2(root, state, true).detail;
-    else detailText = h3(root, state, integration || { path: root, base: state.integration?.base }, true).detail;
-    writeDetail(root, gate, detailText);
+    writeDetail(root, gate, base.detail);
   } catch {
     // detail is best-effort
   }
-  return { text, detail: detailText };
+  return { pages, detail: base.detail, text: pages.map((page) => page.question).join(' / ') };
+}
+
+export function renderGateCard({ gate, root, state, integration }) {
+  const { pages, detail, text } = renderGatePages({ gate, root, state, integration });
+  return { text, pages, detail };
 }

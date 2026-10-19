@@ -1,5 +1,11 @@
 # Changelog
 
+## 3.3.1
+
+- Gate dialogs are now split into 2–3 single-line pages (≤120 chars each) because the host merges newlines inside one question.
+- Each info page has a `已读` option; only the last page shows `通过 / 需要修改`.
+- Pages use `1/3` numbering and `｜` field separators; full content stays in `.specgate/gates/Hx.txt`.
+
 ## 3.3.0
 
 - Gate dialogs now render plain-text compact cards (no Markdown headings/tables), capped at 1200 characters, with full details in `.specgate/gates/H0..H3.txt`.

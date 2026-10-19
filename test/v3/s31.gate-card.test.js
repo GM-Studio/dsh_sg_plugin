@@ -41,7 +41,7 @@ test('H1 卡片为纯文本且 ≤1200 字符，并写详情文件', () => {
   assert.ok(!/^#/m.test(text));
   assert.ok(!text.includes('|'));
   assert.ok(!text.includes('```'));
-  assert.match(text, /SpecGate H1 审批/);
+  assert.match(text, /1\/3/);
   assert.match(text, /AC-001/);
   assert.ok(fs.existsSync(path.join(root, '.specgate', 'gates', 'H1.txt')));
 });

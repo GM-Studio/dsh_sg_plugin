@@ -4,10 +4,16 @@ import { headCommit, isGitRepo } from './util/git.js';
 import { checkM1, checkM2, checkFrozenH1, computeArtifactHash, collectKnownAcs } from './phase.js';
 import { patchState } from './state.js';
 import { askApproval, issueApproval, checkApprovalHash } from './approvals.js';
-import { renderGateCard } from './gate-card.js';
-import { commitChangePackage, ensureIntegration, git, headOf, integrationBranch } from './worktrees.js';
+import { renderGatePages } from './gate-card.js';
+import {
+  commitChangePackage,
+  ensureIntegration,
+  git,
+  headOf,
+  integrationBranch,
+} from './worktrees.js';
 import { createDispatcher } from './dispatch.js';
-import { executeTask, pickNextTask, revertWave } from './executor.js';
+import { executeTask, revertWave } from './executor.js';
 import { readyBatch } from './scheduler.js';
 import { discoverCommand, loadPlan } from './plan.js';
 import { runAllSuites, suggestSuites, persistRuntime } from './suites.js';
@@ -17,7 +23,7 @@ import { generateAcceptance } from './acceptance.js';
 import { verifyEvidence, appendEvidence } from './evidence.js';
 import { digest } from './util/hash.js';
 import { archiveChange, nextTag } from './archive.js';
-import { loadSkill, resolveSkills, suggestForPhase } from './skills.js';
+import { loadSkill, suggestForPhase } from './skills.js';
 import { acquire, release } from './lock.js';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -91,19 +97,23 @@ export function registerTools(ctx, runtime) {
         const root = runtime.getCwd(exec?.agent);
         const result = initProject(root);
         if (!result.ok) return fail(`初始化失败：${result.message}`, result);
-        const changed = result.created.length > 0 ? `新建 ${result.created.length} 项` : '已完整，幂等跳过';
+        const changed =
+          result.created.length > 0 ? `新建 ${result.created.length} 项` : '已完整，幂等跳过';
         const suggestions = suggestSuites(root);
         const hint = suggestions.length
           ? `\n检测到可能的套件（仅建议，未写入配置）：${suggestions
               .map((suite) => `${suite.id}(${suite.kind}@${suite.cwd})`)
               .join('、')}`
           : '';
-        return ok(`SpecGate v3 已初始化（${changed}）。下一步：/sg-change <name> --type feature${hint}`, {
-          root: result.root,
-          created: result.created,
-          ignored: result.ignored,
-          suggestions,
-        });
+        return ok(
+          `SpecGate v3 已初始化（${changed}）。下一步：/sg-change <name> --type feature${hint}`,
+          {
+            root: result.root,
+            created: result.created,
+            ignored: result.ignored,
+            suggestions,
+          },
+        );
       },
     },
     {
@@ -206,304 +216,317 @@ export function registerTools(ctx, runtime) {
 
         try {
           switch (state.phase) {
-          case 'IDLE':
-            return ok('当前没有进行中的 change。先执行 /sg-change <name> --type <type>。');
-          case 'H0_PENDING': {
-            if (!state.h0?.hash) return fail('缺少 H0 上下文哈希');
-            const frozen = checkApprovalHash(state, 'H0', state.h0.hash);
-            if (!frozen.ok) return fail('H0 尚未批准或上下文已变化，请先 /sg-approve H0', frozen);
-            const finished = await finishInitProject({ root: project.root, state });
-            if (!finished.ok) return fail(`初始化失败：${finished.message}`, finished);
-            return ok('H0 已批准，已生成脚手架与首个 change，进入 H1_PENDING。下一步 /sg-run 校验 M1。', finished);
-          }
-          case 'H1_PENDING': {
-            const m1 = checkM1({ root: project.root, state });
-            if (!m1.ok) return fail(`M1 未通过：\n${formatErrors(m1.errors)}`, m1);
-            const suggested = suggestForPhase('H1_PENDING');
-            patchState(project.root, (draft) => {
-              draft.skills.suggested = suggested;
-            });
-            return ok(
-              `M1 通过。请审阅 delta 后执行 /sg-approve H1。\n建议加载技能：${suggested.join('、')}`,
-              { m1, suggested },
-            );
-          }
-          case 'PLAN': {
-            const m2 = checkM2({ root: project.root, state, config: project.config });
-            if (!m2.ok) return fail(`M2 未通过：\n${formatErrors(m2.errors)}`, m2);
-            const saved = patchState(project.root, (draft) => {
-              draft.plan = {
-                designHash: m2.hashes.designHash,
-                casesHash: m2.hashes.casesHash,
-                mappingHash: m2.hashes.mappingHash,
-                touchedHash: m2.hashes.touchedHash,
-                planHash: m2.planHash,
-                cmdHash: m2.cmdHash,
-                argv: m2.command.argv,
-                cwd: m2.command.cwd,
-                suites: m2.suites.map((suite) => ({
-                  id: suite.id,
-                  kind: suite.kind,
-                  argv: suite.argv,
-                  cwd: suite.cwd,
-                  pytestArgs: suite.pytestArgs,
-                  python: suite.python,
-                  node: suite.node,
-                  install: suite.install,
-                  cmdHash: suite.cmdHash,
-                })),
-                approvedAt: null,
-              };
-              draft.tasks = Object.fromEntries(
-                m2.plan.tasks.map((task) => [
-                  task.id,
-                  {
-                    id: task.id,
-                    title: task.title,
-                    ac: task.ac,
-                    deps: task.deps,
-                    parallel: task.parallel,
-                    status: 'pending',
-                    attempts: 0,
-                    commit: null,
-                    review: null,
-                    evidence: [],
-                  },
-                ]),
+            case 'IDLE':
+              return ok('当前没有进行中的 change。先执行 /sg-change <name> --type <type>。');
+            case 'H0_PENDING': {
+              if (!state.h0?.hash) return fail('缺少 H0 上下文哈希');
+              const frozen = checkApprovalHash(state, 'H0', state.h0.hash);
+              if (!frozen.ok) return fail('H0 尚未批准或上下文已变化，请先 /sg-approve H0', frozen);
+              const finished = await finishInitProject({ root: project.root, state });
+              if (!finished.ok) return fail(`初始化失败：${finished.message}`, finished);
+              return ok(
+                'H0 已批准，已生成脚手架与首个 change，进入 H1_PENDING。下一步 /sg-run 校验 M1。',
+                finished,
               );
-              draft.touched = {
-                modify: m2.plan.touched?.modify || [],
-                delete: m2.plan.touched?.delete || [],
-                bootstrap: m2.plan.touched?.bootstrap || [],
-              };
-              draft.phase = 'H2_PENDING';
-            });
-            if (!saved.ok) return fail(`冻结计划失败：${saved.message}`, saved);
-            const suggested = suggestForPhase('PLAN');
-            return ok(
-              `M2 通过，已冻结 planHash ${String(m2.planHash).slice(0, 19)}…。请审阅方案后执行 /sg-approve H2。\n建议加载技能：${suggested.join('、')}`,
-              { m2, suggested },
-            );
-          }
-          case 'H2_PENDING':
-            return ok('等待人执行 /sg-approve H2。');
-          case 'EXECUTING': {
-            const maxParallel = Math.max(1, Math.min(4, Number(project.config?.maxParallel) || 2));
-            const info = readyBatch(state, maxParallel);
-            if (info.done) {
-              const moved = patchState(project.root, (draft) => {
-                draft.phase = 'INTEGRATING';
+            }
+            case 'H1_PENDING': {
+              const m1 = checkM1({ root: project.root, state });
+              if (!m1.ok) return fail(`M1 未通过：\n${formatErrors(m1.errors)}`, m1);
+              const suggested = suggestForPhase('H1_PENDING');
+              patchState(project.root, (draft) => {
+                draft.skills.suggested = suggested;
               });
-              if (!moved.ok) return fail(moved.message, moved);
-              return ok('所有任务已合并，进入 INTEGRATING。请再次 /sg-run 执行全量回归。');
+              return ok(
+                `M1 通过。请审阅 delta 后执行 /sg-approve H1。\n建议加载技能：${suggested.join('、')}`,
+                { m1, suggested },
+              );
             }
-            if (info.batch.length === 0) {
-              return fail('没有可执行任务：依赖未满足或任务已阻塞');
+            case 'PLAN': {
+              const m2 = checkM2({ root: project.root, state, config: project.config });
+              if (!m2.ok) return fail(`M2 未通过：\n${formatErrors(m2.errors)}`, m2);
+              const saved = patchState(project.root, (draft) => {
+                draft.plan = {
+                  designHash: m2.hashes.designHash,
+                  casesHash: m2.hashes.casesHash,
+                  mappingHash: m2.hashes.mappingHash,
+                  touchedHash: m2.hashes.touchedHash,
+                  planHash: m2.planHash,
+                  cmdHash: m2.cmdHash,
+                  argv: m2.command.argv,
+                  cwd: m2.command.cwd,
+                  suites: m2.suites.map((suite) => ({
+                    id: suite.id,
+                    kind: suite.kind,
+                    argv: suite.argv,
+                    cwd: suite.cwd,
+                    pytestArgs: suite.pytestArgs,
+                    python: suite.python,
+                    node: suite.node,
+                    install: suite.install,
+                    cmdHash: suite.cmdHash,
+                  })),
+                  approvedAt: null,
+                };
+                draft.tasks = Object.fromEntries(
+                  m2.plan.tasks.map((task) => [
+                    task.id,
+                    {
+                      id: task.id,
+                      title: task.title,
+                      ac: task.ac,
+                      deps: task.deps,
+                      parallel: task.parallel,
+                      status: 'pending',
+                      attempts: 0,
+                      commit: null,
+                      review: null,
+                      evidence: [],
+                    },
+                  ]),
+                );
+                draft.touched = {
+                  modify: m2.plan.touched?.modify || [],
+                  delete: m2.plan.touched?.delete || [],
+                  bootstrap: m2.plan.touched?.bootstrap || [],
+                };
+                draft.phase = 'H2_PENDING';
+              });
+              if (!saved.ok) return fail(`冻结计划失败：${saved.message}`, saved);
+              const suggested = suggestForPhase('PLAN');
+              return ok(
+                `M2 通过，已冻结 planHash ${String(m2.planHash).slice(0, 19)}…。请审阅方案后执行 /sg-approve H2。\n建议加载技能：${suggested.join('、')}`,
+                { m2, suggested },
+              );
             }
-
-            const dispatcher = createDispatcher(runtime);
-            const results = await Promise.all(
-              info.batch.map(async (taskId) => {
-                const task = state.tasks[taskId];
-                const result = await executeTask({
-                  root: project.root,
-                  state,
-                  task,
-                  dispatcher,
-                  config: project.config,
-                  parent: exec?.agent,
+            case 'H2_PENDING':
+              return ok('等待人执行 /sg-approve H2。');
+            case 'EXECUTING': {
+              const maxParallel = Math.max(
+                1,
+                Math.min(4, Number(project.config?.maxParallel) || 2),
+              );
+              const info = readyBatch(state, maxParallel);
+              if (info.done) {
+                const moved = patchState(project.root, (draft) => {
+                  draft.phase = 'INTEGRATING';
                 });
-                return { taskId, result, attempts: (task.attempts || 0) + 1 };
-              }),
-            );
+                if (!moved.ok) return fail(moved.message, moved);
+                return ok('所有任务已合并，进入 INTEGRATING。请再次 /sg-run 执行全量回归。');
+              }
+              if (info.batch.length === 0) {
+                return fail('没有可执行任务：依赖未满足或任务已阻塞');
+              }
 
-            let lastError = null;
-            const saved = patchState(project.root, (draft) => {
-              for (const { taskId, result, attempts } of results) {
-                const item = draft.tasks[taskId];
-                if (result.ok) {
-                  item.status = 'merged';
-                  item.attempts = attempts;
-                  item.commit = result.commit;
-                  draft.evidence = {
-                    headSeq: result.evidence.seq,
-                    headHash: result.evidence.hash,
-                  };
-                } else {
-                  const isBlocked = attempts >= 3;
-                  item.status = isBlocked ? 'blocked' : 'failed';
-                  item.attempts = attempts;
-                  lastError = `任务 ${taskId} 第 ${attempts} 次失败：${result.message}`;
-                  if (isBlocked) {
-                    draft.phase = 'BLOCKED';
-                    draft.resumePhase = 'EXECUTING';
-                    draft.blockedReason = lastError;
+              const dispatcher = createDispatcher(runtime);
+              const results = await Promise.all(
+                info.batch.map(async (taskId) => {
+                  const task = state.tasks[taskId];
+                  const result = await executeTask({
+                    root: project.root,
+                    state,
+                    task,
+                    dispatcher,
+                    config: project.config,
+                    parent: exec?.agent,
+                  });
+                  return { taskId, result, attempts: (task.attempts || 0) + 1 };
+                }),
+              );
+
+              let lastError = null;
+              const saved = patchState(project.root, (draft) => {
+                for (const { taskId, result, attempts } of results) {
+                  const item = draft.tasks[taskId];
+                  if (result.ok) {
+                    item.status = 'merged';
+                    item.attempts = attempts;
+                    item.commit = result.commit;
+                    draft.evidence = {
+                      headSeq: result.evidence.seq,
+                      headHash: result.evidence.hash,
+                    };
+                  } else {
+                    const isBlocked = attempts >= 3;
+                    item.status = isBlocked ? 'blocked' : 'failed';
+                    item.attempts = attempts;
+                    lastError = `任务 ${taskId} 第 ${attempts} 次失败：${result.message}`;
+                    if (isBlocked) {
+                      draft.phase = 'BLOCKED';
+                      draft.resumePhase = 'EXECUTING';
+                      draft.blockedReason = lastError;
+                    }
                   }
                 }
-              }
-            });
-            if (!saved.ok) return fail(saved.message, saved);
-            if (lastError) return fail(lastError, { results });
+              });
+              if (!saved.ok) return fail(saved.message, saved);
+              if (lastError) return fail(lastError, { results });
 
-            const mergedIds = results.map((item) => `${item.taskId}@${String(item.result.commit).slice(0, 8)}`);
-            return ok(`已合并：${mergedIds.join('、')}。继续 /sg-run 推进。`, {
-              results: results.map((item) => ({ taskId: item.taskId, commit: item.result.commit })),
-            });
-          }
-          case 'INTEGRATING': {
-            const change = state.change;
-            const integration = ensureIntegration(project.root, change, state.integration?.base);
-            if (!integration.ok) return fail(integration.message, integration);
+              const mergedIds = results.map(
+                (item) => `${item.taskId}@${String(item.result.commit).slice(0, 8)}`,
+              );
+              return ok(`已合并：${mergedIds.join('、')}。继续 /sg-run 推进。`, {
+                results: results.map((item) => ({
+                  taskId: item.taskId,
+                  commit: item.result.commit,
+                })),
+              });
+            }
+            case 'INTEGRATING': {
+              const change = state.change;
+              const integration = ensureIntegration(project.root, change, state.integration?.base);
+              if (!integration.ok) return fail(integration.message, integration);
 
-            const command = discoverCommand(project.root, project.config);
-            const plan = loadPlan(project.root, change);
-            const { deltaAcs, knownAcs } = collectKnownAcs({ root: project.root, state, change });
-            const base = state.integration?.base;
-            const changedFiles = base
-              ? git(integration.path, ['diff', '--name-only', `${base}..HEAD`])
-                  .split('\n')
-                  .filter(Boolean)
-              : [];
-            const commit = headOf(integration.path, 'HEAD');
+              const command = discoverCommand(project.root, project.config);
+              const plan = loadPlan(project.root, change);
+              const { deltaAcs, knownAcs } = collectKnownAcs({ root: project.root, state, change });
+              const base = state.integration?.base;
+              const changedFiles = base
+                ? git(integration.path, ['diff', '--name-only', `${base}..HEAD`])
+                    .split('\n')
+                    .filter(Boolean)
+                : [];
+              const commit = headOf(integration.path, 'HEAD');
 
-            const suitesResult = runAllSuites({
-              root: project.root,
-              state,
-              worktree: integration.path,
-              plan,
-              knownAcs,
-              changedFiles,
-              fallbackCommand: command.ok ? command : null,
-            });
-            persistRuntime(project.root, suitesResult.results);
-            if (!suitesResult.ok) {
-              const reverted = revertWave({
+              const suitesResult = runAllSuites({
                 root: project.root,
                 state,
-                waveStart: state.integration?.base,
+                worktree: integration.path,
+                plan,
+                knownAcs,
+                changedFiles,
+                fallbackCommand: command.ok ? command : null,
               });
-              patchState(project.root, (draft) => {
-                for (const id of reverted.reverted || []) {
-                  draft.tasks[id].status = 'reverted';
-                  draft.tasks[id].attempts = (draft.tasks[id].attempts || 0) + 1;
-                }
-                draft.phase = 'EXECUTING';
-                draft.blockedReason = `集成回归失败：suite ${suitesResult.failedSuite} ${suitesResult.message}`;
+              persistRuntime(project.root, suitesResult.results);
+              if (!suitesResult.ok) {
+                const reverted = revertWave({
+                  root: project.root,
+                  state,
+                  waveStart: state.integration?.base,
+                });
+                patchState(project.root, (draft) => {
+                  for (const id of reverted.reverted || []) {
+                    draft.tasks[id].status = 'reverted';
+                    draft.tasks[id].attempts = (draft.tasks[id].attempts || 0) + 1;
+                  }
+                  draft.phase = 'EXECUTING';
+                  draft.blockedReason = `集成回归失败：suite ${suitesResult.failedSuite} ${suitesResult.message}`;
+                });
+                return fail(
+                  `集成回归失败（suite ${suitesResult.failedSuite}）：${suitesResult.message}，已回退到波前：${(reverted.reverted || []).join('、')}`,
+                  { suitesResult, reverted },
+                );
+              }
+
+              const combinedReport = {
+                schemaVersion: 1,
+                cases: suitesResult.results.flatMap((item) => item.report?.cases || []),
+              };
+
+              const headEvidence = verifyEvidence(project.root, change);
+              const acceptance = generateAcceptance({
+                change,
+                type: state.type,
+                changeKey: state.changeKey || null,
+                acs: deltaAcs,
+                report: combinedReport,
+                exitCode: 0,
+                evidence: headEvidence,
+                commit,
+                validator: 'builtin',
               });
-              return fail(
-                `集成回归失败（suite ${suitesResult.failedSuite}）：${suitesResult.message}，已回退到波前：${(reverted.reverted || []).join('、')}`,
-                { suitesResult, reverted },
+              const acceptanceFile = path.join(
+                integration.path,
+                'openspec',
+                'changes',
+                change,
+                'acceptance.md',
+              );
+              fs.mkdirSync(path.dirname(acceptanceFile), { recursive: true });
+              fs.writeFileSync(acceptanceFile, acceptance.text, 'utf8');
+              git(integration.path, ['add', 'openspec/changes']);
+              git(integration.path, ['commit', '-q', '-m', `acceptance(${change}): 生成验收报告`]);
+              const finalCommit = headOf(integration.path, 'HEAD');
+
+              const evidence = appendEvidence(project.root, change, {
+                event: 'acceptance',
+                decision: 'pass',
+                refs: { commit: finalCommit, validator: 'builtin' },
+              });
+              const saved = patchState(project.root, (draft) => {
+                draft.phase = 'H3_PENDING';
+                draft.integration = { ...draft.integration, lastGreen: finalCommit };
+                draft.acceptanceHash = digest(acceptance.text);
+                draft.evidence = { headSeq: evidence.seq, headHash: evidence.hash };
+              });
+              if (!saved.ok) return fail(saved.message, saved);
+              return ok(
+                `集成回归通过，验收报告已生成（${deltaAcs.size} 个 AC），integration commit ${String(finalCommit).slice(0, 8)}。请审阅后执行 /sg-approve H3。`,
+                { acceptance: acceptance.rows, commit: finalCommit },
               );
             }
-
-            const combinedReport = {
-              schemaVersion: 1,
-              cases: suitesResult.results.flatMap((item) => item.report?.cases || []),
-            };
-
-            const headEvidence = verifyEvidence(project.root, change);
-            const acceptance = generateAcceptance({
-              change,
-              type: state.type,
-              changeKey: state.changeKey || null,
-              acs: deltaAcs,
-              report: combinedReport,
-              exitCode: 0,
-              evidence: headEvidence,
-              commit,
-              validator: 'builtin',
-            });
-            const acceptanceFile = path.join(
-              integration.path,
-              'openspec',
-              'changes',
-              change,
-              'acceptance.md',
-            );
-            fs.mkdirSync(path.dirname(acceptanceFile), { recursive: true });
-            fs.writeFileSync(acceptanceFile, acceptance.text, 'utf8');
-            git(integration.path, ['add', 'openspec/changes']);
-            git(integration.path, ['commit', '-q', '-m', `acceptance(${change}): 生成验收报告`]);
-            const finalCommit = headOf(integration.path, 'HEAD');
-
-            const evidence = appendEvidence(project.root, change, {
-              event: 'acceptance',
-              decision: 'pass',
-              refs: { commit: finalCommit, validator: 'builtin' },
-            });
-            const saved = patchState(project.root, (draft) => {
-              draft.phase = 'H3_PENDING';
-              draft.integration = { ...draft.integration, lastGreen: finalCommit };
-              draft.acceptanceHash = digest(acceptance.text);
-              draft.evidence = { headSeq: evidence.seq, headHash: evidence.hash };
-            });
-            if (!saved.ok) return fail(saved.message, saved);
-            return ok(
-              `集成回归通过，验收报告已生成（${deltaAcs.size} 个 AC），integration commit ${String(finalCommit).slice(0, 8)}。请审阅后执行 /sg-approve H3。`,
-              { acceptance: acceptance.rows, commit: finalCommit },
-            );
-          }
-          case 'H3_PENDING':
-            return ok('等待人执行 /sg-approve H3。');
-          case 'ARCHIVING': {
-            const tag = nextTag(project.root);
-            const result = archiveChange({
-              root: project.root,
-              change: state.change,
-              integrationBranch: state.integration?.branch,
-              tag,
-              evidenceHead: state.evidence?.headHash,
-            });
-            if (!result.ok) {
-              patchState(project.root, (draft) => {
-                draft.phase = 'BLOCKED';
-                draft.resumePhase = 'ARCHIVING';
-                draft.blockedReason = `归档失败：${result.message}`;
+            case 'H3_PENDING':
+              return ok('等待人执行 /sg-approve H3。');
+            case 'ARCHIVING': {
+              const tag = nextTag(project.root);
+              const result = archiveChange({
+                root: project.root,
+                change: state.change,
+                integrationBranch: state.integration?.branch,
+                tag,
+                evidenceHead: state.evidence?.headHash,
               });
-              return fail(`归档失败：${result.message}`, result);
+              if (!result.ok) {
+                patchState(project.root, (draft) => {
+                  draft.phase = 'BLOCKED';
+                  draft.resumePhase = 'ARCHIVING';
+                  draft.blockedReason = `归档失败：${result.message}`;
+                });
+                return fail(`归档失败：${result.message}`, result);
+              }
+              await poolDisposeChange(project.root, state.change);
+              const evidence = appendEvidence(project.root, state.change, {
+                event: 'archive',
+                decision: 'done',
+                refs: { tag: result.tag, commit: headOf(project.root, 'HEAD') },
+              });
+              const saved = patchState(project.root, (draft) => {
+                draft.phase = 'DONE';
+                draft.evidence = { headSeq: evidence.seq, headHash: evidence.hash };
+              });
+              if (!saved.ok) return fail(saved.message, saved);
+              return ok(
+                `归档完成：tag ${result.tag}，specs 已更新，change 已移动到 openspec/changes/archive/。`,
+                result,
+              );
             }
-            await poolDisposeChange(project.root, state.change);
-            const evidence = appendEvidence(project.root, state.change, {
-              event: 'archive',
-              decision: 'done',
-              refs: { tag: result.tag, commit: headOf(project.root, 'HEAD') },
-            });
-            const saved = patchState(project.root, (draft) => {
-              draft.phase = 'DONE';
-              draft.evidence = { headSeq: evidence.seq, headHash: evidence.hash };
-            });
-            if (!saved.ok) return fail(saved.message, saved);
-            return ok(
-              `归档完成：tag ${result.tag}，specs 已更新，change 已移动到 openspec/changes/archive/。`,
-              result,
-            );
-          }
-          case 'BLOCKED': {
-            if (!args?.retry) {
-              return ok(`已阻塞：${state.blockedReason || '未知原因'}。处理后可执行 /sg-run --retry。`);
-            }
-            const resumePhase = state.resumePhase || 'EXECUTING';
-            const saved = patchState(project.root, (draft) => {
-              draft.phase = resumePhase;
-              draft.blockedReason = null;
-              if (resumePhase === 'EXECUTING') {
-                for (const item of Object.values(draft.tasks || {})) {
-                  if (item.status === 'blocked' || item.status === 'failed') {
-                    item.status = 'pending';
-                    item.attempts = 0;
+            case 'BLOCKED': {
+              if (!args?.retry) {
+                return ok(
+                  `已阻塞：${state.blockedReason || '未知原因'}。处理后可执行 /sg-run --retry。`,
+                );
+              }
+              const resumePhase = state.resumePhase || 'EXECUTING';
+              const saved = patchState(project.root, (draft) => {
+                draft.phase = resumePhase;
+                draft.blockedReason = null;
+                if (resumePhase === 'EXECUTING') {
+                  for (const item of Object.values(draft.tasks || {})) {
+                    if (item.status === 'blocked' || item.status === 'failed') {
+                      item.status = 'pending';
+                      item.attempts = 0;
+                    }
                   }
                 }
-              }
-            });
-            if (!saved.ok) return fail(saved.message, saved);
-            return ok(`已从 BLOCKED 恢复到 ${resumePhase}，继续 /sg-run。`);
-          }
-          case 'DONE':
-            return ok('change 已完成。');
-          case 'ABORTED':
-            return ok('change 已中止。');
-          default:
-            return fail(`未知阶段：${state.phase}`);
+              });
+              if (!saved.ok) return fail(saved.message, saved);
+              return ok(`已从 BLOCKED 恢复到 ${resumePhase}，继续 /sg-run。`);
+            }
+            case 'DONE':
+              return ok('change 已完成。');
+            case 'ABORTED':
+              return ok('change 已中止。');
+            default:
+              return fail(`未知阶段：${state.phase}`);
           }
         } finally {
           release(project.root);
@@ -546,7 +569,7 @@ export function registerTools(ctx, runtime) {
             artifactHash: state.h0.hash,
             agent: exec?.agent,
             signal: exec?.signal,
-            summary: renderGateCard({ gate: 'H0', root: project.root, state }).text,
+            pages: renderGatePages({ gate: 'H0', root: project.root, state }).pages,
           });
           if (!asked.ok) return fail(asked.message, asked);
           const saved = patchState(project.root, (draft) => {
@@ -595,7 +618,7 @@ export function registerTools(ctx, runtime) {
             artifactHash: hash,
             agent: exec?.agent,
             signal: exec?.signal,
-            summary: renderGateCard({ gate, root: project.root, state, integration }).text,
+            pages: renderGatePages({ gate, root: project.root, state, integration }).pages,
           });
           if (!asked.ok) return fail(asked.message, asked);
 
@@ -631,7 +654,7 @@ export function registerTools(ctx, runtime) {
             artifactHash,
             agent: exec?.agent,
             signal: exec?.signal,
-            summary: renderGateCard({ gate, root: project.root, state }).text,
+            pages: renderGatePages({ gate, root: project.root, state }).pages,
           });
           if (!asked.ok) return fail(asked.message, asked);
 
@@ -672,7 +695,7 @@ export function registerTools(ctx, runtime) {
           artifactHash: m2.planHash,
           agent: exec?.agent,
           signal: exec?.signal,
-          summary: renderGateCard({ gate, root: project.root, state }).text,
+          pages: renderGatePages({ gate, root: project.root, state }).pages,
         });
         if (!asked.ok) return fail(asked.message, asked);
 

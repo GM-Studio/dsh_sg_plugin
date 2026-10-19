@@ -11,7 +11,7 @@ export function approvalOptions() {
 
 export async function askApproval(
   runtime,
-  { gate, change, artifactHash, agent, signal, summary = '' },
+  { gate, change, artifactHash, agent, signal, summary = '', pages = null },
 ) {
   const userQuestions = runtime.service('userQuestions');
   if (!userQuestions || typeof userQuestions.ask !== 'function') {
@@ -24,23 +24,28 @@ export async function askApproval(
   }
 
   const shortHash = String(artifactHash || '').replace(/^sha256:/, '').slice(0, 12);
-  const question = summary
-    ? `${summary}\n\n---\n产物指纹：\`${shortHash}…\`\n是否批准 ${gate}？`
-    : `change「${change}」的 ${gate} 产物指纹为 ${shortHash}…，是否批准？`;
+  const questions =
+    Array.isArray(pages) && pages.length > 0
+      ? pages.map((page, index) => ({
+          id: `sg-approve-${gate}-${index}`,
+          header: page.header,
+          question: page.question,
+          options:
+            index === pages.length - 1
+              ? approvalOptions()
+              : [{ label: '已读', description: '继续下一页' }],
+        }))
+      : [
+          {
+            id: `sg-approve-${gate}`,
+            header: `SpecGate ${gate} 批准`,
+            question: summary || `change「${change}」的 ${gate} 产物指纹为 ${shortHash}…，是否批准？`,
+            options: approvalOptions(),
+          },
+        ];
   let answer;
   try {
-    answer = await userQuestions.ask({
-      questions: [
-        {
-          id: `sg-approve-${gate}`,
-          header: `SpecGate ${gate} 批准`,
-          question,
-          options: approvalOptions(),
-        },
-      ],
-      agent,
-      signal,
-    });
+    answer = await userQuestions.ask({ questions, agent, signal });
   } catch (error) {
     return {
       ok: false,
@@ -50,7 +55,8 @@ export async function askApproval(
     };
   }
 
-  const item = answer?.answers?.[0];
+  const answers = Array.isArray(answer?.answers) ? answer.answers : [];
+  const item = answers[answers.length - 1] || answers[0];
   const selected = Array.isArray(item?.selected) ? item.selected[0] : item?.selected;
   if (selected !== '通过') {
     return {
