@@ -99,6 +99,7 @@ const EMPTY_PARAMS = {
 /** 老项目接入时由 SpecGate 自己生成、因而可以安全提交的路径（REQ-010）。 */
 const LEGACY_GENERATED_PATHS = [
   'openspec/REQ.md',
+  'openspec/history',
   'openspec/specs/.gitkeep',
   'openspec/changes/.gitkeep',
   '.specgate/config.yaml',
@@ -129,6 +130,16 @@ export function registerTools(ctx, runtime) {
             signal: exec?.signal,
           });
           if (!started.ok) return fail(`初始化失败：${started.message}`, started);
+          if (started.skipped) {
+            return ok(
+              [
+                `SpecGate v3 已初始化（幂等跳过）：当前阶段 ${started.phase}，需求基线与配置保持不变。`,
+                `需求基线：${started.requirementsDoc}${started.change ? `；进行中的 change：${started.change}` : ''}。`,
+                '如需修改初始化上下文请执行 /sg-context --reset，查看状态请执行 /sg-status。',
+              ].join('\n'),
+              started,
+            );
+          }
           if (mode === 'existing') {
             return ok(
               [
@@ -821,7 +832,7 @@ export function registerTools(ctx, runtime) {
             });
             if (!committed.ok) return fail(`git 提交失败：${committed.stderr}`, committed);
             return ok(
-              `H0 已批准。已写入需求基线 ${finished.baseline?.doc || 'openspec/REQ.md'}，会进入 H1_PENDING；` +
+              'H0 已批准。已写入需求基线 openspec/REQ.md，会进入 H1_PENDING；' +
                 '老项目未生成脚手架。下一步：/sg-change <name> --type feature 并在 proposal 中引用 REQ-xxx。',
               { gate: 'H0', phase: 'H1_PENDING', mode: 'existing', baseline: finished.baseline },
             );

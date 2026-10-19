@@ -90,7 +90,8 @@ Three hard constraints shape the design:
 
 - **Explicit-only entry points.** Everything the plugin exposes is invoked deliberately: five `/sg-*` commands and six `sg_*` tools. No command auto-runs, and no skill is registered into the session catalog.
 - **One automatic surface — the write guard.** `src/v3/guards.js` intercepts the `write` / `edit` tools and rejects writes to orchestrator-owned paths. This is the only thing that acts without being asked (see [Writes and guards](#writes-and-guards)).
-- **Project initialization**: `/sg-init` creates `.specgate/`, `openspec/`, and a `.gitignore` block in the current directory. Idempotent — re-running it reports what already exists instead of rewriting it.
+- **Project initialization (requirements first)**: `/sg-init` interviews you for requirements — functional (MVP), non-functional, constraints and dependencies, acceptance criteria — and only then for the tech stack, merging both into **one** confirmation page. It stops at `H0_PENDING`; `sg_run` writes `openspec/REQ.md`, the read-only snapshot, and the scaffold after `sg_approve H0`. Idempotent — re-running reports "idempotent skip" without resetting the phase or overwriting the baseline.
+- **Legacy onboarding**: running `/sg-init` in a repository that already has code scans the project, reverse-engineers a requirements draft, and writes `docs/requirements-scan.md` — with **no scaffold at all**. It only runs `git init` when the repository is missing, leaves an existing repository untouched, and commits only assets SpecGate generated itself.
 - **Change packages**: `/sg-change <name>` scaffolds `openspec/changes/<name>/` and moves the project to `H1_PENDING`.
 - **Machine-checked quality gates**: `M1` validates the proposal and spec delta; `M2` validates the design, task graph, acceptance-criteria-to-case mapping, and suite discovery. `sg_run` refuses to advance when either fails.
 - **Human gates**: `H0` (context), `H1` (requirements), `H2` (plan), `H3` (acceptance). Approval hashes freeze the approved artifact, so any later edit is detected and re-approval is required.
@@ -132,8 +133,9 @@ Phases advance only through explicit `sg_run` calls:
 
 ```text
 IDLE
- └─ /sg-init (empty project) ──► H0_PENDING ──(H0)──► H1_PENDING
- └─ /sg-change ─────────────────────────────────────► H1_PENDING
+ ├─ /sg-init (empty project) ──► H0_PENDING ──(H0)──► sg_run ──► H1_PENDING
+ ├─ /sg-init (legacy repo) ────► H0_PENDING ──(H0)──► H1_PENDING   # writes REQ.md only, no scaffold
+ └─ /sg-change ───────────────────────────────────────────────► H1_PENDING
                                                          │
         H1_PENDING ──(M1 + H1)──► PLAN ──(M2 + H2)──► EXECUTING
                                                         │
@@ -143,7 +145,7 @@ IDLE
 | Phase | What happens | Exit |
 |-------|--------------|------|
 | `IDLE` | No change in flight | `/sg-change` |
-| `H0_PENDING` | New-project context collected (`state.change` is still `null`) | `sg_approve gate="H0"`, then `sg_run` scaffolds |
+| `H0_PENDING` | Requirements interview + tech-stack confirmation (`state.change` is still `null`); no `REQ.md` is written before confirmation | `sg_approve gate="H0"`; an empty project then runs `sg_run` to write the baseline and scaffold, a legacy repo writes the baseline on approval |
 | `H1_PENDING` | Author `proposal.md` and `specs/**/spec.md` | `sg_run` runs `M1`, then `H1` |
 | `PLAN` | Author `design.md`, `tasks.md`, `tests/cases.md`, `tests/mapping.json` | `sg_run` runs `M2`, then `H2` |
 | `EXECUTING` | Tasks run in worktrees; completed ones merge and check off | `sg_run` until all merge |
@@ -156,17 +158,31 @@ Full phase set (`src/v3/state.js`): `IDLE`, `H0_PENDING`, `H1_PENDING`, `PLAN`, 
 
 `M1` and `M2` are quality gates, not human ones — they are enforced by `sg_run` itself and reported as errors when they fail.
 
+## Requirements baseline
+
+The confirmed `/sg-init` answers are written to `openspec/REQ.md`, the authoritative requirements source for the project:
+
+- The four dimensions are numbered consecutively in interview order — `REQ-001`, `REQ-002`…: functional (MVP), non-functional, constraints and dependencies.
+- Acceptance criteria are numbered `AC-001`, `AC-002`…, and each declares `- covers: REQ-xxx` pointing at an existing requirement id.
+- The same content is written to the read-only snapshot `openspec/history/v1.0/REQ.md`; the two must match verbatim, otherwise `M1` reports `REQ_BASELINE_DRIFT`.
+- Requirements evolve only through deltas under `openspec/changes/<change>/`; `REQ.md` itself is not edited directly.
+
+`requirements.enabled` in `.specgate/config.yaml` controls enforcement: an interactive `/sg-init` sets it to `true` after confirmation, while legacy projects without a baseline keep `false` and behave exactly as before. When enabled:
+
+- `/sg-change` requires both `openspec/REQ.md` and its snapshot to exist and match;
+- `M1` requires `proposal.md` to reference at least one existing `REQ-xxx`, and fails on unknown ids.
+
 ## Commands
 
 | Command | Arguments | Purpose |
 |---------|-----------|---------|
-| `/sg-init` | none | Initialize `.specgate/` and `openspec/`. For an empty project it first collects context and stops at `H0_PENDING` |
+| `/sg-init` | none | Requirements-first initialization: interviews for requirements (functional/non-functional/constraints/acceptance) and the tech stack, then enters `H0_PENDING`. An empty project writes `REQ.md` and the scaffold via `sg_run`; a legacy repo only reverse-engineers requirements |
 | `/sg-change` | `<name> [--type feature\|modify\|fix\|remove] [--link <changeKey>]` | Create a change package; enters `H1_PENDING` |
 | `/sg-status` | `[--path <repo>] [--json] [--verbose]` | Show phase, change, gate, and plan status |
 | `/sg-context` | `--reset` | Return to `H0_PENDING` and re-collect context (`H0_PENDING`/`H1_PENDING` only) |
 | `/sg-skill` | `<name>` | Print a skill body |
 
-`/sg-init` takes no flags in this version — it initializes the current working directory.
+`/sg-init` takes no flags in this version — it initializes the current working directory. Re-running it on an initialized project returns an "idempotent skip" without resetting the phase or overwriting the baseline; use `/sg-context --reset` to change the context.
 
 ## Tools
 
@@ -438,12 +454,19 @@ sg_approve H3                         # human acceptance
 sg_run                                # ARCHIVING → DONE
 ```
 
-For an empty project, the first two steps are:
+First-time initialization of an empty project:
 
 ```text
-/sg-init                    # collect context, stop at H0_PENDING
+/sg-init                    # requirements interview (functional/non-functional/constraints/acceptance) → tech stack → one confirmation, stop at H0_PENDING
 sg_approve H0               # human approval (no change exists yet)
-sg_run                      # scaffold the project and the first sample change → H1_PENDING
+sg_run                      # write openspec/REQ.md + read-only snapshot, scaffold the project and the first sample change → H1_PENDING
+```
+
+Onboarding a legacy repository:
+
+```text
+/sg-init                    # scan the repo, reverse-engineer a requirements draft; writes docs/requirements-scan.md only, no scaffold
+sg_approve H0               # write openspec/REQ.md + read-only snapshot → H1_PENDING
 ```
 
 `/sg-status` reports the current phase and what to do next at any point.
@@ -497,6 +520,8 @@ Design constraints:
 ├── backups/
 └── gates/
 openspec/
+├── REQ.md                  # requirements baseline: REQ-xxx + AC-xxx (covers: REQ-xxx)
+├── history/v1.0/REQ.md     # read-only snapshot, must match REQ.md verbatim
 ├── changes/<change>/
 │   ├── proposal.md         # 问题 / 目标 / 非目标 / 影响面
 │   ├── design.md           # 目标与非目标 / 任务图 / AC 到用例 / 风险
@@ -508,11 +533,11 @@ openspec/
 
 `/sg-init` also appends these to `.gitignore`: `.specgate/state.json`, `.specgate/run.lock`, `.specgate/worktrees/`, `.specgate/evidence/`, `.specgate/backups/`, `.specgate/gates/`, `.specgate/runs/`.
 
-For a brand-new project, approving `H0` additionally writes `project-context.md`, `AGENTS.md`, `docs/glossary.md`, `docs/adr/0001-initial.md`, `.github/workflows/ci.yml`, and a first sample change.
+For a brand-new project, `sg_run` after `H0` additionally writes `openspec/REQ.md`, `openspec/history/v1.0/REQ.md`, `project-context.md`, `AGENTS.md`, `docs/glossary.md`, `docs/adr/0001-initial.md`, `.github/workflows/ci.yml`, and a first sample change. A legacy repo writes only the requirements baseline, its read-only snapshot, and `docs/requirements-scan.md` — no scaffold.
 
 ## Verification
 
-- **269 tests pass / 0 fail** (`node --test`).
+- **277 tests pass / 0 fail** (`node --test`); `test/v3/s36.requirements.test.js` covers interview ordering, no baseline before confirmation, REQ/AC numbering and `covers`, missing baseline and unknown references, command visibility, and legacy onboarding.
 - `M1` rejects a proposal missing any of 问题 / 目标 / 非目标 / 影响面, and a delta with unresolved acceptance-criteria references.
 - `M2` rejects a design missing any of its four sections, a task graph with cycles, an AC with no covering case, and undiscoverable suites.
 - Approval hashes: editing `proposal.md`/`specs/**` after `H1`, or the plan after `H2`, invalidates the approval and forces re-approval.

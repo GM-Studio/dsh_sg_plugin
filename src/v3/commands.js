@@ -76,6 +76,16 @@ export function registerCommands(ctx, runtime) {
           mode,
         });
         if (!result.ok) return { kind: 'error', text: `初始化失败：${result.message}` };
+        if (result.skipped) {
+          return {
+            kind: 'success',
+            text: [
+              `SpecGate v3 已初始化（幂等跳过）：当前阶段 ${result.phase}，需求基线与配置保持不变。`,
+              `需求基线：${result.requirementsDoc}${result.change ? `；进行中的 change：${result.change}` : ''}。`,
+              '如需修改初始化上下文请执行 /sg-context --reset。',
+            ].join('\n'),
+          };
+        }
         if (mode === 'existing') {
           writeText(
             path.join(root, '.specgate', 'init-result.json'),

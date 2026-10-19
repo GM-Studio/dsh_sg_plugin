@@ -90,7 +90,8 @@ SpecGate 是一套**规格驱动 + 人工门控**的开发工作流。它把"AI 
 
 - **只有显式入口**：插件对外暴露的一切都必须主动调用 —— 5 个 `/sg-*` 命令与 6 个 `sg_*` 工具。没有任何命令会自动运行，也没有任何 Skill 会被注册进会话技能目录。
 - **唯一的自动面 —— 写入守卫**：`src/v3/guards.js` 拦截 `write` / `edit` 工具，拒绝对编排器专属路径的写入。这是唯一无需请求就会生效的行为（见[写入与守卫](#写入与守卫)）。
-- **项目初始化**：`/sg-init` 在当前目录创建 `.specgate/`、`openspec/` 与一段 `.gitignore`。幂等 —— 重复执行会报告已存在的内容，而不是重写。
+- **项目初始化（需求先行）**：`/sg-init` 先逐项盘问需求 —— 功能（MVP）、非功能、约束与依赖、验收标准 —— 再问技术栈，两者合成**一次**确认页。确认后停在 `H0_PENDING`；`sg_approve H0` 之后由 `sg_run` 写入 `openspec/REQ.md`、只读快照与脚手架。幂等 —— 重复执行报告“幂等跳过”，不重置阶段、不覆盖既有需求基线。
+- **老项目接入**：在已有代码的仓库里执行 `/sg-init` 会扫描项目、反推需求草稿并生成 `docs/requirements-scan.md`，**不生成任何脚手架**；只在缺少仓库时补 `git init`，已有仓库保持原状，且只提交 SpecGate 自己生成的资产。
 - **变更包**：`/sg-change <name>` 生成 `openspec/changes/<name>/` 骨架，并把项目推进到 `H1_PENDING`。
 - **机器校验的质量门**：`M1` 校验 proposal 与 spec 增量；`M2` 校验 design、任务图、验收标准到用例的映射以及测试套件发现。任一不通过，`sg_run` 拒绝推进。
 - **人工门**：`H0`（上下文）、`H1`（需求）、`H2`（计划）、`H3`（验收）。批准会对已批准产物生成哈希冻结，之后的任何修改都会被检出并要求重新批准。
@@ -132,8 +133,9 @@ Skill 正文位于 `assets/` 下，**不会**被注册进 DSH 会话技能目录
 
 ```text
 IDLE
- └─ /sg-init（空项目）──► H0_PENDING ──(H0)──► H1_PENDING
- └─ /sg-change ─────────────────────────────► H1_PENDING
+ ├─ /sg-init（空项目）──► H0_PENDING ──(H0)──► sg_run ──► H1_PENDING
+ ├─ /sg-init（老项目）──► H0_PENDING ──(H0)──► H1_PENDING    # 只写 REQ.md，不生成脚手架
+ └─ /sg-change ──────────────────────────────────────────► H1_PENDING
                                                 │
         H1_PENDING ──(M1 + H1)──► PLAN ──(M2 + H2)──► EXECUTING
                                                         │
@@ -143,7 +145,7 @@ IDLE
 | 阶段 | 发生什么 | 出口 |
 |------|----------|------|
 | `IDLE` | 没有进行中的 change | `/sg-change` |
-| `H0_PENDING` | 采集新项目上下文（此时 `state.change` 仍为 `null`） | `sg_approve gate="H0"`，随后 `sg_run` 生成脚手架 |
+| `H0_PENDING` | 需求盘问 + 技术栈确认（此时 `state.change` 仍为 `null`）；确认前不写 `REQ.md` | `sg_approve gate="H0"`；空项目随后 `sg_run` 生成基线与脚手架，老项目批准即写入基线 |
 | `H1_PENDING` | 编写 `proposal.md` 与 `specs/**/spec.md` | `sg_run` 执行 `M1`，随后 `H1` |
 | `PLAN` | 编写 `design.md`、`tasks.md`、`tests/cases.md`、`tests/mapping.json` | `sg_run` 执行 `M2`，随后 `H2` |
 | `EXECUTING` | 任务在 worktree 中运行；完成的合并并勾选 | 反复 `sg_run` 直到全部合并 |
@@ -156,17 +158,31 @@ IDLE
 
 `M1` 与 `M2` 是**质量门**而非人工门 —— 它们由 `sg_run` 自身强制执行，失败时以错误形式报出。
 
+## 需求基线
+
+`/sg-init` 的确认结果写入 `openspec/REQ.md`，它是项目的需求权威源：
+
+- 四类需求按盘问顺序连续编号 `REQ-001`、`REQ-002`…：功能（MVP）、非功能、约束与依赖。
+- 验收标准连续编号 `AC-001`、`AC-002`…，每条声明 `- covers: REQ-xxx`，必须引用真实存在的需求编号。
+- 同时写入只读快照 `openspec/history/v1.0/REQ.md`；两者必须逐字一致，不一致时 `M1` 报 `REQ_BASELINE_DRIFT`。
+- 需求只在 `openspec/changes/<change>/` 的 delta 中演进，不直接改 `REQ.md`。
+
+`.specgate/config.yaml` 的 `requirements.enabled` 控制是否强制校验：交互式 `/sg-init` 确认后自动置为 `true`；未接入需求基线的老项目保持 `false`，行为与旧版本一致。启用后：
+
+- `/sg-change` 要求 `openspec/REQ.md` 与快照都存在且一致，否则拒绝创建；
+- `M1` 要求 `proposal.md` 至少引用一个真实存在的 `REQ-xxx`，引用不存在的编号直接失败。
+
 ## 命令参考
 
 | 命令 | 参数 | 用途 |
 |------|------|------|
-| `/sg-init` | 无 | 初始化 `.specgate/` 与 `openspec/`。空项目会先采集上下文并停在 `H0_PENDING` |
+| `/sg-init` | 无 | 需求先行初始化：先盘问需求（功能/非功能/约束/验收）与技术栈，确认后进入 `H0_PENDING`。空项目由 `sg_run` 生成 `REQ.md` 与脚手架，老项目只反推需求 |
 | `/sg-change` | `<name> [--type feature\|modify\|fix\|remove] [--link <changeKey>]` | 创建变更包；进入 `H1_PENDING` |
 | `/sg-status` | `[--path <repo>] [--json] [--verbose]` | 显示阶段、change、门控与计划状态 |
 | `/sg-context` | `--reset` | 回到 `H0_PENDING` 并重新采集上下文（仅限 `H0_PENDING`/`H1_PENDING`） |
 | `/sg-skill` | `<name>` | 打印一份 Skill 正文 |
 
-本版本 `/sg-init` 不接受任何选项 —— 它初始化当前工作目录。
+本版本 `/sg-init` 不接受任何选项 —— 它初始化当前工作目录。已初始化的项目重复执行会返回“幂等跳过”，不重置阶段、不覆盖需求基线；需要改上下文用 `/sg-context --reset`。
 
 ## 工具参考
 
@@ -438,12 +454,19 @@ sg_approve H3                         # 人工验收
 sg_run                                # ARCHIVING → DONE
 ```
 
-空项目首次初始化的前两步：
+空项目首次初始化：
 
 ```text
-/sg-init                    # 采集上下文，停在 H0_PENDING
+/sg-init                    # 需求盘问（功能/非功能/约束/验收）→ 技术栈 → 一次确认，停在 H0_PENDING
 sg_approve H0               # 人工批准（此时还没有 change）
-sg_run                      # 生成脚手架与首个示例 change → H1_PENDING
+sg_run                      # 写入 openspec/REQ.md 与只读快照，生成脚手架与首个示例 change → H1_PENDING
+```
+
+老项目（已有代码）接入：
+
+```text
+/sg-init                    # 扫描仓库、反推需求草稿；只写 docs/requirements-scan.md，不生成脚手架
+sg_approve H0               # 写入 openspec/REQ.md 与只读快照 → H1_PENDING
 ```
 
 任意时刻 `/sg-status` 都会报告当前阶段与下一步。
@@ -497,6 +520,8 @@ sg_run                      # 生成脚手架与首个示例 change → H1_PENDI
 ├── backups/
 └── gates/
 openspec/
+├── REQ.md                  # 需求基线：REQ-xxx + AC-xxx（covers: REQ-xxx）
+├── history/v1.0/REQ.md     # 只读快照，必须与 REQ.md 逐字一致
 ├── changes/<change>/
 │   ├── proposal.md         # 问题 / 目标 / 非目标 / 影响面
 │   ├── design.md           # 目标与非目标 / 任务图 / AC 到用例 / 风险
@@ -508,11 +533,11 @@ openspec/
 
 `/sg-init` 还会把以下内容追加进 `.gitignore`：`.specgate/state.json`、`.specgate/run.lock`、`.specgate/worktrees/`、`.specgate/evidence/`、`.specgate/backups/`、`.specgate/gates/`、`.specgate/runs/`。
 
-对全新项目，批准 `H0` 会额外写入 `project-context.md`、`AGENTS.md`、`docs/glossary.md`、`docs/adr/0001-initial.md`、`.github/workflows/ci.yml`，以及一个初始示例 change。
+对全新项目，批准 `H0` 后由 `sg_run` 写入 `openspec/REQ.md`、`openspec/history/v1.0/REQ.md`、`project-context.md`、`AGENTS.md`、`docs/glossary.md`、`docs/adr/0001-initial.md`、`.github/workflows/ci.yml`，以及一个初始示例 change。老项目只写需求基线、只读快照与 `docs/requirements-scan.md`，不生成脚手架。
 
 ## 验证
 
-- **269 个测试通过 / 0 失败**（`node --test`）。
+- **277 个测试通过 / 0 失败**（`node --test`），其中 `test/v3/s36.requirements.test.js` 覆盖需求盘问顺序、确认前不落盘、REQ/AC 编号与 `covers`、基线缺失与非法引用、命令可见性与老项目接入。
 - `M1` 拒绝缺少 问题 / 目标 / 非目标 / 影响面 任一段的 proposal，以及存在未解析验收标准引用的增量。
 - `M2` 拒绝缺少四个段落任一的 design、存在环的任务图、没有用例覆盖的 AC，以及无法发现的测试套件。
 - 批准哈希：`H1` 之后修改 `proposal.md`/`specs/**`，或 `H2` 之后修改计划，都会使批准失效并强制重新批准。

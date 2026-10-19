@@ -210,13 +210,18 @@ function h3(root, state, integration, detail) {
 
 function h0(state, detail) {
   const context = state.context || {};
+  // 需求盘问的验收标准存放在 state.requirements，老状态回退到 context.acceptance。
+  const requirements = state.requirements || {};
+  const acceptance = Array.isArray(requirements.acceptance)
+    ? requirements.acceptance.join('；')
+    : requirements.acceptance || context.acceptance;
   const card = [
     'SpecGate H0 审批',
     '================',
     `变更：${state.change || 'new-project'}`,
     `背景：${clip(context.background, 160) || '未填写'}`,
     `技术栈：${clip(context.stack, 80) || '未选择'}`,
-    `验收：${clip(context.acceptance, 160) || '未填写'}`,
+    `验收：${clip(acceptance, 160) || '未填写'}`,
     `团队：${clip(context.team, 120) || '未填写'}`,
     `步骤：${clip(context.steps, 160) || '未填写'}`,
     `哈希：${String(state.h0?.hash || '-')

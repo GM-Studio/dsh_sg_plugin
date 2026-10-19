@@ -240,11 +240,23 @@ export function requirementsConfig(root) {
   };
 }
 
-/** Rewrite only `enabled`/`version` inside the existing requirements block. */
+/** Rewrite `enabled`/`version` inside the requirements block, creating it when absent. */
 export function patchConfigRequirements(root, { enabled, version } = {}) {
   const file = configPath(root);
   if (!exists(file)) return { ok: false, code: 'NO_CONFIG', message: '缺少 .specgate/config.yaml' };
-  const lines = readText(file).split('\n');
+  const text = readText(file);
+  // configureSuites 会整体重写配置，这里在缺失时补回 requirements 块，避免静默关闭需求校验。
+  if (!/^requirements:\s*$/m.test(text)) {
+    const block = [
+      'requirements:',
+      `  enabled: ${enabled === undefined ? 'false' : enabled ? 'true' : 'false'}`,
+      `  version: ${version || REQ_VERSION}`,
+    ].join('\n');
+    const prefix = text === '' || text.endsWith('\n') ? text : `${text}\n`;
+    writeText(file, `${prefix}${block}\n`);
+    return { ok: true, touched: 1, inserted: true };
+  }
+  const lines = text.split('\n');
   let inBlock = false;
   let touched = 0;
   const next = lines.map((line) => {

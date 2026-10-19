@@ -1,6 +1,16 @@
 # 变更记录
 
-## Unreleased
+## 3.7.0
+
+- 需求先行初始化：`/sg-init` 在任何技术栈问题之前，先盘问功能（MVP）、非功能、约束与验收标准，两者合成一次确认页。
+- 新增 `openspec/REQ.md` 需求基线：`REQ-xxx` 连续编号，`AC-xxx` 每条声明 `- covers: REQ-xxx`，并写入逐字一致的只读快照 `openspec/history/v1.0/REQ.md`。
+- 基线只在用户确认后写入：`sg_init` 停在 `H0_PENDING`，由 `sg_run`（新项目）或 `sg_approve H0`（老项目）落盘。
+- 老项目接入：在已有代码的仓库执行 `/sg-init` 会扫描项目、反推需求草稿，只写 `docs/requirements-scan.md` 与 `.specgate/requirements-scan.json`，不生成任何脚手架；仅在缺少仓库时执行 `git init`，且只提交 SpecGate 自己生成的资产。
+- 需求校验通过 `requirements.enabled` 按需启用：`sg-change` 要求基线存在且与快照一致，`M1` 拒绝未引用任何 `REQ-xxx` 或引用不存在编号的 proposal。
+- 幂等：重复执行 `/sg-init` 返回“幂等跳过”，保持阶段不变，且绝不覆盖 `REQ.md`。
+- 新增 `src/v3/notice.js`：无消息会话中的第一条 `/sg-*` 命令会追加一条 `notice` 上下文消息，确保结果不停留在欢迎页。
+- 修复：H0 批准消息不再把基线对象插值成 `[object Object]`；H0 门控卡从 `state.requirements` 读取验收标准；`configureSuites` 重写配置时不再丢掉 `requirements` 块。
+- 277 个测试通过，其中 `test/v3/s36.requirements.test.js` 新增 8 个用例。
 
 - 修复 H0 门控死锁：`sg_approve` 现在接受 `gate: "H0"`（schema 枚举与运行时校验），且 H0 批准不再要求已存在 change。新项目可用 `sg_approve` → `sg_run` 离开 `H0_PENDING`。
 - H0 相关提示改为指向 `sg_approve` 工具，不再引用不存在的 `/sg-approve` 命令。

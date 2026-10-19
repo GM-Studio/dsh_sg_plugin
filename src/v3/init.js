@@ -3,7 +3,7 @@ import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { initProject, createChange, configPath, readConfig } from './change.js';
 import { load, patchState } from './state.js';
-import { exists, writeText, ensureDir } from './util/fsx.js';
+import { exists, readText, writeText, ensureDir } from './util/fsx.js';
 import { digest } from './util/hash.js';
 import { scanEnv, writeEnvReport } from './env-scan.js';
 import { detectJavaProject, validateJavaSelection } from './java-detect.js';
@@ -1224,7 +1224,33 @@ AC-001 由 ${versionTest} 覆盖。
   };
 }
 
+const REQUIREMENTS_BLOCK_RE = /^requirements:\s*$/m;
+
+function requirementsBlock(block) {
+  const lines = [
+    'requirements:',
+    `  enabled: ${block.enabled === false ? 'false' : 'true'}`,
+    `  version: ${block.version || 'v1.0'}`,
+  ];
+  for (const key of ['doc', 'history']) {
+    if (block[key]) lines.push(`  ${key}: ${block[key]}`);
+  }
+  return lines.join('\n');
+}
+
+/** configureSuites 会整体重写配置；需求基线开关必须原样保留（REQ-008）。 */
 export function configureSuites(root, stack, context = {}) {
+  const previous = readConfig(root);
+  writeSuitesConfig(root, stack, context);
+  const block = previous && previous.requirements;
+  if (!block || typeof block !== 'object') return;
+  const current = readText(configPath(root));
+  if (REQUIREMENTS_BLOCK_RE.test(current)) return;
+  const prefix = current.endsWith('\n') ? current : `${current}\n`;
+  writeText(configPath(root), `${prefix}${requirementsBlock(block)}\n`);
+}
+
+function writeSuitesConfig(root, stack, context = {}) {
   const common = `workflowVersion: 3\nschemaVersion: 3\nlanguage: zh\nstack: ${stack}\nmaxParallel: 2\ninstall: true\n`;
   if (stack === 'java') {
     const jdk = String(context.jdk || '8');
@@ -1336,6 +1362,8 @@ export function onboardExistingJava(root) {
 /** 老项目接入第一阶段（H0 之前）由 SpecGate 自己生成的资产路径。 */
 const LEGACY_SCAN_PATHS = [
   '.gitignore',
+  'openspec/specs/.gitkeep',
+  'openspec/changes/.gitkeep',
   '.specgate/config.yaml',
   '.specgate/requirements-scan.json',
   'docs/requirements-scan.md',
@@ -1429,6 +1457,18 @@ export async function startLegacyInitProject({ root, userQuestions, agent, signa
 }
 
 export async function startInitProject({ root, userQuestions, agent, signal, mode = 'new' }) {
+  // REQ-010：已初始化的项目重复 /sg-init 必须幂等跳过，不能重置既有阶段与需求基线。
+  const current = load(root);
+  if (current.ok && current.state?.phase && current.state.phase !== 'IDLE') {
+    return {
+      ok: true,
+      skipped: true,
+      phase: current.state.phase,
+      mode: current.state.mode || mode,
+      change: current.state.change || null,
+      requirementsDoc: current.state.requirementsDoc || 'openspec/REQ.md',
+    };
+  }
   if (mode === 'existing') return startLegacyInitProject({ root, userQuestions, agent, signal });
   if (!userQuestions || typeof userQuestions.ask !== 'function') {
     return {

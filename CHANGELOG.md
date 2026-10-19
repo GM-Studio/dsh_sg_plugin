@@ -1,6 +1,16 @@
 # Changelog
 
-## Unreleased
+## 3.7.0
+
+- Requirements-first initialization: `/sg-init` interviews for functional (MVP), non-functional, constraints, and acceptance criteria before any tech-stack question, then merges both into one confirmation page.
+- New `openspec/REQ.md` baseline: sequentially numbered `REQ-xxx` clauses and `AC-xxx` criteria that each declare `- covers: REQ-xxx`, plus a verbatim read-only snapshot in `openspec/history/v1.0/REQ.md`.
+- The baseline is written only after confirmation: `sg_init` stops at `H0_PENDING`, and `sg_run` (new project) or `sg_approve H0` (legacy repo) writes it.
+- Legacy onboarding: `/sg-init` in a repository that already has code scans the project, reverse-engineers a requirements draft, and writes `docs/requirements-scan.md` + `.specgate/requirements-scan.json` without generating any scaffold; `git init` runs only when the repository is missing, and only SpecGate-generated assets are committed.
+- Requirements enforcement is opt-in via `requirements.enabled`: `sg-change` requires a matching baseline, and `M1` rejects proposals that reference no `REQ-xxx` or an unknown id.
+- Idempotency: re-running `/sg-init` reports an idempotent skip, keeps the phase, and never overwrites `REQ.md`.
+- New `src/v3/notice.js`: the first `/sg-*` command in a session without messages appends a `notice` context message so the result is visible outside the welcome page.
+- Fixes: the H0 approval message no longer interpolates the baseline object (`[object Object]`); the H0 gate card reads acceptance criteria from `state.requirements`; `configureSuites` no longer drops the `requirements` block when rewriting the config.
+- 277 tests pass, including 8 new cases in `test/v3/s36.requirements.test.js`.
 
 - Fix the H0 gate deadlock: `sg_approve` now accepts `gate: "H0"` (schema enum plus runtime check), and H0 approval no longer requires an existing change. A new project can leave `H0_PENDING` with `sg_approve` → `sg_run`.
 - H0 guidance points at the `sg_approve` tool instead of the non-existent `/sg-approve` command.
