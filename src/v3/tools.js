@@ -15,6 +15,7 @@ import {
   integrationBranch,
 } from './worktrees.js';
 import { createDispatcher } from './dispatch.js';
+import { appendRun } from './runs.js';
 import {
   collectDiff,
   validateReview,
@@ -480,6 +481,15 @@ export function registerTools(ctx, runtime) {
               } finally {
                 if (reviewWt.ok) removeReviewWorktree({ root: project.root, path: reviewWt.path });
               }
+              appendRun(project.root, {
+                change,
+                task: 'INTEGRATION',
+                role: 'reviewer',
+                worktree: reviewPath,
+                commit,
+                durationMs: 0,
+                result: integrationReview?.ok ? 'pass' : 'fail',
+              });
               const reviewDir = path.join(
                 integration.path,
                 'openspec',
