@@ -85,6 +85,30 @@ export function readWorkspace(root) {
   };
 }
 
+function openApiYaml() {
+  return [
+    'openapi: 3.0.3',
+    'info:',
+    '  title: SpecGate MVP API',
+    '  version: 1.0.0',
+    'paths:',
+    '  /api/items:',
+    '    get:',
+    "      responses: { '200': { description: ok } }",
+    '    post:',
+    "      responses: { '201': { description: created }, '400': { description: invalid } }",
+    '  /api/items/{id}:',
+    '    get:',
+    '      parameters: [{ name: id, in: path, required: true, schema: { type: integer } }]',
+    "      responses: { '200': { description: ok }, '404': { description: missing } }",
+    '    put:',
+    "      responses: { '200': { description: ok }, '404': { description: missing }, '400': { description: invalid } }",
+    '    delete:',
+    "      responses: { '204': { description: deleted }, '404': { description: missing } }",
+    '',
+  ].join('\n');
+}
+
 function defaultRootState(selection) {
   return {
     schemaVersion: 4,
@@ -134,6 +158,7 @@ export function createWorkspaceLayout({ root, selection }) {
   }
   ensureDir(path.join(root, '.specgate'));
   ensureDir(path.join(root, 'contracts'));
+  writeText(path.join(root, 'contracts', 'openapi.yaml'), openApiYaml());
   writeText(workspaceFile, workspaceYaml(selection));
   writeText(
     path.join(root, '.specgate', 'state.json'),

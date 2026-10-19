@@ -4,6 +4,7 @@ import { spawnSync } from 'node:child_process';
 import { ensureDir, exists, readText, writeText } from '../v3/util/fsx.js';
 import { scaffoldFiles, writeScaffold } from '../v3/init.js';
 import { bootstrapCodeFiles } from '../v3/bootstrap-code.js';
+import { frontendFiles } from './frontend-code.js';
 
 function run(root, command, args = [], options = {}) {
   const started = Date.now();
@@ -176,6 +177,9 @@ async function qualityFor({ root, stack, qualityRunner }) {
     const command = exists(path.join(root, wrapper)) ? wrapper : 'mvn';
     stages.push({ name: 'format', ...run(root, command, ['-B', '-ntp', 'spotless:apply']) });
     stages.push({ name: 'test', ...run(root, command, ['-B', '-ntp', 'verify']) });
+  } else if (stack === 'vue' || stack === 'react') {
+    stages.push({ name: 'install', ...run(root, 'npm', ['install', '--no-audit', '--no-fund']) });
+    stages.push({ name: 'test', ...run(root, 'npm', ['test']) });
   }
   const failed = stages.find((stage) => stage.status !== 0);
   if (failed) {
@@ -278,11 +282,62 @@ export async function buildBackendSide({ root, side, qualityRunner = null }) {
   };
 }
 
+export async function buildFrontendSide({ root, side, qualityRunner = null }) {
+  if (side.role !== 'frontend') return { ok: true, skipped: true, reason: 'not-frontend' };
+  if (!['vue', 'react'].includes(side.stack)) {
+    return { ok: true, skipped: true, reason: 'unsupported-frontend' };
+  }
+  if (exists(path.join(root, '.specgate', 'bootstrap.done'))) {
+    return { ok: true, skipped: true, reason: 'already-built' };
+  }
+  const prepared = prepareRepo(root, side);
+  if (prepared.status !== 0) return prepared;
+
+  const files = frontendFiles(side.stack);
+  const written = [];
+  for (const [relative, content] of Object.entries(files)) {
+    ensureDir(path.dirname(path.join(root, relative)));
+    writeText(path.join(root, relative), content);
+    written.push(relative);
+  }
+  writeBootstrapChange(root);
+
+  const quality = await qualityFor({ root, stack: side.stack, qualityRunner });
+  const report = path.join(root, 'docs', 'mvp-scaffold-report.md');
+  ensureDir(path.dirname(report));
+  writeText(report, reportText({ side, written, quality }));
+  if (!quality.ok) return { ok: false, ...quality, report: 'docs/mvp-scaffold-report.md' };
+
+  const first = commitAll(root, 'feat(mvp): 搭建 ' + side.stack + ' 前端与 Item CRUD');
+  if (first.status !== 0) return first;
+  archiveBootstrap(root);
+  const second = commitAll(root, 'chore(bootstrap): 归档 MVP 框架变更');
+  if (second.status !== 0) return second;
+  const checkout = git(root, ['checkout', 'main']);
+  if (checkout.status !== 0) return checkout;
+  const merge = git(root, identity(['merge', '--no-ff', '-m', 'merge bootstrap', 'bootstrap']));
+  if (merge.status !== 0) return merge;
+  git(root, ['tag', 'mvp-bootstrap']);
+  writeText(path.join(root, '.specgate', 'bootstrap.done'), 'done\n');
+  return {
+    ok: true,
+    side: side.id,
+    stack: side.stack,
+    written,
+    report: 'docs/mvp-scaffold-report.md',
+    commit: (git(root, ['rev-parse', 'HEAD']).stdout || '').trim(),
+  };
+}
+
 export async function buildWorkspace({ root, selection, qualityRunner = null }) {
   const results = [];
   for (const side of selection.sides) {
     const sideRoot = path.join(root, side.path);
-    results.push(await buildBackendSide({ root: sideRoot, side, qualityRunner }));
+    results.push(
+      side.role === 'frontend'
+        ? await buildFrontendSide({ root: sideRoot, side, qualityRunner })
+        : await buildBackendSide({ root: sideRoot, side, qualityRunner }),
+    );
   }
   return { ok: results.every((item) => item.ok), results };
 }
