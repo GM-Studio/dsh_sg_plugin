@@ -6,14 +6,7 @@ import { ensureVenv } from './env/python.js';
 
 const REQUIRED = {
   node: ['prettier', 'eslint', 'eslint-config-prettier'],
-  vue: [
-    'prettier',
-    'eslint',
-    '@eslint/js',
-    'eslint-config-prettier',
-    'eslint-plugin-vue',
-    'vue-tsc',
-  ],
+  vue: ['prettier', 'eslint', 'eslint-config-prettier', 'eslint-plugin-vue', 'vue-tsc'],
   react: ['prettier', 'eslint', 'eslint-config-prettier'],
   python: ['ruff', 'mypy'],
 };
