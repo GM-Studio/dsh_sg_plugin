@@ -50,30 +50,120 @@ function parseScalar(raw) {
   return text;
 }
 
-/** Minimal YAML reader: flat keys plus one nested section. */
+/** Minimal YAML reader: flat keys, one nested section, and a `suites:` list of flat maps. */
 export function parseConfig(text) {
   const result = {};
   let section = null;
+  let suite = null;
   for (const rawLine of String(text || '').split(/\r?\n/)) {
     const line = rawLine.replace(/\s+#.*$/, '');
     if (!line.trim() || line.trim().startsWith('#')) continue;
     const indent = line.match(/^\s*/)[0].length;
-    const match = line.trim().match(/^([A-Za-z0-9_.-]+):\s*(.*)$/);
+    const trimmed = line.trim();
+
+    if (section === 'suites' && indent > 0) {
+      if (trimmed.startsWith('- ')) {
+        suite = {};
+        result.suites.push(suite);
+        const rest = trimmed.slice(2).trim();
+        if (rest) {
+          const match = rest.match(/^([A-Za-z0-9_.-]+):\s*(.*)$/);
+          if (match) suite[match[1]] = parseScalar(match[2]);
+        }
+        continue;
+      }
+      if (suite) {
+        const match = trimmed.match(/^([A-Za-z0-9_.-]+):\s*(.*)$/);
+        if (match) suite[match[1]] = parseScalar(match[2]);
+      }
+      continue;
+    }
+
+    const match = trimmed.match(/^([A-Za-z0-9_.-]+):\s*(.*)$/);
     if (!match) continue;
     const [, key, value] = match;
     if (indent === 0) {
+      suite = null;
       if (value === '') {
         section = key;
-        result[key] = result[key] && typeof result[key] === 'object' ? result[key] : {};
+        if (key === 'suites') {
+          result.suites = [];
+        } else {
+          result[key] =
+            result[key] && typeof result[key] === 'object' && !Array.isArray(result[key])
+              ? result[key]
+              : {};
+        }
       } else {
         section = null;
         result[key] = parseScalar(value);
       }
-    } else if (section) {
+    } else if (section && result[section] && typeof result[section] === 'object') {
       result[section][key] = parseScalar(value);
     }
   }
   return result;
+}
+
+export const SUITE_KINDS = ['node-test', 'pytest', 'command'];
+
+/** Normalize configured suites; fall back to the v3.0 single-suite shape. */
+export function readSuites(config) {
+  const raw = Array.isArray(config?.suites) ? config.suites : [];
+  const installDefault = config?.install !== false;
+  if (raw.length === 0) {
+    const command = Array.isArray(config?.testing?.command) ? config.testing.command : [];
+    return [
+      {
+        id: 'default',
+        kind: 'node-test',
+        command: command.map(String),
+        cwd: config?.testing?.cwd || '.',
+        install: installDefault,
+        timeoutMinutes: 20,
+        pytestArgs: [],
+        python: null,
+        packageManager: null,
+        legacy: true,
+      },
+    ];
+  }
+  return raw.map((item, index) => ({
+    id: String(item.id || `suite-${index + 1}`),
+    kind: String(item.kind || 'node-test'),
+    command: Array.isArray(item.command) ? item.command.map(String) : [],
+    cwd: String(item.cwd || '.'),
+    install: item.install === undefined ? installDefault : item.install !== false,
+    timeoutMinutes: Number(item.timeoutMinutes) > 0 ? Number(item.timeoutMinutes) : 20,
+    pytestArgs: Array.isArray(item.pytestArgs) ? item.pytestArgs.map(String) : [],
+    python: item.python ? String(item.python) : null,
+    packageManager: item.packageManager ? String(item.packageManager) : null,
+    legacy: false,
+  }));
+}
+
+export function validateSuites(root, suites) {
+  const errors = [];
+  const ids = new Set();
+  for (const suite of suites) {
+    if (!CHANGE_NAME_PATTERN.test(suite.id)) {
+      errors.push(`suite id 不合法：${suite.id}`);
+    }
+    if (ids.has(suite.id)) errors.push(`suite id 重复：${suite.id}`);
+    ids.add(suite.id);
+    if (!SUITE_KINDS.includes(suite.kind)) {
+      errors.push(`suite ${suite.id} 的 kind 不合法：${suite.kind}`);
+    }
+    if (!suite.legacy && suite.kind !== 'pytest' && suite.command.length === 0) {
+      errors.push(`suite ${suite.id} 缺少 command`);
+    }
+    const absolute = path.resolve(root, suite.cwd || '.');
+    const relative = path.relative(root, absolute);
+    if (relative.startsWith('..') || path.isAbsolute(relative)) {
+      errors.push(`suite ${suite.id} 的 cwd 逃逸仓库：${suite.cwd}`);
+    }
+  }
+  return { ok: errors.length === 0, errors };
 }
 
 export function configPath(root) {

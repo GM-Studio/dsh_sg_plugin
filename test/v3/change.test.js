@@ -9,6 +9,8 @@ import {
   parseConfig,
   readConfig,
   configPath,
+  readSuites,
+  validateSuites,
 } from '../../src/v3/change.js';
 import { load, patchState } from '../../src/v3/state.js';
 
@@ -134,4 +136,66 @@ test('ABORTED 后可以新建 change', () => {
   });
   const second = createChange(root, { name: 'second-change' });
   assert.equal(second.ok, true);
+});
+
+test('parseConfig 解析 suites 列表', () => {
+  const config = parseConfig(`workflowVersion: 3
+stack: web
+install: true
+suites:
+  - id: web-unit
+    kind: node-test
+    command: ["pnpm", "test:json"]
+    cwd: "."
+    timeoutMinutes: 20
+  - id: api
+    kind: pytest
+    cwd: "server"
+    pytestArgs: ["-q", "tests"]
+    python: "3.12"
+`);
+  assert.equal(config.stack, 'web');
+  assert.equal(config.suites.length, 2);
+  assert.deepEqual(config.suites[0].command, ['pnpm', 'test:json']);
+  assert.equal(config.suites[1].kind, 'pytest');
+  assert.deepEqual(config.suites[1].pytestArgs, ['-q', 'tests']);
+  assert.equal(config.suites[1].python, '3.12');
+});
+
+test('readSuites 对 v3.0 配置退化为 default 单套件', () => {
+  const config = parseConfig(`workflowVersion: 3
+testing:
+  command: ["node", "sg-test.mjs"]
+  cwd: "."
+`);
+  const suites = readSuites(config);
+  assert.equal(suites.length, 1);
+  assert.equal(suites[0].id, 'default');
+  assert.equal(suites[0].kind, 'node-test');
+  assert.deepEqual(suites[0].command, ['node', 'sg-test.mjs']);
+  assert.equal(suites[0].legacy, true);
+});
+
+test('validateSuites 拒绝重复 id、非法 kind 与 cwd 逃逸', () => {
+  const root = tempRoot();
+  const bad = validateSuites(root, [
+    { id: 'web', kind: 'node-test', command: ['x'], cwd: '.', legacy: false },
+    { id: 'web', kind: 'node-test', command: ['x'], cwd: '.', legacy: false },
+    { id: 'api', kind: 'phpunit', command: ['x'], cwd: '.', legacy: false },
+    { id: 'escape', kind: 'command', command: ['x'], cwd: '..', legacy: false },
+  ]);
+  assert.equal(bad.ok, false);
+  const joined = bad.errors.join('; ');
+  assert.match(joined, /重复/);
+  assert.match(joined, /kind 不合法/);
+  assert.match(joined, /逃逸/);
+});
+
+test('validateSuites 接受合法多套件', () => {
+  const root = tempRoot();
+  const result = validateSuites(root, [
+    { id: 'web-unit', kind: 'node-test', command: ['pnpm', 'test:json'], cwd: '.', legacy: false },
+    { id: 'api', kind: 'pytest', command: [], cwd: 'server', legacy: false },
+  ]);
+  assert.equal(result.ok, true, result.errors.join('; '));
 });
