@@ -141,6 +141,8 @@ switch (command) {
           kind: suite.kind,
           argv: suite.argv,
           cwd: suite.cwd,
+          pytestArgs: suite.pytestArgs,
+          python: suite.python,
           cmdHash: suite.cmdHash,
         })),
         approvedAt: null,

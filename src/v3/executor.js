@@ -11,8 +11,8 @@ import {
   headOf,
 } from './worktrees.js';
 import { discoverCommand, loadPlan } from './plan.js';
+import { runTaskSuites } from './suites.js';
 import { runTestCommand } from './testrunner.js';
-import { validateReport } from './report.js';
 import { collectKnownAcs } from './phase.js';
 import { appendEvidence } from './evidence.js';
 import { loadSkillPayload } from './skills.js';
@@ -104,32 +104,28 @@ async function verifyAndFinish({
   parent,
 }) {
   const change = state.change;
-  const run = runTestCommand({
-    argv: command.argv,
-    cwd: path.join(worktree.path, command.cwd || '.'),
-  });
-  if (run.exitCode !== 0) {
-    return failure('TESTS_FAILED', `测试退出码 ${run.exitCode}：${(run.stderr || '').slice(-400)}`, {
-      run,
-    });
-  }
-
   const plan = loadPlan(root, change);
   const { knownAcs } = collectKnownAcs({ root, state, change });
-  const required = new Set(task.ac || []);
   const head = headOf(worktree.path, 'HEAD');
-  const validation = validateReport({
-    report: run.report,
-    deltaAcs: required,
-    knownAcs,
-    mapping: plan.mapping,
+  const suiteResult = runTaskSuites({
+    root,
+    state,
     worktree: worktree.path,
+    task,
+    plan,
+    knownAcs,
     changedFiles: changedFiles(root, base, head),
+    fallbackCommand: command,
     requireChangedFiles: state.type !== 'remove',
   });
-  if (!validation.ok) {
-    return failure('REPORT_INVALID', validation.errors.join('; '), { validation, run });
+  if (!suiteResult.ok) {
+    return failure(
+      'SUITE_FAILED',
+      `suite ${suiteResult.failedSuite} 失败：${suiteResult.message}`,
+      { suiteResult },
+    );
   }
+  const validation = { ok: true, stats: suiteResult.stats };
 
   const reviewerSkills = loadSkillPayload({ role: 'reviewer' });
   const review = await dispatcher({
@@ -280,7 +276,10 @@ async function executeFeatureTask({ root, state, task, dispatcher, config, paren
   }
 
   const command = discoverCommand(root, config);
-  if (!command.ok) return failure(command.code || 'TEST_COMMAND_MISSING', command.message);
+  const hasSuites = Array.isArray(state.plan?.suites) && state.plan.suites.length > 0;
+  if (!command.ok && !hasSuites) {
+    return failure(command.code || 'TEST_COMMAND_MISSING', command.message);
+  }
 
   return verifyAndFinish({
     root,
@@ -306,7 +305,10 @@ async function executeFixTask({ root, state, task, dispatcher, config, parent })
   if (!worktree.ok) return failure(worktree.code || 'WORKTREE_FAILED', worktree.message);
 
   const command = discoverCommand(root, config);
-  if (!command.ok) return failure(command.code || 'TEST_COMMAND_MISSING', command.message);
+  const hasSuites = Array.isArray(state.plan?.suites) && state.plan.suites.length > 0;
+  if (!command.ok && !hasSuites) {
+    return failure(command.code || 'TEST_COMMAND_MISSING', command.message);
+  }
 
   const tester = await dispatcher({
     role: 'tester',

@@ -9,8 +9,7 @@ import { createDispatcher } from './dispatch.js';
 import { executeTask, pickNextTask, revertWave } from './executor.js';
 import { readyBatch } from './scheduler.js';
 import { discoverCommand, loadPlan } from './plan.js';
-import { runTestCommand } from './testrunner.js';
-import { validateReport } from './report.js';
+import { runAllSuites } from './suites.js';
 import { generateAcceptance } from './acceptance.js';
 import { verifyEvidence, appendEvidence } from './evidence.js';
 import { digest } from './util/hash.js';
@@ -227,6 +226,8 @@ export function registerTools(ctx, runtime) {
                   kind: suite.kind,
                   argv: suite.argv,
                   cwd: suite.cwd,
+                  pytestArgs: suite.pytestArgs,
+                  python: suite.python,
                   cmdHash: suite.cmdHash,
                 })),
                 approvedAt: null,
@@ -333,32 +334,6 @@ export function registerTools(ctx, runtime) {
             if (!integration.ok) return fail(integration.message, integration);
 
             const command = discoverCommand(project.root, project.config);
-            if (!command.ok) return fail(command.message, command);
-
-            const run = runTestCommand({
-              argv: command.argv,
-              cwd: path.join(integration.path, command.cwd || '.'),
-            });
-            if (run.exitCode !== 0) {
-              const reverted = revertWave({
-                root: project.root,
-                state,
-                waveStart: state.integration?.base,
-              });
-              patchState(project.root, (draft) => {
-                for (const id of reverted.reverted || []) {
-                  draft.tasks[id].status = 'reverted';
-                  draft.tasks[id].attempts = (draft.tasks[id].attempts || 0) + 1;
-                }
-                draft.phase = 'EXECUTING';
-                draft.blockedReason = `集成回归失败：exit ${run.exitCode}`;
-              });
-              return fail(
-                `集成回归失败（exit ${run.exitCode}），已回退到波前：${(reverted.reverted || []).join('、')}`,
-                { run, reverted },
-              );
-            }
-
             const plan = loadPlan(project.root, change);
             const { deltaAcs, knownAcs } = collectKnownAcs({ root: project.root, state, change });
             const base = state.integration?.base;
@@ -368,16 +343,17 @@ export function registerTools(ctx, runtime) {
                   .filter(Boolean)
               : [];
             const commit = headOf(integration.path, 'HEAD');
-            const validation = validateReport({
-              report: run.report,
-              deltaAcs,
-              knownAcs,
-              mapping: plan.mapping,
+
+            const suitesResult = runAllSuites({
+              root: project.root,
+              state,
               worktree: integration.path,
+              plan,
+              knownAcs,
               changedFiles,
-              requireChangedFiles: false,
+              fallbackCommand: command.ok ? command : null,
             });
-            if (!validation.ok) {
+            if (!suitesResult.ok) {
               const reverted = revertWave({
                 root: project.root,
                 state,
@@ -389,21 +365,26 @@ export function registerTools(ctx, runtime) {
                   draft.tasks[id].attempts = (draft.tasks[id].attempts || 0) + 1;
                 }
                 draft.phase = 'EXECUTING';
-                draft.blockedReason = `验收证据不足：${validation.errors.join('; ')}`;
+                draft.blockedReason = `集成回归失败：suite ${suitesResult.failedSuite} ${suitesResult.message}`;
               });
-              return fail(`验收证据不足，已回退到波前：\n${formatErrors(validation.errors)}`, {
-                validation,
-                run,
-              });
+              return fail(
+                `集成回归失败（suite ${suitesResult.failedSuite}）：${suitesResult.message}，已回退到波前：${(reverted.reverted || []).join('、')}`,
+                { suitesResult, reverted },
+              );
             }
+
+            const combinedReport = {
+              schemaVersion: 1,
+              cases: suitesResult.results.flatMap((item) => item.report?.cases || []),
+            };
 
             const headEvidence = verifyEvidence(project.root, change);
             const acceptance = generateAcceptance({
               change,
               type: state.type,
               acs: deltaAcs,
-              report: run.report,
-              exitCode: run.exitCode,
+              report: combinedReport,
+              exitCode: 0,
               evidence: headEvidence,
               commit,
               validator: 'builtin',
