@@ -16,6 +16,10 @@ const ZERO_SHA = /^0+$/;
 const REVIEW_EXTENSIONS = new Set(['.js', '.mjs', '.cjs', '.ts']);
 const FORMAT_EXTENSIONS = new Set(['.js', '.mjs', '.cjs', '.ts', '.json', '.yml', '.yaml']);
 const STAGES = new Set(['commit', 'push', 'ci', 'all']);
+// Keep in sync with .prettierignore; passing an ignored file explicitly makes
+// both ESLint and Prettier exit with "no files matching".
+const IGNORED_DIRECTORIES = ['node_modules/', 'dist/', 'coverage/', 'assets/', 'docs/'];
+const IGNORED_FILES = new Set(['package-lock.json']);
 
 const repoRoot = execFileSync('git', ['rev-parse', '--show-toplevel'], {
   encoding: 'utf8',
@@ -87,6 +91,14 @@ function normalizeFile(file) {
 
 function extensionOf(file) {
   return path.extname(file).toLowerCase();
+}
+
+function isIgnoredPath(file) {
+  return (
+    IGNORED_DIRECTORIES.some((directory) => file.startsWith(directory)) ||
+    IGNORED_FILES.has(file) ||
+    file.endsWith('.tgz')
+  );
 }
 
 function filterFiles(files) {
@@ -279,8 +291,12 @@ function main() {
   const stdin = options.stage === 'push' ? readStdin() : '';
   const { files: rawFiles, description } = collectChangedFiles(options, stdin);
   const files = filterFiles(rawFiles);
-  const reviewFiles = files.filter((file) => REVIEW_EXTENSIONS.has(extensionOf(file)));
-  const formatTargets = files.filter((file) => FORMAT_EXTENSIONS.has(extensionOf(file)));
+  const reviewFiles = files.filter(
+    (file) => !isIgnoredPath(file) && REVIEW_EXTENSIONS.has(extensionOf(file)),
+  );
+  const formatTargets = files.filter(
+    (file) => !isIgnoredPath(file) && FORMAT_EXTENSIONS.has(extensionOf(file)),
+  );
 
   console.log(`[quality-gate] 阶段：${options.stage}；范围：${description}`);
   if (files.length === 0) {
