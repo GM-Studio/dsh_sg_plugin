@@ -316,6 +316,14 @@ async function executeFeatureTask({ root, state, task, dispatcher, config, paren
   const base = headOf(integration.path, 'HEAD');
   const worktree = ensureTask(root, change, task.id, base);
   if (!worktree.ok) return failure(worktree.code || 'WORKTREE_FAILED', worktree.message);
+  if ((task.attempts || 0) > 0) {
+    try {
+      git(worktree.path, ['reset', '--hard', base]);
+      git(worktree.path, ['clean', '-fd']);
+    } catch {
+      // best-effort retry reset
+    }
+  }
 
   const implementer = await dispatcher({
     role: 'implementer',
@@ -447,6 +455,14 @@ async function executeFixTask({ root, state, task, dispatcher, config, parent })
   const base = headOf(integration.path, 'HEAD');
   const worktree = ensureTask(root, change, task.id, base);
   if (!worktree.ok) return failure(worktree.code || 'WORKTREE_FAILED', worktree.message);
+  if ((task.attempts || 0) > 0) {
+    try {
+      git(worktree.path, ['reset', '--hard', base]);
+      git(worktree.path, ['clean', '-fd']);
+    } catch {
+      // best-effort retry reset
+    }
+  }
 
   const command = discoverCommand(root, config);
   const hasSuites = Array.isArray(state.plan?.suites) && state.plan.suites.length > 0;
