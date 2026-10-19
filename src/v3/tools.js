@@ -278,8 +278,17 @@ export function registerTools(ctx, runtime) {
               if (!m2.ok) return fail(`M2 未通过：\n${formatErrors(m2.errors)}`, m2);
               writeEnvReport(project.root, scanEnv(project.root));
               try {
-                git(project.root, ['add', '.specgate/env.json', '.specgate/env-report.md']);
-                git(project.root, ['commit', '-q', '-m', `env(${state.change}): 环境扫描`]);
+                const dirty = git(project.root, [
+                  'status',
+                  '--porcelain',
+                  '--',
+                  '.specgate/env.json',
+                  '.specgate/env-report.md',
+                ]).trim();
+                if (dirty) {
+                  git(project.root, ['add', '.specgate/env.json', '.specgate/env-report.md']);
+                  git(project.root, ['commit', '-q', '-m', `env(${state.change}): 环境扫描`]);
+                }
               } catch {
                 // env report is best-effort; keep the plan flow unblocked
               }

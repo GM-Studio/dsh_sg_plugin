@@ -158,7 +158,6 @@ export function scanEnv(root) {
   }
   const result = {
     schemaVersion: 1,
-    generatedAt: new Date().toISOString(),
     workspaces,
     missing: [...missing].sort(),
     plan: [...new Set(plan)],
