@@ -50,7 +50,7 @@ export function registerCommands(ctx, runtime) {
   register({
     name: 'sg-init',
     description: '初始化 SpecGate v3 项目（创建 .specgate 配置与 openspec 目录）',
-    input: { hint: '' },
+    input: { hint: '（无需参数）' },
     async handler(inv) {
       const root = runtime.getCwd(inv?.agent);
       const result = initProject(root);
@@ -98,7 +98,7 @@ export function registerCommands(ctx, runtime) {
   register({
     name: 'sg-status',
     description: '查看 SpecGate v3 项目状态：阶段、下一步、任务与证据',
-    input: { hint: '' },
+    input: { hint: '（无需参数）' },
     async handler(inv) {
       const project = runtime.project(inv?.agent);
       return { kind: 'success', text: renderStatus(project) };

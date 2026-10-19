@@ -83,6 +83,37 @@ test('implementer 可以改源码，不能改测试', () => {
   assert.ok(denied.violations.some((item) => item.path === 'tests/x.test.js'));
 });
 
+test('implementer 改 docs 必须在 touched 清单内', () => {
+  const root = initRepo();
+  const base = git(root, ['rev-parse', 'HEAD']);
+  const task = ensureTask(root, 'c1', 'T-001', base);
+  writeAndCommit(task.path, 'docs/guide.md', '# guide\n');
+  const denied = diffCheck({
+    root,
+    branch: task.branch,
+    baseCommit: base,
+    role: 'implementer',
+    change: 'c1',
+    touched: { modify: [], delete: [], bootstrap: [] },
+  });
+  assert.equal(denied.ok, false);
+  assert.ok(denied.violations.some((item) => item.path === 'docs/guide.md'));
+
+  const root2 = initRepo();
+  const base2 = git(root2, ['rev-parse', 'HEAD']);
+  const task2 = ensureTask(root2, 'c1', 'T-002', base2);
+  writeAndCommit(task2.path, 'docs/guide.md', '# guide\n');
+  const allowed = diffCheck({
+    root: root2,
+    branch: task2.branch,
+    baseCommit: base2,
+    role: 'implementer',
+    change: 'c1',
+    touched: { modify: ['docs/guide.md'], delete: [], bootstrap: [] },
+  });
+  assert.equal(allowed.ok, true, JSON.stringify(allowed.violations));
+});
+
 test('tester 可以新增 automation，不能改源码', () => {
   const root = initRepo();
   const base = git(root, ['rev-parse', 'HEAD']);

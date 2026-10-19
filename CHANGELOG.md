@@ -1,5 +1,14 @@
 # Changelog
 
+## 3.1.3
+
+- Workflow audit fixes: H1 now allows writing the change specs delta before approval; design/tasks/tests/src stay frozen.
+- Delta validation rejects reusing an existing baseline AC id in an ADDED requirement, and rejects moving another requirement's AC in MODIFIED.
+- implementer changes under `docs/` must be listed in `touched.modify`/`touched.bootstrap`; unlisted docs are rejected by diffCheck.
+- Archive tags now carry the evidence head hash in the tag annotation (`evidence: sha256:…`).
+- `/sg-init` and `/sg-status` now have a non-empty input hint so they appear in the command palette.
+- Audit report refreshed at `docs/audits/v3.1-workflow-audit.md`.
+
 ## 3.1.2
 
 - H1/H2/H3 approval dialogs now render a Markdown review card: requirement overview, task/file/suite plan, acceptance table, diff stat and key hunks.

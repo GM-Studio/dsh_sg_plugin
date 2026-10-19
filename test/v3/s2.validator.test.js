@@ -47,6 +47,23 @@ const MODIFIED_EXISTING = `## MODIFIED Requirements
 #### Scenario: 登录成功 (AC-001)
 `;
 
+const ADDED_COLLIDE = `## ADDED Requirements
+
+### Requirement: 另一个需求 (REQ-003)
+
+#### Scenario: 复用了旧 AC (AC-001)
+`;
+
+test('ADDED 不能复用基线里已存在的 AC 编号', () => {
+  const result = validateDeltaFiles({
+    files: delta('login', ADDED_COLLIDE),
+    specs: SPECS,
+    type: 'feature',
+  });
+  assert.equal(result.ok, false);
+  assert.match(result.errors.join('; '), /AC-001 已被 specs 使用/);
+});
+
 test('合法 feature delta 通过', () => {
   const result = validateDeltaFiles({
     files: delta('login', ADDED_NEW),

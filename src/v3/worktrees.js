@@ -192,7 +192,9 @@ export function diffCheck({ root, branch, baseCommit, role, change, touched, pha
         !filePath.endsWith('acceptance.md');
       if (filePath.startsWith('docs/')) allowed = true;
     } else if (role === 'implementer') {
-      allowed = !isDeniedCommon(filePath);
+      const listed = [...(touched?.modify || []), ...(touched?.bootstrap || [])];
+      const unlistedDoc = filePath.startsWith('docs/') && !listed.includes(filePath);
+      allowed = !isDeniedCommon(filePath) && !unlistedDoc;
       if (filePath.startsWith('openspec/changes/')) allowed = false;
       if (filePath.startsWith('tests/')) allowed = false;
       if (filePath === 'package.json') allowed = false;

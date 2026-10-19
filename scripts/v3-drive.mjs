@@ -511,6 +511,7 @@ switch (command) {
       change: state.change,
       integrationBranch: state.integration?.branch,
       tag,
+      evidenceHead: state.evidence?.headHash,
     });
     if (!result.ok) fail(result.message, result);
     await poolDisposeChange(root, state.change);

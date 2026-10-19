@@ -31,7 +31,7 @@ export function nextTag(root) {
   return `sg-v0.${numbers.length ? Math.max(...numbers) + 1 : 1}`;
 }
 
-export function archiveChange({ root, change, integrationBranch, backupDir, tag }) {
+export function archiveChange({ root, change, integrationBranch, backupDir, tag, evidenceHead }) {
   const mainBefore = headOf(root, 'HEAD');
   if (!integrationBranch) {
     return { ok: false, code: 'NO_INTEGRATION', message: '没有 integration 分支' };
@@ -67,7 +67,13 @@ export function archiveChange({ root, change, integrationBranch, backupDir, tag 
     git(root, ['add', 'openspec/specs']);
     git(root, ['commit', '-q', '-m', `specs(${change}): 归档需求变更`]);
 
-    git(root, ['tag', '-a', tag, '-m', `SpecGate ${tag}`]);
+    git(root, [
+      'tag',
+      '-a',
+      tag,
+      '-m',
+      `SpecGate ${tag}${evidenceHead ? `\nevidence: ${evidenceHead}` : ''}`,
+    ]);
     createdTag = tag;
 
     const from = path.join(root, 'openspec', 'changes', change);

@@ -443,6 +443,7 @@ export function registerTools(ctx, runtime) {
               change: state.change,
               integrationBranch: state.integration?.branch,
               tag,
+              evidenceHead: state.evidence?.headHash,
             });
             if (!result.ok) {
               patchState(project.root, (draft) => {

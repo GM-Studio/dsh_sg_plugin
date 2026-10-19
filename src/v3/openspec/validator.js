@@ -10,6 +10,12 @@ export function validateDeltaFiles({ files, specs, type }) {
   const reqIds = new Set();
   const acIds = new Set();
   const counts = { ADDED: 0, MODIFIED: 0, REMOVED: 0 };
+  const baselineAcs = new Set();
+  for (const reqs of specs.values()) {
+    for (const req of reqs) {
+      for (const scenario of req.scenarios || []) baselineAcs.add(scenario.id);
+    }
+  }
 
   for (const file of files) {
     const parsed = parseDelta(file.text);
@@ -35,6 +41,17 @@ export function validateDeltaFiles({ files, specs, type }) {
         for (const scenario of req.scenarios) {
           if (acIds.has(scenario.id)) errors.push(`${file.path}: AC 编号重复 ${scenario.id}`);
           acIds.add(scenario.id);
+          if (kind === 'ADDED' && baselineAcs.has(scenario.id)) {
+            errors.push(
+              `${file.path}: AC ${scenario.id} 已被 specs 使用，请换新编号（建议带 change 前缀）`,
+            );
+          }
+          if (kind === 'MODIFIED' && baselineAcs.has(scenario.id)) {
+            const owned = new Set((existing?.scenarios || []).map((item) => item.id));
+            if (!owned.has(scenario.id)) {
+              errors.push(`${file.path}: AC ${scenario.id} 属于其他需求，不能挪用到 ${req.id}`);
+            }
+          }
         }
       }
     }

@@ -36,15 +36,9 @@ export function checkWrite(runtime, exec) {
   const state = loaded.state;
   if (state.phase === 'H1_PENDING') {
     const prefix = `openspec/changes/${state.change}/`;
-    const frozen = [
-      `${prefix}design.md`,
-      `${prefix}tasks.md`,
-      `${prefix}specs/`,
-      `${prefix}tests/`,
-    ];
+    const frozen = [`${prefix}design.md`, `${prefix}tasks.md`];
     if (
       frozen.includes(relative) ||
-      relative.startsWith(`${prefix}specs/`) ||
       relative.startsWith(`${prefix}tests/`) ||
       relative.startsWith('src/') ||
       relative.startsWith('tests/')
