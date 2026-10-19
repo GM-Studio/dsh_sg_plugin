@@ -368,7 +368,12 @@ export async function poolDispatch({
       resultText = entry.firstText;
     } else {
       const summary = entry.lastSummary ? `上一个任务摘要：\n${entry.lastSummary}\n\n` : '';
-      const full = `${summary}${text}`;
+      const full = [
+        `工作目录：${worktree}`,
+        '请先使用 working_directory 工具切换到该目录，再执行任务。',
+        '',
+        `${summary}${text}`,
+      ].join('\n');
       resultText = await continueChild({ runtime, entry, worktree, text: full, parent });
     }
     entry.tasks += 1;
