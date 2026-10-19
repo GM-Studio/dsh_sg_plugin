@@ -1,4 +1,5 @@
 import { answerOf } from '../v3/requirements.js';
+import { buildWorkspace } from './build.js';
 import {
   createWorkspaceLayout,
   resolveSelection,
@@ -48,6 +49,7 @@ export async function startV4Init({
   backend = null,
   frontend = null,
   preset = null,
+  qualityRunner = null,
 }) {
   const scan = scanWorkspace(root);
   if (scan.kind === 'v4') {
@@ -76,9 +78,19 @@ export async function startV4Init({
 
   const created = createWorkspaceLayout({ root, selection });
   if (!created.ok) return created;
+  const built = await buildWorkspace({ root, selection, qualityRunner });
+  if (!built.ok) {
+    return {
+      ok: false,
+      code: 'BUILD_FAILED',
+      message: '脚手架/CRUD/质量阶段失败；详见各 side 的 docs/mvp-scaffold-report.md',
+      results: built.results,
+    };
+  }
   return {
     ...created,
     phase: 'IDLE',
+    build: built,
     message:
       'v4 workspace：' +
       selection.sides.map((side) => side.path + '=' + side.stack).join('，') +
@@ -97,11 +109,21 @@ export function summarizeV4Result(result) {
       '\n下一步：/sg-change <name>'
     );
   }
+  const built = result.build?.results || [];
   return [
-    'SpecGate v4 workspace 已创建（Phase 1：布局 + 默认 REQ）',
+    'SpecGate v4 workspace 已创建（Phase 2：布局 + 后端 CRUD + Git）',
     '子模块：' + (result.sides || []).join('、'),
     '根配置：.specgate/workspace.yaml',
     '默认需求：每个 submodule 的 openspec/REQ.md v1.0（REQ-001 搭建框架）',
-    '下一步：/sg-change <name>（Phase 2/3 将接入脚手架、CRUD、质量与归档）',
+    ...built.map(
+      (item) =>
+        '- ' +
+        (item.side || '?') +
+        '：' +
+        (item.skipped
+          ? '跳过（' + item.reason + '）'
+          : '提交 ' + String(item.commit || '').slice(0, 8)),
+    ),
+    '下一步：/sg-change <name>（Phase 3/4 将接入前端、adopt 与并行 change）',
   ].join('\n');
 }
