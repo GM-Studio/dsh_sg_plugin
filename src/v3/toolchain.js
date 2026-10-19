@@ -68,7 +68,13 @@ export function planToolchain(root, worktree = root, stack = null) {
   const deps = { ...(pkg.dependencies || {}), ...(pkg.devDependencies || {}) };
   const required = REQUIRED[stack] || REQUIRED.node;
   const packages = required.filter((name) => !deps[name]);
-  const configs = Object.keys(CONFIGS).filter((file) => !exists(path.join(worktree, file)));
+  const python =
+    stack === 'python' ||
+    exists(path.join(worktree, 'pyproject.toml')) ||
+    exists(path.join(worktree, 'requirements.txt'));
+  const configs = python
+    ? Object.keys(CONFIGS).filter((file) => !exists(path.join(worktree, file)))
+    : [];
   const hasLockfile = ['pnpm-lock.yaml', 'yarn.lock', 'package-lock.json'].some((file) =>
     exists(path.join(root, file)),
   );

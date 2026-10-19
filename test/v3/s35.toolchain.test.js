@@ -22,7 +22,7 @@ test('planToolchain 找出缺失包与配置', () => {
   assert.ok(plan.packages.includes('eslint'));
   assert.ok(plan.packages.includes('vue-tsc'));
   assert.ok(!plan.packages.includes('prettier'));
-  assert.ok(plan.configs.includes('prettier.config.mjs'));
+  assert.deepEqual(plan.configs, []);
 });
 
 test('Python 项目生成 ruff/mypy 配置', () => {
@@ -41,7 +41,7 @@ test('Python 项目生成 ruff/mypy 配置', () => {
   assert.ok(fs.existsSync(path.join(root, 'mypy.ini')));
 });
 
-test('ensureToolchain(install=false) 只生成配置，不安装', () => {
+test('ensureToolchain(install=false) 不安装依赖，也不生成 Node 质量配置', () => {
   const root = tempRoot();
   const result = ensureToolchain({
     root,
@@ -52,7 +52,7 @@ test('ensureToolchain(install=false) 只生成配置，不安装', () => {
     install: false,
   });
   assert.equal(result.ok, true, result.message);
-  assert.ok(fs.existsSync(path.join(root, 'prettier.config.mjs')));
-  assert.ok(fs.existsSync(path.join(root, 'eslint.config.js')));
-  assert.ok(Array.isArray(result.generated));
+  assert.ok(!fs.existsSync(path.join(root, 'prettier.config.mjs')));
+  assert.ok(!fs.existsSync(path.join(root, 'eslint.config.js')));
+  assert.deepEqual(result.generated, []);
 });
