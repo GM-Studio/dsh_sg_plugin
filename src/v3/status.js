@@ -44,10 +44,12 @@ export function statusData(project) {
     root,
     workflowVersion: Number(config?.workflowVersion) || null,
     change: state.change,
+    changeKey: state.changeKey || null,
     type: state.type,
     phase: state.phase,
     nextAction: nextActionFor(state),
     tasks: taskSummary(state),
+    suites: state.plan?.suites || null,
     evidence: state.evidence,
     blockedReason: state.blockedReason,
     skills: state.skills,
@@ -69,6 +71,10 @@ export function renderStatus(project) {
     'SpecGate v3',
     `项目：${data.root}`,
     `Change：${data.change || '（无）'}${data.type ? `（${data.type}）` : ''}`,
+    ...(data.changeKey ? [`changeKey：${data.changeKey}`] : []),
+    ...(data.suites?.length
+      ? [`套件：${data.suites.map((suite) => suite.id).join(', ')}`]
+      : []),
     `阶段：${data.phase}`,
     `下一步：${data.nextAction}`,
     `任务：共 ${data.tasks.total}，merged ${data.tasks.merged}，失败 ${data.tasks.failed}，进行中 ${data.tasks.running}`,

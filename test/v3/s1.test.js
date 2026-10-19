@@ -120,8 +120,21 @@ test('命令 /sg-init 与 /sg-change 可用', async () => {
   assert.equal(load(root).state.type, 'modify');
 });
 
-test('parseChangeArgs 支持 --type 与位置参数', () => {
-  assert.deepEqual(parseChangeArgs('add-login --type fix'), { name: 'add-login', type: 'fix' });
-  assert.deepEqual(parseChangeArgs('--type remove clean-up'), { name: 'clean-up', type: 'remove' });
-  assert.deepEqual(parseChangeArgs(''), { name: '', type: 'feature' });
+test('parseChangeArgs 支持 --type、--link 与位置参数', () => {
+  assert.deepEqual(parseChangeArgs('add-login --type fix'), {
+    name: 'add-login',
+    type: 'fix',
+    link: null,
+  });
+  assert.deepEqual(parseChangeArgs('--type remove clean-up'), {
+    name: 'clean-up',
+    type: 'remove',
+    link: null,
+  });
+  assert.deepEqual(parseChangeArgs('add-login --link checkout-2026-10'), {
+    name: 'add-login',
+    type: 'feature',
+    link: 'checkout-2026-10',
+  });
+  assert.deepEqual(parseChangeArgs(''), { name: '', type: 'feature', link: null });
 });

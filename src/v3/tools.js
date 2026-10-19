@@ -105,6 +105,7 @@ export function registerTools(ctx, runtime) {
         properties: {
           name: { type: 'string' },
           type: { type: 'string', enum: ['feature', 'modify', 'fix', 'remove'] },
+          link: { type: 'string' },
         },
         required: ['name'],
         additionalProperties: false,
@@ -120,6 +121,7 @@ export function registerTools(ctx, runtime) {
           name: args?.name,
           type: args?.type || 'feature',
           baseCommit,
+          changeKey: args?.link || null,
         });
         if (!result.ok) return fail(result.message, result);
         return ok(
@@ -383,6 +385,7 @@ export function registerTools(ctx, runtime) {
             const acceptance = generateAcceptance({
               change,
               type: state.type,
+              changeKey: state.changeKey || null,
               acs: deltaAcs,
               report: combinedReport,
               exitCode: 0,

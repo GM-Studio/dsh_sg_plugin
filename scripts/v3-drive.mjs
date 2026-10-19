@@ -95,7 +95,12 @@ switch (command) {
   }
   case 'change': {
     const baseCommit = headOf(root, 'HEAD');
-    const result = createChange(root, { name: arg1, type: arg2 || 'feature', baseCommit });
+    const result = createChange(root, {
+      name: arg1,
+      type: arg2 || 'feature',
+      baseCommit,
+      changeKey: process.argv[6] || null,
+    });
     if (!result.ok) fail(result.message, result);
     out({ ok: true, change: arg1, type: arg2 || 'feature', baseCommit });
     break;
@@ -447,6 +452,7 @@ switch (command) {
     const acceptance = generateAcceptance({
       change: state.change,
       type: state.type,
+      changeKey: state.changeKey || null,
       acs: deltaAcs,
       report: run.report,
       exitCode: run.exitCode,

@@ -43,6 +43,7 @@ export function emptyState(patch = {}) {
     change: null,
     type: null,
     phase: 'IDLE',
+    changeKey: null,
     baseCommit: null,
     baseline: { specsBase: null, artifactHash: null, approvedAt: null },
     plan: {

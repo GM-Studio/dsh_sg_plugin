@@ -199,3 +199,29 @@ test('validateSuites 接受合法多套件', () => {
   ]);
   assert.equal(result.ok, true, result.errors.join('; '));
 });
+
+test('createChange 记录 changeKey 并拒绝非法格式', () => {
+  const root = tempRoot();
+  initProject(root);
+  const created = createChange(root, { name: 'key-demo', changeKey: 'checkout-2026-10' });
+  assert.equal(created.ok, true, created.message);
+  assert.equal(created.changeKey, 'checkout-2026-10');
+  assert.equal(load(root).state.changeKey, 'checkout-2026-10');
+
+  patchState(root, (draft) => {
+    draft.phase = 'ABORTED';
+  });
+  const bad = createChange(root, { name: 'bad-key', changeKey: 'UPPER' });
+  assert.equal(bad.ok, false);
+  assert.equal(bad.code, 'INVALID_CHANGE_KEY');
+});
+
+test('createChange 使用配置里的默认 changeKey', () => {
+  const root = tempRoot();
+  initProject(root);
+  const configFile = configPath(root);
+  fs.appendFileSync(configFile, 'changeKey: checkout-default\n', 'utf8');
+  const created = createChange(root, { name: 'default-key' });
+  assert.equal(created.ok, true, created.message);
+  assert.equal(created.changeKey, 'checkout-default');
+});

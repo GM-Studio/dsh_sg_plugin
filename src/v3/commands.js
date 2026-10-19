@@ -15,16 +15,20 @@ export function parseChangeArgs(rawInput) {
   const parts = tokens(rawInput);
   let name = '';
   let type = 'feature';
+  let link = null;
   for (let index = 0; index < parts.length; index += 1) {
     const part = parts[index];
     if (part === '--type' || part === '-t') {
       type = parts[index + 1] || type;
       index += 1;
+    } else if (part === '--link' || part === '-l') {
+      link = parts[index + 1] || null;
+      index += 1;
     } else if (!part.startsWith('-') && !name) {
       name = part;
     }
   }
-  return { name, type };
+  return { name, type, link };
 }
 
 export function registerCommands(ctx, runtime) {
@@ -60,19 +64,22 @@ export function registerCommands(ctx, runtime) {
 
   register({
     name: 'sg-change',
-    description: '创建 v3 change：/sg-change <name> [--type feature|modify|fix|remove]',
-    input: { hint: '<name> [--type feature|modify|fix|remove]' },
+    description: '创建 v3 change：/sg-change <name> [--type feature|modify|fix|remove] [--link <changeKey>]',
+    input: { hint: '<name> [--type feature|modify|fix|remove] [--link <changeKey>]' },
     async handler(inv) {
       const project = runtime.project(inv?.agent);
       const guard = ensureV3(project);
       if (!guard.ok) return { kind: 'error', text: guard.message };
 
-      const { name, type } = parseChangeArgs(inv?.rawInput);
+      const { name, type, link } = parseChangeArgs(inv?.rawInput);
       if (!name) {
-        return { kind: 'error', text: '用法：/sg-change <name> [--type feature|modify|fix|remove]' };
+        return {
+          kind: 'error',
+          text: '用法：/sg-change <name> [--type feature|modify|fix|remove] [--link <changeKey>]',
+        };
       }
       const baseCommit = isGitRepo(project.root) ? headCommit(project.root) : null;
-      const result = createChange(project.root, { name, type, baseCommit });
+      const result = createChange(project.root, { name, type, baseCommit, changeKey: link });
       if (!result.ok) return { kind: 'error', text: result.message };
       return {
         kind: 'success',

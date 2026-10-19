@@ -5,6 +5,7 @@ import { init as initState, load as loadState, save as saveState, patchState } f
 
 export const CONFIG_FILE = 'config.yaml';
 export const CHANGE_NAME_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
+export const CHANGE_KEY_PATTERN = /^[a-z0-9][a-z0-9-]{2,63}$/;
 
 const IGNORE_ENTRIES = [
   '.specgate/state.json',
@@ -251,7 +252,7 @@ export function initProject(root, options = {}) {
   };
 }
 
-export function createChange(root, { name, type = 'feature', baseCommit = null } = {}) {
+export function createChange(root, { name, type = 'feature', baseCommit = null, changeKey = null } = {}) {
   if (!CHANGE_NAME_PATTERN.test(String(name || ''))) {
     return {
       ok: false,
@@ -272,6 +273,16 @@ export function createChange(root, { name, type = 'feature', baseCommit = null }
   const loaded = loadState(root);
   if (!loaded.ok) return loaded;
   const { state } = loaded;
+  const config = readConfig(root);
+  const effectiveKey = changeKey || (config?.changeKey ? String(config.changeKey) : null);
+  if (effectiveKey !== null && !CHANGE_KEY_PATTERN.test(effectiveKey)) {
+    return {
+      ok: false,
+      code: 'INVALID_CHANGE_KEY',
+      message: `changeKey 不合法：${effectiveKey}`,
+      fix: '使用 3-64 位小写字母/数字/连字符，例如 checkout-2026-10',
+    };
+  }
   if (state.change && !['DONE', 'ABORTED', 'IDLE'].includes(state.phase)) {
     return {
       ok: false,
@@ -309,6 +320,7 @@ export function createChange(root, { name, type = 'feature', baseCommit = null }
   const saved = patchState(root, (draft) => {
     draft.change = name;
     draft.type = type;
+    draft.changeKey = effectiveKey;
     draft.baseCommit = baseCommit;
     draft.phase = 'H1_PENDING';
     draft.tasks = {};
@@ -338,7 +350,7 @@ export function createChange(root, { name, type = 'feature', baseCommit = null }
   });
   if (!saved.ok) return saved;
 
-  return { ok: true, root, name, type, changeDir, state: saved.state };
+  return { ok: true, root, name, type, changeKey: effectiveKey, changeDir, state: saved.state };
 }
 
 function proposalTemplate(name, type) {

@@ -1,4 +1,14 @@
-export function generateAcceptance({ change, type, acs, report, exitCode, evidence, commit, validator }) {
+export function generateAcceptance({
+  change,
+  type,
+  changeKey,
+  acs,
+  report,
+  exitCode,
+  evidence,
+  commit,
+  validator,
+}) {
   const cases = Array.isArray(report?.cases) ? report.cases : [];
   const rows = [...acs].sort().map((ac) => {
     const pass = cases.find((item) => item.status === 'pass' && (item.ac || []).includes(ac));
@@ -16,6 +26,7 @@ export function generateAcceptance({ change, type, acs, report, exitCode, eviden
     `# 验收报告：${change}`,
     '',
     `- 变更类型：${type}`,
+    ...(changeKey ? [`- changeKey：${changeKey}`] : []),
     `- 结论：${conclusion}`,
     `- 校验器：${validator}`,
     `- 证据 head：${evidence?.headSeq ?? 0} / ${evidence?.headHash ?? '-'}`,
