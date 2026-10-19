@@ -125,7 +125,7 @@ Add the bundle and the GitHub dependency to the active profile's `package.json`:
     }
   },
   "dependencies": {
-    "dsh-plugin-specgate": "github:GM-Studio/dsh_sg_plugin#v2.1.0"
+    "dsh-plugin-specgate": "github:GM-Studio/dsh_sg_plugin#v3.6.0"
   }
 }
 ```
@@ -146,14 +146,14 @@ Call the DSH `plugin_manager` tool with:
 ```json
 {
   "action": "install_bundle",
-  "target": "github:GM-Studio/dsh_sg_plugin#v2.1.0"
+  "target": "github:GM-Studio/dsh_sg_plugin#v3.6.0"
 }
 ```
 
 The equivalent shorthand is:
 
 ```text
-plugin_manager install_bundle target=github:GM-Studio/dsh_sg_plugin#v2.1.0
+plugin_manager install_bundle target=github:GM-Studio/dsh_sg_plugin#v3.6.0
 ```
 
 The manager accepts `github:`, `git+https://...`, a Git repository URL, a `.tgz` URL, or an **absolute** local directory. It runs `pnpm add`, selects the bundle, and reloads the profile. DSH may ask for `danger-full-access` approval because the change persists across sessions and installs Host code.
@@ -177,8 +177,46 @@ The local path must be absolute. Alternatively, use a `link:` dependency in the 
 ### Method D: npm registry (only if published)
 
 ```text
-plugin_manager action=install_bundle target=dsh-plugin-specgate
+plugin_manager action=install_bundle target=dsh-plugin-specgate@3.6.0
 ```
+
+### Method E: offline `.tgz` (air-gapped / cross-OS)
+
+Build once on a connected machine:
+
+```bash
+npm pack
+# dsh-plugin-specgate-3.6.0.tgz
+sha256sum dsh-plugin-specgate-3.6.0.tgz
+```
+
+Copy the `.tgz` to the target machine, then install by **absolute path**:
+
+```json
+{
+  "action": "install_bundle",
+  "target": "/opt/packages/dsh-plugin-specgate-3.6.0.tgz"
+}
+```
+
+Windows:
+
+```json
+{
+  "action": "install_bundle",
+  "target": "D:\\packages\\dsh-plugin-specgate-3.6.0.tgz"
+}
+```
+
+Or add it directly to the profile:
+
+```json
+"dependencies": {
+  "dsh-plugin-specgate": "file:/opt/packages/dsh-plugin-specgate-3.6.0.tgz"
+}
+```
+
+Then run `pnpm install` (or `npm install`) in the profile and restart DSH. The offline package contains all skills/templates; it does not bundle JDK/Maven/Gradle/Python, which must exist on the target machine.
 
 ### Verify the installation
 
