@@ -218,6 +218,19 @@ Or add it directly to the profile:
 
 Then run `pnpm install` (or `npm install`) in the profile and restart DSH. The offline package contains all skills/templates; it does not bundle JDK/Maven/Gradle/Python, which must exist on the target machine.
 
+### Release artifacts (v3.6.0)
+
+- GitHub Release: `https://github.com/GM-Studio/dsh_sg_plugin/releases/tag/v3.6.0`
+- Assets:
+  - `dsh-plugin-specgate-3.6.0.tgz` — offline package (307 files, ~609 KB)
+  - `dsh-plugin-specgate-3.6.0.tgz.sha256` — SHA256 checksum
+- Suggested install paths:
+  - GitHub tag: Method A / B (`github:GM-Studio/dsh_sg_plugin#v3.6.0`)
+  - Offline package: Method E (absolute `.tgz` path)
+  - Local checkout: Method C (absolute directory)
+
+The offline package contains `index.js`, `src/`, `assets/`, `cordis.patch.yml`, `locale/`, and docs. It does **not** bundle JDK, Maven, Gradle, Python, or Node; install those on the target machine when needed.
+
 ### Verify the installation
 
 After a restart, open a new DSH session and run:
