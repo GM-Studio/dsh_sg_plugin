@@ -37,12 +37,12 @@
 
 ## T-003 配置模型与 suite schema [P]
 
-<!-- sg:task {"id":"T-003","title":"配置模型与 suite schema","ac":["AC-004","AC-005","AC-033","AC-034"],"deps":["T-001"],"parallel":true} -->
+<!-- sg:task {"id":"T-003","title":"配置模型与 suite schema","ac":["AC-004","AC-005","AC-033","AC-034","AC-043"],"deps":["T-001"],"parallel":true} -->
 
 - [ ] `SUITE_KINDS` 增加 `maven`
 - [ ] `readSuites`/`validateSuites` 支持 `jdk`、`goals`、`reportGlob`、`jacocoGlob`
 - [ ] `parseConfig` 支持 `java`、`quality.profile`、`coverage` 新字段
-- [ ] 非法组合 `JAVA_STACK_INVALID`
+- [ ] 非法组合 `JAVA_STACK_INVALID`；`cwd` 逃逸仓库拒绝
 - [ ] 单测覆盖旧配置兼容与字段缺省
 
 ## T-004 Maven 单模块与报告 [P]

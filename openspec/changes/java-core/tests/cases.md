@@ -49,3 +49,4 @@
 | TC-040 | AC-040 | integration | 测试计划覆盖 |
 | TC-041 | AC-041 | integration | 文档 |
 | TC-042 | AC-042 | integration | 全量回归 |
+| TC-043 | AC-043 | unit | suite cwd 逃逸仓库 |

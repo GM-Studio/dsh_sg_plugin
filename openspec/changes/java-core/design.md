@@ -2,7 +2,8 @@
 
 > 状态：G4 待复审  
 > 上游：`proposal.md`、`docs/design/java-support-review.md`  
-> 拆分：Gradle/JDK21/Boot4/monorepo/全矩阵由 `java-extension` 承担。
+> 拆分：Gradle/JDK21/Boot4/monorepo/全矩阵由 `java-extension` 承担。  
+> 规模说明：本 change 已按垂直切片拆分；specgate 将 G6.5 Brief 设为可选门控，本 change 未单独生成 Brief，任务与测试计划已覆盖其核心信息。
 
 ---
 

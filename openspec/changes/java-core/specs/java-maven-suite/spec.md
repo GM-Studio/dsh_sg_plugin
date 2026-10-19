@@ -67,3 +67,9 @@ Maven 执行失败时应输出稳定错误码、模块、命令、退出码与�
 - **WHEN** 用例没有 `[AC-xxx]` 标签
 - **THEN** 返回 `AC_TAG_MISSING`
 - **AND** 不把该用例计入 AC 通过
+
+#### Scenario: suite cwd 逃逸仓库 (AC-043)
+
+- **WHEN** suite 的 `cwd` 指向仓库外
+- **THEN** 返回 `JAVA_STACK_INVALID`
+- **AND** 不执行 Maven 命令

@@ -337,6 +337,14 @@
       "cases": ["TC-042"],
       "suite": "backend",
       "priority": "P0"
+    },
+    {
+      "ac": "AC-043",
+      "covers": ["REQ-007"],
+      "tasks": ["T-003"],
+      "cases": ["TC-043"],
+      "suite": "backend",
+      "priority": "P0"
     }
   ],
   "automation": []
