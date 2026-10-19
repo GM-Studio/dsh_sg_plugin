@@ -28,12 +28,12 @@ export function nodeInstallCommand(manager, root) {
     case 'bun':
       return { bin: 'bun', args: ['install', '--frozen-lockfile'], shell: windows };
     default: {
-      const npmCli = path.join(path.dirname(process.execPath), 'node_modules', 'npm', 'bin', 'npm-cli.js');
       const hasLock = exists(path.join(root, 'package-lock.json'));
-      if (exists(npmCli)) {
-        return { bin: process.execPath, args: [npmCli, hasLock ? 'ci' : 'install'], shell: false };
-      }
-      return { bin: 'npm', args: [hasLock ? 'ci' : 'install'], shell: windows };
+      return {
+        bin: 'npm',
+        args: [hasLock ? 'ci' : 'install'],
+        shell: process.platform === 'win32',
+      };
     }
   }
 }

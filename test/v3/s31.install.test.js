@@ -27,12 +27,12 @@ test('detectNodeManager 按 lockfile 判定包管理器', () => {
   assert.equal(detectNodeManager(root).manager, 'npm');
 });
 
-test('nodeInstallCommand：npm 走 npm-cli，pnpm 在 Windows 用 shell', () => {
+test('nodeInstallCommand：npm 用系统 npm，pnpm 在 Windows 用 shell', () => {
   const root = tempRoot();
   fs.writeFileSync(path.join(root, 'package-lock.json'), '{}', 'utf8');
   const npm = nodeInstallCommand('npm', root);
-  assert.match(npm.args.join(' '), /\bci\b/);
-  assert.equal(npm.shell, false);
+  assert.deepEqual(npm.args, ['ci']);
+  assert.equal(npm.shell, process.platform === 'win32');
 
   const pnpm = nodeInstallCommand('pnpm', root);
   assert.deepEqual(pnpm.args, ['install', '--frozen-lockfile']);

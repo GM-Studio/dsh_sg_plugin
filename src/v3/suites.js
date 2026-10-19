@@ -253,15 +253,6 @@ export function runOneSuite({
   if (suite.kind === 'pytest') {
     run = runPytestSuite({ suite, worktree, root });
   } else {
-    const installed = installForSuite({ root, suite, env });
-    if (!installed.ok) {
-      return {
-        ok: false,
-        suiteId: suite.id,
-        code: 'INSTALL_FAILED',
-        message: installed.message,
-      };
-    }
     const nodeEnv = resolveNode({ root, suite, env: process.env });
     if (!nodeEnv.ok) {
       return {
@@ -272,6 +263,15 @@ export function runOneSuite({
       };
     }
     env = nodeEnv.env;
+    const installed = installForSuite({ root, suite, env });
+    if (!installed.ok) {
+      return {
+        ok: false,
+        suiteId: suite.id,
+        code: 'INSTALL_FAILED',
+        message: installed.message,
+      };
+    }
     run = runTestCommand({ argv: suite.argv, cwd, env });
   }
 
