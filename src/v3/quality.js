@@ -80,6 +80,7 @@ export function runQualityStage({ root, worktree, change, task, stage, stack }) 
     cwd: worktree,
     encoding: 'utf8',
     maxBuffer: 16 * 1024 * 1024,
+    shell: process.platform === 'win32',
   });
   const durationMs = Date.now() - started;
   const status = run.status ?? 1;

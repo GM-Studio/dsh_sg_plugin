@@ -65,6 +65,7 @@ export function runFormatter({ root, worktree, change, task }) {
       cwd: target,
       encoding: 'utf8',
       maxBuffer: 8 * 1024 * 1024,
+      shell: process.platform === 'win32',
     });
     const durationMs = Date.now() - started;
     const status = run.status ?? 1;
