@@ -666,7 +666,7 @@ export async function initNewProject({ root, userQuestions, agent, signal }) {
     changeName = 'add-version';
     for (const [relative, content] of Object.entries(files)) {
       const target = path.join(root, relative);
-      if (!exists(target)) writeText(target, content);
+      writeText(target, content);
     }
   }
   patchState(root, (draft) => {

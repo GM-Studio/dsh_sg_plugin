@@ -52,6 +52,7 @@ export function statusData(project) {
     suites: state.plan?.suites || null,
     runtime: state.runtime || null,
     pool: state.pool || null,
+    h0: state.h0 || null,
     evidence: state.evidence,
     blockedReason: state.blockedReason,
     skills: state.skills,
@@ -83,6 +84,9 @@ export function renderStatus(project) {
     `证据：headSeq=${data.evidence?.headSeq ?? 0}`,
   ];
   if (data.blockedReason) lines.push(`阻塞：${data.blockedReason}`);
+  if (data.h0?.hash) {
+    lines.push(`H0：已确认 ${String(data.h0.hash).replace(/^sha256:/, '').slice(0, 12)}…`);
+  }
   if (data.pool?.stats) {
     const s = data.pool.stats;
     lines.push(

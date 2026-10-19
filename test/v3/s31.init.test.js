@@ -14,12 +14,12 @@ function tempRoot() {
   return fs.mkdtempSync(path.join(os.tmpdir(), 'sg-v31-init-'));
 }
 
-function fakeQuestions() {
+function fakeQuestions(stack = 'node') {
   return {
     async ask({ questions }) {
       const question = questions[0];
       if (question.id === 'sg-init-h0') return { answers: [{ selected: ['确认'] }] };
-      if (question.id === 'sg-init-stack') return { answers: [{ selected: ['node'] }] };
+      if (question.id === 'sg-init-stack') return { answers: [{ selected: [stack] }] };
       return { answers: [{ selected: ['跳过'] }] };
     },
   };
@@ -92,6 +92,27 @@ test('initNewProject 走 H0、脚手架、自动建 change 停 H1', async () => 
   assert.equal(state.change, 'add-version');
   assert.ok(state.h0?.hash);
   assert.ok(state.h0?.approvedAt);
+});
+
+test('monorepo 初始化生成 apps/api 首个 change', async () => {
+  const root = tempRoot();
+  const result = await initNewProject({
+    root,
+    userQuestions: fakeQuestions('monorepo'),
+    agent: null,
+    signal: new AbortController().signal,
+  });
+  assert.equal(result.ok, true, result.message);
+  assert.equal(result.change, 'add-version');
+  assert.ok(fs.existsSync(path.join(root, 'apps/api/index.js')));
+  assert.ok(fs.existsSync(path.join(root, 'apps/web/src/App.vue')));
+  const touched = JSON.parse(
+    fs.readFileSync(
+      path.join(root, 'openspec/changes/add-version/tests/touched.json'),
+      'utf8',
+    ),
+  );
+  assert.deepEqual(touched.modify, ['apps/api/index.js', 'apps/api/sg-test.mjs']);
 });
 
 test('initNewProject 不覆盖已有文件', async () => {
