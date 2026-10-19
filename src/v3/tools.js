@@ -20,6 +20,8 @@ import { createDispatcher } from './dispatch.js';
 import { maybeBuildBootstrap } from './bootstrap.js';
 import { startV4Init, summarizeV4Result } from '../v4/init.js';
 import { adoptWorkspace, summarizeAdopt } from '../v4/adopt.js';
+import { readWorkspace } from '../v4/workspace.js';
+import { startWorkspaceChange, summarizeWorkspaceChange } from '../v4/workspace-change.js';
 import { appendRun } from './runs.js';
 import {
   collectDiff,
@@ -229,6 +231,16 @@ export function registerTools(ctx, runtime) {
       output: textOutput(),
       async execute(args, exec) {
         const project = runtime.project(exec?.agent);
+        const workspace = readWorkspace(project.root);
+        if (workspace) {
+          const result = startWorkspaceChange({
+            root: project.root,
+            name: String(args?.name || ''),
+            type: String(args?.type || 'feature'),
+          });
+          if (!result.ok) return fail(summarizeWorkspaceChange(result), result);
+          return ok(summarizeWorkspaceChange(result), result);
+        }
         const guard = ensureV3(project);
         if (!guard.ok) return fail(guard.message, guard);
 

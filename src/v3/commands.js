@@ -12,6 +12,8 @@ import { withNotice } from './notice.js';
 import { maybeBuildBootstrap } from './bootstrap.js';
 import { startV4Init, summarizeV4Result } from '../v4/init.js';
 import { adoptWorkspace, summarizeAdopt } from '../v4/adopt.js';
+import { readWorkspace } from '../v4/workspace.js';
+import { startWorkspaceChange, summarizeWorkspaceChange } from '../v4/workspace-change.js';
 import { digest } from './util/hash.js';
 import { patchState } from './state.js';
 
@@ -203,6 +205,18 @@ export function registerCommands(ctx, runtime) {
     input: { hint: '<name> [--type feature|modify|fix|remove] [--link <changeKey>]' },
     async handler(inv) {
       const project = runtime.project(inv?.agent);
+      const workspace = readWorkspace(project.root);
+      if (workspace) {
+        const { name, type } = parseChangeArgs(inv?.rawInput);
+        if (!name)
+          return {
+            kind: 'error',
+            text: '用法：/sg-change <name> [--type feature|modify|fix|remove]',
+          };
+        const result = startWorkspaceChange({ root: project.root, name, type });
+        if (!result.ok) return { kind: 'error', text: summarizeWorkspaceChange(result) };
+        return { kind: 'success', text: summarizeWorkspaceChange(result) };
+      }
       const guard = ensureV3(project);
       if (!guard.ok) return { kind: 'error', text: guard.message };
 

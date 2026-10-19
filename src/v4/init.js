@@ -1,5 +1,6 @@
 import { answerOf } from '../v3/requirements.js';
 import { buildWorkspace } from './build.js';
+import { wireSubmodules } from './workspace-change.js';
 import {
   createWorkspaceLayout,
   resolveSelection,
@@ -87,10 +88,20 @@ export async function startV4Init({
       results: built.results,
     };
   }
+  const wired = wireSubmodules({ root, sides: selection.sides });
+  if (!wired.ok) {
+    return {
+      ok: false,
+      code: 'SUBMODULE_FAILED',
+      message: wired.message || 'submodule 接入失败',
+      build: built,
+    };
+  }
   return {
     ...created,
     phase: 'IDLE',
     build: built,
+    submodules: wired,
     message:
       'v4 workspace：' +
       selection.sides.map((side) => side.path + '=' + side.stack).join('，') +
@@ -124,6 +135,7 @@ export function summarizeV4Result(result) {
           ? '跳过（' + item.reason + '）'
           : '提交 ' + String(item.commit || '').slice(0, 8)),
     ),
-    '下一步：/sg-change <name>（Phase 3/4 将接入前端、adopt 与并行 change）',
+    '子模块：' + (result.submodules?.modules || 0) + ' 个',
+    '下一步：/sg-change <name>（需求盘问与并行门控将在后续接入）',
   ].join('\n');
 }
