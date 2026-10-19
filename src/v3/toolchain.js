@@ -4,9 +4,16 @@ import { exists, readText, writeText } from './util/fsx.js';
 import { appendRun } from './runs.js';
 
 const REQUIRED = {
-  node: ['prettier', 'eslint', 'eslint-config-prettier'],
-  vue: ['prettier', 'eslint', 'eslint-config-prettier', 'eslint-plugin-vue', 'vue-tsc'],
-  react: ['prettier', 'eslint', 'eslint-config-prettier'],
+  node: ['prettier', 'eslint', '@eslint/js', 'eslint-config-prettier'],
+  vue: [
+    'prettier',
+    'eslint',
+    '@eslint/js',
+    'eslint-config-prettier',
+    'eslint-plugin-vue',
+    'vue-tsc',
+  ],
+  react: ['prettier', 'eslint', '@eslint/js', 'eslint-config-prettier'],
   python: ['ruff', 'mypy'],
 };
 

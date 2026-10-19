@@ -146,6 +146,40 @@ async function verifyAndFinish({
   const diff = collectDiff({ cwd: worktree.path, base, head });
   const reviewWt = createReviewWorktree({ root, change, commit: head });
   const reviewPath = reviewWt.ok ? reviewWt.path : worktree.path;
+  const reviewSuite = runTaskSuites({
+    root,
+    state,
+    worktree: reviewPath,
+    change,
+    task,
+    plan,
+    knownAcs,
+    changedFiles: changedFiles(root, base, head),
+    fallbackCommand: command,
+    requireChangedFiles: false,
+  });
+  persistRuntime(root, reviewSuite.results);
+  if (!reviewSuite.ok) {
+    if (reviewWt.ok) removeReviewWorktree({ root, path: reviewWt.path });
+    return failure(
+      'REVIEW_SUITE_FAILED',
+      `review worktree 测试失败（suite ${reviewSuite.failedSuite}）：${reviewSuite.message}`,
+      { suiteResult: reviewSuite },
+    );
+  }
+  for (const stage of ['lint', 'typecheck']) {
+    const quality = runQualityStage({
+      root,
+      worktree: reviewPath,
+      change,
+      task,
+      stage,
+    });
+    if (!quality.ok) {
+      if (reviewWt.ok) removeReviewWorktree({ root, path: reviewWt.path });
+      return failure(`${stage.toUpperCase()}_FAILED`, `review ${stage} 失败`, { quality });
+    }
+  }
   let review;
   try {
     review = await dispatcher({
