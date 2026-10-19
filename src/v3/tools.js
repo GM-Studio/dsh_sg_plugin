@@ -228,6 +228,7 @@ export function registerTools(ctx, runtime) {
                   cwd: suite.cwd,
                   pytestArgs: suite.pytestArgs,
                   python: suite.python,
+                  node: suite.node,
                   cmdHash: suite.cmdHash,
                 })),
                 approvedAt: null,

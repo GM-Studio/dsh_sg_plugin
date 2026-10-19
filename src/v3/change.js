@@ -124,6 +124,7 @@ export function readSuites(config) {
         pytestArgs: [],
         python: null,
         packageManager: null,
+        node: config?.node ? String(config.node) : null,
         legacy: true,
       },
     ];
@@ -138,6 +139,7 @@ export function readSuites(config) {
     pytestArgs: Array.isArray(item.pytestArgs) ? item.pytestArgs.map(String) : [],
     python: item.python ? String(item.python) : null,
     packageManager: item.packageManager ? String(item.packageManager) : null,
+    node: item.node ? String(item.node) : config?.node ? String(config.node) : null,
     legacy: false,
   }));
 }

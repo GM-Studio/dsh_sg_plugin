@@ -4,6 +4,7 @@ import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { runTestCommand } from './testrunner.js';
 import { validateReport } from './report.js';
+import { resolveNode } from './env/node.js';
 
 /** Frozen suites from state; falls back to the v3.0 single command. */
 export function suitesFromState(state, fallbackCommand) {
@@ -15,6 +16,7 @@ export function suitesFromState(state, fallbackCommand) {
       cwd: suite.cwd || '.',
       pytestArgs: Array.isArray(suite.pytestArgs) ? suite.pytestArgs : [],
       python: suite.python || null,
+      node: suite.node || null,
     }));
   }
   if (fallbackCommand && fallbackCommand.ok) {
@@ -148,11 +150,22 @@ export function runOneSuite({
   requireChangedFiles = true,
 }) {
   const cwd = path.join(worktree, suite.cwd || '.');
+  let env = process.env;
   let run;
   if (suite.kind === 'pytest') {
     run = runPytestSuite({ suite, worktree });
   } else {
-    run = runTestCommand({ argv: suite.argv, cwd });
+    const nodeEnv = resolveNode({ root, suite, env: process.env });
+    if (!nodeEnv.ok) {
+      return {
+        ok: false,
+        suiteId: suite.id,
+        code: nodeEnv.code,
+        message: nodeEnv.message,
+      };
+    }
+    env = nodeEnv.env;
+    run = runTestCommand({ argv: suite.argv, cwd, env });
   }
 
   if (run.exitCode !== 0) {
