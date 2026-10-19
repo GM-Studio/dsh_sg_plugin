@@ -863,7 +863,7 @@ class HealthControllerTest {
 
     @Test
     @DisplayName("[AC-001] health returns ok")
-    void healthReturnsOk() throws Exception {
+    void healthReturnsOk_AC_001() throws Exception {
         mockMvc.perform(get("/health"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("ok"));

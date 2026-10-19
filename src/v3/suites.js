@@ -215,7 +215,9 @@ export function parseJunitXml(
       : /<skipped\b/.test(body)
         ? 'skip'
         : 'pass';
-    const ac = [...name.matchAll(/\[(AC-\d{3,})\]/g)].map((item) => item[1]);
+    const ac = [...name.matchAll(/(?:\[)?(AC[-_]\d{3,})(?:\])?/g)].map((item) =>
+      item[1].replace('_', '-'),
+    );
     index += 1;
     cases.push({
       id: `TC-${String(index).padStart(3, '0')}`,
@@ -368,13 +370,15 @@ export function runMavenSuite({
   const goals = Array.isArray(suite.goals) && suite.goals.length > 0 ? suite.goals : ['verify'];
   const argv = [...(maven.argsPrefix || []), ...goals];
   const timeoutMinutes = Number(suite.timeoutMinutes) > 0 ? Number(suite.timeoutMinutes) : 30;
-  const result = spawnSync(maven.bin, argv, {
+  const mavenCmd = process.platform === 'win32' && /\.(cmd|bat)$/i.test(maven.bin);
+  const result = spawnSync(mavenCmd ? `"${maven.bin}"` : maven.bin, argv, {
     cwd,
     env: java.env,
     encoding: 'utf8',
     timeout: timeoutMinutes * 60 * 1000,
     windowsHide: true,
     maxBuffer: 16 * 1024 * 1024,
+    shell: mavenCmd,
   });
   const timedOut = result.error?.code === 'ETIMEDOUT' || result.signal === 'SIGTERM';
   const stderr = String(result.stderr || result.error?.message || '');
@@ -462,13 +466,15 @@ export function runGradleSuite({
   const goals = Array.isArray(suite.goals) && suite.goals.length > 0 ? suite.goals : ['check'];
   const argv = ['--no-daemon', '--console=plain', ...goals];
   const timeoutMinutes = Number(suite.timeoutMinutes) > 0 ? Number(suite.timeoutMinutes) : 30;
-  const result = spawnSync(gradle.bin, argv, {
+  const gradleCmd = process.platform === 'win32' && /\.(cmd|bat)$/i.test(gradle.bin);
+  const result = spawnSync(gradleCmd ? `"${gradle.bin}"` : gradle.bin, argv, {
     cwd,
     env: java.env,
     encoding: 'utf8',
     timeout: timeoutMinutes * 60 * 1000,
     windowsHide: true,
     maxBuffer: 16 * 1024 * 1024,
+    shell: gradleCmd,
   });
   const timedOut = result.error?.code === 'ETIMEDOUT' || result.signal === 'SIGTERM';
   const stderr = String(result.stderr || result.error?.message || '');

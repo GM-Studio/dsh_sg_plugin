@@ -1,14 +1,16 @@
 # SpecGate for DSH
 
-> **v3.1 (current)**: 在 v3.0 的单栈流程上增加多技术栈支持 —— `suites[]` 多套件、AC 归属套件、Node 18–24 自动切换、Python venv + pytest、按 lockfile 安装依赖、跨仓 `changeKey`、按仓库+角色复用 Agent 池。
+> **v3.6 (current)**: Java backend support — JDK 8/11/17/21 (LTS), Spring Boot 2.7.x/3.x, Maven/Gradle, JUnit XML adapters, Spotless/Checkstyle/SpotBugs gates, plus the existing Node/Vue/React/Python stacks.
 >
-> - 配置与用法：[`docs/demos/v3.1-multistack.md`](docs/demos/v3.1-multistack.md)
-> - v3.0 单套件项目无需改动。
+> - Java details: [`docs/requirements/2026-10-19-v3.6-java-stack-requirements.md`](docs/requirements/2026-10-19-v3.6-java-stack-requirements.md)
+> - Design/matrix: [`docs/design/java-support-review.md`](docs/design/java-support-review.md), [`docs/design/java-version-matrix.md`](docs/design/java-version-matrix.md)
+> - v3.5 environment preflight: [`docs/requirements/2026-10-19-v3.5-env-preflight-quality-requirements.md`](docs/requirements/2026-10-19-v3.5-env-preflight-quality-requirements.md)
+> - v3.4 review/observability: [`docs/requirements/2026-10-19-v3.4-review-observability-requirements.md`](docs/requirements/2026-10-19-v3.4-review-observability-requirements.md)
 >
-> **v3.0 MVP**：SpecGate v3 replaces gate-by-gate confirmation with an autonomous loop — AI executes, machine evidence decides, humans approve only **H1 (requirements)**, **H2 (plan)** and **H3 (acceptance)**.
+> **v3.0 MVP**: AI executes, machine evidence decides, humans approve only **H1 (requirements)**, **H2 (plan)** and **H3 (acceptance)**.
 >
-> - Commands: `/sg-init`, `/sg-change`, `/sg-run`, `/sg-approve`, `/sg-skill`, `/sg-status`, `/sg-abort`
-> - Evidence: orchestrator runs the frozen `test:json` command; tasks only become `[x]` after merge
+> - Commands: `/sg-init`, `/sg-change`, `/sg-run`, `/sg-approve`, `/sg-skill`, `/sg-status`, `/sg-context`
+> - Evidence: orchestrator runs frozen suites; tasks only become `[x]` after merge
 > - Docs: [`docs/demos/v3-mvp.md`](docs/demos/v3-mvp.md)
 >
 > The v2.1 documentation below is kept for history; the v2 gate runtime and its tests have been removed.
@@ -37,6 +39,43 @@ A Host plugin that brings AgentKit47's gated development workflow to DeepSeek Ha
 - **Requirements version chain**: one current `requirements/REQUIREMENTS.md`; approved changes create immutable `history/vX.Y.Z/` snapshots and change-scoped deltas.
 - Commands: `/sg-init`, `/sg-status`, `/sg-next`, `/sg-gate`, `/sg-commit`, `/sg-deviation`, `/sg-classify`, `/sg-doctor`, `/sg-enable`, `/sg-disable`, `/sg-migrate`, `/sg-change`, `/sg-test`, `/sg-requirements-migrate`, `/sg-propose`, `/sg-apply`, `/sg-archive`, `/sg-explore`
 - Tools: `sg_status`, `sg_next`, `sg_gate`, `sg_commit`, `sg_deviation`, `sg_classify`, `sg_doctor`, `sg_init`, `sg_enable`, `sg_disable`, `sg_migrate`, `sg_change`, `sg_apply`, `sg_test`, `sg_requirements_migrate`, `sg_propose`, `sg_archive`
+
+## Java backend (v3.6)
+
+- **JDK**: 8 / 11 / 17 / 21 (LTS only); JDK 13 is rejected.
+- **Spring Boot**: 2.7.x and 3.x; strict matrix:
+  - Boot 2.7 → JDK 8/11/17
+  - Boot 3.x → JDK 17/21
+- **Default New Project**: JDK 8 + Maven + Boot 2.7.18.
+- **Selectable**: Gradle 8.x + Boot 3.x, JDK 17/21.
+- **Scaffold**: Web + Validation + Actuator, `/health`, JUnit 5 + MockMvc, Spotless (google-java-format), Checkstyle, SpotBugs, JaCoCo.
+- **Runners**: Maven (`mvnw verify`) and Gradle (`gradlew check`); Surefire/Failsafe/Gradle JUnit XML → SpecGate reports.
+- **Quality stages**: Spotless/Checkstyle/compile/SpotBugs; failures block.
+- **JDK lookup**: JAVA_HOME / PATH / SDKMAN / `.java-version` / `.sdkmanrc`; missing JDK is reported, never auto-installed.
+
+Example `.specgate/config.yaml`:
+
+```yaml
+stack: java
+java:
+  jdk: 8
+  buildTool: maven
+  bootVersion: "2.7.x"
+quality:
+  profile: strict
+suites:
+  - id: backend
+    kind: maven
+    cwd: "."
+    jdk: "8"
+    goals: ["-B", "-ntp", "verify"]
+```
+
+Gradle projects use `kind: gradle`, `goals: ["check"]`, and `reportGlob: "build/test-results/test/TEST-*.xml"`.
+
+Initialization asks for `buildTool`, `jdk`, `bootVersion`, and modules; invalid combinations are rejected before scaffolding.
+
+Real sample verification: JDK 8 + Maven + Boot 2.7 (`mvn -B -ntp verify`) and JDK 17 + Gradle + Boot 3 (`gradle spotlessApply check`) both build successfully; see the v3.6 requirements document.
 
 ## Requirements and test workflow (2.x)
 
@@ -366,7 +405,7 @@ CONTEXT.md
 - Output regression: a command in a new session writes a `notice`; an active session does not duplicate history; a running agent writes no messages; failed commands also produce output; automated tests cover "never inject synthetic assistant messages".
 - Idempotency regression: state commands do not replay the cache, append commands deduplicate for 24h, force allows repeats, concurrency locks are mutually exclusive, read-only commands write nothing to disk.
 - Parallel regression: worktree parallelism/waves/dependencies, duplicate dispatch skipping, merge conflicts preserving branches, non-Git degradation, doctor parallel summary.
-- Automated tests: `node --test` → **177 passed / 0 failed**.
+- Automated tests: `node --test` → **265 passed / 0 failed**.
 
 See [verification.md](docs/design/verification.md) for the full record.
 
