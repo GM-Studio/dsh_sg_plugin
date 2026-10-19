@@ -252,7 +252,7 @@ Windows：
 
 - GitHub Release：`https://github.com/GM-Studio/dsh_sg_plugin/releases/tag/v3.6.0`
 - 资产：
-  - `dsh-plugin-specgate-3.6.0.tgz` —— 离线包（243 个文件，约 525 KB）
+  - `dsh-plugin-specgate-3.6.0.tgz` —— 离线包（243 个文件，约 532 KB）
   - `dsh-plugin-specgate-3.6.0.tgz.sha256` —— SHA256 校验和
 - 建议安装路径：
   - GitHub tag：方式 A / B（`github:GM-Studio/dsh_sg_plugin#v3.6.0`）

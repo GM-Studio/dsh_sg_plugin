@@ -252,7 +252,7 @@ Then run `pnpm install` (or `npm install`) in the profile and restart DSH. The o
 
 - GitHub Release: `https://github.com/GM-Studio/dsh_sg_plugin/releases/tag/v3.6.0`
 - Assets:
-  - `dsh-plugin-specgate-3.6.0.tgz` — offline package (243 files, ~525 kB)
+  - `dsh-plugin-specgate-3.6.0.tgz` — offline package (243 files, ~532 kB)
   - `dsh-plugin-specgate-3.6.0.tgz.sha256` — SHA256 checksum
 - Suggested install paths:
   - GitHub tag: Method A / B (`github:GM-Studio/dsh_sg_plugin#v3.6.0`)
