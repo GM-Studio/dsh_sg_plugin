@@ -5,7 +5,7 @@ import { appendRun } from './runs.js';
 import { ensureVenv } from './env/python.js';
 
 const REQUIRED = {
-  node: ['prettier', 'eslint', '@eslint/js', 'eslint-config-prettier'],
+  node: ['prettier', 'eslint', 'eslint-config-prettier'],
   vue: [
     'prettier',
     'eslint',
@@ -14,7 +14,7 @@ const REQUIRED = {
     'eslint-plugin-vue',
     'vue-tsc',
   ],
-  react: ['prettier', 'eslint', '@eslint/js', 'eslint-config-prettier'],
+  react: ['prettier', 'eslint', 'eslint-config-prettier'],
   python: ['ruff', 'mypy'],
 };
 
