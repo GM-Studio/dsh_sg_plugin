@@ -1,10 +1,14 @@
 # SpecGate for DSH
 
-> **v3 MVP (current)**: SpecGate v3 replaces gate-by-gate confirmation with an autonomous loop — AI executes, machine evidence decides, humans approve only **H1 (requirements)**, **H2 (plan)** and **H3 (acceptance)**.
+> **v3.1 (current)**: 在 v3.0 的单栈流程上增加多技术栈支持 —— `suites[]` 多套件、AC 归属套件、Node 18–24 自动切换、Python venv + pytest、按 lockfile 安装依赖、跨仓 `changeKey`。
+>
+> - 配置与用法：[`docs/demos/v3.1-multistack.md`](docs/demos/v3.1-multistack.md)
+> - v3.0 单套件项目无需改动。
+>
+> **v3.0 MVP**：SpecGate v3 replaces gate-by-gate confirmation with an autonomous loop — AI executes, machine evidence decides, humans approve only **H1 (requirements)**, **H2 (plan)** and **H3 (acceptance)**.
 >
 > - Commands: `/sg-init`, `/sg-change`, `/sg-run`, `/sg-approve`, `/sg-skill`, `/sg-status`, `/sg-abort`
 > - Evidence: orchestrator runs the frozen `test:json` command; tasks only become `[x]` after merge
-> - Scope: one active change, feature/modify/fix/remove, parallel `[P]` tasks, archive with tag
 > - Docs: [`docs/demos/v3-mvp.md`](docs/demos/v3-mvp.md)
 >
 > The v2.1 documentation below is kept for history; the v2 gate runtime and its tests have been removed.
@@ -14,7 +18,7 @@ A Host plugin that brings AgentKit47's gated development workflow to DeepSeek Ha
 - Source: `templates/qoder/` from `AgentKit47-Qoder` (MIT)
 - Target: DSH `0.2.1-rc.2` and above
 - Form: workspace bundle, installed into the current DSH profile; **activated per project on opt-in**
-- Version: `3.0.0`
+- Version: `3.1.0`
 
 ## Capabilities
 

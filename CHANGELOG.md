@@ -1,5 +1,22 @@
 # Changelog
 
+## 3.1.0
+
+- Added multi-suite projects: `.specgate/config.yaml` `suites[]` with `node-test` / `pytest` / `command` kinds, per-suite `cmdHash` and evidence.
+- Added AC-to-suite ownership in `tests/mapping.json`; multi-suite changes require `suite` on every AC.
+- Added Node 18–24 detection and per-subprocess switching (volta / fnm / nvm-windows / asdf), with fail-closed errors.
+- Added Python 3.9–3.13 virtualenv reuse/creation and a built-in pytest junit-xml adapter.
+- Added dependency installation by lockfile (npm/pnpm/yarn/bun, pip/uv), idempotent per worktree and disableable.
+- Added `changeKey` for cross-repo traceability without cross-repo locks.
+- Added Windows + Linux CI matrix (Node 20/22/24).
+- v3.0 single-suite projects keep working without config changes.
+
+## 3.0.0
+
+- Replaced the G1–G11 gate workflow with the v3 autonomous loop: AI executes, machine evidence decides, humans approve only H1/H2/H3.
+- Added `src/v3` orchestration: state, approvals, OpenSpec delta validation, worktrees, role diff checks, test:json evidence, acceptance and archive transaction.
+- Removed the v2 gate runtime and its tests.
+
 ## 2.1.0
 
 - Added development-role inference (`architect`/`ddd`/`developer`); explicit `role:` wins and low-confidence tasks stop before any Agent is created.

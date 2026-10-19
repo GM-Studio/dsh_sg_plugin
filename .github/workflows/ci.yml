@@ -2,20 +2,21 @@ name: CI
 
 on:
   push:
-    branches: [main, master]
+    branches: [main, master, feat/v3-mvp]
   pull_request:
 
 jobs:
   test:
-    runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
-        node-version: [20, 22]
+        os: [windows-latest, ubuntu-latest]
+        node-version: [20, 22, 24]
+    runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
-      - run: npm install --ignore-scripts
       - run: npm test
       - run: npm run pack:check
