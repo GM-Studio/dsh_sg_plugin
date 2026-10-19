@@ -16,6 +16,12 @@ import { runTestCommand } from './testrunner.js';
 import { collectKnownAcs } from './phase.js';
 import { appendEvidence } from './evidence.js';
 import { loadSkillPayload } from './skills.js';
+import {
+  collectDiff,
+  validateReview,
+  createReviewWorktree,
+  removeReviewWorktree,
+} from './review.js';
 
 function failure(code, message, extra = {}) {
   return { ok: false, code, message, ...extra };
@@ -133,26 +139,46 @@ async function verifyAndFinish({
   const validation = { ok: true, stats: suiteResult.stats };
 
   const reviewerSkills = loadSkillPayload({ role: 'reviewer' });
-  const review = await dispatcher({
-    role: 'reviewer',
-    task,
-    worktree: worktree.path,
-    root,
-    change,
-    prompt: [
-      `审查 change ${change} 的任务 ${task.id}。`,
-      `AC: ${task.ac.join(', ')}`,
-      `测试结果: passed=${validation.stats.passed} failed=${validation.stats.failed}`,
-      '只输出 JSON：{"verdict":"pass|fail","blocking":[{"file":"","line":0,"reason":""}],"nonBlocking":[]}',
-    ].join('\n'),
-    skills: reviewerSkills,
-    parent,
-  });
+  const diff = collectDiff({ cwd: worktree.path, base, head });
+  const reviewWt = createReviewWorktree({ root, change, commit: head });
+  const reviewPath = reviewWt.ok ? reviewWt.path : worktree.path;
+  let review;
+  try {
+    review = await dispatcher({
+      role: 'reviewer',
+      task,
+      worktree: reviewPath,
+      root,
+      change,
+      prompt: [
+        `审查 change ${change} 的任务 ${task.id}。`,
+        `AC: ${task.ac.join(', ')}`,
+        `测试结果: passed=${validation.stats.passed} failed=${validation.stats.failed}`,
+        `diff ${diff.range}（${diff.bytes} bytes${diff.truncated ? '，已截断但文件清单完整' : ''}）`,
+        '文件清单：',
+        ...diff.fileList,
+        '完整 diff：',
+        diff.text,
+        'blocking 必须包含 file/line/evidence/reason，evidence 必须能在 diff 或测试输出中找到。',
+        '只输出 JSON：{"verdict":"pass|fail","blocking":[{"file":"","line":0,"evidence":"","reason":""}],"nonBlocking":[]}',
+      ].join('\n'),
+      skills: reviewerSkills,
+      parent,
+    });
+  } finally {
+    if (reviewWt.ok) removeReviewWorktree({ root, path: reviewWt.path });
+  }
   if (!review.ok) return failure(review.code || 'REVIEW_FAILED', review.message);
 
   const verdict = extractJson(review.text);
   if (!verdict || !verdict.verdict) return failure('REVIEW_INVALID', 'reviewer 未返回合法 JSON');
-  const blocking = Array.isArray(verdict.blocking) ? verdict.blocking : [];
+  const checked = validateReview(verdict, diff, suiteResult.message || '');
+  if (!checked.ok) {
+    return failure('REVIEW_INVALID', `reviewer 证据不合法：${checked.errors.join('; ')}`, {
+      errors: checked.errors,
+    });
+  }
+  const blocking = checked.blocking;
   if (verdict.verdict !== 'pass' || blocking.length > 0) {
     return failure(
       'REVIEW_BLOCKED',
