@@ -28,14 +28,10 @@ export function parseTasks(text) {
       errors.push(`tasks.md 第 ${index + 1} 行：任务 id 必须形如 T-001`);
       continue;
     }
-    if (!Array.isArray(meta.ac) || meta.ac.length === 0) {
-      errors.push(`tasks.md 第 ${index + 1} 行：任务 ${meta.id} 缺少 ac`);
-      continue;
-    }
     tasks.push({
       id: meta.id,
       title: String(meta.title || ''),
-      ac: meta.ac.map(String),
+      ac: Array.isArray(meta.ac) ? meta.ac.map(String) : [],
       deps: Array.isArray(meta.deps) ? meta.deps.map(String) : [],
       parallel: meta.parallel === true,
     });
@@ -151,8 +147,10 @@ function hasCycle(tasks) {
   return cycle;
 }
 
-export function validatePlan({ root, change, plan, deltaAcs, deltaReqs, config }) {
-  const errors = [...plan.tasksErrors, ...plan.casesErrors];
+export function validatePlan({ root, change, plan, deltaAcs, deltaReqs, config, type = 'feature' }) {
+  const isRemove = type === 'remove';
+  const errors = [...plan.tasksErrors];
+  if (!isRemove) errors.push(...plan.casesErrors);
   if (plan.mappingError) errors.push(plan.mappingError);
   if (plan.touchedError) errors.push(plan.touchedError);
 
@@ -165,8 +163,11 @@ export function validatePlan({ root, change, plan, deltaAcs, deltaReqs, config }
     for (const dep of task.deps) {
       if (!taskIds.has(dep)) errors.push(`任务 ${task.id} 依赖不存在：${dep}`);
     }
-    for (const ac of task.ac) {
-      if (!deltaAcs.has(ac)) errors.push(`任务 ${task.id} 引用了 delta 中不存在的 ${ac}`);
+    if (!isRemove) {
+      if ((task.ac || []).length === 0) errors.push(`任务 ${task.id} 缺少 ac`);
+      for (const ac of task.ac) {
+        if (!deltaAcs.has(ac)) errors.push(`任务 ${task.id} 引用了 delta 中不存在的 ${ac}`);
+      }
     }
   }
   const cycle = hasCycle(plan.tasks);
@@ -179,12 +180,14 @@ export function validatePlan({ root, change, plan, deltaAcs, deltaReqs, config }
       if (!deltaAcs.has(ac)) errors.push(`用例 ${item.id} 引用了不存在的 ${ac}`);
     }
   }
-  for (const ac of deltaAcs) {
-    if (!plan.cases.some((item) => item.ac.includes(ac))) {
-      errors.push(`AC ${ac} 没有对应用例`);
-    }
-    if (!plan.tasks.some((task) => task.ac.includes(ac))) {
-      errors.push(`AC ${ac} 没有对应任务`);
+  if (!isRemove) {
+    for (const ac of deltaAcs) {
+      if (!plan.cases.some((item) => item.ac.includes(ac))) {
+        errors.push(`AC ${ac} 没有对应用例`);
+      }
+      if (!plan.tasks.some((task) => (task.ac || []).includes(ac))) {
+        errors.push(`AC ${ac} 没有对应任务`);
+      }
     }
   }
 

@@ -5,10 +5,12 @@ import { exists } from './util/fsx.js';
 export function validateReport({
   report,
   deltaAcs,
+  knownAcs,
   mapping,
   worktree,
   changedFiles = [],
 }) {
+  const known = knownAcs || deltaAcs;
   if (!report || typeof report !== 'object') {
     return { ok: false, errors: ['报告缺失或不是 JSON 对象'] };
   }
@@ -16,7 +18,7 @@ export function validateReport({
   if (report.schemaVersion !== 1) errors.push('schemaVersion 必须为 1');
 
   const list = Array.isArray(report.cases) ? report.cases : [];
-  if (list.length === 0) errors.push('报告没有用例');
+  if (list.length === 0 && deltaAcs.size > 0) errors.push('报告没有用例');
 
   const ids = new Set();
   const passedAcs = new Set();
@@ -37,9 +39,11 @@ export function validateReport({
     const acs = Array.isArray(item.ac) ? item.ac : [];
     if (acs.length === 0) errors.push(`用例 ${item.id} 缺少 ac`);
     for (const ac of acs) {
-      if (!deltaAcs.has(ac)) errors.push(`用例 ${item.id} 引用了未冻结的 ${ac}`);
-      if (!mappedAcs.has(ac)) errors.push(`用例 ${item.id} 的 ${ac} 不在 mapping 中`);
-      if (item.status === 'pass') passedAcs.add(ac);
+      if (!known.has(ac)) errors.push(`用例 ${item.id} 引用了未冻结的 ${ac}`);
+      if (deltaAcs.has(ac) && !mappedAcs.has(ac)) {
+        errors.push(`用例 ${item.id} 的 ${ac} 不在 mapping 中`);
+      }
+      if (item.status === 'pass' && deltaAcs.has(ac)) passedAcs.add(ac);
     }
 
     if (!item.file) {

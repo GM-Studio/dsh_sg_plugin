@@ -1,7 +1,7 @@
 import { initProject, createChange } from './change.js';
 import { renderStatus, statusData } from './status.js';
 import { headCommit, isGitRepo } from './util/git.js';
-import { checkM1, checkM2, checkFrozenH1, computeArtifactHash, collectDeltaIds } from './phase.js';
+import { checkM1, checkM2, checkFrozenH1, computeArtifactHash, collectKnownAcs } from './phase.js';
 import { patchState } from './state.js';
 import { askApproval, issueApproval } from './approvals.js';
 import { commitChangePackage, ensureIntegration, git, headOf, integrationBranch } from './worktrees.js';
@@ -196,6 +196,11 @@ export function registerTools(ctx, runtime) {
                   },
                 ]),
               );
+              draft.touched = {
+                modify: m2.plan.touched?.modify || [],
+                delete: m2.plan.touched?.delete || [],
+                bootstrap: m2.plan.touched?.bootstrap || [],
+              };
               draft.phase = 'H2_PENDING';
             });
             if (!saved.ok) return fail(`冻结计划失败：${saved.message}`, saved);
@@ -285,7 +290,7 @@ export function registerTools(ctx, runtime) {
             }
 
             const plan = loadPlan(project.root, change);
-            const { acs } = collectDeltaIds(project.root, change);
+            const { deltaAcs, knownAcs } = collectKnownAcs({ root: project.root, state, change });
             const base = state.integration?.base;
             const changedFiles = base
               ? git(integration.path, ['diff', '--name-only', `${base}..HEAD`])
@@ -295,7 +300,8 @@ export function registerTools(ctx, runtime) {
             const commit = headOf(integration.path, 'HEAD');
             const validation = validateReport({
               report: run.report,
-              deltaAcs: acs,
+              deltaAcs,
+              knownAcs,
               mapping: plan.mapping,
               worktree: integration.path,
               changedFiles,
@@ -312,7 +318,7 @@ export function registerTools(ctx, runtime) {
             const acceptance = generateAcceptance({
               change,
               type: state.type,
-              acs,
+              acs: deltaAcs,
               report: run.report,
               exitCode: run.exitCode,
               evidence: headEvidence,
@@ -345,7 +351,7 @@ export function registerTools(ctx, runtime) {
             });
             if (!saved.ok) return fail(saved.message, saved);
             return ok(
-              `集成回归通过，验收报告已生成（${acs.size} 个 AC），integration commit ${String(finalCommit).slice(0, 8)}。请审阅后执行 /sg-approve H3。`,
+              `集成回归通过，验收报告已生成（${deltaAcs.size} 个 AC），integration commit ${String(finalCommit).slice(0, 8)}。请审阅后执行 /sg-approve H3。`,
               { acceptance: acceptance.rows, commit: finalCommit },
             );
           }

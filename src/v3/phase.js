@@ -108,17 +108,33 @@ export function computeArtifactHash({ root, change, specsBase }) {
 
 export function collectDeltaIds(root, change) {
   const acs = new Set();
+  const requiredAcs = new Set();
   const reqs = new Set();
   for (const file of collectDelta(root, change)) {
     const parsed = parseDelta(file.text);
     for (const kind of ['ADDED', 'MODIFIED', 'REMOVED']) {
       for (const req of parsed.sections[kind]) {
         reqs.add(req.id);
-        for (const scenario of req.scenarios) acs.add(scenario.id);
+        for (const scenario of req.scenarios) {
+          acs.add(scenario.id);
+          if (kind !== 'REMOVED') requiredAcs.add(scenario.id);
+        }
       }
     }
   }
-  return { acs, reqs };
+  return { acs, requiredAcs, reqs };
+}
+
+export function collectKnownAcs({ root, state, change }) {
+  const { acs, requiredAcs } = collectDeltaIds(root, change);
+  const known = new Set(acs);
+  const specs = readSpecsAt(root, state?.baseCommit);
+  for (const reqs of specs.values()) {
+    for (const req of reqs) {
+      for (const scenario of req.scenarios || []) known.add(scenario.id);
+    }
+  }
+  return { deltaAcs: requiredAcs, knownAcs: known };
 }
 
 const DESIGN_SECTIONS = ['目标与非目标', '任务图', 'AC 到用例', '风险'];
@@ -140,6 +156,7 @@ export function checkM2({ root, state, config }) {
     deltaAcs: acs,
     deltaReqs: reqs,
     config,
+    type: state.type,
   });
   errors.push(...validation.errors);
 
