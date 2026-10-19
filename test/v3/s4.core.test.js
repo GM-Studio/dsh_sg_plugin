@@ -77,6 +77,23 @@ test('用例文件不在本次 diff 时判失败', () => {
   assert.match(result.errors.join('; '), /不在本次 diff/);
 });
 
+test('集成回归允许已有用例不在本次 diff', () => {
+  const root = tempRoot();
+  fs.writeFileSync(path.join(root, 'a.js'), '', 'utf8');
+  const result = validateReport({
+    report: {
+      schemaVersion: 1,
+      cases: [{ id: 'TC-001', ac: ['AC-001'], status: 'pass', file: 'a.js' }],
+    },
+    deltaAcs: ACS,
+    mapping: MAP,
+    worktree: root,
+    changedFiles: ['b.js'],
+    requireChangedFiles: false,
+  });
+  assert.equal(result.ok, true, result.errors.join('; '));
+});
+
 test('evidence 链可校验，篡改后失败', () => {
   const root = tempRoot();
   assert.equal(appendEvidence(root, 'c1', { event: 'm1', decision: 'pass' }).ok, true);

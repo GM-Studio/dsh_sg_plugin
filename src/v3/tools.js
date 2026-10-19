@@ -368,6 +368,7 @@ export function registerTools(ctx, runtime) {
               mapping: plan.mapping,
               worktree: integration.path,
               changedFiles,
+              requireChangedFiles: false,
             });
             if (!validation.ok) {
               const reverted = revertWave({

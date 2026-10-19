@@ -9,6 +9,7 @@ export function validateReport({
   mapping,
   worktree,
   changedFiles = [],
+  requireChangedFiles = true,
 }) {
   const known = knownAcs || deltaAcs;
   if (!report || typeof report !== 'object') {
@@ -52,7 +53,7 @@ export function validateReport({
       if (worktree && !exists(path.join(worktree, item.file))) {
         errors.push(`用例 ${item.id} 的文件不存在：${item.file}`);
       }
-      if (changed.size > 0 && !changed.has(item.file)) {
+      if (requireChangedFiles && changed.size > 0 && !changed.has(item.file)) {
         errors.push(`用例 ${item.id} 的文件不在本次 diff：${item.file}`);
       }
     }
