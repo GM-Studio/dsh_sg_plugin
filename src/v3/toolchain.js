@@ -2,6 +2,7 @@ import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { exists, readText, writeText } from './util/fsx.js';
 import { appendRun } from './runs.js';
+import { ensureVenv } from './env/python.js';
 
 const REQUIRED = {
   node: ['prettier', 'eslint', '@eslint/js', 'eslint-config-prettier'],
@@ -38,7 +39,15 @@ function installCommand(root, packages, managerName) {
 
 export function planToolchain(root, worktree = root, stack = null) {
   const pkgFile = path.join(worktree, 'package.json');
-  if (!exists(pkgFile)) return { ok: true, packages: [], configs: [], skipped: true };
+  if (!exists(pkgFile)) {
+    const python =
+      stack === 'python' ||
+      exists(path.join(worktree, 'pyproject.toml')) ||
+      exists(path.join(worktree, 'requirements.txt'));
+    if (!python) return { ok: true, packages: [], configs: [], skipped: true };
+    const configs = ['ruff.toml', 'mypy.ini'].filter((file) => !exists(path.join(worktree, file)));
+    return { ok: true, packages: [], configs, skipped: false, python: true };
+  }
   let pkg;
   try {
     pkg = JSON.parse(readText(pkgFile));
@@ -67,6 +76,37 @@ export function ensureToolchain({
   for (const file of plan.configs) {
     writeText(path.join(worktree, file), CONFIGS[file]);
     generated.push(file);
+  }
+  if (plan.python) {
+    if (!install) return { ...plan, generated, installed: false };
+    const venv = ensureVenv({ root: worktree, suite: { python: null } });
+    if (!venv.ok) return { ok: false, code: 'TOOLCHAIN_VENV_FAILED', message: venv.message };
+    const started = Date.now();
+    const run = spawnSync(venv.python, ['-m', 'pip', 'install', 'ruff', 'mypy'], {
+      cwd: worktree,
+      encoding: 'utf8',
+      maxBuffer: 16 * 1024 * 1024,
+    });
+    const durationMs = Date.now() - started;
+    appendRun(root, {
+      change,
+      task: task.id,
+      role: 'toolchain',
+      worktree,
+      commit: null,
+      durationMs,
+      result: run.status === 0 ? 'pass' : 'fail',
+      error: run.status === 0 ? null : `exit ${run.status}`,
+    });
+    if (run.status !== 0) {
+      return {
+        ok: false,
+        code: 'TOOLCHAIN_INSTALL_FAILED',
+        message: `pip install ruff mypy 失败`,
+        stderr: run.stderr,
+      };
+    }
+    return { ...plan, generated, installed: true };
   }
   if (plan.packages.length === 0) {
     appendRun(root, {

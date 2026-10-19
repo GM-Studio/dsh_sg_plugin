@@ -24,6 +24,22 @@ test('planToolchain 找出缺失包与配置', () => {
   assert.ok(plan.configs.includes('prettier.config.mjs'));
 });
 
+test('Python 项目生成 ruff/mypy 配置', () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'sg-v35-py-'));
+  fs.writeFileSync(path.join(root, 'requirements.txt'), 'pytest\n', 'utf8');
+  const result = ensureToolchain({
+    root,
+    worktree: root,
+    change: 'c',
+    task: { id: 'T-001' },
+    stack: 'python',
+    install: false,
+  });
+  assert.equal(result.ok, true, result.message);
+  assert.ok(fs.existsSync(path.join(root, 'ruff.toml')));
+  assert.ok(fs.existsSync(path.join(root, 'mypy.ini')));
+});
+
 test('ensureToolchain(install=false) 只生成配置，不安装', () => {
   const root = tempRoot();
   const result = ensureToolchain({
