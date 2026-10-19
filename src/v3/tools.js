@@ -10,6 +10,7 @@ import { executeTask, pickNextTask, revertWave } from './executor.js';
 import { readyBatch } from './scheduler.js';
 import { discoverCommand, loadPlan } from './plan.js';
 import { runAllSuites, suggestSuites, persistRuntime } from './suites.js';
+import { poolDisposeChange } from './pool.js';
 import { generateAcceptance } from './acceptance.js';
 import { verifyEvidence, appendEvidence } from './evidence.js';
 import { digest } from './util/hash.js';
@@ -450,6 +451,7 @@ export function registerTools(ctx, runtime) {
               });
               return fail(`归档失败：${result.message}`, result);
             }
+            await poolDisposeChange(project.root, state.change);
             const evidence = appendEvidence(project.root, state.change, {
               event: 'archive',
               decision: 'done',

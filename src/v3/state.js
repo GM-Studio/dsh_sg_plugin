@@ -65,6 +65,7 @@ export function emptyState(patch = {}) {
     skills: { suggested: [], injected: [] },
     evidence: { headSeq: 0, headHash: null },
     runtime: { updatedAt: null, suites: {} },
+    pool: null,
     acceptanceHash: null,
     blockedReason: null,
     options: [],

@@ -2,6 +2,7 @@ import { registerCommands } from './src/v3/commands.js';
 import { registerGuards } from './src/v3/guards.js';
 import { createRuntime } from './src/v3/runtime.js';
 import { registerTools } from './src/v3/tools.js';
+import { poolDisposeAll } from './src/v3/pool.js';
 
 export const name = 'specgate';
 export const inject = ['tools', 'agents'];
@@ -43,6 +44,7 @@ export function apply(ctx, config = {}) {
     safe('guards', () => registerGuards(ctx, runtime));
 
     return () => {
+      poolDisposeAll().catch(() => {});
       for (const dispose of disposers.reverse()) {
         try {
           dispose();

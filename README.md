@@ -1,6 +1,6 @@
 # SpecGate for DSH
 
-> **v3.1 (current)**: 在 v3.0 的单栈流程上增加多技术栈支持 —— `suites[]` 多套件、AC 归属套件、Node 18–24 自动切换、Python venv + pytest、按 lockfile 安装依赖、跨仓 `changeKey`。
+> **v3.1 (current)**: 在 v3.0 的单栈流程上增加多技术栈支持 —— `suites[]` 多套件、AC 归属套件、Node 18–24 自动切换、Python venv + pytest、按 lockfile 安装依赖、跨仓 `changeKey`、按仓库+角色复用 Agent 池。
 >
 > - 配置与用法：[`docs/demos/v3.1-multistack.md`](docs/demos/v3.1-multistack.md)
 > - v3.0 单套件项目无需改动。
@@ -18,7 +18,7 @@ A Host plugin that brings AgentKit47's gated development workflow to DeepSeek Ha
 - Source: `templates/qoder/` from `AgentKit47-Qoder` (MIT)
 - Target: DSH `0.2.1-rc.2` and above
 - Form: workspace bundle, installed into the current DSH profile; **activated per project on opt-in**
-- Version: `3.1.0`
+- Version: `3.1.1`
 
 ## Capabilities
 

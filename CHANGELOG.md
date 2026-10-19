@@ -1,5 +1,12 @@
 # Changelog
 
+## 3.1.1
+
+- Added a per-repo, per-role Agent pool for `sg_run`: implementer/tester are reused across tasks, reviewer stays fresh.
+- Bounded history: inject the previous task summary and recycle after 3 tasks or 70% context.
+- Pool limits: 2 per role, 6 concurrently leased per change, 10-minute idle TTL, archive cleanup.
+- Failure replacement and a 2-failure circuit breaker per role; `/sg-status` reports pool stats.
+
 ## 3.1.0
 
 - Added multi-suite projects: `.specgate/config.yaml` `suites[]` with `node-test` / `pytest` / `command` kinds, per-suite `cmdHash` and evidence.

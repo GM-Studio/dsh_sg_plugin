@@ -51,6 +51,7 @@ export function statusData(project) {
     tasks: taskSummary(state),
     suites: state.plan?.suites || null,
     runtime: state.runtime || null,
+    pool: state.pool || null,
     evidence: state.evidence,
     blockedReason: state.blockedReason,
     skills: state.skills,
@@ -82,6 +83,15 @@ export function renderStatus(project) {
     `证据：headSeq=${data.evidence?.headSeq ?? 0}`,
   ];
   if (data.blockedReason) lines.push(`阻塞：${data.blockedReason}`);
+  if (data.pool?.stats) {
+    const s = data.pool.stats;
+    lines.push(
+      `Agent 池：创建 ${s.created}，复用 ${s.reused}，销毁 ${s.disposed}，回收 ${s.recycled}，失败 ${s.failures}`,
+    );
+    for (const [role, info] of Object.entries(data.pool.roles || {})) {
+      lines.push(`池 ${role}：size=${info.size} leased=${info.leased} idle=${info.idle}`);
+    }
+  }
   if (data.runtime?.suites) {
     for (const [id, runtime] of Object.entries(data.runtime.suites)) {
       const parts = [];

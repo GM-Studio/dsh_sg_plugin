@@ -30,6 +30,7 @@ import { discoverCommand, loadPlan } from '../src/v3/plan.js';
 import { runTestCommand } from '../src/v3/testrunner.js';
 import { validateReport } from '../src/v3/report.js';
 import { runAllSuites, runTaskSuites, persistRuntime } from '../src/v3/suites.js';
+import { poolDisposeChange } from '../src/v3/pool.js';
 import { appendEvidence, verifyEvidence } from '../src/v3/evidence.js';
 import { generateAcceptance } from '../src/v3/acceptance.js';
 import { archiveChange, nextTag } from '../src/v3/archive.js';
@@ -512,6 +513,7 @@ switch (command) {
       tag,
     });
     if (!result.ok) fail(result.message, result);
+    await poolDisposeChange(root, state.change);
     const evidence = appendEvidence(root, state.change, {
       event: 'archive',
       decision: 'done',

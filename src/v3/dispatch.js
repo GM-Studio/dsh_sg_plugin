@@ -1,16 +1,17 @@
-import { randomUUID } from 'node:crypto';
+import { poolDispatch } from './pool.js';
 
-const ROLE_PROMPTS = {
-  implementer:
-    '你是 implementer。只修改源码与 docs，不要碰 tests、openspec/specs 或 change 包。完成后在 worktree 内 git commit，并只回复完成摘要与 commit hash。',
-  tester:
-    '你是 tester。只允许新增 openspec/changes/<change>/tests/automation/**，或修改 H2 清单内的测试文件。不要改源码。完成后 git commit。',
-  reviewer:
-    '你是 reviewer。只做审查，不修改任何文件。输出 JSON：{"verdict":"pass|fail","blocking":[{"file":"","line":0,"reason":""}],"nonBlocking":[]}。',
-};
-
+/** Dispatch a role turn. implementer/tester use the per-repo pool; reviewer stays fresh. */
 export function createDispatcher(runtime) {
-  return async function dispatch({ role, task, worktree, prompt, skills = [], parent }) {
+  return async function dispatch({
+    role,
+    task,
+    worktree,
+    prompt,
+    skills = [],
+    parent,
+    root,
+    change,
+  }) {
     const scripted = runtime.agentRunner();
     if (typeof scripted === 'function') {
       const result = await scripted({ role, task, worktree, prompt, skills });
@@ -31,52 +32,24 @@ export function createDispatcher(runtime) {
       };
     }
 
-    let handle;
-    try {
-      handle = await agents.create({
-        sessionId: randomUUID(),
-        parentAgent: parent,
-        agentOptions: { ...(parent?.options || {}) },
-        meta: { cwd: worktree, origin: 'specgate-v3' },
-        setup(agentCtx) {
-          const systemPrompt = agentCtx.get?.('systemPrompt');
-          if (systemPrompt && typeof systemPrompt.context === 'function') {
-            const text = [ROLE_PROMPTS[role] || '', ...skills.map((item) => item.text || '')]
-              .filter(Boolean)
-              .join('\n\n');
-            systemPrompt.context({ name: 'specgate-v3-role', order: 50, text });
-          }
-        },
-      });
-
-      handle.agent.followup({
-        id: randomUUID(),
-        role: 'user',
-        content: [{ type: 'text', text: prompt }],
-        source: { kind: 'specgate-v3' },
-      });
-      await handle.agent.whenIdle();
-
-      const messages = handle.agent.session.deriveMessages();
-      const assistant = [...messages].reverse().find((message) => message.role === 'assistant');
-      const text = (assistant?.content || [])
-        .filter((block) => block && block.type === 'text')
-        .map((block) => block.text)
-        .join('\n')
-        .trim();
-      return { ok: true, text };
-    } catch (error) {
-      return {
-        ok: false,
-        code: 'DISPATCH_FAILED',
-        message: error instanceof Error ? error.message : String(error),
-      };
-    } finally {
-      try {
-        handle?.dispose?.();
-      } catch {
-        // ignore dispose failure
-      }
+    let projectRoot = root;
+    let currentChange = change;
+    if (!projectRoot || !currentChange) {
+      const project = runtime.project(parent);
+      if (!projectRoot) projectRoot = project.root;
+      if (!currentChange) currentChange = project.state?.change || 'unknown';
     }
+
+    return poolDispatch({
+      runtime,
+      role,
+      root: projectRoot,
+      change: currentChange,
+      worktree,
+      prompt,
+      skills,
+      parent,
+      task,
+    });
   };
 }
