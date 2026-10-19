@@ -99,7 +99,7 @@ async function disposeEntry(key, entry, reason) {
   stats.disposed += 1;
   if (reason === 'recycle') stats.recycled += 1;
   try {
-    await entry.handle.dispose?.();
+    await entry.activation?.dispose?.();
   } catch {
     // best effort
   }
@@ -144,8 +144,7 @@ function noteFailure(root, role, config) {
   const key = breakerKey(root, role);
   const next = (breakers.get(key) || 0) + 1;
   breakers.set(key, next);
-  if (next >= config.breakerFailures) return true;
-  return false;
+  return next >= config.breakerFailures;
 }
 
 function noteSuccess(root, role) {
@@ -181,30 +180,73 @@ function buildPrompt({ role, prompt, skills, summary }) {
     .join('\n\n');
 }
 
-async function createEntry({ agents, key, role, worktree, parent, config }) {
-  const handle = await agents.create({
-    sessionId: randomUUID(),
-    parentAgent: parent,
-    agentOptions: { ...(parent?.options || {}) },
-    meta: { cwd: worktree, origin: 'subagent' },
-    setup(agentCtx) {
-      const systemPrompt = agentCtx.get?.('systemPrompt');
-      if (systemPrompt && typeof systemPrompt.context === 'function') {
-        systemPrompt.context({
-          name: 'specgate-v3-role',
-          order: 50,
-          text: ROLE_PROMPTS[role] || '',
-        });
-      }
+function textOf(output) {
+  return (output || [])
+    .filter((block) => block && block.type === 'text')
+    .map((block) => block.text)
+    .join('\n')
+    .trim();
+}
+
+function pickProvider(subagents) {
+  const list = typeof subagents.list === 'function' ? subagents.list() : [];
+  return list[0];
+}
+
+async function startChild({ runtime, role, worktree, text, parent }) {
+  const subagents = runtime.service('subagents');
+  if (!subagents || typeof subagents.startActivation !== 'function') {
+    throw new Error('subagents service unavailable');
+  }
+  const provider = pickProvider(subagents);
+  if (!provider) throw new Error('no subagent provider registered');
+  const activation = await subagents.startActivation({
+    provider,
+    label: `specgate-${role}`,
+    request: {
+      cwd: worktree,
+      prompt: [{ type: 'text', text }],
+      parent,
+      signal: new AbortController().signal,
+      agentOptions: { ...(parent?.options || {}) },
     },
+    delivery: 'caller',
   });
+  const result = await activation.result;
+  return {
+    activation,
+    childId: activation.childId,
+    text: textOf(result.output),
+    stopReason: result.stopReason,
+  };
+}
+
+async function continueChild({ runtime, entry, worktree, text, parent }) {
+  const subagents = runtime.service('subagents');
+  const agents = runtime.service('agents');
+  const workingDirectory = runtime.service('workingDirectory');
+  const child = agents?.get?.(entry.childId);
+  if (child && workingDirectory?.set) await workingDirectory.set(child, worktree);
+  await subagents.sendMessage(parent, entry.childId, [{ type: 'text', text }], {
+    signal: new AbortController().signal,
+  });
+  await subagents.waitForChildren(parent);
+  if (child?.whenIdle) await child.whenIdle();
+  const session = runtime.service('sessions')?.get?.(entry.childId);
+  const messages = session?.deriveMessages?.() || child?.session?.deriveMessages?.() || [];
+  const assistant = [...messages].reverse().find((message) => message.role === 'assistant');
+  return textOf(assistant?.content);
+}
+
+async function createEntry({ runtime, key, role, worktree, parent, config, change, text }) {
+  const child = await startChild({ runtime, role, worktree, text, parent });
   stats.created += 1;
   stats.misses += 1;
   startMaintenance();
   return {
-    id: handle.agent.id,
-    handle,
-    agent: handle.agent,
+    id: child.childId,
+    childId: child.childId,
+    activation: child.activation,
     role,
     createdAt: Date.now(),
     lastUsedAt: Date.now(),
@@ -215,10 +257,11 @@ async function createEntry({ agents, key, role, worktree, parent, config }) {
     leased: false,
     disposed: false,
     config,
+    firstText: child.text,
   };
 }
 
-async function acquireEntry({ agents, key, role, worktree, parent, config, change }) {
+async function acquireEntry({ runtime, key, role, worktree, parent, config, change, text }) {
   const pool = ensurePool(key);
   await expireIdle(config);
   for (;;) {
@@ -235,7 +278,7 @@ async function acquireEntry({ agents, key, role, worktree, parent, config, chang
       return idle;
     }
     if (pool.entries.length < config.poolSize) {
-      const created = await createEntry({ agents, key, role, worktree, parent, config });
+      const created = await createEntry({ runtime, key, role, worktree, parent, config, change, text });
       created.leased = true;
       pool.entries.push(created);
       return created;
@@ -255,107 +298,9 @@ function releaseEntry(key, entry) {
 
 function summaryOf(task, text) {
   const head = String(text || '').replace(/\s+/g, ' ').slice(0, 400);
-  return [
-    `task=${task?.id || '-'}`,
-    `ac=${(task?.ac || []).join(',')}`,
-    `result=${head || '(empty)'}`,
-  ].join(' ');
-}
-
-async function startTurn({ runtime, agent, text }) {
-  const controller = runtime?.service?.('sessionController');
-  if (controller && typeof controller.prompt === 'function') {
-    await controller.prompt(
-      {
-        requestId: randomUUID(),
-        sessionId: agent.id,
-        mode: 'queue',
-        content: [{ type: 'text', text }],
-      },
-      new AbortController().signal,
-    );
-  } else {
-    agent.followup({
-      id: randomUUID(),
-      role: 'user',
-      content: [{ type: 'text', text }],
-      source: { kind: 'specgate-v3' },
-    });
-  }
-  await agent.whenIdle();
-}
-
-async function runOnEntry({
-  entry,
-  worktree,
-  prompt,
-  skills,
-  summary,
-  workingDirectory,
-  change,
-  runtime,
-}) {
-  if (workingDirectory && typeof workingDirectory.set === 'function') {
-    await workingDirectory.set(entry.agent, worktree);
-  }
-  await startTurn({
-    runtime,
-    agent: entry.agent,
-    text: buildPrompt({ role: entry.role, prompt, skills, summary }),
-  });
-  const messages = entry.agent.session.deriveMessages();
-  const assistant = [...messages].reverse().find((message) => message.role === 'assistant');
-  const text = (assistant?.content || [])
-    .filter((block) => block && block.type === 'text')
-    .map((block) => block.text)
-    .join('\n')
-    .trim();
-  entry.tasks += 1;
-  entry.chars = messageChars(entry.agent);
-  entry.lastChange = change;
-  return text;
-}
-
-async function freshRun({ runtime, agents, role, worktree, prompt, skills, parent }) {
-  const handle = await agents.create({
-    sessionId: randomUUID(),
-    parentAgent: parent,
-    agentOptions: { ...(parent?.options || {}) },
-    meta: { cwd: worktree, origin: 'subagent' },
-    setup(agentCtx) {
-      const systemPrompt = agentCtx.get?.('systemPrompt');
-      if (systemPrompt && typeof systemPrompt.context === 'function') {
-        systemPrompt.context({
-          name: 'specgate-v3-role',
-          order: 50,
-          text: ROLE_PROMPTS[role] || '',
-        });
-      }
-    },
-  });
-  stats.created += 1;
-  try {
-    await startTurn({
-      runtime,
-      agent: handle.agent,
-      text: buildPrompt({ role, prompt, skills, summary: null }),
-    });
-    const messages = handle.agent.session.deriveMessages();
-    const assistant = [...messages].reverse().find((message) => message.role === 'assistant');
-    const text = (assistant?.content || [])
-      .filter((block) => block && block.type === 'text')
-      .map((block) => block.text)
-      .join('\n')
-      .trim();
-    return { ok: true, text };
-  } finally {
-    stats.disposed += 1;
-    try {
-      await handle.dispose?.();
-    } catch {
-      // best effort
-    }
-  }
+  return [`task=${task?.id || '-'}`, `ac=${(task?.ac || []).join(',')}`, `result=${head || '(empty)'}`].join(
+    ' ',
+  );
 }
 
 export function resolvePoolConfig(root) {
@@ -374,15 +319,23 @@ export async function poolDispatch({
   task,
 }) {
   const config = resolvePoolConfig(root);
-  const agents = runtime.service('agents');
-  const workingDirectory = runtime.service('workingDirectory');
+  const text = buildPrompt({ role, prompt, skills, summary: null });
 
-  if (role === 'reviewer' || !config.enabled || !workingDirectory) {
+  if (role === 'reviewer' || !config.enabled) {
     await acquireChangeSlot(change, config.maxLeasedPerChange);
     try {
-      return await freshRun({ runtime, agents, role, worktree, prompt, skills, parent });
+      const child = await startChild({ runtime, role, worktree, text, parent });
+      await child.activation?.dispose?.();
+      return { ok: true, text: child.text, agent: { id: child.childId, reused: false, tasks: 1 } };
+    } catch (error) {
+      return {
+        ok: false,
+        code: 'DISPATCH_FAILED',
+        message: error instanceof Error ? error.message : String(error),
+      };
     } finally {
       releaseChangeSlot(change);
+      persistPool(root);
     }
   }
 
@@ -397,24 +350,24 @@ export async function poolDispatch({
   await acquireChangeSlot(change, config.maxLeasedPerChange);
   const key = poolKey(root, role);
   let entry = null;
-  let text = '';
+  let resultText = '';
   try {
-    entry = await acquireEntry({ agents, key, role, worktree, parent, config, change });
-    text = await runOnEntry({
-      entry,
-      worktree,
-      prompt,
-      skills,
-      summary: entry.lastSummary,
-      workingDirectory,
-      change,
-      runtime,
-    });
+    entry = await acquireEntry({ runtime, key, role, worktree, parent, config, change, text });
+    if (entry.tasks === 0) {
+      resultText = entry.firstText;
+    } else {
+      const summary = entry.lastSummary ? `上一个任务摘要：\n${entry.lastSummary}\n\n` : '';
+      const full = `${summary}${text}`;
+      resultText = await continueChild({ runtime, entry, worktree, text: full, parent });
+    }
+    entry.tasks += 1;
+    entry.chars = Math.max(entry.chars, text.length + resultText.length);
+    entry.lastChange = change;
     noteSuccess(root, role);
     return {
       ok: true,
-      text,
-      agent: { id: entry.id, reused: entry.tasks > 1, tasks: entry.tasks },
+      text: resultText,
+      agent: { id: entry.childId, reused: entry.tasks > 1, tasks: entry.tasks },
     };
   } catch (error) {
     stats.failures += 1;
@@ -427,7 +380,7 @@ export async function poolDispatch({
     };
   } finally {
     if (entry && !entry.disposed) {
-      entry.lastSummary = summaryOf(task, text);
+      entry.lastSummary = summaryOf(task, resultText);
       releaseEntry(key, entry);
     }
     releaseChangeSlot(change);
@@ -465,11 +418,7 @@ export function poolSnapshot(root) {
         })),
     };
   }
-  return {
-    updatedAt: new Date().toISOString(),
-    stats: { ...stats },
-    roles,
-  };
+  return { updatedAt: new Date().toISOString(), stats: { ...stats }, roles };
 }
 
 export async function poolDisposeChange(root, change) {
