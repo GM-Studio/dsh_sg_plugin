@@ -15,6 +15,7 @@ import { runTestCommand } from './testrunner.js';
 import { validateReport } from './report.js';
 import { collectKnownAcs } from './phase.js';
 import { appendEvidence } from './evidence.js';
+import { loadSkillPayload } from './skills.js';
 
 function failure(code, message, extra = {}) {
   return { ok: false, code, message, ...extra };
@@ -129,6 +130,7 @@ async function verifyAndFinish({
     return failure('REPORT_INVALID', validation.errors.join('; '), { validation, run });
   }
 
+  const reviewerSkills = loadSkillPayload({ role: 'reviewer' });
   const review = await dispatcher({
     role: 'reviewer',
     task,
@@ -139,6 +141,7 @@ async function verifyAndFinish({
       `测试结果: passed=${validation.stats.passed} failed=${validation.stats.failed}`,
       '只输出 JSON：{"verdict":"pass|fail","blocking":[{"file":"","line":0,"reason":""}],"nonBlocking":[]}',
     ].join('\n'),
+    skills: reviewerSkills,
     parent,
   });
   if (!review.ok) return failure(review.code || 'REVIEW_FAILED', review.message);
@@ -183,11 +186,19 @@ async function verifyAndFinish({
     });
     if (!result.ok) return { ok: false, code: result.code, message: result.message };
     markTaskDone(integration.path, change, task.id);
+    const injected = [
+      ...new Set([
+        ...loadSkillPayload({ role: 'implementer', parallel: task.parallel }).map((item) => item.id),
+        ...loadSkillPayload({ role: 'tester' }).map((item) => item.id),
+        ...reviewerSkills.map((item) => item.id),
+      ]),
+    ];
     const evidence = appendEvidence(root, change, {
       task: task.id,
       event: 'task',
       decision: 'merged',
       refs: { commit: finalHead, integration: result.commit, report: validation.stats },
+      skills: { suggested: [], injected },
     });
     return {
       ok: true,
@@ -216,6 +227,11 @@ async function executeFeatureTask({ root, state, task, dispatcher, config, paren
     task,
     worktree: worktree.path,
     prompt: implementerPrompt(change, task),
+    skills: loadSkillPayload({
+      role: 'implementer',
+      retry: (task.attempts || 0) > 0,
+      parallel: task.parallel,
+    }),
     parent,
   });
   if (!implementer.ok) return failure(implementer.code || 'IMPLEMENTER_FAILED', implementer.message);
@@ -241,6 +257,7 @@ async function executeFeatureTask({ root, state, task, dispatcher, config, paren
     task,
     worktree: worktree.path,
     prompt: testerPrompt(change, task),
+    skills: loadSkillPayload({ role: 'tester', retry: (task.attempts || 0) > 0 }),
     parent,
   });
   if (!tester.ok) return failure(tester.code || 'TESTER_FAILED', tester.message);
@@ -295,6 +312,7 @@ async function executeFixTask({ root, state, task, dispatcher, config, parent })
     task,
     worktree: worktree.path,
     prompt: testerPrompt(change, task, '先写一个能复现缺陷的用例；它必须在当前代码上失败。'),
+    skills: loadSkillPayload({ role: 'tester', retry: (task.attempts || 0) > 0 }),
     parent,
   });
   if (!tester.ok) return failure(tester.code || 'TESTER_FAILED', tester.message);
@@ -343,6 +361,11 @@ async function executeFixTask({ root, state, task, dispatcher, config, parent })
     task,
     worktree: worktree.path,
     prompt: implementerPrompt(change, task),
+    skills: loadSkillPayload({
+      role: 'implementer',
+      retry: (task.attempts || 0) > 0,
+      parallel: task.parallel,
+    }),
     parent,
   });
   if (!implementer.ok) return failure(implementer.code || 'IMPLEMENTER_FAILED', implementer.message);

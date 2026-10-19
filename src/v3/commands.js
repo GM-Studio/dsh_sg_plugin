@@ -2,6 +2,7 @@ import { initProject, createChange } from './change.js';
 import { renderStatus } from './status.js';
 import { ensureV3 } from './tools.js';
 import { headCommit, isGitRepo } from './util/git.js';
+import { loadSkill } from './skills.js';
 
 function tokens(raw) {
   return String(raw || '')
@@ -87,6 +88,19 @@ export function registerCommands(ctx, runtime) {
     async handler(inv) {
       const project = runtime.project(inv?.agent);
       return { kind: 'success', text: renderStatus(project) };
+    },
+  });
+
+  register({
+    name: 'sg-skill',
+    description: '加载技能正文：/sg-skill <name>',
+    input: { hint: '<name>' },
+    async handler(inv) {
+      const id = tokens(inv?.rawInput)[0];
+      if (!id) return { kind: 'error', text: '用法：/sg-skill <name>' };
+      const text = loadSkill(id);
+      if (!text) return { kind: 'error', text: `未知技能：${id}` };
+      return { kind: 'success', text };
     },
   });
 

@@ -15,6 +15,8 @@ import { generateAcceptance } from './acceptance.js';
 import { verifyEvidence, appendEvidence } from './evidence.js';
 import { digest } from './util/hash.js';
 import { archiveChange, nextTag } from './archive.js';
+import { loadSkill, resolveSkills, suggestForPhase } from './skills.js';
+import { acquire, release } from './lock.js';
 import fs from 'node:fs';
 import path from 'node:path';
 
@@ -138,6 +140,37 @@ export function registerTools(ctx, runtime) {
       },
     },
     {
+      name: 'sg_skill',
+      description: '加载一个技能的正文，并把使用记录写入证据。参数：name（技能 id）。',
+      parameters: {
+        type: 'object',
+        properties: { name: { type: 'string' } },
+        required: ['name'],
+        additionalProperties: false,
+      },
+      output: textOutput(),
+      async execute(args, exec) {
+        const id = String(args?.name || '').trim();
+        const text = loadSkill(id);
+        if (!text) {
+          return fail(`未知技能：${id}`, {
+            ok: false,
+            code: 'SKILL_NOT_FOUND',
+            fix: '用技能目录中的 id，例如 sp-skill-brainstorming',
+          });
+        }
+        const project = runtime.project(exec?.agent);
+        if (project.state) {
+          appendEvidence(project.root, project.state.change || 'project', {
+            event: 'skill',
+            decision: 'loaded',
+            refs: { skill: id },
+          });
+        }
+        return ok(text, { skill: id });
+      },
+    },
+    {
       name: 'sg_run',
       description:
         '推进 SpecGate v3 一个阶段：校验 M1/M2、执行任务或做集成回归。不接收命令、分支等覆盖参数。',
@@ -157,13 +190,24 @@ export function registerTools(ctx, runtime) {
         const state = project.state;
         if (!state) return fail('未找到状态文件，先执行 /sg-init', project.stateError);
 
-        switch (state.phase) {
+        const acquired = acquire(project.root, { force: args?.force === true });
+        if (!acquired.ok) return fail(`${acquired.message}。${acquired.fix || ''}`, acquired);
+
+        try {
+          switch (state.phase) {
           case 'IDLE':
             return ok('当前没有进行中的 change。先执行 /sg-change <name> --type <type>。');
           case 'H1_PENDING': {
             const m1 = checkM1({ root: project.root, state });
             if (!m1.ok) return fail(`M1 未通过：\n${formatErrors(m1.errors)}`, m1);
-            return ok('M1 通过。请审阅 delta 后执行 /sg-approve H1。', { m1 });
+            const suggested = suggestForPhase('H1_PENDING');
+            patchState(project.root, (draft) => {
+              draft.skills.suggested = suggested;
+            });
+            return ok(
+              `M1 通过。请审阅 delta 后执行 /sg-approve H1。\n建议加载技能：${suggested.join('、')}`,
+              { m1, suggested },
+            );
           }
           case 'PLAN': {
             const m2 = checkM2({ root: project.root, state, config: project.config });
@@ -205,9 +249,10 @@ export function registerTools(ctx, runtime) {
               draft.phase = 'H2_PENDING';
             });
             if (!saved.ok) return fail(`冻结计划失败：${saved.message}`, saved);
+            const suggested = suggestForPhase('PLAN');
             return ok(
-              `M2 通过，已冻结 planHash ${String(m2.planHash).slice(0, 19)}…。请审阅方案后执行 /sg-approve H2。`,
-              { m2 },
+              `M2 通过，已冻结 planHash ${String(m2.planHash).slice(0, 19)}…。请审阅方案后执行 /sg-approve H2。\n建议加载技能：${suggested.join('、')}`,
+              { m2, suggested },
             );
           }
           case 'H2_PENDING':
@@ -261,6 +306,7 @@ export function registerTools(ctx, runtime) {
                   lastError = `任务 ${taskId} 第 ${attempts} 次失败：${result.message}`;
                   if (isBlocked) {
                     draft.phase = 'BLOCKED';
+                    draft.resumePhase = 'EXECUTING';
                     draft.blockedReason = lastError;
                   }
                 }
@@ -397,6 +443,7 @@ export function registerTools(ctx, runtime) {
             if (!result.ok) {
               patchState(project.root, (draft) => {
                 draft.phase = 'BLOCKED';
+                draft.resumePhase = 'ARCHIVING';
                 draft.blockedReason = `归档失败：${result.message}`;
               });
               return fail(`归档失败：${result.message}`, result);
@@ -416,16 +463,35 @@ export function registerTools(ctx, runtime) {
               result,
             );
           }
-          case 'BLOCKED':
-            return ok(
-              `已阻塞：${state.blockedReason || '未知原因'}。处理后可执行 /sg-run --retry。`,
-            );
+          case 'BLOCKED': {
+            if (!args?.retry) {
+              return ok(`已阻塞：${state.blockedReason || '未知原因'}。处理后可执行 /sg-run --retry。`);
+            }
+            const resumePhase = state.resumePhase || 'EXECUTING';
+            const saved = patchState(project.root, (draft) => {
+              draft.phase = resumePhase;
+              draft.blockedReason = null;
+              if (resumePhase === 'EXECUTING') {
+                for (const item of Object.values(draft.tasks || {})) {
+                  if (item.status === 'blocked' || item.status === 'failed') {
+                    item.status = 'pending';
+                    item.attempts = 0;
+                  }
+                }
+              }
+            });
+            if (!saved.ok) return fail(saved.message, saved);
+            return ok(`已从 BLOCKED 恢复到 ${resumePhase}，继续 /sg-run。`);
+          }
           case 'DONE':
             return ok('change 已完成。');
           case 'ABORTED':
             return ok('change 已中止。');
           default:
             return fail(`未知阶段：${state.phase}`);
+          }
+        } finally {
+          release(project.root);
         }
       },
     },

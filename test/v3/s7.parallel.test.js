@@ -192,7 +192,9 @@ test('S7：两个 [P] 任务并行执行并各自合并', async () => {
   const root = initFixture();
   let active = 0;
   let maxActive = 0;
-  const runner = async ({ role, task, worktree }) => {
+  const seenSkills = {};
+  const runner = async ({ role, task, worktree, skills }) => {
+    seenSkills[role] = (skills || []).map((item) => item.id);
     if (role === 'implementer') {
       active += 1;
       maxActive = Math.max(maxActive, active);
@@ -228,4 +230,6 @@ test('S7：两个 [P] 任务并行执行并各自合并', async () => {
   assert.equal(state.tasks['T-001'].status, 'merged');
   assert.equal(state.tasks['T-002'].status, 'merged');
   assert.ok(maxActive >= 2, `并行度不足：${maxActive}`);
+  assert.ok(seenSkills.implementer?.includes('sg-skill-test-driven-development'));
+  assert.ok(seenSkills.reviewer?.includes('sg-skill-code-review'));
 });
