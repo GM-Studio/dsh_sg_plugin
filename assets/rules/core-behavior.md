@@ -22,8 +22,6 @@ This is not negotiable and not optional. Do not talk yourself into skipping it, 
 
 The following Skills enforce process discipline; the AI **must not** decide on its own that one is "unnecessary" and skip it:
 
-- `sg-skill-entry-guard`: the first step for any user input. Prohibited: skipping it by deciding "this is obviously a modification request".
-- `sg-skill-change-classification`: before creating an OpenSpec Change or writing code. Prohibited: deciding "the change is simple, so no classification is needed".
 - `sg-skill-triage-brief`: once tasks.md is created and the change size exceeds the threshold (effort > 2h / more than 2 modules / more than 3 files / interface changes). Prohibited: skipping it outright by deciding "no Brief is needed".
 - `sg-skill-test-driven-development`: before writing any implementation code. Prohibited: skipping it because "the feature is simple and doesn't need TDD"; ignoring a DSH guard warning or failure result and continuing to code.
 - `sg-skill-vertical-slicing`: before creating OpenSpec specs. Prohibited: skipping it by assuming "the feature is naturally vertical"; defaulting to horizontal component-based slicing.
@@ -38,9 +36,11 @@ If the AI believes a Skill is not needed in the current scenario, it must:
 
 ---
 
-## Mandatory Change Classification Triggers
+## Change Classification Triggers
 
-**Triggers** (any one fires automatically; the AI may not decide to skip):
+> **Note**: the v3 runtime no longer enforces an `L1`/`L2`/`L3` classification, and no classification Skill ships any more. The discipline below is kept as guidance for how much process a given change warrants.
+
+**Triggers** (any one fires):
 
 - The user raises any development request (new feature, bug fix, refactor)
 - Before creating an OpenSpec Change
@@ -49,10 +49,9 @@ If the AI believes a Skill is not needed in the current scenario, it must:
 
 **Required actions**:
 
-1. Invoke `sg-skill-change-classification`
-2. Determine the change level (L1 requirements-driven / L2 technical implementation / L3 defect fix)
-3. Output the result (level + confidence + rationale + next step)
-4. Adjust subsequent process rigor according to the level (see the paradigm-to-gate mapping table in `gate-control.md`)
+1. Decide the change level yourself (L1 requirements-driven / L2 technical implementation / L3 defect fix)
+2. State the result (level + confidence + rationale + next step)
+3. Adjust subsequent process rigor according to the level
 
 **Prohibited**:
 
@@ -143,7 +142,7 @@ If the AI believes a Skill is not needed in the current scenario, it must:
 
 ### Required actions
 
-1. Load `openspec-explore` or `sg-skill-requirements-definition`
+1. Load `sg-skill-requirements-definition`
 2. Run multiple rounds of questioning to clarify: business goals (What & Why), target users (Who), core features, technical constraints
 3. Ask one question at a time and wait for the user's answer before continuing
 4. Once the discussion is clear, summarize the consensus and confirm the next step
@@ -186,7 +185,7 @@ If the AI believes a Skill is not needed in the current scenario, it must:
 - TDD deviation (a code file has no corresponding test file): load `sg-skill-test-driven-development`, stop coding, add tests, and continue once they pass.
 - Missing artifacts (proposal/design/specs/tasks incomplete before writing code): use `/sg-propose` to create the missing change skeleton, stop coding, fill in the missing artifacts, and continue once the user review passes.
 - All artifacts complete (proposal/design/specs/tasks all done): load `sg-skill-critical-review`, stop advancing, run critical review, and apply only after user approval.
-- Missing code review (no review record when a Task is completed/committed): load `sg-skill-code-review` or delegate to `sg-agent-reviewer`, stop committing, run the code review, and continue once it passes.
+- Missing code review (no review record when a Task is completed/committed): load `sg-skill-code-review` or delegate to a read-only review subagent, stop committing, run the code review, and continue once it passes.
 - Insufficient test coverage (more than 30% of source files have no tests before committing): load `sg-skill-test-driven-development`, stop committing, add tests, and continue once coverage meets the target.
 - Missing documentation (key documents not updated): load `sg-skill-critical-review`, stop committing, add documentation, and continue after review.
 

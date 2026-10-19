@@ -17,14 +17,11 @@ Skills related to day-to-day code work, covering core engineering capabilities s
 | [sg-skill-critical-review](sg-skill-critical-review/SKILL.md) | Critical Review - Independently review document quality | Document complete, before archiving |
 | [sg-skill-code-review](sg-skill-code-review/SKILL.md) | Code Review - Verify code quality before merging | Task complete, major feature implemented, before merging |
 | [sg-skill-domain-modeling](sg-skill-domain-modeling/SKILL.md) | Domain Modeling - Establish the domain language and model | Complex business logic design |
-| [sg-skill-improve-architecture](sg-skill-improve-architecture/SKILL.md) | Architecture Improvement - Discover opportunities for architectural deepening | Regular runs, architectural problems found during debugging |
 | [sg-skill-triage-brief](sg-skill-triage-brief/SKILL.md) | Task Triage - Generate a structured Agent Brief | Task assignment, Issue creation |
 | [sg-skill-vertical-slicing](sg-skill-vertical-slicing/SKILL.md) | Vertical Slicing - Decompose tasks into deliverable slices | Implementation plan decomposition |
 
 **Moved to sg-core/**:
-- `sg-skill-anti-patterns` → [../sg-core/sg-skill-anti-patterns.md](../sg-core/sg-skill-anti-patterns.md)
-- `sg-skill-change-classification` → [../sg-core/sg-skill-change-classification.md](../sg-core/sg-skill-change-classification.md)
-- `sg-skill-harness-design` → [../sg-core/sg-skill-harness-design.md](../sg-core/sg-skill-harness-design.md)
+- `sg-skill-anti-patterns` → [../sg-core/sg-skill-anti-patterns/SKILL.md](../sg-core/sg-skill-anti-patterns/SKILL.md)
 
 ### Engineering Practice Skills
 

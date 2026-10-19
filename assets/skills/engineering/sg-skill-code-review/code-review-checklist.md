@@ -1,6 +1,6 @@
 # Code Review Checklist
 
-> **Purpose**: Checklist used by sg-agent-reviewer when performing code review  
+> **Purpose**: Checklist used by the read-only review subagent when performing code review  
 > **Two-layer mechanism**: Layer 1 quick check (mandatory) + Layer 2 deep check (on demand)  
 > **Reference**: [Refactoring Best Practices](../../../../.specgate/experiences/best-practices/BP-refactoring-improving-existing-code.md)
 
@@ -342,6 +342,6 @@ grep -n "\.get[A-Z].*\.get[A-Z].*\.get[A-Z]" src/**/*.ts
 
 ---
 
-**Maintainer**: sg-agent-reviewer  
+**Maintainer**: the code review flow  
 **Update timing**: When new common code issues are discovered  
 **Related document**: [Refactoring Best Practices](../../../../.specgate/experiences/best-practices/BP-refactoring-improving-existing-code.md)

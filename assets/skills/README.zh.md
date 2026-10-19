@@ -8,14 +8,14 @@
 
 ```
 skills/
-├── sg-core/            # specgate 核心 Skills（12 个）
-├── engineering/          # 日常代码工作（11 个 Skills）
+├── sg-core/              # specgate 核心 Skills（1 个）
+├── engineering/          # 日常代码工作（10 个 Skills）
 ├── productivity/         # 非代码工作流（4 个 Skills）
-├── misc/                 # 偶尔使用（3 个 Skills）
+├── misc/                 # 偶尔使用（2 个 Skills）
 └── README.md             # 本文件
 ```
 
-> 30 个 Skill 全部由插件在 DSH 会话启动时注册；`/sg-init` 另外物化到项目 `.dsh/skills/specgate/`。
+> 共 22 个 Skill 随插件以资产形式发布（`assets/skills/` 下 17 个 `sg-skill-*`，`assets/sp/` 下 5 个 `sp-skill-*`）。它们**不会**注册进 DSH 会话技能目录，也不会物化到项目 `.dsh/skills/`；`src/v3/skills.js` 按角色/阶段把匹配的正文注入子 Agent 提示词，需要直接阅读时用 `sg-skill` 工具或 `/sg-skill <name>`。
 
 ---
 
@@ -31,9 +31,6 @@ skills/
 | **规划复杂任务** | `sg-skill-writing-plans` → `sg-skill-executing-plans` | [productivity/](productivity/README.md) |
 | **Git 分支管理** | `sg-skill-using-git-worktrees` → `sg-skill-finishing-a-development-branch` | [productivity/](productivity/README.md) |
 | **验证方案** | `sg-skill-prototype` | [misc/](misc/README.md) |
-| **知识沉淀** | `sg-skill-experience-summarization` | [sg-core/](sg-core/) |
-| **入口判定** | `sg-skill-entry-guard` | [sg-core/](sg-core/) |
-| **规范驱动开发** | `/sg-propose` 命令 → OpenSpec 流程 | DSH 命令 |
 
 ---
 
@@ -41,19 +38,15 @@ skills/
 
 | 分类 | Skills 数量 | 说明 |
 |------|------------|------|
-| [sg-core/](sg-core/) | 12 | 入口判定、变更分类、反模式、架构设计、知识调研、经验总结等 |
-| [engineering/](engineering/README.md) | 11 | 需求分析、架构设计、TDD、调试、代码审查等 |
+| [sg-core/](sg-core/) | 1 | 反模式速查 |
+| [engineering/](engineering/README.md) | 10 | 需求分析、架构设计、TDD、调试、代码审查等 |
 | [productivity/](productivity/README.md) | 4 | Git 工作流、计划管理等 |
-| [misc/](misc/README.md) | 3 | 原型设计、术语管理、全局视角等 |
-| **总计** | **30** | - |
+| [misc/](misc/README.md) | 2 | 原型设计、全局视角 |
+| **总计** | **22** | - |
 
 ---
 
 ## 📚 使用说明
-
-### 完整指南
-
-- [sg-using-skills](sg-core/sg-using-skills/SKILL.md) - 如何查找和使用 Skills
 
 ### 宪法级保障
 
@@ -80,5 +73,4 @@ specgate 采用**双重保障机制**：
 
 - `AGENTS.md` - AI 行为指令和 Skill 使用规范
 - `CONTEXT.md` - 领域上下文和术语表
-- `.specgate/experiences/index.md` - 已沉淀的知识资产
-- `.specgate/agents/` - 可用的 Agent 角色文本
+- [experiences/index.md](../experiences/index.md) - 已沉淀的知识资产

@@ -4,6 +4,14 @@ Status: Implemented in v2.1.0. The design was approved and implemented; see CHAN
 Date: 2026-10-18
 Scope: `dsh-plugin-specgate` v2.1 orchestration; the v2.0 requirement model and test-agent model remain unchanged.
 
+> **Historical design record (v2.1 era).** This document is kept as a record of a design that has since been
+> superseded. The `sg-agent-*` Agent catalog it describes, the `G1`–`G11` gates (including `G7.5`), the
+> `L1`/`L2`/`L3` classification, and the `/sg-*` command set were all removed or replaced in v3.6. The current
+> surface is 5 slash commands (`/sg-init`, `/sg-change`, `/sg-status`, `/sg-context`, `/sg-skill`) and 6 tools
+> (`sg_init`, `sg_change`, `sg_status`, `sg_skill`, `sg_run`, `sg_approve`), gates `H0`–`H3` plus `M1`/`M2`,
+> and 22 skills that ship as plugin assets and are injected into subagent prompts — they are **not** registered
+> in the DSH session skill catalog.
+
 ## 1. Goals
 
 1. Infer a development role automatically when `tasks.md` omits `role:`.

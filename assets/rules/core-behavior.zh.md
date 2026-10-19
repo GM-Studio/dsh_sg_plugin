@@ -22,8 +22,6 @@
 
 以下 Skill 涉及流程纪律，AI **不得**自行判断"不需要"而跳过：
 
-- `sg-skill-entry-guard`：任何用户输入的第一步。禁止：自判"明显是修改请求"而跳过。
-- `sg-skill-change-classification`：准备创建 OpenSpec Change 前或编写代码前。禁止：自判"变更简单不需要分类"。
 - `sg-skill-triage-brief`：tasks.md 创建完成且变更规模超过阈值（工作量 > 2h / 跨模块 > 2 / 文件数 > 3 / 接口变更）。禁止：自判"不需要 Brief"直接跳过。
 - `sg-skill-test-driven-development`：编写任何实现代码前。禁止：自判"功能简单不需要 TDD"跳过；看到 DSH 守卫警告或失败结果后忽略继续编码。
 - `sg-skill-vertical-slicing`：创建 OpenSpec specs 前。禁止：自判"功能自然垂直"跳过；默认按组件水平切分。
@@ -37,9 +35,11 @@
 
 ---
 
-## 变更分类强制触发
+## 变更分类触发
 
-**触发条件**（任一即自动触发，不可由 AI 自行判断跳过）：
+> **说明**：v3 运行时不再强制 `L1`/`L2`/`L3` 分类，也不再随附分类 Skill。以下纪律保留为"某类变更该走多重的流程"的判断依据。
+
+**触发条件**（任一即触发）：
 
 - 用户提出任何开发需求（新功能、修 bug、重构）
 - 准备创建 OpenSpec Change 前
@@ -48,10 +48,9 @@
 
 **必须执行**：
 
-1. 调用 `sg-skill-change-classification`
-2. 判定变更等级（L1 需求驱动 / L2 技术实现 / L3 缺陷修复）
-3. 输出判定结果（等级 + 置信度 + 理由 + 下一步）
-4. 根据等级调整后续流程强度（参考 `gate-control.md` 范式-门控映射表）
+1. 自行判定变更等级（L1 需求驱动 / L2 技术实现 / L3 缺陷修复）
+2. 说明判定结果（等级 + 置信度 + 理由 + 下一步）
+3. 根据等级调整后续流程强度
 
 **禁止行为**：
 
@@ -138,7 +137,7 @@
 
 ### 必须执行
 
-1. 加载 `openspec-explore` 或 `sg-skill-requirements-definition`
+1. 加载 `sg-skill-requirements-definition`
 2. 多轮对话盘问，明确：业务目标(What & Why)、目标用户(Who)、核心功能、技术约束
 3. 一次一个问题，等待用户回答后再继续
 4. 讨论清晰后，总结共识并确认下一步
@@ -180,7 +179,7 @@
 - TDD 偏离（代码文件无对应测试文件）：加载 `sg-skill-test-driven-development`，停止编码，补测试，通过后继续。
 - Artifacts 缺失（写代码前 proposal/design/specs/tasks 不齐）：使用 `/sg-propose` 创建缺失的 change 骨架，停止编码，补齐缺失 artifact，用户评审通过后继续。
 - Artifacts 全齐（proposal/design/specs/tasks 全部完成）：加载 `sg-skill-critical-review`，停止推进，执行 critical-review，用户批准后 apply。
-- 缺少代码审查（Task 完成/提交前无审查记录）：加载 `sg-skill-code-review` 或委托 `sg-agent-reviewer`，停止提交，执行代码审查，审查通过后继续。
+- 缺少代码审查（Task 完成/提交前无审查记录）：加载 `sg-skill-code-review` 或委托只读审查子 Agent，停止提交，执行代码审查，审查通过后继续。
 - 测试覆盖不足（提交前 >30% 源码文件无测试）：加载 `sg-skill-test-driven-development`，停止提交，补测试，覆盖达标后继续。
 - 文档缺失（关键文档未更新）：加载 `sg-skill-critical-review`，停止提交，补文档，审查后继续。
 

@@ -61,7 +61,7 @@ requirements/
 
 ## 测试 Agent 与及格线
 
-- `sg-agent-tester` 与实现者独立。
+- `tester` 角色与 `implementer` 角色相互独立。
 - 测试用例和自动化必须在编码前写好。
 - 测试在独立 test worktree 执行；tester 禁止修改生产代码。
 - 及格线：P0/P1 100%，P2 至少 90%，行覆盖至少 80%，分支覆盖至少 70%；构建/类型检查/lint 必须通过；不允许新增回归。
@@ -69,8 +69,8 @@ requirements/
 
 ## 格式化与审查 Agent
 
-- `sg-agent-formatter`：独立 format worktree，只改本次变更文件，自动修复并运行 lint。
-- `sg-agent-reviewer`：独立只读 review worktree，完整审查 diff、需求/测试证据、安全和回归风险。
+- 格式化步骤：独立 format worktree，只改本次变更文件，自动修复并运行 lint。
+- 审查子 Agent：独立只读 review worktree，完整审查 diff、需求/测试证据、安全和回归风险。
 - formatter 无命令时停止 G7.5，不跳过。
 - reviewer 输出 blocking/non-blocking；blocking 阻止 G9。
 - 主 Agent 是唯一合并者；formatter 分支由主 Agent 合并，reviewer 不合并。
@@ -112,7 +112,7 @@ requirements/
 
 ## Agent
 
-`.specgate/agents/` 共 11 个角色：po、architect、ddd、developer、reviewer、formatter、knowledge-engineer、process-guardian、config-maintainer、scaffold-maintainer、tester。
+运行时只定义两个流水线角色：`implementer` 和 `tester`；其他 `role:` 值一律按只读审查角色处理。SpecGate 不再随附 `.specgate/agents/` 角色目录。
 
 ## DSH 输出
 

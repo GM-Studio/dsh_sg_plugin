@@ -10,7 +10,7 @@ description: "Use when creating new skills, editing existing skills, or verifyin
 
 **Writing skills IS Test-Driven Development applied to process documentation.**
 
-**Personal skills live in `.dsh/skills/specgate/`**
+**SpecGate plugin skills live in `assets/skills/<category>/<name>/SKILL.md`** (with a `.zh.md` sibling). Skills are never materialized into a project `.dsh/` directory.
 
 You write test cases (pressure scenarios with subagents), watch them fail (baseline behavior), write the skill (documentation), watch tests pass (agents comply), and refactor (close loopholes).
 

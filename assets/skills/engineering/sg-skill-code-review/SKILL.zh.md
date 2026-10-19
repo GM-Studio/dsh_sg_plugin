@@ -6,7 +6,7 @@ description: "代码审查 - 在完成任务、实施主要功能或合并之前
 
 # 代码审查（Code Review）
 
-调度 sg-agent-reviewer 子代理执行代码审查，在问题扩散之前捕获它们。
+调度一个只读审查子 Agent 执行代码审查，在问题扩散之前捕获它们。
 
 **核心原则：** 及早审查，经常审查。独立上下文，客观审查。
 
@@ -69,9 +69,9 @@ BASE_SHA=$(git rev-parse HEAD~1)  # 或 origin/main
 HEAD_SHA=$(git rev-parse HEAD)
 ```
 
-### 2. 调度 sg-agent-reviewer 子代理
+### 2. 调度审查子 Agent
 
-使用 Task 工具，选择 sg-agent-reviewer Agent，提供以下信息：
+使用 Task 工具调度一个只读审查子 Agent，提供以下信息：
 
 **必填参数：**
 - `{WHAT_WAS_IMPLEMENTED}` —— 你刚刚实现了什么
@@ -82,7 +82,7 @@ HEAD_SHA=$(git rev-parse HEAD)
 
 ### 3. Agent 执行审查
 
-sg-agent-reviewer 会：
+审查子 Agent 会：
 1. 加载 `code-review-checklist.md` 审查清单
 2. 执行第一层快速检查（P0/P1/P2）
 3. 如发现严重问题，触发第二层深度检查
@@ -120,7 +120,7 @@ sg-agent-reviewer 会：
 BASE_SHA=$(git log --oneline | grep "Task 1" | head -1 | awk '{print $1}')
 HEAD_SHA=$(git rev-parse HEAD)
 
-[调度 sg-agent-reviewer 子代理]
+[调度只读审查子 Agent]
   WHAT_WAS_IMPLEMENTED: 对话索引的验证和修复函数
   PLAN_OR_REQUIREMENTS: 来自 docs/plans/deployment-plan.md 的任务 2
   BASE_SHA: a7981ec

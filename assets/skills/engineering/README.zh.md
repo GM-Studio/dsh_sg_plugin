@@ -17,14 +17,11 @@
 | [sg-skill-critical-review](sg-skill-critical-review/SKILL.md) | 批判性审核 - 独立审查文档质量 | 文档完成，等待存档前 |
 | [sg-skill-code-review](sg-skill-code-review/SKILL.md) | 代码审查 - 合并前验证代码质量 | 完成任务、实施主要功能、合并前 |
 | [sg-skill-domain-modeling](sg-skill-domain-modeling/SKILL.md) | 领域建模 - 建立领域语言和模型 | 复杂业务逻辑设计 |
-| [sg-skill-improve-architecture](sg-skill-improve-architecture/SKILL.md) | 架构改进 - 发现架构深化机会 | 定期运行、调试发现架构问题 |
 | [sg-skill-triage-brief](sg-skill-triage-brief/SKILL.md) | 任务分类 - 生成结构化 Agent Brief | 任务分配、Issue 创建 |
 | [sg-skill-vertical-slicing](sg-skill-vertical-slicing/SKILL.md) | 垂直切片 - 任务分解为可交付切片 | 实施计划分解 |
 
 **已移至 sg-core/**:
-- `sg-skill-anti-patterns` → [../sg-core/sg-skill-anti-patterns.md](../sg-core/sg-skill-anti-patterns.md)
-- `sg-skill-change-classification` → [../sg-core/sg-skill-change-classification.md](../sg-core/sg-skill-change-classification.md)
-- `sg-skill-harness-design` → [../sg-core/sg-skill-harness-design.md](../sg-core/sg-skill-harness-design.md)
+- `sg-skill-anti-patterns` → [../sg-core/sg-skill-anti-patterns/SKILL.md](../sg-core/sg-skill-anti-patterns/SKILL.md)
 
 ### 工程实践 Skills
 

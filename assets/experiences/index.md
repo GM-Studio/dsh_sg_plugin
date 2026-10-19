@@ -2,7 +2,7 @@
 
 > This directory stores the project's knowledge assets, including tool research, best practices, pitfall records, and architecture decisions.
 > 
-> **Maintainer**: sg-agent-knowledge-engineer  
+> **Maintainer**: the knowledge maintainer flow  
 > **Update mechanism**: Automatic (after tool research is completed, a bug is resolved, or a technical decision is made)
 
 ---
@@ -82,7 +82,7 @@ grep:
 
 ### Method 4: Delegate to the Knowledge Engineer
 
-For complex scenarios, invoke the `sg-agent-knowledge-engineer` Agent for comprehensive retrieval and conflict detection.
+For complex scenarios, delegate to a subagent acting as knowledge engineer for comprehensive retrieval and conflict detection.
 
 ---
 
@@ -134,4 +134,4 @@ When you receive a task, first consult [trigger-guide.md](trigger-guide.md) to d
 ---
 
 **Created**: {{date}}  
-**Maintained with**: sg-agent-knowledge-engineer
+**Maintained with**: the knowledge maintainer flow

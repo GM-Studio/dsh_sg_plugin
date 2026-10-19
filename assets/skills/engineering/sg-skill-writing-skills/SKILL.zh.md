@@ -10,7 +10,7 @@ description: "在创建新技能、编辑现有技能或在部署前验证技能
 
 **Writing skills IS Test-Driven Development applied to process documentation.**
 
-**Personal skills live in `.dsh/skills/specgate/`**
+**SpecGate 插件的技能放在 `assets/skills/<category>/<name>/SKILL.md`**（配一个 `.zh.md` 副本）。技能不会被物化到项目的 `.dsh/` 目录。
 
 You write test cases (pressure scenarios with subagents), watch them fail (baseline behavior), write the skill (documentation), watch tests pass (agents comply), and refactor (close loopholes).
 

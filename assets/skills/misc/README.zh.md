@@ -1,6 +1,6 @@
 # Misc Skills
 
-偶尔使用的 Skills，涵盖原型设计、知识研究、经验总结、术语管理等辅助能力。
+偶尔使用的 Skills，涵盖原型设计、全局视角等辅助能力。
 
 ---
 
@@ -9,13 +9,7 @@
 | Skill | 描述 | 触发场景 |
 |-------|------|---------|
 | [sg-skill-prototype](sg-skill-prototype/SKILL.md) | 原型设计 - 快速验证方案 | 逻辑/状态模型验证、UI 方案探索 |
-| [sg-skill-terminology-management](sg-skill-terminology-management/SKILL.md) | 术语管理 - 统一领域语言 | 发现术语冲突、更新 CONTEXT.md |
 | [sg-skill-zoom-out](sg-skill-zoom-out/SKILL.md) | 全局视角 - 宏观分析 | 架构决策、系统性问题 |
-
-**已移至 sg-core/**:
-- `sg-skill-entry-guard` → [../sg-core/sg-skill-entry-guard.md](../sg-core/sg-skill-entry-guard.md)
-- `sg-skill-experience-summarization` → [../sg-core/sg-skill-experience-summarization.md](../sg-core/sg-skill-experience-summarization.md)
-- `sg-skill-knowledge-research` → [../sg-core/sg-skill-knowledge-research.md](../sg-core/sg-skill-knowledge-research.md)
 
 ---
 

@@ -4,6 +4,14 @@ Status: Implemented in v2.1.0. The design was approved and implemented; see CHAN
 Date: 2026-10-18
 Scope: `dsh-plugin-specgate` v2.1 orchestration; requirement model and test-agent model from v2.0 remain unchanged.
 
+> **历史设计存档（v2.1 时期）。** 本文档记录的设计已被取代，仅作追溯保留。其中描述的
+> `sg-agent-*` Agent 目录、`G1`–`G11` 门控（含 `G7.5`）、`L1`/`L2`/`L3` 变更分类，以及
+> `/sg-*` 命令集，都已在 v3.6 移除或替换。当前能力面是 5 个斜杠命令（`/sg-init`、
+> `/sg-change`、`/sg-status`、`/sg-context`、`/sg-skill`）与 6 个工具（`sg_init`、
+> `sg_change`、`sg_status`、`sg_skill`、`sg_run`、`sg_approve`），门控为 `H0`–`H3` 加
+> `M1`/`M2`，另有 22 个技能以插件资产形式发布并注入子 Agent 提示词——这些技能**不会**注册进
+> DSH 会话技能目录。
+
 ## 1. Goals
 
 1. Development tasks get an automatically inferred role when `tasks.md` omits `role:`.

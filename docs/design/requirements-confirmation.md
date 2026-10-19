@@ -4,6 +4,15 @@
 > Baseline versions: AgentKit47 `0.7.11`; DSH `0.2.1-rc.2`; current environment Windows + PowerShell
 > Constraint: This document is the single requirements baseline for design, implementation, and acceptance. Any scope change must append a "Change Log" entry and be confirmed again.
 > v1.1 changes: plugin built-in initialization, new project directory creation, complete `AGENTS.md`, default `git init`, gate-level commit discipline, enable/disable switch.
+>
+> **Historical design record (v2.1-era requirements baseline).** This document records the requirements as
+> confirmed at the time (v1.0/v1.1, 2026-10-18) and is kept for traceability. The `sg-agent-*` Agent catalog,
+> the `G1`–`G11` gates, the `L1`/`L2`/`L3` classification, and the `/sg-*` command set described here were
+> removed or replaced in v3.6; figures such as "30 Skills" and the detailed initialization tree are likewise
+> era-specific. The current surface is 5 slash commands (`/sg-init`, `/sg-change`, `/sg-status`,
+> `/sg-context`, `/sg-skill`) and 6 tools (`sg_init`, `sg_change`, `sg_status`, `sg_skill`, `sg_run`,
+> `sg_approve`), gates `H0`–`H3` plus `M1`/`M2`, and 22 skills shipped as plugin assets and injected into
+> subagent prompts — they are **not** registered in the DSH session skill catalog.
 
 ### Decision Record (v1.0, 2026-10-18)
 

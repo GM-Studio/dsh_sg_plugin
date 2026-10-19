@@ -6,7 +6,7 @@ description: "Code Review - Use before completing a task, implementing a major f
 
 # Code Review
 
-Dispatch the sg-agent-reviewer subagent to perform a code review, catching problems before they spread.
+Dispatch a read-only review subagent to perform a code review, catching problems before they spread.
 
 **Core principle:** Review early, review often. Independent context, objective review.
 
@@ -69,9 +69,9 @@ BASE_SHA=$(git rev-parse HEAD~1)  # or origin/main
 HEAD_SHA=$(git rev-parse HEAD)
 ```
 
-### 2. Dispatch the sg-agent-reviewer Subagent
+### 2. Dispatch the Review Subagent
 
-Use the Task tool, select the sg-agent-reviewer Agent, and provide the following information:
+Use the Task tool to dispatch a read-only review subagent and provide the following information:
 
 **Required parameters:**
 - `{WHAT_WAS_IMPLEMENTED}` — what you just implemented
@@ -82,7 +82,7 @@ Use the Task tool, select the sg-agent-reviewer Agent, and provide the following
 
 ### 3. The Agent Performs the Review
 
-sg-agent-reviewer will:
+The review subagent will:
 1. Load the `code-review-checklist.md` review checklist
 2. Perform the Layer 1 quick check (P0/P1/P2)
 3. If serious issues are found, trigger the Layer 2 deep check
@@ -120,7 +120,7 @@ You: Let me request a code review before continuing.
 BASE_SHA=$(git log --oneline | grep "Task 1" | head -1 | awk '{print $1}')
 HEAD_SHA=$(git rev-parse HEAD)
 
-[Dispatch the sg-agent-reviewer subagent]
+[Dispatch a read-only review subagent]
   WHAT_WAS_IMPLEMENTED: Validation and repair functions for the conversation index
   PLAN_OR_REQUIREMENTS: Task 2 from docs/plans/deployment-plan.md
   BASE_SHA: a7981ec

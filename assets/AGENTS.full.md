@@ -61,7 +61,7 @@ requirements/
 
 ## Test Agent and pass bar
 
-- `sg-agent-tester` is independent from the implementer.
+- The `tester` role is independent from the `implementer` role.
 - Test cases and automation must be written before implementation.
 - Tests run in an independent test worktree; the tester never modifies production code.
 - Pass bar: P0/P1 100%, P2 at least 90%, line coverage at least 80%, branch coverage at least 70%; build/typecheck/lint clean; no new regressions.
@@ -69,8 +69,8 @@ requirements/
 
 ## Formatter and reviewer Agents
 
-- `sg-agent-formatter`: independent format worktree, changed files only, auto-fix and lint.
-- `sg-agent-reviewer`: independent read-only review worktree for diff, requirement/test evidence, security and regression risk.
+- Formatter step: independent format worktree, changed files only, auto-fix and lint.
+- Review subagent: independent read-only review worktree for diff, requirement/test evidence, security and regression risk.
 - No formatter/lint command means G7.5 stops; never skip.
 - Reviewer reports blocking/non-blocking; blocking prevents G9.
 - The main agent is the only merger; formatter is merged by the main agent, reviewer never merges.
@@ -113,7 +113,7 @@ Review:   specgate/<change>/review  (read-only)
 
 ## Agents
 
-11 roles ship in `.specgate/agents/`: po, architect, ddd, developer, reviewer, formatter, knowledge-engineer, process-guardian, config-maintainer, scaffold-maintainer, tester.
+The runtime defines exactly two pipeline roles, `implementer` and `tester`; any other `role:` value is treated as a review-only role. SpecGate ships no `.specgate/agents/` catalog.
 
 ## DSH output
 

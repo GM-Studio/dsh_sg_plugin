@@ -1,6 +1,6 @@
 # Misc Skills
 
-Occasionally used skills covering auxiliary capabilities such as prototyping, knowledge research, experience summarization, and terminology management.
+Occasionally used skills covering auxiliary capabilities such as prototyping and macro-level analysis.
 
 ---
 
@@ -9,13 +9,7 @@ Occasionally used skills covering auxiliary capabilities such as prototyping, kn
 | Skill | Description | Trigger Scenario |
 |-------|-------------|------------------|
 | [sg-skill-prototype](sg-skill-prototype/SKILL.md) | Prototyping - quickly validate a solution | Logic/state model validation, UI solution exploration |
-| [sg-skill-terminology-management](sg-skill-terminology-management/SKILL.md) | Terminology management - unify the domain language | Detecting terminology conflicts, updating CONTEXT.md |
 | [sg-skill-zoom-out](sg-skill-zoom-out/SKILL.md) | Zoom out - macro-level analysis | Architecture decisions, systemic issues |
-
-**Moved to sg-core/**:
-- `sg-skill-entry-guard` → [../sg-core/sg-skill-entry-guard.md](../sg-core/sg-skill-entry-guard.md)
-- `sg-skill-experience-summarization` → [../sg-core/sg-skill-experience-summarization.md](../sg-core/sg-skill-experience-summarization.md)
-- `sg-skill-knowledge-research` → [../sg-core/sg-skill-knowledge-research.md](../sg-core/sg-skill-knowledge-research.md)
 
 ---
 

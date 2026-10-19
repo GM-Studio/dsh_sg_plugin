@@ -1,6 +1,6 @@
 # 代码审查清单（Code Review Checklist）
 
-> **用途**：sg-agent-reviewer 执行代码审查时的检查清单  
+> **用途**：只读审查子 Agent 执行代码审查时的检查清单  
 > **两层机制**：第一层快速检查（必做）+ 第二层深度检查（按需）  
 > **参考**：[重构最佳实践](../../../../.specgate/experiences/best-practices/BP-refactoring-improving-existing-code.md)
 
@@ -342,6 +342,6 @@ grep -n "\.get[A-Z].*\.get[A-Z].*\.get[A-Z]" src/**/*.ts
 
 ---
 
-**维护者**：sg-agent-reviewer  
+**维护者**：代码审查流程  
 **更新时机**：发现新的常见代码问题时  
 **关联文档**：[重构最佳实践](../../../../.specgate/experiences/best-practices/BP-refactoring-improving-existing-code.md)

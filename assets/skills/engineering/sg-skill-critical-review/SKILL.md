@@ -111,7 +111,7 @@ digraph critical_review {
 
 ### Mandatory Behavior
 
-1. Must invoke `sg-skill-critical-review` or delegate to `sg-agent-reviewer` to perform the incremental review
+1. Must invoke `sg-skill-critical-review` or delegate to a read-only review subagent to perform the incremental review
 2. ❌ The AI must not decide on its own that "the change is small and needs no review"
 3. ❌ The AI must not scan and fix on its own and then pass the artifact directly (even if it found and fixed a problem, that does not replace review)
 4. ❌ The AI must not take over the reviewer role (the reviewer is not the modifier)

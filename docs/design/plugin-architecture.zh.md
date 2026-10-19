@@ -1,5 +1,12 @@
 # 插件架构（v0.3）
 
+> **历史设计记录（v0.3 时期）。** 本文描述的是 v0.3 当时的架构设想。此后 `sg-agent-*` Agent 目录、
+> `G1`–`G11` 门控、`L1`/`L2`/`L3` 变更分类，以及大部分 `/sg-*` 命令均已在 v3.6 中移除或替换。当前对外
+> 面是 **5 个命令**（`/sg-init`、`/sg-change`、`/sg-status`、`/sg-context`、`/sg-skill`）、**6 个工具**
+> （`sg_init`、`sg_change`、`sg_status`、`sg_skill`、`sg_run`、`sg_approve`）、人工门 `H0`–`H3`、质量门
+> `M1`/`M2`，以及 **22 个技能**。技能**不会**注册进会话技能目录，也**不会**物化到项目中 —— 权威的当前
+> 面以 [verification.md](verification.md) 第 1 部分为准。
+
 本文说明 `dsh-plugin-specgate` 的分层、扩展点与数据流。需求基线见
 [requirements-confirmation.md](requirements-confirmation.md)。
 
@@ -20,7 +27,7 @@
 | `ctx.on('tools/post-execute')` | 写入成功后失效下游门控 | 门控可能过期，但不会误放行 |
 | `ctx.systemPrompt.context` | 注入当前 Change、门控与下一步 | 仅少提示，不影响工具 |
 | `ctx.commands.register` | `/sg-*`、`/sg-*` 命令 | 命令不可用，工具仍可用 |
-| `ctx.skills.register` | 内置 30 个 Skill（运行时兜底） | 依赖项目 `.dsh/skills/specgate/` |
+| `ctx.skills.register` | *（v3.6：**未使用** —— 不存在任何技能注册调用）* | *（v3.6：技能作为资产随插件发布，只注入子 Agent 提示词）* |
 | `ctx.userQuestions.ask` | 门控确认/跳过的结构化提问 | 无法安全确认，fail closed |
 | `ctx.agents.create` | `/sg-apply` worktree 子 Agent、`/sg-doctor` 并行体检 | 降级串行 / 本地 doctor |
 | `ctx.inject` | 等待 `commands`/`skills`/`systemPrompt` 服务就绪 | 服务缺失时跳过对应能力 |
@@ -95,7 +102,7 @@ L3（缺陷修复）豁免 `G1`、`G3`、`G4`、`G5`、`G6.5`；因此源码写�
   → 解析目标目录（当前目录或新建目录）
   → 非空 --path 需要 --force
   → 默认 git init（--no-git 跳过）
-  → 生成 .specgate / .dsh/skills/specgate / openspec / AGENTS.md / agents / templates / docs / 示例
+  → 生成 .specgate / openspec / AGENTS.md *（v3.6：无 `.dsh/skills/`、无 Agent、无模板/文档/示例）*
   → 工作区 init 前 clean：git add -A + commit "chore(specgate): 初始化工作流项目"
   → 工作区 init 前 dirty：跳过初始提交并报告，避免卷入无关改动
 ```
@@ -201,12 +208,16 @@ write/edit 调用
 
 状态每次查询实时推断，带 400ms 进程内缓存；写入后主动失效。
 
-## 7. 双轨技能
+## 7. 技能
 
-- **内置**：`assets/skills/**/SKILL.md`，插件启动时通过 `ctx.skills.register` 注册，
-  作为全局兜底。
-- **物化**：`/sg-init` 复制到 `<project>/.dsh/skills/specgate/<name>/SKILL.md`，可审计、可改。
-- 项目文件优先级高于运行时注册；升级时 `init` 默认跳过已存在文件，避免覆盖定制。
+> **v3.6 更正**：本节所述的"双轨"机制从未落地。没有任何代码调用 `ctx.skills.register`，也没有任何代码
+> 写入 `.dsh/skills/specgate/`。技能是单轨的：存放在插件的 `assets/skills/`（17 个 `sg-skill-*`）与
+> `assets/sp/`（5 个 `sp-skill-*`）下，共 22 个；`src/v3/skills.js` 把匹配的正文注入子 Agent 提示词。
+> `sg_skill` 工具与 `/sg-skill` 命令可按需打印正文。
+
+- ~~**内置**：`assets/skills/**/SKILL.md`，插件启动时通过 `ctx.skills.register` 注册，作为全局兜底。~~
+- ~~**物化**：`/sg-init` 复制到 `<project>/.dsh/skills/specgate/<name>/SKILL.md`，可审计、可改。~~
+- ~~项目文件优先级高于运行时注册；升级时 `init` 默认跳过已存在文件，避免覆盖定制。~~
 
 ## 8. 失败与降级
 

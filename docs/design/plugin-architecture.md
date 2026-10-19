@@ -1,5 +1,13 @@
 # Plugin Architecture (v0.3)
 
+> **Historical design record (v0.3 era).** This document describes the architecture as designed at v0.3. Since
+> then the `sg-agent-*` Agent catalog, the `G1`–`G11` gates, the `L1`/`L2`/`L3` classification, and most of the
+> `/sg-*` command set have been removed or replaced in v3.6. The current surface is **5 commands**
+> (`/sg-init`, `/sg-change`, `/sg-status`, `/sg-context`, `/sg-skill`), **6 tools** (`sg_init`, `sg_change`,
+> `sg_status`, `sg_skill`, `sg_run`, `sg_approve`), human gates `H0`–`H3`, quality gates `M1`/`M2`, and
+> **22 skills**. Skills are **not** registered in the session catalog and are **not** materialized into a
+> project — see [verification.md](verification.md) Part 1 for the authoritative current surface.
+
 This document describes the layering, extension points, and data flow of `dsh-plugin-specgate`. For the
 requirements baseline, see [requirements-confirmation.md](requirements-confirmation.md).
 
@@ -20,7 +28,7 @@ requirements baseline, see [requirements-confirmation.md](requirements-confirmat
 | `ctx.on('tools/post-execute')` | Invalidates downstream gates after a successful write | Gates may become stale, but are never incorrectly allowed through |
 | `ctx.systemPrompt.context` | Injects the current Change, gates, and next step | Fewer hints only; tools unaffected |
 | `ctx.commands.register` | `/sg-*`, `/sg-*` commands | Commands unavailable; tools still usable |
-| `ctx.skills.register` | 30 built-in Skills (runtime fallback) | Relies on project `.dsh/skills/specgate/` |
+| `ctx.skills.register` | *(v3.6: **not used** — no skill registration call exists)* | *(v3.6: skills ship as assets and are injected into subagent prompts)* |
 | `ctx.userQuestions.ask` | Structured questions for gate confirmation/waiving | Cannot confirm safely; fail closed |
 | `ctx.agents.create` | `/sg-apply` worktree sub-agents; `/sg-doctor` parallel health check | Degrades to serial / local doctor |
 | `ctx.inject` | Waits for the `commands`/`skills`/`systemPrompt` services to be ready | Skips the corresponding capability when the service is missing |
@@ -95,7 +103,7 @@ modified, `G3`-`G11` are all invalidated and must be reviewed again.
   → Resolve the target directory (current directory or a new directory)
   → A non-empty --path requires --force
   → git init by default (skipped with --no-git)
-  → Generate .specgate / .dsh/skills/specgate / openspec / AGENTS.md / agents / templates / docs / examples
+  → Generate .specgate / openspec / AGENTS.md *(v3.6: no `.dsh/skills/`, no agents, no templates/docs/examples)*
   → Workspace clean before init: git add -A + commit "chore(specgate): initialize workflow project"
   → Workspace dirty before init: skip the initial commit and report, avoiding unrelated changes
 ```
@@ -201,12 +209,18 @@ intercepted by guard. This matches the coverage of the SpecGate Qoder Hook.
 
 State is inferred in real time on every query, with a 400ms in-process cache; it is actively invalidated after writes.
 
-## 7. Dual-Track Skills
+## 7. Skills
 
-- **Built-in**: `assets/skills/**/SKILL.md`, registered via `ctx.skills.register` when the plugin starts,
-  serving as a global fallback.
-- **Materialized**: `/sg-init` copies them to `<project>/.dsh/skills/specgate/<name>/SKILL.md`, auditable and editable.
-- Project files take precedence over runtime registration; on upgrade, `init` skips existing files by default to avoid overwriting customizations.
+> **v3.6 correction**: the "dual-track" mechanism described in this section never shipped. No code calls
+> `ctx.skills.register`, and no code writes to `.dsh/skills/specgate/`. Skills are single-track: they live in
+> the plugin at `assets/skills/` (17 `sg-skill-*`) and `assets/sp/` (5 `sp-skill-*`) — 22 in total — and
+> `src/v3/skills.js` injects the matching bodies into subagent prompts. The `sg_skill` tool and `/sg-skill`
+> command print a body on request.
+
+- ~~**Built-in**: `assets/skills/**/SKILL.md`, registered via `ctx.skills.register` when the plugin starts,
+  serving as a global fallback.~~
+- ~~**Materialized**: `/sg-init` copies them to `<project>/.dsh/skills/specgate/<name>/SKILL.md`, auditable and editable.~~
+- ~~Project files take precedence over runtime registration; on upgrade, `init` skips existing files by default to avoid overwriting customizations.~~
 
 ## 8. Failures and Degradation
 

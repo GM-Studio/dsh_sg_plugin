@@ -111,7 +111,7 @@ digraph critical_review {
 
 ### 强制行为
 
-1. 必须调用 `sg-skill-critical-review` 或委托 `sg-agent-reviewer` 执行增量审查
+1. 必须调用 `sg-skill-critical-review` 或委托只读审查子 Agent 执行增量审查
 2. ❌ 禁止 AI 自行判断"改动小不需要审查"
 3. ❌ 禁止 AI 自行扫描修复后直接放行（即使发现并修复了问题也不替代审查）
 4. ❌ 禁止 AI 替代审查者角色（审核员不是修改者）
