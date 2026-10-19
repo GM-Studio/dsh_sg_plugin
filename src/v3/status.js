@@ -4,7 +4,7 @@ import { renderEnvLine } from './env-scan.js';
 
 const NEXT_ACTION = {
   IDLE: '执行 /sg-change <name> --type <feature|modify|fix|remove> 创建 change',
-  H0_PENDING: '等待人执行 /sg-approve H0；批准后 /sg-run 生成脚手架',
+  H0_PENDING: '等待人工批准 H0（sg_approve 工具，gate="H0"）；批准后 /sg-run 生成脚手架',
   H1_PENDING: '写 proposal + specs delta，然后执行 /sg-run',
   PLAN: '写 design/tasks/cases/mapping/touched，然后执行 /sg-run',
   H2_PENDING: '等待人执行 /sg-approve H2',

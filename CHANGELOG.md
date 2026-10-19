@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased
+
+- Fix the H0 gate deadlock: `sg_approve` now accepts `gate: "H0"` (schema enum plus runtime check), and H0 approval no longer requires an existing change. A new project can leave `H0_PENDING` with `sg_approve` → `sg_run`.
+- H0 guidance points at the `sg_approve` tool instead of the non-existent `/sg-approve` command.
+
 ## 3.6.0
 
 - Java backend stack: JDK 8/11/17/21 (LTS only), Spring Boot 2.7.x and 3.x with a strict compatibility matrix.

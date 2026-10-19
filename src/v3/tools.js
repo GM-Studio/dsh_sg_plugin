@@ -254,7 +254,11 @@ export function registerTools(ctx, runtime) {
             case 'H0_PENDING': {
               if (!state.h0?.hash) return fail('缺少 H0 上下文哈希');
               const frozen = checkApprovalHash(state, 'H0', state.h0.hash);
-              if (!frozen.ok) return fail('H0 尚未批准或上下文已变化，请先 /sg-approve H0', frozen);
+              if (!frozen.ok)
+                return fail(
+                  'H0 尚未批准或上下文已变化，请先调用 sg_approve 工具（gate="H0"）',
+                  frozen,
+                );
               const finished = await finishInitProject({ root: project.root, state });
               if (!finished.ok) return fail(`初始化失败：${finished.message}`, finished);
               return ok(
@@ -712,11 +716,11 @@ export function registerTools(ctx, runtime) {
     {
       name: 'sg_approve',
       description:
-        '人类批准 H1/H2/H3。工具内部通过宿主问答询问用户；无用户应答则拒绝，模型无法自签。',
+        '人类批准 H0/H1/H2/H3。工具内部通过宿主问答询问用户；无用户应答则拒绝，模型无法自签。',
       parameters: {
         type: 'object',
         properties: {
-          gate: { type: 'string', enum: ['H1', 'H2', 'H3'] },
+          gate: { type: 'string', enum: ['H0', 'H1', 'H2', 'H3'] },
         },
         required: ['gate'],
         additionalProperties: false,
@@ -727,12 +731,14 @@ export function registerTools(ctx, runtime) {
         const guard = ensureV3(project);
         if (!guard.ok) return fail(guard.message, guard);
         const state = project.state;
-        if (!state?.change) return fail('没有进行中的 change');
+        if (!state) return fail('未找到状态文件，先执行 /sg-init', project.stateError);
 
         const gate = String(args?.gate || '').toUpperCase();
-        if (!['H1', 'H2', 'H3'].includes(gate)) {
+        if (!['H0', 'H1', 'H2', 'H3'].includes(gate)) {
           return fail(`未知批准点：${gate}`);
         }
+        // H0 发生在新项目脚手架生成之前：此时 state.change 仍为 null。
+        if (gate !== 'H0' && !state.change) return fail('没有进行中的 change');
 
         if (gate === 'H0') {
           if (state.phase !== 'H0_PENDING') {

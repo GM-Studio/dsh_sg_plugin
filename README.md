@@ -1,117 +1,206 @@
 # SpecGate for DSH
 
-> **v3.6 (current)**: Java backend support — JDK 8/11/17/21 (LTS), Spring Boot 2.7.x/3.x, Maven/Gradle, JUnit XML adapters, Spotless/Checkstyle/SpotBugs gates, plus the existing Node/Vue/React/Python stacks.
+**中文** | [English](README.en.md)
+
+![version](https://img.shields.io/badge/version-3.6.0-blue)
+![license](https://img.shields.io/badge/license-MIT-green)
+![node](https://img.shields.io/badge/node-%3E%3D20.19.0-brightgreen)
+![dsh](https://img.shields.io/badge/dsh-%3E%3D0.2.1--rc.2-purple)
+
+> **v3.6（当前）**：Java 后端支持 —— JDK 8/11/17/21（LTS）、Spring Boot 2.7.x/3.x、Maven/Gradle、JUnit XML 适配器、Spotless/Checkstyle/SpotBugs 门禁，并与既有的 Node/Vue/React/Python 技术栈并存。
 >
-> - Java details: [`docs/requirements/2026-10-19-v3.6-java-stack-requirements.md`](docs/requirements/2026-10-19-v3.6-java-stack-requirements.md)
-> - Design/matrix: [`docs/design/java-support-review.md`](docs/design/java-support-review.md), [`docs/design/java-version-matrix.md`](docs/design/java-version-matrix.md)
-> - v3.5 environment preflight: [`docs/requirements/2026-10-19-v3.5-env-preflight-quality-requirements.md`](docs/requirements/2026-10-19-v3.5-env-preflight-quality-requirements.md)
-> - v3.4 review/observability: [`docs/requirements/2026-10-19-v3.4-review-observability-requirements.md`](docs/requirements/2026-10-19-v3.4-review-observability-requirements.md)
+> - Java 细节：[`docs/requirements/2026-10-19-v3.6-java-stack-requirements.md`](docs/requirements/2026-10-19-v3.6-java-stack-requirements.md)
+> - 设计与矩阵：[`docs/design/java-support-review.md`](docs/design/java-support-review.md)、[`docs/design/java-version-matrix.md`](docs/design/java-version-matrix.md)
+> - v3.5 环境预检：[`docs/requirements/2026-10-19-v3.5-env-preflight-quality-requirements.md`](docs/requirements/2026-10-19-v3.5-env-preflight-quality-requirements.md)
+> - v3.4 审查与可观测：[`docs/requirements/2026-10-19-v3.4-review-observability-requirements.md`](docs/requirements/2026-10-19-v3.4-review-observability-requirements.md)
 >
-> **v3.0 MVP**: AI executes, machine evidence decides, humans approve the gates they need to approve.
+> **v3.0 MVP**：AI 执行，机器证据裁决，人只批准需要自己批准的关口。
 >
-> - Commands: `/sg-init`, `/sg-change`, `/sg-status`, `/sg-context`, `/sg-skill`
-> - Tools: `sg_init`, `sg_change`, `sg_status`, `sg_skill`, `sg_run`, `sg_approve`
-> - Evidence: the orchestrator runs frozen suites; tasks only become `[x]` after merge
-> - Docs: [`docs/demos/v3-mvp.md`](docs/demos/v3-mvp.md)
+> - 命令：`/sg-init`、`/sg-change`、`/sg-status`、`/sg-context`、`/sg-skill`
+> - 工具：`sg_init`、`sg_change`、`sg_status`、`sg_skill`、`sg_run`、`sg_approve`
+> - 证据：编排器执行被冻结的测试套件；任务只有在合并之后才会被勾选
+> - 文档：[`docs/demos/v3-mvp.md`](docs/demos/v3-mvp.md)
 
-A Host plugin that brings AgentKit47's gated development workflow to DeepSeek Harness (DSH).
+把 AgentKit47 的门控式开发工作流迁移到 DeepSeek Harness（DSH）的 Host 插件。
 
-- Source: `templates/qoder/` from `AgentKit47-Qoder` (MIT)
-- Target: DSH `0.2.1-rc.2` and above
-- Form: workspace bundle, installed into the current DSH profile
-- Version: `3.6.0`
+| 属性 | 值 |
+|------|-----|
+| 来源 | `AgentKit47-Qoder` 的 `templates/qoder/`（MIT） |
+| 目标 | DSH `0.2.1-rc.2` 及以上 |
+| 形态 | workspace bundle，安装到当前 DSH profile |
+| 版本 | `3.6.0` |
 
-## Capabilities
+---
 
-- **Explicit-only entry points.** Everything the plugin exposes is invoked deliberately: five `/sg-*` commands and six `sg_*` tools. No command auto-runs, and no skill is registered into the session catalog.
-- **One automatic surface — the write guard.** `src/v3/guards.js` intercepts the `write` / `edit` tools and rejects writes to orchestrator-owned paths. This is the only thing that acts without being asked (see [Writes and guards](#writes-and-guards)).
-- **Project initialization**: `/sg-init` creates `.specgate/`, `openspec/`, and a `.gitignore` block in the current directory. Idempotent — re-running it reports what already exists instead of rewriting it.
-- **Change packages**: `/sg-change <name>` scaffolds `openspec/changes/<name>/` and moves the project to `H1_PENDING`.
-- **Machine-checked quality gates**: `M1` validates the proposal and spec delta; `M2` validates the design, task graph, acceptance-criteria-to-case mapping, and suite discovery. `sg_run` refuses to advance when either fails.
-- **Human gates**: `H0` (context), `H1` (requirements), `H2` (plan), `H3` (acceptance). Approval hashes freeze the approved artifact, so any later edit is detected and re-approval is required.
-- **Frozen test evidence**: suites are discovered from `.specgate/config.yaml`, hashed into the plan, and re-run by the orchestrator. A task is only checked off after its work is merged.
-- **Parallel execution**: tasks marked `[P]`/`depends` run in isolated Git worktrees with a per-repo agent pool, a merge lock, and a circuit breaker; non-Git or dirty trees degrade to a serial single writer.
-- **Bilingual assets**: English `*.md` and Chinese `*.zh.md` siblings, selected by the `language` config key.
-- **DSH output adaptation**: command results render as persistent command cards; tool results render as tool cards.
+## 目录
 
-## Skills
+- [概述](#概述)
+- [核心特性](#核心特性)
+- [技能体系](#技能体系)
+- [工作流与阶段机](#工作流与阶段机)
+- [命令参考](#命令参考)
+- [工具参考](#工具参考)
+- [Java 后端（v3.6）](#java-后端v36)
+- [安装](#安装)
+  - [方式 A：GitHub 依赖（推荐）](#方式-a-github-依赖推荐)
+  - [方式 B：plugin_manager 从 GitHub 安装](#方式-b-plugin_manager-从-github-安装)
+  - [方式 C：本地目录](#方式-c-本地目录)
+  - [方式 D：npm registry（仅当已发布）](#方式-d-npm-registry-仅当已发布)
+  - [方式 E：离线 tgz 包](#方式-e-离线-tgz-包)
+  - [发布产物（v3.6.0）](#发布产物v360)
+  - [验证安装](#验证安装)
+  - [启动与关闭](#启动与关闭)
+- [配置](#配置)
+- [多语言](#多语言)
+- [快速开始](#快速开始)
+- [写入与守卫](#写入与守卫)
+- [输出显示](#输出显示)
+- [文件布局](#文件布局)
+- [验证](#验证)
+- [已知限制](#已知限制)
+- [代码审查与格式化门禁](#代码审查与格式化门禁)
+- [开发](#开发)
+- [许可证](#许可证)
 
-Skill bodies ship under `assets/` and are **not** registered in the DSH session catalog. `src/v3/skills.js` maps roles, phases, and conditions to skill ids, then injects the matching bodies into **subagent prompts** during dispatch. To read one yourself, use the `sg-skill` tool or `/sg-skill <name>`.
+---
 
-22 skills ship today:
+## 概述
 
-- `sg-core/` — `sg-skill-anti-patterns`
-- `engineering/` — `sg-skill-architecture-design`, `sg-skill-code-review`, `sg-skill-critical-review`, `sg-skill-domain-modeling`, `sg-skill-requirements-definition`, `sg-skill-systematic-debugging`, `sg-skill-test-driven-development`, `sg-skill-triage-brief`, `sg-skill-vertical-slicing`, `sg-skill-writing-skills`
-- `productivity/` — `sg-skill-executing-plans`, `sg-skill-finishing-a-development-branch`, `sg-skill-using-git-worktrees`, `sg-skill-writing-plans`
-- `misc/` — `sg-skill-prototype`, `sg-skill-zoom-out`
-- `sp/` (ported from superpowers) — `sp-skill-brainstorming`, `sp-skill-dispatching-parallel-agents`, `sp-skill-requesting-and-receiving-code-review`, `sp-skill-subagent-driven-development`, `sp-skill-verification-before-completion`
+SpecGate 是一套**规格驱动 + 人工门控**的开发工作流。它把"AI 写代码"拆成一条可审计的流水线：
 
-Conditional selection: parallel dispatch adds `sp-skill-dispatching-parallel-agents`; a retry adds `sg-skill-systematic-debugging`; multi-capability changes add `sp-skill-brainstorming`; more than five acceptance criteria adds `sg-skill-triage-brief`.
+```text
+规格（proposal / specs）
+   ↓  M1 机器校验 + H1 人工批准
+计划（design / tasks / tests）
+   ↓  M2 机器校验 + H2 人工批准
+执行（worktree 并行 / 串行降级）
+   ↓  合并后勾选任务
+集成（冻结套件回归）
+   ↓  H3 人工验收
+归档（spec 增量落到 openspec/specs/）
+```
 
-## Workflow
+设计上的三条硬约束：
 
-Phases advance only through explicit `sg_run` calls:
+1. **只有显式入口** —— 5 个命令、6 个工具，没有隐式触发。
+2. **机器先裁决，人再批准** —— `M1`/`M2` 不通过，`sg_run` 直接拒绝推进，人工门根本不会出现。
+3. **批准即冻结** —— 人工批准会给产物生成哈希，之后任何修改都会使批准失效。
+
+## 核心特性
+
+- **只有显式入口**：插件对外暴露的一切都必须主动调用 —— 5 个 `/sg-*` 命令与 6 个 `sg_*` 工具。没有任何命令会自动运行，也没有任何 Skill 会被注册进会话技能目录。
+- **唯一的自动面 —— 写入守卫**：`src/v3/guards.js` 拦截 `write` / `edit` 工具，拒绝对编排器专属路径的写入。这是唯一无需请求就会生效的行为（见[写入与守卫](#写入与守卫)）。
+- **项目初始化**：`/sg-init` 在当前目录创建 `.specgate/`、`openspec/` 与一段 `.gitignore`。幂等 —— 重复执行会报告已存在的内容，而不是重写。
+- **变更包**：`/sg-change <name>` 生成 `openspec/changes/<name>/` 骨架，并把项目推进到 `H1_PENDING`。
+- **机器校验的质量门**：`M1` 校验 proposal 与 spec 增量；`M2` 校验 design、任务图、验收标准到用例的映射以及测试套件发现。任一不通过，`sg_run` 拒绝推进。
+- **人工门**：`H0`（上下文）、`H1`（需求）、`H2`（计划）、`H3`（验收）。批准会对已批准产物生成哈希冻结，之后的任何修改都会被检出并要求重新批准。
+- **冻结的测试证据**：测试套件由 `.specgate/config.yaml` 发现、哈希进计划，并由编排器重新执行。任务只有在其工作被合并后才会被勾选。
+- **并行执行**：标记 `[P]`/`depends` 的任务在隔离的 Git worktree 中运行，配有单仓库 Agent 池、合并锁与熔断；非 Git 或工作区 dirty 时降级为串行单写者。
+- **双语资产**：英文 `*.md` 与中文 `*.zh.md` 成对，由 `language` 配置项选择。
+- **DSH 输出适配**：命令结果显示为持久命令卡片；工具结果显示为工具卡片。
+
+## 技能体系
+
+Skill 正文位于 `assets/` 下，**不会**被注册进 DSH 会话技能目录。`src/v3/skills.js` 把角色、阶段与条件映射到 Skill id，然后在派发时把匹配的正文注入**子 Agent 的提示词**。若你想自己读一份，使用 `sg-skill` 工具或 `/sg-skill <name>`。
+
+当前共 **22 个** Skill：
+
+| 分类 | Skill |
+|------|-------|
+| `sg-core/` | `sg-skill-anti-patterns` |
+| `engineering/` | `sg-skill-architecture-design`、`sg-skill-code-review`、`sg-skill-critical-review`、`sg-skill-domain-modeling`、`sg-skill-requirements-definition`、`sg-skill-systematic-debugging`、`sg-skill-test-driven-development`、`sg-skill-triage-brief`、`sg-skill-vertical-slicing`、`sg-skill-writing-skills` |
+| `productivity/` | `sg-skill-executing-plans`、`sg-skill-finishing-a-development-branch`、`sg-skill-using-git-worktrees`、`sg-skill-writing-plans` |
+| `misc/` | `sg-skill-prototype`、`sg-skill-zoom-out` |
+| `sp/`（移植自 superpowers） | `sp-skill-brainstorming`、`sp-skill-dispatching-parallel-agents`、`sp-skill-requesting-and-receiving-code-review`、`sp-skill-subagent-driven-development`、`sp-skill-verification-before-completion` |
+
+**角色映射**（`ROLE_SKILLS`，见 `src/v3/skills.js`）：
+
+| 角色 | 注入的 Skill |
+|------|--------------|
+| `planner` | `sg-skill-requirements-definition`、`sg-skill-vertical-slicing` |
+| `implementer` | `sg-skill-test-driven-development`、`sp-skill-subagent-driven-development` |
+| `tester` | `sg-skill-test-driven-development` |
+| `reviewer` | `sg-skill-code-review`、`sp-skill-requesting-and-receiving-code-review` |
+| `integrating` | `sp-skill-verification-before-completion` |
+| `archive` | `sg-skill-finishing-a-development-branch` |
+
+**条件选择**：并行派发追加 `sp-skill-dispatching-parallel-agents`；重试追加 `sg-skill-systematic-debugging`；多能力变更追加 `sp-skill-brainstorming`；验收标准超过 5 条追加 `sg-skill-triage-brief`。
+
+## 工作流与阶段机
+
+阶段只在显式调用 `sg_run` 时推进：
 
 ```text
 IDLE
- └─ /sg-change ──► H1_PENDING ──(M1 + H1)──► PLAN ──(M2 + H2)──► EXECUTING
-                                                                      │
-                    DONE ◄── ARCHIVING ◄──(H3)── H3_PENDING ◄── INTEGRATING
+ └─ /sg-init（空项目）──► H0_PENDING ──(H0)──► H1_PENDING
+ └─ /sg-change ─────────────────────────────► H1_PENDING
+                                                │
+        H1_PENDING ──(M1 + H1)──► PLAN ──(M2 + H2)──► EXECUTING
+                                                        │
+              DONE ◄── ARCHIVING ◄──(H3)── H3_PENDING ◄── INTEGRATING
 ```
 
-| Phase | What happens | Exit |
-|-------|--------------|------|
-| `IDLE` | No change in flight | `/sg-change` |
-| `H0_PENDING` | New-project context collected | `H0` approval, then `sg_run` |
-| `H1_PENDING` | Author `proposal.md` and `specs/**/spec.md` | `sg_run` runs `M1`, then `H1` |
-| `PLAN` | Author `design.md`, `tasks.md`, `tests/cases.md`, `tests/mapping.json` | `sg_run` runs `M2`, then `H2` |
-| `EXECUTING` | Tasks run in worktrees; completed ones merge and check off | `sg_run` until all merge |
-| `INTEGRATING` | Frozen suites re-run; `acceptance.md` generated | `sg_run`, then `H3` |
-| `H3_PENDING` | Acceptance awaits a human | `H3` approval |
-| `ARCHIVING` | Spec delta applied to `openspec/specs/` | `sg_run` |
-| `DONE` / `BLOCKED` / `ABORTED` | Terminal or paused | `sg_run --retry` to resume a block |
+| 阶段 | 发生什么 | 出口 |
+|------|----------|------|
+| `IDLE` | 没有进行中的 change | `/sg-change` |
+| `H0_PENDING` | 采集新项目上下文（此时 `state.change` 仍为 `null`） | `sg_approve gate="H0"`，随后 `sg_run` 生成脚手架 |
+| `H1_PENDING` | 编写 `proposal.md` 与 `specs/**/spec.md` | `sg_run` 执行 `M1`，随后 `H1` |
+| `PLAN` | 编写 `design.md`、`tasks.md`、`tests/cases.md`、`tests/mapping.json` | `sg_run` 执行 `M2`，随后 `H2` |
+| `EXECUTING` | 任务在 worktree 中运行；完成的合并并勾选 | 反复 `sg_run` 直到全部合并 |
+| `INTEGRATING` | 重新执行冻结套件；生成 `acceptance.md` | `sg_run`，随后 `H3` |
+| `H3_PENDING` | 等待人工验收 | `H3` 批准 |
+| `ARCHIVING` | 把 spec 增量应用到 `openspec/specs/` | `sg_run` |
+| `DONE` / `BLOCKED` / `ABORTED` | 终态或暂停 | `sg_run --retry` 从阻塞恢复 |
 
-`M1` and `M2` are quality gates, not human ones — they are enforced by `sg_run` itself and reported as errors when they fail.
+完整阶段集合（`src/v3/state.js`）：`IDLE`、`H0_PENDING`、`H1_PENDING`、`PLAN`、`H2_PENDING`、`EXECUTING`、`INTEGRATING`、`H3_PENDING`、`ARCHIVING`、`DONE`、`BLOCKED`、`ABORTED`。
 
-## Commands
+`M1` 与 `M2` 是**质量门**而非人工门 —— 它们由 `sg_run` 自身强制执行，失败时以错误形式报出。
 
-| Command | Arguments | Purpose |
-|---------|-----------|---------|
-| `/sg-init` | none | Initialize `.specgate/` and `openspec/`. For an empty project it first collects context and stops at `H0_PENDING` |
-| `/sg-change` | `<name> [--type feature\|modify\|fix\|remove] [--link <changeKey>]` | Create a change package; enters `H1_PENDING` |
-| `/sg-status` | `[--path <repo>] [--json] [--verbose]` | Show phase, change, gate, and plan status |
-| `/sg-context` | `--reset` | Return to `H0_PENDING` and re-collect context (`H0_PENDING`/`H1_PENDING` only) |
-| `/sg-skill` | `<name>` | Print a skill body |
+## 命令参考
 
-`/sg-init` takes no flags in this version — it initializes the current working directory.
+| 命令 | 参数 | 用途 |
+|------|------|------|
+| `/sg-init` | 无 | 初始化 `.specgate/` 与 `openspec/`。空项目会先采集上下文并停在 `H0_PENDING` |
+| `/sg-change` | `<name> [--type feature\|modify\|fix\|remove] [--link <changeKey>]` | 创建变更包；进入 `H1_PENDING` |
+| `/sg-status` | `[--path <repo>] [--json] [--verbose]` | 显示阶段、change、门控与计划状态 |
+| `/sg-context` | `--reset` | 回到 `H0_PENDING` 并重新采集上下文（仅限 `H0_PENDING`/`H1_PENDING`） |
+| `/sg-skill` | `<name>` | 打印一份 Skill 正文 |
 
-## Tools
+本版本 `/sg-init` 不接受任何选项 —— 它初始化当前工作目录。
 
-| Tool | Parameters | Purpose |
-|------|------------|---------|
-| `sg_init` | none | Same as `/sg-init` |
-| `sg_change` | `name` (required), `type`, `link` | Same as `/sg-change` |
-| `sg_status` | `path`, `json`, `verbose` | Same as `/sg-status` |
-| `sg_skill` | `name` | Same as `/sg-skill` |
-| `sg_run` | `retry`, `force` | Advance exactly one phase. Takes no command/branch overrides |
-| `sg_approve` | `gate` (`H1`\|`H2`\|`H3`) | Ask the human to approve a gate; the model cannot self-approve |
+## 工具参考
 
-`sg_run` is the engine: it validates `M1`/`M2`, executes or retries tasks, runs integration suites, and writes the acceptance report — but only ever one phase per call.
+| 工具 | 参数 | 用途 |
+|------|------|------|
+| `sg_init` | 无 | 等价于 `/sg-init` |
+| `sg_change` | `name`（必填）、`type`、`link` | 等价于 `/sg-change` |
+| `sg_status` | `path`、`json`、`verbose` | 等价于 `/sg-status` |
+| `sg_skill` | `name` | 等价于 `/sg-skill` |
+| `sg_run` | `retry`、`force` | 恰好推进一个阶段。不接受命令、分支等覆盖参数 |
+| `sg_approve` | `gate`（`H0`\|`H1`\|`H2`\|`H3`） | 请求人工批准某个门；模型无法自签。`H0` 在首个 change 产生之前执行 |
 
-## Java backend (v3.6)
+`sg_run` 是引擎：它校验 `M1`/`M2`、执行或重试任务、运行集成套件并写出验收报告 —— 但每次调用只推进一个阶段。
 
-- **JDK**: 8 / 11 / 17 / 21 (LTS only); JDK 13 is rejected.
-- **Spring Boot**: 2.7.x and 3.x; strict matrix:
-  - Boot 2.7 → JDK 8/11/17
-  - Boot 3.x → JDK 17/21
-- **Default New Project**: JDK 8 + Maven + Boot 2.7.18.
-- **Selectable**: Gradle 8.x + Boot 3.x, JDK 17/21.
-- **Scaffold**: Web + Validation + Actuator, `/health`, JUnit 5 + MockMvc, Spotless (google-java-format), Checkstyle, SpotBugs, JaCoCo.
-- **Runners**: Maven (`mvnw verify`) and Gradle (`gradlew check`); Surefire/Failsafe/Gradle JUnit XML → SpecGate reports.
-- **Quality stages**: Spotless/Checkstyle/compile/SpotBugs; failures block.
-- **JDK lookup**: JAVA_HOME / PATH / SDKMAN / `.java-version` / `.sdkmanrc`; missing JDK is reported, never auto-installed.
+> `/sg-run` 与 `/sg-approve` **不是**斜杠命令，只有对应工具 `sg_run` / `sg_approve`。工具返回文本与本文档中的 `/sg-approve H1` 只是给人看的提示语。
 
-Example `.specgate/config.yaml`:
+## Java 后端（v3.6）
+
+- **JDK**：8 / 11 / 17 / 21（仅 LTS）；JDK 13 会被拒绝。
+- **Spring Boot**：2.7.x 与 3.x；严格矩阵：
+
+  | Spring Boot | 允许的 JDK |
+  |-------------|-----------|
+  | 2.7.x | 8 / 11 / 17 |
+  | 3.x | 17 / 21 |
+
+- **默认新项目**：JDK 8 + Maven + Boot 2.7.18。
+- **可选**：Gradle 8.x + Boot 3.x、JDK 17/21。
+- **脚手架**：Web + Validation + Actuator、`/health`、JUnit 5 + MockMvc、Spotless（google-java-format）、Checkstyle、SpotBugs、JaCoCo。
+- **执行器**：Maven（`mvnw verify`）与 Gradle（`gradlew check`）；Surefire/Failsafe/Gradle JUnit XML → SpecGate 报告。
+- **质量阶段**：Spotless/Checkstyle/compile/SpotBugs；失败即阻断。
+- **JDK 查找**：JAVA_HOME / PATH / SDKMAN / `.java-version` / `.sdkmanrc`；缺失 JDK 会报告，绝不自动安装。
+
+`.specgate/config.yaml` 示例：
 
 ```yaml
 stack: java
@@ -129,29 +218,25 @@ suites:
     goals: ["-B", "-ntp", "verify"]
 ```
 
-Gradle projects use `kind: gradle`, `goals: ["check"]`, and `reportGlob: "build/test-results/test/TEST-*.xml"`.
+Gradle 项目使用 `kind: gradle`、`goals: ["check"]` 与 `reportGlob: "build/test-results/test/TEST-*.xml"`。
 
-Initialization asks for `buildTool`, `jdk`, `bootVersion`, and modules; invalid combinations are rejected before scaffolding.
+初始化会询问 `buildTool`、`jdk`、`bootVersion` 与 modules；非法组合在生成脚手架前即被拒绝（`JAVA_MATRIX_INVALID`）。
 
-Real sample verification: JDK 8 + Maven + Boot 2.7 (`mvn -B -ntp verify`) and JDK 17 + Gradle + Boot 3 (`gradle spotlessApply check`) both build successfully; see the v3.6 requirements document.
+真实样例验证：JDK 8 + Maven + Boot 2.7（`mvn -B -ntp verify`）与 JDK 17 + Gradle + Boot 3（`gradle spotlessApply check`）均可构建成功；详见 v3.6 需求文档。
 
-## Installation
+## 安装
 
-SpecGate is distributed as a public Git repository; a publish to the npm registry is optional. The repository is a complete plugin with no build step.
+SpecGate 以公开 Git 仓库分发；发布到 npm 是可选项。仓库本身就是完整插件，没有构建步骤。
 
-### Method A: GitHub dependency in the DSH profile (recommended, tested)
+### 方式 A：GitHub 依赖（推荐）
 
-Add the bundle and the GitHub dependency to the active profile's `package.json`:
+在当前 profile 的 `package.json` 中加入：
 
 ```json
 {
   "dsh": {
     "profile": {
-      "bundles": [
-        "@deepseek-ai/dsh-base",
-        "@deepseek-ai/dsh-web-app",
-        "dsh-plugin-specgate"
-      ]
+      "bundles": ["@deepseek-ai/dsh-base", "@deepseek-ai/dsh-web-app", "dsh-plugin-specgate"]
     }
   },
   "dependencies": {
@@ -160,18 +245,18 @@ Add the bundle and the GitHub dependency to the active profile's `package.json`:
 }
 ```
 
-Then install and restart DSH:
+然后在 profile 目录安装并重启 DSH：
 
 ```powershell
-cd C:\Users\<user>\.dsh\profiles\desktop
+cd C:\Users\<用户名>\.dsh\profiles\desktop
 pnpm install
 ```
 
-Use `#main` for the latest commit, or `#<commit-sha>` for a pinned build. Profiles that use npm can run `npm install` instead.
+`#main` 表示最新提交；`#<commit-sha>` 可固定构建。使用 npm 的 profile 可执行 `npm install`。
 
-### Method B: `plugin_manager` install from GitHub (tested against the DSH plugin-manager source)
+### 方式 B：plugin_manager 从 GitHub 安装
 
-Call the DSH `plugin_manager` tool with:
+调用 DSH 的 `plugin_manager` 工具：
 
 ```json
 {
@@ -180,23 +265,23 @@ Call the DSH `plugin_manager` tool with:
 }
 ```
 
-The equivalent shorthand is:
+等价简写：
 
 ```text
 plugin_manager install_bundle target=github:GM-Studio/dsh_sg_plugin#v3.6.0
 ```
 
-The manager accepts `github:`, `git+https://...`, a Git repository URL, a `.tgz` URL, or an **absolute** local directory. It runs `pnpm add`, selects the bundle, and reloads the profile. DSH may ask for `danger-full-access` approval because the change persists across sessions and installs Host code.
+管理器接受 `github:`、`git+https://...`、Git 仓库 URL、`.tgz` URL，或**绝对路径**的本地目录。它会执行 `pnpm add`、选中 bundle 并重载 profile。由于改动会跨会话持久化并安装 Host 代码，DSH 可能要求 `danger-full-access` 授权。
 
-If the manager reports `already-installed`, remove the bundle first or use Method A.
+如果提示 `already-installed`，先移除旧 bundle，或改用方式 A。
 
-### Method C: local checkout
+### 方式 C：本地目录
 
 ```text
 plugin_manager action=install_bundle target=D:\plugins\specgate
 ```
 
-The local path must be absolute. Alternatively, use a `link:` dependency in the profile:
+本地路径必须是绝对路径。也可以在 profile 中使用 `link:`：
 
 ```json
 "dependencies": {
@@ -204,15 +289,15 @@ The local path must be absolute. Alternatively, use a `link:` dependency in the 
 }
 ```
 
-### Method D: npm registry (only if published)
+### 方式 D：npm registry（仅当已发布）
 
 ```text
 plugin_manager action=install_bundle target=dsh-plugin-specgate@3.6.0
 ```
 
-### Method E: offline `.tgz` (air-gapped / cross-OS)
+### 方式 E：离线 tgz 包
 
-Build once on a connected machine:
+适用于内网 / 跨操作系统。在联网机器上构建一次：
 
 ```bash
 npm pack
@@ -220,7 +305,7 @@ npm pack
 sha256sum dsh-plugin-specgate-3.6.0.tgz
 ```
 
-Copy the `.tgz` to the target machine, then install by **absolute path**:
+把 `.tgz` 拷到目标机器，用**绝对路径**安装：
 
 ```json
 {
@@ -229,7 +314,7 @@ Copy the `.tgz` to the target machine, then install by **absolute path**:
 }
 ```
 
-Windows:
+Windows：
 
 ```json
 {
@@ -238,7 +323,7 @@ Windows:
 }
 ```
 
-Or add it directly to the profile:
+或直接写进 profile：
 
 ```json
 "dependencies": {
@@ -246,44 +331,44 @@ Or add it directly to the profile:
 }
 ```
 
-Then run `pnpm install` (or `npm install`) in the profile and restart DSH. The offline package contains all skills and templates; it does not bundle JDK/Maven/Gradle/Python, which must exist on the target machine.
+然后在 profile 执行 `pnpm install`（或 `npm install`）并重启 DSH。离线包包含全部 Skill 与模板，但不包含 JDK/Maven/Gradle/Python，需要目标机器自行具备。
 
-### Release artifacts (v3.6.0)
+### 发布产物（v3.6.0）
 
-- GitHub Release: `https://github.com/GM-Studio/dsh_sg_plugin/releases/tag/v3.6.0`
-- Assets:
-  - `dsh-plugin-specgate-3.6.0.tgz` — offline package (243 files, ~532 kB)
-  - `dsh-plugin-specgate-3.6.0.tgz.sha256` — SHA256 checksum
-- Suggested install paths:
-  - GitHub tag: Method A / B (`github:GM-Studio/dsh_sg_plugin#v3.6.0`)
-  - Offline package: Method E (absolute `.tgz` path)
-  - Local checkout: Method C (absolute directory)
+- GitHub Release：`https://github.com/GM-Studio/dsh_sg_plugin/releases/tag/v3.6.0`
+- 资产：
+  - `dsh-plugin-specgate-3.6.0.tgz` —— 离线包（243 个文件，约 532 KB）
+  - `dsh-plugin-specgate-3.6.0.tgz.sha256` —— SHA256 校验和
+- 建议安装路径：
+  - GitHub tag：方式 A / B（`github:GM-Studio/dsh_sg_plugin#v3.6.0`）
+  - 离线包：方式 E（`.tgz` 绝对路径）
+  - 本地目录：方式 C（绝对目录）
 
-The offline package contains `index.js`, `src/`, `assets/`, `cordis.patch.yml`, `locale/`, and docs. It does **not** bundle JDK, Maven, Gradle, Python, or Node; install those on the target machine when needed.
+离线包包含 `index.js`、`src/`、`assets/`、`cordis.patch.yml`、`locale/` 与文档。它**不**打包 JDK、Maven、Gradle、Python 或 Node；需要时在目标机器上安装。
 
-### Verify the installation
+### 验证安装
 
-After a restart, open a new DSH session and run:
+重启 DSH，新开会话执行：
 
 ```text
 /sg-status
 ```
 
-If the command is missing:
+如果命令不存在：
 
-1. Confirm `dsh-plugin-specgate` is in the profile's `dsh.profile.bundles`.
-2. Confirm the dependency resolves (`pnpm install` in the profile directory).
-3. Restart DSH.
-4. Check `~/.dsh/logs` for load errors.
-5. Confirm DSH `>= 0.2.1-rc.2` and Node `>= 20.19.0`.
+1. 确认 profile 的 `dsh.profile.bundles` 包含 `dsh-plugin-specgate`
+2. 确认依赖能解析（在 profile 目录执行 `pnpm install`）
+3. 重启 DSH
+4. 查看 `~/.dsh/logs` 的加载错误
+5. 确认 DSH `>= 0.2.1-rc.2`、Node `>= 20.19.0`
 
-### Project-level start / stop
+### 启动与关闭
 
-The plugin is a Host plugin; it has no background daemon and no enable/disable toggle. It activates per project the moment the project root contains `.specgate/state.json` — which `/sg-init` creates. To stop using it in a project, remove `.specgate/` (and optionally `openspec/`); nothing else in the repository depends on it.
+SpecGate 是 Host 插件，没有独立后台进程，也没有启用/禁用开关。只要项目根存在 `.specgate/state.json`（由 `/sg-init` 创建），它就在该项目生效。若要在某个项目停用，删除 `.specgate/`（可选连同 `openspec/`）；仓库中其他内容都不依赖它。
 
-## Configuration
+## 配置
 
-Project config lives in `.specgate/config.yaml`, written by `/sg-init`:
+项目配置位于 `.specgate/config.yaml`，由 `/sg-init` 写入：
 
 ```yaml
 # SpecGate v3 项目配置
@@ -300,148 +385,185 @@ coverage:
   blocking: false
 ```
 
-Java projects extend it with `stack: java`, a `java:` block, `quality:`, `coverage:` thresholds, and a `suites:` list (see [Java backend](#java-backend-v36)).
+Java 项目在其上扩展 `stack: java`、`java:` 块、`quality:`、`coverage:` 阈值与 `suites:` 列表（见 [Java 后端](#java-后端v36)）。
 
-- `language`: `zh` or `en`. Selects the `.zh.md` / `.md` asset variant and the language of command output.
-- `testing.command`: the argv array for the project's test suite. When empty, discovery falls back to `package.json`'s `scripts["test:json"]`.
-- `maxParallel`: how many tasks in one wave may run at once (1–4).
-- `coverage.blocking`: whether coverage shortfalls fail the integration phase.
-- `suites`: the named test suites `sg_run` executes and hashes into the plan.
+| 键 | 说明 |
+|----|------|
+| `language` | `zh` 或 `en`。选择 `.zh.md` / `.md` 资产变体与命令输出语言 |
+| `testing.command` | 项目测试套件的 argv 数组。留空时回退到 `package.json` 的 `scripts["test:json"]` |
+| `maxParallel` | 同一波内最多并行任务数（1–4） |
+| `coverage.blocking` | 覆盖率不达标是否让集成阶段失败 |
+| `suites` | `sg_run` 执行并哈希进计划的具名测试套件 |
+| `enabled` | 池中某个 Skill / 角色是否参与派发 |
 
-A project whose `workflowVersion` is below 3 is refused rather than silently taken over.
+`workflowVersion` 低于 3 的项目会被拒绝，而不是被静默接管（`WORKFLOW_VERSION_MISMATCH`）。
 
-Parallel worker-pool defaults (`src/v3/pool.js`): `poolSize: 2`, `maxLeasedPerChange: 6`, `reuseTasks: 3`, `contextThreshold: 0.7`, `contextTokens: 128000`, `ttlMinutes: 10`, `breakerFailures: 2`. A role's breaker opens after two consecutive failures and its agents are recycled.
+并行工作池默认值（`src/v3/pool.js`）：
 
-## Language
+| 参数 | 默认值 |
+|------|--------|
+| `poolSize` | `2` |
+| `maxLeasedPerChange` | `6` |
+| `reuseTasks` | `3` |
+| `contextThreshold` | `0.7` |
+| `contextTokens` | `128000` |
+| `ttlMinutes` | `10` |
+| `breakerFailures` | `2` |
 
-SpecGate ships bilingual assets: English `*.md` files and Chinese `*.zh.md` siblings. Chinese is the authoritative source; English is a complete translation. The runtime and `sg_skill` select variants by the `language` key in `.specgate/config.yaml`.
+某角色连续失败两次后熔断打开，其 Agent 被回收。
 
-## Quick start
+## 多语言
+
+SpecGate 资产为双语：
+
+- **中文为权威源**，英文为完整翻译。
+- 资产命名：英文 `*.md`，中文 `*.zh.md`。
+- 运行时与 `sg_skill` 按 `.specgate/config.yaml` 的 `language` 选择变体。
+- 本仓库 README 同样双语：`README.md`（中文，默认显示）与 [`README.en.md`](README.en.md)（英文）。
+
+## 快速开始
 
 ```text
-/sg-init                              # initialize the current directory
-/sg-change add-login --type feature   # scaffold the change package; phase H1_PENDING
-#   ... author proposal.md and specs/<capability>/spec.md ...
-sg_run                                # runs M1; on pass, approve H1
-sg_approve H1                         # human approval; phase becomes PLAN
-#   ... author design.md, tasks.md, tests/cases.md, tests/mapping.json ...
-sg_run                                # runs M2; on pass, approve H2
-sg_approve H2                         # phase becomes EXECUTING
-sg_run                                # execute wave by wave until all tasks merge
-sg_run                                # INTEGRATING: full regression + acceptance.md
-sg_approve H3                         # human acceptance
+/sg-init                              # 初始化当前目录
+/sg-change add-login --type feature   # 创建变更包；阶段 H1_PENDING
+#   ... 编写 proposal.md 与 specs/<capability>/spec.md ...
+sg_run                                # 执行 M1；通过后批准 H1
+sg_approve H1                         # 人工批准；阶段变为 PLAN
+#   ... 编写 design.md、tasks.md、tests/cases.md、tests/mapping.json ...
+sg_run                                # 执行 M2；通过后批准 H2
+sg_approve H2                         # 阶段变为 EXECUTING
+sg_run                                # 逐波执行，直到全部任务合并
+sg_run                                # INTEGRATING：全量回归 + acceptance.md
+sg_approve H3                         # 人工验收
 sg_run                                # ARCHIVING → DONE
 ```
 
-`/sg-status` reports the current phase and what to do next at any point.
+空项目首次初始化的前两步：
 
-Parallel notation in `tasks.md`:
-
-```markdown
-- [ ] T1 Implement the login API [P]
-- [ ] T2 Implement the login page [P]
-- [ ] T3 Integrate the login flow depends: T1,T2 role: reviewer
+```text
+/sg-init                    # 采集上下文，停在 H0_PENDING
+sg_approve H0               # 人工批准（此时还没有 change）
+sg_run                      # 生成脚手架与首个示例 change → H1_PENDING
 ```
 
-Without `[P]` or `depends`, tasks default to serial. `role:` selects the worker prompt (`implementer` or `tester`); other values are treated as review-only roles.
+任意时刻 `/sg-status` 都会报告当前阶段与下一步。
 
-## Writes and guards
+`tasks.md` 的并行写法：
 
-`guards.js` intercepts the `write` and `edit` tools. It rejects:
+```markdown
+- [ ] T1 实现登录接口 [P]
+- [ ] T2 实现登录页面 [P]
+- [ ] T3 集成登录流程 depends: T1,T2 role: reviewer
+```
 
-| Write target | Reason |
-|--------------|--------|
-| `.specgate/**` | Orchestrator-owned state |
-| `openspec/specs/**` | Only the archive transaction may modify it |
-| `acceptance.md` | Generated by the orchestrator |
-| `<change>/design.md`, `<change>/tasks.md`, `<change>/tests/**`, `src/**`, `tests/**` **while in `H1_PENDING`** | H1 has not been approved yet |
+没有 `[P]` 或 `depends` 时默认串行。`role:` 选择工作 Agent 提示词（`implementer` 或 `tester`）；其他取值按只读审查角色处理。
 
-Everything else is permitted. The guard is inert for projects whose `workflowVersion` is below 3, and it does not see writes performed through shell commands.
+## 写入与守卫
 
-## Output display (DSH adaptation)
+`guards.js` 拦截 `write` 与 `edit` 工具，拒绝：
 
-| Entry point | Display | History |
-|-------------|---------|---------|
-| `sg_*` tools | Tool result card (success/error text) | Persisted in the session log |
-| `/sg-*` commands | DSH persistent command card, expandable to the full text | `command/run` + `command/done` |
-| First command in a new session | Additionally writes a `notice` context message, ensuring the session leaves the welcome page and shows the result | `user/message` (source.kind=`specgate`) |
+| 写入目标 | 原因 |
+|----------|------|
+| `.specgate/**` | 编排器专属状态 |
+| `openspec/specs/**` | 只能由归档事务修改 |
+| `acceptance.md` | 由编排器生成 |
+| `<change>/design.md`、`<change>/tasks.md`、`<change>/tests/**`、`src/**`、`tests/**`，且**处于 `H1_PENDING`** | H1 尚未批准 |
 
-Design constraints:
+其余写入一律放行。对 `workflowVersion` 低于 3 的项目守卫不生效，且它看不到通过 shell 命令完成的写入。
 
-- Append the `notice` only when the agent is idle and the session has no messages yet; an active session only shows the command card and does not write history again.
-- Never append a message between a tool call and its tool result. Earlier versions injected a synthetic `assistant/message`, which left `tool_use` without an adjacent `tool_result` and made subsequent requests fail with 400 outright.
-- Command exceptions also produce output: they return `kind: 'error'`, and an empty session also gets an error `notice`.
+## 输出显示
 
-## File layout
+| 入口 | 显示方式 | 历史 |
+|------|----------|------|
+| `sg_*` 工具 | 工具结果卡片（成功/错误文本） | 会话日志持久化 |
+| `/sg-*` 命令 | DSH 持久命令卡片，可展开完整文本 | `command/run` + `command/done` |
+| 新会话中的第一条命令 | 额外写入一条 `notice` 上下文消息，确保离开欢迎页并显示结果 | `user/message`（source.kind=`specgate`） |
+
+设计约束：
+
+- 只在 agent 空闲且会话还没有任何消息时追加 `notice`；活跃会话只显示命令卡片，不重复写历史。
+- 绝不在工具调用与工具结果之间追加消息。旧版本曾注入合成 `assistant/message`，会导致 `tool_use` 没有紧邻的 `tool_result`，使后续请求直接 400。
+- 命令异常同样有输出：返回 `kind: 'error'`，空会话同样写入错误 `notice`。
+
+## 文件布局
 
 ```text
 .specgate/
 ├── config.yaml
-├── state.json              # phase, change, approvals, plan
+├── state.json              # 阶段、change、批准、计划
 ├── run.lock
-├── worktrees/              # Git worktrees for parallel tasks
-├── evidence/               # per-task run evidence
+├── worktrees/              # 并行任务的 Git worktree
+├── evidence/               # 每个任务的运行证据
 ├── backups/
 └── gates/
 openspec/
 ├── changes/<change>/
 │   ├── proposal.md         # 问题 / 目标 / 非目标 / 影响面
 │   ├── design.md           # 目标与非目标 / 任务图 / AC 到用例 / 风险
-│   ├── tasks.md            # task graph, [P] / depends / role
+│   ├── tasks.md            # 任务图，[P] / depends / role
 │   ├── specs/<capability>/spec.md
 │   └── tests/{cases.md,mapping.json,touched.json,automation/}
-└── specs/<capability>/spec.md   # written only on archive
+└── specs/<capability>/spec.md   # 只在归档时写入
 ```
 
-`/sg-init` also appends these to `.gitignore`: `.specgate/state.json`, `.specgate/run.lock`, `.specgate/worktrees/`, `.specgate/evidence/`, `.specgate/backups/`, `.specgate/gates/`, `.specgate/runs/`.
+`/sg-init` 还会把以下内容追加进 `.gitignore`：`.specgate/state.json`、`.specgate/run.lock`、`.specgate/worktrees/`、`.specgate/evidence/`、`.specgate/backups/`、`.specgate/gates/`、`.specgate/runs/`。
 
-For a brand-new project, approving `H0` additionally writes `project-context.md`, `AGENTS.md`, `docs/glossary.md`, `docs/adr/0001-initial.md`, `.github/workflows/ci.yml`, and a first sample change.
+对全新项目，批准 `H0` 会额外写入 `project-context.md`、`AGENTS.md`、`docs/glossary.md`、`docs/adr/0001-initial.md`、`.github/workflows/ci.yml`，以及一个初始示例 change。
 
-## Verification
+## 验证
 
-- **265 tests pass / 0 fail** (`node --test`).
-- `M1` rejects a proposal missing any of 问题 / 目标 / 非目标 / 影响面, and a delta with unresolved acceptance-criteria references.
-- `M2` rejects a design missing any of its four sections, a task graph with cycles, an AC with no covering case, and undiscoverable suites.
-- Approval hashes: editing `proposal.md`/`specs/**` after `H1`, or the plan after `H2`, invalidates the approval and forces re-approval.
-- Write guard: writing `design.md` while `H1_PENDING` is rejected; writing it after approval is allowed. Shell writes are not intercepted.
-- Output regression: a command in a new session writes a `notice`; an active session does not duplicate history; a running agent writes no messages; failed commands also produce output.
+- **269 个测试通过 / 0 失败**（`node --test`）。
+- `M1` 拒绝缺少 问题 / 目标 / 非目标 / 影响面 任一段的 proposal，以及存在未解析验收标准引用的增量。
+- `M2` 拒绝缺少四个段落任一的 design、存在环的任务图、没有用例覆盖的 AC，以及无法发现的测试套件。
+- 批准哈希：`H1` 之后修改 `proposal.md`/`specs/**`，或 `H2` 之后修改计划，都会使批准失效并强制重新批准。
+- 写入守卫：`H1_PENDING` 期间写 `design.md` 被拒绝；批准后放行。shell 写入不被拦截。
+- H0 门控：空项目可用 `sg_approve gate="H0"` → `sg_run` 离开 `H0_PENDING`，不要求已存在 change。
+- 输出回归：新会话命令写入 `notice`；活跃会话不重复写历史；运行中的 agent 不写消息；失败命令同样有输出。
 
-See [verification.md](docs/design/verification.md) for the full record.
+完整记录见 [verification.md](docs/design/verification.md)。
 
-## Known limitations
+## 已知限制
 
-- Write interception covers the `write` / `edit` tools; writing files directly through shell commands is not intercepted.
-- `sg_approve` declares `H1`/`H2`/`H3`. `H0` is part of the phase machine, but the tool's parameter schema does not currently expose it.
-- Initialization requires a Git repository for worktree isolation and commit discipline; without one, parallel execution degrades to a single serial writer.
-- Parallel worktrees require a clean working tree; dirty projects degrade to serial and do not isolate uncommitted changes.
-- Merge conflicts are not resolved automatically; the worktree and branch are kept, and you must merge manually and re-run `sg_run`.
-- Idempotent `--force` applies to append-type operations; state transitions are naturally re-run by advancing the phase.
-- Agent roles are limited to `implementer`, `tester`, and review-only roles; the plugin does not ship a role catalog.
-- Does not replace the AgentKit47 CLI's `init/upgrade/doctor/validate`; SpecGate is a DSH Host plugin, not a standalone CLI.
-- The plugin provides no MCP server or MCP tools; MCP capabilities on the DSH side are independent of this plugin.
-- **Upgrade note**: the predecessor plugin's early 0.2.0 `ak47_selftest_append` polluted the session log; continue in a new session and do not reuse old sessions that already show `tool_use` / `tool_result` 400 errors.
+- 写入拦截覆盖 `write` / `edit` 工具；通过 shell 命令直接写文件不会被拦截。
+- 初始化要求 Git 仓库以实现 worktree 隔离与提交纪律；没有 Git 时并行执行降级为串行单写者。
+- 并行 worktree 要求工作区 clean；dirty 项目自动降级串行，不隔离未提交改动。
+- 合并冲突不会自动解决；worktree 与分支会保留，需人工合并后重新执行 `sg_run`。
+- 幂等 `--force` 只对追加类操作开放；状态类转换通过推进阶段自然重跑。
+- Agent 角色仅限 `implementer`、`tester` 与只读审查角色；插件不提供角色目录。
+- 不替代 AgentKit47 CLI 的 `init/upgrade/doctor/validate`；SpecGate 是 DSH Host 插件，不是独立 CLI。
+- 插件不提供 MCP server 或 MCP 工具；DSH 侧的 MCP 能力与本插件相互独立。
+- **升级提示**：前身插件 0.2.0 早期构建中的 `ak47_selftest_append` 会污染会话日志；升级后请在新会话中继续，旧会话若已出现 `tool_use` / `tool_result` 400 错误不要复用。
 
-## Code review and formatting gate
+## 代码审查与格式化门禁
 
-Every code file changed by a push must pass review and formatting before it reaches the remote:
+推送到远程前，本次 push 涉及的所有代码文件必须通过审查与格式化：
 
-- **Local hooks**: run `npm run hooks:install` once per clone to install `pre-commit` and `pre-push`.
-  - `pre-commit`: runs ESLint on staged JS/TS files, then Prettier formats them and re-stages the result.
-  - `pre-push`: runs ESLint, `npm test` and `prettier --check` on every file changed by the push; any failure aborts the push with an error report.
-- **CI re-check**: the `review-and-format` job in `.github/workflows/ci.yml` reviews and format-checks changed files on push and pull request. Enable branch protection on the main branch and require `review-and-format` and `test` as status checks.
-- **Commands**:
-  - `npm run lint`, `npm run format:check`: full-repository checks.
-  - `npm run gate`: run the full gate against the diff from `origin/main`.
-  - `npm run gate:fix`: format the current changes and stage them.
+- **本地钩子**：克隆后执行一次 `npm run hooks:install`，安装 `pre-commit` 与 `pre-push`。
+  - `pre-commit`：对暂存区的 JS/TS 文件执行 ESLint；通过后用 Prettier 格式化并重新暂存。
+  - `pre-push`：对本次 push 的全部变更文件执行 ESLint、`npm test` 和 `prettier --check`；任一失败即中止 push 并输出错误信息。
+- **CI 复核**：`.github/workflows/ci.yml` 的 `review-and-format` job 在 push / PR 时对变更文件执行审查与格式检查。主分支应开启分支保护，把 `review-and-format` 与 `test` 设为必需状态检查。
+- **命令**：
 
-> GitHub Actions runs after a push succeeds and cannot retract commits that are already on the remote; the local `pre-push` hook is what actually blocks the push. Branch protection stops merges whose checks did not pass, so commits created with `--no-verify` are still caught by CI.
+  | 命令 | 作用 |
+  |------|------|
+  | `npm run lint` | ESLint 全量检查 |
+  | `npm run format:check` | Prettier 全量检查 |
+  | `npm run gate` | 按当前分支与 `origin/main` 的差异执行一次完整门禁 |
+  | `npm run gate:fix` | 自动格式化本次变更并暂存 |
 
-## Development
+> GitHub Actions 在 push 成功之后才运行，无法撤回已经推送的提交；真正阻止推送的是本地 `pre-push` 钩子。服务端通过分支保护阻止未通过检查的合并，使用 `--no-verify` 绕过本地钩子的提交仍会被 CI 拦下。
+
+## 开发
 
 ```bash
-node --test
+node --test        # 运行测试
+npm run lint       # ESLint
+npm run format     # Prettier 写入
+npm run gate       # 完整质量门
 ```
 
-## License
+提交信息遵循 Conventional Commits：`<type>(<scope>): <description>`，`type` 限 `feat` / `fix` / `docs` / `style` / `refactor` / `perf` / `test` / `build` / `ci` / `chore` / `revert`，描述使用中文且不超过 72 字符、不以句号结尾。
 
-MIT, derived from the templates and workflow design of AgentKit47-Qoder.
+## 许可证
+
+MIT，基于 AgentKit47-Qoder 的模板与工作流设计。

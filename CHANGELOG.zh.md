@@ -1,5 +1,10 @@
 # 变更记录
 
+## Unreleased
+
+- 修复 H0 门控死锁：`sg_approve` 现在接受 `gate: "H0"`（schema 枚举与运行时校验），且 H0 批准不再要求已存在 change。新项目可用 `sg_approve` → `sg_run` 离开 `H0_PENDING`。
+- H0 相关提示改为指向 `sg_approve` 工具，不再引用不存在的 `/sg-approve` 命令。
+
 ## 2.1.0
 
 - 新增开发角色推断（architect/ddd/developer）；显式 `role:` 优先，低置信度任务在创建任何 Agent 前停止。

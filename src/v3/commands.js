@@ -82,7 +82,7 @@ export function registerCommands(ctx, runtime) {
           kind: 'success',
           text: [
             `已采集新建项目上下文（${result.context.stack}），阶段 H0_PENDING。`,
-            '请执行 /sg-approve H0 审阅上下文；批准后执行 /sg-run 生成脚手架与首个 change。',
+            '请调用 sg_approve 工具（gate="H0"）审阅上下文；批准后执行 /sg-run 生成脚手架与首个 change。',
             '需要修改上下文时执行 /sg-context --reset。',
             '结构化结果：.specgate/init-result.json',
           ].join('\n'),
@@ -223,7 +223,7 @@ export function registerCommands(ctx, runtime) {
       });
       return {
         kind: 'success',
-        text: '已回到 H0_PENDING 并重新采集上下文。请 /sg-approve H0；批准后 /sg-run 重新生成脚手架。',
+        text: '已回到 H0_PENDING 并重新采集上下文。请调用 sg_approve 工具（gate="H0"）；批准后 /sg-run 重新生成脚手架。',
       };
     },
   });
