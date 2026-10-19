@@ -1,5 +1,7 @@
 import { initProject, createChange } from './change.js';
-import { renderStatus, statusData } from './status.js';
+import { renderStatusAt, statusJsonAt, resolveRepoPath, loadProjectAt } from './status-query.js';
+import { renderStatus } from './status.js';
+import { exists } from './util/fsx.js';
 import { headCommit, isGitRepo } from './util/git.js';
 import { checkM1, checkM2, checkFrozenH1, computeArtifactHash, collectKnownAcs } from './phase.js';
 import { patchState } from './state.js';
@@ -152,12 +154,34 @@ export function registerTools(ctx, runtime) {
     },
     {
       name: 'sg_status',
-      description: '查看 SpecGate v3 项目状态：阶段、下一步、任务、证据与阻塞原因。只读。',
-      parameters: EMPTY_PARAMS,
+      description:
+        '查看 SpecGate v3 状态。可选参数：path 指定仓库根（支持 Windows/POSIX 路径），json 输出 JSON，verbose 显示运行时间线。只读。',
+      parameters: {
+        type: 'object',
+        properties: {
+          path: { type: 'string' },
+          json: { type: 'boolean' },
+          verbose: { type: 'boolean' },
+        },
+        additionalProperties: false,
+      },
       output: textOutput(),
       async execute(args, exec) {
-        const project = runtime.project(exec?.agent);
-        return ok(renderStatus(project), statusData(project));
+        const cwd = runtime.getCwd(exec?.agent);
+        if (!args?.path && !exists(cwd + '/.specgate/state.json')) {
+          const project = { root: cwd, state: null, config: {} };
+          const data = statusJsonAt(project, { verbose: false });
+          return ok(args?.json ? JSON.stringify(data, null, 2) : renderStatus(project), data);
+        }
+        const resolved = resolveRepoPath(cwd, args?.path);
+        if (!resolved.ok) return fail(`${resolved.code}：${resolved.message}`);
+        const loaded = loadProjectAt(resolved.root);
+        if (!loaded.ok) return fail(`${loaded.code || 'STATE_INVALID'}：${loaded.message}`);
+        const data = statusJsonAt(loaded.project, { verbose: Boolean(args?.verbose) });
+        const text = args?.json
+          ? JSON.stringify(data, null, 2)
+          : renderStatusAt(loaded.project, { verbose: Boolean(args?.verbose) });
+        return ok(text, data);
       },
     },
     {

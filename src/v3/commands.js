@@ -1,7 +1,9 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { initProject, createChange } from './change.js';
+import { renderStatusAt, statusJsonAt, resolveRepoPath, loadProjectAt } from './status-query.js';
 import { renderStatus } from './status.js';
+import { exists } from './util/fsx.js';
 import { ensureV3 } from './tools.js';
 import { headCommit, isGitRepo } from './util/git.js';
 import { loadSkill } from './skills.js';
@@ -132,11 +134,43 @@ export function registerCommands(ctx, runtime) {
 
   register({
     name: 'sg-status',
-    description: '查看 SpecGate v3 项目状态：阶段、下一步、任务与证据',
-    input: { hint: '（无需参数）' },
+    description: '查看 SpecGate v3 状态：/sg-status [--path <repo>] [--json] [--verbose]',
+    input: { hint: '[--path <repo>] [--json] [--verbose]' },
     async handler(inv) {
-      const project = runtime.project(inv?.agent);
-      return { kind: 'success', text: renderStatus(project) };
+      const args = tokens(inv?.rawInput);
+      let pathArg = null;
+      let json = false;
+      let verbose = false;
+      for (let index = 0; index < args.length; index += 1) {
+        if (args[index] === '--path') {
+          pathArg = args[index + 1];
+          index += 1;
+          if (!pathArg) return { kind: 'error', text: '--path 需要目录参数' };
+        } else if (args[index] === '--json') json = true;
+        else if (args[index] === '--verbose') verbose = true;
+        else return { kind: 'error', text: `未知参数：${args[index]}` };
+      }
+      const cwd = runtime.getCwd(inv?.agent);
+      if (!pathArg && !exists(path.join(cwd, '.specgate', 'state.json'))) {
+        const project = { root: cwd, state: null, config: {} };
+        const data = statusJsonAt(project, { verbose });
+        return {
+          kind: 'success',
+          text: json ? JSON.stringify(data, null, 2) : renderStatus(project),
+        };
+      }
+      const resolved = resolveRepoPath(cwd, pathArg);
+      if (!resolved.ok) return { kind: 'error', text: `${resolved.code}：${resolved.message}` };
+      const loaded = loadProjectAt(resolved.root);
+      if (!loaded.ok)
+        return { kind: 'error', text: `${loaded.code || 'STATE_INVALID'}：${loaded.message}` };
+      if (json) {
+        return {
+          kind: 'success',
+          text: JSON.stringify(statusJsonAt(loaded.project, { verbose }), null, 2),
+        };
+      }
+      return { kind: 'success', text: renderStatusAt(loaded.project, { verbose }) };
     },
   });
 
