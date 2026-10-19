@@ -6,7 +6,7 @@ import { scanEnv, writeEnvReport } from './env-scan.js';
 import { ensureToolchain } from './toolchain.js';
 import { headCommit, isGitRepo } from './util/git.js';
 import { checkM1, checkM2, checkFrozenH1, computeArtifactHash, collectKnownAcs } from './phase.js';
-import { patchState } from './state.js';
+import { load, patchState } from './state.js';
 import { askApproval, issueApproval, checkApprovalHash } from './approvals.js';
 import { renderGatePages } from './gate-card.js';
 import {
@@ -28,7 +28,8 @@ import { executeTask, revertWave } from './executor.js';
 import { readyBatch } from './scheduler.js';
 import { discoverCommand, loadPlan } from './plan.js';
 import { runAllSuites, suggestSuites, persistRuntime } from './suites.js';
-import { finishInitProject } from './init.js';
+import { detectInitMode, finishInitProject, gitInitCommit, startInitProject } from './init.js';
+import { requirementsConfig } from './change.js';
 import { poolDisposeChange } from './pool.js';
 import { generateAcceptance } from './acceptance.js';
 import { verifyEvidence, appendEvidence } from './evidence.js';
@@ -95,17 +96,58 @@ const EMPTY_PARAMS = {
   additionalProperties: false,
 };
 
+/** 老项目接入时由 SpecGate 自己生成、因而可以安全提交的路径（REQ-010）。 */
+const LEGACY_GENERATED_PATHS = [
+  'openspec/REQ.md',
+  'openspec/specs/.gitkeep',
+  'openspec/changes/.gitkeep',
+  '.specgate/config.yaml',
+  '.gitignore',
+  'docs/requirements-scan.md',
+];
+
 export function registerTools(ctx, runtime) {
   const disposers = [];
   const definitions = [
     {
       name: 'sg_init',
       description:
-        '初始化 SpecGate v3 项目：创建 .specgate 配置、openspec 目录、.gitignore 与状态文件。幂等。',
+        '初始化 SpecGate v3 项目：先完成需求盘问（功能/非功能/约束/验收）再确认技术栈，' +
+        '确认后生成 openspec/REQ.md 需求基线并创建 .specgate 配置、openspec 目录、.gitignore 与状态文件。幂等。',
       parameters: EMPTY_PARAMS,
       output: textOutput(),
       async execute(args, exec) {
         const root = runtime.getCwd(exec?.agent);
+        const userQuestions = runtime.service('userQuestions');
+        const mode = detectInitMode(root);
+        if (userQuestions && typeof userQuestions.ask === 'function') {
+          const started = await startInitProject({
+            root,
+            mode,
+            userQuestions,
+            agent: exec?.agent,
+            signal: exec?.signal,
+          });
+          if (!started.ok) return fail(`初始化失败：${started.message}`, started);
+          if (mode === 'existing') {
+            return ok(
+              [
+                `已扫描现有项目并反推需求草稿（共 ${started.scan.fileCount} 个文件、${started.requirements ? Object.keys(started.requirements).length : 0} 个维度），阶段 H0_PENDING。`,
+                `扫描报告：${started.scan.report}；结构化结果：${started.scan.json}。`,
+                '未生成任何脚手架文件；仓库已存在时保持原状，否则已执行 git init。',
+                '请调用 sg_approve（gate="H0"）确认需求；确认后才写入 openspec/REQ.md 并进入 H1_PENDING。',
+              ].join('\n'),
+              started,
+            );
+          }
+          return ok(
+            [
+              `已采集新建项目上下文（${started.context.stack}）与需求草稿，阶段 H0_PENDING。`,
+              '请调用 sg_approve（gate="H0"）审阅；批准后执行 sg_run 生成 openspec/REQ.md、脚手架与首个 change。',
+            ].join('\n'),
+            started,
+          );
+        }
         const result = initProject(root);
         if (!result.ok) return fail(`初始化失败：${result.message}`, result);
         const changed =
@@ -116,13 +158,18 @@ export function registerTools(ctx, runtime) {
               .map((suite) => `${suite.id}(${suite.kind}@${suite.cwd})`)
               .join('、')}`
           : '';
+        const rules = requirementsConfig(root);
+        const reqHint = rules.enabled
+          ? `\n需求基线：${rules.doc}（v${String(rules.version).replace(/^v/, '')}）`
+          : '';
         return ok(
-          `SpecGate v3 已初始化（${changed}）。下一步：/sg-change <name> --type feature${hint}`,
+          `SpecGate v3 已初始化（${changed}）。下一步：/sg-change <name> --type feature${reqHint}${hint}`,
           {
             root: result.root,
             created: result.created,
             ignored: result.ignored,
             suggestions,
+            requirements: rules,
           },
         );
       },
@@ -758,6 +805,27 @@ export function registerTools(ctx, runtime) {
             issueApproval(draft, 'H0', state.h0.hash, asked.at);
           });
           if (!saved.ok) return fail(saved.message, saved);
+          const legacy = state.mode === 'existing' || !state.context?.stack;
+          if (legacy) {
+            const current = load(project.root).state;
+            const finished = await finishInitProject({
+              root: project.root,
+              state: current,
+              gitOnly: true,
+            });
+            if (!finished.ok) return fail(finished.message, finished);
+            // 老项目只提交本次生成的需求资产，绝不提交既有工作树（REQ-010）。
+            const committed = gitInitCommit(project.root, 'chore: 接入 SpecGate 需求基线', {
+              gitOnly: true,
+              commitPaths: LEGACY_GENERATED_PATHS,
+            });
+            if (!committed.ok) return fail(`git 提交失败：${committed.stderr}`, committed);
+            return ok(
+              `H0 已批准。已写入需求基线 ${finished.baseline?.doc || 'openspec/REQ.md'}，会进入 H1_PENDING；` +
+                '老项目未生成脚手架。下一步：/sg-change <name> --type feature 并在 proposal 中引用 REQ-xxx。',
+              { gate: 'H0', phase: 'H1_PENDING', mode: 'existing', baseline: finished.baseline },
+            );
+          }
           return ok('H0 已批准，执行 /sg-run 生成脚手架与首个 change。', {
             gate: 'H0',
             phase: 'H0_PENDING',

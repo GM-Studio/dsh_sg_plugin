@@ -7,6 +7,8 @@ import { parseDelta, parseSpec } from './openspec/parser.js';
 import { validateDeltaFiles } from './openspec/validator.js';
 import { discoverSuites, loadPlan, computePlanHash, validatePlan } from './plan.js';
 import { checkApprovalHash } from './approvals.js';
+import { requirementsConfig } from './change.js';
+import { extractReqIds, isRequirementsFrozen, parseReqBaseline } from './requirements.js';
 
 const PROPOSAL_SECTIONS = ['问题', '目标', '非目标', '影响面'];
 
@@ -74,16 +76,55 @@ export function checkProposal(root, change) {
   return errors;
 }
 
+/**
+ * REQ-008: when the project declares a requirements baseline, the proposal must
+ * reference at least one REQ-xxx and every reference must exist in REQ.md.
+ */
+export function checkRequirements({ root, change }) {
+  const rules = requirementsConfig(root);
+  if (!rules.enabled) return { ok: true, errors: [], skipped: true };
+  const errors = [];
+  const frozen = isRequirementsFrozen(root, rules.version);
+  if (!frozen.ok) errors.push(frozen.message);
+  const baseline = exists(path.join(root, 'openspec', 'REQ.md'))
+    ? parseReqBaseline(readText(path.join(root, 'openspec', 'REQ.md')))
+    : { reqs: [], acs: [] };
+  const known = new Set(baseline.reqs.map((req) => req.id));
+  const proposalFile = path.join(changeDir(root, change), 'proposal.md');
+  const proposalText = exists(proposalFile) ? readText(proposalFile) : '';
+  const referenced = extractReqIds(proposalText);
+  if (referenced.size === 0) {
+    errors.push('proposal.md 必须至少引用一个 REQ-xxx（需求基线中的需求编号）');
+  }
+  for (const id of referenced) {
+    if (!known.has(id)) errors.push(`proposal.md 引用了不存在的需求编号：${id}`);
+  }
+  return {
+    ok: errors.length === 0,
+    errors,
+    reqs: Array.from(known),
+    referenced: Array.from(referenced),
+  };
+}
+
 export function checkM1({ root, state }) {
   if (!state?.change) {
     return { ok: false, errors: ['没有进行中的 change'] };
   }
   const errors = [...checkProposal(root, state.change)];
+  const requirementCheck = checkRequirements({ root, change: state.change });
+  errors.push(...requirementCheck.errors);
   const files = collectDelta(root, state.change);
   const specs = readSpecsAt(root, state.baseCommit);
   const validation = validateDeltaFiles({ files, specs, type: state.type });
   errors.push(...validation.errors);
-  return { ok: errors.length === 0, errors, counts: validation.counts, files };
+  return {
+    ok: errors.length === 0,
+    errors,
+    counts: validation.counts,
+    files,
+    requirements: requirementCheck,
+  };
 }
 
 export function computeArtifactHash({ root, change, specsBase }) {

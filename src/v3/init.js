@@ -7,6 +7,26 @@ import { exists, writeText, ensureDir } from './util/fsx.js';
 import { digest } from './util/hash.js';
 import { scanEnv, writeEnvReport } from './env-scan.js';
 import { detectJavaProject, validateJavaSelection } from './java-detect.js';
+import { patchConfigRequirements } from './change.js';
+import {
+  renderMarkdownReport,
+  renderScanSummary,
+  reverseRequirements,
+  scanProject,
+} from './reverse.js';
+import { isGitRepo } from './util/git.js';
+import {
+  MAX_CONFIRM_ROUNDS,
+  askInitConfirmation,
+  collectRequirements,
+  normalizeRequirements,
+  renderInitConfirmation,
+  renderRequirementsSummary,
+  writeRequirementsBaseline,
+} from './requirements.js';
+
+export const TECH_KEYS = ['stack', 'buildTool', 'jdk', 'bootVersion', 'modules'];
+export const OTHER_KEYS = ['background', 'team', 'steps'];
 
 export const CONTEXT_FIELDS = [
   {
@@ -65,13 +85,6 @@ export const CONTEXT_FIELDS = [
     question: '选择模块：minimal（Web+Validation+Actuator+Test）或 minimal+jpa',
   },
   {
-    key: 'acceptance',
-    label: '验收标准',
-    required: true,
-    default: 'GET /health 返回 200 {"status":"ok"}，并有自动化测试',
-    question: 'MVP 的可观察验收标准是什么？',
-  },
-  {
     key: 'team',
     label: '团队背景与规范',
     required: true,
@@ -124,10 +137,19 @@ function answerOf(answer, index = 0) {
   return item?.selected;
 }
 
-export async function collectContext({ userQuestions, agent, signal, initial = {} }) {
+export async function collectContext({
+  userQuestions,
+  agent,
+  signal,
+  initial = {},
+  skip = [],
+  only = null,
+}) {
   const context = { ...initial };
   for (const field of CONTEXT_FIELDS) {
-    if (context[field.key]) continue;
+    if (skip.includes(field.key)) continue;
+    if (only && !only.includes(field.key)) continue;
+    if (context[field.key] && !only) continue;
     if (field.when && !field.when(context)) continue;
     const values = field.optionsFor ? field.optionsFor(context) : field.options;
     const options = values
@@ -158,7 +180,13 @@ export async function collectContext({ userQuestions, agent, signal, initial = {
       continue;
     }
     const selected = answerOf(answer);
-    context[field.key] = selected && selected !== '跳过' ? selected : field.default;
+    const previous = context[field.key];
+    context[field.key] =
+      selected && selected !== '跳过'
+        ? selected
+        : previous !== undefined
+          ? previous
+          : field.default;
   }
   return context;
 }
@@ -173,41 +201,66 @@ export function renderContextSummary(context) {
         ]
       : [];
   return [
-    '# H0 初始化上下文',
+    '# H0 技术栈与项目上下文',
     '',
-    `- 背景与 MVP：${context.background}`,
+    `- 项目背景与目标：${context.background}`,
     `- 技术栈：${context.stack}`,
     ...java,
-    `- 验收标准：${context.acceptance}`,
     `- 团队与规范：${context.team}`,
     `- 实施步骤：${context.steps}`,
-    '',
-    '确认后将创建仓库、脚手架与首个 change（停在 H1）。',
   ].join('\n');
 }
 
-export async function confirmContext({ userQuestions, agent, signal, context }) {
-  for (let round = 0; round < 3; round += 1) {
-    const answer = await userQuestions.ask({
-      questions: [
-        {
-          id: 'sg-init-h0',
-          header: 'SpecGate H0 确认',
-          question: renderContextSummary(context),
-          options: [
-            { label: '确认', description: '按该上下文初始化' },
-            { label: '需要修改', description: '逐项重新回答' },
-          ],
-        },
-      ],
-      agent,
-      signal,
+/**
+ * REQ-006: the requirements draft and the tech stack share one confirmation
+ * point. Picking a section re-asks only that section, then re-renders the page.
+ */
+export async function confirmInit({ userQuestions, agent, signal, requirements, context }) {
+  let reqs = normalizeRequirements(requirements);
+  let ctx = { ...context };
+  for (let round = 0; round < MAX_CONFIRM_ROUNDS; round += 1) {
+    const page = renderInitConfirmation({
+      requirementsBlock: renderRequirementsSummary(reqs),
+      contextBlock: renderContextSummary(ctx),
     });
-    if (answerOf(answer) !== '需要修改') return { ok: true, context };
-    const next = await collectContext({ userQuestions, agent, signal, initial: {} });
-    Object.assign(context, next);
+    const answer = await askInitConfirmation({ userQuestions, agent, signal, question: page });
+    if (!answer.ok) {
+      if (round === 0) {
+        return {
+          ok: true,
+          autoConfirmed: true,
+          reason: answer.code,
+          requirements: reqs,
+          context: ctx,
+        };
+      }
+      return { ok: false, message: `确认问题不可用：${answer.message}` };
+    }
+    if (answer.action === '确认') return { ok: true, requirements: reqs, context: ctx };
+    if (answer.action === '修改需求') {
+      reqs = await collectRequirements({ userQuestions, agent, signal, initial: reqs });
+    } else if (answer.action === '修改技术栈') {
+      ctx = await collectContext({ userQuestions, agent, signal, initial: ctx, only: TECH_KEYS });
+    } else if (answer.action === '修改其他确认点') {
+      ctx = await collectContext({ userQuestions, agent, signal, initial: ctx, only: OTHER_KEYS });
+    } else {
+      return { ok: true, requirements: reqs, context: ctx };
+    }
   }
-  return { ok: false, message: 'H0 修改次数超过上限' };
+  return { ok: false, message: '初始化确认次数超过上限' };
+}
+
+/** Backwards-compatible single-section confirmation over the tech stack only. */
+export async function confirmContext({ userQuestions, agent, signal, context }) {
+  const result = await confirmInit({
+    userQuestions,
+    agent,
+    signal,
+    requirements: normalizeRequirements({}),
+    context,
+  });
+  if (!result.ok) return result;
+  return { ok: true, context: result.context };
 }
 
 function nodeScaffold() {
@@ -524,7 +577,7 @@ process.exit(ok ? 0 : 1);
 
 function genericChangeFiles() {
   return {
-    'openspec/changes/add-version/proposal.md': `# 变更提案：add-version\n\n## 问题\n通用骨架只有占位版本 0.1.0。\n\n## 目标\nVERSION 固定为 1.0.0，并由 check.mjs 校验。\n\n## 非目标\n不绑定技术栈。\n\n## 影响面\nVERSION / check.mjs\n`,
+    'openspec/changes/add-version/proposal.md': `# 变更提案：add-version\n\n## 问题\n通用骨架只有占位版本 0.1.0。\n\n## 目标\nVERSION 固定为 1.0.0，并由 check.mjs 校验。\n\n## 非目标\n不绑定技术栈。\n\n## 影响面\nVERSION / check.mjs\n- 关联需求：REQ-001\n`,
     'openspec/changes/add-version/specs/ops/spec.md': `## ADDED Requirements\n\n### Requirement: 版本文件 (REQ-001)\n\n#### Scenario: 版本为 1.0.0 (AC-001)\n\n- **When** 运行 check.mjs\n- **Then** VERSION 为 1.0.0\n`,
     'openspec/changes/add-version/design.md': `# 方案：add-version\n\n## 目标与非目标\n更新 VERSION 与校验脚本。\n\n## 任务图\nT-001。\n\n## AC 到用例\nAC-001 由 check.mjs 覆盖。\n\n## 风险\n无。\n`,
     'openspec/changes/add-version/tasks.md': `# 任务：add-version\n\n## T-001 版本文件\n<!-- sg:task {"id":"T-001","title":"版本文件","ac":["AC-001"],"deps":[],"parallel":false} -->\n- [ ] VERSION 改为 1.0.0\n- [ ] check.mjs 校验 1.0.0\n`,
@@ -908,7 +961,7 @@ export function writeScaffold(root, files) {
 
 export function writeArtifacts(root, context) {
   const files = {
-    'project-context.md': `# 项目上下文\n\n## 背景与 MVP\n${context.background}\n\n## 技术栈\n${context.stack}\n\n## 验收标准\n${context.acceptance}\n\n## 团队与规范\n${context.team}\n\n## 实施步骤\n${context.steps}\n`,
+    'project-context.md': `# 项目上下文\n\n## 背景与 MVP\n${context.background}\n\n## 技术栈\n${context.stack}\n\n## 需求基线\n见 openspec/REQ.md（唯一需求来源，AC 全部声明 covers）。\n\n## 团队与规范\n${context.team}\n\n## 实施步骤\n${context.steps}\n`,
     'AGENTS.md': `# AGENTS.md\n\n## 团队与规范\n${context.team}\n\n## 命令\n- 运行测试：/sg-run\n- 查看状态：/sg-status\n`,
     'docs/glossary.md': `# 术语表\n\n| 术语 | 定义 |\n|---|---|\n| MVP | ${context.background} |\n`,
     'docs/adr/0001-initial.md': `# ADR-0001 初始化\n\n## 决策\n采用 ${context.stack} 作为 MVP 技术栈。\n`,
@@ -917,21 +970,49 @@ export function writeArtifacts(root, context) {
   return writeScaffold(root, files);
 }
 
-export function gitInitCommit(root, message = 'chore: 初始化 MVP 脚手架') {
+export function gitInitCommit(root, message = 'chore: 初始化 MVP 脚手架', options = {}) {
   const run = (args) =>
     spawnSync('git', ['-c', 'user.name=SpecGate', '-c', 'user.email=specgate@local', ...args], {
       cwd: root,
       encoding: 'utf8',
     });
-  if (!exists(path.join(root, '.git'))) run(['init', '-q']);
+  const hadRepo = exists(path.join(root, '.git'));
+  const initialized = !hadRepo;
+  if (!hadRepo) run(['init', '-q']);
+  // Legacy onboarding only guarantees a repository; it must not commit the
+  // existing working tree (REQ-010: skip scaffolding, git init only). It may
+  // commit exactly the paths SpecGate itself generated, never anything else.
+  if (options.gitOnly) {
+    const paths = (Array.isArray(options.commitPaths) ? options.commitPaths : []).filter(
+      (relative) => exists(path.join(root, relative)),
+    );
+    if (!paths.length) return { ok: true, initialized, hadRepo, committed: false };
+    const pending = run(['status', '--porcelain', '--', ...paths]);
+    if (!pending.stdout.trim()) return { ok: true, initialized, hadRepo, committed: false };
+    for (const relative of paths) run(['add', '--', relative]);
+    const committed = run(['commit', '-q', '-m', message, '--', ...paths]);
+    return {
+      ok: committed.status === 0,
+      stderr: committed.stderr,
+      initialized,
+      hadRepo,
+      committed: committed.status === 0,
+    };
+  }
   run(['add', '-A']);
   const committed = run(['commit', '-q', '-m', message]);
-  return { ok: committed.status === 0, stderr: committed.stderr };
+  return {
+    ok: committed.status === 0,
+    stderr: committed.stderr,
+    initialized,
+    hadRepo,
+    committed: committed.status === 0,
+  };
 }
 
 function firstChangeFiles(context) {
   return {
-    'openspec/changes/add-version/proposal.md': `# 变更提案：add-version\n\n## 问题\nMVP 只有 health，没有版本标识。\n\n## 目标\n新增 GET /version 返回 {"version":"1.0.0"}。\n\n## 非目标\n不改 health。\n\n## 影响面\nindex.js / sg-test.mjs\n`,
+    'openspec/changes/add-version/proposal.md': `# 变更提案：add-version\n\n## 问题\nMVP 只有 health，没有版本标识。\n\n## 目标\n新增 GET /version 返回 {"version":"1.0.0"}。\n\n## 非目标\n不改 health。\n\n## 影响面\nindex.js / sg-test.mjs\n- 关联需求：REQ-001\n`,
     'openspec/changes/add-version/specs/ops/spec.md': `## ADDED Requirements\n\n### Requirement: 版本接口 (REQ-001)\n\n#### Scenario: 返回版本 (AC-001)\n\n- **When** GET /version\n- **Then** 200 {"version":"1.0.0"}\n`,
     'openspec/changes/add-version/design.md': `# 方案：add-version\n\n## 目标与非目标\n新增 /version。\n\n## 任务图\nT-001。\n\n## AC 到用例\nAC-001 由 sg-test.mjs 覆盖。\n\n## 风险\n无。\n`,
     'openspec/changes/add-version/tasks.md': `# 任务：add-version\n\n## T-001 版本接口\n<!-- sg:task {"id":"T-001","title":"版本接口","ac":["AC-001"],"deps":[],"parallel":false} -->\n- [ ] 实现 /version 并补测试\n`,
@@ -964,7 +1045,7 @@ function firstChangeFiles(context) {
 
 function pythonChangeFiles() {
   return {
-    'openspec/changes/add-version/proposal.md': `# 变更提案：add-version\n\n## 问题\nMVP 只有 health，没有版本标识。\n\n## 目标\n新增 GET /version 返回 {"version":"1.0.0"}。\n\n## 非目标\n不改 health。\n\n## 影响面\napp.py / tests/test_health.py\n`,
+    'openspec/changes/add-version/proposal.md': `# 变更提案：add-version\n\n## 问题\nMVP 只有 health，没有版本标识。\n\n## 目标\n新增 GET /version 返回 {"version":"1.0.0"}。\n\n## 非目标\n不改 health。\n\n## 影响面\napp.py / tests/test_health.py\n- 关联需求：REQ-001\n`,
     'openspec/changes/add-version/specs/ops/spec.md': `## ADDED Requirements\n\n### Requirement: 版本接口 (REQ-001)\n\n#### Scenario: 返回版本 (AC-001)\n\n- **When** GET /version\n- **Then** 200 {"version":"1.0.0"}\n`,
     'openspec/changes/add-version/design.md': `# 方案：add-version\n\n## 目标与非目标\n新增 /version。\n\n## 任务图\nT-001。\n\n## AC 到用例\nAC-001 由 tests/test_health.py 增补。\n\n## 风险\n无。\n`,
     'openspec/changes/add-version/tasks.md': `# 任务：add-version\n\n## T-001 版本接口\n<!-- sg:task {"id":"T-001","title":"版本接口","ac":["AC-001"],"deps":[],"parallel":false} -->\n- [ ] app.py 实现 /version\n- [ ] tests/test_health.py 增补 AC-001 用例\n`,
@@ -993,7 +1074,7 @@ function frontendChangeFiles(stack) {
   const appFile = stack === 'react' ? 'src/App.jsx' : 'src/App.vue';
   const testFile = 'e2e/sg-version.spec.ts';
   return {
-    'openspec/changes/add-version/proposal.md': `# 变更提案：add-version\n\n## 问题\n首页没有版本标识。\n\n## 目标\n首页展示 v1.0.0，并有 E2E 覆盖。\n\n## 非目标\n不改路由。\n\n## 影响面\n${appFile} / ${testFile}\n`,
+    'openspec/changes/add-version/proposal.md': `# 变更提案：add-version\n\n## 问题\n首页没有版本标识。\n\n## 目标\n首页展示 v1.0.0，并有 E2E 覆盖。\n\n## 非目标\n不改路由。\n\n## 影响面\n${appFile} / ${testFile}\n- 关联需求：REQ-001\n`,
     'openspec/changes/add-version/specs/ops/spec.md': `## ADDED Requirements\n\n### Requirement: 首页版本标识 (REQ-001)\n\n#### Scenario: 展示版本 (AC-001)\n\n- **When** 访问 /\n- **Then** [data-test="app-version"] 文本为 v1.0.0\n`,
     'openspec/changes/add-version/design.md': `# 方案：add-version\n\n## 目标与非目标\n在首页增加版本标识。\n\n## 任务图\nT-001。\n\n## AC 到用例\nAC-001 由 ${testFile} 覆盖。\n\n## 风险\n无。\n`,
     'openspec/changes/add-version/tasks.md': `# 任务：add-version\n\n## T-001 版本标识\n<!-- sg:task {"id":"T-001","title":"版本标识","ac":["AC-001"],"deps":[],"parallel":false} -->\n- [ ] ${appFile} 增加版本标识\n- [ ] 新增 ${testFile}\n`,
@@ -1026,7 +1107,7 @@ function frontendChangeFiles(stack) {
 
 function monorepoChangeFiles() {
   return {
-    'openspec/changes/add-version/proposal.md': `# 变更提案：add-version\n\n## 问题\nAPI 只有 health。\n\n## 目标\n新增 /version。\n\n## 非目标\n不改 web。\n\n## 影响面\napps/api/index.js / apps/api/sg-test.mjs\n`,
+    'openspec/changes/add-version/proposal.md': `# 变更提案：add-version\n\n## 问题\nAPI 只有 health。\n\n## 目标\n新增 /version。\n\n## 非目标\n不改 web。\n\n## 影响面\napps/api/index.js / apps/api/sg-test.mjs\n- 关联需求：REQ-001\n`,
     'openspec/changes/add-version/specs/ops/spec.md': `## ADDED Requirements\n\n### Requirement: 版本接口 (REQ-001)\n\n#### Scenario: 返回版本 (AC-001)\n\n- **When** GET /version\n- **Then** 200 {"version":"1.0.0"}\n`,
     'openspec/changes/add-version/design.md': `# 方案：add-version\n\n## 目标与非目标\n新增 /version。\n\n## 任务图\nT-001。\n\n## AC 到用例\nAC-001 由 apps/api/sg-test.mjs 覆盖。\n\n## 风险\n无。\n`,
     'openspec/changes/add-version/tasks.md': `# 任务：add-version\n\n## T-001 版本接口\n<!-- sg:task {"id":"T-001","title":"版本接口","ac":["AC-001"],"deps":[],"parallel":false} -->\n- [ ] apps/api/index.js 增加 /version\n- [ ] apps/api/sg-test.mjs 增补断言\n`,
@@ -1074,6 +1155,7 @@ MVP 只有 health，没有版本标识。
 
 ## 影响面
 ${versionFile} / ${versionTest}
+- 关联需求：REQ-001
 `,
     'openspec/changes/add-version/specs/ops/spec.md': `## ADDED Requirements
 
@@ -1242,22 +1324,79 @@ export function onboardExistingJava(root) {
   };
 }
 
-export async function startInitProject({ root, userQuestions, agent, signal }) {
-  const context = await collectContext({ userQuestions, agent, signal });
-  if (context.stack === 'java') {
-    const selection = validateJavaSelection(context);
-    if (!selection.ok) {
-      return { ok: false, code: 'JAVA_MATRIX_INVALID', message: selection.errors.join('; ') };
-    }
+/**
+ * REQ-001/REQ-002/REQ-006: requirements questions run first, then the tech
+ * stack, and both are approved through a single confirmation page. REQ-003:
+ * nothing is written to disk before that confirmation.
+ */
+/**
+ * 老项目接入：完整只读扫描 → 反推四维需求 → 用户确认 → 生成 REQ.md。
+ * 不生成脚手架；仓库不存在时才 git init（已存在则跳过）。
+ */
+/** 老项目接入第一阶段（H0 之前）由 SpecGate 自己生成的资产路径。 */
+const LEGACY_SCAN_PATHS = [
+  '.gitignore',
+  '.specgate/config.yaml',
+  '.specgate/requirements-scan.json',
+  'docs/requirements-scan.md',
+];
+
+export async function startLegacyInitProject({ root, userQuestions, agent, signal }) {
+  if (!userQuestions || typeof userQuestions.ask !== 'function') {
+    return {
+      ok: false,
+      code: 'QUESTIONS_UNAVAILABLE',
+      message: '当前环境没有用户问答服务，无法确认反推需求；请使用交互式会话执行 /sg-init',
+    };
   }
+  const scan = scanProject(root);
+  const proposed = reverseRequirements(scan);
+  const requirements = await collectRequirements({
+    userQuestions,
+    agent,
+    signal,
+    initial: proposed,
+  });
+  const context = {
+    stack: scan.stacks[0]?.stack || 'generic',
+    background: '既有项目接入（未生成脚手架）',
+  };
+  const confirmed = await confirmInit({ userQuestions, agent, signal, requirements, context });
+  if (!confirmed.ok) return confirmed;
+  const finalRequirements = confirmed.requirements;
+  const finalContext = confirmed.context;
+
   const init = initProject(root);
   if (!init.ok) return init;
-  writeEnvReport(root, scanEnv(root));
-  const hash = digest(JSON.stringify(context));
+
+  const hadRepo = isGitRepo(root);
+  if (!hadRepo) {
+    const initialized = gitInitCommit(root, 'chore: 接入 SpecGate 需求基线', { gitOnly: true });
+    if (!initialized.ok) return { ok: false, message: `git init 失败：${initialized.stderr}` };
+  }
+
+  ensureDir(path.join(root, 'docs'));
+  const reportFile = path.join(root, 'docs', 'requirements-scan.md');
+  writeText(reportFile, renderMarkdownReport(scan, finalRequirements) + '\n');
+  const scanFile = path.join(root, '.specgate', 'requirements-scan.json');
+  writeText(scanFile, JSON.stringify(scan, null, 2) + '\n');
+  // 扫描报告属于本项目自己生成的资产，随接入一并入库，避免留下未跟踪文件（REQ-010）。
+  const scanCommit = gitInitCommit(root, 'chore: 扫描既有项目并反推需求', {
+    gitOnly: true,
+    commitPaths: LEGACY_SCAN_PATHS,
+  });
+  if (!scanCommit.ok) return { ok: false, message: `git 提交失败：${scanCommit.stderr}` };
+
+  const hash = digest(JSON.stringify({ context: finalContext, requirements: finalRequirements }));
   patchState(root, (draft) => {
     draft.phase = 'H0_PENDING';
     draft.change = null;
-    draft.context = context;
+    draft.mode = 'existing';
+    draft.context = { ...finalContext, requirements: finalRequirements };
+    draft.requirements = finalRequirements;
+    draft.requirementsVersion = 'v1.0';
+    draft.requirementsDoc = 'openspec/REQ.md';
+    draft.requirementsScan = { generatedAt: new Date().toISOString(), fileCount: scan.fileCount };
     draft.h0 = { hash, approvedAt: null };
     draft.approvals = {
       H0: { artifactHash: null, issuedAt: null, expiresAt: null, consumedAt: null },
@@ -1266,11 +1405,115 @@ export async function startInitProject({ root, userQuestions, agent, signal }) {
       H3: { artifactHash: null, issuedAt: null, expiresAt: null, consumedAt: null },
     };
   });
-  return { ok: true, mode: 'new', phase: 'H0_PENDING', context, h0Hash: hash };
+  return {
+    ok: true,
+    mode: 'existing',
+    phase: 'H0_PENDING',
+    context: { ...finalContext, requirements: finalRequirements },
+    requirements: finalRequirements,
+    requirementsDoc: 'openspec/REQ.md',
+    autoConfirmed: Boolean(confirmed.autoConfirmed),
+    h0Hash: hash,
+    scan: {
+      fileCount: scan.fileCount,
+      truncated: scan.truncated,
+      stacks: scan.stacks.map((item) => item.stack),
+      routes: scan.routes.length,
+      capabilities: scan.capabilities.map((item) => item.label),
+      report: 'docs/requirements-scan.md',
+      json: '.specgate/requirements-scan.json',
+      summary: renderScanSummary(scan),
+    },
+    git: { hadRepo, initialized: !hadRepo },
+  };
 }
 
-export async function finishInitProject({ root, state }) {
+export async function startInitProject({ root, userQuestions, agent, signal, mode = 'new' }) {
+  if (mode === 'existing') return startLegacyInitProject({ root, userQuestions, agent, signal });
+  if (!userQuestions || typeof userQuestions.ask !== 'function') {
+    return {
+      ok: false,
+      code: 'QUESTIONS_UNAVAILABLE',
+      message: '当前环境没有用户问答服务，无法完成需求盘问；请使用交互式会话执行 /sg-init',
+    };
+  }
+  const requirements = await collectRequirements({ userQuestions, agent, signal });
+  const context = await collectContext({ userQuestions, agent, signal, initial: { requirements } });
+  if (context.stack === 'java') {
+    const selection = validateJavaSelection(context);
+    if (!selection.ok) {
+      return { ok: false, code: 'JAVA_MATRIX_INVALID', message: selection.errors.join('; ') };
+    }
+  }
+  const confirmed = await confirmInit({ userQuestions, agent, signal, requirements, context });
+  if (!confirmed.ok) return confirmed;
+  const finalRequirements = confirmed.requirements;
+  const finalContext = confirmed.context;
+  finalContext.requirements = finalRequirements;
+  const init = initProject(root);
+  if (!init.ok) return init;
+  writeEnvReport(root, scanEnv(root));
+  const hash = digest(JSON.stringify({ context: finalContext, requirements: finalRequirements }));
+  patchState(root, (draft) => {
+    draft.phase = 'H0_PENDING';
+    draft.change = null;
+    draft.mode = 'new';
+    draft.context = finalContext;
+    draft.requirements = finalRequirements;
+    draft.requirementsVersion = 'v1.0';
+    draft.requirementsDoc = 'openspec/REQ.md';
+    draft.h0 = { hash, approvedAt: null };
+    draft.approvals = {
+      H0: { artifactHash: null, issuedAt: null, expiresAt: null, consumedAt: null },
+      H1: { artifactHash: null, issuedAt: null, expiresAt: null, consumedAt: null },
+      H2: { artifactHash: null, issuedAt: null, expiresAt: null, consumedAt: null },
+      H3: { artifactHash: null, issuedAt: null, expiresAt: null, consumedAt: null },
+    };
+  });
+  return {
+    ok: true,
+    mode: 'new',
+    phase: 'H0_PENDING',
+    context: finalContext,
+    requirements: finalRequirements,
+    requirementsDoc: 'openspec/REQ.md',
+    autoConfirmed: Boolean(confirmed.autoConfirmed),
+    h0Hash: hash,
+  };
+}
+
+export async function finishInitProject({ root, state, gitOnly = false }) {
   const context = state.context || {};
+  const requirements = context.requirements || state.requirements || {};
+  const baseline = writeRequirementsBaseline(root, requirements, {
+    version: state.requirementsVersion || 'v1.0',
+  });
+  if (gitOnly) {
+    const gitOnlyResult = gitInitCommit(root, 'chore: 接入 SpecGate 需求基线', { gitOnly: true });
+    if (!gitOnlyResult.ok) return { ok: false, message: `git init 失败：${gitOnlyResult.stderr}` };
+    patchConfigRequirements(root, {
+      enabled: true,
+      version: state.requirementsVersion || 'v1.0',
+    });
+    patchState(root, (draft) => {
+      draft.phase = 'H1_PENDING';
+      if (!draft.requirementsVersion) draft.requirementsVersion = 'v1.0';
+      draft.requirementsDoc = 'openspec/REQ.md';
+    });
+    return {
+      ok: true,
+      phase: 'H1_PENDING',
+      change: null,
+      mode: 'existing',
+      scaffold: { written: [], skipped: [] },
+      baseline,
+      git: gitOnlyResult,
+    };
+  }
+  patchConfigRequirements(root, {
+    enabled: true,
+    version: state.requirementsVersion || 'v1.0',
+  });
   const scaffold = writeScaffold(root, scaffoldFiles(context.stack || 'generic', context));
   writeArtifacts(root, context);
   configureSuites(root, context.stack || 'generic', context);
@@ -1291,6 +1534,7 @@ export async function finishInitProject({ root, state }) {
     type: 'feature',
     baseCommit: null,
     changeKey: null,
+    requirements: Object.keys(requirements).length ? ['REQ-001'] : null,
   });
   if (!created.ok) return created;
   for (const [relative, content] of Object.entries(files)) {
@@ -1303,7 +1547,7 @@ export async function finishInitProject({ root, state }) {
       approvedAt: draft.h0?.approvedAt || new Date().toISOString(),
     };
   });
-  return { ok: true, phase: 'H1_PENDING', change: 'add-version', scaffold };
+  return { ok: true, phase: 'H1_PENDING', change: 'add-version', scaffold, baseline };
 }
 
 export async function initNewProject({ root, userQuestions, agent, signal }) {

@@ -9,6 +9,7 @@ import { headCommit, isGitRepo } from './util/git.js';
 import { loadSkill } from './skills.js';
 import { suggestSuites } from './suites.js';
 import { detectInitMode, startInitProject, collectContext, onboardExistingJava } from './init.js';
+import { withNotice } from './notice.js';
 import { writeText } from './util/fsx.js';
 import { digest } from './util/hash.js';
 import { patchState } from './state.js';
@@ -48,7 +49,10 @@ export function registerCommands(ctx, runtime) {
   const disposers = [];
   const register = (definition) => {
     try {
-      const dispose = commands.register(definition);
+      const dispose = commands.register({
+        ...definition,
+        handler: withNotice(definition.handler),
+      });
       if (typeof dispose === 'function') disposers.push(dispose);
     } catch (error) {
       console.warn(`[specgate] failed to register command ${definition.name}:`, error);
@@ -62,18 +66,31 @@ export function registerCommands(ctx, runtime) {
     async handler(inv) {
       const root = runtime.getCwd(inv?.agent);
       const userQuestions = runtime.service('userQuestions');
-      if (
-        detectInitMode(root) === 'new' &&
-        userQuestions &&
-        typeof userQuestions.ask === 'function'
-      ) {
+      const mode = detectInitMode(root);
+      if (userQuestions && typeof userQuestions.ask === 'function') {
         const result = await startInitProject({
           root,
           userQuestions,
           agent: inv?.agent,
           signal: inv?.signal,
+          mode,
         });
         if (!result.ok) return { kind: 'error', text: `初始化失败：${result.message}` };
+        if (mode === 'existing') {
+          writeText(
+            path.join(root, '.specgate', 'init-result.json'),
+            `${JSON.stringify(result, null, 2)}\n`,
+          );
+          return {
+            kind: 'success',
+            text: [
+              `已扫描现有项目（${result.scan.fileCount} 个文件）并反推需求草稿，阶段 H0_PENDING。`,
+              `扫描报告：${result.scan.report}；结构化结果：.specgate/init-result.json。`,
+              '未生成任何脚手架文件；仓库已存在时保持原状，否则已执行 git init。',
+              '请调用 sg_approve（gate="H0"）确认需求；确认后才写入 openspec/REQ.md 并进入 H1_PENDING。',
+            ].join('\n'),
+          };
+        }
         writeText(
           path.join(root, '.specgate', 'init-result.json'),
           `${JSON.stringify(result, null, 2)}\n`,
@@ -81,8 +98,8 @@ export function registerCommands(ctx, runtime) {
         return {
           kind: 'success',
           text: [
-            `已采集新建项目上下文（${result.context.stack}），阶段 H0_PENDING。`,
-            '请调用 sg_approve 工具（gate="H0"）审阅上下文；批准后执行 /sg-run 生成脚手架与首个 change。',
+            `已采集新建项目需求草稿与技术栈（${result.context.stack}），阶段 H0_PENDING。`,
+            '请调用 sg_approve 工具（gate="H0"）审阅需求与确认点；批准后执行 /sg-run 写入 openspec/REQ.md、生成脚手架与首个 change。',
             '需要修改上下文时执行 /sg-context --reset。',
             '结构化结果：.specgate/init-result.json',
           ].join('\n'),

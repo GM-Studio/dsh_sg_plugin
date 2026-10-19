@@ -157,9 +157,12 @@ test('M1 未通过时不允许批准', async () => {
     recursive: true,
     force: true,
   });
+  // REQ-001 起 init 本身会盘问需求与确认点，这里记录基线，验证 M1 失败后不再提问。
+  const askedBeforeApprove = services.userQuestions.asked;
+  assert.ok(askedBeforeApprove >= 4, 'sg-init 应已就四个需求维度提问');
   const result = await callTool(ctx, 'sg_approve', { gate: 'H1' });
   assert.match(result.text, /M1 未通过/);
-  assert.equal(services.userQuestions.asked, 0);
+  assert.equal(services.userQuestions.asked, askedBeforeApprove);
 });
 
 test('artifactHash 对换行不敏感、对内容敏感', () => {

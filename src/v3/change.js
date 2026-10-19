@@ -1,6 +1,7 @@
 import path from 'node:path';
 import { ensureDir, exists, readText, writeText } from './util/fsx.js';
 import { init as initState, load as loadState, patchState } from './state.js';
+import { REQ_VERSION, isRequirementsFrozen } from './requirements.js';
 
 export const CONFIG_FILE = 'config.yaml';
 export const CHANGE_NAME_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
@@ -28,6 +29,13 @@ testing:
 maxParallel: 2
 coverage:
   blocking: false
+# 需求基线（REQ.md）。enabled: true 时 sg-change/M1 会校验需求基线与 REQ 引用；
+# /sg-init 完成需求确认后会自动置为 true，老项目保持 false 不受影响。
+requirements:
+  enabled: false
+  version: v1.0
+  doc: openspec/REQ.md
+  history: openspec/history
 `;
 
 function parseScalar(raw) {
@@ -108,7 +116,7 @@ export function parseConfig(text) {
 }
 
 export const SUITE_KINDS = ['node-test', 'pytest', 'command', 'maven'];
-export const JAVA_JDK_VERSIONS = ['8', '11', '13', '17', '21'];
+export const JAVA_JDK_VERSIONS = ['8', '11', '17', '21'];
 export const JAVA_BUILD_TOOLS = ['maven'];
 
 /** Normalize configured suites; fall back to the v3.0 single-suite shape. */
@@ -217,6 +225,52 @@ export function validateSuites(root, suites) {
   return { ok: errors.length === 0, errors };
 }
 
+/**
+ * REQ-008: requirements enforcement is opt-in. Projects without the
+ * `requirements` config block (all legacy projects) behave exactly as before.
+ */
+export function requirementsConfig(root) {
+  const config = readConfig(root);
+  const block = config?.requirements;
+  if (!block || typeof block !== 'object') return { enabled: false, version: REQ_VERSION };
+  return {
+    enabled: block.enabled !== false,
+    version: block.version ? String(block.version) : REQ_VERSION,
+    doc: block.doc ? String(block.doc) : 'openspec/REQ.md',
+  };
+}
+
+/** Rewrite only `enabled`/`version` inside the existing requirements block. */
+export function patchConfigRequirements(root, { enabled, version } = {}) {
+  const file = configPath(root);
+  if (!exists(file)) return { ok: false, code: 'NO_CONFIG', message: '缺少 .specgate/config.yaml' };
+  const lines = readText(file).split('\n');
+  let inBlock = false;
+  let touched = 0;
+  const next = lines.map((line) => {
+    if (/^requirements:\s*$/.test(line)) {
+      inBlock = true;
+      return line;
+    }
+    if (inBlock && /^\S/.test(line) && line.trim() !== '') {
+      inBlock = false;
+      return line;
+    }
+    if (!inBlock) return line;
+    if (enabled !== undefined && /^\s+enabled:\s*/.test(line)) {
+      touched += 1;
+      return `  enabled: ${enabled ? 'true' : 'false'}`;
+    }
+    if (version !== undefined && /^\s+version:\s*/.test(line)) {
+      touched += 1;
+      return `  version: ${version}`;
+    }
+    return line;
+  });
+  writeText(file, next.join('\n'));
+  return { ok: true, touched };
+}
+
 export function configPath(root) {
   return path.join(root, '.specgate', CONFIG_FILE);
 }
@@ -301,7 +355,7 @@ export function initProject(root, options = {}) {
 
 export function createChange(
   root,
-  { name, type = 'feature', baseCommit = null, changeKey = null } = {},
+  { name, type = 'feature', baseCommit = null, changeKey = null, requirements = null } = {},
 ) {
   if (!CHANGE_NAME_PATTERN.test(String(name || ''))) {
     return {
@@ -324,6 +378,11 @@ export function createChange(
   if (!loaded.ok) return loaded;
   const { state } = loaded;
   const config = readConfig(root);
+  const requirementRules = requirementsConfig(root);
+  if (requirementRules.enabled) {
+    const frozen = isRequirementsFrozen(root, requirementRules.version);
+    if (!frozen.ok) return frozen;
+  }
   const effectiveKey = changeKey || (config?.changeKey ? String(config.changeKey) : null);
   if (effectiveKey !== null && !CHANGE_KEY_PATTERN.test(effectiveKey)) {
     return {
@@ -353,8 +412,11 @@ export function createChange(
   }
 
   ensureDir(changeDir);
+  const linkedReqs = Array.isArray(requirements)
+    ? requirements.filter((id) => /^REQ-\d{3,}$/.test(String(id)))
+    : [];
   const files = {
-    'proposal.md': proposalTemplate(name, type),
+    'proposal.md': proposalTemplate(name, type, linkedReqs),
     'design.md': designTemplate(name, type),
     'tasks.md': tasksTemplate(name),
     'tests/cases.md': casesTemplate(),
@@ -403,11 +465,15 @@ export function createChange(
   return { ok: true, root, name, type, changeKey: effectiveKey, changeDir, state: saved.state };
 }
 
-function proposalTemplate(name, type) {
+function proposalTemplate(name, type, requirements = []) {
+  const linkedDraft = requirements.length
+    ? requirements.map((id) => `- 关联需求：${id}`).join('\n')
+    : '- 关联需求：（必填）引用需求基线 openspec/REQ.md 中的 REQ-xxx';
   return `# 变更提案：${name}
 
 - 类型：${type}
 - 状态：Draft
+${linkedDraft}
 
 ## 问题
 
