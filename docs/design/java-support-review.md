@@ -470,7 +470,7 @@ suites:
 1. 版本矩阵复杂：JDK × Boot × Maven/Gradle × 质量工具，必须锁定并 CI 验证。
 2. JDK8 工具链老化：Checkstyle 10/PMD 7/SpotBugs 4.8 要求 Java 11+，需旧版本或独立 analysis JVM。
 3. 既有仓库零侵入的代价：Spotless/JaCoCo 无法完全等价接入，必须接受降级与补丁建议。
-4. Wrapper 生成依赖工具/网络；无工具时只能给指引。
+4. Wrapper 由模板内置并校验 SHA-256；既有仓库缺失时仍需系统工具或补丁。
 5. 构建脚本执行即代码执行：Maven/Gradle 插件可执行任意代码；“不执行不可信构建脚本”只能通过只接入可信仓库、固定 goals、最小权限实现。
 6. Boot 4.x 生态较新：第三方插件、Gradle 版本、静态分析工具兼容性需要 PoC。
 7. monorepo 变更选择：根构建文件变更可能需要全量构建，耗时较长。
@@ -484,16 +484,16 @@ suites:
 
 ---
 
-## 17. 下一步
+## 17. 实施拆分与下一步
 
-1. 本稿落盘后，进入 SpecGate 门控：
-   - G1 需求理解确认（本稿即需求基线）；
-   - G2 变更分类（建议 L2 技术实现）；
-   - G3 proposal；
-   - G4 design；
-   - G5 specs；
-   - G6 tasks；
-   - G7 批判性审核；
-   - G8-G11 实施与收尾。
-2. 本稿不创建 `openspec/changes/` 包，不修改实现代码。
-3. 实施前需完成 S1 的 PoC：锁定 JDK/Boot/Gradle/质量工具版本矩阵。
+G7 批判性审核后，实施拆分为两个 change：
+
+- `java-core`：JDK 8/11/17、Maven、Boot 2.7/3.x、质量门禁、既有 Maven 仓库、Maven CI、测试计划。
+- `java-extension`：JDK21、Boot4、Gradle、Java + Vue/React monorepo、全矩阵 CI、跨平台与安全。
+
+当前状态：
+
+- 基线已修复：189/189 测试通过（commit `e87246e`）。
+- 两个 change 均已补齐 `tests/cases.md` 与 `tests/mapping.json`，AC 覆盖率 100%。
+- 原 `java-stack-support` change 包已删除；本文件保留为需求基线。
+- 下一步：分别完成 G7 复审，再进入实施。

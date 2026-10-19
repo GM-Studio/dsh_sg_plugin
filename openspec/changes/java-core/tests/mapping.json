@@ -1,0 +1,343 @@
+{
+  "schemaVersion": 1,
+  "change": "java-core",
+  "requirements": [
+    {
+      "ac": "AC-001",
+      "covers": ["REQ-001"],
+      "tasks": ["T-007"],
+      "cases": ["TC-001"],
+      "suite": "backend",
+      "priority": "P0"
+    },
+    {
+      "ac": "AC-002",
+      "covers": ["REQ-001"],
+      "tasks": ["T-007"],
+      "cases": ["TC-002"],
+      "suite": "backend",
+      "priority": "P0"
+    },
+    {
+      "ac": "AC-003",
+      "covers": ["REQ-001"],
+      "tasks": ["T-007"],
+      "cases": ["TC-003"],
+      "suite": "backend",
+      "priority": "P0"
+    },
+    {
+      "ac": "AC-004",
+      "covers": ["REQ-002"],
+      "tasks": ["T-003", "T-008"],
+      "cases": ["TC-004"],
+      "suite": "backend",
+      "priority": "P0"
+    },
+    {
+      "ac": "AC-005",
+      "covers": ["REQ-002"],
+      "tasks": ["T-003", "T-008"],
+      "cases": ["TC-005"],
+      "suite": "backend",
+      "priority": "P0"
+    },
+    {
+      "ac": "AC-006",
+      "covers": ["REQ-002"],
+      "tasks": ["T-002", "T-008"],
+      "cases": ["TC-006"],
+      "suite": "backend",
+      "priority": "P0"
+    },
+    {
+      "ac": "AC-007",
+      "covers": ["REQ-003"],
+      "tasks": ["T-007", "T-008"],
+      "cases": ["TC-007"],
+      "suite": "backend",
+      "priority": "P0"
+    },
+    {
+      "ac": "AC-008",
+      "covers": ["REQ-003"],
+      "tasks": ["T-007", "T-008"],
+      "cases": ["TC-008"],
+      "suite": "backend",
+      "priority": "P0"
+    },
+    {
+      "ac": "AC-009",
+      "covers": ["REQ-003"],
+      "tasks": ["T-007", "T-008"],
+      "cases": ["TC-009"],
+      "suite": "backend",
+      "priority": "P0"
+    },
+    {
+      "ac": "AC-010",
+      "covers": ["REQ-004"],
+      "tasks": ["T-007"],
+      "cases": ["TC-010"],
+      "suite": "backend",
+      "priority": "P0"
+    },
+    {
+      "ac": "AC-011",
+      "covers": ["REQ-005"],
+      "tasks": ["T-004"],
+      "cases": ["TC-011"],
+      "suite": "backend",
+      "priority": "P1"
+    },
+    {
+      "ac": "AC-012",
+      "covers": ["REQ-005"],
+      "tasks": ["T-004"],
+      "cases": ["TC-012"],
+      "suite": "backend",
+      "priority": "P1"
+    },
+    {
+      "ac": "AC-013",
+      "covers": ["REQ-005"],
+      "tasks": ["T-004"],
+      "cases": ["TC-013"],
+      "suite": "backend",
+      "priority": "P1"
+    },
+    {
+      "ac": "AC-014",
+      "covers": ["REQ-006"],
+      "tasks": ["T-005"],
+      "cases": ["TC-014"],
+      "suite": "backend",
+      "priority": "P1"
+    },
+    {
+      "ac": "AC-015",
+      "covers": ["REQ-006"],
+      "tasks": ["T-005"],
+      "cases": ["TC-015"],
+      "suite": "backend",
+      "priority": "P1"
+    },
+    {
+      "ac": "AC-016",
+      "covers": ["REQ-006"],
+      "tasks": ["T-005"],
+      "cases": ["TC-016"],
+      "suite": "backend",
+      "priority": "P1"
+    },
+    {
+      "ac": "AC-017",
+      "covers": ["REQ-007"],
+      "tasks": ["T-004"],
+      "cases": ["TC-017"],
+      "suite": "backend",
+      "priority": "P1"
+    },
+    {
+      "ac": "AC-018",
+      "covers": ["REQ-007"],
+      "tasks": ["T-005"],
+      "cases": ["TC-018"],
+      "suite": "backend",
+      "priority": "P1"
+    },
+    {
+      "ac": "AC-019",
+      "covers": ["REQ-007"],
+      "tasks": ["T-005"],
+      "cases": ["TC-019"],
+      "suite": "backend",
+      "priority": "P1"
+    },
+    {
+      "ac": "AC-020",
+      "covers": ["REQ-008"],
+      "tasks": ["T-010"],
+      "cases": ["TC-020"],
+      "suite": "backend",
+      "priority": "P0"
+    },
+    {
+      "ac": "AC-021",
+      "covers": ["REQ-008"],
+      "tasks": ["T-010"],
+      "cases": ["TC-021"],
+      "suite": "backend",
+      "priority": "P0"
+    },
+    {
+      "ac": "AC-022",
+      "covers": ["REQ-008"],
+      "tasks": ["T-010", "T-011"],
+      "cases": ["TC-022"],
+      "suite": "backend",
+      "priority": "P0"
+    },
+    {
+      "ac": "AC-023",
+      "covers": ["REQ-009"],
+      "tasks": ["T-006"],
+      "cases": ["TC-023"],
+      "suite": "backend",
+      "priority": "P0"
+    },
+    {
+      "ac": "AC-024",
+      "covers": ["REQ-009"],
+      "tasks": ["T-006"],
+      "cases": ["TC-024"],
+      "suite": "backend",
+      "priority": "P0"
+    },
+    {
+      "ac": "AC-025",
+      "covers": ["REQ-009"],
+      "tasks": ["T-006"],
+      "cases": ["TC-025"],
+      "suite": "backend",
+      "priority": "P0"
+    },
+    {
+      "ac": "AC-026",
+      "covers": ["REQ-009"],
+      "tasks": ["T-006"],
+      "cases": ["TC-026"],
+      "suite": "backend",
+      "priority": "P0"
+    },
+    {
+      "ac": "AC-027",
+      "covers": ["REQ-010"],
+      "tasks": ["T-010"],
+      "cases": ["TC-027"],
+      "suite": "backend",
+      "priority": "P0"
+    },
+    {
+      "ac": "AC-028",
+      "covers": ["REQ-010"],
+      "tasks": ["T-010"],
+      "cases": ["TC-028"],
+      "suite": "backend",
+      "priority": "P1"
+    },
+    {
+      "ac": "AC-029",
+      "covers": ["REQ-011"],
+      "tasks": ["T-001"],
+      "cases": ["TC-029"],
+      "suite": "backend",
+      "priority": "P1"
+    },
+    {
+      "ac": "AC-030",
+      "covers": ["REQ-011"],
+      "tasks": ["T-006", "T-011"],
+      "cases": ["TC-030"],
+      "suite": "backend",
+      "priority": "P1"
+    },
+    {
+      "ac": "AC-031",
+      "covers": ["REQ-012"],
+      "tasks": ["T-002", "T-009"],
+      "cases": ["TC-031"],
+      "suite": "backend",
+      "priority": "P1"
+    },
+    {
+      "ac": "AC-032",
+      "covers": ["REQ-012"],
+      "tasks": ["T-002", "T-009"],
+      "cases": ["TC-032"],
+      "suite": "backend",
+      "priority": "P1"
+    },
+    {
+      "ac": "AC-033",
+      "covers": ["REQ-013"],
+      "tasks": ["T-003", "T-009"],
+      "cases": ["TC-033"],
+      "suite": "backend",
+      "priority": "P1"
+    },
+    {
+      "ac": "AC-034",
+      "covers": ["REQ-013"],
+      "tasks": ["T-003", "T-009"],
+      "cases": ["TC-034"],
+      "suite": "backend",
+      "priority": "P1"
+    },
+    {
+      "ac": "AC-035",
+      "covers": ["REQ-014"],
+      "tasks": ["T-009"],
+      "cases": ["TC-035"],
+      "suite": "backend",
+      "priority": "P1"
+    },
+    {
+      "ac": "AC-036",
+      "covers": ["REQ-014"],
+      "tasks": ["T-009", "T-011"],
+      "cases": ["TC-036"],
+      "suite": "backend",
+      "priority": "P1"
+    },
+    {
+      "ac": "AC-037",
+      "covers": ["REQ-015"],
+      "tasks": ["T-001", "T-012"],
+      "cases": ["TC-037"],
+      "suite": "backend",
+      "priority": "P0"
+    },
+    {
+      "ac": "AC-038",
+      "covers": ["REQ-015"],
+      "tasks": ["T-012"],
+      "cases": ["TC-038"],
+      "suite": "backend",
+      "priority": "P0"
+    },
+    {
+      "ac": "AC-039",
+      "covers": ["REQ-015"],
+      "tasks": ["T-012"],
+      "cases": ["TC-039"],
+      "suite": "backend",
+      "priority": "P0"
+    },
+    {
+      "ac": "AC-040",
+      "covers": ["REQ-016"],
+      "tasks": ["T-012"],
+      "cases": ["TC-040"],
+      "suite": "backend",
+      "priority": "P2"
+    },
+    {
+      "ac": "AC-041",
+      "covers": ["REQ-016"],
+      "tasks": ["T-012"],
+      "cases": ["TC-041"],
+      "suite": "backend",
+      "priority": "P2"
+    },
+    {
+      "ac": "AC-042",
+      "covers": ["REQ-016"],
+      "tasks": ["T-001", "T-012"],
+      "cases": ["TC-042"],
+      "suite": "backend",
+      "priority": "P0"
+    }
+  ],
+  "automation": []
+}

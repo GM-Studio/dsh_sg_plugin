@@ -1,0 +1,215 @@
+{
+  "schemaVersion": 1,
+  "change": "java-extension",
+  "requirements": [
+    {
+      "ac": "AC-101",
+      "covers": ["REQ-101"],
+      "tasks": ["T-101"],
+      "cases": ["TC-001"],
+      "suite": "backend",
+      "priority": "P0"
+    },
+    {
+      "ac": "AC-102",
+      "covers": ["REQ-101"],
+      "tasks": ["T-101"],
+      "cases": ["TC-002"],
+      "suite": "backend",
+      "priority": "P0"
+    },
+    {
+      "ac": "AC-103",
+      "covers": ["REQ-101"],
+      "tasks": ["T-101"],
+      "cases": ["TC-003"],
+      "suite": "backend",
+      "priority": "P0"
+    },
+    {
+      "ac": "AC-104",
+      "covers": ["REQ-102"],
+      "tasks": ["T-101"],
+      "cases": ["TC-004"],
+      "suite": "backend",
+      "priority": "P0"
+    },
+    {
+      "ac": "AC-105",
+      "covers": ["REQ-103"],
+      "tasks": ["T-102"],
+      "cases": ["TC-005"],
+      "suite": "backend",
+      "priority": "P0"
+    },
+    {
+      "ac": "AC-106",
+      "covers": ["REQ-103"],
+      "tasks": ["T-102"],
+      "cases": ["TC-006"],
+      "suite": "backend",
+      "priority": "P0"
+    },
+    {
+      "ac": "AC-107",
+      "covers": ["REQ-104"],
+      "tasks": ["T-103"],
+      "cases": ["TC-007"],
+      "suite": "backend",
+      "priority": "P0"
+    },
+    {
+      "ac": "AC-108",
+      "covers": ["REQ-104"],
+      "tasks": ["T-103"],
+      "cases": ["TC-008"],
+      "suite": "backend",
+      "priority": "P0"
+    },
+    {
+      "ac": "AC-109",
+      "covers": ["REQ-104"],
+      "tasks": ["T-103"],
+      "cases": ["TC-009"],
+      "suite": "backend",
+      "priority": "P0"
+    },
+    {
+      "ac": "AC-110",
+      "covers": ["REQ-105"],
+      "tasks": ["T-102"],
+      "cases": ["TC-010"],
+      "suite": "backend",
+      "priority": "P0"
+    },
+    {
+      "ac": "AC-111",
+      "covers": ["REQ-105"],
+      "tasks": ["T-103"],
+      "cases": ["TC-011"],
+      "suite": "backend",
+      "priority": "P0"
+    },
+    {
+      "ac": "AC-112",
+      "covers": ["REQ-106"],
+      "tasks": ["T-104"],
+      "cases": ["TC-012"],
+      "suite": "backend",
+      "priority": "P1"
+    },
+    {
+      "ac": "AC-113",
+      "covers": ["REQ-106"],
+      "tasks": ["T-104"],
+      "cases": ["TC-013"],
+      "suite": "backend",
+      "priority": "P1"
+    },
+    {
+      "ac": "AC-114",
+      "covers": ["REQ-107"],
+      "tasks": ["T-105"],
+      "cases": ["TC-014"],
+      "suite": "backend",
+      "priority": "P1"
+    },
+    {
+      "ac": "AC-115",
+      "covers": ["REQ-107"],
+      "tasks": ["T-105"],
+      "cases": ["TC-015"],
+      "suite": "web-unit",
+      "priority": "P1"
+    },
+    {
+      "ac": "AC-116",
+      "covers": ["REQ-107"],
+      "tasks": ["T-105"],
+      "cases": ["TC-016"],
+      "suite": "backend",
+      "priority": "P1"
+    },
+    {
+      "ac": "AC-117",
+      "covers": ["REQ-108"],
+      "tasks": ["T-105"],
+      "cases": ["TC-017"],
+      "suite": "backend",
+      "priority": "P1"
+    },
+    {
+      "ac": "AC-118",
+      "covers": ["REQ-108"],
+      "tasks": ["T-105"],
+      "cases": ["TC-018"],
+      "suite": "web-unit",
+      "priority": "P1"
+    },
+    {
+      "ac": "AC-119",
+      "covers": ["REQ-109"],
+      "tasks": ["T-106"],
+      "cases": ["TC-019"],
+      "suite": "backend",
+      "priority": "P0"
+    },
+    {
+      "ac": "AC-120",
+      "covers": ["REQ-109"],
+      "tasks": ["T-106"],
+      "cases": ["TC-020"],
+      "suite": "backend",
+      "priority": "P0"
+    },
+    {
+      "ac": "AC-121",
+      "covers": ["REQ-109"],
+      "tasks": ["T-106"],
+      "cases": ["TC-021"],
+      "suite": "backend",
+      "priority": "P0"
+    },
+    {
+      "ac": "AC-122",
+      "covers": ["REQ-110"],
+      "tasks": ["T-106"],
+      "cases": ["TC-022"],
+      "suite": "backend",
+      "priority": "P0"
+    },
+    {
+      "ac": "AC-123",
+      "covers": ["REQ-110"],
+      "tasks": ["T-106"],
+      "cases": ["TC-023"],
+      "suite": "backend",
+      "priority": "P0"
+    },
+    {
+      "ac": "AC-124",
+      "covers": ["REQ-111"],
+      "tasks": ["T-106"],
+      "cases": ["TC-024"],
+      "suite": "backend",
+      "priority": "P0"
+    },
+    {
+      "ac": "AC-125",
+      "covers": ["REQ-111"],
+      "tasks": ["T-106"],
+      "cases": ["TC-025"],
+      "suite": "backend",
+      "priority": "P0"
+    },
+    {
+      "ac": "AC-126",
+      "covers": ["REQ-112"],
+      "tasks": ["T-106"],
+      "cases": ["TC-026"],
+      "suite": "backend",
+      "priority": "P2"
+    }
+  ],
+  "automation": []
+}
