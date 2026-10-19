@@ -74,7 +74,9 @@ export function registerCommands(ctx, runtime) {
           text: [
             `已初始化新建仓库（${result.stack}），脚手架 ${result.scaffold.written.length} 个文件。`,
             '已生成 project-context.md、AGENTS.md、openspec、术语表/ADR、CI 与技术栈锁定。',
-            '首个 change add-version 已创建并停在 H1，等待 /sg-approve H1。',
+            result.change
+              ? `首个 change ${result.change} 已创建并停在 H1，等待 /sg-approve H1。`
+              : '通用骨架未创建 change；请配置 suites 后执行 /sg-change。',
             '结构化结果：.specgate/init-result.json',
           ].join('\n'),
         };

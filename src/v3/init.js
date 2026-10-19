@@ -541,6 +541,67 @@ function pythonChangeFiles() {
   };
 }
 
+function frontendChangeFiles(stack) {
+  const appFile = stack === 'react' ? 'src/App.jsx' : 'src/App.vue';
+  const testFile = 'e2e/sg-version.spec.ts';
+  return {
+    'openspec/changes/add-version/proposal.md': `# 变更提案：add-version\n\n## 问题\n首页没有版本标识。\n\n## 目标\n首页展示 v1.0.0，并有 E2E 覆盖。\n\n## 非目标\n不改路由。\n\n## 影响面\n${appFile} / ${testFile}\n`,
+    'openspec/changes/add-version/specs/ops/spec.md': `## ADDED Requirements\n\n### Requirement: 首页版本标识 (REQ-001)\n\n#### Scenario: 展示版本 (AC-001)\n\n- **When** 访问 /\n- **Then** [data-test="app-version"] 文本为 v1.0.0\n`,
+    'openspec/changes/add-version/design.md': `# 方案：add-version\n\n## 目标与非目标\n在首页增加版本标识。\n\n## 任务图\nT-001。\n\n## AC 到用例\nAC-001 由 ${testFile} 覆盖。\n\n## 风险\n无。\n`,
+    'openspec/changes/add-version/tasks.md': `# 任务：add-version\n\n## T-001 版本标识\n<!-- sg:task {"id":"T-001","title":"版本标识","ac":["AC-001"],"deps":[],"parallel":false} -->\n- [ ] ${appFile} 增加版本标识\n- [ ] 新增 ${testFile}\n`,
+    'openspec/changes/add-version/tests/cases.md': `# 测试用例\n\n| 用例 | AC | 层次 | 描述 |\n|---|---|---|---|\n| TC-001 | AC-001 | e2e | 首页展示版本 |\n`,
+    'openspec/changes/add-version/tests/mapping.json': `${JSON.stringify(
+      {
+        schemaVersion: 1,
+        change: 'add-version',
+        requirements: [
+          { ac: 'AC-001', covers: ['REQ-001'], tasks: ['T-001'], cases: ['TC-001'], suite: 'web-e2e' },
+        ],
+        automation: [],
+      },
+      null,
+      2,
+    )}\n`,
+    'openspec/changes/add-version/tests/touched.json': `${JSON.stringify(
+      { schemaVersion: 1, modify: [appFile], delete: [], bootstrap: [testFile] },
+      null,
+      2,
+    )}\n`,
+  };
+}
+
+function monorepoChangeFiles() {
+  return {
+    'openspec/changes/add-version/proposal.md': `# 变更提案：add-version\n\n## 问题\nAPI 只有 health。\n\n## 目标\n新增 /version。\n\n## 非目标\n不改 web。\n\n## 影响面\napps/api/index.js / apps/api/sg-test.mjs\n`,
+    'openspec/changes/add-version/specs/ops/spec.md': `## ADDED Requirements\n\n### Requirement: 版本接口 (REQ-001)\n\n#### Scenario: 返回版本 (AC-001)\n\n- **When** GET /version\n- **Then** 200 {"version":"1.0.0"}\n`,
+    'openspec/changes/add-version/design.md': `# 方案：add-version\n\n## 目标与非目标\n新增 /version。\n\n## 任务图\nT-001。\n\n## AC 到用例\nAC-001 由 apps/api/sg-test.mjs 覆盖。\n\n## 风险\n无。\n`,
+    'openspec/changes/add-version/tasks.md': `# 任务：add-version\n\n## T-001 版本接口\n<!-- sg:task {"id":"T-001","title":"版本接口","ac":["AC-001"],"deps":[],"parallel":false} -->\n- [ ] apps/api/index.js 增加 /version\n- [ ] apps/api/sg-test.mjs 增补断言\n`,
+    'openspec/changes/add-version/tests/cases.md': `# 测试用例\n\n| 用例 | AC | 层次 | 描述 |\n|---|---|---|---|\n| TC-001 | AC-001 | integration | GET /version |\n`,
+    'openspec/changes/add-version/tests/mapping.json': `${JSON.stringify(
+      {
+        schemaVersion: 1,
+        change: 'add-version',
+        requirements: [
+          { ac: 'AC-001', covers: ['REQ-001'], tasks: ['T-001'], cases: ['TC-001'], suite: 'api' },
+        ],
+        automation: [],
+      },
+      null,
+      2,
+    )}\n`,
+    'openspec/changes/add-version/tests/touched.json': `${JSON.stringify(
+      {
+        schemaVersion: 1,
+        modify: ['apps/api/index.js', 'apps/api/sg-test.mjs'],
+        delete: [],
+        bootstrap: [],
+      },
+      null,
+      2,
+    )}\n`,
+  };
+}
+
 export function configureSuites(root, stack) {
   const common = `workflowVersion: 3\nschemaVersion: 3\nlanguage: zh\nstack: ${stack}\nmaxParallel: 2\ninstall: true\n`;
   if (stack === 'python') {
@@ -564,6 +625,10 @@ export function configureSuites(root, stack) {
     );
     return;
   }
+  if (stack === 'generic') {
+    writeText(configPath(root), common);
+    return;
+  }
   writeText(
     configPath(root),
     `${common}suites:\n  - id: api\n    kind: node-test\n    command: ["node", "sg-test.mjs"]\n    cwd: "."\n`,
@@ -583,17 +648,26 @@ export async function initNewProject({ root, userQuestions, agent, signal }) {
   const git = gitInitCommit(root);
   if (!git.ok) return { ok: false, message: `git commit 失败：${git.stderr}` };
 
-  const created = createChange(root, {
-    name: 'add-version',
-    type: 'feature',
-    baseCommit: null,
-    changeKey: null,
-  });
-  if (!created.ok) return created;
-  const files = context.stack === 'python' ? pythonChangeFiles() : firstChangeFiles(context);
-  for (const [relative, content] of Object.entries(files)) {
-    const target = path.join(root, relative);
-    if (!exists(target)) writeText(target, content);
+  let files = null;
+  if (context.stack === 'python') files = pythonChangeFiles();
+  else if (context.stack === 'vue' || context.stack === 'react') files = frontendChangeFiles(context.stack);
+  else if (context.stack === 'monorepo') files = monorepoChangeFiles();
+  else if (context.stack !== 'generic') files = firstChangeFiles(context);
+
+  let changeName = null;
+  if (files) {
+    const created = createChange(root, {
+      name: 'add-version',
+      type: 'feature',
+      baseCommit: null,
+      changeKey: null,
+    });
+    if (!created.ok) return created;
+    changeName = 'add-version';
+    for (const [relative, content] of Object.entries(files)) {
+      const target = path.join(root, relative);
+      if (!exists(target)) writeText(target, content);
+    }
   }
   patchState(root, (draft) => {
     draft.h0 = {
@@ -608,7 +682,7 @@ export async function initNewProject({ root, userQuestions, agent, signal }) {
     stack: context.stack,
     context,
     scaffold,
-    change: 'add-version',
-    phase: 'H1_PENDING',
+    change: changeName,
+    phase: changeName ? 'H1_PENDING' : 'IDLE',
   };
 }

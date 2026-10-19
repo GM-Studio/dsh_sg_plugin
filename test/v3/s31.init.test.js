@@ -46,6 +46,21 @@ test('scaffoldFiles 生成 Node 与 Python 最小骨架', () => {
   assert.equal(python['.python-version'], '3.12\n');
 });
 
+test('scaffoldFiles 生成 Vue/React/monorepo 骨架', () => {
+  const vue = scaffoldFiles('vue');
+  assert.ok(vue['src/App.vue'].includes('app-title'));
+  assert.ok(vue['e2e/home.spec.ts'].includes('[AC-001]'));
+  assert.ok(vue['sg-test-e2e.mjs'].includes('playwright'));
+
+  const react = scaffoldFiles('react');
+  assert.ok(react['src/App.jsx'].includes('app-title'));
+
+  const mono = scaffoldFiles('monorepo');
+  assert.ok(mono['apps/api/index.js'].includes('/health'));
+  assert.ok(mono['apps/web/src/App.vue'].includes('app-title'));
+  assert.ok(mono['package.json'].includes('workspaces'));
+});
+
 test('initNewProject 走 H0、脚手架、自动建 change 停 H1', async () => {
   const root = tempRoot();
   const result = await initNewProject({
