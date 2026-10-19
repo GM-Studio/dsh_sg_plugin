@@ -2,6 +2,7 @@ import { initProject, createChange } from './change.js';
 import { renderStatusAt, statusJsonAt, resolveRepoPath, loadProjectAt } from './status-query.js';
 import { renderStatus } from './status.js';
 import { exists } from './util/fsx.js';
+import { scanEnv, writeEnvReport } from './env-scan.js';
 import { headCommit, isGitRepo } from './util/git.js';
 import { checkM1, checkM2, checkFrozenH1, computeArtifactHash, collectKnownAcs } from './phase.js';
 import { patchState } from './state.js';
@@ -275,6 +276,13 @@ export function registerTools(ctx, runtime) {
             case 'PLAN': {
               const m2 = checkM2({ root: project.root, state, config: project.config });
               if (!m2.ok) return fail(`M2 未通过：\n${formatErrors(m2.errors)}`, m2);
+              writeEnvReport(project.root, scanEnv(project.root));
+              try {
+                git(project.root, ['add', '.specgate/env.json', '.specgate/env-report.md']);
+                git(project.root, ['commit', '-q', '-m', `env(${state.change}): 环境扫描`]);
+              } catch {
+                // env report is best-effort; keep the plan flow unblocked
+              }
               const saved = patchState(project.root, (draft) => {
                 draft.plan = {
                   designHash: m2.hashes.designHash,

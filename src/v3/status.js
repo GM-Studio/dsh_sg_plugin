@@ -1,3 +1,7 @@
+import path from 'node:path';
+import { exists, readText } from './util/fsx.js';
+import { renderEnvLine } from './env-scan.js';
+
 const NEXT_ACTION = {
   IDLE: '执行 /sg-change <name> --type <feature|modify|fix|remove> 创建 change',
   H0_PENDING: '等待人执行 /sg-approve H0；批准后 /sg-run 生成脚手架',
@@ -55,6 +59,14 @@ export function statusData(project) {
     pool: state.pool || null,
     h0: state.h0 || null,
     context: state.context || null,
+    env: (() => {
+      try {
+        const file = path.join(root, '.specgate', 'env.json');
+        return exists(file) ? JSON.parse(readText(file)) : null;
+      } catch {
+        return null;
+      }
+    })(),
     evidence: state.evidence,
     blockedReason: state.blockedReason,
     skills: state.skills,
@@ -96,6 +108,7 @@ export function renderStatus(project) {
         .slice(0, 12)}…`,
     );
   }
+  lines.push(renderEnvLine(data.env));
   if (data.pool?.stats) {
     const s = data.pool.stats;
     lines.push(

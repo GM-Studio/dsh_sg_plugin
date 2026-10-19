@@ -5,6 +5,7 @@ import { initProject, createChange, configPath } from './change.js';
 import { load, patchState } from './state.js';
 import { exists, writeText, ensureDir } from './util/fsx.js';
 import { digest } from './util/hash.js';
+import { scanEnv, writeEnvReport } from './env-scan.js';
 
 export const CONTEXT_FIELDS = [
   {
@@ -705,6 +706,7 @@ export async function startInitProject({ root, userQuestions, agent, signal }) {
   const context = await collectContext({ userQuestions, agent, signal });
   const init = initProject(root);
   if (!init.ok) return init;
+  writeEnvReport(root, scanEnv(root));
   const hash = digest(JSON.stringify(context));
   patchState(root, (draft) => {
     draft.phase = 'H0_PENDING';
