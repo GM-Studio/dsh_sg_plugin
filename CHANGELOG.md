@@ -1,5 +1,13 @@
 # Changelog
 
+## 3.3.0
+
+- Gate dialogs now render plain-text compact cards (no Markdown headings/tables), capped at 1200 characters, with full details in `.specgate/gates/H0..H3.txt`.
+- Card content is compressed per gate: H1 overview + first ACs, H2 tasks/files/suites, H3 acceptance + one 5-line diff hunk; secret-like lines are redacted.
+- Added `H0_PENDING`: `/sg-init` collects context and stops; `/sg-approve H0` records `approvals.H0`; `/sg-run` builds the scaffold and first change, then moves to `H1_PENDING`.
+- `/sg-status` shows H0 context and next action; new fifth command `/sg-context --reset` re-asks context and returns to H0.
+- `.specgate/gates/` is gitignored so gate details never dirty the workspace.
+
 ## 3.2.0
 
 - `/sg-init` now detects an empty directory and starts a new-project workflow: context Q&A (background/MVP, stack, acceptance, team, steps), H0 summary confirmation, scaffold, git init+commit, and a first change parked at H1.

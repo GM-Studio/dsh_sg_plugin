@@ -5,6 +5,7 @@ export const SCHEMA_VERSION = 3;
 
 export const PHASES = [
   'IDLE',
+  'H0_PENDING',
   'H1_PENDING',
   'PLAN',
   'H2_PENDING',
@@ -61,7 +62,7 @@ export function emptyState(patch = {}) {
     waves: [],
     integration: null,
     touched: { modify: [], delete: [], bootstrap: [] },
-    approvals: { H1: blankApproval(), H2: blankApproval(), H3: blankApproval() },
+    approvals: { H0: blankApproval(), H1: blankApproval(), H2: blankApproval(), H3: blankApproval() },
     skills: { suggested: [], injected: [] },
     evidence: { headSeq: 0, headHash: null },
     runtime: { updatedAt: null, suites: {} },

@@ -684,16 +684,31 @@ export function configureSuites(root, stack) {
   );
 }
 
-export async function initNewProject({ root, userQuestions, agent, signal }) {
+export async function startInitProject({ root, userQuestions, agent, signal }) {
   const context = await collectContext({ userQuestions, agent, signal });
-  const confirmed = await confirmContext({ userQuestions, agent, signal, context });
-  if (!confirmed.ok) return confirmed;
-
-  const scaffold = writeScaffold(root, scaffoldFiles(context.stack));
   const init = initProject(root);
   if (!init.ok) return init;
+  const hash = digest(JSON.stringify(context));
+  patchState(root, (draft) => {
+    draft.phase = 'H0_PENDING';
+    draft.change = null;
+    draft.context = context;
+    draft.h0 = { hash, approvedAt: null };
+    draft.approvals = {
+      H0: { artifactHash: null, issuedAt: null, expiresAt: null, consumedAt: null },
+      H1: { artifactHash: null, issuedAt: null, expiresAt: null, consumedAt: null },
+      H2: { artifactHash: null, issuedAt: null, expiresAt: null, consumedAt: null },
+      H3: { artifactHash: null, issuedAt: null, expiresAt: null, consumedAt: null },
+    };
+  });
+  return { ok: true, mode: 'new', phase: 'H0_PENDING', context, h0Hash: hash };
+}
+
+export async function finishInitProject({ root, state }) {
+  const context = state.context || {};
+  const scaffold = writeScaffold(root, scaffoldFiles(context.stack || 'generic'));
   writeArtifacts(root, context);
-  configureSuites(root, context.stack);
+  configureSuites(root, context.stack || 'generic');
   const git = gitInitCommit(root);
   if (!git.ok) return { ok: false, message: `git commit 失败：${git.stderr}` };
 
@@ -704,35 +719,28 @@ export async function initNewProject({ root, userQuestions, agent, signal }) {
   else if (context.stack === 'generic') files = genericChangeFiles();
   else files = firstChangeFiles(context);
 
-  let changeName = null;
-  if (files) {
-    const created = createChange(root, {
-      name: 'add-version',
-      type: 'feature',
-      baseCommit: null,
-      changeKey: null,
-    });
-    if (!created.ok) return created;
-    changeName = 'add-version';
-    for (const [relative, content] of Object.entries(files)) {
-      const target = path.join(root, relative);
-      writeText(target, content);
-    }
+  const created = createChange(root, {
+    name: 'add-version',
+    type: 'feature',
+    baseCommit: null,
+    changeKey: null,
+  });
+  if (!created.ok) return created;
+  for (const [relative, content] of Object.entries(files)) {
+    writeText(path.join(root, relative), content);
   }
   patchState(root, (draft) => {
-    draft.h0 = {
-      hash: digest(JSON.stringify(context)),
-      approvedAt: new Date().toISOString(),
-      context,
-    };
+    draft.phase = 'H1_PENDING';
+    draft.h0 = { ...(draft.h0 || {}), approvedAt: draft.h0?.approvedAt || new Date().toISOString() };
   });
-  return {
-    ok: true,
-    mode: 'new',
-    stack: context.stack,
-    context,
-    scaffold,
-    change: changeName,
-    phase: changeName ? 'H1_PENDING' : 'IDLE',
-  };
+  return { ok: true, phase: 'H1_PENDING', change: 'add-version', scaffold };
+}
+
+export async function initNewProject({ root, userQuestions, agent, signal }) {
+  const started = await startInitProject({ root, userQuestions, agent, signal });
+  if (!started.ok) return started;
+  const state = load(root).state;
+  const finished = await finishInitProject({ root, state });
+  if (!finished.ok) return finished;
+  return { ...started, ...finished, mode: 'new' };
 }

@@ -1,3 +1,4 @@
+import fs from 'node:fs';
 import path from 'node:path';
 import { initProject, createChange } from './change.js';
 import { renderStatus } from './status.js';
@@ -5,8 +6,10 @@ import { ensureV3 } from './tools.js';
 import { headCommit, isGitRepo } from './util/git.js';
 import { loadSkill } from './skills.js';
 import { suggestSuites } from './suites.js';
-import { detectInitMode, initNewProject } from './init.js';
+import { detectInitMode, startInitProject, collectContext } from './init.js';
 import { writeText } from './util/fsx.js';
+import { digest } from './util/hash.js';
+import { patchState } from './state.js';
 
 function tokens(raw) {
   return String(raw || '')
@@ -58,7 +61,7 @@ export function registerCommands(ctx, runtime) {
       const root = runtime.getCwd(inv?.agent);
       const userQuestions = runtime.service('userQuestions');
       if (detectInitMode(root) === 'new' && userQuestions && typeof userQuestions.ask === 'function') {
-        const result = await initNewProject({
+        const result = await startInitProject({
           root,
           userQuestions,
           agent: inv?.agent,
@@ -72,11 +75,9 @@ export function registerCommands(ctx, runtime) {
         return {
           kind: 'success',
           text: [
-            `已初始化新建仓库（${result.stack}），脚手架 ${result.scaffold.written.length} 个文件。`,
-            '已生成 project-context.md、AGENTS.md、openspec、术语表/ADR、CI 与技术栈锁定。',
-            result.change
-              ? `首个 change ${result.change} 已创建并停在 H1，等待 /sg-approve H1。`
-              : '通用骨架未创建 change；请配置 suites 后执行 /sg-change。',
+            `已采集新建项目上下文（${result.context.stack}），阶段 H0_PENDING。`,
+            '请执行 /sg-approve H0 审阅上下文；批准后执行 /sg-run 生成脚手架与首个 change。',
+            '需要修改上下文时执行 /sg-context --reset。',
             '结构化结果：.specgate/init-result.json',
           ].join('\n'),
         };
@@ -130,6 +131,54 @@ export function registerCommands(ctx, runtime) {
     async handler(inv) {
       const project = runtime.project(inv?.agent);
       return { kind: 'success', text: renderStatus(project) };
+    },
+  });
+
+  register({
+    name: 'sg-context',
+    description: 'H0 上下文回退：/sg-context --reset',
+    input: { hint: '--reset' },
+    async handler(inv) {
+      const project = runtime.project(inv?.agent);
+      const guard = ensureV3(project);
+      if (!guard.ok) return { kind: 'error', text: guard.message };
+      if (tokens(inv?.rawInput).join(' ') !== '--reset') {
+        return { kind: 'error', text: '用法：/sg-context --reset（仅用于回到 H0 重新确认上下文）' };
+      }
+      if (!project.state || !['H0_PENDING', 'H1_PENDING'].includes(project.state.phase)) {
+        return { kind: 'error', text: `当前阶段 ${project.state?.phase || '未知'} 不能回退 H0` };
+      }
+      const userQuestions = runtime.service('userQuestions');
+      if (!userQuestions || typeof userQuestions.ask !== 'function') {
+        return { kind: 'error', text: '回退上下文需要用户问答通道' };
+      }
+      if (project.state.phase === 'H1_PENDING' && project.state.change) {
+        fs.rmSync(path.join(project.root, 'openspec', 'changes', project.state.change), {
+          recursive: true,
+          force: true,
+        });
+      }
+      const context = await collectContext({
+        userQuestions,
+        agent: inv?.agent,
+        signal: inv?.signal,
+      });
+      patchState(project.root, (draft) => {
+        draft.phase = 'H0_PENDING';
+        draft.change = null;
+        draft.context = context;
+        draft.h0 = { hash: digest(JSON.stringify(context)), approvedAt: null };
+        draft.approvals.H0 = {
+          artifactHash: null,
+          issuedAt: null,
+          expiresAt: null,
+          consumedAt: null,
+        };
+      });
+      return {
+        kind: 'success',
+        text: '已回到 H0_PENDING 并重新采集上下文。请 /sg-approve H0；批准后 /sg-run 重新生成脚手架。',
+      };
     },
   });
 

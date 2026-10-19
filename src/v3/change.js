@@ -13,6 +13,7 @@ const IGNORE_ENTRIES = [
   '.specgate/worktrees/',
   '.specgate/evidence/',
   '.specgate/backups/',
+  '.specgate/gates/',
 ];
 
 const CONFIG_TEMPLATE = `# SpecGate v3 项目配置

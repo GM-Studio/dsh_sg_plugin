@@ -3,14 +3,15 @@ import { renderStatus, statusData } from './status.js';
 import { headCommit, isGitRepo } from './util/git.js';
 import { checkM1, checkM2, checkFrozenH1, computeArtifactHash, collectKnownAcs } from './phase.js';
 import { patchState } from './state.js';
-import { askApproval, issueApproval } from './approvals.js';
-import { renderGateSummary } from './gate-summary.js';
+import { askApproval, issueApproval, checkApprovalHash } from './approvals.js';
+import { renderGateCard } from './gate-card.js';
 import { commitChangePackage, ensureIntegration, git, headOf, integrationBranch } from './worktrees.js';
 import { createDispatcher } from './dispatch.js';
 import { executeTask, pickNextTask, revertWave } from './executor.js';
 import { readyBatch } from './scheduler.js';
 import { discoverCommand, loadPlan } from './plan.js';
 import { runAllSuites, suggestSuites, persistRuntime } from './suites.js';
+import { finishInitProject } from './init.js';
 import { poolDisposeChange } from './pool.js';
 import { generateAcceptance } from './acceptance.js';
 import { verifyEvidence, appendEvidence } from './evidence.js';
@@ -207,6 +208,14 @@ export function registerTools(ctx, runtime) {
           switch (state.phase) {
           case 'IDLE':
             return ok('当前没有进行中的 change。先执行 /sg-change <name> --type <type>。');
+          case 'H0_PENDING': {
+            if (!state.h0?.hash) return fail('缺少 H0 上下文哈希');
+            const frozen = checkApprovalHash(state, 'H0', state.h0.hash);
+            if (!frozen.ok) return fail('H0 尚未批准或上下文已变化，请先 /sg-approve H0', frozen);
+            const finished = await finishInitProject({ root: project.root, state });
+            if (!finished.ok) return fail(`初始化失败：${finished.message}`, finished);
+            return ok('H0 已批准，已生成脚手架与首个 change，进入 H1_PENDING。下一步 /sg-run 校验 M1。', finished);
+          }
           case 'H1_PENDING': {
             const m1 = checkM1({ root: project.root, state });
             if (!m1.ok) return fail(`M1 未通过：\n${formatErrors(m1.errors)}`, m1);
@@ -526,6 +535,30 @@ export function registerTools(ctx, runtime) {
           return fail(`未知批准点：${gate}`);
         }
 
+        if (gate === 'H0') {
+          if (state.phase !== 'H0_PENDING') {
+            return fail(`当前阶段 ${state.phase} 不能批准 H0`);
+          }
+          if (!state.h0?.hash) return fail('缺少 H0 上下文哈希');
+          const asked = await askApproval(runtime, {
+            gate: 'H0',
+            change: state.change || 'new-project',
+            artifactHash: state.h0.hash,
+            agent: exec?.agent,
+            signal: exec?.signal,
+            summary: renderGateCard({ gate: 'H0', root: project.root, state }).text,
+          });
+          if (!asked.ok) return fail(asked.message, asked);
+          const saved = patchState(project.root, (draft) => {
+            issueApproval(draft, 'H0', state.h0.hash, asked.at);
+          });
+          if (!saved.ok) return fail(saved.message, saved);
+          return ok('H0 已批准，执行 /sg-run 生成脚手架与首个 change。', {
+            gate: 'H0',
+            phase: 'H0_PENDING',
+          });
+        }
+
         if (gate === 'H3') {
           if (state.phase !== 'H3_PENDING') {
             return fail(`当前阶段 ${state.phase} 不能批准 H3`);
@@ -562,7 +595,7 @@ export function registerTools(ctx, runtime) {
             artifactHash: hash,
             agent: exec?.agent,
             signal: exec?.signal,
-            summary: renderGateSummary({ gate, root: project.root, state, integration }).text,
+            summary: renderGateCard({ gate, root: project.root, state, integration }).text,
           });
           if (!asked.ok) return fail(asked.message, asked);
 
@@ -598,7 +631,7 @@ export function registerTools(ctx, runtime) {
             artifactHash,
             agent: exec?.agent,
             signal: exec?.signal,
-            summary: renderGateSummary({ gate, root: project.root, state }).text,
+            summary: renderGateCard({ gate, root: project.root, state }).text,
           });
           if (!asked.ok) return fail(asked.message, asked);
 
@@ -639,7 +672,7 @@ export function registerTools(ctx, runtime) {
           artifactHash: m2.planHash,
           agent: exec?.agent,
           signal: exec?.signal,
-          summary: renderGateSummary({ gate, root: project.root, state }).text,
+          summary: renderGateCard({ gate, root: project.root, state }).text,
         });
         if (!asked.ok) return fail(asked.message, asked);
 
