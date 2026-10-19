@@ -1,5 +1,14 @@
 # Changelog
 
+## 3.4.0
+
+- `/sg-status` accepts `--path <repo-root>`, `--json`, `--verbose`; paths work across Windows/POSIX and default to the current directory.
+- Run records: `state.runs` plus `.specgate/runs/<change>.jsonl`; `--verbose` prints the recent timeline.
+- Reviewer gets the real `git diff` (200KB cap with full file list), runs in a temporary detached review worktree, and blocking entries must carry `file/line/evidence/reason` validated against the diff.
+- INTEGRATING performs a full `base..integration HEAD` review; blocking prevents H3.
+- Formatter stage after implementer and before tester: runs `formatter.command` from config, writes `format-report.md`, commits formatting, and blocks on non-zero exit; unconfigured projects are skipped.
+- Formatter/reviewer/implementer/tester runs are appended to the runs timeline.
+
 ## 3.3.1
 
 - Gate dialogs are now split into 2–3 single-line pages (≤120 chars each) because the host merges newlines inside one question.

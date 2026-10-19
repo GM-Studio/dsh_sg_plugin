@@ -23,6 +23,7 @@ import {
   removeReviewWorktree,
 } from './review.js';
 import { runFormatter } from './formatter.js';
+import { appendRun } from './runs.js';
 
 function failure(code, message, extra = {}) {
   return { ok: false, code, message, ...extra };
@@ -179,6 +180,15 @@ async function verifyAndFinish({
       errors: checked.errors,
     });
   }
+  appendRun(root, {
+    change,
+    task: task.id,
+    role: 'reviewer',
+    worktree: reviewPath,
+    commit: head,
+    durationMs: 0,
+    result: verdict.verdict,
+  });
   const blocking = checked.blocking;
   if (verdict.verdict !== 'pass' || blocking.length > 0) {
     return failure(
@@ -279,6 +289,15 @@ async function executeFeatureTask({ root, state, task, dispatcher, config, paren
 
   const implHead = headOf(worktree.path, 'HEAD');
   if (!implHead || implHead === base) return failure('NO_COMMIT', 'implementer 没有产生提交');
+  appendRun(root, {
+    change,
+    task: task.id,
+    role: 'implementer',
+    worktree: worktree.path,
+    commit: implHead,
+    durationMs: 0,
+    result: 'pass',
+  });
   const implDiff = diffCheck({
     root,
     branch: worktree.branch,
@@ -311,6 +330,15 @@ async function executeFeatureTask({ root, state, task, dispatcher, config, paren
   const testHead = headOf(worktree.path, 'HEAD');
   if (!testHead || testHead === formatHead)
     return failure('NO_TEST_COMMIT', 'tester 没有产生测试提交');
+  appendRun(root, {
+    change,
+    task: task.id,
+    role: 'tester',
+    worktree: worktree.path,
+    commit: testHead,
+    durationMs: 0,
+    result: 'pass',
+  });
   const testDiff = diffCheck({
     root,
     branch: worktree.branch,
@@ -445,6 +473,8 @@ async function executeFixTask({ root, state, task, dispatcher, config, parent })
       violations: implDiff.violations,
     });
   }
+  const formatted = runFormatter({ root, worktree: worktree.path, change, task });
+  if (!formatted.ok) return failure('FORMAT_FAILED', formatted.message, { formatted });
 
   return verifyAndFinish({
     root,
