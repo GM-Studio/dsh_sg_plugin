@@ -77,7 +77,11 @@ function makeCtx() {
   return {
     get: (name) =>
       name === 'userQuestions'
-        ? { async ask() { return { answers: [{ selected: ['通过'] }] }; } }
+        ? {
+            async ask() {
+              return { answers: [{ selected: ['通过'] }] };
+            },
+          }
         : undefined,
     tools: {
       register(definition) {
@@ -162,7 +166,11 @@ function writePlan(root) {
   fs.writeFileSync(path.join(dir, 'design.md'), DESIGN, 'utf8');
   fs.writeFileSync(path.join(dir, 'tasks.md'), TASKS, 'utf8');
   fs.writeFileSync(path.join(dir, 'tests', 'cases.md'), CASES, 'utf8');
-  fs.writeFileSync(path.join(dir, 'tests', 'mapping.json'), JSON.stringify(MAPPING, null, 2), 'utf8');
+  fs.writeFileSync(
+    path.join(dir, 'tests', 'mapping.json'),
+    JSON.stringify(MAPPING, null, 2),
+    'utf8',
+  );
   fs.writeFileSync(
     path.join(dir, 'tests', 'touched.json'),
     JSON.stringify({ schemaVersion: 1, modify: [], delete: [], bootstrap: [] }, null, 2),
@@ -182,7 +190,7 @@ function runner({ role, worktree }) {
       'repro.test.mjs',
     );
     fs.mkdirSync(path.dirname(file), { recursive: true });
-    fs.writeFileSync(file, "export const ok = true;\n", 'utf8');
+    fs.writeFileSync(file, 'export const ok = true;\n', 'utf8');
     commitAll(worktree, 'add repro');
     return { ok: true, text: 'repro added' };
   }
@@ -249,4 +257,3 @@ test('S6：fix 先红后绿并归档更新 specs', async () => {
   assert.match(spec, /AC-002/);
   assert.match(spec, /返回 hello/);
 });
-

@@ -39,7 +39,8 @@ export function readyBatch(state, maxParallel = 2) {
   const runnable = waves[waveIndex].filter((id) => {
     const task = state.tasks[id];
     if (!task) return false;
-    const retryable = task.status === 'pending' || (task.status === 'failed' && (task.attempts || 0) < 3);
+    const retryable =
+      task.status === 'pending' || (task.status === 'failed' && (task.attempts || 0) < 3);
     return retryable && (task.deps || []).every((dep) => merged.has(dep));
   });
 

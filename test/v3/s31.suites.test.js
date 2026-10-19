@@ -12,10 +12,9 @@ function tempRoot() {
 
 function planFixture(overrides = {}) {
   return {
-    designText: '# 方案\n\n## 目标与非目标\nx\n\n## 任务图\nT-001\n\n## AC 到用例\nx\n\n## 风险\n无\n',
-    tasks: [
-      { id: 'T-001', title: 'x', ac: ['AC-001'], deps: [], parallel: false },
-    ],
+    designText:
+      '# 方案\n\n## 目标与非目标\nx\n\n## 任务图\nT-001\n\n## AC 到用例\nx\n\n## 风险\n无\n',
+    tasks: [{ id: 'T-001', title: 'x', ac: ['AC-001'], deps: [], parallel: false }],
     tasksErrors: [],
     cases: [{ id: 'TC-001', ac: ['AC-001'], layer: 'unit', description: 'x' }],
     casesErrors: [],
@@ -71,9 +70,7 @@ test('多套件时 mapping 缺 suite 被拒', () => {
   const root = tempRoot();
   const plan = planFixture({
     mapping: {
-      requirements: [
-        { ac: 'AC-001', covers: ['REQ-001'], tasks: ['T-001'], cases: ['TC-001'] },
-      ],
+      requirements: [{ ac: 'AC-001', covers: ['REQ-001'], tasks: ['T-001'], cases: ['TC-001'] }],
     },
   });
   const result = validatePlan({
@@ -83,7 +80,10 @@ test('多套件时 mapping 缺 suite 被拒', () => {
     deltaAcs: new Set(['AC-001']),
     deltaReqs: new Set(['REQ-001']),
     config: {},
-    suites: [{ id: 'web', kind: 'node-test', argv: [], cwd: '.' }, { id: 'api', kind: 'pytest', argv: [], cwd: '.' }],
+    suites: [
+      { id: 'web', kind: 'node-test', argv: [], cwd: '.' },
+      { id: 'api', kind: 'pytest', argv: [], cwd: '.' },
+    ],
   });
   assert.equal(result.ok, false);
   assert.match(result.errors.join('; '), /缺少 suite/);
@@ -116,7 +116,10 @@ test('合法多套件 mapping 通过', () => {
     deltaAcs: new Set(['AC-001']),
     deltaReqs: new Set(['REQ-001']),
     config: {},
-    suites: [{ id: 'web', kind: 'node-test', argv: ['node'], cwd: '.' }, { id: 'api', kind: 'pytest', argv: [], cwd: '.' }],
+    suites: [
+      { id: 'web', kind: 'node-test', argv: ['node'], cwd: '.' },
+      { id: 'api', kind: 'pytest', argv: [], cwd: '.' },
+    ],
   });
   assert.equal(result.ok, true, result.errors.join('; '));
 });

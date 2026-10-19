@@ -28,7 +28,11 @@ test('H1 卡片为纯文本且 ≤1200 字符，并写详情文件', () => {
   initProject(root);
   createChange(root, { name: 'card-demo', type: 'feature' });
   const dir = path.join(root, 'openspec', 'changes', 'card-demo');
-  fs.writeFileSync(path.join(dir, 'proposal.md'), '## 问题\n\n太乱。\n\n## 目标\n\n清晰。\n', 'utf8');
+  fs.writeFileSync(
+    path.join(dir, 'proposal.md'),
+    '## 问题\n\n太乱。\n\n## 目标\n\n清晰。\n',
+    'utf8',
+  );
   fs.mkdirSync(path.join(dir, 'specs', 'ops'), { recursive: true });
   fs.writeFileSync(
     path.join(dir, 'specs', 'ops', 'spec.md'),

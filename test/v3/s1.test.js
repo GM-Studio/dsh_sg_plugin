@@ -51,14 +51,21 @@ async function callTool(ctx, name, args = {}) {
 test('注册 6 个工具与 5 个命令', () => {
   const root = tempRoot();
   const { ctx } = setup(root);
-  assert.deepEqual(
-    [...ctx.toolsMap.keys()].sort(),
-    ['sg_approve', 'sg_change', 'sg_init', 'sg_run', 'sg_skill', 'sg_status'],
-  );
-  assert.deepEqual(
-    [...ctx.commandsMap.keys()].sort(),
-    ['sg-change', 'sg-context', 'sg-init', 'sg-skill', 'sg-status'],
-  );
+  assert.deepEqual([...ctx.toolsMap.keys()].sort(), [
+    'sg_approve',
+    'sg_change',
+    'sg_init',
+    'sg_run',
+    'sg_skill',
+    'sg_status',
+  ]);
+  assert.deepEqual([...ctx.commandsMap.keys()].sort(), [
+    'sg-change',
+    'sg-context',
+    'sg-init',
+    'sg-skill',
+    'sg-status',
+  ]);
 });
 
 test('未初始化时 sg_status 显示未初始化', async () => {

@@ -62,7 +62,12 @@ export function emptyState(patch = {}) {
     waves: [],
     integration: null,
     touched: { modify: [], delete: [], bootstrap: [] },
-    approvals: { H0: blankApproval(), H1: blankApproval(), H2: blankApproval(), H3: blankApproval() },
+    approvals: {
+      H0: blankApproval(),
+      H1: blankApproval(),
+      H2: blankApproval(),
+      H3: blankApproval(),
+    },
     skills: { suggested: [], injected: [] },
     evidence: { headSeq: 0, headHash: null },
     runtime: { updatedAt: null, suites: {} },

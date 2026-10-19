@@ -41,7 +41,11 @@ export function archiveChange({ root, change, integrationBranch, backupDir, tag,
   }
   const branch = currentBranch(root);
   if (!['main', 'master'].includes(branch)) {
-    return { ok: false, code: 'NOT_MAIN', message: `当前分支是 ${branch}，请在 main/master 上归档` };
+    return {
+      ok: false,
+      code: 'NOT_MAIN',
+      message: `当前分支是 ${branch}，请在 main/master 上归档`,
+    };
   }
 
   const day = stamp();

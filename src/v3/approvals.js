@@ -23,7 +23,9 @@ export async function askApproval(
     };
   }
 
-  const shortHash = String(artifactHash || '').replace(/^sha256:/, '').slice(0, 12);
+  const shortHash = String(artifactHash || '')
+    .replace(/^sha256:/, '')
+    .slice(0, 12);
   const questions =
     Array.isArray(pages) && pages.length > 0
       ? pages.map((page, index) => ({
@@ -39,7 +41,8 @@ export async function askApproval(
           {
             id: `sg-approve-${gate}`,
             header: `SpecGate ${gate} 批准`,
-            question: summary || `change「${change}」的 ${gate} 产物指纹为 ${shortHash}…，是否批准？`,
+            question:
+              summary || `change「${change}」的 ${gate} 产物指纹为 ${shortHash}…，是否批准？`,
             options: approvalOptions(),
           },
         ];

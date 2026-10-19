@@ -4,11 +4,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { execFileSync } from 'node:child_process';
-import {
-  ensureIntegration,
-  ensureTask,
-  mergeIntoIntegration,
-} from '../../src/v3/worktrees.js';
+import { ensureIntegration, ensureTask, mergeIntoIntegration } from '../../src/v3/worktrees.js';
 import { discoverCommand } from '../../src/v3/plan.js';
 
 function git(cwd, args) {

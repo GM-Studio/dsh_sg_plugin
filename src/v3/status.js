@@ -77,9 +77,7 @@ export function renderStatus(project) {
     `项目：${data.root}`,
     `Change：${data.change || '（无）'}${data.type ? `（${data.type}）` : ''}`,
     ...(data.changeKey ? [`changeKey：${data.changeKey}`] : []),
-    ...(data.suites?.length
-      ? [`套件：${data.suites.map((suite) => suite.id).join(', ')}`]
-      : []),
+    ...(data.suites?.length ? [`套件：${data.suites.map((suite) => suite.id).join(', ')}`] : []),
     `阶段：${data.phase}`,
     `下一步：${data.nextAction}`,
     `任务：共 ${data.tasks.total}，merged ${data.tasks.merged}，失败 ${data.tasks.failed}，进行中 ${data.tasks.running}`,
@@ -92,7 +90,11 @@ export function renderStatus(project) {
     lines.push(`H0 验收：${data.context.acceptance}`);
   }
   if (data.h0?.hash) {
-    lines.push(`H0：已确认 ${String(data.h0.hash).replace(/^sha256:/, '').slice(0, 12)}…`);
+    lines.push(
+      `H0：已确认 ${String(data.h0.hash)
+        .replace(/^sha256:/, '')
+        .slice(0, 12)}…`,
+    );
   }
   if (data.pool?.stats) {
     const s = data.pool.stats;
@@ -109,10 +111,14 @@ export function renderStatus(project) {
       if (runtime.node) parts.push(`Node ${runtime.node.version}（${runtime.node.tool}）`);
       if (runtime.python) parts.push(`Python ${runtime.python.version}（${runtime.python.venv}）`);
       if (runtime.install) {
-        parts.push(`安装 ${runtime.install.state}${runtime.install.reason ? `:${runtime.install.reason}` : ''}`);
+        parts.push(
+          `安装 ${runtime.install.state}${runtime.install.reason ? `:${runtime.install.reason}` : ''}`,
+        );
       }
       if (runtime.lastRun) {
-        parts.push(`上次 ${runtime.lastRun.ok ? 'pass' : 'fail'}${runtime.lastRun.exitCode !== null ? `(${runtime.lastRun.exitCode})` : ''}`);
+        parts.push(
+          `上次 ${runtime.lastRun.ok ? 'pass' : 'fail'}${runtime.lastRun.exitCode !== null ? `(${runtime.lastRun.exitCode})` : ''}`,
+        );
       }
       lines.push(`运行时 ${id}：${parts.join('，') || '-'}`);
     }

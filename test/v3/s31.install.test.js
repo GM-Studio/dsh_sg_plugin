@@ -51,10 +51,17 @@ test('installForSuite 对无 lockfile 的项目自动跳过', () => {
 test('installForSuite install:false 跳过，dryRun 返回命令', () => {
   const root = tempRoot();
   fs.writeFileSync(path.join(root, 'package-lock.json'), '{}', 'utf8');
-  const disabled = installForSuite({ root, suite: { id: 'web', kind: 'node-test', install: false } });
+  const disabled = installForSuite({
+    root,
+    suite: { id: 'web', kind: 'node-test', install: false },
+  });
   assert.equal(disabled.skipped, true);
 
-  const dry = installForSuite({ root, suite: { id: 'web', kind: 'node-test', install: null }, dryRun: true });
+  const dry = installForSuite({
+    root,
+    suite: { id: 'web', kind: 'node-test', install: null },
+    dryRun: true,
+  });
   assert.equal(dry.ok, true);
   assert.equal(dry.dryRun, true);
   assert.match(dry.command.args.join(' '), /\bci\b/);

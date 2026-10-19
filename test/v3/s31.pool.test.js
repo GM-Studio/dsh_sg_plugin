@@ -93,9 +93,17 @@ test('同一仓同一角色跨任务复用 agent，并注入上一任务摘要',
   const { runtime, subagents } = fakeRuntime();
   const base = { runtime, role: 'implementer', root, change: 'c1', worktree: root, skills: [] };
 
-  const first = await poolDispatch({ ...base, prompt: 'task-one', task: { id: 'T-001', ac: ['AC-001'] } });
+  const first = await poolDispatch({
+    ...base,
+    prompt: 'task-one',
+    task: { id: 'T-001', ac: ['AC-001'] },
+  });
   assert.equal(first.ok, true);
-  const second = await poolDispatch({ ...base, prompt: 'task-two', task: { id: 'T-002', ac: ['AC-002'] } });
+  const second = await poolDispatch({
+    ...base,
+    prompt: 'task-two',
+    task: { id: 'T-002', ac: ['AC-002'] },
+  });
   assert.equal(second.ok, true);
 
   assert.equal(subagents.started, 1);
@@ -110,7 +118,11 @@ test('连续 3 个任务后销毁重建', async () => {
   const { runtime, subagents } = fakeRuntime();
   const base = { runtime, role: 'tester', root, change: 'c1', worktree: root, skills: [] };
   for (let index = 1; index <= 3; index += 1) {
-    const result = await poolDispatch({ ...base, prompt: `t${index}`, task: { id: `T-00${index}` } });
+    const result = await poolDispatch({
+      ...base,
+      prompt: `t${index}`,
+      task: { id: `T-00${index}` },
+    });
     assert.equal(result.ok, true);
   }
   assert.equal(subagents.started, 1);
@@ -197,7 +209,10 @@ test('并发受单 change 上限约束并复用，且每次切换工作目录', 
     poolDispatch({ ...base, worktree: path.join(root, 'b'), prompt: 'b', task: { id: 'T-002' } }),
     poolDispatch({ ...base, worktree: path.join(root, 'c'), prompt: 'c', task: { id: 'T-003' } }),
   ]);
-  assert.equal(results.every((item) => item.ok), true);
+  assert.equal(
+    results.every((item) => item.ok),
+    true,
+  );
   assert.equal(subagents.started, 2);
   assert.equal(cwdCalls.length, 1);
   assert.deepEqual(cwdCalls[0][1], path.join(root, 'c'));

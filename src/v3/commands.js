@@ -60,7 +60,11 @@ export function registerCommands(ctx, runtime) {
     async handler(inv) {
       const root = runtime.getCwd(inv?.agent);
       const userQuestions = runtime.service('userQuestions');
-      if (detectInitMode(root) === 'new' && userQuestions && typeof userQuestions.ask === 'function') {
+      if (
+        detectInitMode(root) === 'new' &&
+        userQuestions &&
+        typeof userQuestions.ask === 'function'
+      ) {
         const result = await startInitProject({
           root,
           userQuestions,
@@ -84,7 +88,8 @@ export function registerCommands(ctx, runtime) {
       }
       const result = initProject(root);
       if (!result.ok) return { kind: 'error', text: `初始化失败：${result.message}` };
-      const changed = result.created.length > 0 ? `新建 ${result.created.length} 项` : '已完整，幂等跳过';
+      const changed =
+        result.created.length > 0 ? `新建 ${result.created.length} 项` : '已完整，幂等跳过';
       const suggestions = suggestSuites(root);
       const hint = suggestions.length
         ? `\n检测到可能的套件（仅建议，未写入配置）：${suggestions
@@ -100,7 +105,8 @@ export function registerCommands(ctx, runtime) {
 
   register({
     name: 'sg-change',
-    description: '创建 v3 change：/sg-change <name> [--type feature|modify|fix|remove] [--link <changeKey>]',
+    description:
+      '创建 v3 change：/sg-change <name> [--type feature|modify|fix|remove] [--link <changeKey>]',
     input: { hint: '<name> [--type feature|modify|fix|remove] [--link <changeKey>]' },
     async handler(inv) {
       const project = runtime.project(inv?.agent);

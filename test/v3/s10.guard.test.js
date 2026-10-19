@@ -33,7 +33,10 @@ test('H1 前禁止写 design/tasks/源码/测试', () => {
     assert.match(String(message), /H1 尚未批准/, file);
   }
 
-  assert.equal(checkWrite(runtime, execWrite('openspec/changes/guard-demo/proposal.md')), undefined);
+  assert.equal(
+    checkWrite(runtime, execWrite('openspec/changes/guard-demo/proposal.md')),
+    undefined,
+  );
   assert.equal(
     checkWrite(runtime, execWrite('openspec/changes/guard-demo/specs/app/spec.md')),
     undefined,

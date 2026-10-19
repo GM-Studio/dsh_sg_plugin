@@ -98,7 +98,9 @@ test('createChange 创建包并推进到 H1_PENDING', () => {
   assert.equal(state.state.type, 'feature');
   assert.equal(state.state.phase, 'H1_PENDING');
   assert.equal(state.state.baseCommit, 'abc123');
-  const mapping = JSON.parse(fs.readFileSync(path.join(changeDir, 'tests', 'mapping.json'), 'utf8'));
+  const mapping = JSON.parse(
+    fs.readFileSync(path.join(changeDir, 'tests', 'mapping.json'), 'utf8'),
+  );
   assert.equal(mapping.change, 'add-login');
 });
 

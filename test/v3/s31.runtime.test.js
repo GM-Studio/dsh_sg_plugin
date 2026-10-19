@@ -14,7 +14,9 @@ function tempRoot() {
 }
 
 test('runOneSuite 记录 Node 版本、安装状态与上次结果', (t) => {
-  const has18 = nodeDirCandidates(process.env).some((item) => String(item.version).startsWith('18.'));
+  const has18 = nodeDirCandidates(process.env).some((item) =>
+    String(item.version).startsWith('18.'),
+  );
   if (!has18) {
     t.skip('本机没有 Node 18');
     return;

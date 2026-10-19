@@ -50,7 +50,11 @@ function initFixture() {
   fs.mkdirSync(path.join(root, 'openspec', 'specs', 'greeting'), { recursive: true });
   fs.writeFileSync(path.join(root, 'openspec', 'specs', 'greeting', 'spec.md'), BASE_SPEC, 'utf8');
   fs.mkdirSync(path.join(root, 'src'), { recursive: true });
-  fs.writeFileSync(path.join(root, 'src', 'greeting.js'), "export const greeting = () => 'hi';\n", 'utf8');
+  fs.writeFileSync(
+    path.join(root, 'src', 'greeting.js'),
+    "export const greeting = () => 'hi';\n",
+    'utf8',
+  );
   fs.writeFileSync(path.join(root, 'reporter.mjs'), REPORTER, 'utf8');
   fs.writeFileSync(
     path.join(root, 'package.json'),
@@ -66,7 +70,11 @@ function makeCtx() {
   return {
     get: (name) =>
       name === 'userQuestions'
-        ? { async ask() { return { answers: [{ selected: ['通过'] }] }; } }
+        ? {
+            async ask() {
+              return { answers: [{ selected: ['通过'] }] };
+            },
+          }
         : undefined,
     tools: {
       register(definition) {
@@ -133,9 +141,7 @@ const CASES = `| 用例 | AC | 层次 | 描述 |
 const MAPPING = {
   schemaVersion: 1,
   change: 'mod-greeting',
-  requirements: [
-    { ac: 'AC-001', covers: ['REQ-001'], tasks: ['T-001'], cases: ['TC-001'] },
-  ],
+  requirements: [{ ac: 'AC-001', covers: ['REQ-001'], tasks: ['T-001'], cases: ['TC-001'] }],
   automation: [],
 };
 
@@ -144,7 +150,11 @@ function writePlan(root) {
   fs.writeFileSync(path.join(dir, 'design.md'), DESIGN, 'utf8');
   fs.writeFileSync(path.join(dir, 'tasks.md'), TASKS, 'utf8');
   fs.writeFileSync(path.join(dir, 'tests', 'cases.md'), CASES, 'utf8');
-  fs.writeFileSync(path.join(dir, 'tests', 'mapping.json'), JSON.stringify(MAPPING, null, 2), 'utf8');
+  fs.writeFileSync(
+    path.join(dir, 'tests', 'mapping.json'),
+    JSON.stringify(MAPPING, null, 2),
+    'utf8',
+  );
   fs.writeFileSync(
     path.join(dir, 'tests', 'touched.json'),
     JSON.stringify({ schemaVersion: 1, modify: [], delete: [], bootstrap: [] }, null, 2),
@@ -193,7 +203,10 @@ async function bootstrap(root) {
     config,
     fs
       .readFileSync(config, 'utf8')
-      .replace('command: []', `command: ["${process.execPath.replace(/\\/g, '/')}","reporter.mjs"]`),
+      .replace(
+        'command: []',
+        `command: ["${process.execPath.replace(/\\/g, '/')}","reporter.mjs"]`,
+      ),
     'utf8',
   );
   await call(ctx, 'sg_change', { name: 'mod-greeting', type: 'modify' });

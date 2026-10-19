@@ -53,9 +53,7 @@ test('缺少 file 或文件不存在判失败', () => {
   const root = tempRoot();
   const missing = run(root, [{ id: 'TC-001', ac: ['AC-001'], status: 'pass' }]);
   assert.equal(missing.ok, false);
-  const absent = run(root, [
-    { id: 'TC-001', ac: ['AC-001'], status: 'pass', file: 'nope.js' },
-  ]);
+  const absent = run(root, [{ id: 'TC-001', ac: ['AC-001'], status: 'pass', file: 'nope.js' }]);
   assert.equal(absent.ok, false);
   assert.match(absent.errors.join('; '), /不存在/);
 });

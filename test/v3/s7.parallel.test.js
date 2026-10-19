@@ -57,7 +57,11 @@ function makeCtx() {
   return {
     get: (name) =>
       name === 'userQuestions'
-        ? { async ask() { return { answers: [{ selected: ['通过'] }] }; } }
+        ? {
+            async ask() {
+              return { answers: [{ selected: ['通过'] }] };
+            },
+          }
         : undefined,
     tools: {
       register(definition) {
@@ -199,7 +203,11 @@ test('S7：两个 [P] 任务并行执行并各自合并', async () => {
       active += 1;
       maxActive = Math.max(maxActive, active);
       await new Promise((resolve) => setTimeout(resolve, 80));
-      fs.writeFileSync(path.join(worktree, 'src', `${task.id}.js`), 'export const x = 1;\n', 'utf8');
+      fs.writeFileSync(
+        path.join(worktree, 'src', `${task.id}.js`),
+        'export const x = 1;\n',
+        'utf8',
+      );
       commitAll(worktree, `impl ${task.id}`);
       active -= 1;
       return { ok: true, text: 'done' };

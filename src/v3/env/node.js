@@ -170,9 +170,10 @@ export function resolveNode({ root, suite, config, env = process.env, verify = t
     return {
       ok: false,
       code: versions.length === 0 ? 'NODE_VERSION_TOOL_MISSING' : 'NODE_VERSION_NOT_INSTALLED',
-      message: versions.length === 0
-        ? `项目要求 Node ${requirement}，但没有找到 volta/fnm/nvm-windows/asdf`
-        : `项目要求 Node ${requirement}，已安装版本不匹配：${versions.join(', ')}`,
+      message:
+        versions.length === 0
+          ? `项目要求 Node ${requirement}，但没有找到 volta/fnm/nvm-windows/asdf`
+          : `项目要求 Node ${requirement}，已安装版本不匹配：${versions.join(', ')}`,
       available: versions,
     };
   }
@@ -192,10 +193,13 @@ export function resolveNode({ root, suite, config, env = process.env, verify = t
     PATH: `${binDir}${path.delimiter}${env.PATH || ''}`,
     SG_NODE_VERSION: version,
   };
-  if (!verify) return { ok: true, requirement, version, tool: candidate.tool, dir: binDir, env: nextEnv };
+  if (!verify)
+    return { ok: true, requirement, version, tool: candidate.tool, dir: binDir, env: nextEnv };
 
   const result = spawnSync('node', ['-v'], { env: nextEnv, encoding: 'utf8', windowsHide: true });
-  const printed = String(result.stdout || '').trim().replace(/^v/, '');
+  const printed = String(result.stdout || '')
+    .trim()
+    .replace(/^v/, '');
   if (result.status !== 0 || !printed.startsWith(version)) {
     return {
       ok: false,

@@ -72,7 +72,7 @@ function makeRunner() {
         'greeting.test.mjs',
       );
       fs.mkdirSync(path.dirname(file), { recursive: true });
-      fs.writeFileSync(file, "export const ok = true;\n", 'utf8');
+      fs.writeFileSync(file, 'export const ok = true;\n', 'utf8');
       commitAll(worktree, 'add automation');
       return { ok: true, text: 'test added' };
     }
@@ -91,7 +91,11 @@ function makeCtx() {
   return {
     get: (name) =>
       name === 'userQuestions'
-        ? { async ask() { return { answers: [{ selected: ['通过'] }] }; } }
+        ? {
+            async ask() {
+              return { answers: [{ selected: ['通过'] }] };
+            },
+          }
         : undefined,
     tools: {
       register(definition) {
@@ -189,7 +193,10 @@ async function bootstrap(root) {
     config,
     fs
       .readFileSync(config, 'utf8')
-      .replace('command: []', `command: ["${process.execPath.replace(/\\/g, '/')}","reporter.mjs"]`),
+      .replace(
+        'command: []',
+        `command: ["${process.execPath.replace(/\\/g, '/')}","reporter.mjs"]`,
+      ),
     'utf8',
   );
   await call(ctx, 'sg_change', { name: 'add-greeting', type: 'feature' });
@@ -333,4 +340,3 @@ test('S5：集成回归、H3 与归档', async () => {
   const entries = fs.readdirSync(archiveRoot);
   assert.ok(entries.some((name) => name.endsWith('-add-greeting')));
 });
-

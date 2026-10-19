@@ -86,10 +86,9 @@ test('sg_skill 工具返回正文并写证据', async () => {
   const runtime = createRuntime(ctx, { root });
   registerTools(ctx, runtime);
 
-  const result = await ctx.toolsMap.get('sg_skill').execute(
-    { name: 'sp-skill-brainstorming' },
-    { agent: null },
-  );
+  const result = await ctx.toolsMap
+    .get('sg_skill')
+    .execute({ name: 'sp-skill-brainstorming' }, { agent: null });
   assert.match(result.text, /brainstorming/);
   assert.equal(result.data.skill, 'sp-skill-brainstorming');
 

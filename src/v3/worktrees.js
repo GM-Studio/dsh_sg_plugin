@@ -69,11 +69,21 @@ function createWorktree(root, dir, branch, baseCommit) {
 }
 
 export function ensureIntegration(root, change, baseCommit) {
-  return createWorktree(root, worktreePath(root, change, 'integration'), integrationBranch(change), baseCommit);
+  return createWorktree(
+    root,
+    worktreePath(root, change, 'integration'),
+    integrationBranch(change),
+    baseCommit,
+  );
 }
 
 export function ensureTask(root, change, taskId, baseCommit) {
-  return createWorktree(root, worktreePath(root, change, taskId), taskBranch(change, taskId), baseCommit);
+  return createWorktree(
+    root,
+    worktreePath(root, change, taskId),
+    taskBranch(change, taskId),
+    baseCommit,
+  );
 }
 
 export function removeWorktree(root, dir) {
@@ -93,7 +103,8 @@ export function headOf(root, ref) {
   }
 }
 
-export function mergeIntoIntegration({ integrationPath, branch, expectedCommit, message }) {  const head = headOf(integrationPath, branch);
+export function mergeIntoIntegration({ integrationPath, branch, expectedCommit, message }) {
+  const head = headOf(integrationPath, branch);
   if (!head) {
     return { ok: false, code: 'BRANCH_MISSING', message: `分支不存在：${branch}` };
   }
@@ -112,7 +123,11 @@ export function mergeIntoIntegration({ integrationPath, branch, expectedCommit, 
     } catch {
       // nothing to abort
     }
-    return { ok: false, code: 'MERGE_CONFLICT', message: String(error.stderr || error.message).trim() };
+    return {
+      ok: false,
+      code: 'MERGE_CONFLICT',
+      message: String(error.stderr || error.message).trim(),
+    };
   }
   return { ok: true, commit: headOf(integrationPath, 'HEAD') };
 }
@@ -188,8 +203,7 @@ export function diffCheck({ root, branch, baseCommit, role, change, touched, pha
 
     if (role === 'planner') {
       allowed =
-        filePath.startsWith(`openspec/changes/${change}/`) &&
-        !filePath.endsWith('acceptance.md');
+        filePath.startsWith(`openspec/changes/${change}/`) && !filePath.endsWith('acceptance.md');
       if (filePath.startsWith('docs/')) allowed = true;
     } else if (role === 'implementer') {
       const listed = [...(touched?.modify || []), ...(touched?.bootstrap || [])];

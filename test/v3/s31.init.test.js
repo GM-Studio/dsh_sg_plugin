@@ -3,11 +3,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import {
-  detectInitMode,
-  scaffoldFiles,
-  initNewProject,
-} from '../../src/v3/init.js';
+import { detectInitMode, scaffoldFiles, initNewProject } from '../../src/v3/init.js';
 import { load } from '../../src/v3/state.js';
 
 function tempRoot() {
@@ -111,10 +107,7 @@ test('monorepo 初始化生成 apps/api 首个 change', async () => {
   assert.ok(fs.existsSync(path.join(root, 'apps/api/index.js')));
   assert.ok(fs.existsSync(path.join(root, 'apps/web/src/App.vue')));
   const touched = JSON.parse(
-    fs.readFileSync(
-      path.join(root, 'openspec/changes/add-version/tests/touched.json'),
-      'utf8',
-    ),
+    fs.readFileSync(path.join(root, 'openspec/changes/add-version/tests/touched.json'), 'utf8'),
   );
   assert.deepEqual(touched.modify, ['apps/api/index.js', 'apps/api/sg-test.mjs']);
 });

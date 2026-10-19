@@ -90,9 +90,7 @@ const CASES = `# 用例
 const MAPPING = {
   schemaVersion: 1,
   change: 'add-greeting',
-  requirements: [
-    { ac: 'AC-001', covers: ['REQ-001'], tasks: ['T-001'], cases: ['TC-001'] },
-  ],
+  requirements: [{ ac: 'AC-001', covers: ['REQ-001'], tasks: ['T-001'], cases: ['TC-001'] }],
   automation: [],
 };
 

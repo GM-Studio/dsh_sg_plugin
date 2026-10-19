@@ -41,7 +41,9 @@ export function generateAcceptance({
     '',
     '| AC | 结果 | 用例文件 | exitCode | commit |',
     '|---|---|---|---|---|',
-    ...rows.map((row) => `| ${row.ac} | ${row.result} | ${row.file} | ${row.exitCode} | ${row.commit} |`),
+    ...rows.map(
+      (row) => `| ${row.ac} | ${row.result} | ${row.file} | ${row.exitCode} | ${row.commit} |`,
+    ),
     '',
   ];
   return { text: lines.join('\n'), rows, conclusion };

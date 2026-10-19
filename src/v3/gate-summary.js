@@ -35,7 +35,8 @@ function listSpecFiles(root, change) {
     for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
       const full = path.join(dir, entry.name);
       if (entry.isDirectory()) walk(full, capability || entry.name);
-      else if (entry.name === 'spec.md') result.push({ file: full, capability: capability || entry.name });
+      else if (entry.name === 'spec.md')
+        result.push({ file: full, capability: capability || entry.name });
     }
   };
   walk(base, null);
@@ -145,7 +146,9 @@ function renderH2(root, state) {
         )
       : ['| - | - | - | - |']),
     '',
-    `计划指纹：\`${String(state.plan?.planHash || '-').replace(/^sha256:/, '').slice(0, 12)}…\``,
+    `计划指纹：\`${String(state.plan?.planHash || '-')
+      .replace(/^sha256:/, '')
+      .slice(0, 12)}…\``,
   ].join('\n');
 }
 
@@ -254,7 +257,9 @@ function renderH3(root, state, integration) {
     '## AC 验收',
     '| AC | 结果 | 用例文件 |',
     '|---|---|---|',
-    ...(rows.length ? rows.map((row) => `| ${row.ac} | ${row.result} | ${row.file} |`) : ['| - | - | - |']),
+    ...(rows.length
+      ? rows.map((row) => `| ${row.ac} | ${row.result} | ${row.file} |`)
+      : ['| - | - | - |']),
     '',
     '## 测试统计',
     stats ? `- ${stats}` : '- 见 acceptance.md',
@@ -267,11 +272,18 @@ function renderH3(root, state, integration) {
     '## 关键 diff',
     ...(hunks.lines.length ? hunks.lines : ['（无可用 diff）']),
     '',
-    ...(state.type === 'fix' ? ['## 修复证据', '- 类型为 fix：复现用例在 base 上失败、修复后通过的记录见证据链。', ''] : []),
-    ...(hunks.redacted || summary.note
-      ? [`> ${summary.note || ''}${hunks.redacted ? `已脱敏 ${hunks.redacted} 行。` : ''}`.trim(), '']
+    ...(state.type === 'fix'
+      ? ['## 修复证据', '- 类型为 fix：复现用例在 base 上失败、修复后通过的记录见证据链。', '']
       : []),
-    `验收指纹：\`${String(state.acceptanceHash || '-').replace(/^sha256:/, '').slice(0, 12)}…\``,
+    ...(hunks.redacted || summary.note
+      ? [
+          `> ${summary.note || ''}${hunks.redacted ? `已脱敏 ${hunks.redacted} 行。` : ''}`.trim(),
+          '',
+        ]
+      : []),
+    `验收指纹：\`${String(state.acceptanceHash || '-')
+      .replace(/^sha256:/, '')
+      .slice(0, 12)}…\``,
   ];
   return lines.join('\n');
 }
@@ -285,6 +297,7 @@ export function renderGateSummary({ gate, root, state, integration }) {
   } catch (error) {
     text = `# ${gate} 审阅\n\n> 无法生成变更摘要：${error instanceof Error ? error.message : String(error)}`;
   }
-  if (text.length > MAX_CHARS) text = `${text.slice(0, MAX_CHARS)}\n…（内容超过 ${MAX_CHARS} 字符，已截断）`;
+  if (text.length > MAX_CHARS)
+    text = `${text.slice(0, MAX_CHARS)}\n…（内容超过 ${MAX_CHARS} 字符，已截断）`;
   return { text };
 }

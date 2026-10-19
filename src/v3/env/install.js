@@ -41,7 +41,8 @@ export function nodeInstallCommand(manager, root) {
 export function detectPythonInstaller(root) {
   if (exists(path.join(root, 'uv.lock'))) return { tool: 'uv', lockfile: 'uv.lock' };
   if (exists(path.join(root, 'poetry.lock'))) return { tool: 'poetry', lockfile: 'poetry.lock' };
-  if (exists(path.join(root, 'requirements.txt'))) return { tool: 'pip', lockfile: 'requirements.txt' };
+  if (exists(path.join(root, 'requirements.txt')))
+    return { tool: 'pip', lockfile: 'requirements.txt' };
   if (exists(path.join(root, 'pyproject.toml'))) return { tool: 'pip', lockfile: 'pyproject.toml' };
   return { tool: null, lockfile: null };
 }
@@ -51,7 +52,11 @@ export function pythonInstallCommand(root, pythonBin) {
   if (tool === 'uv') return { bin: 'uv', args: ['sync', '--frozen'], shell: false };
   if (tool === 'pip') {
     if (exists(path.join(root, 'requirements.txt'))) {
-      return { bin: pythonBin, args: ['-m', 'pip', 'install', '-r', 'requirements.txt'], shell: false };
+      return {
+        bin: pythonBin,
+        args: ['-m', 'pip', 'install', '-r', 'requirements.txt'],
+        shell: false,
+      };
     }
     return { bin: pythonBin, args: ['-m', 'pip', 'install', '-e', '.'], shell: false };
   }
@@ -86,7 +91,9 @@ export function installForSuite({
     command = pythonInstallCommand(root, pythonBin || 'python');
     if (!command) return { ok: true, skipped: true, reason: 'no-python-deps' };
     const { lockfile } = detectPythonInstaller(root);
-    fingerprint = lockfile ? digest(readText(path.join(root, lockfile))) : digest(String(command.args));
+    fingerprint = lockfile
+      ? digest(readText(path.join(root, lockfile)))
+      : digest(String(command.args));
   } else {
     const { manager, lockfile } = detectNodeManager(root);
     if (!lockfile && suite?.install !== true) {

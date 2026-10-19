@@ -13,7 +13,9 @@ export function readPythonRequirement(root, { suite, config } = {}) {
   }
   const runtimeFile = path.join(root, 'runtime.txt');
   if (exists(runtimeFile)) {
-    const value = readText(runtimeFile).trim().replace(/^python-/, '');
+    const value = readText(runtimeFile)
+      .trim()
+      .replace(/^python-/, '');
     if (value) return value;
   }
   const pyproject = path.join(root, 'pyproject.toml');
@@ -48,8 +50,10 @@ export function satisfiesPython(version, requirement) {
   let min = 0;
   let max = 99;
   for (const bound of bounds) {
-    if (bound.op === '>' || bound.op === '>=') min = Math.max(min, bound.minor + (bound.op === '>' ? 1 : 0));
-    else if (bound.op === '<' || bound.op === '<=') max = Math.min(max, bound.minor - (bound.op === '<' ? 1 : 0));
+    if (bound.op === '>' || bound.op === '>=')
+      min = Math.max(min, bound.minor + (bound.op === '>' ? 1 : 0));
+    else if (bound.op === '<' || bound.op === '<=')
+      max = Math.min(max, bound.minor - (bound.op === '<' ? 1 : 0));
     else if (bound.op === '') min = Math.max(min, bound.minor);
   }
   return current.major === 3 && current.minor >= min && current.minor <= max;
@@ -113,11 +117,11 @@ export function ensureVenv({ root, suite, config, env = process.env }) {
   }
 
   fs.mkdirSync(root, { recursive: true });
-  const created = spawnSync(
-    bin,
-    [...prefix, '-m', 'venv', venvPath],
-    { encoding: 'utf8', windowsHide: true, env },
-  );
+  const created = spawnSync(bin, [...prefix, '-m', 'venv', venvPath], {
+    encoding: 'utf8',
+    windowsHide: true,
+    env,
+  });
   if (created.status !== 0) {
     return {
       ok: false,
@@ -128,7 +132,11 @@ export function ensureVenv({ root, suite, config, env = process.env }) {
 
   const verified = pythonVersion(target, [], env);
   if (!verified.ok) {
-    return { ok: false, code: 'VENV_CREATE_FAILED', message: `venv 创建后无法执行：${verified.message}` };
+    return {
+      ok: false,
+      code: 'VENV_CREATE_FAILED',
+      message: `venv 创建后无法执行：${verified.message}`,
+    };
   }
   return { ok: true, python: target, version: verified.version, venv: venvPath, created: true };
 }

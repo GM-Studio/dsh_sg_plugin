@@ -68,7 +68,12 @@ export function suggestSuites(root) {
               if (!entry.isDirectory()) continue;
               const cwd = path.join(base, entry.name).replace(/\\/g, '/');
               if (exists(path.join(root, cwd, 'package.json'))) {
-                add({ id: entry.name, kind: 'node-test', cwd, command: ['npm', 'run', 'test:json'] });
+                add({
+                  id: entry.name,
+                  kind: 'node-test',
+                  cwd,
+                  command: ['npm', 'run', 'test:json'],
+                });
               }
             }
           } else if (exists(path.join(root, pattern, 'package.json'))) {
@@ -96,7 +101,12 @@ export function suggestSuites(root) {
     add({ id: 'api', kind: 'pytest', cwd: '.', pytestArgs: ['-q', 'tests'] });
   }
 
-  for (const config of ['playwright.config.ts', 'playwright.config.js', 'cypress.config.ts', 'cypress.config.js']) {
+  for (const config of [
+    'playwright.config.ts',
+    'playwright.config.js',
+    'cypress.config.ts',
+    'cypress.config.js',
+  ]) {
     if (exists(path.join(root, config))) {
       add({ id: 'e2e', kind: 'command', cwd: '.', command: ['npm', 'run', 'test:e2e'] });
       break;
@@ -168,8 +178,6 @@ export function parseJunitXml(text, { suiteId, cwd, worktree }) {
   return { schemaVersion: 1, runner: 'pytest', suite: suiteId, cases };
 }
 
-
-
 function installMeta(installed) {
   return {
     state: installed.skipped ? 'skipped' : 'done',
@@ -209,7 +217,12 @@ export function runPytestSuite({ suite, worktree, root }) {
       report: null,
       reportError: installed.message,
       code: 'INSTALL_FAILED',
-      python: { version: venv.version, venv: venv.venv, created: !!venv.created, reused: !!venv.reused },
+      python: {
+        version: venv.version,
+        venv: venv.venv,
+        created: !!venv.created,
+        reused: !!venv.reused,
+      },
       install: null,
     };
   }
@@ -249,7 +262,12 @@ export function runPytestSuite({ suite, worktree, root }) {
     stderr: String(result.stderr || ''),
     report,
     reportError,
-    python: { version: venv.version, venv: venv.venv, created: !!venv.created, reused: !!venv.reused },
+    python: {
+      version: venv.version,
+      venv: venv.venv,
+      created: !!venv.created,
+      reused: !!venv.reused,
+    },
     install: installMeta(installed),
   };
 }
@@ -405,7 +423,13 @@ export function runTaskSuites({
     });
     results.push(result);
     if (!result.ok) {
-      return { ok: false, failedSuite: suiteId, results, stats: mergeStats(results), message: result.message };
+      return {
+        ok: false,
+        failedSuite: suiteId,
+        results,
+        stats: mergeStats(results),
+        message: result.message,
+      };
     }
   }
   return { ok: true, results, stats: mergeStats(results) };
@@ -442,7 +466,13 @@ export function runAllSuites({
     });
     results.push(result);
     if (!result.ok) {
-      return { ok: false, failedSuite: suite.id, results, stats: mergeStats(results), message: result.message };
+      return {
+        ok: false,
+        failedSuite: suite.id,
+        results,
+        stats: mergeStats(results),
+        message: result.message,
+      };
     }
   }
   return { ok: true, results, stats: mergeStats(results) };

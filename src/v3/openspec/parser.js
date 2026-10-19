@@ -15,7 +15,9 @@ function idOf(text, pattern) {
  * Requirements may only appear inside ADDED/MODIFIED/REMOVED sections.
  */
 export function parseDelta(text) {
-  const lines = String(text ?? '').replace(/\r\n/g, '\n').split('\n');
+  const lines = String(text ?? '')
+    .replace(/\r\n/g, '\n')
+    .split('\n');
   const sections = { ADDED: [], MODIFIED: [], REMOVED: [] };
   const errors = [];
   let section = null;
@@ -94,7 +96,9 @@ export function parseDelta(text) {
 
 /** Parse a capability spec (requirements without delta sections). */
 export function parseSpec(text) {
-  const lines = String(text ?? '').replace(/\r\n/g, '\n').split('\n');
+  const lines = String(text ?? '')
+    .replace(/\r\n/g, '\n')
+    .split('\n');
   const requirements = [];
   const errors = [];
   let requirement = null;

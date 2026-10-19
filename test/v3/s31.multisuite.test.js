@@ -42,7 +42,10 @@ test('parseJunitXml 解析 pass/fail/skip 与 AC 标记', () => {
   const report = parseJunitXml(xml, { suiteId: 'api', cwd: root, worktree: root });
   assert.equal(report.suite, 'api');
   assert.equal(report.runner, 'pytest');
-  assert.deepEqual(report.cases.map((item) => item.status), ['pass', 'fail', 'skip']);
+  assert.deepEqual(
+    report.cases.map((item) => item.status),
+    ['pass', 'fail', 'skip'],
+  );
   assert.deepEqual(report.cases[0].ac, ['AC-001']);
   assert.equal(report.cases[0].file, 'tests/test_login.py');
 });

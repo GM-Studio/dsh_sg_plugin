@@ -165,9 +165,14 @@ test('M1 未通过时不允许批准', async () => {
 test('artifactHash 对换行不敏感、对内容敏感', () => {
   const root = tempRoot();
   fs.mkdirSync(path.join(root, 'openspec', 'changes', 'c', 'specs', 'cap'), { recursive: true });
-  const delta = '## ADDED Requirements\n\n### Requirement: 甲 (REQ-001)\n\n#### Scenario: 乙 (AC-001)\n';
+  const delta =
+    '## ADDED Requirements\n\n### Requirement: 甲 (REQ-001)\n\n#### Scenario: 乙 (AC-001)\n';
   fs.writeFileSync(path.join(root, 'openspec', 'changes', 'c', 'proposal.md'), PROPOSAL, 'utf8');
-  fs.writeFileSync(path.join(root, 'openspec', 'changes', 'c', 'specs', 'cap', 'spec.md'), delta, 'utf8');
+  fs.writeFileSync(
+    path.join(root, 'openspec', 'changes', 'c', 'specs', 'cap', 'spec.md'),
+    delta,
+    'utf8',
+  );
   const first = computeArtifactHash({ root, change: 'c', specsBase: 'base' });
   fs.writeFileSync(
     path.join(root, 'openspec', 'changes', 'c', 'specs', 'cap', 'spec.md'),

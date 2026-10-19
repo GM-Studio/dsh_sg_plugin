@@ -47,7 +47,11 @@ function initFixture() {
   fs.mkdirSync(path.join(root, 'openspec', 'specs', 'greeting'), { recursive: true });
   fs.writeFileSync(path.join(root, 'openspec', 'specs', 'greeting', 'spec.md'), BASE_SPEC, 'utf8');
   fs.mkdirSync(path.join(root, 'tests', 'automation'), { recursive: true });
-  fs.writeFileSync(path.join(root, 'tests', 'automation', 'legacy.test.mjs'), 'export {};\n', 'utf8');
+  fs.writeFileSync(
+    path.join(root, 'tests', 'automation', 'legacy.test.mjs'),
+    'export {};\n',
+    'utf8',
+  );
   fs.mkdirSync(path.join(root, 'src'), { recursive: true });
   fs.writeFileSync(
     path.join(root, 'src', 'greeting.js'),
@@ -69,7 +73,11 @@ function makeCtx() {
   return {
     get: (name) =>
       name === 'userQuestions'
-        ? { async ask() { return { answers: [{ selected: ['通过'] }] }; } }
+        ? {
+            async ask() {
+              return { answers: [{ selected: ['通过'] }] };
+            },
+          }
         : undefined,
     tools: {
       register(definition) {
@@ -134,7 +142,11 @@ function writePlan(root) {
   fs.writeFileSync(path.join(dir, 'tests', 'cases.md'), CASES, 'utf8');
   fs.writeFileSync(
     path.join(dir, 'tests', 'mapping.json'),
-    JSON.stringify({ schemaVersion: 1, change: 'remove-greeting', requirements: [], automation: [] }, null, 2),
+    JSON.stringify(
+      { schemaVersion: 1, change: 'remove-greeting', requirements: [], automation: [] },
+      null,
+      2,
+    ),
     'utf8',
   );
   fs.writeFileSync(
@@ -220,4 +232,3 @@ test('S6：remove 删除实现、测试并从 specs 移除需求', async () => {
   const state = load(root).state;
   assert.equal(state.phase, 'DONE');
 });
-
