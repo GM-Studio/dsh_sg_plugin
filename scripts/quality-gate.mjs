@@ -252,13 +252,26 @@ function stageFiles(files) {
   execFileSync('git', ['add', '--', ...files], { cwd: repoRoot, stdio: 'inherit' });
 }
 
-function workingTreeChanged(files) {
-  if (files.length === 0) return false;
-  const output = execFileSync('git', ['status', '--porcelain', '--', ...files], {
-    cwd: repoRoot,
-    encoding: 'utf8',
-  }).trim();
-  return output.length > 0;
+function snapshotFiles(files) {
+  const snapshot = new Map();
+  for (const file of files) {
+    try {
+      snapshot.set(file, readFileSync(path.join(repoRoot, file), 'utf8'));
+    } catch {
+      snapshot.set(file, null);
+    }
+  }
+  return snapshot;
+}
+
+function changedContentFiles(files, snapshot) {
+  return files.filter((file) => {
+    try {
+      return readFileSync(path.join(repoRoot, file), 'utf8') !== snapshot.get(file);
+    } catch {
+      return false;
+    }
+  });
 }
 
 function main() {
@@ -280,10 +293,11 @@ function main() {
   if (options.tests) runTests();
 
   if (options.fix) {
+    const before = snapshotFiles(formatTargets);
     formatFiles(formatTargets, true);
-    const formatted = workingTreeChanged(formatTargets);
-    stageFiles(formatTargets);
-    if (options.stage === 'push' && formatted) {
+    const formatted = changedContentFiles(formatTargets, before);
+    stageFiles(formatted);
+    if (options.stage === 'push' && formatted.length > 0) {
       banner([
         '[quality-gate] 代码已自动格式化，push 已被阻止',
         '格式化结果已暂存到 Git 索引。',
