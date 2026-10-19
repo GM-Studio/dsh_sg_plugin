@@ -19,6 +19,7 @@ import {
 import { createDispatcher } from './dispatch.js';
 import { maybeBuildBootstrap } from './bootstrap.js';
 import { startV4Init, summarizeV4Result } from '../v4/init.js';
+import { adoptWorkspace, summarizeAdopt } from '../v4/adopt.js';
 import { appendRun } from './runs.js';
 import {
   collectDiff,
@@ -161,6 +162,12 @@ export function registerTools(ctx, runtime) {
           return fail('初始化失败（E_DRAFT_INCOMPLETE）：draft 必须是对象；未写入任何文件。', {
             code: 'E_DRAFT_INCOMPLETE',
           });
+        }
+
+        if (input.adopt === true) {
+          const adopted = adoptWorkspace({ root });
+          if (!adopted.ok) return fail(summarizeAdopt(adopted), adopted);
+          return ok(summarizeAdopt(adopted), adopted);
         }
 
         if (input.v4 === true) {

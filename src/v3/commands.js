@@ -11,6 +11,7 @@ import { collectContext, inspectInit, startRequirementsInit, summarizeInitResult
 import { withNotice } from './notice.js';
 import { maybeBuildBootstrap } from './bootstrap.js';
 import { startV4Init, summarizeV4Result } from '../v4/init.js';
+import { adoptWorkspace, summarizeAdopt } from '../v4/adopt.js';
 import { digest } from './util/hash.js';
 import { patchState } from './state.js';
 
@@ -58,6 +59,7 @@ export function parseInitArgs(rawInput) {
   const parts = splitArgs(rawInput);
   let req = null;
   let v4 = false;
+  let adopt = false;
   let backend = null;
   let frontend = null;
   let preset = null;
@@ -73,6 +75,8 @@ export function parseInitArgs(rawInput) {
       index += 1;
     } else if (part === '--v4') {
       v4 = true;
+    } else if (part === '--adopt') {
+      adopt = true;
     } else if (part === '--backend' || part === '--frontend' || part === '--preset') {
       const value = parts[index + 1];
       if (!value) {
@@ -93,7 +97,16 @@ export function parseInitArgs(rawInput) {
       message: '-req 与自由描述不能同时使用',
     };
   }
-  return { ok: true, req, v4, backend, frontend, preset, description: rest.join(' ').trim() };
+  return {
+    ok: true,
+    req,
+    v4,
+    adopt,
+    backend,
+    frontend,
+    preset,
+    description: rest.join(' ').trim(),
+  };
 }
 
 export function registerCommands(ctx, runtime) {
@@ -125,6 +138,12 @@ export function registerCommands(ctx, runtime) {
       const parsed = parseInitArgs(inv?.rawInput);
       if (!parsed.ok) {
         return { kind: 'error', text: '初始化失败（' + parsed.code + '）：' + parsed.message };
+      }
+
+      if (parsed.adopt) {
+        const adopted = adoptWorkspace({ root });
+        if (!adopted.ok) return { kind: 'error', text: summarizeAdopt(adopted) };
+        return { kind: 'success', text: summarizeAdopt(adopted) };
       }
 
       if (parsed.v4) {
