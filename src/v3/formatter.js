@@ -5,17 +5,21 @@ import { configPath, parseConfig } from './change.js';
 import { exists, readText } from './util/fsx.js';
 import { git } from './util/git.js';
 import { appendRun } from './runs.js';
+import { detectQuality } from './quality.js';
 
-export function formatterCommand(root) {
+export function formatterCommand(root, worktree = root, stack = null) {
   const file = configPath(root);
-  if (!exists(file)) return [];
-  const config = parseConfig(readText(file));
-  const command = config?.formatter?.command;
-  return Array.isArray(command) ? command.map(String) : [];
+  if (exists(file)) {
+    const config = parseConfig(readText(file));
+    const command = config?.formatter?.command;
+    if (Array.isArray(command) && command.length > 0) return command.map(String);
+  }
+  const detected = detectQuality({ root, worktree, stack }).format;
+  return Array.isArray(detected) ? detected : [];
 }
 
 export function runFormatter({ root, worktree, change, task }) {
-  const command = formatterCommand(root);
+  const command = formatterCommand(root, worktree);
   if (command.length === 0) {
     const skipDir = path.join(root, '.specgate', 'runs');
     fs.mkdirSync(skipDir, { recursive: true });

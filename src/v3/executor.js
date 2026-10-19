@@ -23,6 +23,7 @@ import {
   removeReviewWorktree,
 } from './review.js';
 import { runFormatter } from './formatter.js';
+import { runQualityStage } from './quality.js';
 import { appendRun } from './runs.js';
 
 function failure(code, message, extra = {}) {
@@ -314,6 +315,14 @@ async function executeFeatureTask({ root, state, task, dispatcher, config, paren
   const formatted = runFormatter({ root, worktree: worktree.path, change, task });
   if (!formatted.ok) return failure('FORMAT_FAILED', formatted.message, { formatted });
   const formatHead = headOf(worktree.path, 'HEAD') || implHead;
+  for (const stage of ['lint', 'typecheck']) {
+    const quality = runQualityStage({ root, worktree: worktree.path, change, task, stage });
+    if (!quality.ok) {
+      return failure(`${stage.toUpperCase()}_FAILED`, `${stage} 失败：${quality.report}`, {
+        quality,
+      });
+    }
+  }
 
   const tester = await dispatcher({
     role: 'tester',
@@ -475,6 +484,14 @@ async function executeFixTask({ root, state, task, dispatcher, config, parent })
   }
   const formatted = runFormatter({ root, worktree: worktree.path, change, task });
   if (!formatted.ok) return failure('FORMAT_FAILED', formatted.message, { formatted });
+  for (const stage of ['lint', 'typecheck']) {
+    const quality = runQualityStage({ root, worktree: worktree.path, change, task, stage });
+    if (!quality.ok) {
+      return failure(`${stage.toUpperCase()}_FAILED`, `${stage} 失败：${quality.report}`, {
+        quality,
+      });
+    }
+  }
 
   return verifyAndFinish({
     root,
