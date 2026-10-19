@@ -71,7 +71,7 @@ test('initNewProject 走 H0、脚手架、自动建 change 停 H1', async () => 
   });
   assert.equal(result.ok, true, result.message);
   assert.equal(result.phase, 'H1_PENDING');
-  assert.equal(result.change, 'add-version');
+  assert.equal(result.change, 'mvp-scaffold');
 
   for (const file of [
     'index.js',
@@ -81,15 +81,15 @@ test('initNewProject 走 H0、脚手架、自动建 change 停 H1', async () => 
     'docs/glossary.md',
     'docs/adr/0001-initial.md',
     '.github/workflows/ci.yml',
-    'openspec/changes/add-version/proposal.md',
-    'openspec/changes/add-version/specs/ops/spec.md',
+    'openspec/changes/mvp-scaffold/proposal.md',
+    'openspec/changes/mvp-scaffold/specs/mvp/spec.md',
   ]) {
     assert.ok(fs.existsSync(path.join(root, file)), file);
   }
 
   const state = load(root).state;
   assert.equal(state.phase, 'H1_PENDING');
-  assert.equal(state.change, 'add-version');
+  assert.equal(state.change, 'mvp-scaffold');
   assert.ok(state.h0?.hash);
   assert.ok(state.h0?.approvedAt);
 });

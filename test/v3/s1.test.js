@@ -7,6 +7,7 @@ import { createRuntime } from '../../src/v3/runtime.js';
 import { registerTools } from '../../src/v3/tools.js';
 import { registerCommands, parseChangeArgs } from '../../src/v3/commands.js';
 import { load } from '../../src/v3/state.js';
+import { initProject } from '../../src/v3/change.js';
 
 function tempRoot() {
   return fs.mkdtempSync(path.join(os.tmpdir(), 'sg-v3-s1-'));
@@ -76,11 +77,10 @@ test('未初始化时 sg_status 显示未初始化', async () => {
   assert.equal(result.data.initialized, false);
 });
 
-test('sg_init 后 sg_status 显示 IDLE', async () => {
+test('initProject 后 sg_status 显示 IDLE', async () => {
   const root = tempRoot();
   const { ctx } = setup(root);
-  const init = await callTool(ctx, 'sg_init');
-  assert.match(init.text, /已初始化/);
+  initProject(root);
   const status = await callTool(ctx, 'sg_status');
   assert.match(status.text, /阶段：IDLE/);
   assert.equal(load(root).state.phase, 'IDLE');
@@ -89,7 +89,7 @@ test('sg_init 后 sg_status 显示 IDLE', async () => {
 test('sg_change 创建 change 并进入 H1_PENDING', async () => {
   const root = tempRoot();
   const { ctx } = setup(root);
-  await callTool(ctx, 'sg_init');
+  initProject(root);
   const result = await callTool(ctx, 'sg_change', { name: 'add-login', type: 'fix' });
   assert.match(result.text, /H1_PENDING/);
   const status = await callTool(ctx, 'sg_status');
@@ -119,6 +119,7 @@ test('命令 /sg-init 与 /sg-change 可用', async () => {
   const { ctx } = setup(root);
   const init = await ctx.commandsMap.get('sg-init').handler({ rawInput: '', agent: null });
   assert.equal(init.kind, 'success');
+  initProject(root);
   const change = await ctx.commandsMap
     .get('sg-change')
     .handler({ rawInput: 'add-login --type modify', agent: null });

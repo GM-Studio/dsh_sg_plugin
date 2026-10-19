@@ -1,5 +1,36 @@
 # Changelog
 
+## 3.10.0
+
+- **init now generates the Item CRUD code and tests**: for new java / node / python projects, mvp-scaffold no longer stops at the change package; it writes the Item model, in-memory store, five CRUD endpoints, and full tests.
+- **Automatic quality pipeline**: formatting (Java Spotless apply, configured Node scripts), static checks (Java Checkstyle), full tests, then a read-only reviewer subagent.
+- **Success archives the change**: tasks checked, spec delta applied to openspec/specs/mvp/spec.md, mvp-scaffold moved to openspec/changes/archive/, and the project returns to IDLE ready for a business change.
+- **Failure aborts**: any formatting/static/test/review failure stops at H1_PENDING, keeps the code and docs/mvp-scaffold-report.md, and does not archive.
+- **No subagents: skip auto-build**: stays at H1_PENDING for /sg-run, avoiding a silent review bypass.
+- **Tests**: added test/v3/s40.bootstrap.test.js; full suite is 301 tests, 297 pass / 0 fail / 4 skipped.
+
+## 3.9.0
+
+- **The first change of a new project is now `mvp-scaffold`** (java / node / python): its proposal is titled "MVP框架搭建" and ships the specs/design/tasks/cases/mapping/touched for a generic Item CRUD example.
+- **Framework requirement injected into the baseline**: a new backend project starts with `REQ-001 MVP framework and Item CRUD example (framework baseline)`; business requirements shift to `REQ-002+`. `mvp-scaffold` references `REQ-001`.
+- **init does not generate CRUD code**: it only creates the change package; `/sg-run` executes T-001..T-003 to generate the Item model/store/endpoints and tests.
+- **CRUD contract**: GET/POST/PUT/DELETE `/api/items` (plus `/api/items/{id}`), in-memory storage, 201/204/400/404 covered; 10 ACs and 10 cases.
+- **Stack scope**: java / node / python; vue / react / monorepo / generic keep `add-version` and do not receive the framework requirement.
+- **Existing projects unchanged**: no migration, no rewrite; new projects only.
+- **Tests**: added `test/v3/s39.mvp-scaffold.test.js`; full suite is 296 tests, 292 pass / 0 fail / 4 skipped.
+
+## 3.8.0
+
+- **Three `/sg-init` entries**: `-req <document>` import, free-form description, and no-argument dialogue. The command and the `sg_init` tool accept `req` / `description` / `draft`.
+- **Lenient parsing with a minimum bar**: Markdown/UTF-8 (BOM/CRLF allowed, ≤1 MiB); the file must be readable, non-empty, and contain at least one functional requirement. Missing non-functional/constraint dimensions return `CLARIFY` for agent-led follow-up; only an explicit `confirmedEmpty` leaves them blank.
+- **Zero writes before confirmation**: removed `autoConfirmed` and the ask-failure fallback to defaults. `CLARIFY`, cancel, an unavailable question channel, or a validation failure create or modify nothing and return an `E_*` code.
+- **Active requirement dialog**: when a `userQuestions` channel exists, `-req` with missing dimensions, a free-form description, and the no-argument entry all open dimension-by-dimension dialogs (functional → non-functional → constraints → acceptance) with custom input; only when no channel exists does it return `CLARIFY` for the agent.
+- **Results reach the conversation**: command output is delivered via `agent.followup` when available, falling back to the new-session notice otherwise. The init summary now lists scaffold files and the correct next step (`/sg-run` when a first change already exists, not `/sg-change`).
+- **One confirmation page = H0**: the page shows the full requirements document (template FR/NFR/AC), the tech stack, auto-fill/warnings, and the files to write. Confirming writes `docs/requirements/REQ.md` and derives `openspec/REQ.md` plus the read-only snapshot.
+- **One-shot initialization**: after confirmation the scaffold and the first change `add-version` are generated and the project stops at `H1_PENDING`; a legacy repository writes only requirements assets and no scaffold. `sg_approve H0` remains for legacy projects.
+- **Traceability**: the requirements document records source/source_sha256 in frontmatter; `REQ.md` records derived_from; `state.requirementsSource` and `h0.hash/approvedAt` are auditable; `/sg-status` shows the requirements source and H0 approval time.
+- **Tests**: added `test/v3/s38.init-entries.test.js` (13 cases) and rewrote `s36.requirements.test.js`; the full `node --test` run is 292 tests, 288 pass / 0 fail / 4 skipped (environment-only Node 18 cases).
+
 ## 3.7.0
 
 - Requirements-first initialization: `/sg-init` interviews for functional (MVP), non-functional, constraints, and acceptance criteria before any tech-stack question, then merges both into one confirmation page.

@@ -7,6 +7,7 @@ import { createRuntime } from '../../src/v3/runtime.js';
 import { registerTools } from '../../src/v3/tools.js';
 import { load } from '../../src/v3/state.js';
 import { startInitProject } from '../../src/v3/init.js';
+import { initProject } from '../../src/v3/change.js';
 
 function tempRoot() {
   return fs.mkdtempSync(path.join(os.tmpdir(), 'sg-v3-h0-'));
@@ -42,6 +43,7 @@ function fakeQuestions(stack = 'node', approval = '通过') {
     async ask({ questions }) {
       const question = questions[0];
       if (question.id === 'sg-init-stack') return { answers: [{ selected: [stack] }] };
+      if (question.id === 'sg-init-h0') return { answers: [{ selected: ['确认'] }] };
       if (String(question.id).startsWith('sg-approve-')) {
         return { answers: [{ selected: [approval] }] };
       }
@@ -88,7 +90,7 @@ test('H0：尚无 change 时也能批准，随后 sg_run 生成脚手架并进�
 
   state = load(root).state;
   assert.equal(state.phase, 'H1_PENDING');
-  assert.equal(state.change, 'add-version');
+  assert.equal(state.change, 'mvp-scaffold');
 });
 
 test('H0：用户拒绝时停在 H0_PENDING', async () => {
@@ -101,8 +103,9 @@ test('H0：用户拒绝时停在 H0_PENDING', async () => {
 });
 
 test('H0：不在 H0_PENDING 阶段时拒绝批准', async () => {
-  const { ctx } = setup(tempRoot());
-  await callTool(ctx, 'sg_init');
+  const root = tempRoot();
+  const { ctx } = setup(root);
+  initProject(root);
   const result = await callTool(ctx, 'sg_approve', { gate: 'H0' });
   assert.match(result.text, /不能批准 H0/);
 });

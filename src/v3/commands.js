@@ -1,16 +1,15 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { initProject, createChange } from './change.js';
+import { createChange } from './change.js';
 import { renderStatusAt, statusJsonAt, resolveRepoPath, loadProjectAt } from './status-query.js';
 import { renderStatus } from './status.js';
 import { exists } from './util/fsx.js';
 import { ensureV3 } from './tools.js';
 import { headCommit, isGitRepo } from './util/git.js';
 import { loadSkill } from './skills.js';
-import { suggestSuites } from './suites.js';
-import { detectInitMode, startInitProject, collectContext, onboardExistingJava } from './init.js';
+import { collectContext, inspectInit, startRequirementsInit, summarizeInitResult } from './init.js';
 import { withNotice } from './notice.js';
-import { writeText } from './util/fsx.js';
+import { maybeBuildBootstrap } from './bootstrap.js';
 import { digest } from './util/hash.js';
 import { patchState } from './state.js';
 
@@ -41,6 +40,46 @@ export function parseChangeArgs(rawInput) {
   return { name, type, link };
 }
 
+function splitArgs(raw) {
+  const text = String(raw || '');
+  const out = [];
+  const pattern = /"([^"]*)"|'([^']*)'|(\S+)/g;
+  let match = pattern.exec(text);
+  while (match) {
+    out.push(match[1] ?? match[2] ?? match[3]);
+    match = pattern.exec(text);
+  }
+  return out;
+}
+
+/** /sg-init [-req <path>] [自由描述] */
+export function parseInitArgs(rawInput) {
+  const parts = splitArgs(rawInput);
+  let req = null;
+  const rest = [];
+  for (let index = 0; index < parts.length; index += 1) {
+    const part = parts[index];
+    if (part === '-req' || part === '--req') {
+      const value = parts[index + 1];
+      if (!value) {
+        return { ok: false, code: 'E_ARGS_CONFLICT', message: '-req 需要一个文档路径' };
+      }
+      req = value;
+      index += 1;
+    } else {
+      rest.push(part);
+    }
+  }
+  if (req && rest.length) {
+    return {
+      ok: false,
+      code: 'E_ARGS_CONFLICT',
+      message: '-req 与自由描述不能同时使用',
+    };
+  }
+  return { ok: true, req, description: rest.join(' ').trim() };
+}
+
 export function registerCommands(ctx, runtime) {
   const commands =
     ctx.commands || (typeof ctx.get === 'function' ? ctx.get('commands') : undefined);
@@ -61,80 +100,50 @@ export function registerCommands(ctx, runtime) {
 
   register({
     name: 'sg-init',
-    description: '初始化 SpecGate v3 项目（创建 .specgate 配置与 openspec 目录）',
-    input: { hint: '（无需参数）' },
+    description:
+      '初始化 SpecGate v3：/sg-init [-req <需求文档>] [自由描述]。确认前不写任何文件，确认后进入 H1_PENDING。',
+    input: { hint: '[-req <需求文档>] [自由描述]' },
     async handler(inv) {
       const root = runtime.getCwd(inv?.agent);
       const userQuestions = runtime.service('userQuestions');
-      const mode = detectInitMode(root);
-      if (userQuestions && typeof userQuestions.ask === 'function') {
-        const result = await startInitProject({
-          root,
-          userQuestions,
-          agent: inv?.agent,
-          signal: inv?.signal,
-          mode,
-        });
-        if (!result.ok) return { kind: 'error', text: `初始化失败：${result.message}` };
-        if (result.skipped) {
-          return {
-            kind: 'success',
-            text: [
-              `SpecGate v3 已初始化（幂等跳过）：当前阶段 ${result.phase}，需求基线与配置保持不变。`,
-              `需求基线：${result.requirementsDoc}${result.change ? `；进行中的 change：${result.change}` : ''}。`,
-              '如需修改初始化上下文请执行 /sg-context --reset。',
-            ].join('\n'),
-          };
-        }
-        if (mode === 'existing') {
-          writeText(
-            path.join(root, '.specgate', 'init-result.json'),
-            `${JSON.stringify(result, null, 2)}\n`,
-          );
-          return {
-            kind: 'success',
-            text: [
-              `已扫描现有项目（${result.scan.fileCount} 个文件）并反推需求草稿，阶段 H0_PENDING。`,
-              `扫描报告：${result.scan.report}；结构化结果：.specgate/init-result.json。`,
-              '未生成任何脚手架文件；仓库已存在时保持原状，否则已执行 git init。',
-              '请调用 sg_approve（gate="H0"）确认需求；确认后才写入 openspec/REQ.md 并进入 H1_PENDING。',
-            ].join('\n'),
-          };
-        }
-        writeText(
-          path.join(root, '.specgate', 'init-result.json'),
-          `${JSON.stringify(result, null, 2)}\n`,
-        );
+      const parsed = parseInitArgs(inv?.rawInput);
+      if (!parsed.ok) {
+        return { kind: 'error', text: '初始化失败（' + parsed.code + '）：' + parsed.message };
+      }
+
+      const guard = inspectInit(root);
+      if (guard.skip) {
         return {
           kind: 'success',
-          text: [
-            `已采集新建项目需求草稿与技术栈（${result.context.stack}），阶段 H0_PENDING。`,
-            '请调用 sg_approve 工具（gate="H0"）审阅需求与确认点；批准后执行 /sg-run 写入 openspec/REQ.md、生成脚手架与首个 change。',
-            '需要修改上下文时执行 /sg-context --reset。',
-            '结构化结果：.specgate/init-result.json',
-          ].join('\n'),
+          text: summarizeInitResult({
+            ...guard,
+            ok: true,
+            skipped: true,
+          }),
         };
       }
-      const result = initProject(root);
-      if (!result.ok) return { kind: 'error', text: `初始化失败：${result.message}` };
-      const changed =
-        result.created.length > 0 ? `新建 ${result.created.length} 项` : '已完整，幂等跳过';
-      const suggestions = suggestSuites(root);
-      const onboarding = onboardExistingJava(root);
-      const javaHint = onboarding
-        ? `\n已识别 Java 项目：${onboarding.project.buildTool || 'unknown'} / JDK ${
-            onboarding.project.jdk || 'unknown'
-          }；接入报告 docs/java-onboarding.md`
-        : '';
-      const hint = suggestions.length
-        ? `\n检测到可能的套件（仅建议，未写入配置）：${suggestions
-            .map((suite) => `${suite.id}(${suite.kind}@${suite.cwd})`)
-            .join('、')}`
-        : '';
-      return {
-        kind: 'success',
-        text: `SpecGate v3 已初始化（${changed}）。下一步：/sg-change <name> --type feature${hint}${javaHint}`,
-      };
+
+      let result = await startRequirementsInit({
+        root,
+        userQuestions,
+        agent: inv?.agent,
+        signal: inv?.signal,
+        req: parsed.req,
+        description: parsed.description,
+      });
+      if (!result.ok) {
+        return { kind: 'error', text: summarizeInitResult(result) };
+      }
+      const built = await maybeBuildBootstrap({
+        root,
+        result,
+        runtime,
+        agent: inv?.agent,
+      });
+      if (!built.ok) return { kind: 'error', text: summarizeInitResult(built) };
+      if (built.result) result = built.result;
+      if (built.skipped && built.reason) result = { ...result, autoBuildSkipped: built.reason };
+      return { kind: 'success', text: summarizeInitResult(result) };
     },
   });
 

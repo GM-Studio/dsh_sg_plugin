@@ -3,6 +3,21 @@ import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { initProject, createChange, configPath, readConfig } from './change.js';
 import { load, patchState } from './state.js';
+import { issueApproval } from './approvals.js';
+import {
+  buildClarifyPayload,
+  CONFIRM_OPTIONS,
+  DOC_RELATIVE,
+  nextRequirementsDocPath,
+  normalizeDraftInput,
+  parseRequirementsText,
+  readRequirementsFile,
+  renderConfirmationPage,
+  renderRequirementsDocument,
+  toLegacyRequirements,
+  validateParsedDoc,
+  writeRequirementsDocument,
+} from './requirements-doc.js';
 import { exists, readText, writeText, ensureDir } from './util/fsx.js';
 import { digest } from './util/hash.js';
 import { scanEnv, writeEnvReport } from './env-scan.js';
@@ -175,18 +190,15 @@ export async function collectContext({
         agent,
         signal,
       });
-    } catch {
-      context[field.key] = field.default;
-      continue;
+    } catch (error) {
+      const wrapped = new Error('用户问答不可用：' + (error?.message || String(error)));
+      wrapped.code = 'E_QUESTIONS_UNAVAILABLE';
+      throw wrapped;
     }
     const selected = answerOf(answer);
     const previous = context[field.key];
     context[field.key] =
-      selected && selected !== '跳过'
-        ? selected
-        : previous !== undefined
-          ? previous
-          : field.default;
+      selected && selected !== '跳过' ? selected : previous !== undefined ? previous : '';
   }
   return context;
 }
@@ -225,16 +237,11 @@ export async function confirmInit({ userQuestions, agent, signal, requirements, 
     });
     const answer = await askInitConfirmation({ userQuestions, agent, signal, question: page });
     if (!answer.ok) {
-      if (round === 0) {
-        return {
-          ok: true,
-          autoConfirmed: true,
-          reason: answer.code,
-          requirements: reqs,
-          context: ctx,
-        };
-      }
-      return { ok: false, message: `确认问题不可用：${answer.message}` };
+      return {
+        ok: false,
+        code: answer.code || 'E_QUESTIONS_UNAVAILABLE',
+        message: `确认问题不可用：${answer.message}`,
+      };
     }
     if (answer.action === '确认') return { ok: true, requirements: reqs, context: ctx };
     if (answer.action === '修改需求') {
@@ -244,7 +251,11 @@ export async function confirmInit({ userQuestions, agent, signal, requirements, 
     } else if (answer.action === '修改其他确认点') {
       ctx = await collectContext({ userQuestions, agent, signal, initial: ctx, only: OTHER_KEYS });
     } else {
-      return { ok: true, requirements: reqs, context: ctx };
+      return {
+        ok: false,
+        code: 'E_CONFIRM_CANCELLED',
+        message: '用户取消了初始化确认',
+      };
     }
   }
   return { ok: false, message: '初始化确认次数超过上限' };
@@ -1137,6 +1148,204 @@ function monorepoChangeFiles() {
   };
 }
 
+/**
+ * v3.9：新项目（java/node/python）的第一变更固定为 mvp-scaffold。
+ * init 只生成 change 包，CRUD 代码由 /sg-run 执行任务时生成。
+ */
+function mvpScaffoldFiles(stack, context = {}) {
+  const isJava = stack === 'java';
+  const isPython = stack === 'python';
+  const pkgPath = isJava ? javaPathOf(context) : '';
+  const touched = isJava
+    ? {
+        modify: [],
+        bootstrap: [
+          'src/main/java/' + pkgPath + '/Item.java',
+          'src/main/java/' + pkgPath + '/ItemStore.java',
+          'src/main/java/' + pkgPath + '/ItemController.java',
+          'src/test/java/' + pkgPath + '/ItemControllerTest.java',
+        ],
+      }
+    : isPython
+      ? {
+          modify: ['app.py'],
+          bootstrap: ['items.py', 'tests/test_items.py'],
+        }
+      : {
+          modify: ['index.js'],
+          bootstrap: ['src/items.js', 'test/items.test.mjs'],
+        };
+  const suite = isJava ? 'backend' : 'api';
+  const testFile = isJava
+    ? 'src/test/java/' + pkgPath + '/ItemControllerTest.java'
+    : isPython
+      ? 'tests/test_items.py'
+      : 'test/items.test.mjs';
+  const testCommand = isJava ? 'mvnw verify' : isPython ? 'pytest -q tests' : 'npm test';
+  const files = [...touched.bootstrap, ...touched.modify];
+
+  const scenarios = [
+    ['AC-001', '列表返回数组', 'GET /api/items', '200，返回 JSON 数组（可为空）'],
+    ['AC-002', '查询存在的条目', 'GET /api/items/{id}', '200，返回该条目的 id/name/description'],
+    ['AC-003', '查询不存在的条目', 'GET /api/items/{id}', '404'],
+    ['AC-004', '创建条目', 'POST /api/items {"name":"demo"}', '201，返回包含 id 的条目'],
+    ['AC-005', '创建缺少 name', 'POST /api/items {}', '400'],
+    ['AC-006', '更新存在的条目', 'PUT /api/items/{id} {"name":"updated"}', '200，返回更新后的条目'],
+    ['AC-007', '更新不存在的条目', 'PUT /api/items/{id} {"name":"x"}', '404'],
+    ['AC-008', '删除存在的条目', 'DELETE /api/items/{id}', '204'],
+    ['AC-009', '删除不存在的条目', 'DELETE /api/items/{id}', '404'],
+    ['AC-010', '全接口测试与静态检查', testCommand, '退出码 0，全部用例通过'],
+  ];
+
+  const specLines = [
+    '## ADDED Requirements',
+    '',
+    '### Requirement: MVP 框架与 Item CRUD 示例 (REQ-001)',
+    '',
+    '系统 SHALL 在 ' + stack + ' 脚手架上提供内存版 Item CRUD 示例，作为后续业务变更的框架基线。',
+    '',
+  ];
+  for (const [ac, title, when, then] of scenarios) {
+    specLines.push('#### Scenario: ' + title + ' (' + ac + ')', '');
+    specLines.push('- **WHEN** ' + when);
+    specLines.push('- **THEN** ' + then);
+    specLines.push('');
+  }
+
+  const tasks = [
+    {
+      id: 'T-001',
+      title: 'Item 模型与读取接口',
+      ac: ['AC-001', 'AC-002', 'AC-003'],
+      deps: [],
+      lines: [
+        '- [ ] 定义 Item（id/name/description）与内存存储',
+        '- [ ] GET /api/items、GET /api/items/{id}（含 404）',
+      ],
+    },
+    {
+      id: 'T-002',
+      title: '创建/更新/删除接口',
+      ac: ['AC-004', 'AC-005', 'AC-006', 'AC-007', 'AC-008', 'AC-009'],
+      deps: ['T-001'],
+      lines: [
+        '- [ ] POST /api/items（name 必填，201）',
+        '- [ ] PUT /api/items/{id}（含 404/400）',
+        '- [ ] DELETE /api/items/{id}（含 404）',
+      ],
+    },
+    {
+      id: 'T-003',
+      title: '全接口测试与静态检查',
+      ac: ['AC-010'],
+      deps: ['T-001', 'T-002'],
+      lines: [
+        '- [ ] 补齐 ' + testFile + ' 的 5 接口成功/404/400 用例',
+        '- [ ] 运行 ' + testCommand + ' 并确保全绿',
+      ],
+    },
+  ];
+
+  const cases = [
+    ['TC-001', 'AC-001', 'integration', 'GET /api/items 返回数组'],
+    ['TC-002', 'AC-002', 'integration', 'GET /api/items/{id} 存在'],
+    ['TC-003', 'AC-003', 'integration', 'GET /api/items/{id} 404'],
+    ['TC-004', 'AC-004', 'integration', 'POST /api/items 创建'],
+    ['TC-005', 'AC-005', 'unit', 'POST /api/items 缺 name 返回 400'],
+    ['TC-006', 'AC-006', 'integration', 'PUT /api/items/{id} 更新'],
+    ['TC-007', 'AC-007', 'integration', 'PUT /api/items/{id} 404'],
+    ['TC-008', 'AC-008', 'integration', 'DELETE /api/items/{id} 204'],
+    ['TC-009', 'AC-009', 'integration', 'DELETE /api/items/{id} 404'],
+    ['TC-010', 'AC-010', 'quality', testCommand + ' 全绿'],
+  ];
+
+  const mapping = {
+    schemaVersion: 1,
+    change: 'mvp-scaffold',
+    requirements: scenarios.map(([ac], index) => ({
+      ac,
+      covers: ['REQ-001'],
+      tasks: [index < 3 ? 'T-001' : index < 9 ? 'T-002' : 'T-003'],
+      cases: ['TC-' + String(index + 1).padStart(3, '0')],
+      suite,
+      priority: 'P0',
+    })),
+    automation: [],
+  };
+
+  return {
+    'openspec/changes/mvp-scaffold/proposal.md':
+      '# 变更提案：MVP框架搭建\n\n' +
+      '## 问题\n' +
+      '新项目只有 health 检查，没有可复用的 CRUD 样板，无法验证分层、参数校验、错误处理与测试链路。\n\n' +
+      '## 目标\n' +
+      '在 ' +
+      stack +
+      ' 脚手架上实现通用 Item CRUD 示例：\n' +
+      '- GET /api/items\n' +
+      '- GET /api/items/{id}\n' +
+      '- POST /api/items\n' +
+      '- PUT /api/items/{id}\n' +
+      '- DELETE /api/items/{id}\n' +
+      '内存存储，不引入数据库/外部服务；补齐全接口测试与静态检查。\n\n' +
+      '## 非目标\n' +
+      '不实现业务域接口；不做持久化、鉴权、分页、文件上传。\n\n' +
+      '## 影响面\n' +
+      files.map((file) => '- ' + file).join('\n') +
+      '\n' +
+      '- 关联需求：REQ-001\n',
+    'openspec/changes/mvp-scaffold/specs/mvp/spec.md': specLines.join('\n'),
+    'openspec/changes/mvp-scaffold/design.md':
+      '# 方案：MVP框架搭建\n\n' +
+      '## 目标与非目标\n' +
+      '提供内存版 Item CRUD 示例，验证 Controller/Service/测试链路；不做持久化与鉴权。\n\n' +
+      '## 任务图\n' +
+      'T-001 → T-002 → T-003（T-002/T-003 依赖前者）。\n\n' +
+      '## AC 到用例\n' +
+      'AC-001..AC-010 由 ' +
+      testFile +
+      ' 覆盖。\n\n' +
+      '## 风险\n' +
+      '内存存储在重启后丢失，仅用于框架演示；后续业务 change 再引入持久化。\n',
+    'openspec/changes/mvp-scaffold/tasks.md':
+      '# 任务：MVP框架搭建\n\n' +
+      tasks
+        .map(
+          (task) =>
+            '## ' +
+            task.id +
+            ' ' +
+            task.title +
+            '\n' +
+            '<!-- sg:task ' +
+            JSON.stringify({
+              id: task.id,
+              title: task.title,
+              ac: task.ac,
+              deps: task.deps,
+              parallel: false,
+            }) +
+            ' -->\n' +
+            task.lines.join('\n') +
+            '\n',
+        )
+        .join('\n'),
+    'openspec/changes/mvp-scaffold/tests/cases.md':
+      '# 测试用例\n\n' +
+      '| 用例 | AC | 层次 | 描述 |\n' +
+      '|---|---|---|---|\n' +
+      cases.map((row) => '| ' + row.join(' | ') + ' |').join('\n') +
+      '\n',
+    'openspec/changes/mvp-scaffold/tests/mapping.json': JSON.stringify(mapping, null, 2) + '\n',
+    'openspec/changes/mvp-scaffold/tests/touched.json':
+      JSON.stringify(
+        { schemaVersion: 1, modify: touched.modify, delete: [], bootstrap: touched.bootstrap },
+        null,
+        2,
+      ) + '\n',
+  };
+}
+
 function javaChangeFiles(context) {
   const pkgPath = javaPathOf(context);
   const versionFile = `src/main/java/${pkgPath}/VersionController.java`;
@@ -1527,6 +1736,8 @@ export async function finishInitProject({ root, state, gitOnly = false }) {
   const requirements = context.requirements || state.requirements || {};
   const baseline = writeRequirementsBaseline(root, requirements, {
     version: state.requirementsVersion || 'v1.0',
+    source: state.requirementsSource?.doc || null,
+    sourceHash: state.requirementsSource?.docHash || null,
   });
   if (gitOnly) {
     const gitOnlyResult = gitInitCommit(root, 'chore: 接入 SpecGate 需求基线', { gitOnly: true });
@@ -1560,8 +1771,11 @@ export async function finishInitProject({ root, state, gitOnly = false }) {
   const git = gitInitCommit(root);
   if (!git.ok) return { ok: false, message: `git commit 失败：${git.stderr}` };
 
+  const backendMvp = ['java', 'node', 'python'].includes(context.stack);
+  const changeName = backendMvp ? 'mvp-scaffold' : 'add-version';
   let files = null;
-  if (context.stack === 'java') files = javaChangeFiles(context);
+  if (backendMvp) files = mvpScaffoldFiles(context.stack, context);
+  else if (context.stack === 'java') files = javaChangeFiles(context);
   else if (context.stack === 'python') files = pythonChangeFiles();
   else if (context.stack === 'vue' || context.stack === 'react')
     files = frontendChangeFiles(context.stack);
@@ -1570,7 +1784,7 @@ export async function finishInitProject({ root, state, gitOnly = false }) {
   else files = firstChangeFiles(context);
 
   const created = createChange(root, {
-    name: 'add-version',
+    name: changeName,
     type: 'feature',
     baseCommit: null,
     changeKey: null,
@@ -1587,7 +1801,7 @@ export async function finishInitProject({ root, state, gitOnly = false }) {
       approvedAt: draft.h0?.approvedAt || new Date().toISOString(),
     };
   });
-  return { ok: true, phase: 'H1_PENDING', change: 'add-version', scaffold, baseline };
+  return { ok: true, phase: 'H1_PENDING', change: changeName, scaffold, baseline };
 }
 
 export async function initNewProject({ root, userQuestions, agent, signal }) {
@@ -1597,4 +1811,757 @@ export async function initNewProject({ root, userQuestions, agent, signal }) {
   const finished = await finishInitProject({ root, state });
   if (!finished.ok) return finished;
   return { ...started, ...finished, mode: 'new' };
+}
+
+/* ------------------------------------------------------------------ *
+ * v3.8：需求先行的三种入口（-req / 自由描述 / 纯对话）
+ * 所有校验、技术栈问答与确认都发生在落盘之前；确认失败一律零写。
+ * ------------------------------------------------------------------ */
+
+const INIT_GENERATED_PATHS = [
+  'openspec/REQ.md',
+  'openspec/history',
+  'openspec/specs/.gitkeep',
+  'openspec/changes/.gitkeep',
+  '.specgate/config.yaml',
+  '.gitignore',
+];
+
+/** 已初始化项目直接幂等跳过；H0_PENDING 且无基线时允许重新澄清。 */
+export function inspectInit(root) {
+  const loaded = load(root);
+  if (!loaded.ok || !loaded.state) return { ok: true, skip: false, fresh: true };
+  const state = loaded.state;
+  const baselineExists = exists(path.join(root, 'openspec', 'REQ.md'));
+  if (baselineExists || state.change || !['IDLE', 'H0_PENDING'].includes(state.phase)) {
+    return {
+      ok: true,
+      skip: true,
+      phase: state.phase,
+      change: state.change || null,
+      requirementsDoc: state.requirementsDoc || 'openspec/REQ.md',
+      requirementsSource: state.requirementsSource || null,
+      reason: baselineExists ? 'REQ_BASELINE_EXISTS' : 'ALREADY_INITIALIZED',
+    };
+  }
+  return { ok: true, skip: false, replace: state.phase === 'H0_PENDING' };
+}
+
+function docTarget(root) {
+  return nextRequirementsDocPath(root, 'v1.0') || DOC_RELATIVE;
+}
+
+function initWriteList(root, context, mode) {
+  const list = [
+    docTarget(root),
+    'openspec/REQ.md',
+    'openspec/history/v1.0/REQ.md',
+    '.specgate/config.yaml',
+    '.specgate/state.json',
+    '.specgate/init-result.json',
+  ];
+  if (mode === 'new') {
+    const files = Object.keys(scaffoldFiles(context.stack || 'generic', context));
+    list.push('脚手架（' + files.length + ' 个文件）');
+    list.push('openspec/changes/add-version/（首个 change）');
+  }
+  return list;
+}
+
+async function askContextFields({ userQuestions, agent, signal, context, only }) {
+  if (!userQuestions || typeof userQuestions.ask !== 'function') {
+    return {
+      ok: false,
+      code: 'E_QUESTIONS_UNAVAILABLE',
+      message: '当前宿主没有用户问答通道，无法完成技术栈采集；未写入任何文件。',
+    };
+  }
+  try {
+    const next = await collectContext({ userQuestions, agent, signal, initial: context, only });
+    return { ok: true, context: next };
+  } catch (error) {
+    return {
+      ok: false,
+      code: error?.code || 'E_QUESTIONS_UNAVAILABLE',
+      message: '技术栈问答失败：' + (error?.message || String(error)),
+    };
+  }
+}
+
+async function askRequirementsConfirmation({ userQuestions, agent, signal, page }) {
+  if (!userQuestions || typeof userQuestions.ask !== 'function') {
+    return {
+      ok: false,
+      code: 'E_QUESTIONS_UNAVAILABLE',
+      message: '当前宿主没有用户问答通道，确认被拒绝（fail-closed）；未写入任何文件。',
+    };
+  }
+  let answer;
+  try {
+    answer = await userQuestions.ask({
+      questions: [
+        {
+          id: 'sg-init-confirm',
+          header: 'SpecGate 初始化确认',
+          question: page,
+          options: CONFIRM_OPTIONS.map((label) => ({
+            label,
+            description: label === '确认' ? '写入需求文档与基线，并进入 H1_PENDING' : '',
+          })),
+        },
+      ],
+      agent,
+      signal,
+    });
+  } catch (error) {
+    return {
+      ok: false,
+      code: 'E_QUESTIONS_UNAVAILABLE',
+      message: '确认问答失败：' + (error?.message || String(error)) + '；未写入任何文件。',
+    };
+  }
+  const selected = answerOf(answer);
+  if (selected === '确认') return { ok: true, action: '确认' };
+  if (selected === '修改需求') return { ok: true, action: '修改需求' };
+  if (selected === '修改技术栈') return { ok: true, action: '修改技术栈' };
+  if (selected === '修改其他确认点') return { ok: true, action: '修改其他确认点' };
+  return {
+    ok: false,
+    code: 'E_CONFIRM_CANCELLED',
+    message: '用户取消了初始化确认；未写入任何文件。',
+  };
+}
+
+function splitRequirementItems(text) {
+  return String(text || '')
+    .split(/\r?\n|[；;]/)
+    .map((line) => line.replace(/^[-*\d.\s]+/, '').trim())
+    .filter(Boolean);
+}
+
+function docToInterviewDraft(doc, extra = {}) {
+  return {
+    background: extra.background || '',
+    functional: doc.functional.map((entry) => ({
+      title: entry.title,
+      acceptance: entry.acceptanceText || '',
+    })),
+    nonFunctional: doc.nonFunctional.map((entry) => ({
+      title: entry.title,
+      metric: entry.metric || '',
+    })),
+    constraints: doc.constraints.map((entry) => entry.title),
+    acceptance: [],
+    confirmedEmpty: extra.confirmedEmpty || [],
+    context: extra.context || {},
+    team: extra.team || '',
+    steps: extra.steps || '',
+  };
+}
+
+const BACKEND_STACKS = ['java', 'node', 'python'];
+const FRAMEWORK_REQUIREMENT_MARKER = 'MVP 框架与 Item CRUD 示例';
+const FRAMEWORK_REQUIREMENT_TITLE = 'MVP 框架与 Item CRUD 示例（框架基线）';
+const FRAMEWORK_ACCEPTANCE = '启动项目后 Item CRUD 全接口测试通过（GET/POST/PUT/DELETE + 404/400）';
+
+function supportsMvpScaffold(stack) {
+  return BACKEND_STACKS.includes(String(stack || ''));
+}
+
+/**
+ * 新项目 + 后端栈：需求基线第一条固定为框架需求，业务需求顺延。
+ * 非后端栈或既有项目不注入。
+ */
+function syncFrameworkRequirement(doc, stack) {
+  const should = supportsMvpScaffold(stack);
+  const has = doc.functional.some((entry) =>
+    String(entry.title || '').includes(FRAMEWORK_REQUIREMENT_MARKER),
+  );
+  if (should === has) return doc;
+  const draft = docToInterviewDraft(doc, {});
+  if (should) {
+    draft.functional.unshift({
+      title: FRAMEWORK_REQUIREMENT_TITLE,
+      acceptance: FRAMEWORK_ACCEPTANCE,
+    });
+  } else {
+    draft.functional = draft.functional.filter(
+      (entry) => !String(entry.title || '').includes(FRAMEWORK_REQUIREMENT_MARKER),
+    );
+  }
+  return normalizeDraftInput(draft).doc;
+}
+
+/**
+ * 有问答通道时，sg-init 主动打开对话框逐维澄清；
+ * 无通道时才退回 CLARIFY 交给 Agent。任何失败都不写盘。
+ */
+async function interviewRequirements({ userQuestions, agent, signal, base = null, keys = null }) {
+  const draft = base || {
+    functional: [],
+    nonFunctional: [],
+    constraints: [],
+    acceptance: [],
+    confirmedEmpty: [],
+  };
+  const initial = {
+    functional: (draft.functional || []).map((entry) => entry.title || entry).filter(Boolean),
+    nonFunctional: (draft.nonFunctional || []).map((entry) => entry.title || entry).filter(Boolean),
+    constraints: (draft.constraints || []).map((entry) => entry.title || entry).filter(Boolean),
+    acceptance: (draft.functional || [])
+      .map((entry) => entry.acceptance || entry.acceptanceText || '')
+      .filter(Boolean),
+  };
+  const collected = await collectRequirements({ userQuestions, agent, signal, initial, keys });
+  const asked = keys || ['functional', 'nonFunctional', 'constraints', 'acceptance'];
+  const next = {
+    ...draft,
+    functional: [...(draft.functional || [])],
+    nonFunctional: [...(draft.nonFunctional || [])],
+    constraints: [...(draft.constraints || [])],
+    acceptance: [...(draft.acceptance || [])],
+    confirmedEmpty: [...(draft.confirmedEmpty || [])],
+  };
+  const empty = new Set(next.confirmedEmpty);
+  for (const key of asked) {
+    const value = collected[key]?.[0] || '';
+    const items = splitRequirementItems(value);
+    if (key === 'acceptance') {
+      if (items.length) {
+        next.acceptance = items.map((title, index) => ({ title, covers: [index + 1] }));
+      }
+      continue;
+    }
+    if (!items.length) {
+      next[key] = [];
+      empty.add(key);
+      continue;
+    }
+    next[key] = items;
+    empty.delete(key);
+  }
+  next.confirmedEmpty = [...empty];
+  return normalizeDraftInput(next);
+}
+
+async function runInterview(args) {
+  try {
+    return { ok: true, ...(await interviewRequirements(args)) };
+  } catch (error) {
+    return {
+      ok: false,
+      code: error?.code || 'E_QUESTIONS_UNAVAILABLE',
+      message: '需求问答失败：' + (error?.message || String(error)) + '；未写入任何文件。',
+    };
+  }
+}
+
+/**
+ * 三种入口的统一实现。返回 CLARIFY 时一定没有写盘。
+ */
+export async function startRequirementsInit({
+  root,
+  userQuestions,
+  agent,
+  signal,
+  req = null,
+  description = '',
+  draft = null,
+  mode = null,
+}) {
+  const guard = inspectInit(root);
+  if (guard.skip) return { ...guard, ok: true, skipped: true };
+
+  const targetMode = mode || detectInitMode(root);
+  const seed = String(description || '').trim();
+  let model = null;
+  let source = { kind: 'dialog', path: null, hash: null };
+  let background = seed;
+  let team = '';
+  let steps = '';
+  let context = {};
+  let confirmedEmpty = [];
+  let warnings = [];
+
+  if (req) {
+    const read = readRequirementsFile(root, req);
+    if (!read.ok) return read;
+    model = parseRequirementsText(read.text);
+    source = { kind: 'req', path: read.displayPath, hash: read.hash };
+    background =
+      String(model.meta?.frontmatter?.background || '').trim() ||
+      seed ||
+      '导入需求文档：' + read.displayPath;
+    warnings = model.warnings || [];
+    const valid = validateParsedDoc(model, { sourceKind: 'req' });
+    if (!valid.ok) {
+      return {
+        ok: false,
+        ...valid.errors[0],
+        missing: valid.missing,
+        draft: buildClarifyPayload({
+          source: 'req',
+          seed,
+          doc: model,
+          background,
+          warnings,
+          sourceInfo: source,
+        }).draft,
+      };
+    }
+  } else if (draft && typeof draft === 'object') {
+    const normalized = normalizeDraftInput(draft);
+    model = normalized.doc;
+    source =
+      normalized.source?.kind === 'req' && normalized.source.path
+        ? { kind: 'req', path: normalized.source.path, hash: normalized.source.hash || null }
+        : { kind: 'draft', path: null, hash: digest(JSON.stringify(draft)) };
+    background = normalized.background || seed;
+    team = normalized.team;
+    steps = normalized.steps;
+    context = normalized.context;
+    confirmedEmpty = normalized.confirmedEmpty;
+    warnings = normalized.warnings;
+    const valid = validateParsedDoc(model, { sourceKind: 'draft', confirmedEmpty });
+    if (!valid.ok) {
+      return {
+        ok: false,
+        ...valid.errors[0],
+        missing: valid.missing,
+        draft: buildClarifyPayload({
+          source: 'draft',
+          seed,
+          doc: model,
+          background,
+          team,
+          steps,
+          context,
+          confirmedEmpty,
+          warnings,
+        }).draft,
+      };
+    }
+  } else {
+    if (!userQuestions || typeof userQuestions.ask !== 'function') {
+      return buildClarifyPayload({ source: 'dialog', seed, background: seed });
+    }
+    const seedDraft = seed
+      ? {
+          background: seed,
+          functional: [{ title: seed }],
+          nonFunctional: [],
+          constraints: [],
+          acceptance: [],
+          confirmedEmpty: [],
+        }
+      : null;
+    const interviewed = await runInterview({
+      userQuestions,
+      agent,
+      signal,
+      ...(seedDraft ? { base: seedDraft } : {}),
+    });
+    if (!interviewed.ok) return interviewed;
+    model = interviewed.doc;
+    background = seed || interviewed.background || '';
+    team = interviewed.team || '';
+    steps = interviewed.steps || '';
+    context = interviewed.context || {};
+    confirmedEmpty = interviewed.confirmedEmpty || [];
+    warnings = interviewed.warnings || [];
+    source = { kind: 'dialog', path: null, hash: null };
+    if (!model.functional.length) {
+      return {
+        ok: false,
+        code: 'E_REQ_NO_FUNCTIONAL',
+        message: '对话框中没有得到任何功能需求；未写入任何文件。',
+        missing: ['functional'],
+      };
+    }
+  }
+
+  const reviewed = validateParsedDoc(model, {
+    sourceKind: source.kind === 'req' ? 'req' : 'draft',
+    confirmedEmpty,
+  });
+  if (!reviewed.ok) return { ok: false, ...reviewed.errors[0], missing: reviewed.missing };
+  if (reviewed.missing.length) {
+    if (!userQuestions || typeof userQuestions.ask !== 'function') {
+      return buildClarifyPayload({
+        source: source.kind,
+        seed,
+        doc: model,
+        background,
+        team,
+        steps,
+        context,
+        confirmedEmpty,
+        warnings,
+        missing: reviewed.missing,
+        ...(source.kind === 'req' ? { sourceInfo: source } : {}),
+      });
+    }
+    const baseDraft = docToInterviewDraft(model, {
+      background,
+      team,
+      steps,
+      context,
+      confirmedEmpty,
+    });
+    const interviewed = await runInterview({
+      userQuestions,
+      agent,
+      signal,
+      base: baseDraft,
+      keys: reviewed.missing,
+    });
+    if (!interviewed.ok) return interviewed;
+    model = interviewed.doc;
+    confirmedEmpty = interviewed.confirmedEmpty || [];
+    warnings = [...new Set([...(warnings || []), ...(interviewed.warnings || [])])];
+    if (!model.functional.length) {
+      return {
+        ok: false,
+        code: 'E_REQ_NO_FUNCTIONAL',
+        message: '对话后仍没有功能需求；未写入任何文件。',
+        missing: ['functional'],
+      };
+    }
+    const afterInterview = validateParsedDoc(model, {
+      sourceKind: source.kind === 'req' ? 'req' : 'draft',
+      confirmedEmpty,
+    });
+    if (!afterInterview.ok) return { ok: false, ...afterInterview.errors[0] };
+    if (afterInterview.missing.length) {
+      return buildClarifyPayload({
+        source: source.kind,
+        seed,
+        doc: model,
+        background,
+        team,
+        steps,
+        context,
+        confirmedEmpty,
+        warnings,
+        missing: afterInterview.missing,
+        ...(source.kind === 'req' ? { sourceInfo: source } : {}),
+      });
+    }
+  }
+
+  let ctx = { ...context };
+  if (!ctx.background) ctx.background = background;
+  if (!ctx.team) ctx.team = team;
+  if (!ctx.steps) ctx.steps = steps;
+
+  const needsContext =
+    !ctx.stack ||
+    (ctx.stack === 'java' &&
+      ['buildTool', 'jdk', 'bootVersion', 'modules'].some((key) => !ctx[key]));
+  if (needsContext) {
+    const collected = await askContextFields({ userQuestions, agent, signal, context: ctx });
+    if (!collected.ok) return collected;
+    ctx = collected.context;
+  }
+  if (!ctx.stack) {
+    return {
+      ok: false,
+      code: 'E_DRAFT_INCOMPLETE',
+      message: '技术栈未确认（stack 为空）；未写入任何文件。',
+      fix: '重新执行 /sg-init 并选择技术栈',
+    };
+  }
+  if (ctx.stack === 'java') {
+    const selection = validateJavaSelection(ctx);
+    if (!selection.ok) {
+      return {
+        ok: false,
+        code: 'JAVA_MATRIX_INVALID',
+        message: selection.errors.join('; ') + '；未写入任何文件。',
+      };
+    }
+  }
+  if (!ctx.background) ctx.background = seed || '（待补充）';
+  if (!ctx.team) ctx.team = '（待补充）';
+  if (!ctx.steps) ctx.steps = '（待补充）';
+  if (targetMode === 'new') model = syncFrameworkRequirement(model, ctx.stack);
+
+  const approvedAt = new Date().toISOString();
+  let legacy = toLegacyRequirements(model);
+  const buildDoc = () =>
+    renderRequirementsDocument(model, {
+      source: source.kind === 'req' ? source.path : 'dialog',
+      sourceHash: source.hash || digest(JSON.stringify({ model, context: ctx })),
+      updatedAt: approvedAt,
+      background: ctx.background,
+      team: ctx.team,
+      steps: ctx.steps,
+    });
+
+  let confirmedDoc = null;
+  for (let round = 0; round < MAX_CONFIRM_ROUNDS; round += 1) {
+    const docText = buildDoc();
+    const page = renderConfirmationPage({
+      docText,
+      contextText: renderContextSummary(ctx),
+      warnings: [...new Set([...(warnings || []), ...(model.warnings || [])])],
+      willWrite: initWriteList(root, ctx, targetMode),
+    });
+    const answer = await askRequirementsConfirmation({ userQuestions, agent, signal, page });
+    if (!answer.ok) return answer;
+    if (answer.action === '确认') {
+      confirmedDoc = docText;
+      break;
+    }
+    if (answer.action === '修改需求') {
+      if (!userQuestions || typeof userQuestions.ask !== 'function') {
+        return buildClarifyPayload({
+          source: source.kind,
+          seed,
+          doc: model,
+          background: ctx.background,
+          team: ctx.team,
+          steps: ctx.steps,
+          context: ctx,
+          confirmedEmpty,
+          warnings,
+          action: 'revise',
+        });
+      }
+      const reviseDraft = docToInterviewDraft(model, {
+        background: ctx.background,
+        team: ctx.team,
+        steps: ctx.steps,
+        context: ctx,
+        confirmedEmpty,
+      });
+      const revised = await runInterview({
+        userQuestions,
+        agent,
+        signal,
+        base: reviseDraft,
+      });
+      if (!revised.ok) return revised;
+      model = revised.doc;
+      confirmedEmpty = revised.confirmedEmpty || [];
+      warnings = [...new Set([...(warnings || []), ...(revised.warnings || [])])];
+      if (targetMode === 'new') model = syncFrameworkRequirement(model, ctx.stack);
+      if (!model.functional.length) {
+        return {
+          ok: false,
+          code: 'E_REQ_NO_FUNCTIONAL',
+          message: '修改后仍没有功能需求；未写入任何文件。',
+          missing: ['functional'],
+        };
+      }
+      continue;
+    }
+    if (answer.action === '修改技术栈') {
+      const collected = await askContextFields({
+        userQuestions,
+        agent,
+        signal,
+        context: ctx,
+        only: TECH_KEYS,
+      });
+      if (!collected.ok) return collected;
+      ctx = collected.context;
+      if (ctx.stack === 'java') {
+        const selection = validateJavaSelection(ctx);
+        if (!selection.ok) {
+          return {
+            ok: false,
+            code: 'JAVA_MATRIX_INVALID',
+            message: selection.errors.join('; ') + '；未写入任何文件。',
+          };
+        }
+      }
+      if (targetMode === 'new') model = syncFrameworkRequirement(model, ctx.stack);
+      continue;
+    }
+    if (answer.action === '修改其他确认点') {
+      const collected = await askContextFields({
+        userQuestions,
+        agent,
+        signal,
+        context: ctx,
+        only: OTHER_KEYS,
+      });
+      if (!collected.ok) return collected;
+      ctx = collected.context;
+      if (!ctx.background) ctx.background = seed || '（待补充）';
+      if (!ctx.team) ctx.team = '（待补充）';
+      if (!ctx.steps) ctx.steps = '（待补充）';
+      continue;
+    }
+  }
+  if (!confirmedDoc) {
+    return {
+      ok: false,
+      code: 'E_CONFIRM_LIMIT',
+      message: '初始化确认次数超过上限（6 轮）；未写入任何文件。',
+    };
+  }
+  // 确认页可能经过“修改需求”多轮，最终基线必须与最后一次渲染的文档一致。
+  legacy = toLegacyRequirements(model);
+
+  const h0Hash = digest(JSON.stringify({ doc: confirmedDoc, context: ctx }));
+  const init = initProject(root);
+  if (!init.ok) return init;
+  const docWrite = writeRequirementsDocument(root, confirmedDoc, { version: 'v1.0' });
+  if (!docWrite.ok) return docWrite;
+  const saved = patchState(root, (draftState) => {
+    draftState.phase = 'H0_PENDING';
+    draftState.mode = targetMode;
+    draftState.context = { ...ctx, requirements: legacy };
+    draftState.requirements = legacy;
+    draftState.requirementsVersion = 'v1.0';
+    draftState.requirementsDoc = 'openspec/REQ.md';
+    draftState.requirementsSource = {
+      kind: source.kind,
+      path: source.kind === 'req' ? source.path : null,
+      hash: source.hash || null,
+      doc: docWrite.relative,
+      docHash: digest(confirmedDoc),
+    };
+    draftState.h0 = { hash: h0Hash, approvedAt };
+    draftState.approvals = draftState.approvals || {};
+    issueApproval(draftState, 'H0', h0Hash, approvedAt);
+  });
+  if (!saved.ok) return saved;
+
+  const finished = await finishInitProject({
+    root,
+    state: load(root).state,
+    gitOnly: targetMode === 'existing',
+  });
+  if (!finished.ok) return finished;
+
+  if (targetMode === 'existing') {
+    const committed = gitInitCommit(root, 'chore: 接入 SpecGate 需求基线', {
+      gitOnly: true,
+      commitPaths: [...INIT_GENERATED_PATHS, docWrite.relative],
+    });
+    if (!committed.ok) {
+      return {
+        ok: false,
+        code: 'E_WRITE_FAILED',
+        message: 'git 提交失败：' + (committed.stderr || 'unknown'),
+      };
+    }
+  }
+
+  const payload = {
+    ok: true,
+    phase: 'H1_PENDING',
+    mode: targetMode,
+    requirements: legacy,
+    requirementsVersion: 'v1.0',
+    requirementsDoc: 'openspec/REQ.md',
+    docsDoc: docWrite.relative,
+    requirementsSource: load(root).state?.requirementsSource || null,
+    h0Hash,
+    approvedAt,
+    change: finished.change || null,
+    scaffold: finished.scaffold || null,
+    git: finished.git || null,
+    warnings: [...new Set([...(warnings || []), ...(model.warnings || [])])],
+    autoConfirmed: false,
+  };
+  writeText(
+    path.join(root, '.specgate', 'init-result.json'),
+    JSON.stringify(payload, null, 2) + '\n',
+  );
+  return payload;
+}
+
+export function summarizeInitResult(result) {
+  if (!result || result.ok === false) {
+    const code = result?.code || 'E_INIT_FAILED';
+    const fix = result?.fix ? '\n修复：' + result.fix : '';
+    const report = result?.report ? '\n报告：' + result.report : '';
+    const missing =
+      Array.isArray(result?.missing) && result.missing.length
+        ? '\n缺失维度：' + result.missing.join('、')
+        : '';
+    const draft = result?.draft ? '\n当前草稿：\n' + JSON.stringify(result.draft, null, 2) : '';
+    return (
+      '初始化失败（' +
+      code +
+      '）：' +
+      (result?.message || '未知错误') +
+      fix +
+      report +
+      missing +
+      draft +
+      '\n未写入任何文件。'
+    );
+  }
+  if (result.skipped) {
+    return [
+      'SpecGate v3 已初始化（幂等跳过）：当前阶段 ' + result.phase + '。',
+      '需求基线：' +
+        result.requirementsDoc +
+        (result.change ? '；进行中的 change：' + result.change : '') +
+        '。',
+      '如需修改初始化上下文请执行 /sg-context --reset。',
+    ].join('\n');
+  }
+  if (result.phase === 'CLARIFY') {
+    const lines = [
+      'SpecGate 需求澄清（尚未写入任何文件）',
+      '',
+      '来源：' + result.source + (result.seed ? '（种子描述已记录）' : ''),
+      '缺失维度：' + (result.missing.length ? result.missing.join('、') : '无'),
+      '',
+      '下一批问题：',
+      ...result.nextQuestions.map((question, index) => index + 1 + '. ' + question),
+      '',
+      '协议：' + result.protocol,
+      '',
+      '当前草稿（收集完请调用 sg_init({ draft })）：',
+      '\x60\x60\x60json',
+      JSON.stringify(result.draft, null, 2),
+      '\x60\x60\x60',
+    ];
+    if (result.warnings?.length) {
+      lines.push('', '告警：', ...result.warnings.map((warning) => '- ' + warning));
+    }
+    return lines.join('\n');
+  }
+  const written = Array.isArray(result.scaffold?.written) ? result.scaffold.written : [];
+  const skipped = Array.isArray(result.scaffold?.skipped) ? result.scaffold.skipped : [];
+  const lines = [
+    'SpecGate v3 初始化完成：' + result.phase,
+    '需求文档：' + result.docsDoc,
+    '需求基线：' + result.requirementsDoc + '（' + result.requirementsVersion + '）',
+  ];
+  if (written.length) {
+    lines.push(
+      '脚手架：已生成 ' +
+        written.length +
+        ' 个文件（' +
+        written.slice(0, 6).join('、') +
+        (written.length > 6 ? '…' : '') +
+        '）',
+    );
+  }
+  if (skipped.length) lines.push('已存在而跳过：' + skipped.join('、'));
+  lines.push(
+    result.change
+      ? '首个 change：' + result.change + '（示例任务，尚未执行）'
+      : '既有项目：未生成脚手架',
+  );
+  if (result.autoBuildSkipped) {
+    lines.push('自动构建：跳过（' + result.autoBuildSkipped + '）；可运行 /sg-run 继续');
+  }
+  if (result.change) {
+    lines.push(
+      '下一步：/sg-run 校验 M1，然后 sg_approve H1；首个 change 的示例任务会示范实现与测试流程',
+    );
+  } else {
+    lines.push('下一步：/sg-change <name> --type feature 编写 proposal/specs，然后 /sg-run');
+  }
+  lines.push('说明：sg-init 只负责脚手架与需求基线；业务接口（CRUD）由 change 任务实现并测试。');
+  return lines.join('\n');
 }

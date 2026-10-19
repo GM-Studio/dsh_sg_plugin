@@ -7,6 +7,7 @@ import { execFileSync } from 'node:child_process';
 import { createRuntime } from '../../src/v3/runtime.js';
 import { registerTools } from '../../src/v3/tools.js';
 import { load } from '../../src/v3/state.js';
+import { initProject } from '../../src/v3/change.js';
 import { verifyEvidence } from '../../src/v3/evidence.js';
 
 function git(cwd, args) {
@@ -187,7 +188,7 @@ async function bootstrap(root) {
   const ctx = makeCtx();
   const runtime = createRuntime(ctx, { root, agentRunner: makeRunner() });
   registerTools(ctx, runtime);
-  await call(ctx, 'sg_init');
+  initProject(root);
   const config = path.join(root, '.specgate', 'config.yaml');
   fs.writeFileSync(
     config,
@@ -278,7 +279,7 @@ test('S4：测试失败时不合并、不勾选', async () => {
   };
   const runtime = createRuntime(ctx, { root, agentRunner: failingRunner });
   registerTools(ctx, runtime);
-  await call(ctx, 'sg_init');
+  initProject(root);
   const config = path.join(root, '.specgate', 'config.yaml');
   fs.writeFileSync(
     config,

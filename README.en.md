@@ -90,7 +90,7 @@ Three hard constraints shape the design:
 
 - **Explicit-only entry points.** Everything the plugin exposes is invoked deliberately: five `/sg-*` commands and six `sg_*` tools. No command auto-runs, and no skill is registered into the session catalog.
 - **One automatic surface — the write guard.** `src/v3/guards.js` intercepts the `write` / `edit` tools and rejects writes to orchestrator-owned paths. This is the only thing that acts without being asked (see [Writes and guards](#writes-and-guards)).
-- **Project initialization (requirements first)**: `/sg-init` interviews you for requirements — functional (MVP), non-functional, constraints and dependencies, acceptance criteria — and only then for the tech stack, merging both into **one** confirmation page. It stops at `H0_PENDING`; `sg_run` writes `openspec/REQ.md`, the read-only snapshot, and the scaffold after `sg_approve H0`. Idempotent — re-running reports "idempotent skip" without resetting the phase or overwriting the baseline.
+- **Project initialization (three entries, zero writes before confirmation)**: `/sg-init` accepts `-req <document>`, a free-form description, or no arguments for agent-led dialogue. The agent clarifies functional/non-functional/constraints/acceptance against the template and writes nothing before confirmation. The confirmation page shows both the requirements document and the tech stack; confirming is H0: it writes `docs/requirements/REQ.md`, derives `openspec/REQ.md` plus the read-only snapshot, and creates the scaffold and first change in one shot: backend stacks (java/node/python) get `mvp-scaffold` ("MVP框架搭建"), then automatically generate Item CRUD code and tests, run formatting/static checks/tests/reviewer, archive on success and return to `IDLE`, or stop at `H1_PENDING` with a report on failure. Missing question channels fail closed — no auto-confirmation. Idempotent — re-running reports an "idempotent skip" and never overwrites an existing baseline.
 - **Legacy onboarding**: running `/sg-init` in a repository that already has code scans the project, reverse-engineers a requirements draft, and writes `docs/requirements-scan.md` — with **no scaffold at all**. It only runs `git init` when the repository is missing, leaves an existing repository untouched, and commits only assets SpecGate generated itself.
 - **Change packages**: `/sg-change <name>` scaffolds `openspec/changes/<name>/` and moves the project to `H1_PENDING`.
 - **Machine-checked quality gates**: `M1` validates the proposal and spec delta; `M2` validates the design, task graph, acceptance-criteria-to-case mapping, and suite discovery. `sg_run` refuses to advance when either fails.
@@ -133,9 +133,9 @@ Phases advance only through explicit `sg_run` calls:
 
 ```text
 IDLE
- ├─ /sg-init (empty project) ──► H0_PENDING ──(H0)──► sg_run ──► H1_PENDING
- ├─ /sg-init (legacy repo) ────► H0_PENDING ──(H0)──► H1_PENDING   # writes REQ.md only, no scaffold
- └─ /sg-change ───────────────────────────────────────────────► H1_PENDING
+ ├─ /sg-init (-req / description / dialogue) ──► one page = H0 ──► H1_PENDING   # scaffold + first change
+ ├─ /sg-init (legacy repo) ────────────────────► one page = H0 ──► H1_PENDING   # requirements assets only
+ └─ /sg-change ──────────────────────────────────────────────────► H1_PENDING
                                                          │
         H1_PENDING ──(M1 + H1)──► PLAN ──(M2 + H2)──► EXECUTING
                                                         │
@@ -145,7 +145,7 @@ IDLE
 | Phase | What happens | Exit |
 |-------|--------------|------|
 | `IDLE` | No change in flight | `/sg-change` |
-| `H0_PENDING` | Requirements interview + tech-stack confirmation (`state.change` is still `null`); no `REQ.md` is written before confirmation | `sg_approve gate="H0"`; an empty project then runs `sg_run` to write the baseline and scaffold, a legacy repo writes the baseline on approval |
+| `H0_PENDING` | Compatibility phase: requirements + tech stack awaiting confirmation (`state.change` is still `null`); nothing is written before confirmation | `/sg-init` confirmation page (confirmation is H0); legacy projects may still use `sg_approve gate="H0"` |
 | `H1_PENDING` | Author `proposal.md` and `specs/**/spec.md` | `sg_run` runs `M1`, then `H1` |
 | `PLAN` | Author `design.md`, `tasks.md`, `tests/cases.md`, `tests/mapping.json` | `sg_run` runs `M2`, then `H2` |
 | `EXECUTING` | Tasks run in worktrees; completed ones merge and check off | `sg_run` until all merge |
@@ -160,7 +160,7 @@ Full phase set (`src/v3/state.js`): `IDLE`, `H0_PENDING`, `H1_PENDING`, `PLAN`, 
 
 ## Requirements baseline
 
-The confirmed `/sg-init` answers are written to `openspec/REQ.md`, the authoritative requirements source for the project:
+After confirmation, the human-readable `docs/requirements/REQ.md` (template format FR/NFR/AC) is written first; `openspec/REQ.md` is derived from it:
 
 - The four dimensions are numbered consecutively in interview order — `REQ-001`, `REQ-002`…: functional (MVP), non-functional, constraints and dependencies.
 - Acceptance criteria are numbered `AC-001`, `AC-002`…, and each declares `- covers: REQ-xxx` pointing at an existing requirement id.
@@ -172,17 +172,33 @@ The confirmed `/sg-init` answers are written to `openspec/REQ.md`, the authorita
 - `/sg-change` requires both `openspec/REQ.md` and its snapshot to exist and match;
 - `M1` requires `proposal.md` to reference at least one existing `REQ-xxx`, and fails on unknown ids.
 
-## Commands
+## Initialization and MVP auto-build (v3.10)
 
+After a new project is confirmed, `sg-init`:
+
+1. Writes the requirements document and baseline; for backend stacks (java/node/python) the first change is always `mvp-scaffold` (proposal "MVP框架搭建").
+2. Generates generic Item CRUD code and tests: `GET/POST/PUT/DELETE /api/items` (plus `/{id}`), in-memory storage, with 201/204/400/404 covered.
+3. Runs the quality pipeline:
+   - Java: `mvnw spotless:apply` → `checkstyle:check` → `verify`
+   - Node: `scripts.format` / `scripts.lint` (when configured) → `node --test test/items.test.mjs`
+   - Python: `python -m pytest -q tests`
+   - a read-only reviewer subagent
+4. On success: checks tasks, applies the spec to `openspec/specs/mvp/spec.md`, archives `openspec/changes/archive/<date>-mvp-scaffold`, and returns to `IDLE`.
+5. On any failure: stays at `H1_PENDING`, keeps the code and `docs/mvp-scaffold-report.md`, and does not archive.
+
+> Auto-build needs the `subagents` service. When unavailable it stays at `H1_PENDING` with an "auto-build skipped" note for `/sg-run`.
+> Java needs Maven/JDK and Python needs pytest; a missing toolchain is treated as a failure with a report.
+
+## Commands
 | Command | Arguments | Purpose |
 |---------|-----------|---------|
-| `/sg-init` | none | Requirements-first initialization: interviews for requirements (functional/non-functional/constraints/acceptance) and the tech stack, then enters `H0_PENDING`. An empty project writes `REQ.md` and the scaffold via `sg_run`; a legacy repo only reverse-engineers requirements |
+| `/sg-init` | `[-req <doc>] [description]` | Three entries: import a requirements document / agent-led clarification from a description / pure dialogue. Confirmation is H0; backend stacks write the docs, `REQ.md`, scaffold and `mvp-scaffold`, then auto-generate CRUD code/tests and archive; zero writes beforehand |
 | `/sg-change` | `<name> [--type feature\|modify\|fix\|remove] [--link <changeKey>]` | Create a change package; enters `H1_PENDING` |
 | `/sg-status` | `[--path <repo>] [--json] [--verbose]` | Show phase, change, gate, and plan status |
 | `/sg-context` | `--reset` | Return to `H0_PENDING` and re-collect context (`H0_PENDING`/`H1_PENDING` only) |
 | `/sg-skill` | `<name>` | Print a skill body |
 
-`/sg-init` takes no flags in this version — it initializes the current working directory. Re-running it on an initialized project returns an "idempotent skip" without resetting the phase or overwriting the baseline; use `/sg-context --reset` to change the context.
+`-req` accepts a local Markdown/text path (relative to the project root or absolute); a free-form description starts agent-led clarification. Nothing is created or modified before confirmation; re-running on an initialized project returns an "idempotent skip" and never overwrites the baseline.
 
 ## Tools
 
@@ -457,9 +473,10 @@ sg_run                                # ARCHIVING → DONE
 First-time initialization of an empty project:
 
 ```text
-/sg-init                    # requirements interview (functional/non-functional/constraints/acceptance) → tech stack → one confirmation, stop at H0_PENDING
-sg_approve H0               # human approval (no change exists yet)
-sg_run                      # write openspec/REQ.md + read-only snapshot, scaffold the project and the first sample change → H1_PENDING
+/sg-init                    # no args: agent-led clarification → tech stack → one confirmation
+/sg-init add login and health      # description entry: seed the clarification
+/sg-init -req docs/req.md   # import entry: lenient parse of an existing requirements document
+# after confirming: docs + baseline + scaffold + mvp-scaffold; then auto-generate Item CRUD code/tests → quality/review → archive → IDLE
 ```
 
 Onboarding a legacy repository:
@@ -533,16 +550,16 @@ openspec/
 
 `/sg-init` also appends these to `.gitignore`: `.specgate/state.json`, `.specgate/run.lock`, `.specgate/init-result.json`, `.specgate/worktrees/`, `.specgate/evidence/`, `.specgate/backups/`, `.specgate/gates/`, `.specgate/runs/`.
 
-For a brand-new project, `sg_run` after `H0` additionally writes `openspec/REQ.md`, `openspec/history/v1.0/REQ.md`, `project-context.md`, `AGENTS.md`, `docs/glossary.md`, `docs/adr/0001-initial.md`, `.github/workflows/ci.yml`, and a first sample change. A legacy repo writes only the requirements baseline, its read-only snapshot, and `docs/requirements-scan.md` — no scaffold.
+For a brand-new project, confirming the page immediately writes `docs/requirements/REQ.md`, `openspec/REQ.md`, `openspec/history/v1.0/REQ.md`, `project-context.md`, `AGENTS.md`, `docs/glossary.md`, `docs/adr/0001-initial.md`, `.github/workflows/ci.yml`, and the first change: `mvp-scaffold` for java/node/python (proposal "MVP框架搭建"), then the Item CRUD code/tests are generated, formatted, statically checked, tested, and reviewed; success archives it and returns to `IDLE`, failure keeps `H1_PENDING` with `docs/mvp-scaffold-report.md`. Other stacks keep `add-version`. A new backend project starts its baseline with `REQ-001 MVP framework and Item CRUD example (framework baseline)`; business requirements begin at `REQ-002`. A legacy repo writes only the requirements document, baseline, and read-only snapshot — no scaffold.
 
 ## Verification
 
-- **277 tests pass / 0 fail** (`node --test`); `test/v3/s36.requirements.test.js` covers interview ordering, no baseline before confirmation, REQ/AC numbering and `covers`, missing baseline and unknown references, command visibility, and legacy onboarding.
+- **301 tests, 297 pass / 0 fail / 4 skipped** (`node --test`; the skips are environment-only Node 18 cases). `s36` covers derivation and M1, `s38` covers the three entries and fail-closed behavior, `s39` covers `mvp-scaffold` and the three-stack templates, and `s40` covers auto-generation, quality failure, and archiving.
 - `M1` rejects a proposal missing any of 问题 / 目标 / 非目标 / 影响面, and a delta with unresolved acceptance-criteria references.
 - `M2` rejects a design missing any of its four sections, a task graph with cycles, an AC with no covering case, and undiscoverable suites.
 - Approval hashes: editing `proposal.md`/`specs/**` after `H1`, or the plan after `H2`, invalidates the approval and forces re-approval.
 - Write guard: writing `design.md` while `H1_PENDING` is rejected; writing it after approval is allowed. Shell writes are not intercepted.
-- H0 gate: an empty project leaves `H0_PENDING` via `sg_approve gate="H0"` → `sg_run`, with no existing change required.
+- H0 gate: in the new flow the confirmation page is H0 and the project enters `H1_PENDING` directly; legacy projects can still use `sg_approve gate="H0"`.
 - Output regression: a command in a new session writes a `notice`; an active session does not duplicate history; a running agent writes no messages; failed commands also produce output.
 
 See [verification.md](docs/design/verification.md) for the full record.

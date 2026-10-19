@@ -6,6 +6,7 @@ import path from 'node:path';
 import { createRuntime } from '../../src/v3/runtime.js';
 import { registerTools } from '../../src/v3/tools.js';
 import { load } from '../../src/v3/state.js';
+import { initProject } from '../../src/v3/change.js';
 import { computeArtifactHash } from '../../src/v3/phase.js';
 
 function tempRoot() {
@@ -77,7 +78,7 @@ function writeArtifacts(root, change) {
 
 async function bootstrap(root, services) {
   const { ctx } = setup(root, services);
-  await callTool(ctx, 'sg_init');
+  initProject(root);
   await callTool(ctx, 'sg_change', { name: 'add-greeting', type: 'feature' });
   writeArtifacts(root, 'add-greeting');
   return ctx;
@@ -157,9 +158,9 @@ test('M1 未通过时不允许批准', async () => {
     recursive: true,
     force: true,
   });
-  // REQ-001 起 init 本身会盘问需求与确认点，这里记录基线，验证 M1 失败后不再提问。
+  // 直接 initProject 建骨架，不经过需求盘问；验证 M1 失败阶段不再提问。
   const askedBeforeApprove = services.userQuestions.asked;
-  assert.ok(askedBeforeApprove >= 4, 'sg-init 应已就四个需求维度提问');
+  assert.equal(askedBeforeApprove, 0, 'bootstrap 不应触发需求盘问');
   const result = await callTool(ctx, 'sg_approve', { gate: 'H1' });
   assert.match(result.text, /M1 未通过/);
   assert.equal(services.userQuestions.asked, askedBeforeApprove);

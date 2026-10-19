@@ -18,6 +18,7 @@ function questions(stack = 'node') {
     async ask({ questions: list }) {
       const question = list[0];
       if (question.id === 'sg-init-stack') return { answers: [{ selected: [stack] }] };
+      if (question.id === 'sg-init-h0') return { answers: [{ selected: ['确认'] }] };
       return { answers: [{ selected: ['跳过'] }] };
     },
   };
@@ -90,5 +91,5 @@ test('H0_PENDING → 批准 → finish → H1_PENDING', async () => {
   assert.equal(finished.ok, true, finished.message);
   assert.equal(finished.phase, 'H1_PENDING');
   assert.ok(fs.existsSync(path.join(root, 'index.js')));
-  assert.ok(fs.existsSync(path.join(root, 'openspec', 'changes', 'add-version', 'proposal.md')));
+  assert.ok(fs.existsSync(path.join(root, 'openspec', 'changes', 'mvp-scaffold', 'proposal.md')));
 });

@@ -1,4 +1,4 @@
-import { initProject, createChange } from './change.js';
+import { createChange } from './change.js';
 import { renderStatusAt, statusJsonAt, resolveRepoPath, loadProjectAt } from './status-query.js';
 import { renderStatus } from './status.js';
 import { exists } from './util/fsx.js';
@@ -17,6 +17,7 @@ import {
   integrationBranch,
 } from './worktrees.js';
 import { createDispatcher } from './dispatch.js';
+import { maybeBuildBootstrap } from './bootstrap.js';
 import { appendRun } from './runs.js';
 import {
   collectDiff,
@@ -27,9 +28,14 @@ import {
 import { executeTask, revertWave } from './executor.js';
 import { readyBatch } from './scheduler.js';
 import { discoverCommand, loadPlan } from './plan.js';
-import { runAllSuites, suggestSuites, persistRuntime } from './suites.js';
-import { detectInitMode, finishInitProject, gitInitCommit, startInitProject } from './init.js';
-import { requirementsConfig } from './change.js';
+import { runAllSuites, persistRuntime } from './suites.js';
+import {
+  finishInitProject,
+  gitInitCommit,
+  inspectInit,
+  startRequirementsInit,
+  summarizeInitResult,
+} from './init.js';
 import { poolDisposeChange } from './pool.js';
 import { generateAcceptance } from './acceptance.js';
 import { verifyEvidence, appendEvidence } from './evidence.js';
@@ -90,12 +96,6 @@ function formatErrors(errors) {
   return errors.map((item) => `- ${item}`).join('\n');
 }
 
-const EMPTY_PARAMS = {
-  type: 'object',
-  properties: {},
-  additionalProperties: false,
-};
-
 /** 老项目接入时由 SpecGate 自己生成、因而可以安全提交的路径（REQ-010）。 */
 const LEGACY_GENERATED_PATHS = [
   'openspec/REQ.md',
@@ -113,76 +113,81 @@ export function registerTools(ctx, runtime) {
     {
       name: 'sg_init',
       description:
-        '初始化 SpecGate v3 项目：先完成需求盘问（功能/非功能/约束/验收）再确认技术栈，' +
-        '确认后生成 openspec/REQ.md 需求基线并创建 .specgate 配置、openspec 目录、.gitignore 与状态文件。幂等。',
-      parameters: EMPTY_PARAMS,
+        '初始化 SpecGate v3：sg_init({ req }) 导入需求文档；sg_init({ description }) 由 Agent 在对话中澄清；sg_init({ draft }) 提交结构化草稿。' +
+        '确认前不写任何文件，确认后写入需求文档与基线并进入 H1_PENDING。幂等。',
+      parameters: {
+        type: 'object',
+        properties: {
+          req: {
+            type: 'string',
+            description: '本地需求文档路径（Markdown/文本，相对项目根或绝对路径）',
+          },
+          description: { type: 'string', description: '自由描述；缺少的维度由 Agent 逐维追问' },
+          draft: {
+            type: 'object',
+            additionalProperties: true,
+            description:
+              '结构化需求草稿：functional/nonFunctional/constraints/acceptance/context 等',
+          },
+        },
+        additionalProperties: false,
+      },
       output: textOutput(),
       async execute(args, exec) {
         const root = runtime.getCwd(exec?.agent);
         const userQuestions = runtime.service('userQuestions');
-        const mode = detectInitMode(root);
-        if (userQuestions && typeof userQuestions.ask === 'function') {
-          const started = await startInitProject({
-            root,
-            mode,
-            userQuestions,
-            agent: exec?.agent,
-            signal: exec?.signal,
-          });
-          if (!started.ok) return fail(`初始化失败：${started.message}`, started);
-          if (started.skipped) {
-            return ok(
-              [
-                `SpecGate v3 已初始化（幂等跳过）：当前阶段 ${started.phase}，需求基线与配置保持不变。`,
-                `需求基线：${started.requirementsDoc}${started.change ? `；进行中的 change：${started.change}` : ''}。`,
-                '如需修改初始化上下文请执行 /sg-context --reset，查看状态请执行 /sg-status。',
-              ].join('\n'),
-              started,
-            );
-          }
-          if (mode === 'existing') {
-            return ok(
-              [
-                `已扫描现有项目并反推需求草稿（共 ${started.scan.fileCount} 个文件、${started.requirements ? Object.keys(started.requirements).length : 0} 个维度），阶段 H0_PENDING。`,
-                `扫描报告：${started.scan.report}；结构化结果：${started.scan.json}。`,
-                '未生成任何脚手架文件；仓库已存在时保持原状，否则已执行 git init。',
-                '请调用 sg_approve（gate="H0"）确认需求；确认后才写入 openspec/REQ.md 并进入 H1_PENDING。',
-              ].join('\n'),
-              started,
-            );
-          }
-          return ok(
-            [
-              `已采集新建项目上下文（${started.context.stack}）与需求草稿，阶段 H0_PENDING。`,
-              '请调用 sg_approve（gate="H0"）审阅；批准后执行 sg_run 生成 openspec/REQ.md、脚手架与首个 change。',
-            ].join('\n'),
-            started,
+        const input = args && typeof args === 'object' ? args : {};
+        if (input.req && (input.description || input.draft)) {
+          return fail(
+            '初始化失败（E_ARGS_CONFLICT）：-req 与自由描述/草稿不能同时使用；未写入任何文件。',
+            {
+              code: 'E_ARGS_CONFLICT',
+            },
           );
         }
-        const result = initProject(root);
-        if (!result.ok) return fail(`初始化失败：${result.message}`, result);
-        const changed =
-          result.created.length > 0 ? `新建 ${result.created.length} 项` : '已完整，幂等跳过';
-        const suggestions = suggestSuites(root);
-        const hint = suggestions.length
-          ? `\n检测到可能的套件（仅建议，未写入配置）：${suggestions
-              .map((suite) => `${suite.id}(${suite.kind}@${suite.cwd})`)
-              .join('、')}`
-          : '';
-        const rules = requirementsConfig(root);
-        const reqHint = rules.enabled
-          ? `\n需求基线：${rules.doc}（v${String(rules.version).replace(/^v/, '')}）`
-          : '';
-        return ok(
-          `SpecGate v3 已初始化（${changed}）。下一步：/sg-change <name> --type feature${reqHint}${hint}`,
-          {
-            root: result.root,
-            created: result.created,
-            ignored: result.ignored,
-            suggestions,
-            requirements: rules,
-          },
-        );
+        if (input.description && input.draft) {
+          return fail(
+            '初始化失败（E_ARGS_CONFLICT）：description 与 draft 不能同时使用；未写入任何文件。',
+            {
+              code: 'E_ARGS_CONFLICT',
+            },
+          );
+        }
+        if (
+          input.draft !== undefined &&
+          (input.draft === null || typeof input.draft !== 'object')
+        ) {
+          return fail('初始化失败（E_DRAFT_INCOMPLETE）：draft 必须是对象；未写入任何文件。', {
+            code: 'E_DRAFT_INCOMPLETE',
+          });
+        }
+
+        const guard = inspectInit(root);
+        if (guard.skip) {
+          const skipped = { ...guard, ok: true, skipped: true };
+          return ok(summarizeInitResult(skipped), skipped);
+        }
+
+        let result = await startRequirementsInit({
+          root,
+          userQuestions,
+          agent: exec?.agent,
+          signal: exec?.signal,
+          req: input.req || null,
+          description: input.description || '',
+          draft: input.draft || null,
+        });
+        if (!result.ok) return fail(summarizeInitResult(result), result);
+        const built = await maybeBuildBootstrap({
+          root,
+          result,
+          runtime,
+          agent: exec?.agent,
+        });
+        if (!built.ok) return fail(summarizeInitResult(built), built);
+        if (built.result) result = built.result;
+        if (built.skipped && built.reason) result = { ...result, autoBuildSkipped: built.reason };
+        return ok(summarizeInitResult(result), result);
       },
     },
     {
@@ -800,6 +805,13 @@ export function registerTools(ctx, runtime) {
 
         if (gate === 'H0') {
           if (state.phase !== 'H0_PENDING') {
+            if (state.phase === 'H1_PENDING' && state.h0?.approvedAt) {
+              return ok('H0 已在初始化确认页批准（确认页即 H0），无需重复批准。', {
+                gate: 'H0',
+                phase: state.phase,
+                approvedAt: state.h0.approvedAt,
+              });
+            }
             return fail(`当前阶段 ${state.phase} 不能批准 H0`);
           }
           if (!state.h0?.hash) return fail('缺少 H0 上下文哈希');

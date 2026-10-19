@@ -90,7 +90,7 @@ SpecGate 是一套**规格驱动 + 人工门控**的开发工作流。它把"AI 
 
 - **只有显式入口**：插件对外暴露的一切都必须主动调用 —— 5 个 `/sg-*` 命令与 6 个 `sg_*` 工具。没有任何命令会自动运行，也没有任何 Skill 会被注册进会话技能目录。
 - **唯一的自动面 —— 写入守卫**：`src/v3/guards.js` 拦截 `write` / `edit` 工具，拒绝对编排器专属路径的写入。这是唯一无需请求就会生效的行为（见[写入与守卫](#写入与守卫)）。
-- **项目初始化（需求先行）**：`/sg-init` 先逐项盘问需求 —— 功能（MVP）、非功能、约束与依赖、验收标准 —— 再问技术栈，两者合成**一次**确认页。确认后停在 `H0_PENDING`；`sg_approve H0` 之后由 `sg_run` 写入 `openspec/REQ.md`、只读快照与脚手架。幂等 —— 重复执行报告“幂等跳过”，不重置阶段、不覆盖既有需求基线。
+- **项目初始化（三种入口 + 确认前零写）**：`/sg-init` 支持 `-req <需求文档>`、自由描述、无参纯对话三种入口；Agent 按模板逐维澄清功能/非功能/约束/验收，**确认前不写任何文件**。确认页同时展示需求文档与技术栈，确认即 H0：写入 `docs/requirements/REQ.md`、派生 `openspec/REQ.md` 与只读快照，并一次性生成脚手架与首个 change：后端栈（java/node/python）的 change 固定为 `mvp-scaffold`（MVP框架搭建），随后自动生成 Item CRUD 代码与测试、跑格式化/静态检查/测试/reviewer，成功后归档并回到 `IDLE`；失败则停 `H1_PENDING` 并保留报告。问答不可用时 fail-closed（禁止自动确认）。幂等 —— 重复执行报告“幂等跳过”，不覆盖既有基线。
 - **老项目接入**：在已有代码的仓库里执行 `/sg-init` 会扫描项目、反推需求草稿并生成 `docs/requirements-scan.md`，**不生成任何脚手架**；只在缺少仓库时补 `git init`，已有仓库保持原状，且只提交 SpecGate 自己生成的资产。
 - **变更包**：`/sg-change <name>` 生成 `openspec/changes/<name>/` 骨架，并把项目推进到 `H1_PENDING`。
 - **机器校验的质量门**：`M1` 校验 proposal 与 spec 增量；`M2` 校验 design、任务图、验收标准到用例的映射以及测试套件发现。任一不通过，`sg_run` 拒绝推进。
@@ -133,9 +133,9 @@ Skill 正文位于 `assets/` 下，**不会**被注册进 DSH 会话技能目录
 
 ```text
 IDLE
- ├─ /sg-init（空项目）──► H0_PENDING ──(H0)──► sg_run ──► H1_PENDING
- ├─ /sg-init（老项目）──► H0_PENDING ──(H0)──► H1_PENDING    # 只写 REQ.md，不生成脚手架
- └─ /sg-change ──────────────────────────────────────────► H1_PENDING
+ ├─ /sg-init（-req / 描述 / 对话）──► 单页确认 = H0 ──► H1_PENDING   # 同时生成脚手架与首个 change
+ ├─ /sg-init（老项目）──────────────► 单页确认 = H0 ──► H1_PENDING   # 只写需求资产，不生成脚手架
+ └─ /sg-change ─────────────────────────────────────────────────► H1_PENDING
                                                 │
         H1_PENDING ──(M1 + H1)──► PLAN ──(M2 + H2)──► EXECUTING
                                                         │
@@ -145,7 +145,7 @@ IDLE
 | 阶段 | 发生什么 | 出口 |
 |------|----------|------|
 | `IDLE` | 没有进行中的 change | `/sg-change` |
-| `H0_PENDING` | 需求盘问 + 技术栈确认（此时 `state.change` 仍为 `null`）；确认前不写 `REQ.md` | `sg_approve gate="H0"`；空项目随后 `sg_run` 生成基线与脚手架，老项目批准即写入基线 |
+| `H0_PENDING` | 兼容阶段：需求 + 技术栈待确认（此时 `state.change` 仍为 `null`）；确认前不写任何文件 | `/sg-init` 的单页确认（确认即 H0）；旧项目也可用 `sg_approve gate="H0"` |
 | `H1_PENDING` | 编写 `proposal.md` 与 `specs/**/spec.md` | `sg_run` 执行 `M1`，随后 `H1` |
 | `PLAN` | 编写 `design.md`、`tasks.md`、`tests/cases.md`、`tests/mapping.json` | `sg_run` 执行 `M2`，随后 `H2` |
 | `EXECUTING` | 任务在 worktree 中运行；完成的合并并勾选 | 反复 `sg_run` 直到全部合并 |
@@ -160,7 +160,7 @@ IDLE
 
 ## 需求基线
 
-`/sg-init` 的确认结果写入 `openspec/REQ.md`，它是项目的需求权威源：
+确认后先写人类可读的 `docs/requirements/REQ.md`（模板格式 FR/NFR/AC），再由它派生 `openspec/REQ.md` 需求基线：
 
 - 四类需求按盘问顺序连续编号 `REQ-001`、`REQ-002`…：功能（MVP）、非功能、约束与依赖。
 - 验收标准连续编号 `AC-001`、`AC-002`…，每条声明 `- covers: REQ-xxx`，必须引用真实存在的需求编号。
@@ -172,17 +172,33 @@ IDLE
 - `/sg-change` 要求 `openspec/REQ.md` 与快照都存在且一致，否则拒绝创建；
 - `M1` 要求 `proposal.md` 至少引用一个真实存在的 `REQ-xxx`，引用不存在的编号直接失败。
 
-## 命令参考
+## 初始化与 MVP 自动构建（v3.10）
 
+新项目确认后，`sg-init` 会：
+
+1. 写入需求文档与基线；后端栈（java/node/python）第一变更固定为 `mvp-scaffold`（proposal「MVP框架搭建」）。
+2. 生成通用 Item CRUD 代码与测试：`GET/POST/PUT/DELETE /api/items`（含 `/{id}`），内存存储，201/204/400/404 全覆盖。
+3. 自动执行质量流水线：
+   - Java：`mvnw spotless:apply` → `checkstyle:check` → `verify`
+   - Node：`scripts.format` / `scripts.lint`（若配置）→ `node --test test/items.test.mjs`
+   - Python：`python -m pytest -q tests`
+   - reviewer 子 Agent 只读审查
+4. 全部通过：勾选任务、把规格写入 `openspec/specs/mvp/spec.md`、归档 `openspec/changes/archive/<date>-mvp-scaffold`，状态回到 `IDLE`。
+5. 任一失败：停在 `H1_PENDING`，保留代码与 `docs/mvp-scaffold-report.md`，不归档。
+
+> 自动构建依赖 `subagents` 服务；不可用时停在 `H1_PENDING` 并提示“自动构建：跳过”，由 `/sg-run` 继续。
+> Java 需 Maven/JDK，Python 需 pytest；工具链缺失会按失败处理并给出报告。
+
+## 命令参考
 | 命令 | 参数 | 用途 |
 |------|------|------|
-| `/sg-init` | 无 | 需求先行初始化：先盘问需求（功能/非功能/约束/验收）与技术栈，确认后进入 `H0_PENDING`。空项目由 `sg_run` 生成 `REQ.md` 与脚手架，老项目只反推需求 |
+| `/sg-init` | `[-req <doc>] [自由描述]` | 三种入口：导入需求文档 / 描述后由 Agent 澄清 / 无参纯对话。确认页 = H0；后端栈确认后写入需求文档、`REQ.md`、脚手架与 `mvp-scaffold`，随后自动生成 CRUD 代码/测试并归档；确认前零写 |
 | `/sg-change` | `<name> [--type feature\|modify\|fix\|remove] [--link <changeKey>]` | 创建变更包；进入 `H1_PENDING` |
 | `/sg-status` | `[--path <repo>] [--json] [--verbose]` | 显示阶段、change、门控与计划状态 |
 | `/sg-context` | `--reset` | 回到 `H0_PENDING` 并重新采集上下文（仅限 `H0_PENDING`/`H1_PENDING`） |
 | `/sg-skill` | `<name>` | 打印一份 Skill 正文 |
 
-本版本 `/sg-init` 不接受任何选项 —— 它初始化当前工作目录。已初始化的项目重复执行会返回“幂等跳过”，不重置阶段、不覆盖需求基线；需要改上下文用 `/sg-context --reset`。
+`-req` 接受本地 Markdown/文本路径（相对项目根或绝对路径）；自由描述会进入 Agent 逐维澄清。确认前不创建或修改任何项目文件；已初始化项目重复执行返回“幂等跳过”，不覆盖需求基线。
 
 ## 工具参考
 
@@ -457,9 +473,10 @@ sg_run                                # ARCHIVING → DONE
 空项目首次初始化：
 
 ```text
-/sg-init                    # 需求盘问（功能/非功能/约束/验收）→ 技术栈 → 一次确认，停在 H0_PENDING
-sg_approve H0               # 人工批准（此时还没有 change）
-sg_run                      # 写入 openspec/REQ.md 与只读快照，生成脚手架与首个示例 change → H1_PENDING
+/sg-init                    # 无参：Agent 逐维澄清 → 技术栈 → 一次确认
+/sg-init 我想做登录和健康检查   # 描述入口：以描述为种子继续澄清
+/sg-init -req docs/req.md    # 导入入口：宽松解析已有需求文档
+# 确认页点“确认”后：写需求文档/基线 + 脚手架 + mvp-scaffold；随后自动生成 Item CRUD 代码与测试 → 质量/审查 → 归档 → IDLE
 ```
 
 老项目（已有代码）接入：
@@ -533,16 +550,16 @@ openspec/
 
 `/sg-init` 还会把以下内容追加进 `.gitignore`：`.specgate/state.json`、`.specgate/run.lock`、`.specgate/init-result.json`、`.specgate/worktrees/`、`.specgate/evidence/`、`.specgate/backups/`、`.specgate/gates/`、`.specgate/runs/`。
 
-对全新项目，批准 `H0` 后由 `sg_run` 写入 `openspec/REQ.md`、`openspec/history/v1.0/REQ.md`、`project-context.md`、`AGENTS.md`、`docs/glossary.md`、`docs/adr/0001-initial.md`、`.github/workflows/ci.yml`，以及一个初始示例 change。老项目只写需求基线、只读快照与 `docs/requirements-scan.md`，不生成脚手架。
+对全新项目，确认页确认后立即写入 `docs/requirements/REQ.md`、`openspec/REQ.md`、`openspec/history/v1.0/REQ.md`、`project-context.md`、`AGENTS.md`、`docs/glossary.md`、`docs/adr/0001-initial.md`、`.github/workflows/ci.yml`，以及首个 change：java/node/python 为 `mvp-scaffold`（proposal「MVP框架搭建」），随后自动生成 Item CRUD 代码与测试、跑格式化/静态检查/测试/reviewer；成功后归档并回到 `IDLE`，失败则保留 `H1_PENDING` 与 `docs/mvp-scaffold-report.md`。其他栈仍为 `add-version`。后端新项目的需求基线第一条固定为 `REQ-001 MVP 框架与 Item CRUD 示例（框架基线）`，业务需求从 `REQ-002` 开始。老项目只写需求文档、基线与只读快照，不生成脚手架。
 
 ## 验证
 
-- **277 个测试通过 / 0 失败**（`node --test`），其中 `test/v3/s36.requirements.test.js` 覆盖需求盘问顺序、确认前不落盘、REQ/AC 编号与 `covers`、基线缺失与非法引用、命令可见性与老项目接入。
+- **301 个测试，297 通过 / 0 失败 / 4 跳过**（`node --test`；跳过项是本机缺少 Node 18 的环境用例）。`s36` 覆盖需求文档派生与 M1，`s38` 覆盖三种入口与 fail-closed，`s39` 覆盖 `mvp-scaffold` 与三栈模板，`s40` 覆盖自动生成、质量失败与归档。
 - `M1` 拒绝缺少 问题 / 目标 / 非目标 / 影响面 任一段的 proposal，以及存在未解析验收标准引用的增量。
 - `M2` 拒绝缺少四个段落任一的 design、存在环的任务图、没有用例覆盖的 AC，以及无法发现的测试套件。
 - 批准哈希：`H1` 之后修改 `proposal.md`/`specs/**`，或 `H2` 之后修改计划，都会使批准失效并强制重新批准。
 - 写入守卫：`H1_PENDING` 期间写 `design.md` 被拒绝；批准后放行。shell 写入不被拦截。
-- H0 门控：空项目可用 `sg_approve gate="H0"` → `sg_run` 离开 `H0_PENDING`，不要求已存在 change。
+- H0 门控：新流程确认页即 H0，确认后直接进入 `H1_PENDING`；旧项目仍可用 `sg_approve gate="H0"` 兼容。
 - 输出回归：新会话命令写入 `notice`；活跃会话不重复写历史；运行中的 agent 不写消息；失败命令同样有输出。
 
 完整记录见 [verification.md](docs/design/verification.md)。

@@ -6,6 +6,7 @@ import path from 'node:path';
 import { createRuntime } from '../../src/v3/runtime.js';
 import { registerTools } from '../../src/v3/tools.js';
 import { load } from '../../src/v3/state.js';
+import { initProject } from '../../src/v3/change.js';
 import { checkFrozenH2 } from '../../src/v3/phase.js';
 
 function tempRoot() {
@@ -132,7 +133,7 @@ async function bootstrap(root) {
     },
   };
   const { ctx } = setup(root, services);
-  await callTool(ctx, 'sg_init');
+  initProject(root);
   configureTestCommand(root);
   await callTool(ctx, 'sg_change', { name: 'add-greeting', type: 'feature' });
   const dir = baseDir(root);

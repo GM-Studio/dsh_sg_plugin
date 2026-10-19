@@ -53,6 +53,31 @@ export function appendCommandNotice(invocation, result, options = {}) {
   return { appended: true, summary };
 }
 
+/**
+ * 把命令结果交回会话：优先 agent.followup（活跃会话也能出现在对话历史），
+ * 没有 followup 时才退回新会话 notice。
+ */
+export function deliverCommandResult(invocation, result, options = {}) {
+  const agent = options.agent ?? invocation?.agent;
+  const text = result && typeof result === 'object' ? result.text : result;
+  const value = typeof text === 'string' ? text.trim() : '';
+  if (!value) return { delivered: false, reason: 'empty' };
+  if (agent && typeof agent.followup === 'function' && agent.status !== 'running') {
+    try {
+      const pending = agent.followup({
+        content: [{ type: 'text', text: String(text) }],
+        source: { kind: options.kind || 'specgate' },
+      });
+      if (pending && typeof pending.catch === 'function') pending.catch(() => {});
+      return { delivered: true, via: 'followup' };
+    } catch {
+      // followup 不可用时退回 notice
+    }
+  }
+  const appended = appendCommandNotice(invocation, result, options);
+  return { delivered: appended.appended, via: 'notice', ...appended };
+}
+
 /** 包装命令 handler：抛出的异常也要变成可见的失败文本。 */
 export function withNotice(handler, options = {}) {
   return async (invocation) => {
@@ -66,14 +91,14 @@ export function withNotice(handler, options = {}) {
       };
     }
     try {
-      appendCommandNotice(invocation, result, {
+      deliverCommandResult(invocation, result, {
         session: invocation && invocation.session,
         agent: invocation && invocation.agent,
         kind: options.kind,
         fallback: options.fallback,
       });
     } catch {
-      // notice 只是可见性增强，失败不能影响命令结果。
+      // 结果交回只是可见性增强，失败不能影响命令结果。
     }
     return result;
   };

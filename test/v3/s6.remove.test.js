@@ -7,6 +7,7 @@ import { execFileSync } from 'node:child_process';
 import { createRuntime } from '../../src/v3/runtime.js';
 import { registerTools } from '../../src/v3/tools.js';
 import { load } from '../../src/v3/state.js';
+import { initProject } from '../../src/v3/change.js';
 
 function git(cwd, args) {
   return execFileSync('git', args, {
@@ -186,7 +187,7 @@ async function bootstrap(root) {
   const ctx = makeCtx();
   const runtime = createRuntime(ctx, { root, agentRunner: runner });
   registerTools(ctx, runtime);
-  await call(ctx, 'sg_init');
+  initProject(root);
   const config = path.join(root, '.specgate', 'config.yaml');
   fs.writeFileSync(
     config,

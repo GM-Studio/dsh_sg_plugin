@@ -4,7 +4,7 @@ import { renderEnvLine } from './env-scan.js';
 
 const NEXT_ACTION = {
   IDLE: '执行 /sg-change <name> --type <feature|modify|fix|remove> 创建 change',
-  H0_PENDING: '等待人工批准 H0（sg_approve 工具，gate="H0"）；批准后 /sg-run 生成脚手架',
+  H0_PENDING: '完成初始化确认（确认页即 H0）：/sg-init；旧项目也可用 sg_approve（gate="H0"）',
   H1_PENDING: '写 proposal + specs delta，然后执行 /sg-run',
   PLAN: '写 design/tasks/cases/mapping/touched，然后执行 /sg-run',
   H2_PENDING: '等待人执行 /sg-approve H2',
@@ -58,6 +58,9 @@ export function statusData(project) {
     runtime: state.runtime || null,
     pool: state.pool || null,
     h0: state.h0 || null,
+    requirementsSource: state.requirementsSource || null,
+    requirementsVersion: state.requirementsVersion || null,
+    requirementsDoc: state.requirementsDoc || null,
     context: state.context || null,
     env: (() => {
       try {
@@ -101,11 +104,17 @@ export function renderStatus(project) {
     lines.push(`H0 技术栈：${data.context.stack}`);
     lines.push(`H0 验收：${data.context.acceptance}`);
   }
+  if (data.requirementsSource) {
+    const source = data.requirementsSource;
+    const where = source.path ? `（来源：${source.path}）` : '';
+    lines.push(`需求文档：${source.doc || 'docs/requirements/REQ.md'}${where}`);
+  }
   if (data.h0?.hash) {
+    const approved = data.h0.approvedAt ? `，${data.h0.approvedAt}` : '';
     lines.push(
       `H0：已确认 ${String(data.h0.hash)
         .replace(/^sha256:/, '')
-        .slice(0, 12)}…`,
+        .slice(0, 12)}…${approved}`,
     );
   }
   lines.push(renderEnvLine(data.env));

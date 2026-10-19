@@ -44,8 +44,11 @@ export const ASK_ORDER = [DIMENSIONS[0], DIMENSIONS[1], DIMENSIONS[2], ACCEPTANC
 
 export function answerOf(answer, index = 0) {
   const item = answer && answer.answers ? answer.answers[index] : null;
-  if (item && Array.isArray(item.selected)) return item.selected[0];
-  return item ? item.selected : undefined;
+  if (!item) return undefined;
+  const custom = typeof item.custom === 'string' ? item.custom.trim() : '';
+  if (custom) return custom;
+  if (Array.isArray(item.selected)) return item.selected[0];
+  return item.selected;
 }
 
 export function normalizeRequirements(input) {
@@ -73,12 +76,21 @@ export function requirementsSummaryText(requirements) {
  * The four dimensions are functional capability list, non-functional qualities,
  * constraints and dependencies, and acceptance criteria.
  */
-export async function collectRequirements({ userQuestions, agent, signal, initial = {} }) {
+export async function collectRequirements({
+  userQuestions,
+  agent,
+  signal,
+  initial = {},
+  keys = null,
+}) {
   const requirements = normalizeRequirements(initial);
   for (const dimension of ASK_ORDER) {
-    const recommended =
-      requirements[dimension.key].length > 0 ? requirements[dimension.key] : dimension.default;
-    const preset = recommended.join('；');
+    if (keys && !keys.includes(dimension.key)) continue;
+    const preset = requirements[dimension.key].join('；');
+    const options = [
+      ...(preset ? [{ label: preset, description: '使用已填写内容' }] : []),
+      { label: '留空', description: '该维度留空，后续可补' },
+    ];
     let answer;
     try {
       answer = await userQuestions.ask({
@@ -87,28 +99,21 @@ export async function collectRequirements({ userQuestions, agent, signal, initia
             id: 'sg-init-req-' + dimension.key,
             header: dimension.label,
             question: dimension.question,
-            options: [
-              { label: preset, description: '使用推荐示例' },
-              {
-                label: '跳过',
-                description: '写入示例模板占位，稍后可在 REQ.md 补充',
-              },
-            ],
+            options,
           },
         ],
         agent,
         signal,
       });
-    } catch {
-      if (!requirements[dimension.key].length) {
-        requirements[dimension.key] = recommended.slice();
-      }
-      continue;
+    } catch (error) {
+      const wrapped = new Error('用户问答不可用：' + (error?.message || String(error)));
+      wrapped.code = 'E_QUESTIONS_UNAVAILABLE';
+      throw wrapped;
     }
     const selected = answerOf(answer);
     const value = typeof selected === 'string' ? selected.trim() : '';
-    const fallback = recommended.length ? recommended : dimension.default;
-    requirements[dimension.key] = value && value !== '跳过' ? [value] : fallback.slice();
+    // 不做默认值兜底：留空/跳过就是空，由用户后续补充。
+    requirements[dimension.key] = value && value !== '跳过' && value !== '留空' ? [value] : [];
   }
   return requirements;
 }
@@ -147,9 +152,10 @@ function pushSection(lines, heading, items, startIndex) {
  */
 export function renderRequirementsDoc(requirements, options = {}) {
   const data = normalizeRequirements(requirements);
-  const functional = data.functional.length ? data.functional : DIMENSIONS[0].default;
-  const nonFunctional = data.nonFunctional.length ? data.nonFunctional : DIMENSIONS[1].default;
-  const constraints = data.constraints.length ? data.constraints : DIMENSIONS[2].default;
+  // 不再回落到示例默认值：空就是空，避免把占位需求写进基线。
+  const functional = data.functional;
+  const nonFunctional = data.nonFunctional;
+  const constraints = data.constraints;
 
   const lines = [];
   lines.push('# 项目需求基线');
@@ -157,6 +163,19 @@ export function renderRequirementsDoc(requirements, options = {}) {
   lines.push(
     '> 版本：' + (options.version || REQ_VERSION) + '　｜　状态：已确认　｜　生成：SpecGate v3',
   );
+  if (options.source) {
+    lines.push(
+      '> 派生自：' +
+        options.source +
+        (options.sourceHash
+          ? '（' +
+            String(options.sourceHash)
+              .replace(/^sha256:/, '')
+              .slice(0, 19) +
+            '…）'
+          : ''),
+    );
+  }
   lines.push('');
   lines.push(
     '本文件是项目唯一的需求基线。后续需求变更只能通过 openspec/changes/vX.Y/delta.md 提出，并同步更新本文件。',
@@ -252,7 +271,7 @@ export async function askInitConfirmation({ userQuestions, agent, signal, questi
       signal,
     });
     const selected = answerOf(answer);
-    return { ok: true, action: selected || '确认' };
+    return { ok: true, action: selected || '取消' };
   } catch (error) {
     return {
       ok: false,
@@ -273,7 +292,11 @@ export function historyReqPath(root, version = REQ_VERSION) {
 /** REQ-010: never overwrite an existing baseline; report idempotent skips. */
 export function writeRequirementsBaseline(root, requirements, options = {}) {
   const version = options.version || REQ_VERSION;
-  const doc = renderRequirementsDoc(requirements, { version });
+  const doc = renderRequirementsDoc(requirements, {
+    version,
+    source: options.source || null,
+    sourceHash: options.sourceHash || null,
+  });
   const mainRelative = 'openspec/REQ.md';
   const snapshotRelative = 'openspec/history/' + version + '/REQ.md';
   const created = [];
