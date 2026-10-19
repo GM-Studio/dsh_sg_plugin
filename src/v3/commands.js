@@ -10,6 +10,7 @@ import { loadSkill } from './skills.js';
 import { collectContext, inspectInit, startRequirementsInit, summarizeInitResult } from './init.js';
 import { withNotice } from './notice.js';
 import { maybeBuildBootstrap } from './bootstrap.js';
+import { startV4Init, summarizeV4Result } from '../v4/init.js';
 import { digest } from './util/hash.js';
 import { patchState } from './state.js';
 
@@ -56,6 +57,10 @@ function splitArgs(raw) {
 export function parseInitArgs(rawInput) {
   const parts = splitArgs(rawInput);
   let req = null;
+  let v4 = false;
+  let backend = null;
+  let frontend = null;
+  let preset = null;
   const rest = [];
   for (let index = 0; index < parts.length; index += 1) {
     const part = parts[index];
@@ -65,6 +70,17 @@ export function parseInitArgs(rawInput) {
         return { ok: false, code: 'E_ARGS_CONFLICT', message: '-req 需要一个文档路径' };
       }
       req = value;
+      index += 1;
+    } else if (part === '--v4') {
+      v4 = true;
+    } else if (part === '--backend' || part === '--frontend' || part === '--preset') {
+      const value = parts[index + 1];
+      if (!value) {
+        return { ok: false, code: 'E_ARGS_CONFLICT', message: part + ' 需要一个值' };
+      }
+      if (part === '--backend') backend = value;
+      if (part === '--frontend') frontend = value;
+      if (part === '--preset') preset = value;
       index += 1;
     } else {
       rest.push(part);
@@ -77,7 +93,7 @@ export function parseInitArgs(rawInput) {
       message: '-req 与自由描述不能同时使用',
     };
   }
-  return { ok: true, req, description: rest.join(' ').trim() };
+  return { ok: true, req, v4, backend, frontend, preset, description: rest.join(' ').trim() };
 }
 
 export function registerCommands(ctx, runtime) {
@@ -109,6 +125,20 @@ export function registerCommands(ctx, runtime) {
       const parsed = parseInitArgs(inv?.rawInput);
       if (!parsed.ok) {
         return { kind: 'error', text: '初始化失败（' + parsed.code + '）：' + parsed.message };
+      }
+
+      if (parsed.v4) {
+        const v4 = await startV4Init({
+          root,
+          userQuestions,
+          agent: inv?.agent,
+          signal: inv?.signal,
+          backend: parsed.backend,
+          frontend: parsed.frontend,
+          preset: parsed.preset,
+        });
+        if (!v4.ok) return { kind: 'error', text: summarizeV4Result(v4) };
+        return { kind: 'success', text: summarizeV4Result(v4) };
       }
 
       const guard = inspectInit(root);

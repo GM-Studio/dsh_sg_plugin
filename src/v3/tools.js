@@ -18,6 +18,7 @@ import {
 } from './worktrees.js';
 import { createDispatcher } from './dispatch.js';
 import { maybeBuildBootstrap } from './bootstrap.js';
+import { startV4Init, summarizeV4Result } from '../v4/init.js';
 import { appendRun } from './runs.js';
 import {
   collectDiff,
@@ -160,6 +161,20 @@ export function registerTools(ctx, runtime) {
           return fail('初始化失败（E_DRAFT_INCOMPLETE）：draft 必须是对象；未写入任何文件。', {
             code: 'E_DRAFT_INCOMPLETE',
           });
+        }
+
+        if (input.v4 === true) {
+          const v4 = await startV4Init({
+            root,
+            userQuestions,
+            agent: exec?.agent,
+            signal: exec?.signal,
+            backend: input.backend || null,
+            frontend: input.frontend || null,
+            preset: input.preset || null,
+          });
+          if (!v4.ok) return fail(summarizeV4Result(v4), v4);
+          return ok(summarizeV4Result(v4), v4);
         }
 
         const guard = inspectInit(root);

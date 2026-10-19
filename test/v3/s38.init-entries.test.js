@@ -387,5 +387,13 @@ test('v3.8：-req 与自由描述互斥', async () => {
   assert.equal(parsed.ok, false);
   assert.equal(parsed.code, 'E_ARGS_CONFLICT');
   const quoted = parseInitArgs('-req "my req.md"');
-  assert.deepEqual(quoted, { ok: true, req: 'my req.md', description: '' });
+  assert.deepEqual(quoted, {
+    ok: true,
+    req: 'my req.md',
+    v4: false,
+    backend: null,
+    frontend: null,
+    preset: null,
+    description: '',
+  });
 });
