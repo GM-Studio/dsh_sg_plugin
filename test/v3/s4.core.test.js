@@ -74,7 +74,7 @@ test('用例文件不在本次 diff 时判失败', () => {
     changedFiles: ['b.js'],
   });
   assert.equal(result.ok, false);
-  assert.match(result.errors.join('; '), /不在本次 diff/);
+  assert.match(result.errors.join('; '), /没有通过的用例/);
 });
 
 test('集成回归允许已有用例不在本次 diff', () => {

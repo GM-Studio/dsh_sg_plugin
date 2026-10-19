@@ -38,7 +38,7 @@ export function validateReport({
       errors.push(`用例 ${item.id} 的 status 非法：${String(item.status)}`);
     }
     const acs = Array.isArray(item.ac) ? item.ac : [];
-    const inScope = changed.size === 0 || changed.has(item.file);
+    const inScope = !requireChangedFiles || changed.size === 0 || changed.has(item.file);
     if (inScope) {
       for (const ac of acs) {
         if (!known.has(ac)) errors.push(`用例 ${item.id} 引用了未冻结的 ${ac}`);
