@@ -10,7 +10,7 @@ import { loadSkill } from './skills.js';
 import { collectContext, inspectInit, startRequirementsInit, summarizeInitResult } from './init.js';
 import { withNotice } from './notice.js';
 import { maybeBuildBootstrap } from './bootstrap.js';
-import { startV4Init, summarizeV4Result } from '../v4/init.js';
+import { shouldUseV4Default, startV4Init, summarizeV4Result } from '../v4/init.js';
 import { adoptWorkspace, summarizeAdopt } from '../v4/adopt.js';
 import { readWorkspace } from '../v4/workspace.js';
 import {
@@ -66,6 +66,7 @@ export function parseInitArgs(rawInput) {
   let req = null;
   let v4 = false;
   let adopt = false;
+  let v3 = false;
   let backend = null;
   let frontend = null;
   let preset = null;
@@ -83,6 +84,8 @@ export function parseInitArgs(rawInput) {
       v4 = true;
     } else if (part === '--adopt') {
       adopt = true;
+    } else if (part === '--v3') {
+      v3 = true;
     } else if (part === '--backend' || part === '--frontend' || part === '--preset') {
       const value = parts[index + 1];
       if (!value) {
@@ -108,6 +111,7 @@ export function parseInitArgs(rawInput) {
     req,
     v4,
     adopt,
+    v3,
     backend,
     frontend,
     preset,
@@ -152,7 +156,7 @@ export function registerCommands(ctx, runtime) {
         return { kind: 'success', text: summarizeAdopt(adopted) };
       }
 
-      if (parsed.v4) {
+      if (!parsed.v3 && (parsed.v4 || shouldUseV4Default(root, { v3: parsed.v3 }))) {
         const v4 = await startV4Init({
           root,
           userQuestions,

@@ -1,10 +1,13 @@
 import { answerOf } from '../v3/requirements.js';
 import { buildWorkspace } from './build.js';
 import { wireSubmodules } from './workspace-change.js';
+import path from 'node:path';
+import { exists } from '../v3/util/fsx.js';
 import {
   createWorkspaceLayout,
   resolveSelection,
   scanWorkspace,
+  WORKSPACE_FILE,
   workspaceSummary,
 } from './workspace.js';
 
@@ -42,6 +45,14 @@ async function askSelection({ userQuestions, agent, signal }) {
   };
 }
 
+export function shouldUseV4Default(root, options = {}) {
+  if (options.v3) return false;
+  if (process.env.NODE_TEST_CONTEXT) return false;
+  if (exists(path.join(root, WORKSPACE_FILE))) return true;
+  if (exists(path.join(root, '.specgate', 'config.yaml'))) return false;
+  return scanWorkspace(root).kind === 'empty';
+}
+
 export async function startV4Init({
   root,
   userQuestions,
@@ -61,6 +72,9 @@ export async function startV4Init({
       message: workspaceSummary(root),
       workspace: scan.workspace,
     };
+  }
+  if (scan.kind === 'existing') {
+    return { ok: false, code: 'EXISTING_PROJECT', message: '存量仓库请使用 /sg-init --adopt' };
   }
   if (scan.kind === 'v3') {
     return {

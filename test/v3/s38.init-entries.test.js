@@ -392,6 +392,7 @@ test('v3.8：-req 与自由描述互斥', async () => {
     req: 'my req.md',
     v4: false,
     adopt: false,
+    v3: false,
     backend: null,
     frontend: null,
     preset: null,

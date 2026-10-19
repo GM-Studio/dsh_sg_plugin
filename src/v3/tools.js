@@ -18,7 +18,7 @@ import {
 } from './worktrees.js';
 import { createDispatcher } from './dispatch.js';
 import { maybeBuildBootstrap } from './bootstrap.js';
-import { startV4Init, summarizeV4Result } from '../v4/init.js';
+import { shouldUseV4Default, startV4Init, summarizeV4Result } from '../v4/init.js';
 import { adoptWorkspace, summarizeAdopt } from '../v4/adopt.js';
 import { readWorkspace } from '../v4/workspace.js';
 import {
@@ -178,7 +178,10 @@ export function registerTools(ctx, runtime) {
           return ok(summarizeAdopt(adopted), adopted);
         }
 
-        if (input.v4 === true) {
+        if (
+          !input.v3 &&
+          (input.v4 === true || shouldUseV4Default(root, { v3: input.v3 === true }))
+        ) {
           const v4 = await startV4Init({
             root,
             userQuestions,
