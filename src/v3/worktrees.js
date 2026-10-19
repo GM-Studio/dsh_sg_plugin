@@ -217,6 +217,18 @@ export function diffCheck({ root, branch, baseCommit, role, change, touched, pha
 export function commitChangePackage(root, change, message) {
   try {
     git(root, ['add', `openspec/changes/${change}`]);
+    for (const extra of [
+      '.gitignore',
+      '.specgate/config.yaml',
+      'openspec/specs/.gitkeep',
+      'openspec/changes/.gitkeep',
+    ]) {
+      try {
+        git(root, ['add', extra]);
+      } catch {
+        // optional file
+      }
+    }
     const staged = git(root, ['diff', '--cached', '--name-only']);
     if (!staged) return { ok: true, skipped: true, commit: headOf(root, 'HEAD') };
     git(root, ['commit', '-q', '-m', message]);

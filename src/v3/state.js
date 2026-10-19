@@ -63,6 +63,7 @@ export function emptyState(patch = {}) {
     approvals: { H1: blankApproval(), H2: blankApproval(), H3: blankApproval() },
     skills: { suggested: [], injected: [] },
     evidence: { headSeq: 0, headHash: null },
+    acceptanceHash: null,
     blockedReason: null,
     options: [],
     createdAt: stamp,

@@ -298,3 +298,38 @@ test('S4：测试失败时不合并、不勾选', async () => {
   assert.equal(state.tasks['T-001'].status, 'failed');
   assert.equal(state.tasks['T-001'].commit, null);
 });
+
+test('S5：集成回归、H3 与归档', async () => {
+  const root = initFixture();
+  const ctx = await bootstrap(root);
+
+  const task = await call(ctx, 'sg_run');
+  assert.equal(task.data?.ok, true, task.text);
+
+  const transition = await call(ctx, 'sg_run');
+  assert.match(transition.text, /进入 INTEGRATING/);
+
+  const integrated = await call(ctx, 'sg_run');
+  assert.match(integrated.text, /验收报告已生成/);
+  let state = load(root).state;
+  assert.equal(state.phase, 'H3_PENDING');
+
+  const approved = await call(ctx, 'sg_approve', { gate: 'H3' });
+  assert.match(approved.text, /H3 已批准/);
+
+  const archived = await call(ctx, 'sg_run');
+  assert.match(archived.text, /归档完成/);
+
+  state = load(root).state;
+  assert.equal(state.phase, 'DONE');
+
+  const tags = git(root, ['tag', '-l', 'sg-v0.*']).split('\n').filter(Boolean);
+  assert.deepEqual(tags, ['sg-v0.1']);
+
+  const spec = fs.readFileSync(path.join(root, 'openspec', 'specs', 'greeting', 'spec.md'), 'utf8');
+  assert.match(spec, /REQ-001/);
+
+  const archiveRoot = path.join(root, 'openspec', 'changes', 'archive');
+  const entries = fs.readdirSync(archiveRoot);
+  assert.ok(entries.some((name) => name.endsWith('-add-greeting')));
+});

@@ -1,12 +1,21 @@
 import { initProject, createChange } from './change.js';
 import { renderStatus, statusData } from './status.js';
 import { headCommit, isGitRepo } from './util/git.js';
-import { checkM1, checkM2, checkFrozenH1, computeArtifactHash } from './phase.js';
+import { checkM1, checkM2, checkFrozenH1, computeArtifactHash, collectDeltaIds } from './phase.js';
 import { patchState } from './state.js';
 import { askApproval, issueApproval } from './approvals.js';
-import { commitChangePackage, integrationBranch } from './worktrees.js';
+import { commitChangePackage, ensureIntegration, git, headOf, integrationBranch } from './worktrees.js';
 import { createDispatcher } from './dispatch.js';
 import { executeTask, pickNextTask } from './executor.js';
+import { discoverCommand, loadPlan } from './plan.js';
+import { runTestCommand } from './testrunner.js';
+import { validateReport } from './report.js';
+import { generateAcceptance } from './acceptance.js';
+import { verifyEvidence, appendEvidence } from './evidence.js';
+import { digest } from './util/hash.js';
+import { archiveChange, nextTag } from './archive.js';
+import fs from 'node:fs';
+import path from 'node:path';
 
 function textOutput() {
   return {
@@ -206,7 +215,7 @@ export function registerTools(ctx, runtime) {
                   draft.phase = 'INTEGRATING';
                 });
                 if (!moved.ok) return fail(moved.message, moved);
-                return ok('所有任务已合并，进入 INTEGRATING（全量回归在 S5 启用）。');
+                return ok('所有任务已合并，进入 INTEGRATING。请再次 /sg-run 执行全量回归。');
               }
               return fail('没有可执行任务：依赖未满足或任务已阻塞');
             }
@@ -253,12 +262,125 @@ export function registerTools(ctx, runtime) {
               result,
             );
           }
-          case 'INTEGRATING':
-            return ok('集成阶段：全量回归尚未启用（S5）。');
+          case 'INTEGRATING': {
+            const change = state.change;
+            const integration = ensureIntegration(project.root, change, state.integration?.base);
+            if (!integration.ok) return fail(integration.message, integration);
+
+            const command = discoverCommand(project.root, project.config);
+            if (!command.ok) return fail(command.message, command);
+
+            const run = runTestCommand({
+              argv: command.argv,
+              cwd: path.join(integration.path, command.cwd || '.'),
+            });
+            if (run.exitCode !== 0) {
+              patchState(project.root, (draft) => {
+                draft.phase = 'BLOCKED';
+                draft.blockedReason = `集成回归失败：exit ${run.exitCode}`;
+              });
+              return fail(`集成回归失败（exit ${run.exitCode}）：${(run.stderr || '').slice(-300)}`, {
+                run,
+              });
+            }
+
+            const plan = loadPlan(project.root, change);
+            const { acs } = collectDeltaIds(project.root, change);
+            const base = state.integration?.base;
+            const changedFiles = base
+              ? git(integration.path, ['diff', '--name-only', `${base}..HEAD`])
+                  .split('\n')
+                  .filter(Boolean)
+              : [];
+            const commit = headOf(integration.path, 'HEAD');
+            const validation = validateReport({
+              report: run.report,
+              deltaAcs: acs,
+              mapping: plan.mapping,
+              worktree: integration.path,
+              changedFiles,
+            });
+            if (!validation.ok) {
+              patchState(project.root, (draft) => {
+                draft.phase = 'BLOCKED';
+                draft.blockedReason = `验收证据不足：${validation.errors.join('; ')}`;
+              });
+              return fail(`验收证据不足：\n${formatErrors(validation.errors)}`, { validation, run });
+            }
+
+            const headEvidence = verifyEvidence(project.root, change);
+            const acceptance = generateAcceptance({
+              change,
+              type: state.type,
+              acs,
+              report: run.report,
+              exitCode: run.exitCode,
+              evidence: headEvidence,
+              commit,
+              validator: 'builtin',
+            });
+            const acceptanceFile = path.join(
+              integration.path,
+              'openspec',
+              'changes',
+              change,
+              'acceptance.md',
+            );
+            fs.mkdirSync(path.dirname(acceptanceFile), { recursive: true });
+            fs.writeFileSync(acceptanceFile, acceptance.text, 'utf8');
+            git(integration.path, ['add', 'openspec/changes']);
+            git(integration.path, ['commit', '-q', '-m', `acceptance(${change}): 生成验收报告`]);
+            const finalCommit = headOf(integration.path, 'HEAD');
+
+            const evidence = appendEvidence(project.root, change, {
+              event: 'acceptance',
+              decision: 'pass',
+              refs: { commit: finalCommit, validator: 'builtin' },
+            });
+            const saved = patchState(project.root, (draft) => {
+              draft.phase = 'H3_PENDING';
+              draft.integration = { ...draft.integration, lastGreen: finalCommit };
+              draft.acceptanceHash = digest(acceptance.text);
+              draft.evidence = { headSeq: evidence.seq, headHash: evidence.hash };
+            });
+            if (!saved.ok) return fail(saved.message, saved);
+            return ok(
+              `集成回归通过，验收报告已生成（${acs.size} 个 AC），integration commit ${String(finalCommit).slice(0, 8)}。请审阅后执行 /sg-approve H3。`,
+              { acceptance: acceptance.rows, commit: finalCommit },
+            );
+          }
           case 'H3_PENDING':
             return ok('等待人执行 /sg-approve H3。');
-          case 'ARCHIVING':
-            return ok('归档阶段：归档事务尚未启用（S5）。');
+          case 'ARCHIVING': {
+            const tag = nextTag(project.root);
+            const result = archiveChange({
+              root: project.root,
+              change: state.change,
+              integrationBranch: state.integration?.branch,
+              tag,
+            });
+            if (!result.ok) {
+              patchState(project.root, (draft) => {
+                draft.phase = 'BLOCKED';
+                draft.blockedReason = `归档失败：${result.message}`;
+              });
+              return fail(`归档失败：${result.message}`, result);
+            }
+            const evidence = appendEvidence(project.root, state.change, {
+              event: 'archive',
+              decision: 'done',
+              refs: { tag: result.tag, commit: headOf(project.root, 'HEAD') },
+            });
+            const saved = patchState(project.root, (draft) => {
+              draft.phase = 'DONE';
+              draft.evidence = { headSeq: evidence.seq, headHash: evidence.hash };
+            });
+            if (!saved.ok) return fail(saved.message, saved);
+            return ok(
+              `归档完成：tag ${result.tag}，specs 已更新，change 已移动到 openspec/changes/archive/。`,
+              result,
+            );
+          }
           case 'BLOCKED':
             return ok(
               `已阻塞：${state.blockedReason || '未知原因'}。处理后可执行 /sg-run --retry。`,
@@ -293,8 +415,59 @@ export function registerTools(ctx, runtime) {
         if (!state?.change) return fail('没有进行中的 change');
 
         const gate = String(args?.gate || '').toUpperCase();
-        if (!['H1', 'H2'].includes(gate)) {
-          return fail(`${gate} 批准尚未启用（S5 提供 H3）。`);
+        if (!['H1', 'H2', 'H3'].includes(gate)) {
+          return fail(`未知批准点：${gate}`);
+        }
+
+        if (gate === 'H3') {
+          if (state.phase !== 'H3_PENDING') {
+            return fail(`当前阶段 ${state.phase} 不能批准 H3`);
+          }
+          const integration = ensureIntegration(
+            project.root,
+            state.change,
+            state.integration?.base,
+          );
+          if (!integration.ok) return fail(integration.message, integration);
+          const acceptanceFile = path.join(
+            integration.path,
+            'openspec',
+            'changes',
+            state.change,
+            'acceptance.md',
+          );
+          if (!fs.existsSync(acceptanceFile)) {
+            return fail('找不到 acceptance.md，请先执行 /sg-run 生成验收报告');
+          }
+          const text = fs.readFileSync(acceptanceFile, 'utf8');
+          const hash = digest(text);
+          if (state.acceptanceHash && state.acceptanceHash !== hash) {
+            return fail('验收报告在生成后发生变化，请重新执行 /sg-run');
+          }
+          const evidence = verifyEvidence(project.root, state.change);
+          if (!evidence.ok) {
+            return fail(`证据链断裂：${evidence.message}`, evidence);
+          }
+
+          const asked = await askApproval(runtime, {
+            gate,
+            change: state.change,
+            artifactHash: hash,
+            agent: exec?.agent,
+            signal: exec?.signal,
+          });
+          if (!asked.ok) return fail(asked.message, asked);
+
+          const saved = patchState(project.root, (draft) => {
+            issueApproval(draft, gate, hash, asked.at);
+            draft.phase = 'ARCHIVING';
+          });
+          if (!saved.ok) return fail(saved.message, saved);
+          return ok(`H3 已批准，验收指纹 ${hash.slice(0, 19)}…。执行 /sg-run 完成归档。`, {
+            gate,
+            acceptanceHash: hash,
+            phase: 'ARCHIVING',
+          });
         }
 
         if (gate === 'H1') {

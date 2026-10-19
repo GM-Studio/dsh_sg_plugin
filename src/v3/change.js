@@ -241,6 +241,7 @@ export function createChange(root, { name, type = 'feature', baseCommit = null }
       H3: { artifactHash: null, issuedAt: null, expiresAt: null, consumedAt: null },
     };
     draft.evidence = { headSeq: 0, headHash: null };
+    draft.acceptanceHash = null;
   });
   if (!saved.ok) return saved;
 
