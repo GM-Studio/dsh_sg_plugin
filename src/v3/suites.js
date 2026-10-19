@@ -5,6 +5,7 @@ import { spawnSync } from 'node:child_process';
 import { runTestCommand } from './testrunner.js';
 import { validateReport } from './report.js';
 import { resolveNode } from './env/node.js';
+import { ensureVenv } from './env/python.js';
 
 /** Frozen suites from state; falls back to the v3.0 single command. */
 export function suitesFromState(state, fallbackCommand) {
@@ -96,24 +97,33 @@ export function parseJunitXml(text, { suiteId, cwd, worktree }) {
   return { schemaVersion: 1, runner: 'pytest', suite: suiteId, cases };
 }
 
-function pythonCommand(suite) {
-  if (process.platform === 'win32') {
-    return suite.python ? ['py', `-${suite.python}`] : ['py', '-3'];
-  }
-  return suite.python ? [`python${suite.python}`] : ['python3'];
-}
 
-export function runPytestSuite({ suite, worktree }) {
+
+export function runPytestSuite({ suite, worktree, root }) {
+  const venv = ensureVenv({ root: root || worktree, suite });
+  if (!venv.ok) {
+    return {
+      exitCode: -1,
+      stderr: venv.message,
+      report: null,
+      reportError: venv.message,
+      code: venv.code,
+    };
+  }
   const cwd = path.join(worktree, suite.cwd || '.');
   const junit = path.join(
     os.tmpdir(),
     `sg-junit-${process.pid}-${Date.now()}-${Math.random().toString(16).slice(2)}.xml`,
   );
-  const [bin, ...prefix] = pythonCommand(suite);
+  const env = {
+    ...process.env,
+    VIRTUAL_ENV: venv.venv,
+    PATH: `${path.dirname(venv.python)}${path.delimiter}${process.env.PATH || ''}`,
+  };
   const result = spawnSync(
-    bin,
-    [...prefix, '-m', 'pytest', `--junitxml=${junit}`, ...(suite.pytestArgs || [])],
-    { cwd, encoding: 'utf8', windowsHide: true },
+    venv.python,
+    ['-m', 'pytest', `--junitxml=${junit}`, ...(suite.pytestArgs || [])],
+    { cwd, encoding: 'utf8', windowsHide: true, env },
   );
   let report = null;
   let reportError = null;
@@ -153,7 +163,7 @@ export function runOneSuite({
   let env = process.env;
   let run;
   if (suite.kind === 'pytest') {
-    run = runPytestSuite({ suite, worktree });
+    run = runPytestSuite({ suite, worktree, root });
   } else {
     const nodeEnv = resolveNode({ root, suite, env: process.env });
     if (!nodeEnv.ok) {
