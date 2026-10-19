@@ -24,6 +24,7 @@ import {
 } from './review.js';
 import { runFormatter } from './formatter.js';
 import { runQualityStage } from './quality.js';
+import { ensureToolchain } from './toolchain.js';
 import { appendRun } from './runs.js';
 
 function failure(code, message, extra = {}) {
@@ -312,6 +313,18 @@ async function executeFeatureTask({ root, state, task, dispatcher, config, paren
       violations: implDiff.violations,
     });
   }
+  if (state.context?.stack) {
+    const toolchain = ensureToolchain({
+      root,
+      worktree: worktree.path,
+      change,
+      task,
+      stack: state.context.stack,
+    });
+    if (!toolchain.ok) {
+      return failure('TOOLCHAIN_FAILED', toolchain.message, { toolchain });
+    }
+  }
   const formatted = runFormatter({ root, worktree: worktree.path, change, task });
   if (!formatted.ok) return failure('FORMAT_FAILED', formatted.message, { formatted });
   const formatHead = headOf(worktree.path, 'HEAD') || implHead;
@@ -481,6 +494,18 @@ async function executeFixTask({ root, state, task, dispatcher, config, parent })
     return failure('DIFF_VIOLATION', implDiff.violations.map((item) => item.reason).join('; '), {
       violations: implDiff.violations,
     });
+  }
+  if (state.context?.stack) {
+    const toolchain = ensureToolchain({
+      root,
+      worktree: worktree.path,
+      change,
+      task,
+      stack: state.context.stack,
+    });
+    if (!toolchain.ok) {
+      return failure('TOOLCHAIN_FAILED', toolchain.message, { toolchain });
+    }
   }
   const formatted = runFormatter({ root, worktree: worktree.path, change, task });
   if (!formatted.ok) return failure('FORMAT_FAILED', formatted.message, { formatted });
