@@ -1,5 +1,13 @@
 # Changelog
 
+## 3.5.0
+
+- H0/H2 read-only environment scan for Node/Vue/React/Python/monorepo: `.specgate/env.json`, `env-report.md`, and a status line.
+- First execution toolchain: missing devDependencies/configs are added per lockfile (npm/pnpm/yarn) or Python venv (`ruff`, `mypy`); existing files are not overwritten.
+- Formatter auto-detects Prettier/Ruff; new lint and typecheck stages block on failure.
+- Reviewer reruns the task suite, lint, and typecheck inside the review worktree before diff review.
+- Environment reports are idempotent (no timestamp churn); quality reports live under `.specgate/runs/`.
+
 ## 3.4.0
 
 - `/sg-status` accepts `--path <repo-root>`, `--json`, `--verbose`; paths work across Windows/POSIX and default to the current directory.
