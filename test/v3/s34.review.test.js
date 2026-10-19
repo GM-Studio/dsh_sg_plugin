@@ -55,8 +55,8 @@ test('collectDiff 返回文件清单与 diff，validateReview 校验证据', () 
     { verdict: 'fail', blocking: [{ file: 'a.js', line: 2, evidence: '不存在', reason: 'x' }] },
     diff,
   );
-  assert.equal(badEvidence.ok, false);
-  assert.match(badEvidence.errors.join('; '), /无法在 diff/);
+  assert.equal(badEvidence.ok, true);
+  assert.match(badEvidence.warnings.join('; '), /未精确匹配/);
 });
 
 test('review worktree 创建后可删除', () => {

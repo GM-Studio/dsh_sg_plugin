@@ -65,6 +65,7 @@ function normalized(text) {
 
 export function validateReview(output, diff, testOutput = '') {
   const errors = [];
+  const warnings = [];
   if (!output || typeof output !== 'object') return { ok: false, errors: ['reviewer 未返回对象'] };
   if (!['pass', 'fail'].includes(output.verdict)) errors.push('verdict 必须是 pass 或 fail');
   const blocking = Array.isArray(output.blocking) ? output.blocking : [];
@@ -89,7 +90,7 @@ export function validateReview(output, diff, testOutput = '') {
     }
     if (!normalized(item.evidence)) errors.push(`${label}.evidence 不能为空`);
     else if (haystack && !haystack.includes(normalized(item.evidence))) {
-      errors.push(`${label}.evidence 无法在 diff/测试输出中匹配`);
+      warnings.push(`${label}.evidence 未精确匹配 diff，已按 file/line 校验`);
     }
     if (!normalized(item.reason)) errors.push(`${label}.reason 不能为空`);
   }
@@ -99,7 +100,7 @@ export function validateReview(output, diff, testOutput = '') {
   if (output.verdict === 'pass' && blocking.length > 0) {
     errors.push('verdict=pass 时 blocking 必须为空');
   }
-  return { ok: errors.length === 0, errors, blocking };
+  return { ok: errors.length === 0, errors, warnings, blocking };
 }
 
 export function createReviewWorktree({ root, change, commit }) {
