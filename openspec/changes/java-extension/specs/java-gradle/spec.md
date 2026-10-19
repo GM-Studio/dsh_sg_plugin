@@ -47,9 +47,9 @@
 #### Scenario: 版本策略 (AC-110)
 
 - **WHEN** Boot2.7
-- **THEN** 使用 Gradle 7.6.x
+- **THEN** 使用 Gradle 7.6.6
 - **WHEN** Boot3/4
-- **THEN** 使用 Gradle 8.14+
+- **THEN** 使用 Gradle 8.14.6
 
 #### Scenario: Wrapper 缺失或损坏 (AC-111)
 

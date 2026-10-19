@@ -107,7 +107,9 @@ export function parseConfig(text) {
   return result;
 }
 
-export const SUITE_KINDS = ['node-test', 'pytest', 'command'];
+export const SUITE_KINDS = ['node-test', 'pytest', 'command', 'maven'];
+export const JAVA_JDK_VERSIONS = ['8', '11', '13', '17', '21'];
+export const JAVA_BUILD_TOOLS = ['maven'];
 
 /** Normalize configured suites; fall back to the v3.0 single-suite shape. */
 export function readSuites(config) {
@@ -127,6 +129,11 @@ export function readSuites(config) {
         python: null,
         packageManager: null,
         node: config?.node ? String(config.node) : null,
+        jdk: null,
+        buildTool: null,
+        goals: [],
+        reportGlob: null,
+        jacocoGlob: null,
         legacy: true,
       },
     ];
@@ -142,6 +149,11 @@ export function readSuites(config) {
     python: item.python ? String(item.python) : null,
     packageManager: item.packageManager ? String(item.packageManager) : null,
     node: item.node ? String(item.node) : config?.node ? String(config.node) : null,
+    jdk: item.jdk ? String(item.jdk) : null,
+    buildTool: item.buildTool ? String(item.buildTool) : null,
+    goals: Array.isArray(item.goals) ? item.goals.map(String) : [],
+    reportGlob: item.reportGlob ? String(item.reportGlob) : null,
+    jacocoGlob: item.jacocoGlob ? String(item.jacocoGlob) : null,
     legacy: false,
   }));
 }
@@ -158,13 +170,48 @@ export function validateSuites(root, suites) {
     if (!SUITE_KINDS.includes(suite.kind)) {
       errors.push(`suite ${suite.id} 的 kind 不合法：${suite.kind}`);
     }
-    if (!suite.legacy && suite.kind !== 'pytest' && suite.command.length === 0) {
+    if (
+      !suite.legacy &&
+      suite.kind !== 'pytest' &&
+      suite.kind !== 'maven' &&
+      suite.command.length === 0
+    ) {
       errors.push(`suite ${suite.id} 缺少 command`);
+    }
+    if (suite.jdk && !JAVA_JDK_VERSIONS.includes(String(suite.jdk))) {
+      errors.push(`suite ${suite.id} 的 jdk 不合法：${suite.jdk}`);
+    }
+    if (suite.kind === 'maven') {
+      const buildTool = suite.buildTool || 'maven';
+      if (!JAVA_BUILD_TOOLS.includes(buildTool)) {
+        errors.push(`suite ${suite.id} 的 buildTool 不合法：${buildTool}`);
+      }
+      if (!Array.isArray(suite.goals)) {
+        errors.push(`suite ${suite.id} 的 goals 必须是数组`);
+      }
+    }
+    if (
+      suite.reportGlob !== null &&
+      suite.reportGlob !== undefined &&
+      typeof suite.reportGlob !== 'string'
+    ) {
+      errors.push(`suite ${suite.id} 的 reportGlob 必须是字符串`);
+    }
+    if (
+      suite.jacocoGlob !== null &&
+      suite.jacocoGlob !== undefined &&
+      typeof suite.jacocoGlob !== 'string'
+    ) {
+      errors.push(`suite ${suite.id} 的 jacocoGlob 必须是字符串`);
     }
     const absolute = path.resolve(root, suite.cwd || '.');
     const relative = path.relative(root, absolute);
     if (relative.startsWith('..') || path.isAbsolute(relative)) {
       errors.push(`suite ${suite.id} 的 cwd 逃逸仓库：${suite.cwd}`);
+      continue;
+    }
+    if (suite.kind === 'maven' && !exists(path.join(absolute, 'pom.xml'))) {
+      errors.push(`suite ${suite.id} 的 cwd 缺少 pom.xml：${suite.cwd || '.'}`);
     }
   }
   return { ok: errors.length === 0, errors };

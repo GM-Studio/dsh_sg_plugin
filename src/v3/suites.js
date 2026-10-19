@@ -8,6 +8,12 @@ import { validateReport } from './report.js';
 import { resolveNode } from './env/node.js';
 import { ensureVenv } from './env/python.js';
 import { installForSuite } from './env/install.js';
+import { resolveJava } from './env/java.js';
+import { resolveMaven } from './env/maven.js';
+import { resolveGradle } from './env/gradle.js';
+import { collectJavaReports, findJacocoFiles } from './java-reports.js';
+import { mergeCoverage, parseJacocoXml } from './coverage/jacoco.js';
+import { detectJavaProject } from './java-detect.js';
 import { patchState } from './state.js';
 
 /** Frozen suites from state; falls back to the v3.0 single command. */
@@ -21,6 +27,11 @@ export function suitesFromState(state, fallbackCommand) {
       pytestArgs: Array.isArray(suite.pytestArgs) ? suite.pytestArgs : [],
       python: suite.python || null,
       node: suite.node || null,
+      jdk: suite.jdk || null,
+      buildTool: suite.buildTool || null,
+      goals: Array.isArray(suite.goals) ? suite.goals : [],
+      reportGlob: suite.reportGlob || null,
+      jacocoGlob: suite.jacocoGlob || null,
       install: suite.install === undefined ? false : suite.install,
     }));
   }
@@ -101,6 +112,27 @@ export function suggestSuites(root) {
     add({ id: 'api', kind: 'pytest', cwd: '.', pytestArgs: ['-q', 'tests'] });
   }
 
+  const java = detectJavaProject(root);
+  if (java.ok && java.buildTool === 'maven') {
+    add({
+      id: 'backend',
+      kind: 'maven',
+      cwd: '.',
+      jdk: java.jdk || null,
+      buildTool: 'maven',
+      goals: ['-B', '-ntp', 'verify'],
+    });
+  } else if (java.ok && java.buildTool === 'gradle') {
+    add({
+      id: 'backend',
+      kind: 'gradle',
+      cwd: '.',
+      jdk: java.jdk || null,
+      buildTool: 'gradle',
+      goals: ['check'],
+    });
+  }
+
   for (const config of [
     'playwright.config.ts',
     'playwright.config.js',
@@ -151,7 +183,24 @@ function resolvePytestFile(cwd, worktree, classname) {
   return relative;
 }
 
-export function parseJunitXml(text, { suiteId, cwd, worktree }) {
+export function resolveJavaTestFile(cwd, worktree, classname) {
+  const clean = String(classname || '').replace(/\$.*$/, '');
+  if (!clean) return null;
+  const relative = `${clean.replace(/\./g, '/')}.java`;
+  const candidates = [
+    path.join(cwd, 'src', 'test', 'java', relative),
+    path.join(cwd, 'src', 'main', 'java', relative),
+  ];
+  for (const candidate of candidates) {
+    if (fs.existsSync(candidate)) return path.relative(worktree, candidate).replace(/\\/g, '/');
+  }
+  return `src/test/java/${relative}`;
+}
+
+export function parseJunitXml(
+  text,
+  { suiteId, cwd, worktree, runner = 'pytest', fileResolver = null },
+) {
   const cases = [];
   const pattern = /<testcase\b([^>]*?)(\/>|>([\s\S]*?)<\/testcase>)/g;
   let match;
@@ -172,10 +221,14 @@ export function parseJunitXml(text, { suiteId, cwd, worktree }) {
       id: `TC-${String(index).padStart(3, '0')}`,
       ac,
       status,
-      file: resolvePytestFile(cwd, worktree, classname),
+      classname,
+      name,
+      file: fileResolver
+        ? fileResolver(classname, { cwd, worktree })
+        : resolvePytestFile(cwd, worktree, classname),
     });
   }
-  return { schemaVersion: 1, runner: 'pytest', suite: suiteId, cases };
+  return { schemaVersion: 1, runner, suite: suiteId, cases };
 }
 
 function installMeta(installed) {
@@ -272,6 +325,194 @@ export function runPytestSuite({ suite, worktree, root }) {
   };
 }
 
+export function runMavenSuite({
+  suite,
+  worktree,
+  root,
+  resolveJavaFn = resolveJava,
+  resolveMavenFn = resolveMaven,
+}) {
+  const cwd = path.join(worktree, suite.cwd || '.');
+  const baseRoot = root || worktree;
+  const java = resolveJavaFn({ root: baseRoot, suite, env: process.env });
+  if (!java.ok) {
+    return {
+      exitCode: -1,
+      stderr: java.message,
+      report: null,
+      reportError: java.message,
+      code: java.code,
+      java: null,
+      maven: null,
+      coverage: null,
+    };
+  }
+  const maven = resolveMavenFn({ root: cwd, suite, env: java.env });
+  if (!maven.ok) {
+    return {
+      exitCode: -1,
+      stderr: maven.message,
+      report: null,
+      reportError: maven.message,
+      code: maven.code,
+      java: {
+        version: java.version,
+        javaHome: java.javaHome,
+        source: java.source,
+        origin: java.origin || null,
+      },
+      maven: null,
+      coverage: null,
+    };
+  }
+  const goals = Array.isArray(suite.goals) && suite.goals.length > 0 ? suite.goals : ['verify'];
+  const argv = [...(maven.argsPrefix || []), ...goals];
+  const timeoutMinutes = Number(suite.timeoutMinutes) > 0 ? Number(suite.timeoutMinutes) : 30;
+  const result = spawnSync(maven.bin, argv, {
+    cwd,
+    env: java.env,
+    encoding: 'utf8',
+    timeout: timeoutMinutes * 60 * 1000,
+    windowsHide: true,
+    maxBuffer: 16 * 1024 * 1024,
+  });
+  const timedOut = result.error?.code === 'ETIMEDOUT' || result.signal === 'SIGTERM';
+  const stderr = String(result.stderr || result.error?.message || '');
+  const runtime = {
+    java: {
+      version: java.version,
+      javaHome: java.javaHome,
+      source: java.source,
+      origin: java.origin || null,
+    },
+    maven: { bin: maven.bin, version: maven.version, wrapper: maven.wrapper },
+  };
+  if (timedOut) {
+    return {
+      exitCode: -1,
+      stderr,
+      report: null,
+      reportError: `Maven 超时（${timeoutMinutes} 分钟）`,
+      code: 'BUILD_TIMEOUT',
+      ...runtime,
+      coverage: null,
+    };
+  }
+  const collected = collectJavaReports(cwd, {
+    suiteId: suite.id,
+    worktree,
+    runner: 'maven',
+  });
+  const jacocoFiles = findJacocoFiles(cwd);
+  const coverage = jacocoFiles.length
+    ? mergeCoverage(jacocoFiles.map((file) => parseJacocoXml(fs.readFileSync(file, 'utf8'))))
+    : null;
+  const status = typeof result.status === 'number' ? result.status : -1;
+  return {
+    exitCode: status,
+    stderr,
+    report: collected.ok ? collected.report : null,
+    reportError: collected.ok ? null : collected.message,
+    code: status !== 0 ? 'BUILD_FAILED' : collected.ok ? undefined : 'TEST_REPORT_MISSING',
+    ...runtime,
+    coverage,
+  };
+}
+
+export function runGradleSuite({
+  suite,
+  worktree,
+  root,
+  resolveJavaFn = resolveJava,
+  resolveGradleFn = resolveGradle,
+}) {
+  const cwd = path.join(worktree, suite.cwd || '.');
+  const baseRoot = root || worktree;
+  const java = resolveJavaFn({ root: baseRoot, suite, env: process.env });
+  if (!java.ok) {
+    return {
+      exitCode: -1,
+      stderr: java.message,
+      report: null,
+      reportError: java.message,
+      code: java.code,
+      java: null,
+      gradle: null,
+      coverage: null,
+    };
+  }
+  const gradle = resolveGradleFn({ root: cwd, suite, env: java.env });
+  if (!gradle.ok) {
+    return {
+      exitCode: -1,
+      stderr: gradle.message,
+      report: null,
+      reportError: gradle.message,
+      code: gradle.code,
+      java: {
+        version: java.version,
+        javaHome: java.javaHome,
+        source: java.source,
+        origin: java.origin || null,
+      },
+      gradle: null,
+      coverage: null,
+    };
+  }
+  const goals = Array.isArray(suite.goals) && suite.goals.length > 0 ? suite.goals : ['check'];
+  const argv = ['--no-daemon', '--console=plain', ...goals];
+  const timeoutMinutes = Number(suite.timeoutMinutes) > 0 ? Number(suite.timeoutMinutes) : 30;
+  const result = spawnSync(gradle.bin, argv, {
+    cwd,
+    env: java.env,
+    encoding: 'utf8',
+    timeout: timeoutMinutes * 60 * 1000,
+    windowsHide: true,
+    maxBuffer: 16 * 1024 * 1024,
+  });
+  const timedOut = result.error?.code === 'ETIMEDOUT' || result.signal === 'SIGTERM';
+  const stderr = String(result.stderr || result.error?.message || '');
+  const runtime = {
+    java: {
+      version: java.version,
+      javaHome: java.javaHome,
+      source: java.source,
+      origin: java.origin || null,
+    },
+    gradle: { bin: gradle.bin, version: gradle.version, wrapper: gradle.wrapper },
+  };
+  if (timedOut) {
+    return {
+      exitCode: -1,
+      stderr,
+      report: null,
+      reportError: `Gradle 超时（${timeoutMinutes} 分钟）`,
+      code: 'BUILD_TIMEOUT',
+      ...runtime,
+      coverage: null,
+    };
+  }
+  const collected = collectJavaReports(cwd, {
+    suiteId: suite.id,
+    worktree,
+    runner: 'gradle',
+  });
+  const jacocoFiles = findJacocoFiles(cwd);
+  const coverage = jacocoFiles.length
+    ? mergeCoverage(jacocoFiles.map((file) => parseJacocoXml(fs.readFileSync(file, 'utf8'))))
+    : null;
+  const status = typeof result.status === 'number' ? result.status : -1;
+  return {
+    exitCode: status,
+    stderr,
+    report: collected.ok ? collected.report : null,
+    reportError: collected.ok ? null : collected.message,
+    code: status !== 0 ? 'BUILD_FAILED' : collected.ok ? undefined : 'TEST_REPORT_MISSING',
+    ...runtime,
+    coverage,
+  };
+}
+
 export function runOneSuite({
   suite,
   root,
@@ -281,6 +522,8 @@ export function runOneSuite({
   knownAcs,
   changedFiles,
   requireChangedFiles = true,
+  mavenRunner = runMavenSuite,
+  gradleRunner = runGradleSuite,
 }) {
   const cwd = path.join(worktree, suite.cwd || '.');
   const runtime = {
@@ -288,6 +531,10 @@ export function runOneSuite({
     at: new Date().toISOString(),
     node: null,
     python: null,
+    java: null,
+    maven: null,
+    gradle: null,
+    coverage: null,
     install: null,
     lastRun: null,
   };
@@ -309,6 +556,16 @@ export function runOneSuite({
     run = runPytestSuite({ suite, worktree, root });
     runtime.python = run.python || null;
     runtime.install = run.install || null;
+  } else if (suite.kind === 'maven') {
+    run = mavenRunner({ suite, worktree, root });
+    runtime.java = run.java || null;
+    runtime.maven = run.maven || null;
+    runtime.coverage = run.coverage || null;
+  } else if (suite.kind === 'gradle') {
+    run = gradleRunner({ suite, worktree, root });
+    runtime.java = run.java || null;
+    runtime.gradle = run.gradle || null;
+    runtime.coverage = run.coverage || null;
   } else {
     const nodeEnv = resolveNode({ root, suite, env: process.env });
     if (!nodeEnv.ok) {
@@ -335,14 +592,17 @@ export function runOneSuite({
   if (run.exitCode !== 0) {
     return done({
       ok: false,
+      code: run.code || 'BUILD_FAILED',
       exitCode: run.exitCode,
       report: run.report,
-      message: `suite ${suite.id} 退出码 ${run.exitCode}：${(run.stderr || '').slice(-300)}`,
+      coverage: run.coverage || null,
+      message: `suite ${suite.id} 退出码 ${run.exitCode}：${(run.stderr || run.reportError || '').slice(-300)}`,
     });
   }
   if (!run.report) {
     return done({
       ok: false,
+      code: run.code || 'TEST_REPORT_MISSING',
       exitCode: run.exitCode,
       message: `suite ${suite.id} 没有报告：${run.reportError || 'unknown'}`,
     });
@@ -361,6 +621,7 @@ export function runOneSuite({
     ok: validation.ok,
     exitCode: run.exitCode,
     report: run.report,
+    coverage: run.coverage || null,
     validation,
     message: validation.ok ? null : validation.errors.join('; '),
   });

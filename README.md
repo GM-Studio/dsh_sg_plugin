@@ -18,7 +18,7 @@ A Host plugin that brings AgentKit47's gated development workflow to DeepSeek Ha
 - Source: `templates/qoder/` from `AgentKit47-Qoder` (MIT)
 - Target: DSH `0.2.1-rc.2` and above
 - Form: workspace bundle, installed into the current DSH profile; **activated per project on opt-in**
-- Version: `3.5.0`
+- Version: `3.6.0`
 
 ## Capabilities
 

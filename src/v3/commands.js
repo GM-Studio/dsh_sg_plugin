@@ -8,7 +8,7 @@ import { ensureV3 } from './tools.js';
 import { headCommit, isGitRepo } from './util/git.js';
 import { loadSkill } from './skills.js';
 import { suggestSuites } from './suites.js';
-import { detectInitMode, startInitProject, collectContext } from './init.js';
+import { detectInitMode, startInitProject, collectContext, onboardExistingJava } from './init.js';
 import { writeText } from './util/fsx.js';
 import { digest } from './util/hash.js';
 import { patchState } from './state.js';
@@ -93,6 +93,12 @@ export function registerCommands(ctx, runtime) {
       const changed =
         result.created.length > 0 ? `新建 ${result.created.length} 项` : '已完整，幂等跳过';
       const suggestions = suggestSuites(root);
+      const onboarding = onboardExistingJava(root);
+      const javaHint = onboarding
+        ? `\n已识别 Java 项目：${onboarding.project.buildTool || 'unknown'} / JDK ${
+            onboarding.project.jdk || 'unknown'
+          }；接入报告 docs/java-onboarding.md`
+        : '';
       const hint = suggestions.length
         ? `\n检测到可能的套件（仅建议，未写入配置）：${suggestions
             .map((suite) => `${suite.id}(${suite.kind}@${suite.cwd})`)
@@ -100,7 +106,7 @@ export function registerCommands(ctx, runtime) {
         : '';
       return {
         kind: 'success',
-        text: `SpecGate v3 已初始化（${changed}）。下一步：/sg-change <name> --type feature${hint}`,
+        text: `SpecGate v3 已初始化（${changed}）。下一步：/sg-change <name> --type feature${hint}${javaHint}`,
       };
     },
   });

@@ -152,7 +152,10 @@ export function discoverSuites(root, config) {
     }
     let argv = suite.command.slice();
     let source = 'config';
-    if (suite.kind === 'pytest') {
+    if (suite.kind === 'maven') {
+      source = 'maven';
+      argv = [];
+    } else if (suite.kind === 'pytest') {
       source = 'pytest';
     } else if (argv.length === 0) {
       if (suite.legacy) {
@@ -170,7 +173,15 @@ export function discoverSuites(root, config) {
     const cmdHash =
       suite.kind === 'pytest'
         ? digest({ kind: 'pytest', args: suite.pytestArgs, python: suite.python, cwd })
-        : digest({ kind: suite.kind, argv, cwd });
+        : suite.kind === 'maven'
+          ? digest({
+              kind: 'maven',
+              goals: suite.goals,
+              jdk: suite.jdk,
+              buildTool: suite.buildTool,
+              cwd,
+            })
+          : digest({ kind: suite.kind, argv, cwd });
     resolved.push({ ...suite, argv, source, cwd, cmdHash });
   }
   return { ok: errors.length === 0, errors, suites: resolved };
@@ -353,6 +364,11 @@ export function computePlanHash({ plan, command, suites = null }) {
           kind: suite.kind,
           argv: suite.kind === 'pytest' ? suite.pytestArgs : suite.argv,
           cwd: suite.cwd,
+          jdk: suite.jdk || null,
+          buildTool: suite.buildTool || null,
+          goals: suite.goals || [],
+          reportGlob: suite.reportGlob || null,
+          jacocoGlob: suite.jacocoGlob || null,
         }))
       : null,
   };

@@ -32,7 +32,7 @@
 - JDK21 + Boot4 允许；
 - JDK21 + Boot2.7 拒绝，除非显式 `allowUnsupported: true`；
 - JDK8/11 + Boot4 拒绝；
-- Boot4 默认 Maven 3.9.x、Gradle 8.14+。
+- Boot4 默认 Maven 3.9.x、Gradle 8.14.6。
 
 ---
 
@@ -43,7 +43,7 @@
 - Groovy：`build.gradle`、`settings.gradle`。
 - Kotlin：`build.gradle.kts`、`settings.gradle.kts`。
 - 模板内置 Gradle Wrapper（脚本 + jar/properties），校验 SHA-256。
-- Boot2.7 项目使用 Gradle 7.6.x；Boot3/4 使用 8.14+。
+- Boot2.7 项目使用 Gradle 7.6.6；Boot3/4 使用 8.14.6；Gradle 7.6 不能在 JDK21 上运行。
 
 ### 3.2 suite
 

@@ -1,5 +1,14 @@
 # Changelog
 
+## 3.6.0
+
+- Java backend stack: JDK 8/11/17/21 (LTS only), Spring Boot 2.7.x and 3.x with a strict compatibility matrix.
+- New-project Java scaffold: default JDK 8 + Maven + Boot 2.7.18; selectable Gradle + Boot 3.x; Web/Validation/Actuator + JUnit 5 test + `/health`.
+- Maven wrapper/scaffold and Gradle wrapper/scaffold, including Spotless/Checkstyle/SpotBugs configuration.
+- Maven and Gradle suite runners parse Surefire/Failsafe/Gradle JUnit XML into SpecGate reports; JaCoCo report discovery.
+- Java quality stages: Spotless, Checkstyle, compile, SpotBugs; Maven `verify` and Gradle `check`.
+- Validation samples: JDK 8 + Maven + Boot 2.7 (`mvn verify`, 1 test pass) and JDK 17 + Gradle + Boot 3 (`spotlessApply check`, build successful).
+
 ## 3.5.0
 
 - H0/H2 read-only environment scan for Node/Vue/React/Python/monorepo: `.specgate/env.json`, `env-report.md`, and a status line.

@@ -72,6 +72,25 @@ export function detectQuality({ root, worktree, stack }) {
       continue;
     }
     if (resolved === 'java' || resolved === 'java-monorepo') {
+      const gradleFile = ['build.gradle', 'build.gradle.kts']
+        .map((file) => path.join(worktree, file))
+        .find((file) => exists(file));
+      if (gradleFile) {
+        const build = readText(gradleFile);
+        const wrapper = process.platform === 'win32' ? 'gradlew.bat' : 'gradlew';
+        const base = exists(path.join(worktree, wrapper))
+          ? [path.join(worktree, wrapper)]
+          : ['gradle'];
+        const args = [...base, '--no-daemon', '--console=plain'];
+        if (stage === 'format' && /spotless/i.test(build))
+          stages.format = [...args, 'spotlessApply'];
+        else if (stage === 'lint' && /checkstyle/i.test(build))
+          stages.lint = [...args, 'checkstyleMain'];
+        else if (stage === 'typecheck') stages.typecheck = [...args, 'compileJava'];
+        else if (stage === 'static' && /spotbugs/i.test(build))
+          stages.static = [...args, 'spotbugsMain'];
+        continue;
+      }
       const pom = mavenPlugins(worktree);
       const base = mavenBase(worktree);
       if (stage === 'format' && /spotless-maven-plugin/.test(pom)) {

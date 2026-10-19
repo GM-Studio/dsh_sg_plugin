@@ -1,11 +1,12 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
-import { initProject, createChange, configPath } from './change.js';
+import { initProject, createChange, configPath, readConfig } from './change.js';
 import { load, patchState } from './state.js';
 import { exists, writeText, ensureDir } from './util/fsx.js';
 import { digest } from './util/hash.js';
 import { scanEnv, writeEnvReport } from './env-scan.js';
+import { detectJavaProject, validateJavaSelection } from './java-detect.js';
 
 export const CONTEXT_FIELDS = [
   {
@@ -20,8 +21,48 @@ export const CONTEXT_FIELDS = [
     label: '技术栈',
     required: true,
     default: 'node',
-    options: ['node', 'python', 'vue', 'react', 'monorepo', 'generic'],
-    question: '选择技术栈：node / python / vue / react / monorepo / generic',
+    options: ['node', 'python', 'vue', 'react', 'monorepo', 'generic', 'java'],
+    question: '选择技术栈：node / python / vue / react / monorepo / generic / java',
+  },
+  {
+    key: 'buildTool',
+    label: '构建工具',
+    required: true,
+    default: 'maven',
+    options: ['maven', 'gradle'],
+    when: (context) => context.stack === 'java',
+    question: '选择构建工具：maven / gradle',
+  },
+  {
+    key: 'jdk',
+    label: 'JDK 版本',
+    required: true,
+    default: '8',
+    options: ['8', '11', '17', '21'],
+    when: (context) => context.stack === 'java',
+    question: '选择 JDK LTS：8 / 11 / 17 / 21',
+  },
+  {
+    key: 'bootVersion',
+    label: 'Spring Boot 版本',
+    required: true,
+    default: '2.7.x',
+    optionsFor: (context) => {
+      if (context.jdk === '21') return ['3.x'];
+      if (context.jdk === '17') return ['2.7.x', '3.x'];
+      return ['2.7.x'];
+    },
+    when: (context) => context.stack === 'java',
+    question: '选择 Spring Boot：2.7.x / 3.x（JDK8/11 只支持 2.7.x，JDK21 只支持 3.x）',
+  },
+  {
+    key: 'modules',
+    label: 'Java 模块',
+    required: true,
+    default: 'minimal',
+    options: ['minimal', 'minimal+jpa'],
+    when: (context) => context.stack === 'java',
+    question: '选择模块：minimal（Web+Validation+Actuator+Test）或 minimal+jpa',
   },
   {
     key: 'acceptance',
@@ -59,6 +100,12 @@ export function detectInitMode(root) {
     'package.json',
     'pyproject.toml',
     'requirements.txt',
+    'pom.xml',
+    'build.gradle',
+    'build.gradle.kts',
+    'mvnw',
+    'gradlew',
+    '.java-version',
     'src',
     'app',
     'apps',
@@ -81,8 +128,10 @@ export async function collectContext({ userQuestions, agent, signal, initial = {
   const context = { ...initial };
   for (const field of CONTEXT_FIELDS) {
     if (context[field.key]) continue;
-    const options = field.options
-      ? field.options.map((value) => ({
+    if (field.when && !field.when(context)) continue;
+    const values = field.optionsFor ? field.optionsFor(context) : field.options;
+    const options = values
+      ? values.map((value) => ({
           label: value,
           description: value === field.default ? '推荐默认' : '',
         }))
@@ -115,11 +164,20 @@ export async function collectContext({ userQuestions, agent, signal, initial = {
 }
 
 export function renderContextSummary(context) {
+  const java =
+    context.stack === 'java'
+      ? [
+          `- JDK：${context.jdk}`,
+          `- Spring Boot：${context.bootVersion}`,
+          `- Java 模块：${context.modules}`,
+        ]
+      : [];
   return [
     '# H0 初始化上下文',
     '',
     `- 背景与 MVP：${context.background}`,
     `- 技术栈：${context.stack}`,
+    ...java,
     `- 验收标准：${context.acceptance}`,
     `- 团队与规范：${context.team}`,
     `- 实施步骤：${context.steps}`,
@@ -491,7 +549,332 @@ function genericChangeFiles() {
   };
 }
 
-export function scaffoldFiles(stack) {
+const JAVA_BOOT_VERSIONS = { '2.7.x': '2.7.18', '3.x': '3.5.16' };
+
+function javaPackage(context) {
+  return String(context.packageName || 'com.example.demo');
+}
+
+function javaPathOf(context) {
+  return javaPackage(context).replace(/\./g, '/');
+}
+
+function javaWrapper() {
+  return {
+    mvnw: `#!/bin/sh
+# Minimal Maven wrapper. Prefer a full Maven Wrapper distribution in CI.
+if command -v mvn >/dev/null 2>&1; then
+  exec mvn "$@"
+fi
+echo "Maven not found. Install Maven or add the full Maven Wrapper." >&2
+exit 1
+`,
+    'mvnw.cmd': `@echo off
+where mvn >nul 2>nul
+if %ERRORLEVEL%==0 (
+  mvn %*
+  exit /b %ERRORLEVEL%
+)
+echo Maven not found. Install Maven or add the full Maven Wrapper.
+exit /b 1
+`,
+    '.mvn/wrapper/maven-wrapper.properties':
+      'distributionUrl=https\\://repo.maven.apache.org/maven2/org/apache/maven/apache-maven/3.9.11/apache-maven-3.9.11-bin.zip\n',
+  };
+}
+
+function javaGradleFiles(context) {
+  const bootVersion = JAVA_BOOT_VERSIONS[String(context.bootVersion || '2.7.x')] || '2.7.18';
+  const boot3 = String(context.bootVersion || '').startsWith('3');
+  const jdk = String(context.jdk || '8');
+  const source = jdk === '8' ? '1.8' : jdk;
+  const dependencyManagement = boot3 ? '1.1.6' : '1.0.15.RELEASE';
+  const build = `plugins {
+    id 'java'
+    id 'org.springframework.boot' version '${bootVersion}'
+    id 'io.spring.dependency-management' version '${dependencyManagement}'
+    id 'com.diffplug.spotless' version '6.25.0'
+    id 'checkstyle'
+    id 'com.github.spotbugs' version '6.0.9'
+}
+
+group = 'com.example'
+version = '0.0.1-SNAPSHOT'
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_${source.replace('.', '_')}
+    targetCompatibility = JavaVersion.VERSION_${source.replace('.', '_')}
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.boot:spring-boot-starter-validation'
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+}
+
+tasks.named('test') {
+    useJUnitPlatform()
+}
+
+spotless {
+    java {
+        googleJavaFormat('1.22.0')
+    }
+}
+
+checkstyle {
+    toolVersion = '10.12.4'
+}
+
+spotbugs {
+    effort = 'max'
+    reportLevel = 'low'
+}
+`;
+  return {
+    'build.gradle': build,
+    'settings.gradle': "rootProject.name = 'demo'\n",
+    gradlew: `#!/bin/sh
+# Minimal Gradle wrapper. Prefer a full Gradle Wrapper distribution in CI.
+if command -v gradle >/dev/null 2>&1; then
+  exec gradle "$@"
+fi
+echo "Gradle not found. Install Gradle 8.x or add the full Gradle Wrapper." >&2
+exit 1
+`,
+    'gradlew.bat': `@echo off
+where gradle >nul 2>nul
+if %ERRORLEVEL%==0 (
+  gradle %*
+  exit /b %ERRORLEVEL%
+)
+echo Gradle not found. Install Gradle 8.x or add the full Gradle Wrapper.
+exit /b 1
+`,
+    'gradle/wrapper/gradle-wrapper.properties':
+      'distributionUrl=https\\://services.gradle.org/distributions/gradle-8.14-bin.zip\n',
+    'config/checkstyle/checkstyle.xml': `<?xml version="1.0"?>
+<!DOCTYPE module PUBLIC "-//Checkstyle//DTD Checkstyle Configuration 1.3//EN" "https://checkstyle.org/dtds/configuration_1_3.dtd">
+<module name="Checker">
+  <module name="TreeWalker">
+    <module name="AvoidStarImport"/>
+    <module name="UnusedImports"/>
+    <module name="NeedBraces"/>
+  </module>
+</module>
+`,
+    'config/checkstyle/suppressions.xml': `<?xml version="1.0"?>
+<!DOCTYPE suppressions PUBLIC "-//Checkstyle//DTD SuppressionFilter Configuration 1.2//EN" "https://checkstyle.org/dtds/suppressions_1_2.dtd">
+<suppressions/>
+`,
+  };
+}
+
+function javaPom(context) {
+  const jdk = String(context.jdk || '8');
+  const bootVersion = JAVA_BOOT_VERSIONS[String(context.bootVersion || '2.7.x')] || '2.7.18';
+  const withJpa = context.modules === 'minimal+jpa';
+  const javaVersion = jdk === '17' ? '17' : jdk;
+  const modern = jdk === '17' || jdk === '21';
+  const spotlessVersion = modern ? '3.10.4' : '2.32.0';
+  const gjfVersion = modern ? '1.28.0' : '1.7';
+  const checkstyleVersion = modern ? '12.3.1' : '9.3';
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <parent>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-parent</artifactId>
+    <version>${bootVersion}</version>
+    <relativePath/>
+  </parent>
+  <groupId>com.example</groupId>
+  <artifactId>demo</artifactId>
+  <version>0.0.1-SNAPSHOT</version>
+  <name>demo</name>
+  <description>SpecGate Java MVP</description>
+  <properties>
+    <java.version>${javaVersion}</java.version>
+    <google-java-format.version>${gjfVersion}</google-java-format.version>
+    <checkstyle.version>${checkstyleVersion}</checkstyle.version>
+  </properties>
+  <dependencies>
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-web</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-validation</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-actuator</artifactId>
+    </dependency>${
+      withJpa
+        ? `
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-data-jpa</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.h2database</groupId>
+      <artifactId>h2</artifactId>
+      <scope>runtime</scope>
+    </dependency>`
+        : ''
+    }
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-test</artifactId>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-maven-plugin</artifactId>
+      </plugin>
+      <plugin>
+        <groupId>com.diffplug.spotless</groupId>
+        <artifactId>spotless-maven-plugin</artifactId>
+        <version>${spotlessVersion}</version>
+        <configuration>
+          <java>
+            <googleJavaFormat>
+              <version>\${google-java-format.version}</version>
+            </googleJavaFormat>
+          </java>
+        </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-checkstyle-plugin</artifactId>
+        <version>3.3.1</version>
+        <configuration>
+          <configLocation>google_checks.xml</configLocation>
+          <consoleOutput>true</consoleOutput>
+          <failOnViolation>true</failOnViolation>
+        </configuration>
+        <dependencies>
+          <dependency>
+            <groupId>com.puppycrawl.tools</groupId>
+            <artifactId>checkstyle</artifactId>
+            <version>\${checkstyle.version}</version>
+          </dependency>
+        </dependencies>
+      </plugin>
+      <plugin>
+        <groupId>org.jacoco</groupId>
+        <artifactId>jacoco-maven-plugin</artifactId>
+        <version>0.8.15</version>
+        <executions>
+          <execution>
+            <goals>
+              <goal>prepare-agent</goal>
+            </goals>
+          </execution>
+          <execution>
+            <id>report</id>
+            <phase>verify</phase>
+            <goals>
+              <goal>report</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
+</project>
+`;
+}
+
+function javaScaffold(context) {
+  const pkg = javaPackage(context);
+  const pkgPath = javaPathOf(context);
+  const appClass = 'DemoApplication';
+  const buildTool = context.buildTool === 'gradle' ? 'gradle' : 'maven';
+  const buildFiles =
+    buildTool === 'gradle'
+      ? javaGradleFiles(context)
+      : { ...javaWrapper(), 'pom.xml': javaPom(context) };
+  return {
+    ...buildFiles,
+    '.java-version': `${context.jdk || '8'}\n`,
+    '.gitignore': buildTool === 'gradle' ? 'build/\n.gradle/\n' : 'target/\n',
+    'src/main/resources/application.yml': 'server:\n  port: 8080\n',
+    [`src/main/java/${pkgPath}/${appClass}.java`]: `package ${pkg};
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+
+@SpringBootApplication
+public class ${appClass} {
+
+    public static void main(String[] args) {
+        SpringApplication.run(${appClass}.class, args);
+    }
+}
+`,
+    [`src/main/java/${pkgPath}/HealthController.java`]: `package ${pkg};
+
+import java.util.Collections;
+import java.util.Map;
+
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+@RestController
+public class HealthController {
+
+    @GetMapping("/health")
+    public Map<String, String> health() {
+        return Collections.singletonMap("status", "ok");
+    }
+}
+`,
+    [`src/test/java/${pkgPath}/HealthControllerTest.java`]: `package ${pkg};
+
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.web.servlet.MockMvc;
+
+@SpringBootTest
+@AutoConfigureMockMvc
+class HealthControllerTest {
+
+    @Autowired
+    private MockMvc mockMvc;
+
+    @Test
+    @DisplayName("[AC-001] health returns ok")
+    void healthReturnsOk() throws Exception {
+        mockMvc.perform(get("/health"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("ok"));
+    }
+}
+`,
+  };
+}
+
+export function scaffoldFiles(stack, context = {}) {
+  if (stack === 'java') return javaScaffold(context);
   if (stack === 'python') return pythonScaffold();
   if (stack === 'vue') return { ...genericScaffold(), ...vueScaffold() };
   if (stack === 'react') return { ...genericScaffold(), ...reactScaffold() };
@@ -511,6 +894,13 @@ export function writeScaffold(root, files) {
     }
     ensureDir(path.dirname(target));
     writeText(target, content);
+    if (relative === 'mvnw' || relative === 'gradlew') {
+      try {
+        fs.chmodSync(target, 0o755);
+      } catch {
+        // Windows has no POSIX mode bits.
+      }
+    }
     written.push(relative);
   }
   return { written, skipped };
@@ -666,8 +1056,112 @@ function monorepoChangeFiles() {
   };
 }
 
-export function configureSuites(root, stack) {
+function javaChangeFiles(context) {
+  const pkgPath = javaPathOf(context);
+  const versionFile = `src/main/java/${pkgPath}/VersionController.java`;
+  const versionTest = `src/test/java/${pkgPath}/VersionControllerTest.java`;
+  return {
+    'openspec/changes/add-version/proposal.md': `# 变更提案：add-version
+
+## 问题
+MVP 只有 health，没有版本标识。
+
+## 目标
+新增 GET /version 返回 {"version":"1.0.0"}。
+
+## 非目标
+不改 health。
+
+## 影响面
+${versionFile} / ${versionTest}
+`,
+    'openspec/changes/add-version/specs/ops/spec.md': `## ADDED Requirements
+
+### Requirement: 版本接口 (REQ-001)
+
+#### Scenario: 返回版本 (AC-001)
+
+- **WHEN** GET /version
+- **THEN** 200 {"version":"1.0.0"}
+`,
+    'openspec/changes/add-version/design.md': `# 方案：add-version
+
+## 目标与非目标
+新增 /version。
+
+## 任务图
+T-001。
+
+## AC 到用例
+AC-001 由 ${versionTest} 覆盖。
+
+## 风险
+无。
+`,
+    'openspec/changes/add-version/tasks.md': `# 任务：add-version
+
+## T-001 版本接口
+<!-- sg:task {"id":"T-001","title":"版本接口","ac":["AC-001"],"deps":[],"parallel":false} -->
+- [ ] 实现 /version 并补测试
+`,
+    'openspec/changes/add-version/tests/cases.md': `# 测试用例
+
+| 用例 | AC | 层次 | 描述 |
+|---|---|---|---|
+| TC-001 | AC-001 | integration | GET /version |
+`,
+    'openspec/changes/add-version/tests/mapping.json': `${JSON.stringify(
+      {
+        schemaVersion: 1,
+        change: 'add-version',
+        requirements: [
+          {
+            ac: 'AC-001',
+            covers: ['REQ-001'],
+            tasks: ['T-001'],
+            cases: ['TC-001'],
+            suite: 'backend',
+            priority: 'P0',
+          },
+        ],
+        automation: [],
+      },
+      null,
+      2,
+    )}\n`,
+    'openspec/changes/add-version/tests/touched.json': `${JSON.stringify(
+      {
+        schemaVersion: 1,
+        modify: [],
+        delete: [],
+        bootstrap: [versionFile, versionTest],
+      },
+      null,
+      2,
+    )}\n`,
+  };
+}
+
+export function configureSuites(root, stack, context = {}) {
   const common = `workflowVersion: 3\nschemaVersion: 3\nlanguage: zh\nstack: ${stack}\nmaxParallel: 2\ninstall: true\n`;
+  if (stack === 'java') {
+    const jdk = String(context.jdk || '8');
+    const bootVersion = String(context.bootVersion || '2.7.x');
+    const modules =
+      context.modules === 'minimal+jpa'
+        ? ['web', 'validation', 'actuator', 'test', 'data-jpa']
+        : ['web', 'validation', 'actuator', 'test'];
+    const buildTool = context.buildTool === 'gradle' ? 'gradle' : 'maven';
+    const suite =
+      buildTool === 'gradle'
+        ? `  - id: backend\n    kind: gradle\n    cwd: "."\n    jdk: "${jdk}"\n    buildTool: gradle\n    goals: ["check"]\n    reportGlob: "build/test-results/test/TEST-*.xml"\n    jacocoGlob: "build/reports/jacoco/test/jacocoTestReport.xml"\n    timeoutMinutes: 30\n`
+        : `  - id: backend\n    kind: maven\n    cwd: "."\n    jdk: "${jdk}"\n    buildTool: maven\n    goals: ["-B", "-ntp", "verify"]\n    reportGlob: "target/{surefire,failsafe}-reports/TEST-*.xml"\n    jacocoGlob: "target/site/jacoco/jacoco.xml"\n    timeoutMinutes: 30\n`;
+    writeText(
+      configPath(root),
+      `${common}java:\n  jdk: ${jdk}\n  buildTool: ${buildTool}\n  bootVersion: "${bootVersion}"\n  groupId: com.example\n  artifactId: demo\n  packageName: com.example.demo\n  modules: ${JSON.stringify(modules)}\nquality:\n  profile: strict\ncoverage:\n  blocking: true\n  lines: 80\n  branches: 70\n  p0p1: 100\n  p2: 90\nsuites:\n${suite}`,
+    );
+    return;
+  }
   if (stack === 'python') {
     writeText(
       configPath(root),
@@ -702,8 +1196,60 @@ export function configureSuites(root, stack) {
   );
 }
 
+export function onboardExistingJava(root) {
+  const project = detectJavaProject(root);
+  if (!project.ok) return null;
+  const config = readConfig(root) || {};
+  const hasSuites = Array.isArray(config.suites) && config.suites.length > 0;
+  const jdk = String(project.jdk || '8');
+  const bootVersion = String(project.bootVersion || '').startsWith('3') ? '3.x' : '2.7.x';
+  if (!hasSuites) configureSuites(root, 'java', { jdk, bootVersion, modules: 'minimal' });
+  const env = scanEnv(root);
+  const envFiles = writeEnvReport(root, env);
+  const onboarding = path.join(root, 'docs', 'java-onboarding.md');
+  const lines = [
+    '# Java 接入报告',
+    '',
+    `- 构建工具：${project.buildTool || 'unknown'}`,
+    `- Gradle DSL：${project.gradleDsl || '-'}`,
+    `- JDK：${project.jdk || 'unknown'}（来源：${project.jdkSource || 'unknown'}）`,
+    `- Spring Boot：${project.bootVersion || 'unknown'}`,
+    `- Maven Wrapper：${project.wrapper.maven ? 'ready' : 'missing'}`,
+    `- Gradle Wrapper：${project.wrapper.gradle ? 'ready' : 'missing'}`,
+    `- 模块：${project.modules.length ? project.modules.join(', ') : '(single)'}`,
+    '',
+    '## 接入说明',
+    '',
+    '- 未修改 `pom.xml` / `build.gradle`。',
+    '- 已生成/更新 `.specgate/config.yaml`、`.specgate/env.json`、`.specgate/env-report.md`。',
+    '- Spotless/Checkstyle/PMD/SpotBugs/JaCoCo 缺失时使用外部 CLI 或标记降级，补丁建议见下。',
+    '',
+    '## 补丁建议',
+    '',
+  ];
+  for (const [name, state] of Object.entries(env.workspaces?.[0]?.tools || {})) {
+    if (state === 'missing') lines.push(`- 添加 ${name} 插件/工具到构建文件或环境。`);
+  }
+  ensureDir(path.dirname(onboarding));
+  writeText(onboarding, `${lines.join('\n')}\n`);
+  return {
+    ok: true,
+    project,
+    configWritten: !hasSuites,
+    envFiles,
+    onboarding,
+    env,
+  };
+}
+
 export async function startInitProject({ root, userQuestions, agent, signal }) {
   const context = await collectContext({ userQuestions, agent, signal });
+  if (context.stack === 'java') {
+    const selection = validateJavaSelection(context);
+    if (!selection.ok) {
+      return { ok: false, code: 'JAVA_MATRIX_INVALID', message: selection.errors.join('; ') };
+    }
+  }
   const init = initProject(root);
   if (!init.ok) return init;
   writeEnvReport(root, scanEnv(root));
@@ -725,14 +1271,15 @@ export async function startInitProject({ root, userQuestions, agent, signal }) {
 
 export async function finishInitProject({ root, state }) {
   const context = state.context || {};
-  const scaffold = writeScaffold(root, scaffoldFiles(context.stack || 'generic'));
+  const scaffold = writeScaffold(root, scaffoldFiles(context.stack || 'generic', context));
   writeArtifacts(root, context);
-  configureSuites(root, context.stack || 'generic');
+  configureSuites(root, context.stack || 'generic', context);
   const git = gitInitCommit(root);
   if (!git.ok) return { ok: false, message: `git commit 失败：${git.stderr}` };
 
   let files = null;
-  if (context.stack === 'python') files = pythonChangeFiles();
+  if (context.stack === 'java') files = javaChangeFiles(context);
+  else if (context.stack === 'python') files = pythonChangeFiles();
   else if (context.stack === 'vue' || context.stack === 'react')
     files = frontendChangeFiles(context.stack);
   else if (context.stack === 'monorepo') files = monorepoChangeFiles();

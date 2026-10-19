@@ -25,10 +25,55 @@ import {
 import { runFormatter } from './formatter.js';
 import { runQualityStage } from './quality.js';
 import { ensureToolchain } from './toolchain.js';
+import { readConfig } from './change.js';
+import { evaluateCoverage, mergeCoverage } from './coverage/jacoco.js';
 import { appendRun } from './runs.js';
 
 function failure(code, message, extra = {}) {
   return { ok: false, code, message, ...extra };
+}
+
+function priorityStats(results, mapping) {
+  const byAc = new Map(
+    (mapping?.requirements || []).map((item) => [item.ac, item.priority || 'P1']),
+  );
+  const stats = {
+    P0: { total: 0, passed: 0 },
+    P1: { total: 0, passed: 0 },
+    P2: { total: 0, passed: 0 },
+  };
+  for (const result of results || []) {
+    for (const item of result.report?.cases || []) {
+      for (const ac of item.ac || []) {
+        const priority = byAc.get(ac);
+        if (!priority || !stats[priority]) continue;
+        stats[priority].total += 1;
+        if (item.status === 'pass') stats[priority].passed += 1;
+      }
+    }
+  }
+  return stats;
+}
+
+export function checkCoverage({ root, suiteResult, plan }) {
+  const config = readConfig(root) || {};
+  const thresholds = config.coverage || {};
+  if (thresholds.blocking === false) return null;
+  const reports = (suiteResult.results || []).map((item) => item.coverage).filter(Boolean);
+  const coverage = reports.length > 0 ? mergeCoverage(reports) : null;
+  if (!coverage && thresholds.blocking !== true) return null;
+  const evaluated = evaluateCoverage({
+    coverage,
+    thresholds,
+    baseline: thresholds.baseline || null,
+    stats: priorityStats(suiteResult.results, plan.mapping),
+  });
+  if (evaluated.ok) return null;
+  return {
+    code: coverage ? 'COVERAGE_BELOW_THRESHOLD' : 'COVERAGE_MISSING',
+    message: evaluated.errors.join('; '),
+    coverage: evaluated,
+  };
 }
 
 let mergeQueue = Promise.resolve();
@@ -139,6 +184,10 @@ async function verifyAndFinish({
       `suite ${suiteResult.failedSuite} 失败：${suiteResult.message}`,
       { suiteResult },
     );
+  }
+  const coverageCheck = checkCoverage({ root, suiteResult, plan });
+  if (coverageCheck) {
+    return failure(coverageCheck.code, coverageCheck.message, { coverage: coverageCheck.coverage });
   }
   const validation = { ok: true, stats: suiteResult.stats };
 

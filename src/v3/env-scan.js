@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { exists, readText, writeText } from './util/fsx.js';
+import { detectJavaProject } from './java-detect.js';
 
 const NODE_TOOLS = {
   node: ['prettier', 'eslint'],
@@ -50,7 +51,10 @@ function workspaceDirs(root) {
     if (
       exists(path.join(full, 'package.json')) ||
       exists(path.join(full, 'pyproject.toml')) ||
-      exists(path.join(full, 'requirements.txt'))
+      exists(path.join(full, 'requirements.txt')) ||
+      exists(path.join(full, 'pom.xml')) ||
+      exists(path.join(full, 'build.gradle')) ||
+      exists(path.join(full, 'build.gradle.kts'))
     ) {
       dirs.push(entry.name);
     }
@@ -59,6 +63,13 @@ function workspaceDirs(root) {
 }
 
 function stackOf(root, dir) {
+  if (
+    exists(path.join(root, dir, 'pom.xml')) ||
+    exists(path.join(root, dir, 'build.gradle')) ||
+    exists(path.join(root, dir, 'build.gradle.kts'))
+  ) {
+    return 'java';
+  }
   const pkgFile = path.join(root, dir, 'package.json');
   const pkg = exists(pkgFile) ? readJson(pkgFile) : null;
   const deps = { ...(pkg?.dependencies || {}), ...(pkg?.devDependencies || {}) };
@@ -78,8 +89,10 @@ function runtimeInfo(root, dir, stack) {
   const info = {};
   const nvmrc = path.join(root, dir, '.nvmrc');
   const pyversion = path.join(root, dir, '.python-version');
+  const javaversion = path.join(root, dir, '.java-version');
   if (exists(nvmrc)) info.node = readText(nvmrc).trim();
   if (exists(pyversion)) info.python = readText(pyversion).trim();
+  if (exists(javaversion)) info.java = readText(javaversion).trim();
   if (stack === 'python') {
     const req = path.join(root, dir, 'requirements.txt');
     if (exists(req)) info.pythonDeps = readText(req).split(/\r?\n/).filter(Boolean).length;
@@ -87,7 +100,28 @@ function runtimeInfo(root, dir, stack) {
   return info;
 }
 
+function javaTools(root, dir) {
+  const base = path.join(root, dir);
+  const project = detectJavaProject(base);
+  const pom = exists(path.join(base, 'pom.xml')) ? readText(path.join(base, 'pom.xml')) : '';
+  const gradle = ['build.gradle', 'build.gradle.kts']
+    .filter((file) => exists(path.join(base, file)))
+    .map((file) => readText(path.join(base, file)))
+    .join('\n');
+  const text = `${pom}\n${gradle}`;
+  const ready = (pattern) => (pattern.test(text) ? 'ready' : 'missing');
+  return {
+    maven: project.wrapper.maven ? 'ready' : 'missing',
+    spotless: ready(/spotless/),
+    checkstyle: ready(/checkstyle/),
+    pmd: ready(/pmd/),
+    spotbugs: ready(/spotbugs/),
+    jacoco: ready(/jacoco/),
+  };
+}
+
 function installedTools(root, dir, stack, pkg) {
+  if (stack === 'java') return javaTools(root, dir);
   const deps = { ...(pkg?.dependencies || {}), ...(pkg?.devDependencies || {}) };
   const required = NODE_TOOLS[stack] || NODE_TOOLS.node;
   const tools = {};
@@ -126,6 +160,17 @@ function installedTools(root, dir, stack, pkg) {
 
 function planFor(workspace) {
   const plan = [];
+  if (workspace.stack === 'java') {
+    for (const [name, state] of Object.entries(workspace.tools)) {
+      if (state !== 'missing') continue;
+      plan.push(
+        name === 'maven'
+          ? './mvnw -N wrapper:wrapper'
+          : `# add ${name} plugin to pom.xml / build.gradle`,
+      );
+    }
+    return plan;
+  }
   for (const [name, state] of Object.entries(workspace.tools)) {
     if (state !== 'missing') continue;
     if (workspace.stack === 'python') plan.push(`pip install ${name}`);
@@ -151,6 +196,23 @@ export function scanEnv(root) {
       packageManager: stack === 'python' ? 'pip' : packageManager(root),
       tools,
     };
+    if (stack === 'java') {
+      const project = detectJavaProject(path.join(root, dir));
+      workspace.java = {
+        jdk: project.jdk,
+        jdkSource: project.jdkSource,
+        bootVersion: project.bootVersion,
+        buildTool: project.buildTool,
+        gradleDsl: project.gradleDsl,
+        modules: project.modules,
+      };
+      workspace.packageManager = project.buildTool || 'maven';
+      workspace.runtime = {
+        ...workspace.runtime,
+        jdk: project.jdk,
+        bootVersion: project.bootVersion,
+      };
+    }
     workspace.plan = planFor(workspace);
     for (const [name, state] of Object.entries(tools)) if (state === 'missing') missing.add(name);
     plan.push(...workspace.plan);
@@ -176,6 +238,7 @@ export function writeEnvReport(root, env) {
     lines.push(`- stack: ${workspace.stack}`);
     lines.push(`- packageManager: ${workspace.packageManager || 'unknown'}`);
     lines.push(`- runtime: ${JSON.stringify(workspace.runtime)}`);
+    if (workspace.java) lines.push(`- java: ${JSON.stringify(workspace.java)}`);
     lines.push('- tools:');
     for (const [name, state] of Object.entries(workspace.tools))
       lines.push(`  - ${name}: ${state}`);

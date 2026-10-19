@@ -50,6 +50,15 @@ function baseInstallCommand(root, managerName) {
 
 export function planToolchain(root, worktree = root, stack = null) {
   const pkgFile = path.join(worktree, 'package.json');
+  const java =
+    stack === 'java' ||
+    stack === 'java-monorepo' ||
+    exists(path.join(worktree, 'pom.xml')) ||
+    exists(path.join(worktree, 'build.gradle')) ||
+    exists(path.join(worktree, 'build.gradle.kts'));
+  if (java) {
+    return { ok: true, packages: [], configs: [], skipped: false, java: true, hasLockfile: true };
+  }
   if (!exists(pkgFile)) {
     const python =
       stack === 'python' ||
@@ -92,6 +101,7 @@ export function ensureToolchain({
 }) {
   const plan = planToolchain(root, worktree, stack);
   if (!plan.ok || plan.skipped) return plan;
+  if (plan.java) return { ...plan, generated: [], installed: false };
   if (!plan.hasLockfile) return { ...plan, skipped: true, reason: 'NO_LOCKFILE' };
   const generated = [];
   for (const file of plan.configs) {
