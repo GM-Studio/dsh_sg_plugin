@@ -22,6 +22,12 @@ export function generateAcceptance({
   });
 
   const conclusion = rows.every((row) => row.result === 'pass') ? '可验收' : '不可验收';
+  const stats = {
+    total: cases.length,
+    pass: cases.filter((item) => item.status === 'pass').length,
+    fail: cases.filter((item) => item.status === 'fail').length,
+    skip: cases.filter((item) => item.status === 'skip').length,
+  };
   const lines = [
     `# 验收报告：${change}`,
     '',
@@ -29,6 +35,7 @@ export function generateAcceptance({
     ...(changeKey ? [`- changeKey：${changeKey}`] : []),
     `- 结论：${conclusion}`,
     `- 校验器：${validator}`,
+    `- 测试：total=${stats.total} pass=${stats.pass} fail=${stats.fail} skip=${stats.skip}`,
     `- 证据 head：${evidence?.headSeq ?? 0} / ${evidence?.headHash ?? '-'}`,
     `- integration commit：${commit}`,
     '',

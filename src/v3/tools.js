@@ -4,6 +4,7 @@ import { headCommit, isGitRepo } from './util/git.js';
 import { checkM1, checkM2, checkFrozenH1, computeArtifactHash, collectKnownAcs } from './phase.js';
 import { patchState } from './state.js';
 import { askApproval, issueApproval } from './approvals.js';
+import { renderGateSummary } from './gate-summary.js';
 import { commitChangePackage, ensureIntegration, git, headOf, integrationBranch } from './worktrees.js';
 import { createDispatcher } from './dispatch.js';
 import { executeTask, pickNextTask, revertWave } from './executor.js';
@@ -560,6 +561,7 @@ export function registerTools(ctx, runtime) {
             artifactHash: hash,
             agent: exec?.agent,
             signal: exec?.signal,
+            summary: renderGateSummary({ gate, root: project.root, state, integration }).text,
           });
           if (!asked.ok) return fail(asked.message, asked);
 
@@ -595,6 +597,7 @@ export function registerTools(ctx, runtime) {
             artifactHash,
             agent: exec?.agent,
             signal: exec?.signal,
+            summary: renderGateSummary({ gate, root: project.root, state }).text,
           });
           if (!asked.ok) return fail(asked.message, asked);
 
@@ -635,6 +638,7 @@ export function registerTools(ctx, runtime) {
           artifactHash: m2.planHash,
           agent: exec?.agent,
           signal: exec?.signal,
+          summary: renderGateSummary({ gate, root: project.root, state }).text,
         });
         if (!asked.ok) return fail(asked.message, asked);
 

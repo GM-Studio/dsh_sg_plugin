@@ -9,7 +9,10 @@ export function approvalOptions() {
   ];
 }
 
-export async function askApproval(runtime, { gate, change, artifactHash, agent, signal }) {
+export async function askApproval(
+  runtime,
+  { gate, change, artifactHash, agent, signal, summary = '' },
+) {
   const userQuestions = runtime.service('userQuestions');
   if (!userQuestions || typeof userQuestions.ask !== 'function') {
     return {
@@ -21,6 +24,9 @@ export async function askApproval(runtime, { gate, change, artifactHash, agent, 
   }
 
   const shortHash = String(artifactHash || '').replace(/^sha256:/, '').slice(0, 12);
+  const question = summary
+    ? `${summary}\n\n---\n产物指纹：\`${shortHash}…\`\n是否批准 ${gate}？`
+    : `change「${change}」的 ${gate} 产物指纹为 ${shortHash}…，是否批准？`;
   let answer;
   try {
     answer = await userQuestions.ask({
@@ -28,7 +34,7 @@ export async function askApproval(runtime, { gate, change, artifactHash, agent, 
         {
           id: `sg-approve-${gate}`,
           header: `SpecGate ${gate} 批准`,
-          question: `change「${change}」的 ${gate} 产物指纹为 ${shortHash}…，是否批准？`,
+          question,
           options: approvalOptions(),
         },
       ],

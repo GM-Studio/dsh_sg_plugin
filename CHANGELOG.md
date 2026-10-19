@@ -1,5 +1,12 @@
 # Changelog
 
+## 3.1.2
+
+- H1/H2/H3 approval dialogs now render a Markdown review card: requirement overview, task/file/suite plan, acceptance table, diff stat and key hunks.
+- Diff display is capped (20 files, 40 lines, 6000 chars) and redacts secret-like lines; binary files show stats only.
+- Acceptance reports now include total/pass/fail/skip test counts.
+- Added `docs/audits/v3.1-workflow-audit.md` covering add/modify/fix/remove compliance and open gaps.
+
 ## 3.1.1
 
 - Added a per-repo, per-role Agent pool for `sg_run`: implementer/tester are reused across tasks, reviewer stays fresh.
