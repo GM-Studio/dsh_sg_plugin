@@ -9,7 +9,7 @@ import { createDispatcher } from './dispatch.js';
 import { executeTask, pickNextTask, revertWave } from './executor.js';
 import { readyBatch } from './scheduler.js';
 import { discoverCommand, loadPlan } from './plan.js';
-import { runAllSuites } from './suites.js';
+import { runAllSuites, suggestSuites } from './suites.js';
 import { generateAcceptance } from './acceptance.js';
 import { verifyEvidence, appendEvidence } from './evidence.js';
 import { digest } from './util/hash.js';
@@ -89,10 +89,17 @@ export function registerTools(ctx, runtime) {
         const result = initProject(root);
         if (!result.ok) return fail(`初始化失败：${result.message}`, result);
         const changed = result.created.length > 0 ? `新建 ${result.created.length} 项` : '已完整，幂等跳过';
-        return ok(`SpecGate v3 已初始化（${changed}）。下一步：/sg-change <name> --type feature`, {
+        const suggestions = suggestSuites(root);
+        const hint = suggestions.length
+          ? `\n检测到可能的套件（仅建议，未写入配置）：${suggestions
+              .map((suite) => `${suite.id}(${suite.kind}@${suite.cwd})`)
+              .join('、')}`
+          : '';
+        return ok(`SpecGate v3 已初始化（${changed}）。下一步：/sg-change <name> --type feature${hint}`, {
           root: result.root,
           created: result.created,
           ignored: result.ignored,
+          suggestions,
         });
       },
     },

@@ -3,6 +3,7 @@ import { renderStatus } from './status.js';
 import { ensureV3 } from './tools.js';
 import { headCommit, isGitRepo } from './util/git.js';
 import { loadSkill } from './skills.js';
+import { suggestSuites } from './suites.js';
 
 function tokens(raw) {
   return String(raw || '')
@@ -55,9 +56,15 @@ export function registerCommands(ctx, runtime) {
       const result = initProject(root);
       if (!result.ok) return { kind: 'error', text: `初始化失败：${result.message}` };
       const changed = result.created.length > 0 ? `新建 ${result.created.length} 项` : '已完整，幂等跳过';
+      const suggestions = suggestSuites(root);
+      const hint = suggestions.length
+        ? `\n检测到可能的套件（仅建议，未写入配置）：${suggestions
+            .map((suite) => `${suite.id}(${suite.kind}@${suite.cwd})`)
+            .join('、')}`
+        : '';
       return {
         kind: 'success',
-        text: `SpecGate v3 已初始化（${changed}）。下一步：/sg-change <name> --type feature`,
+        text: `SpecGate v3 已初始化（${changed}）。下一步：/sg-change <name> --type feature${hint}`,
       };
     },
   });

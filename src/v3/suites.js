@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
+import { exists, readText } from './util/fsx.js';
 import { runTestCommand } from './testrunner.js';
 import { validateReport } from './report.js';
 import { resolveNode } from './env/node.js';
@@ -34,6 +35,73 @@ export function suitesFromState(state, fallbackCommand) {
     ];
   }
   return [];
+}
+
+/** Advisory suggestions only; nothing is written to config. */
+export function suggestSuites(root) {
+  const suggestions = [];
+  const seen = new Set();
+  const add = (item) => {
+    if (seen.has(item.id)) return;
+    seen.add(item.id);
+    suggestions.push(item);
+  };
+
+  const pkgPath = path.join(root, 'package.json');
+  if (exists(pkgPath)) {
+    try {
+      const pkg = JSON.parse(readText(pkgPath));
+      const workspaces = Array.isArray(pkg.workspaces)
+        ? pkg.workspaces
+        : Array.isArray(pkg.workspaces?.packages)
+          ? pkg.workspaces.packages
+          : null;
+      if (workspaces) {
+        for (const pattern of workspaces) {
+          if (String(pattern).includes('*')) {
+            const base = String(pattern).split('*')[0].replace(/\/$/, '');
+            const dir = path.join(root, base);
+            if (!exists(dir)) continue;
+            for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+              if (!entry.isDirectory()) continue;
+              const cwd = path.join(base, entry.name).replace(/\\/g, '/');
+              if (exists(path.join(root, cwd, 'package.json'))) {
+                add({ id: entry.name, kind: 'node-test', cwd, command: ['npm', 'run', 'test:json'] });
+              }
+            }
+          } else if (exists(path.join(root, pattern, 'package.json'))) {
+            add({
+              id: String(pattern).split('/').filter(Boolean).pop() || 'app',
+              kind: 'node-test',
+              cwd: pattern,
+              command: ['npm', 'run', 'test:json'],
+            });
+          }
+        }
+      } else if (pkg?.scripts?.['test:json']) {
+        add({ id: 'default', kind: 'node-test', cwd: '.', command: ['npm', 'run', 'test:json'] });
+      }
+    } catch {
+      // ignore invalid package.json
+    }
+  }
+
+  if (
+    exists(path.join(root, 'pyproject.toml')) ||
+    exists(path.join(root, 'pytest.ini')) ||
+    exists(path.join(root, 'requirements.txt'))
+  ) {
+    add({ id: 'api', kind: 'pytest', cwd: '.', pytestArgs: ['-q', 'tests'] });
+  }
+
+  for (const config of ['playwright.config.ts', 'playwright.config.js', 'cypress.config.ts', 'cypress.config.js']) {
+    if (exists(path.join(root, config))) {
+      add({ id: 'e2e', kind: 'command', cwd: '.', command: ['npm', 'run', 'test:e2e'] });
+      break;
+    }
+  }
+
+  return suggestions;
 }
 
 export function suiteIdForAc(mapping, suites, ac) {
