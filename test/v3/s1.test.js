@@ -48,10 +48,13 @@ async function callTool(ctx, name, args = {}) {
   return definition.execute(args, { agent: null });
 }
 
-test('注册 3 个工具与 3 个命令', () => {
+test('注册 5 个工具与 3 个命令', () => {
   const root = tempRoot();
   const { ctx } = setup(root);
-  assert.deepEqual([...ctx.toolsMap.keys()].sort(), ['sg_change', 'sg_init', 'sg_status']);
+  assert.deepEqual(
+    [...ctx.toolsMap.keys()].sort(),
+    ['sg_approve', 'sg_change', 'sg_init', 'sg_run', 'sg_status'],
+  );
   assert.deepEqual([...ctx.commandsMap.keys()].sort(), ['sg-change', 'sg-init', 'sg-status']);
 });
 

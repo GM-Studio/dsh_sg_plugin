@@ -1,6 +1,9 @@
 import { initProject, createChange } from './change.js';
 import { renderStatus, statusData } from './status.js';
 import { headCommit, isGitRepo } from './util/git.js';
+import { checkM1, computeArtifactHash } from './phase.js';
+import { patchState } from './state.js';
+import { askApproval, issueApproval } from './approvals.js';
 
 function textOutput() {
   return {
@@ -48,6 +51,10 @@ export function ensureV3(project) {
   return { ok: true };
 }
 
+function formatErrors(errors) {
+  return errors.map((item) => `- ${item}`).join('\n');
+}
+
 const EMPTY_PARAMS = {
   type: 'object',
   properties: {},
@@ -66,9 +73,7 @@ export function registerTools(ctx, runtime) {
       async execute(args, exec) {
         const root = runtime.getCwd(exec?.agent);
         const result = initProject(root);
-        if (!result.ok) {
-          return fail(`初始化失败：${result.message}`, result);
-        }
+        if (!result.ok) return fail(`初始化失败：${result.message}`, result);
         const changed = result.created.length > 0 ? `新建 ${result.created.length} 项` : '已完整，幂等跳过';
         return ok(`SpecGate v3 已初始化（${changed}）。下一步：/sg-change <name> --type feature`, {
           root: result.root,
@@ -117,6 +122,122 @@ export function registerTools(ctx, runtime) {
       async execute(args, exec) {
         const project = runtime.project(exec?.agent);
         return ok(renderStatus(project), statusData(project));
+      },
+    },
+    {
+      name: 'sg_run',
+      description:
+        '推进 SpecGate v3 一个阶段：校验 M1/M2、执行任务或做集成回归。不接收命令、分支等覆盖参数。',
+      parameters: {
+        type: 'object',
+        properties: {
+          retry: { type: 'boolean' },
+          force: { type: 'boolean' },
+        },
+        additionalProperties: false,
+      },
+      output: textOutput(),
+      async execute(args, exec) {
+        const project = runtime.project(exec?.agent);
+        const guard = ensureV3(project);
+        if (!guard.ok) return fail(guard.message, guard);
+        const state = project.state;
+        if (!state) return fail('未找到状态文件，先执行 /sg-init', project.stateError);
+
+        switch (state.phase) {
+          case 'IDLE':
+            return ok('当前没有进行中的 change。先执行 /sg-change <name> --type <type>。');
+          case 'H1_PENDING': {
+            const m1 = checkM1({ root: project.root, state });
+            if (!m1.ok) return fail(`M1 未通过：\n${formatErrors(m1.errors)}`, m1);
+            return ok('M1 通过。请审阅 delta 后执行 /sg-approve H1。', { m1 });
+          }
+          case 'PLAN':
+            return ok('方案阶段：写完 design/tasks/cases/mapping 后再次执行 /sg-run（M2 校验在 S3 启用）。');
+          case 'H2_PENDING':
+            return ok('等待人执行 /sg-approve H2。');
+          case 'EXECUTING':
+            return ok('执行阶段：任务调度尚未启用（S4）。');
+          case 'INTEGRATING':
+            return ok('集成阶段：全量回归尚未启用（S5）。');
+          case 'H3_PENDING':
+            return ok('等待人执行 /sg-approve H3。');
+          case 'ARCHIVING':
+            return ok('归档阶段：归档事务尚未启用（S5）。');
+          case 'BLOCKED':
+            return ok(
+              `已阻塞：${state.blockedReason || '未知原因'}。处理后可执行 /sg-run --retry。`,
+            );
+          case 'DONE':
+            return ok('change 已完成。');
+          case 'ABORTED':
+            return ok('change 已中止。');
+          default:
+            return fail(`未知阶段：${state.phase}`);
+        }
+      },
+    },
+    {
+      name: 'sg_approve',
+      description:
+        '人类批准 H1/H2/H3。工具内部通过宿主问答询问用户；无用户应答则拒绝，模型无法自签。',
+      parameters: {
+        type: 'object',
+        properties: {
+          gate: { type: 'string', enum: ['H1', 'H2', 'H3'] },
+        },
+        required: ['gate'],
+        additionalProperties: false,
+      },
+      output: textOutput(),
+      async execute(args, exec) {
+        const project = runtime.project(exec?.agent);
+        const guard = ensureV3(project);
+        if (!guard.ok) return fail(guard.message, guard);
+        const state = project.state;
+        if (!state?.change) return fail('没有进行中的 change');
+
+        const gate = String(args?.gate || '').toUpperCase();
+        if (gate !== 'H1') {
+          return fail(`${gate} 批准尚未启用（S3/S5）。当前只支持 H1。`);
+        }
+        if (state.phase !== 'H1_PENDING') {
+          return fail(`当前阶段 ${state.phase} 不能批准 H1`);
+        }
+
+        const m1 = checkM1({ root: project.root, state });
+        if (!m1.ok) return fail(`M1 未通过，不能批准：\n${formatErrors(m1.errors)}`, m1);
+
+        const specsBase = state.baseCommit || 'no-commit';
+        const artifactHash = computeArtifactHash({
+          root: project.root,
+          change: state.change,
+          specsBase,
+        });
+        const asked = await askApproval(runtime, {
+          gate,
+          change: state.change,
+          artifactHash,
+          agent: exec?.agent,
+          signal: exec?.signal,
+        });
+        if (!asked.ok) return fail(asked.message, asked);
+
+        const saved = patchState(project.root, (draft) => {
+          issueApproval(draft, gate, artifactHash, asked.at);
+          draft.baseline = {
+            specsBase,
+            artifactHash,
+            approvedAt: asked.at,
+          };
+          draft.phase = 'PLAN';
+        });
+        if (!saved.ok) return fail(`记录批准失败：${saved.message}`, saved);
+
+        return ok(
+          `H1 已批准，产物指纹 ${artifactHash.slice(0, 19)}…，进入 PLAN。下一步：写 design/tasks/cases/mapping，然后 /sg-run`,
+          { gate, artifactHash, phase: 'PLAN' },
+        );
       },
     },
   ];
