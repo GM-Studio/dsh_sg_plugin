@@ -1,9 +1,12 @@
+import path from 'node:path';
 import { initProject, createChange } from './change.js';
 import { renderStatus } from './status.js';
 import { ensureV3 } from './tools.js';
 import { headCommit, isGitRepo } from './util/git.js';
 import { loadSkill } from './skills.js';
 import { suggestSuites } from './suites.js';
+import { detectInitMode, initNewProject } from './init.js';
+import { writeText } from './util/fsx.js';
 
 function tokens(raw) {
   return String(raw || '')
@@ -53,6 +56,29 @@ export function registerCommands(ctx, runtime) {
     input: { hint: '（无需参数）' },
     async handler(inv) {
       const root = runtime.getCwd(inv?.agent);
+      const userQuestions = runtime.service('userQuestions');
+      if (detectInitMode(root) === 'new' && userQuestions && typeof userQuestions.ask === 'function') {
+        const result = await initNewProject({
+          root,
+          userQuestions,
+          agent: inv?.agent,
+          signal: inv?.signal,
+        });
+        if (!result.ok) return { kind: 'error', text: `初始化失败：${result.message}` };
+        writeText(
+          path.join(root, '.specgate', 'init-result.json'),
+          `${JSON.stringify(result, null, 2)}\n`,
+        );
+        return {
+          kind: 'success',
+          text: [
+            `已初始化新建仓库（${result.stack}），脚手架 ${result.scaffold.written.length} 个文件。`,
+            '已生成 project-context.md、AGENTS.md、openspec、术语表/ADR、CI 与技术栈锁定。',
+            '首个 change add-version 已创建并停在 H1，等待 /sg-approve H1。',
+            '结构化结果：.specgate/init-result.json',
+          ].join('\n'),
+        };
+      }
       const result = initProject(root);
       if (!result.ok) return { kind: 'error', text: `初始化失败：${result.message}` };
       const changed = result.created.length > 0 ? `新建 ${result.created.length} 项` : '已完整，幂等跳过';

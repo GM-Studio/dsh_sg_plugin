@@ -1,5 +1,12 @@
 # Changelog
 
+## 3.2.0
+
+- `/sg-init` now detects an empty directory and starts a new-project workflow: context Q&A (background/MVP, stack, acceptance, team, steps), H0 summary confirmation, scaffold, git init+commit, and a first change parked at H1.
+- New Node and Python scaffolds include a runnable `/health` endpoint and a real test (`sg-test.mjs` / pytest).
+- New-project artifacts: `project-context.md`, `AGENTS.md`, `openspec/`, glossary + ADR, CI, version locks, `.specgate/config.yaml` suites.
+- Vue/React/monorepo currently fall back to the generic skeleton; real frontend/monorepo templates are still pending.
+
 ## 3.1.3
 
 - Workflow audit fixes: H1 now allows writing the change specs delta before approval; design/tasks/tests/src stay frozen.
