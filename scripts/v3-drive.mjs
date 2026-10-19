@@ -150,6 +150,7 @@ switch (command) {
           pytestArgs: suite.pytestArgs,
           python: suite.python,
           node: suite.node,
+          install: suite.install,
           cmdHash: suite.cmdHash,
         })),
         approvedAt: null,

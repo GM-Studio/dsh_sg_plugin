@@ -20,6 +20,7 @@ export function suitesFromState(state, fallbackCommand) {
       pytestArgs: Array.isArray(suite.pytestArgs) ? suite.pytestArgs : [],
       python: suite.python || null,
       node: suite.node || null,
+      install: suite.install === undefined ? false : suite.install,
     }));
   }
   if (fallbackCommand && fallbackCommand.ok) {
