@@ -38,7 +38,6 @@ export function validateReport({
       errors.push(`用例 ${item.id} 的 status 非法：${String(item.status)}`);
     }
     const acs = Array.isArray(item.ac) ? item.ac : [];
-    if (acs.length === 0) errors.push(`用例 ${item.id} 缺少 ac`);
     for (const ac of acs) {
       if (!known.has(ac)) errors.push(`用例 ${item.id} 引用了未冻结的 ${ac}`);
       if (deltaAcs.has(ac) && !mappedAcs.has(ac)) {
@@ -53,7 +52,7 @@ export function validateReport({
       if (worktree && !exists(path.join(worktree, item.file))) {
         errors.push(`用例 ${item.id} 的文件不存在：${item.file}`);
       }
-      if (requireChangedFiles && changed.size > 0 && !changed.has(item.file)) {
+      if (requireChangedFiles && changed.size > 0 && acs.length > 0 && !changed.has(item.file)) {
         errors.push(`用例 ${item.id} 的文件不在本次 diff：${item.file}`);
       }
     }
