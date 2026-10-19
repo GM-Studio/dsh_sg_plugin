@@ -28,6 +28,20 @@ function installCommand(root, packages, managerName) {
   return ['npm', ['install', '-D', ...packages]];
 }
 
+function available(bin) {
+  const run = spawnSync(bin, ['--version'], {
+    encoding: 'utf8',
+    shell: process.platform === 'win32',
+  });
+  return run.status === 0;
+}
+
+function resolveManager(root, managerName) {
+  const wanted = managerName || manager(root);
+  if (wanted !== 'npm' && !available(wanted)) return 'npm';
+  return wanted;
+}
+
 function baseInstallCommand(root, managerName) {
   if (managerName === 'pnpm') return ['pnpm', ['install', '--frozen-lockfile']];
   if (managerName === 'yarn') return ['yarn', ['install', '--immutable']];
@@ -111,7 +125,7 @@ export function ensureToolchain({
   }
   if (plan.packages.length === 0) {
     if (install && !exists(path.join(worktree, 'node_modules'))) {
-      const [bin, args] = baseInstallCommand(root, managerName || manager(root));
+      const [bin, args] = baseInstallCommand(root, resolveManager(root, managerName));
       const started = Date.now();
       const run = spawnSync(bin, args, {
         cwd: worktree,
@@ -151,7 +165,7 @@ export function ensureToolchain({
     return { ...plan, generated, installed: false };
   }
   if (!install) return { ...plan, generated, installed: false };
-  const [bin, args] = installCommand(root, plan.packages, managerName || manager(root));
+  const [bin, args] = installCommand(root, plan.packages, resolveManager(root, managerName));
   const started = Date.now();
   const run = spawnSync(bin, args, {
     cwd: worktree,
