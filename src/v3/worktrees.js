@@ -93,8 +93,7 @@ export function headOf(root, ref) {
   }
 }
 
-export function mergeIntoIntegration({ integrationPath, branch, expectedCommit, message }) {
-  const head = headOf(integrationPath, branch);
+export function mergeIntoIntegration({ integrationPath, branch, expectedCommit, message }) {  const head = headOf(integrationPath, branch);
   if (!head) {
     return { ok: false, code: 'BRANCH_MISSING', message: `分支不存在：${branch}` };
   }
@@ -213,4 +212,16 @@ export function diffCheck({ root, branch, baseCommit, role, change, touched, pha
   }
 
   return { ok: violations.length === 0, violations, entries };
+}
+
+export function commitChangePackage(root, change, message) {
+  try {
+    git(root, ['add', `openspec/changes/${change}`]);
+    const staged = git(root, ['diff', '--cached', '--name-only']);
+    if (!staged) return { ok: true, skipped: true, commit: headOf(root, 'HEAD') };
+    git(root, ['commit', '-q', '-m', message]);
+    return { ok: true, commit: headOf(root, 'HEAD') };
+  } catch (error) {
+    return { ok: false, message: String(error.stderr || error.message).trim() };
+  }
 }

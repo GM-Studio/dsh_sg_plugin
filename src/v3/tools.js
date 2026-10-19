@@ -4,6 +4,9 @@ import { headCommit, isGitRepo } from './util/git.js';
 import { checkM1, checkM2, checkFrozenH1, computeArtifactHash } from './phase.js';
 import { patchState } from './state.js';
 import { askApproval, issueApproval } from './approvals.js';
+import { commitChangePackage, integrationBranch } from './worktrees.js';
+import { createDispatcher } from './dispatch.js';
+import { executeTask, pickNextTask } from './executor.js';
 
 function textOutput() {
   return {
@@ -167,6 +170,23 @@ export function registerTools(ctx, runtime) {
                 cwd: m2.command.cwd,
                 approvedAt: null,
               };
+              draft.tasks = Object.fromEntries(
+                m2.plan.tasks.map((task) => [
+                  task.id,
+                  {
+                    id: task.id,
+                    title: task.title,
+                    ac: task.ac,
+                    deps: task.deps,
+                    parallel: task.parallel,
+                    status: 'pending',
+                    attempts: 0,
+                    commit: null,
+                    review: null,
+                    evidence: [],
+                  },
+                ]),
+              );
               draft.phase = 'H2_PENDING';
             });
             if (!saved.ok) return fail(`冻结计划失败：${saved.message}`, saved);
@@ -177,8 +197,62 @@ export function registerTools(ctx, runtime) {
           }
           case 'H2_PENDING':
             return ok('等待人执行 /sg-approve H2。');
-          case 'EXECUTING':
-            return ok('执行阶段：任务调度尚未启用（S4）。');
+          case 'EXECUTING': {
+            const task = pickNextTask(state);
+            if (!task) {
+              const all = Object.values(state.tasks || {});
+              if (all.length > 0 && all.every((item) => item.status === 'merged')) {
+                const moved = patchState(project.root, (draft) => {
+                  draft.phase = 'INTEGRATING';
+                });
+                if (!moved.ok) return fail(moved.message, moved);
+                return ok('所有任务已合并，进入 INTEGRATING（全量回归在 S5 启用）。');
+              }
+              return fail('没有可执行任务：依赖未满足或任务已阻塞');
+            }
+
+            const dispatcher = createDispatcher(runtime);
+            const result = await executeTask({
+              root: project.root,
+              state,
+              task,
+              dispatcher,
+              config: project.config,
+              parent: exec?.agent,
+            });
+            const attempts = (task.attempts || 0) + 1;
+
+            if (!result.ok) {
+              const blocked = attempts >= 3;
+              const saved = patchState(project.root, (draft) => {
+                const item = draft.tasks[task.id];
+                item.status = blocked ? 'blocked' : 'failed';
+                item.attempts = attempts;
+                if (blocked) {
+                  draft.phase = 'BLOCKED';
+                  draft.blockedReason = `任务 ${task.id} 连续失败 3 次：${result.message}`;
+                }
+              });
+              if (!saved.ok) return fail(saved.message, saved);
+              return fail(`任务 ${task.id} 第 ${attempts} 次失败：${result.message}`, result);
+            }
+
+            const saved = patchState(project.root, (draft) => {
+              const item = draft.tasks[task.id];
+              item.status = 'merged';
+              item.attempts = attempts;
+              item.commit = result.commit;
+              draft.evidence = {
+                headSeq: result.evidence.seq,
+                headHash: result.evidence.hash,
+              };
+            });
+            if (!saved.ok) return fail(saved.message, saved);
+            return ok(
+              `任务 ${task.id} 已合并（commit ${String(result.commit).slice(0, 8)}），证据 #${result.evidence.seq}。继续 /sg-run 推进下一个任务。`,
+              result,
+            );
+          }
           case 'INTEGRATING':
             return ok('集成阶段：全量回归尚未启用（S5）。');
           case 'H3_PENDING':
@@ -286,10 +360,21 @@ export function registerTools(ctx, runtime) {
         });
         if (!asked.ok) return fail(asked.message, asked);
 
+        const committed = isGitRepo(project.root)
+          ? commitChangePackage(project.root, state.change, `docs(${state.change}): 冻结 H2 方案`)
+          : { ok: true, skipped: true };
+        if (!committed.ok) return fail(`提交 change 包失败：${committed.message}`, committed);
+        const integrationBase = isGitRepo(project.root) ? headCommit(project.root) : null;
+
         const saved = patchState(project.root, (draft) => {
           issueApproval(draft, gate, m2.planHash, asked.at);
           draft.plan.planHash = m2.planHash;
           draft.plan.approvedAt = asked.at;
+          draft.integration = {
+            branch: integrationBranch(state.change),
+            base: integrationBase,
+            lastGreen: null,
+          };
           draft.phase = 'EXECUTING';
         });
         if (!saved.ok) return fail(`记录批准失败：${saved.message}`, saved);

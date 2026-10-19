@@ -113,7 +113,11 @@ export function discoverCommand(root, config) {
     try {
       const pkg = JSON.parse(readText(pkgPath));
       if (typeof pkg?.scripts?.['test:json'] === 'string' && pkg.scripts['test:json'].trim()) {
-        return { ok: true, argv: ['npm', 'run', 'test:json'], cwd: '.', source: 'package.json' };
+        const npmCli = path.join(path.dirname(process.execPath), 'node_modules', 'npm', 'bin', 'npm-cli.js');
+        const argv = exists(npmCli)
+          ? [process.execPath, npmCli, 'run', 'test:json']
+          : ['npm', 'run', 'test:json'];
+        return { ok: true, argv, cwd: '.', source: 'package.json' };
       }
     } catch {
       // fall through
