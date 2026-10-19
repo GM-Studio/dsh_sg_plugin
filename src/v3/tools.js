@@ -3,6 +3,7 @@ import { renderStatusAt, statusJsonAt, resolveRepoPath, loadProjectAt } from './
 import { renderStatus } from './status.js';
 import { exists } from './util/fsx.js';
 import { scanEnv, writeEnvReport } from './env-scan.js';
+import { ensureToolchain } from './toolchain.js';
 import { headCommit, isGitRepo } from './util/git.js';
 import { checkM1, checkM2, checkFrozenH1, computeArtifactHash, collectKnownAcs } from './phase.js';
 import { patchState } from './state.js';
@@ -435,6 +436,19 @@ export function registerTools(ctx, runtime) {
                 : [];
               const commit = headOf(integration.path, 'HEAD');
 
+              const integrationToolchain = ensureToolchain({
+                root: project.root,
+                worktree: integration.path,
+                change,
+                task: { id: 'INTEGRATION' },
+                stack: state.context?.stack || null,
+              });
+              if (!integrationToolchain.ok) {
+                return fail(
+                  `集成环境安装失败：${integrationToolchain.message}`,
+                  integrationToolchain,
+                );
+              }
               const suitesResult = runAllSuites({
                 root: project.root,
                 state,
