@@ -366,7 +366,7 @@ CONTEXT.md
 - Output regression: a command in a new session writes a `notice`; an active session does not duplicate history; a running agent writes no messages; failed commands also produce output; automated tests cover "never inject synthetic assistant messages".
 - Idempotency regression: state commands do not replay the cache, append commands deduplicate for 24h, force allows repeats, concurrency locks are mutually exclusive, read-only commands write nothing to disk.
 - Parallel regression: worktree parallelism/waves/dependencies, duplicate dispatch skipping, merge conflicts preserving branches, non-Git degradation, doctor parallel summary.
-- Automated tests: `node --test` → **113 passed / 0 failed**.
+- Automated tests: `node --test` → **177 passed / 0 failed**.
 
 See [verification.md](docs/design/verification.md) for the full record.
 
@@ -384,6 +384,21 @@ See [verification.md](docs/design/verification.md) for the full record.
 - G6.5 Brief is an optional gate and is not in the "pending confirmation" list by default.
 - The plugin provides no MCP server or MCP tools; MCP capabilities on the DSH side are independent of this plugin.
 - **Upgrade note**: the predecessor plugin's early 0.2.0 `ak47_selftest_append` polluted the session log; continue in a new session and do not reuse old sessions that already show `tool_use` / `tool_result` 400 errors.
+
+## Code review and formatting gate
+
+Every code file changed by a push must pass review and formatting before it reaches the remote:
+
+- **Local hooks**: run `npm run hooks:install` once per clone to install `pre-commit` and `pre-push`.
+  - `pre-commit`: runs ESLint on staged JS/TS files, then Prettier formats them and re-stages the result.
+  - `pre-push`: runs ESLint, `npm test` and `prettier --check` on every file changed by the push; any failure aborts the push with an error report.
+- **CI re-check**: the `review-and-format` job in `.github/workflows/ci.yml` reviews and format-checks changed files on push and pull request. Enable branch protection on the main branch and require `review-and-format` and `test` as status checks.
+- **Commands**:
+  - `npm run lint`, `npm run format:check`: full-repository checks.
+  - `npm run gate`: run the full gate against the diff from `origin/main`.
+  - `npm run gate:fix`: format the current changes and stage them.
+
+> GitHub Actions runs after a push succeeds and cannot retract commits that are already on the remote; the local `pre-push` hook is what actually blocks the push. Branch protection stops merges whose checks did not pass, so commits created with `--no-verify` are still caught by CI.
 
 ## Development
 

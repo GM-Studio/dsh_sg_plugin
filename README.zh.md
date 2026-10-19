@@ -352,7 +352,7 @@ CONTEXT.md
 - 输出回归：新会话命令写入 `notice`；活跃会话不重复写历史；运行中的 agent 不写消息；失败命令同样有输出；自动化测试覆盖“绝不注入合成 assistant 消息”。
 - 幂等回归：状态命令不重放缓存、追加命令 24h 去重、force 可重复、并发锁互斥、只读命令不落盘。
 - 并行回归：worktree 并行/波次/依赖、重复派发跳过、合并冲突保留分支、非 Git 降级、doctor 并行汇总。
-- 自动化测试：`node --test` → **113 passed / 0 failed**。
+- 自动化测试：`node --test` → **177 passed / 0 failed**。
 
 完整记录见 [verification.md](docs/design/verification.md)。
 
@@ -370,6 +370,21 @@ CONTEXT.md
 - G6.5 Brief 为可选门控，默认不进入“待确认”列表。
 - 插件不提供 MCP server 或 MCP 工具；DSH 侧的 MCP 能力与本插件相互独立。
 - **升级提示**：前身插件 0.2.0 早期构建中的 `ak47_selftest_append` 会污染会话日志；升级后请在新会话中继续，旧会话若已出现 `tool_use` / `tool_result` 400 错误不要复用。
+
+## 代码审查与格式化门禁
+
+推送到远程前，本次 push 涉及的所有代码文件必须通过审查与格式化：
+
+- **本地钩子**：克隆后执行一次 `npm run hooks:install`，安装 `pre-commit` 与 `pre-push`。
+  - `pre-commit`：对暂存区的 JS/TS 文件执行 ESLint；通过后用 Prettier 格式化并重新暂存。
+  - `pre-push`：对本次 push 的全部变更文件执行 ESLint、`npm test` 和 `prettier --check`；任一失败即中止 push 并输出错误信息。
+- **CI 复核**：`.github/workflows/ci.yml` 的 `review-and-format` job 在 push / PR 时对变更文件执行审查与格式检查。主分支应开启分支保护，把 `review-and-format` 与 `test` 设为必需状态检查。
+- **命令**：
+  - `npm run lint`、`npm run format:check`：全量检查。
+  - `npm run gate`：按当前分支与 `origin/main` 的差异执行一次完整门禁。
+  - `npm run gate:fix`：自动格式化本次变更并暂存。
+
+> GitHub Actions 在 push 成功之后才运行，无法撤回已经推送的提交；真正阻止推送的是本地 `pre-push` 钩子。服务端通过分支保护阻止未通过检查的合并，使用 `--no-verify` 绕过本地钩子的提交仍会被 CI 拦下。
 
 ## 开发
 

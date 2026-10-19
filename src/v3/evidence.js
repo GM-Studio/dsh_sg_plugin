@@ -26,7 +26,7 @@ function readRecords(dir) {
 }
 
 function recordHash(record) {
-  const { hash, ...rest } = record;
+  const { hash: _hash, ...rest } = record;
   return `sha256:${sha256(canonicalJson(rest))}`;
 }
 

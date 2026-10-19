@@ -3,7 +3,6 @@ import path from 'node:path';
 import { exists, readText } from './util/fsx.js';
 import { git } from './worktrees.js';
 
-const MAX_CARD = 1200;
 const SECRET_RE = /(secret|token|password|passwd|api[_-]?key|private key)/i;
 
 function clip(text, limit) {
@@ -31,7 +30,8 @@ function listSpecFiles(root, change) {
     for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
       const full = path.join(dir, entry.name);
       if (entry.isDirectory()) walk(full, capability || entry.name);
-      else if (entry.name === 'spec.md') result.push({ file: full, capability: capability || entry.name });
+      else if (entry.name === 'spec.md')
+        result.push({ file: full, capability: capability || entry.name });
     }
   };
   walk(base, null);
@@ -63,9 +63,13 @@ function redact(line) {
 
 function h1(root, state, detail) {
   const dir = path.join(root, 'openspec', 'changes', state.change);
-  const proposal = exists(path.join(dir, 'proposal.md')) ? readText(path.join(dir, 'proposal.md')) : '';
+  const proposal = exists(path.join(dir, 'proposal.md'))
+    ? readText(path.join(dir, 'proposal.md'))
+    : '';
   const requirements = parseRequirements(listSpecFiles(root, state.change));
-  const acs = requirements.flatMap((item) => item.scenarios.map((scenario) => ({ ...scenario, req: item.id })));
+  const acs = requirements.flatMap((item) =>
+    item.scenarios.map((scenario) => ({ ...scenario, req: item.id })),
+  );
   const capabilities = [...new Set(requirements.map((item) => item.capability))];
   const head = [
     `SpecGate H1 审批`,
@@ -103,19 +107,25 @@ function h2(root, state, detail) {
     `套件：${suites.length} 个`,
     '前 5 个任务：',
     ...tasks.slice(0, 5).map((task) => `- ${task.id} ${task.title} [${(task.ac || []).join(',')}]`),
-    `计划：${String(state.plan?.planHash || '-').replace(/^sha256:/, '').slice(0, 12)}…`,
+    `计划：${String(state.plan?.planHash || '-')
+      .replace(/^sha256:/, '')
+      .slice(0, 12)}…`,
   ];
   if (detail) {
     card.push('', '完整任务：');
     for (const task of tasks) {
-      card.push(`- ${task.id} ${task.title} ac=${(task.ac || []).join(',')} deps=${(task.deps || []).join(',') || '-'}`);
+      card.push(
+        `- ${task.id} ${task.title} ac=${(task.ac || []).join(',')} deps=${(task.deps || []).join(',') || '-'}`,
+      );
     }
     card.push('', '完整文件：');
-    for (const file of touched.modify || []) card.push(`M ${file}（${lineCount(path.join(root, file)) ?? '?'} 行）`);
+    for (const file of touched.modify || [])
+      card.push(`M ${file}（${lineCount(path.join(root, file)) ?? '?'} 行）`);
     for (const file of touched.bootstrap || []) card.push(`A ${file}`);
     for (const file of touched.delete || []) card.push(`D ${file}`);
     card.push('', '套件：');
-    for (const suite of suites) card.push(`${suite.id} ${suite.kind} ${(suite.argv || []).join(' ')} @${suite.cwd || '.'}`);
+    for (const suite of suites)
+      card.push(`${suite.id} ${suite.kind} ${(suite.argv || []).join(' ')} @${suite.cwd || '.'}`);
   }
   return { card, detail: card };
 }
@@ -145,7 +155,13 @@ function numstat(integrationPath, base) {
 }
 
 function h3(root, state, integration, detail) {
-  const acceptanceFile = path.join(integration.path, 'openspec', 'changes', state.change, 'acceptance.md');
+  const acceptanceFile = path.join(
+    integration.path,
+    'openspec',
+    'changes',
+    state.change,
+    'acceptance.md',
+  );
   const acceptance = exists(acceptanceFile) ? readText(acceptanceFile) : '';
   const { rows, stats } = parseAcceptance(acceptance);
   const pass = rows.filter((row) => row.result === 'pass').length;
@@ -165,7 +181,11 @@ function h3(root, state, integration, detail) {
     `变更：${files.length} 文件  +${added}  -${deleted}`,
   ];
   const top = [...files].sort(
-    (a, b) => (Number(b.added) || 0) + (Number(b.deleted) || 0) - (Number(a.added) || 0) - (Number(a.deleted) || 0),
+    (a, b) =>
+      (Number(b.added) || 0) +
+      (Number(b.deleted) || 0) -
+      (Number(a.added) || 0) -
+      (Number(a.deleted) || 0),
   )[0];
   if (top) {
     try {
@@ -199,7 +219,9 @@ function h0(state, detail) {
     `验收：${clip(context.acceptance, 160) || '未填写'}`,
     `团队：${clip(context.team, 120) || '未填写'}`,
     `步骤：${clip(context.steps, 160) || '未填写'}`,
-    `哈希：${String(state.h0?.hash || '-').replace(/^sha256:/, '').slice(0, 12)}…`,
+    `哈希：${String(state.h0?.hash || '-')
+      .replace(/^sha256:/, '')
+      .slice(0, 12)}…`,
   ];
   if (detail) {
     card.push('', '完整上下文：');

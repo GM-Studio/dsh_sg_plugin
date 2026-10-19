@@ -1,4 +1,3 @@
-import { randomUUID } from 'node:crypto';
 import { readConfig } from './change.js';
 import { patchState } from './state.js';
 
@@ -69,15 +68,6 @@ function poolKey(root, role) {
 function ensurePool(key) {
   if (!pools.has(key)) pools.set(key, { entries: [], waiters: [] });
   return pools.get(key);
-}
-
-function messageChars(agent) {
-  try {
-    const messages = agent?.session?.deriveMessages?.() || [];
-    return JSON.stringify(messages).length;
-  } catch {
-    return 0;
-  }
 }
 
 function shouldRecycle(entry, config) {
@@ -155,7 +145,6 @@ async function acquireChangeSlot(change, max) {
   if (!changeSlots.has(change)) changeSlots.set(change, { count: 0, waiters: [] });
   const slot = changeSlots.get(change);
   while (slot.count >= max) {
-    // eslint-disable-next-line no-await-in-loop
     await new Promise((resolve) => slot.waiters.push(resolve));
   }
   slot.count += 1;
@@ -288,12 +277,20 @@ async function acquireEntry({ runtime, key, role, worktree, parent, config, chan
       return idle;
     }
     if (pool.entries.length < config.poolSize) {
-      const created = await createEntry({ runtime, key, role, worktree, parent, config, change, text });
+      const created = await createEntry({
+        runtime,
+        key,
+        role,
+        worktree,
+        parent,
+        config,
+        change,
+        text,
+      });
       created.leased = true;
       pool.entries.push(created);
       return created;
     }
-    // eslint-disable-next-line no-await-in-loop
     await new Promise((resolve) => pool.waiters.push(resolve));
   }
 }
@@ -307,10 +304,14 @@ function releaseEntry(key, entry) {
 }
 
 function summaryOf(task, text) {
-  const head = String(text || '').replace(/\s+/g, ' ').slice(0, 400);
-  return [`task=${task?.id || '-'}`, `ac=${(task?.ac || []).join(',')}`, `result=${head || '(empty)'}`].join(
-    ' ',
-  );
+  const head = String(text || '')
+    .replace(/\s+/g, ' ')
+    .slice(0, 400);
+  return [
+    `task=${task?.id || '-'}`,
+    `ac=${(task?.ac || []).join(',')}`,
+    `result=${head || '(empty)'}`,
+  ].join(' ');
 }
 
 export function resolvePoolConfig(root) {

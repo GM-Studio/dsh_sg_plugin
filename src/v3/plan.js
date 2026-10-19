@@ -1,4 +1,3 @@
-import fs from 'node:fs';
 import path from 'node:path';
 import { exists, readText } from './util/fsx.js';
 import { canonicalJson, digest, norm, sha256 } from './util/hash.js';
@@ -12,7 +11,9 @@ export function changeDir(root, change) {
 }
 
 export function parseTasks(text) {
-  const lines = String(text ?? '').replace(/\r\n/g, '\n').split('\n');
+  const lines = String(text ?? '')
+    .replace(/\r\n/g, '\n')
+    .split('\n');
   const tasks = [];
   const errors = [];
   for (let index = 0; index < lines.length; index += 1) {
@@ -42,7 +43,9 @@ export function parseTasks(text) {
 }
 
 export function parseCases(text) {
-  const lines = String(text ?? '').replace(/\r\n/g, '\n').split('\n');
+  const lines = String(text ?? '')
+    .replace(/\r\n/g, '\n')
+    .split('\n');
   const cases = [];
   for (const line of lines) {
     const match = CASE_RE.exec(line.trim());
@@ -110,7 +113,13 @@ export function discoverCommand(root, config) {
     try {
       const pkg = JSON.parse(readText(pkgPath));
       if (typeof pkg?.scripts?.['test:json'] === 'string' && pkg.scripts['test:json'].trim()) {
-        const npmCli = path.join(path.dirname(process.execPath), 'node_modules', 'npm', 'bin', 'npm-cli.js');
+        const npmCli = path.join(
+          path.dirname(process.execPath),
+          'node_modules',
+          'npm',
+          'bin',
+          'npm-cli.js',
+        );
         const argv = exists(npmCli)
           ? [process.execPath, npmCli, 'run', 'test:json']
           : ['npm', 'run', 'test:json'];
@@ -123,7 +132,8 @@ export function discoverCommand(root, config) {
   return {
     ok: false,
     code: 'TEST_COMMAND_MISSING',
-    message: '找不到 test:json：请在 .specgate/config.yaml 的 testing.command 配置 argv，或添加 package.json scripts["test:json"]',
+    message:
+      '找不到 test:json：请在 .specgate/config.yaml 的 testing.command 配置 argv，或添加 package.json scripts["test:json"]',
   };
 }
 

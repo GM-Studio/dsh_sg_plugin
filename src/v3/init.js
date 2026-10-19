@@ -3,7 +3,7 @@ import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { initProject, createChange, configPath } from './change.js';
 import { load, patchState } from './state.js';
-import { exists, readText, writeText, ensureDir } from './util/fsx.js';
+import { exists, writeText, ensureDir } from './util/fsx.js';
 import { digest } from './util/hash.js';
 
 export const CONTEXT_FIELDS = [
@@ -81,7 +81,10 @@ export async function collectContext({ userQuestions, agent, signal, initial = {
   for (const field of CONTEXT_FIELDS) {
     if (context[field.key]) continue;
     const options = field.options
-      ? field.options.map((value) => ({ label: value, description: value === field.default ? '推荐默认' : '' }))
+      ? field.options.map((value) => ({
+          label: value,
+          description: value === field.default ? '推荐默认' : '',
+        }))
       : [
           { label: field.default, description: '使用推荐默认' },
           { label: '跳过', description: '留空，后续再补' },
@@ -332,7 +335,9 @@ process.exit(failed ? 1 : 0);
 `;
 
 function prefixFiles(files, prefix) {
-  return Object.fromEntries(Object.entries(files).map(([key, value]) => [`${prefix}${key}`, value]));
+  return Object.fromEntries(
+    Object.entries(files).map(([key, value]) => [`${prefix}${key}`, value]),
+  );
 }
 
 function vueScaffold(prefix = '') {
@@ -442,7 +447,7 @@ function monorepoScaffold() {
 function genericStackScaffold() {
   return {
     ...genericScaffold(),
-    'VERSION': '0.1.0\n',
+    VERSION: '0.1.0\n',
     'check.mjs': `import fs from 'node:fs';
 const version = fs.readFileSync('VERSION', 'utf8').trim();
 const ok = /^\\d+\\.\\d+\\.\\d+$/.test(version);
@@ -545,7 +550,13 @@ function firstChangeFiles(context) {
         schemaVersion: 1,
         change: 'add-version',
         requirements: [
-          { ac: 'AC-001', covers: ['REQ-001'], tasks: ['T-001'], cases: ['TC-001'], suite: 'default' },
+          {
+            ac: 'AC-001',
+            covers: ['REQ-001'],
+            tasks: ['T-001'],
+            cases: ['TC-001'],
+            suite: 'default',
+          },
         ],
         automation: [],
       },
@@ -601,7 +612,13 @@ function frontendChangeFiles(stack) {
         schemaVersion: 1,
         change: 'add-version',
         requirements: [
-          { ac: 'AC-001', covers: ['REQ-001'], tasks: ['T-001'], cases: ['TC-001'], suite: 'web-e2e' },
+          {
+            ac: 'AC-001',
+            covers: ['REQ-001'],
+            tasks: ['T-001'],
+            cases: ['TC-001'],
+            suite: 'web-e2e',
+          },
         ],
         automation: [],
       },
@@ -714,7 +731,8 @@ export async function finishInitProject({ root, state }) {
 
   let files = null;
   if (context.stack === 'python') files = pythonChangeFiles();
-  else if (context.stack === 'vue' || context.stack === 'react') files = frontendChangeFiles(context.stack);
+  else if (context.stack === 'vue' || context.stack === 'react')
+    files = frontendChangeFiles(context.stack);
   else if (context.stack === 'monorepo') files = monorepoChangeFiles();
   else if (context.stack === 'generic') files = genericChangeFiles();
   else files = firstChangeFiles(context);
@@ -731,7 +749,10 @@ export async function finishInitProject({ root, state }) {
   }
   patchState(root, (draft) => {
     draft.phase = 'H1_PENDING';
-    draft.h0 = { ...(draft.h0 || {}), approvedAt: draft.h0?.approvedAt || new Date().toISOString() };
+    draft.h0 = {
+      ...(draft.h0 || {}),
+      approvedAt: draft.h0?.approvedAt || new Date().toISOString(),
+    };
   });
   return { ok: true, phase: 'H1_PENDING', change: 'add-version', scaffold };
 }

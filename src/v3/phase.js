@@ -5,14 +5,7 @@ import { canonicalJson, digest, norm, sha256 } from './util/hash.js';
 import { git } from './util/git.js';
 import { parseDelta, parseSpec } from './openspec/parser.js';
 import { validateDeltaFiles } from './openspec/validator.js';
-import {
-  discoverCommand,
-  discoverSuites,
-  loadPlan,
-  computeCmdHash,
-  computePlanHash,
-  validatePlan,
-} from './plan.js';
+import { discoverSuites, loadPlan, computePlanHash, validatePlan } from './plan.js';
 import { checkApprovalHash } from './approvals.js';
 
 const PROPOSAL_SECTIONS = ['问题', '目标', '非目标', '影响面'];
@@ -165,12 +158,8 @@ export function checkM2({ root, state, config }) {
   errors.push(...validation.errors);
 
   const command = validation.command;
-  const planHash = command.ok
-    ? computePlanHash({ plan, command, suites: suiteInfo.suites })
-    : null;
-  const cmdHash = suiteInfo.ok
-    ? digest(suiteInfo.suites.map((suite) => suite.cmdHash))
-    : null;
+  const planHash = command.ok ? computePlanHash({ plan, command, suites: suiteInfo.suites }) : null;
+  const cmdHash = suiteInfo.ok ? digest(suiteInfo.suites.map((suite) => suite.cmdHash)) : null;
   return {
     ok: errors.length === 0,
     errors,

@@ -28,7 +28,6 @@ import {
 } from '../src/v3/worktrees.js';
 import { discoverCommand, loadPlan } from '../src/v3/plan.js';
 import { runTestCommand } from '../src/v3/testrunner.js';
-import { validateReport } from '../src/v3/report.js';
 import { runAllSuites, runTaskSuites, persistRuntime } from '../src/v3/suites.js';
 import { poolDisposeChange } from '../src/v3/pool.js';
 import { appendEvidence, verifyEvidence } from '../src/v3/evidence.js';
@@ -179,7 +178,12 @@ switch (command) {
       draft.phase = 'H2_PENDING';
     });
     if (!saved.ok) fail(saved.message, saved);
-    out({ ok: true, planHash: m2.planHash, cmdHash: m2.cmdHash, tasks: m2.plan.tasks.map((t) => t.id) });
+    out({
+      ok: true,
+      planHash: m2.planHash,
+      cmdHash: m2.cmdHash,
+      tasks: m2.plan.tasks.map((t) => t.id),
+    });
     break;
   }
   case 'approve-h2': {
@@ -189,7 +193,11 @@ switch (command) {
     if (!m2.ok) fail('M2 failed', m2);
     const frozen = checkFrozenH1({ root, state });
     if (!frozen.ok) fail(frozen.message, frozen);
-    const committed = commitChangePackage(root, state.change, `docs(${state.change}): 冻结 H2 方案`);
+    const committed = commitChangePackage(
+      root,
+      state.change,
+      `docs(${state.change}): 冻结 H2 方案`,
+    );
     if (!committed.ok) fail(committed.message, committed);
     const base = headOf(root, 'HEAD');
     const saved = patchState(root, (draft) => {
@@ -425,7 +433,13 @@ switch (command) {
       draft.tasks[arg1].commit = finalHead;
       draft.evidence = { headSeq: evidence.seq, headHash: evidence.hash };
     });
-    out({ ok: true, task: arg1, commit: finalHead, integration: merged.commit, evidence: evidence.seq });
+    out({
+      ok: true,
+      task: arg1,
+      commit: finalHead,
+      integration: merged.commit,
+      evidence: evidence.seq,
+    });
     break;
   }
   case 'integrate': {
@@ -467,7 +481,13 @@ switch (command) {
       commit,
       validator: 'builtin',
     });
-    const acceptanceFile = path.join(integration.path, 'openspec', 'changes', state.change, 'acceptance.md');
+    const acceptanceFile = path.join(
+      integration.path,
+      'openspec',
+      'changes',
+      state.change,
+      'acceptance.md',
+    );
     fs.writeFileSync(acceptanceFile, acceptance.text, 'utf8');
     git(integration.path, ['add', 'openspec/changes']);
     git(integration.path, ['commit', '-q', '-m', `acceptance(${state.change}): 生成验收报告`]);

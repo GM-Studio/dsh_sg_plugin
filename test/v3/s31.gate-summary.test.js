@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { initProject, createChange, configPath } from '../../src/v3/change.js';
+import { initProject, createChange } from '../../src/v3/change.js';
 import { load, patchState } from '../../src/v3/state.js';
 import { git } from '../../src/v3/worktrees.js';
 import { renderGateSummary } from '../../src/v3/gate-summary.js';

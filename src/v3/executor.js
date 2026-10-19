@@ -34,7 +34,9 @@ async function withMergeLock(task) {
 
 function changedFiles(root, base, head) {
   try {
-    return git(root, ['diff', '--name-only', `${base}..${head}`]).split('\n').filter(Boolean);
+    return git(root, ['diff', '--name-only', `${base}..${head}`])
+      .split('\n')
+      .filter(Boolean);
   } catch {
     return [];
   }
@@ -51,7 +53,8 @@ function extractJson(text) {
   }
 }
 
-function markTaskDone(integrationPath, change, taskId) {  const file = path.join(integrationPath, 'openspec', 'changes', change, 'tasks.md');
+function markTaskDone(integrationPath, change, taskId) {
+  const file = path.join(integrationPath, 'openspec', 'changes', change, 'tasks.md');
   if (!fs.existsSync(file)) return false;
   const lines = fs.readFileSync(file, 'utf8').split(/\r?\n/);
   const marker = new RegExp(`"id"\\s*:\\s*"${taskId}"`);
@@ -111,7 +114,6 @@ async function verifyAndFinish({
     root,
     state,
     worktree: worktree.path,
-    root,
     change,
     task,
     plan,
@@ -152,9 +154,13 @@ async function verifyAndFinish({
   if (!verdict || !verdict.verdict) return failure('REVIEW_INVALID', 'reviewer 未返回合法 JSON');
   const blocking = Array.isArray(verdict.blocking) ? verdict.blocking : [];
   if (verdict.verdict !== 'pass' || blocking.length > 0) {
-    return failure('REVIEW_BLOCKED', `reviewer 判定 ${verdict.verdict}，blocking ${blocking.length} 项`, {
-      verdict,
-    });
+    return failure(
+      'REVIEW_BLOCKED',
+      `reviewer 判定 ${verdict.verdict}，blocking ${blocking.length} 项`,
+      {
+        verdict,
+      },
+    );
   }
 
   const reviewDiff = diffCheck({
@@ -190,7 +196,9 @@ async function verifyAndFinish({
     markTaskDone(integration.path, change, task.id);
     const injected = [
       ...new Set([
-        ...loadSkillPayload({ role: 'implementer', parallel: task.parallel }).map((item) => item.id),
+        ...loadSkillPayload({ role: 'implementer', parallel: task.parallel }).map(
+          (item) => item.id,
+        ),
         ...loadSkillPayload({ role: 'tester' }).map((item) => item.id),
         ...reviewerSkills.map((item) => item.id),
       ]),
@@ -218,7 +226,8 @@ async function executeFeatureTask({ root, state, task, dispatcher, config, paren
   const change = state.change;
   const integrationBase = state.integration?.base || state.baseCommit;
   const integration = ensureIntegration(root, change, integrationBase);
-  if (!integration.ok) return failure(integration.code || 'INTEGRATION_FAILED', integration.message);
+  if (!integration.ok)
+    return failure(integration.code || 'INTEGRATION_FAILED', integration.message);
 
   const base = headOf(integration.path, 'HEAD');
   const worktree = ensureTask(root, change, task.id, base);
@@ -238,7 +247,8 @@ async function executeFeatureTask({ root, state, task, dispatcher, config, paren
     }),
     parent,
   });
-  if (!implementer.ok) return failure(implementer.code || 'IMPLEMENTER_FAILED', implementer.message);
+  if (!implementer.ok)
+    return failure(implementer.code || 'IMPLEMENTER_FAILED', implementer.message);
 
   const implHead = headOf(worktree.path, 'HEAD');
   if (!implHead || implHead === base) return failure('NO_COMMIT', 'implementer 没有产生提交');
@@ -269,7 +279,8 @@ async function executeFeatureTask({ root, state, task, dispatcher, config, paren
   if (!tester.ok) return failure(tester.code || 'TESTER_FAILED', tester.message);
 
   const testHead = headOf(worktree.path, 'HEAD');
-  if (!testHead || testHead === implHead) return failure('NO_TEST_COMMIT', 'tester 没有产生测试提交');
+  if (!testHead || testHead === implHead)
+    return failure('NO_TEST_COMMIT', 'tester 没有产生测试提交');
   const testDiff = diffCheck({
     root,
     branch: worktree.branch,
@@ -307,7 +318,8 @@ async function executeFixTask({ root, state, task, dispatcher, config, parent })
   const change = state.change;
   const integrationBase = state.integration?.base || state.baseCommit;
   const integration = ensureIntegration(root, change, integrationBase);
-  if (!integration.ok) return failure(integration.code || 'INTEGRATION_FAILED', integration.message);
+  if (!integration.ok)
+    return failure(integration.code || 'INTEGRATION_FAILED', integration.message);
 
   const base = headOf(integration.path, 'HEAD');
   const worktree = ensureTask(root, change, task.id, base);
@@ -384,10 +396,12 @@ async function executeFixTask({ root, state, task, dispatcher, config, parent })
     }),
     parent,
   });
-  if (!implementer.ok) return failure(implementer.code || 'IMPLEMENTER_FAILED', implementer.message);
+  if (!implementer.ok)
+    return failure(implementer.code || 'IMPLEMENTER_FAILED', implementer.message);
 
   const implHead = headOf(worktree.path, 'HEAD');
-  if (!implHead || implHead === testHead) return failure('NO_COMMIT', 'implementer 没有产生修复提交');
+  if (!implHead || implHead === testHead)
+    return failure('NO_COMMIT', 'implementer 没有产生修复提交');
   const implDiff = diffCheck({
     root,
     branch: worktree.branch,

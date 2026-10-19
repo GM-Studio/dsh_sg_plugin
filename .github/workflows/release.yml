@@ -20,6 +20,7 @@ jobs:
         with:
           node-version: 22
       - run: npm install --ignore-scripts
+      - run: npm run lint
       - run: npm test
       - run: npm run pack:check
       - name: Publish to npm (optional)

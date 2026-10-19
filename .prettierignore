@@ -1,0 +1,8 @@
+node_modules/
+dist/
+coverage/
+assets/
+docs/
+*.md
+*.tgz
+package-lock.json

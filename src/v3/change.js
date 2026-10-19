@@ -1,7 +1,6 @@
-import fs from 'node:fs';
 import path from 'node:path';
 import { ensureDir, exists, readText, writeText } from './util/fsx.js';
-import { init as initState, load as loadState, save as saveState, patchState } from './state.js';
+import { init as initState, load as loadState, patchState } from './state.js';
 
 export const CONFIG_FILE = 'config.yaml';
 export const CHANGE_NAME_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
@@ -112,8 +111,7 @@ export const SUITE_KINDS = ['node-test', 'pytest', 'command'];
 /** Normalize configured suites; fall back to the v3.0 single-suite shape. */
 export function readSuites(config) {
   const raw = Array.isArray(config?.suites) ? config.suites : [];
-  const installDefault =
-    config?.install === undefined ? null : config.install !== false;
+  const installDefault = config?.install === undefined ? null : config.install !== false;
   if (raw.length === 0) {
     const command = Array.isArray(config?.testing?.command) ? config.testing.command : [];
     return [
@@ -253,7 +251,10 @@ export function initProject(root, options = {}) {
   };
 }
 
-export function createChange(root, { name, type = 'feature', baseCommit = null, changeKey = null } = {}) {
+export function createChange(
+  root,
+  { name, type = 'feature', baseCommit = null, changeKey = null } = {},
+) {
   if (!CHANGE_NAME_PATTERN.test(String(name || ''))) {
     return {
       ok: false,
