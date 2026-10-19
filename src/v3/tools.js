@@ -15,6 +15,12 @@ import {
   integrationBranch,
 } from './worktrees.js';
 import { createDispatcher } from './dispatch.js';
+import {
+  collectDiff,
+  validateReview,
+  createReviewWorktree,
+  removeReviewWorktree,
+} from './review.js';
 import { executeTask, revertWave } from './executor.js';
 import { readyBatch } from './scheduler.js';
 import { discoverCommand, loadPlan } from './plan.js';
@@ -25,7 +31,7 @@ import { generateAcceptance } from './acceptance.js';
 import { verifyEvidence, appendEvidence } from './evidence.js';
 import { digest } from './util/hash.js';
 import { archiveChange, nextTag } from './archive.js';
-import { loadSkill, suggestForPhase } from './skills.js';
+import { loadSkill, loadSkillPayload, suggestForPhase } from './skills.js';
 import { acquire, release } from './lock.js';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -439,6 +445,104 @@ export function registerTools(ctx, runtime) {
                   `集成回归失败（suite ${suitesResult.failedSuite}）：${suitesResult.message}，已回退到波前：${(reverted.reverted || []).join('、')}`,
                   { suitesResult, reverted },
                 );
+              }
+
+              const reviewDiff = collectDiff({ cwd: integration.path, base, head: commit });
+              const reviewWt = createReviewWorktree({
+                root: project.root,
+                change,
+                commit,
+              });
+              const reviewPath = reviewWt.ok ? reviewWt.path : integration.path;
+              const reviewDispatcher = createDispatcher(runtime);
+              let integrationReview;
+              try {
+                integrationReview = await reviewDispatcher({
+                  role: 'reviewer',
+                  task: { id: 'INTEGRATION', title: '集成审查', ac: [...deltaAcs] },
+                  worktree: reviewPath,
+                  root: project.root,
+                  change,
+                  prompt: [
+                    `审查 change ${change} 的集成结果。`,
+                    `AC: ${[...deltaAcs].join(', ')}`,
+                    `diff ${reviewDiff.range}（${reviewDiff.bytes} bytes${reviewDiff.truncated ? '，已截断但文件清单完整' : ''}）`,
+                    '文件清单：',
+                    ...reviewDiff.fileList,
+                    '完整 diff：',
+                    reviewDiff.text,
+                    'blocking 必须包含 file/line/evidence/reason，evidence 必须能在 diff 或测试输出中找到。',
+                    '只输出 JSON：{"verdict":"pass|fail","blocking":[{"file":"","line":0,"evidence":"","reason":""}],"nonBlocking":[]}',
+                  ].join('\n'),
+                  skills: loadSkillPayload({ role: 'reviewer' }),
+                  parent: exec?.agent,
+                });
+              } finally {
+                if (reviewWt.ok) removeReviewWorktree({ root: project.root, path: reviewWt.path });
+              }
+              const reviewDir = path.join(
+                integration.path,
+                'openspec',
+                'changes',
+                change,
+                'reviews',
+              );
+              fs.mkdirSync(reviewDir, { recursive: true });
+              let integrationVerdict = null;
+              let reviewErrors = [];
+              if (integrationReview?.ok) {
+                try {
+                  const raw = String(integrationReview.text || '');
+                  const start = raw.indexOf('{');
+                  const end = raw.lastIndexOf('}');
+                  integrationVerdict = start >= 0 ? JSON.parse(raw.slice(start, end + 1)) : null;
+                } catch {
+                  integrationVerdict = null;
+                }
+                if (!integrationVerdict) {
+                  reviewErrors = ['reviewer 未返回合法 JSON'];
+                } else {
+                  const checked = validateReview(
+                    integrationVerdict,
+                    reviewDiff,
+                    suitesResult.message || '',
+                  );
+                  reviewErrors = checked.errors;
+                  if (
+                    checked.ok &&
+                    (integrationVerdict.verdict !== 'pass' || checked.blocking.length > 0)
+                  ) {
+                    reviewErrors = [
+                      `reviewer 判定 ${integrationVerdict.verdict}，blocking ${checked.blocking.length} 项`,
+                    ];
+                  }
+                }
+              } else {
+                reviewErrors = [integrationReview?.message || 'reviewer 调用失败'];
+              }
+              fs.writeFileSync(
+                path.join(reviewDir, 'integration.json'),
+                `${JSON.stringify(
+                  {
+                    verdict: integrationVerdict,
+                    errors: reviewErrors,
+                    at: new Date().toISOString(),
+                  },
+                  null,
+                  2,
+                )}\n`,
+                'utf8',
+              );
+              git(integration.path, ['add', 'openspec/changes']);
+              git(integration.path, ['commit', '-q', '-m', `review(${change}): 集成审查`]);
+              if (reviewErrors.length > 0) {
+                patchState(project.root, (draft) => {
+                  draft.blockedReason = `集成审查未通过：${reviewErrors.join('; ')}`;
+                });
+                return fail(`集成审查未通过：${reviewErrors.join('; ')}`, {
+                  verdict: integrationVerdict,
+                  errors: reviewErrors,
+                });
               }
 
               const combinedReport = {

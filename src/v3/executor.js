@@ -22,6 +22,7 @@ import {
   createReviewWorktree,
   removeReviewWorktree,
 } from './review.js';
+import { runFormatter } from './formatter.js';
 
 function failure(code, message, extra = {}) {
   return { ok: false, code, message, ...extra };
@@ -291,6 +292,9 @@ async function executeFeatureTask({ root, state, task, dispatcher, config, paren
       violations: implDiff.violations,
     });
   }
+  const formatted = runFormatter({ root, worktree: worktree.path, change, task });
+  if (!formatted.ok) return failure('FORMAT_FAILED', formatted.message, { formatted });
+  const formatHead = headOf(worktree.path, 'HEAD') || implHead;
 
   const tester = await dispatcher({
     role: 'tester',
@@ -305,12 +309,12 @@ async function executeFeatureTask({ root, state, task, dispatcher, config, paren
   if (!tester.ok) return failure(tester.code || 'TESTER_FAILED', tester.message);
 
   const testHead = headOf(worktree.path, 'HEAD');
-  if (!testHead || testHead === implHead)
+  if (!testHead || testHead === formatHead)
     return failure('NO_TEST_COMMIT', 'tester 没有产生测试提交');
   const testDiff = diffCheck({
     root,
     branch: worktree.branch,
-    baseCommit: implHead,
+    baseCommit: formatHead,
     role: 'tester',
     change,
     touched: state.touched,
