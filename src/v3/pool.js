@@ -106,11 +106,11 @@ async function disposeEntry(key, entry, reason) {
 }
 
 async function expireIdle(config, now = Date.now()) {
-  const ttlMs = config.ttlMinutes * 60 * 1000;
   for (const [key, pool] of pools) {
     for (const entry of [...pool.entries]) {
       if (entry.leased) continue;
-      if (now - entry.lastUsedAt >= ttlMs) {
+      const ttlMinutes = entry.config?.ttlMinutes || config.ttlMinutes;
+      if (now - entry.lastUsedAt >= ttlMinutes * 60 * 1000) {
         await disposeEntry(key, entry, 'ttl');
       }
     }
