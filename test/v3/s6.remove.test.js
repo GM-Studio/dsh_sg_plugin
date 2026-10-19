@@ -1,4 +1,4 @@
-import test from 'node:test';
+﻿import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import os from 'node:os';
@@ -203,7 +203,7 @@ test('S6：remove 删除实现、测试并从 specs 移除需求', async () => {
   const ctx = await bootstrap(root);
 
   const task = await call(ctx, 'sg_run');
-  assert.equal(task.data?.ok, true, task.text);
+  assert.match(task.text, /已合并/);
 
   await call(ctx, 'sg_run');
   const integrated = await call(ctx, 'sg_run');
@@ -220,3 +220,4 @@ test('S6：remove 删除实现、测试并从 specs 移除需求', async () => {
   const state = load(root).state;
   assert.equal(state.phase, 'DONE');
 });
+

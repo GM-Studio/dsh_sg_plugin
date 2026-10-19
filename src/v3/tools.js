@@ -6,7 +6,8 @@ import { patchState } from './state.js';
 import { askApproval, issueApproval } from './approvals.js';
 import { commitChangePackage, ensureIntegration, git, headOf, integrationBranch } from './worktrees.js';
 import { createDispatcher } from './dispatch.js';
-import { executeTask, pickNextTask } from './executor.js';
+import { executeTask, pickNextTask, revertWave } from './executor.js';
+import { readyBatch } from './scheduler.js';
 import { discoverCommand, loadPlan } from './plan.js';
 import { runTestCommand } from './testrunner.js';
 import { validateReport } from './report.js';
@@ -212,60 +213,66 @@ export function registerTools(ctx, runtime) {
           case 'H2_PENDING':
             return ok('等待人执行 /sg-approve H2。');
           case 'EXECUTING': {
-            const task = pickNextTask(state);
-            if (!task) {
-              const all = Object.values(state.tasks || {});
-              if (all.length > 0 && all.every((item) => item.status === 'merged')) {
-                const moved = patchState(project.root, (draft) => {
-                  draft.phase = 'INTEGRATING';
-                });
-                if (!moved.ok) return fail(moved.message, moved);
-                return ok('所有任务已合并，进入 INTEGRATING。请再次 /sg-run 执行全量回归。');
-              }
+            const maxParallel = Math.max(1, Math.min(4, Number(project.config?.maxParallel) || 2));
+            const info = readyBatch(state, maxParallel);
+            if (info.done) {
+              const moved = patchState(project.root, (draft) => {
+                draft.phase = 'INTEGRATING';
+              });
+              if (!moved.ok) return fail(moved.message, moved);
+              return ok('所有任务已合并，进入 INTEGRATING。请再次 /sg-run 执行全量回归。');
+            }
+            if (info.batch.length === 0) {
               return fail('没有可执行任务：依赖未满足或任务已阻塞');
             }
 
             const dispatcher = createDispatcher(runtime);
-            const result = await executeTask({
-              root: project.root,
-              state,
-              task,
-              dispatcher,
-              config: project.config,
-              parent: exec?.agent,
-            });
-            const attempts = (task.attempts || 0) + 1;
+            const results = await Promise.all(
+              info.batch.map(async (taskId) => {
+                const task = state.tasks[taskId];
+                const result = await executeTask({
+                  root: project.root,
+                  state,
+                  task,
+                  dispatcher,
+                  config: project.config,
+                  parent: exec?.agent,
+                });
+                return { taskId, result, attempts: (task.attempts || 0) + 1 };
+              }),
+            );
 
-            if (!result.ok) {
-              const blocked = attempts >= 3;
-              const saved = patchState(project.root, (draft) => {
-                const item = draft.tasks[task.id];
-                item.status = blocked ? 'blocked' : 'failed';
-                item.attempts = attempts;
-                if (blocked) {
-                  draft.phase = 'BLOCKED';
-                  draft.blockedReason = `任务 ${task.id} 连续失败 3 次：${result.message}`;
-                }
-              });
-              if (!saved.ok) return fail(saved.message, saved);
-              return fail(`任务 ${task.id} 第 ${attempts} 次失败：${result.message}`, result);
-            }
-
+            let lastError = null;
             const saved = patchState(project.root, (draft) => {
-              const item = draft.tasks[task.id];
-              item.status = 'merged';
-              item.attempts = attempts;
-              item.commit = result.commit;
-              draft.evidence = {
-                headSeq: result.evidence.seq,
-                headHash: result.evidence.hash,
-              };
+              for (const { taskId, result, attempts } of results) {
+                const item = draft.tasks[taskId];
+                if (result.ok) {
+                  item.status = 'merged';
+                  item.attempts = attempts;
+                  item.commit = result.commit;
+                  draft.evidence = {
+                    headSeq: result.evidence.seq,
+                    headHash: result.evidence.hash,
+                  };
+                } else {
+                  const isBlocked = attempts >= 3;
+                  item.status = isBlocked ? 'blocked' : 'failed';
+                  item.attempts = attempts;
+                  lastError = `任务 ${taskId} 第 ${attempts} 次失败：${result.message}`;
+                  if (isBlocked) {
+                    draft.phase = 'BLOCKED';
+                    draft.blockedReason = lastError;
+                  }
+                }
+              }
             });
             if (!saved.ok) return fail(saved.message, saved);
-            return ok(
-              `任务 ${task.id} 已合并（commit ${String(result.commit).slice(0, 8)}），证据 #${result.evidence.seq}。继续 /sg-run 推进下一个任务。`,
-              result,
-            );
+            if (lastError) return fail(lastError, { results });
+
+            const mergedIds = results.map((item) => `${item.taskId}@${String(item.result.commit).slice(0, 8)}`);
+            return ok(`已合并：${mergedIds.join('、')}。继续 /sg-run 推进。`, {
+              results: results.map((item) => ({ taskId: item.taskId, commit: item.result.commit })),
+            });
           }
           case 'INTEGRATING': {
             const change = state.change;
@@ -280,13 +287,23 @@ export function registerTools(ctx, runtime) {
               cwd: path.join(integration.path, command.cwd || '.'),
             });
             if (run.exitCode !== 0) {
+              const reverted = revertWave({
+                root: project.root,
+                state,
+                waveStart: state.integration?.base,
+              });
               patchState(project.root, (draft) => {
-                draft.phase = 'BLOCKED';
+                for (const id of reverted.reverted || []) {
+                  draft.tasks[id].status = 'reverted';
+                  draft.tasks[id].attempts = (draft.tasks[id].attempts || 0) + 1;
+                }
+                draft.phase = 'EXECUTING';
                 draft.blockedReason = `集成回归失败：exit ${run.exitCode}`;
               });
-              return fail(`集成回归失败（exit ${run.exitCode}）：${(run.stderr || '').slice(-300)}`, {
-                run,
-              });
+              return fail(
+                `集成回归失败（exit ${run.exitCode}），已回退到波前：${(reverted.reverted || []).join('、')}`,
+                { run, reverted },
+              );
             }
 
             const plan = loadPlan(project.root, change);
@@ -307,11 +324,23 @@ export function registerTools(ctx, runtime) {
               changedFiles,
             });
             if (!validation.ok) {
+              const reverted = revertWave({
+                root: project.root,
+                state,
+                waveStart: state.integration?.base,
+              });
               patchState(project.root, (draft) => {
-                draft.phase = 'BLOCKED';
+                for (const id of reverted.reverted || []) {
+                  draft.tasks[id].status = 'reverted';
+                  draft.tasks[id].attempts = (draft.tasks[id].attempts || 0) + 1;
+                }
+                draft.phase = 'EXECUTING';
                 draft.blockedReason = `验收证据不足：${validation.errors.join('; ')}`;
               });
-              return fail(`验收证据不足：\n${formatErrors(validation.errors)}`, { validation, run });
+              return fail(`验收证据不足，已回退到波前：\n${formatErrors(validation.errors)}`, {
+                validation,
+                run,
+              });
             }
 
             const headEvidence = verifyEvidence(project.root, change);

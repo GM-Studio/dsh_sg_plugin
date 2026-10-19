@@ -20,6 +20,17 @@ function failure(code, message, extra = {}) {
   return { ok: false, code, message, ...extra };
 }
 
+let mergeQueue = Promise.resolve();
+
+async function withMergeLock(task) {
+  const run = mergeQueue.then(task, task);
+  mergeQueue = run.then(
+    () => undefined,
+    () => undefined,
+  );
+  return run;
+}
+
 function changedFiles(root, base, head) {
   try {
     return git(root, ['diff', '--name-only', `${base}..${head}`]).split('\n').filter(Boolean);
@@ -39,8 +50,7 @@ function extractJson(text) {
   }
 }
 
-function markTaskDone(integrationPath, change, taskId) {
-  const file = path.join(integrationPath, 'openspec', 'changes', change, 'tasks.md');
+function markTaskDone(integrationPath, change, taskId) {  const file = path.join(integrationPath, 'openspec', 'changes', change, 'tasks.md');
   if (!fs.existsSync(file)) return false;
   const lines = fs.readFileSync(file, 'utf8').split(/\r?\n/);
   const marker = new RegExp(`"id"\\s*:\\s*"${taskId}"`);
@@ -104,11 +114,12 @@ async function verifyAndFinish({
   }
 
   const plan = loadPlan(root, change);
-  const { deltaAcs, knownAcs } = collectKnownAcs({ root, state, change });
+  const { knownAcs } = collectKnownAcs({ root, state, change });
+  const required = new Set(task.ac || []);
   const head = headOf(worktree.path, 'HEAD');
   const validation = validateReport({
     report: run.report,
-    deltaAcs,
+    deltaAcs: required,
     knownAcs,
     mapping: plan.mapping,
     worktree: worktree.path,
@@ -163,30 +174,31 @@ async function verifyAndFinish({
   git(worktree.path, ['add', '-A']);
   git(worktree.path, ['commit', '-q', '-m', `review ${task.id}`]);
   const finalHead = headOf(worktree.path, 'HEAD');
-
-  const merged = mergeIntoIntegration({
-    integrationPath: integration.path,
-    branch: worktree.branch,
-    expectedCommit: finalHead,
-    message: `merge ${task.id}`,
+  const merged = await withMergeLock(async () => {
+    const result = mergeIntoIntegration({
+      integrationPath: integration.path,
+      branch: worktree.branch,
+      expectedCommit: finalHead,
+      message: `merge ${task.id}`,
+    });
+    if (!result.ok) return { ok: false, code: result.code, message: result.message };
+    markTaskDone(integration.path, change, task.id);
+    const evidence = appendEvidence(root, change, {
+      task: task.id,
+      event: 'task',
+      decision: 'merged',
+      refs: { commit: finalHead, integration: result.commit, report: validation.stats },
+    });
+    return {
+      ok: true,
+      commit: finalHead,
+      integrationCommit: result.commit,
+      report: validation.stats,
+      evidence: { seq: evidence.seq, hash: evidence.hash },
+    };
   });
   if (!merged.ok) return failure(merged.code || 'MERGE_FAILED', merged.message);
-
-  markTaskDone(integration.path, change, task.id);
-  const evidence = appendEvidence(root, change, {
-    task: task.id,
-    event: 'task',
-    decision: 'merged',
-    refs: { commit: finalHead, integration: merged.commit, report: validation.stats },
-  });
-
-  return {
-    ok: true,
-    commit: finalHead,
-    integrationCommit: merged.commit,
-    report: validation.stats,
-    evidence: { seq: evidence.seq, hash: evidence.hash },
-  };
+  return merged;
 }
 
 async function executeFeatureTask({ root, state, task, dispatcher, config, parent }) {
@@ -379,4 +391,23 @@ export function pickNextTask(state) {
         (task.deps || []).every((dep) => merged.has(dep)),
     ) || null
   );
+}
+
+export function revertWave({ root, state, waveStart }) {
+  const integration = ensureIntegration(root, state.change, state.integration?.base);
+  if (!integration.ok) return { ok: false, message: integration.message };
+  try {
+    git(integration.path, ['reset', '--hard', waveStart]);
+  } catch (error) {
+    return { ok: false, message: String(error.stderr || error.message) };
+  }
+  const reverted = Object.entries(state.tasks || {})
+    .filter(([, task]) => task.status === 'merged' || task.status === 'failed')
+    .map(([id]) => id);
+  appendEvidence(root, state.change, {
+    event: 'revertWave',
+    decision: 'reverted',
+    refs: { to: waveStart, tasks: reverted },
+  });
+  return { ok: true, reverted, commit: headOf(integration.path, 'HEAD') };
 }

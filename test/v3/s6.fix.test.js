@@ -1,4 +1,4 @@
-import test from 'node:test';
+﻿import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import os from 'node:os';
@@ -234,7 +234,7 @@ test('S6：fix 先红后绿并归档更新 specs', async () => {
   const ctx = await bootstrap(root);
 
   const task = await call(ctx, 'sg_run');
-  assert.equal(task.data?.ok, true, task.text);
+  assert.match(task.text, /已合并/);
   const state = load(root).state;
   assert.equal(state.tasks['T-001'].status, 'merged');
 
@@ -249,3 +249,4 @@ test('S6：fix 先红后绿并归档更新 specs', async () => {
   assert.match(spec, /AC-002/);
   assert.match(spec, /返回 hello/);
 });
+

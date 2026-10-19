@@ -1,4 +1,4 @@
-import test from 'node:test';
+﻿import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import os from 'node:os';
@@ -208,7 +208,7 @@ test('S4：feature 单任务从实现到合并并写 [x]', async () => {
   const root = initFixture();
   const ctx = await bootstrap(root);
   const result = await call(ctx, 'sg_run');
-  assert.equal(result.data?.ok, true, result.text);
+  assert.match(result.text, /已合并/);
 
   const state = load(root).state;
   assert.equal(state.tasks['T-001'].status, 'merged');
@@ -304,7 +304,7 @@ test('S5：集成回归、H3 与归档', async () => {
   const ctx = await bootstrap(root);
 
   const task = await call(ctx, 'sg_run');
-  assert.equal(task.data?.ok, true, task.text);
+  assert.match(task.text, /已合并/);
 
   const transition = await call(ctx, 'sg_run');
   assert.match(transition.text, /进入 INTEGRATING/);
@@ -333,3 +333,4 @@ test('S5：集成回归、H3 与归档', async () => {
   const entries = fs.readdirSync(archiveRoot);
   assert.ok(entries.some((name) => name.endsWith('-add-greeting')));
 });
+
