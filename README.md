@@ -228,7 +228,7 @@ Gradle 项目使用 `kind: gradle`、`goals: ["check"]` 与 `reportGlob: "build/
 
 SpecGate 以公开 Git 仓库分发；发布到 npm 是可选项。仓库本身就是完整插件，没有构建步骤。
 
-### 方式 A：GitHub 依赖（推荐）
+### 方式 A GitHub 依赖（推荐）
 
 在当前 profile 的 `package.json` 中加入：
 
@@ -254,7 +254,7 @@ pnpm install
 
 `#main` 表示最新提交；`#<commit-sha>` 可固定构建。使用 npm 的 profile 可执行 `npm install`。
 
-### 方式 B：plugin_manager 从 GitHub 安装
+### 方式 B plugin_manager 从 GitHub 安装
 
 调用 DSH 的 `plugin_manager` 工具：
 
@@ -275,7 +275,7 @@ plugin_manager install_bundle target=github:GM-Studio/dsh_sg_plugin#v3.6.0
 
 如果提示 `already-installed`，先移除旧 bundle，或改用方式 A。
 
-### 方式 C：本地目录
+### 方式 C 本地目录
 
 ```text
 plugin_manager action=install_bundle target=D:\plugins\specgate
@@ -289,13 +289,13 @@ plugin_manager action=install_bundle target=D:\plugins\specgate
 }
 ```
 
-### 方式 D：npm registry（仅当已发布）
+### 方式 D npm registry 仅当已发布
 
 ```text
 plugin_manager action=install_bundle target=dsh-plugin-specgate@3.6.0
 ```
 
-### 方式 E：离线 tgz 包
+### 方式 E 离线 tgz 包
 
 适用于内网 / 跨操作系统。在联网机器上构建一次：
 

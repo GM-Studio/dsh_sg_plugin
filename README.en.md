@@ -49,7 +49,7 @@ A Host plugin that brings AgentKit47's gated development workflow to DeepSeek Ha
   - [Method E: offline tgz package](#method-e-offline-tgz-package)
   - [Release artifacts (v3.6.0)](#release-artifacts-v360)
   - [Verify the installation](#verify-the-installation)
-  - [Project-level start / stop](#project-level-start--stop)
+  - [Project-level start and stop](#project-level-start-and-stop)
 - [Configuration](#configuration)
 - [Language](#language)
 - [Quick start](#quick-start)
@@ -362,7 +362,7 @@ If the command is missing:
 4. Check `~/.dsh/logs` for load errors.
 5. Confirm DSH `>= 0.2.1-rc.2` and Node `>= 20.19.0`.
 
-### Project-level start / stop
+### Project-level start and stop
 
 The plugin is a Host plugin; it has no background daemon and no enable/disable toggle. It activates per project the moment the project root contains `.specgate/state.json` — which `/sg-init` creates. To stop using it in a project, remove `.specgate/` (and optionally `openspec/`); nothing else in the repository depends on it.
 
