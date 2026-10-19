@@ -439,12 +439,58 @@ function monorepoScaffold() {
   };
 }
 
+function genericStackScaffold() {
+  return {
+    ...genericScaffold(),
+    'VERSION': '0.1.0\n',
+    'check.mjs': `import fs from 'node:fs';
+const version = fs.readFileSync('VERSION', 'utf8').trim();
+const ok = /^\\d+\\.\\d+\\.\\d+$/.test(version);
+fs.writeFileSync(
+  process.env.SG_REPORT || 'sg-report.json',
+  JSON.stringify({
+    schemaVersion: 1,
+    cases: [{ id: 'TC-001', ac: ['AC-001'], status: ok ? 'pass' : 'fail', file: 'VERSION' }],
+  }, null, 2),
+);
+process.exit(ok ? 0 : 1);
+`,
+  };
+}
+
+function genericChangeFiles() {
+  return {
+    'openspec/changes/add-version/proposal.md': `# 变更提案：add-version\n\n## 问题\n通用骨架只有占位版本 0.1.0。\n\n## 目标\nVERSION 固定为 1.0.0，并由 check.mjs 校验。\n\n## 非目标\n不绑定技术栈。\n\n## 影响面\nVERSION / check.mjs\n`,
+    'openspec/changes/add-version/specs/ops/spec.md': `## ADDED Requirements\n\n### Requirement: 版本文件 (REQ-001)\n\n#### Scenario: 版本为 1.0.0 (AC-001)\n\n- **When** 运行 check.mjs\n- **Then** VERSION 为 1.0.0\n`,
+    'openspec/changes/add-version/design.md': `# 方案：add-version\n\n## 目标与非目标\n更新 VERSION 与校验脚本。\n\n## 任务图\nT-001。\n\n## AC 到用例\nAC-001 由 check.mjs 覆盖。\n\n## 风险\n无。\n`,
+    'openspec/changes/add-version/tasks.md': `# 任务：add-version\n\n## T-001 版本文件\n<!-- sg:task {"id":"T-001","title":"版本文件","ac":["AC-001"],"deps":[],"parallel":false} -->\n- [ ] VERSION 改为 1.0.0\n- [ ] check.mjs 校验 1.0.0\n`,
+    'openspec/changes/add-version/tests/cases.md': `# 测试用例\n\n| 用例 | AC | 层次 | 描述 |\n|---|---|---|---|\n| TC-001 | AC-001 | unit | VERSION=1.0.0 |\n`,
+    'openspec/changes/add-version/tests/mapping.json': `${JSON.stringify(
+      {
+        schemaVersion: 1,
+        change: 'add-version',
+        requirements: [
+          { ac: 'AC-001', covers: ['REQ-001'], tasks: ['T-001'], cases: ['TC-001'], suite: 'api' },
+        ],
+        automation: [],
+      },
+      null,
+      2,
+    )}\n`,
+    'openspec/changes/add-version/tests/touched.json': `${JSON.stringify(
+      { schemaVersion: 1, modify: ['VERSION', 'check.mjs'], delete: [], bootstrap: [] },
+      null,
+      2,
+    )}\n`,
+  };
+}
+
 export function scaffoldFiles(stack) {
   if (stack === 'python') return pythonScaffold();
   if (stack === 'vue') return { ...genericScaffold(), ...vueScaffold() };
   if (stack === 'react') return { ...genericScaffold(), ...reactScaffold() };
   if (stack === 'monorepo') return { ...genericScaffold(), ...monorepoScaffold() };
-  if (stack === 'generic') return genericScaffold();
+  if (stack === 'generic') return { ...genericStackScaffold() };
   return { ...genericScaffold(), ...nodeScaffold() };
 }
 
@@ -626,7 +672,10 @@ export function configureSuites(root, stack) {
     return;
   }
   if (stack === 'generic') {
-    writeText(configPath(root), common);
+    writeText(
+      configPath(root),
+      `${common}suites:\n  - id: api\n    kind: node-test\n    command: ["node", "check.mjs"]\n    cwd: "."\n`,
+    );
     return;
   }
   writeText(
@@ -652,7 +701,8 @@ export async function initNewProject({ root, userQuestions, agent, signal }) {
   if (context.stack === 'python') files = pythonChangeFiles();
   else if (context.stack === 'vue' || context.stack === 'react') files = frontendChangeFiles(context.stack);
   else if (context.stack === 'monorepo') files = monorepoChangeFiles();
-  else if (context.stack !== 'generic') files = firstChangeFiles(context);
+  else if (context.stack === 'generic') files = genericChangeFiles();
+  else files = firstChangeFiles(context);
 
   let changeName = null;
   if (files) {

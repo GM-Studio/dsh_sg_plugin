@@ -59,6 +59,10 @@ test('scaffoldFiles 生成 Vue/React/monorepo 骨架', () => {
   assert.ok(mono['apps/api/index.js'].includes('/health'));
   assert.ok(mono['apps/web/src/App.vue'].includes('app-title'));
   assert.ok(mono['package.json'].includes('workspaces'));
+
+  const generic = scaffoldFiles('generic');
+  assert.equal(generic['VERSION'], '0.1.0\n');
+  assert.ok(generic['check.mjs'].includes('SG_REPORT'));
 });
 
 test('initNewProject 走 H0、脚手架、自动建 change 停 H1', async () => {
