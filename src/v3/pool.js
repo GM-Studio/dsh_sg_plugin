@@ -262,17 +262,47 @@ function summaryOf(task, text) {
   ].join(' ');
 }
 
-async function runOnEntry({ entry, worktree, prompt, skills, summary, workingDirectory, change }) {
+async function startTurn({ runtime, agent, text }) {
+  const controller = runtime?.service?.('sessionController');
+  if (controller && typeof controller.prompt === 'function') {
+    await controller.prompt(
+      {
+        requestId: randomUUID(),
+        sessionId: agent.id,
+        mode: 'queue',
+        content: [{ type: 'text', text }],
+      },
+      new AbortController().signal,
+    );
+  } else {
+    agent.followup({
+      id: randomUUID(),
+      role: 'user',
+      content: [{ type: 'text', text }],
+      source: { kind: 'specgate-v3' },
+    });
+  }
+  await agent.whenIdle();
+}
+
+async function runOnEntry({
+  entry,
+  worktree,
+  prompt,
+  skills,
+  summary,
+  workingDirectory,
+  change,
+  runtime,
+}) {
   if (workingDirectory && typeof workingDirectory.set === 'function') {
     await workingDirectory.set(entry.agent, worktree);
   }
-  entry.agent.followup({
-    id: randomUUID(),
-    role: 'user',
-    content: [{ type: 'text', text: buildPrompt({ role: entry.role, prompt, skills, summary }) }],
-    source: { kind: 'specgate-v3' },
+  await startTurn({
+    runtime,
+    agent: entry.agent,
+    text: buildPrompt({ role: entry.role, prompt, skills, summary }),
   });
-  await entry.agent.whenIdle();
   const messages = entry.agent.session.deriveMessages();
   const assistant = [...messages].reverse().find((message) => message.role === 'assistant');
   const text = (assistant?.content || [])
@@ -286,7 +316,7 @@ async function runOnEntry({ entry, worktree, prompt, skills, summary, workingDir
   return text;
 }
 
-async function freshRun({ agents, role, worktree, prompt, skills, parent }) {
+async function freshRun({ runtime, agents, role, worktree, prompt, skills, parent }) {
   const handle = await agents.create({
     sessionId: randomUUID(),
     parentAgent: parent,
@@ -305,13 +335,11 @@ async function freshRun({ agents, role, worktree, prompt, skills, parent }) {
   });
   stats.created += 1;
   try {
-    handle.agent.followup({
-      id: randomUUID(),
-      role: 'user',
-      content: [{ type: 'text', text: buildPrompt({ role, prompt, skills, summary: null }) }],
-      source: { kind: 'specgate-v3' },
+    await startTurn({
+      runtime,
+      agent: handle.agent,
+      text: buildPrompt({ role, prompt, skills, summary: null }),
     });
-    await handle.agent.whenIdle();
     const messages = handle.agent.session.deriveMessages();
     const assistant = [...messages].reverse().find((message) => message.role === 'assistant');
     const text = (assistant?.content || [])
@@ -352,7 +380,7 @@ export async function poolDispatch({
   if (role === 'reviewer' || !config.enabled || !workingDirectory) {
     await acquireChangeSlot(change, config.maxLeasedPerChange);
     try {
-      return await freshRun({ agents, role, worktree, prompt, skills, parent });
+      return await freshRun({ runtime, agents, role, worktree, prompt, skills, parent });
     } finally {
       releaseChangeSlot(change);
     }
@@ -380,6 +408,7 @@ export async function poolDispatch({
       summary: entry.lastSummary,
       workingDirectory,
       change,
+      runtime,
     });
     noteSuccess(root, role);
     return {
