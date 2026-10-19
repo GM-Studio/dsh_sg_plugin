@@ -200,6 +200,7 @@ async function startChild({ runtime, role, worktree, text, parent }) {
   }
   const provider = pickProvider(subagents);
   if (!provider) throw new Error('no subagent provider registered');
+  const signal = new AbortController().signal;
   const activation = await subagents.startActivation({
     provider,
     label: `specgate-${role}`,
@@ -207,10 +208,11 @@ async function startChild({ runtime, role, worktree, text, parent }) {
       cwd: worktree,
       prompt: [{ type: 'text', text }],
       parent,
-      signal: new AbortController().signal,
+      signal,
       agentOptions: { ...(parent?.options || {}) },
     },
     delivery: 'caller',
+    signal,
   });
   const result = await activation.result;
   return {
