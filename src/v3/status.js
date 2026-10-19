@@ -50,6 +50,7 @@ export function statusData(project) {
     nextAction: nextActionFor(state),
     tasks: taskSummary(state),
     suites: state.plan?.suites || null,
+    runtime: state.runtime || null,
     evidence: state.evidence,
     blockedReason: state.blockedReason,
     skills: state.skills,
@@ -81,6 +82,20 @@ export function renderStatus(project) {
     `证据：headSeq=${data.evidence?.headSeq ?? 0}`,
   ];
   if (data.blockedReason) lines.push(`阻塞：${data.blockedReason}`);
+  if (data.runtime?.suites) {
+    for (const [id, runtime] of Object.entries(data.runtime.suites)) {
+      const parts = [];
+      if (runtime.node) parts.push(`Node ${runtime.node.version}（${runtime.node.tool}）`);
+      if (runtime.python) parts.push(`Python ${runtime.python.version}（${runtime.python.venv}）`);
+      if (runtime.install) {
+        parts.push(`安装 ${runtime.install.state}${runtime.install.reason ? `:${runtime.install.reason}` : ''}`);
+      }
+      if (runtime.lastRun) {
+        parts.push(`上次 ${runtime.lastRun.ok ? 'pass' : 'fail'}${runtime.lastRun.exitCode !== null ? `(${runtime.lastRun.exitCode})` : ''}`);
+      }
+      lines.push(`运行时 ${id}：${parts.join('，') || '-'}`);
+    }
+  }
   if (data.skills?.suggested?.length || data.skills?.injected?.length) {
     lines.push(
       `技能：建议 ${(data.skills.suggested || []).join(', ') || '无'}；注入 ${(data.skills.injected || []).join(', ') || '无'}`,

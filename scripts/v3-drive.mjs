@@ -29,7 +29,7 @@ import {
 import { discoverCommand, loadPlan } from '../src/v3/plan.js';
 import { runTestCommand } from '../src/v3/testrunner.js';
 import { validateReport } from '../src/v3/report.js';
-import { runAllSuites, runTaskSuites } from '../src/v3/suites.js';
+import { runAllSuites, runTaskSuites, persistRuntime } from '../src/v3/suites.js';
 import { appendEvidence, verifyEvidence } from '../src/v3/evidence.js';
 import { generateAcceptance } from '../src/v3/acceptance.js';
 import { archiveChange, nextTag } from '../src/v3/archive.js';
@@ -346,6 +346,7 @@ switch (command) {
       fallbackCommand: commandInfo.ok ? commandInfo : null,
       requireChangedFiles: state.type !== 'remove',
     });
+    persistRuntime(root, suiteResult.results);
     out(
       {
         ok: suiteResult.ok,
@@ -389,6 +390,7 @@ switch (command) {
       fallbackCommand: commandInfo.ok ? commandInfo : null,
       requireChangedFiles: state.type !== 'remove',
     });
+    persistRuntime(root, suiteResult.results);
     if (!suiteResult.ok) fail('tests failed at finish', { suiteResult });
     const validation = { ok: true, stats: suiteResult.stats };
 
@@ -445,6 +447,7 @@ switch (command) {
       changedFiles,
       fallbackCommand: commandInfo.ok ? commandInfo : null,
     });
+    persistRuntime(root, suiteResult.results);
     if (!suiteResult.ok) fail('integration regression failed', suiteResult);
     const report = {
       schemaVersion: 1,

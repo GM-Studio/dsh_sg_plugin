@@ -8,6 +8,7 @@ import { validateReport } from './report.js';
 import { resolveNode } from './env/node.js';
 import { ensureVenv } from './env/python.js';
 import { installForSuite } from './env/install.js';
+import { patchState } from './state.js';
 
 /** Frozen suites from state; falls back to the v3.0 single command. */
 export function suitesFromState(state, fallbackCommand) {
@@ -169,6 +170,15 @@ export function parseJunitXml(text, { suiteId, cwd, worktree }) {
 
 
 
+function installMeta(installed) {
+  return {
+    state: installed.skipped ? 'skipped' : 'done',
+    reason: installed.reason || null,
+    reused: installed.reused === true,
+    command: installed.command ? [installed.command.bin, ...installed.command.args] : null,
+  };
+}
+
 export function runPytestSuite({ suite, worktree, root }) {
   const venv = ensureVenv({ root: root || worktree, suite });
   if (!venv.ok) {
@@ -178,6 +188,8 @@ export function runPytestSuite({ suite, worktree, root }) {
       report: null,
       reportError: venv.message,
       code: venv.code,
+      python: null,
+      install: null,
     };
   }
   const installed = installForSuite({
@@ -197,6 +209,8 @@ export function runPytestSuite({ suite, worktree, root }) {
       report: null,
       reportError: installed.message,
       code: 'INSTALL_FAILED',
+      python: { version: venv.version, venv: venv.venv, created: !!venv.created, reused: !!venv.reused },
+      install: null,
     };
   }
   const cwd = path.join(worktree, suite.cwd || '.');
@@ -235,6 +249,8 @@ export function runPytestSuite({ suite, worktree, root }) {
     stderr: String(result.stderr || ''),
     report,
     reportError,
+    python: { version: venv.version, venv: venv.venv, created: !!venv.created, reused: !!venv.reused },
+    install: installMeta(installed),
   };
 }
 
@@ -249,49 +265,69 @@ export function runOneSuite({
   requireChangedFiles = true,
 }) {
   const cwd = path.join(worktree, suite.cwd || '.');
+  const runtime = {
+    suiteId: suite.id,
+    at: new Date().toISOString(),
+    node: null,
+    python: null,
+    install: null,
+    lastRun: null,
+  };
+  const done = (payload) => ({
+    ...payload,
+    suiteId: suite.id,
+    runtime: {
+      ...runtime,
+      lastRun: {
+        ok: payload.ok === true,
+        exitCode: payload.exitCode ?? null,
+        at: new Date().toISOString(),
+      },
+    },
+  });
   let env = process.env;
   let run;
   if (suite.kind === 'pytest') {
     run = runPytestSuite({ suite, worktree, root });
+    runtime.python = run.python || null;
+    runtime.install = run.install || null;
   } else {
     const nodeEnv = resolveNode({ root, suite, env: process.env });
     if (!nodeEnv.ok) {
-      return {
+      return done({
         ok: false,
-        suiteId: suite.id,
         code: nodeEnv.code,
         message: nodeEnv.message,
-      };
+      });
     }
+    runtime.node = { version: nodeEnv.version, tool: nodeEnv.tool, dir: nodeEnv.dir };
     env = nodeEnv.env;
     const installed = installForSuite({ root, suite, env });
+    runtime.install = installMeta(installed);
     if (!installed.ok) {
-      return {
+      return done({
         ok: false,
-        suiteId: suite.id,
         code: 'INSTALL_FAILED',
         message: installed.message,
-      };
+      });
     }
     run = runTestCommand({ argv: suite.argv, cwd, env });
   }
 
   if (run.exitCode !== 0) {
-    return {
+    return done({
       ok: false,
-      suiteId: suite.id,
       exitCode: run.exitCode,
       report: run.report,
       message: `suite ${suite.id} 退出码 ${run.exitCode}：${(run.stderr || '').slice(-300)}`,
-    };
+    });
   }
   if (!run.report) {
-    return {
+    return done({
       ok: false,
-      suiteId: suite.id,
       exitCode: run.exitCode,
       message: `suite ${suite.id} 没有报告：${run.reportError || 'unknown'}`,
-    };
+    });
   }
 
   const validation = validateReport({
@@ -303,14 +339,28 @@ export function runOneSuite({
     changedFiles,
     requireChangedFiles,
   });
-  return {
+  return done({
     ok: validation.ok,
-    suiteId: suite.id,
     exitCode: run.exitCode,
     report: run.report,
     validation,
     message: validation.ok ? null : validation.errors.join('; '),
-  };
+  });
+}
+
+export function persistRuntime(root, results) {
+  const suites = {};
+  for (const result of results || []) {
+    if (result?.runtime) suites[result.suiteId] = result.runtime;
+  }
+  if (Object.keys(suites).length === 0) return { ok: true, updated: 0 };
+  const saved = patchState(root, (draft) => {
+    draft.runtime = {
+      updatedAt: new Date().toISOString(),
+      suites: { ...(draft.runtime?.suites || {}), ...suites },
+    };
+  });
+  return { ok: saved.ok, updated: Object.keys(suites).length };
 }
 
 function mergeStats(results) {

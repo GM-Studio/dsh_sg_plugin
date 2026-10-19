@@ -9,7 +9,7 @@ import { createDispatcher } from './dispatch.js';
 import { executeTask, pickNextTask, revertWave } from './executor.js';
 import { readyBatch } from './scheduler.js';
 import { discoverCommand, loadPlan } from './plan.js';
-import { runAllSuites, suggestSuites } from './suites.js';
+import { runAllSuites, suggestSuites, persistRuntime } from './suites.js';
 import { generateAcceptance } from './acceptance.js';
 import { verifyEvidence, appendEvidence } from './evidence.js';
 import { digest } from './util/hash.js';
@@ -364,6 +364,7 @@ export function registerTools(ctx, runtime) {
               changedFiles,
               fallbackCommand: command.ok ? command : null,
             });
+            persistRuntime(project.root, suitesResult.results);
             if (!suitesResult.ok) {
               const reverted = revertWave({
                 root: project.root,

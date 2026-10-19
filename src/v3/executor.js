@@ -11,7 +11,7 @@ import {
   headOf,
 } from './worktrees.js';
 import { discoverCommand, loadPlan } from './plan.js';
-import { runTaskSuites } from './suites.js';
+import { runTaskSuites, persistRuntime } from './suites.js';
 import { runTestCommand } from './testrunner.js';
 import { collectKnownAcs } from './phase.js';
 import { appendEvidence } from './evidence.js';
@@ -118,6 +118,7 @@ async function verifyAndFinish({
     fallbackCommand: command,
     requireChangedFiles: state.type !== 'remove',
   });
+  persistRuntime(root, suiteResult.results);
   if (!suiteResult.ok) {
     return failure(
       'SUITE_FAILED',
