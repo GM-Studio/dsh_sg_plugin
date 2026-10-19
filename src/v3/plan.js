@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { exists, readText } from './util/fsx.js';
 import { canonicalJson, digest, norm, sha256 } from './util/hash.js';
+import { readSuites, validateSuites } from './change.js';
 
 const TASK_RE = /^<!--\s*sg:task\s+(\{.*\})\s*-->\s*$/;
 const CASE_RE = /^\|\s*(TC-\d{3,})\s*\|\s*([^|]*)\|\s*([^|]*)\|\s*(.*?)\s*\|\s*$/;
@@ -126,6 +127,45 @@ export function discoverCommand(root, config) {
   };
 }
 
+/**
+ * Resolve every configured suite to a frozen command. pytest suites keep their
+ * args; the adapter adds --junitxml at run time.
+ */
+export function discoverSuites(root, config) {
+  const suites = readSuites(config);
+  const errors = [...validateSuites(root, suites).errors];
+  const resolved = [];
+  for (const suite of suites) {
+    const cwd = suite.cwd || '.';
+    if (!exists(path.resolve(root, cwd))) {
+      errors.push(`suite ${suite.id} 的 cwd 不存在：${cwd}`);
+    }
+    let argv = suite.command.slice();
+    let source = 'config';
+    if (suite.kind === 'pytest') {
+      source = 'pytest';
+    } else if (argv.length === 0) {
+      if (suite.legacy) {
+        const fallback = discoverCommand(root, config);
+        if (fallback.ok) {
+          argv = fallback.argv;
+          source = fallback.source;
+        } else {
+          errors.push(fallback.message);
+        }
+      } else {
+        errors.push(`suite ${suite.id} 缺少 command`);
+      }
+    }
+    const cmdHash =
+      suite.kind === 'pytest'
+        ? digest({ kind: 'pytest', args: suite.pytestArgs, python: suite.python, cwd })
+        : digest({ kind: suite.kind, argv, cwd });
+    resolved.push({ ...suite, argv, source, cwd, cmdHash });
+  }
+  return { ok: errors.length === 0, errors, suites: resolved };
+}
+
 function hasCycle(tasks) {
   const byId = new Map(tasks.map((task) => [task.id, task]));
   const visiting = new Set();
@@ -147,7 +187,16 @@ function hasCycle(tasks) {
   return cycle;
 }
 
-export function validatePlan({ root, change, plan, deltaAcs, deltaReqs, config, type = 'feature' }) {
+export function validatePlan({
+  root,
+  change,
+  plan,
+  deltaAcs,
+  deltaReqs,
+  config,
+  type = 'feature',
+  suites = null,
+}) {
   const isRemove = type === 'remove';
   const errors = [...plan.tasksErrors];
   if (!isRemove) errors.push(...plan.casesErrors);
@@ -218,6 +267,30 @@ export function validatePlan({ root, change, plan, deltaAcs, deltaReqs, config, 
     }
   }
 
+  if (Array.isArray(suites) && suites.length > 0) {
+    const ids = new Set(suites.map((suite) => suite.id));
+    const multi = suites.length > 1;
+    const owner = new Map();
+    if (plan.mapping && Array.isArray(plan.mapping.requirements)) {
+      for (const entry of plan.mapping.requirements) {
+        if (!entry?.ac) continue;
+        const suiteId = entry.suite || (multi ? null : suites[0].id);
+        if (!suiteId) {
+          errors.push(`mapping ${entry.ac} 缺少 suite`);
+          continue;
+        }
+        if (!ids.has(suiteId)) {
+          errors.push(`mapping ${entry.ac} 的 suite 不存在：${suiteId}`);
+          continue;
+        }
+        if (owner.has(entry.ac) && owner.get(entry.ac) !== suiteId) {
+          errors.push(`AC ${entry.ac} 属于多个 suite`);
+        }
+        owner.set(entry.ac, suiteId);
+      }
+    }
+  }
+
   const touched = plan.touched;
   if (touched) {
     for (const key of ['modify', 'delete', 'bootstrap']) {
@@ -237,13 +310,18 @@ export function validatePlan({ root, change, plan, deltaAcs, deltaReqs, config, 
     errors.push('缺少 tests/touched.json');
   }
 
-  const command = discoverCommand(root, config);
-  if (!command.ok) errors.push(command.message);
+  let command;
+  if (Array.isArray(suites) && suites.length > 0) {
+    command = { ok: true, argv: suites[0].argv, cwd: suites[0].cwd, source: suites[0].source };
+  } else {
+    command = discoverCommand(root, config);
+    if (!command.ok) errors.push(command.message);
+  }
 
-  return { ok: errors.length === 0, errors, command };
+  return { ok: errors.length === 0, errors, command, suites };
 }
 
-export function computePlanHash({ plan, command }) {
+export function computePlanHash({ plan, command, suites = null }) {
   const payload = {
     design: sha256(norm(plan.designText)),
     cases: sha256(norm(JSON.stringify(plan.cases))),
@@ -259,6 +337,14 @@ export function computePlanHash({ plan, command }) {
         parallel: task.parallel,
       })),
     cmd: command.ok ? { argv: command.argv, cwd: command.cwd } : null,
+    suites: Array.isArray(suites)
+      ? suites.map((suite) => ({
+          id: suite.id,
+          kind: suite.kind,
+          argv: suite.kind === 'pytest' ? suite.pytestArgs : suite.argv,
+          cwd: suite.cwd,
+        }))
+      : null,
   };
   return `sha256:${sha256(canonicalJson(payload))}`;
 }

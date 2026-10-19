@@ -7,6 +7,7 @@ import { parseDelta, parseSpec } from './openspec/parser.js';
 import { validateDeltaFiles } from './openspec/validator.js';
 import {
   discoverCommand,
+  discoverSuites,
   loadPlan,
   computeCmdHash,
   computePlanHash,
@@ -148,6 +149,8 @@ export function checkM2({ root, state, config }) {
       errors.push(`design 缺少「${title}」小节`);
     }
   }
+  const suiteInfo = discoverSuites(root, config);
+  errors.push(...suiteInfo.errors);
   const { acs, reqs } = collectDeltaIds(root, state.change);
   const validation = validatePlan({
     root,
@@ -157,18 +160,23 @@ export function checkM2({ root, state, config }) {
     deltaReqs: reqs,
     config,
     type: state.type,
+    suites: suiteInfo.suites,
   });
   errors.push(...validation.errors);
 
-  const planHash = validation.command.ok
-    ? computePlanHash({ plan, command: validation.command })
+  const command = validation.command;
+  const planHash = command.ok
+    ? computePlanHash({ plan, command, suites: suiteInfo.suites })
     : null;
-  const cmdHash = computeCmdHash(validation.command);
+  const cmdHash = suiteInfo.ok
+    ? digest(suiteInfo.suites.map((suite) => suite.cmdHash))
+    : null;
   return {
     ok: errors.length === 0,
     errors,
     plan,
-    command: validation.command,
+    command,
+    suites: suiteInfo.suites,
     planHash,
     cmdHash,
     hashes: {
@@ -182,8 +190,14 @@ export function checkM2({ root, state, config }) {
 
 export function computePlanHashFor(root, change, config) {
   const plan = loadPlan(root, change);
-  const command = discoverCommand(root, config);
-  return command.ok ? computePlanHash({ plan, command }) : null;
+  const suiteInfo = discoverSuites(root, config);
+  if (!suiteInfo.ok) return null;
+  const command = {
+    ok: true,
+    argv: suiteInfo.suites[0].argv,
+    cwd: suiteInfo.suites[0].cwd,
+  };
+  return computePlanHash({ plan, command, suites: suiteInfo.suites });
 }
 
 export function checkFrozenH1({ root, state }) {

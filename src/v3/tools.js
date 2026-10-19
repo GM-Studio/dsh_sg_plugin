@@ -222,6 +222,13 @@ export function registerTools(ctx, runtime) {
                 cmdHash: m2.cmdHash,
                 argv: m2.command.argv,
                 cwd: m2.command.cwd,
+                suites: m2.suites.map((suite) => ({
+                  id: suite.id,
+                  kind: suite.kind,
+                  argv: suite.argv,
+                  cwd: suite.cwd,
+                  cmdHash: suite.cmdHash,
+                })),
                 approvedAt: null,
               };
               draft.tasks = Object.fromEntries(
