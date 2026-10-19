@@ -1,6 +1,13 @@
 import { poolDispatch } from './pool.js';
 
-/** Dispatch a role turn. implementer/tester use the per-repo pool; reviewer stays fresh. */
+/**
+ * Dispatch one role turn.
+ *
+ * implementer/tester go through the per-repo Agent pool, which is built on the
+ * DSH subagents service (`startActivation` / `sendMessage` / `waitForChildren`).
+ * reviewer always gets a fresh child so its judgement stays independent.
+ * A scripted `agentRunner` (tests) bypasses the pool entirely.
+ */
 export function createDispatcher(runtime) {
   return async function dispatch({
     role,
@@ -23,12 +30,12 @@ export function createDispatcher(runtime) {
       };
     }
 
-    const agents = runtime.service('agents');
-    if (!agents || typeof agents.create !== 'function') {
+    const subagents = runtime.service('subagents');
+    if (!subagents || typeof subagents.startActivation !== 'function') {
       return {
         ok: false,
-        code: 'AGENTS_UNAVAILABLE',
-        message: '宿主不提供 agents 服务，无法派发子 Agent',
+        code: 'SUBAGENTS_UNAVAILABLE',
+        message: '宿主不提供 subagents 服务，无法派发子 Agent',
       };
     }
 
