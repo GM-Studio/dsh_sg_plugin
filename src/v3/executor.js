@@ -347,17 +347,15 @@ async function executeFeatureTask({ root, state, task, dispatcher, config, paren
       violations: implDiff.violations,
     });
   }
-  if (state.context?.stack) {
-    const toolchain = ensureToolchain({
-      root,
-      worktree: worktree.path,
-      change,
-      task,
-      stack: state.context.stack,
-    });
-    if (!toolchain.ok) {
-      return failure('TOOLCHAIN_FAILED', toolchain.message, { toolchain });
-    }
+  const toolchain = ensureToolchain({
+    root,
+    worktree: worktree.path,
+    change,
+    task,
+    stack: state.context?.stack || null,
+  });
+  if (!toolchain.ok) {
+    return failure('TOOLCHAIN_FAILED', toolchain.message, { toolchain });
   }
   const formatted = runFormatter({ root, worktree: worktree.path, change, task });
   if (!formatted.ok) return failure('FORMAT_FAILED', formatted.message, { formatted });
@@ -529,17 +527,15 @@ async function executeFixTask({ root, state, task, dispatcher, config, parent })
       violations: implDiff.violations,
     });
   }
-  if (state.context?.stack) {
-    const toolchain = ensureToolchain({
-      root,
-      worktree: worktree.path,
-      change,
-      task,
-      stack: state.context.stack,
-    });
-    if (!toolchain.ok) {
-      return failure('TOOLCHAIN_FAILED', toolchain.message, { toolchain });
-    }
+  const toolchain = ensureToolchain({
+    root,
+    worktree: worktree.path,
+    change,
+    task,
+    stack: state.context?.stack || null,
+  });
+  if (!toolchain.ok) {
+    return failure('TOOLCHAIN_FAILED', toolchain.message, { toolchain });
   }
   const formatted = runFormatter({ root, worktree: worktree.path, change, task });
   if (!formatted.ok) return failure('FORMAT_FAILED', formatted.message, { formatted });

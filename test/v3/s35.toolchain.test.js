@@ -12,6 +12,7 @@ function tempRoot() {
     JSON.stringify({ name: 'demo', devDependencies: { prettier: '^3.0.0' } }, null, 2),
     'utf8',
   );
+  fs.writeFileSync(path.join(root, 'package-lock.json'), '{}', 'utf8');
   return root;
 }
 

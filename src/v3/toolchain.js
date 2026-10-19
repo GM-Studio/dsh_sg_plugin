@@ -46,7 +46,7 @@ export function planToolchain(root, worktree = root, stack = null) {
       exists(path.join(worktree, 'requirements.txt'));
     if (!python) return { ok: true, packages: [], configs: [], skipped: true };
     const configs = ['ruff.toml', 'mypy.ini'].filter((file) => !exists(path.join(worktree, file)));
-    return { ok: true, packages: [], configs, skipped: false, python: true };
+    return { ok: true, packages: [], configs, skipped: false, python: true, hasLockfile: true };
   }
   let pkg;
   try {
@@ -58,7 +58,10 @@ export function planToolchain(root, worktree = root, stack = null) {
   const required = REQUIRED[stack] || REQUIRED.node;
   const packages = required.filter((name) => !deps[name]);
   const configs = Object.keys(CONFIGS).filter((file) => !exists(path.join(worktree, file)));
-  return { ok: true, packages, configs, skipped: false };
+  const hasLockfile = ['pnpm-lock.yaml', 'yarn.lock', 'package-lock.json'].some((file) =>
+    exists(path.join(root, file)),
+  );
+  return { ok: true, packages, configs, skipped: false, hasLockfile };
 }
 
 export function ensureToolchain({
@@ -72,6 +75,7 @@ export function ensureToolchain({
 }) {
   const plan = planToolchain(root, worktree, stack);
   if (!plan.ok || plan.skipped) return plan;
+  if (!plan.hasLockfile) return { ...plan, skipped: true, reason: 'NO_LOCKFILE' };
   const generated = [];
   for (const file of plan.configs) {
     writeText(path.join(worktree, file), CONFIGS[file]);
