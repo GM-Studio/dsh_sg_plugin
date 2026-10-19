@@ -130,7 +130,7 @@
 <!-- sg:task {"id":"T-012","title":"CI、文档与回归","ac":["AC-037","AC-038","AC-039","AC-040","AC-041","AC-042"],"deps":["T-001","T-006","T-008","T-009","T-010","T-011"],"parallel":false} -->
 
 - [ ] 生成 Maven CI JDK8/11/17、缓存、最小权限、Windows 冒烟
-- [ ] 更新 README / README.zh.md / CHANGELOG
+- [ ] 更新 README / README.en.md / CHANGELOG
 - [ ] 校验 `tests/cases.md` 与 `tests/mapping.json` 覆盖全部 AC
 - [ ] 全量回归，不硬编码测试数量
 - [ ] 输出验收报告

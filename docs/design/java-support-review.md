@@ -240,7 +240,7 @@ JDK 解析优先级：
 
 ### FR-10 文档与测试
 
-- 更新 README / README.zh.md / CHANGELOG。
+- 更新 README / README.en.md / CHANGELOG。
 - 新增 `docs/design/java-support-review.md`（本稿）与实现后的 `docs/design/java-support.md`。
 - 插件自身单元测试不依赖真实 JDK：使用 fake `mvnw` / `gradlew` 与固定 XML fixture。
 - 真实 Java 集成测试作为可选 CI job；无 JDK 时跳过。

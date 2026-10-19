@@ -64,5 +64,5 @@
 #### Scenario: 文档与回归 (AC-126)
 
 - **WHEN** 扩展完成
-- **THEN** README / README.zh.md / CHANGELOG 包含扩展说明
+- **THEN** README / README.en.md / CHANGELOG 包含扩展说明
 - **AND** `java-core` 与 Node/Python 全量测试通过

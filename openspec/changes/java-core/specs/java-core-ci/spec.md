@@ -37,7 +37,7 @@
 #### Scenario: 文档 (AC-041)
 
 - **WHEN** 变更完成
-- **THEN** README / README.zh.md / CHANGELOG 包含 Java 核心支持说明
+- **THEN** README / README.en.md / CHANGELOG 包含 Java 核心支持说明
 
 #### Scenario: 全量回归 (AC-042)
 

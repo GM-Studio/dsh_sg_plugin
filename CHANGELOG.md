@@ -4,6 +4,7 @@
 
 - Fix the H0 gate deadlock: `sg_approve` now accepts `gate: "H0"` (schema enum plus runtime check), and H0 approval no longer requires an existing change. A new project can leave `H0_PENDING` with `sg_approve` → `sg_run`.
 - H0 guidance points at the `sg_approve` tool instead of the non-existent `/sg-approve` command.
+- Restructure the README: Chinese is now the default `README.md`, English moved to `README.en.md`, and both carry a table of contents. `README.zh.md` was removed.
 
 ## 3.6.0
 

@@ -1,9 +1,9 @@
 {
-  "README.md": [
+  "README.en.md": [
     {
-      "base": "README.md",
-      "zh": "README.zh.md",
-      "size": 22702
+      "base": "README.en.md",
+      "zh": "README.md",
+      "size": 27592
     }
   ],
   "assets/AGENTS.full.md": [

@@ -4,6 +4,7 @@
 
 - 修复 H0 门控死锁：`sg_approve` 现在接受 `gate: "H0"`（schema 枚举与运行时校验），且 H0 批准不再要求已存在 change。新项目可用 `sg_approve` → `sg_run` 离开 `H0_PENDING`。
 - H0 相关提示改为指向 `sg_approve` 工具，不再引用不存在的 `/sg-approve` 命令。
+- 重构 README：中文为默认 `README.md`，英文移至 `README.en.md`，两版均新增目录，删除 `README.zh.md`。
 
 ## 2.1.0
 
