@@ -29,6 +29,7 @@ import {
 import { discoverCommand, loadPlan } from '../src/v3/plan.js';
 import { runTestCommand } from '../src/v3/testrunner.js';
 import { validateReport } from '../src/v3/report.js';
+import { runAllSuites, runTaskSuites } from '../src/v3/suites.js';
 import { appendEvidence, verifyEvidence } from '../src/v3/evidence.js';
 import { generateAcceptance } from '../src/v3/acceptance.js';
 import { archiveChange, nextTag } from '../src/v3/archive.js';
@@ -329,31 +330,35 @@ switch (command) {
     const worktree = path.join(root, '.specgate', 'worktrees', state.change, arg1);
     const config = readConfig(root);
     const commandInfo = discoverCommand(root, config);
-    if (!commandInfo.ok) fail(commandInfo.message, commandInfo);
-    const run = runTestCommand({
-      argv: commandInfo.argv,
-      cwd: path.join(worktree, commandInfo.cwd || '.'),
-    });
     const plan = loadPlan(root, state.change);
     const { knownAcs } = collectKnownAcs({ root, state, change: state.change });
-    const validation = validateReport({
-      report: run.report,
-      deltaAcs: new Set(task.ac || []),
-      knownAcs,
-      mapping: plan.mapping,
+    const suiteResult = runTaskSuites({
+      root,
+      state,
       worktree,
+      task,
+      plan,
+      knownAcs,
       changedFiles: git(root, ['diff', '--name-only', `${task.baseCommit}..HEAD`])
         .split('\n')
         .filter(Boolean),
+      fallbackCommand: commandInfo.ok ? commandInfo : null,
       requireChangedFiles: state.type !== 'remove',
     });
-    out({
-      ok: run.exitCode === 0 && validation.ok,
-      exitCode: run.exitCode,
-      report: run.report,
-      validation,
-      stderr: (run.stderr || '').slice(-500),
-    }, run.exitCode === 0 && validation.ok ? 0 : 1);
+    out(
+      {
+        ok: suiteResult.ok,
+        failedSuite: suiteResult.failedSuite,
+        message: suiteResult.message,
+        stats: suiteResult.stats,
+        suites: (suiteResult.results || []).map((item) => ({
+          suite: item.suiteId,
+          ok: item.ok,
+          exitCode: item.exitCode,
+        })),
+      },
+      suiteResult.ok ? 0 : 1,
+    );
     break;
   }
   case 'finish': {
@@ -368,26 +373,23 @@ switch (command) {
     const worktree = path.join(root, '.specgate', 'worktrees', state.change, arg1);
     const config = readConfig(root);
     const commandInfo = discoverCommand(root, config);
-    const run = runTestCommand({
-      argv: commandInfo.argv,
-      cwd: path.join(worktree, commandInfo.cwd || '.'),
-    });
-    if (run.exitCode !== 0) fail('tests failed at finish', { run });
     const plan = loadPlan(root, state.change);
     const { knownAcs } = collectKnownAcs({ root, state, change: state.change });
-    const head = headOf(worktree, 'HEAD');
-    const validation = validateReport({
-      report: run.report,
-      deltaAcs: new Set(task.ac || []),
-      knownAcs,
-      mapping: plan.mapping,
+    const suiteResult = runTaskSuites({
+      root,
+      state,
       worktree,
+      task,
+      plan,
+      knownAcs,
       changedFiles: git(root, ['diff', '--name-only', `${task.baseCommit}..HEAD`])
         .split('\n')
         .filter(Boolean),
+      fallbackCommand: commandInfo.ok ? commandInfo : null,
       requireChangedFiles: state.type !== 'remove',
     });
-    if (!validation.ok) fail('report invalid', validation);
+    if (!suiteResult.ok) fail('tests failed at finish', { suiteResult });
+    const validation = { ok: true, stats: suiteResult.stats };
 
     const reviewDir = path.join(worktree, 'openspec', 'changes', state.change, 'reviews');
     fs.mkdirSync(reviewDir, { recursive: true });
@@ -427,26 +429,26 @@ switch (command) {
     const integration = ensureIntegration(root, state.change, state.integration?.base);
     const config = readConfig(root);
     const commandInfo = discoverCommand(root, config);
-    const run = runTestCommand({
-      argv: commandInfo.argv,
-      cwd: path.join(integration.path, commandInfo.cwd || '.'),
-    });
     const plan = loadPlan(root, state.change);
     const { deltaAcs, knownAcs } = collectKnownAcs({ root, state, change: state.change });
     const base = state.integration?.base;
     const changedFiles = git(integration.path, ['diff', '--name-only', `${base}..HEAD`])
       .split('\n')
       .filter(Boolean);
-    const validation = validateReport({
-      report: run.report,
-      deltaAcs,
-      knownAcs,
-      mapping: plan.mapping,
+    const suiteResult = runAllSuites({
+      root,
+      state,
       worktree: integration.path,
+      plan,
+      knownAcs,
       changedFiles,
-      requireChangedFiles: false,
+      fallbackCommand: commandInfo.ok ? commandInfo : null,
     });
-    if (run.exitCode !== 0 || !validation.ok) fail('integration regression failed', { run, validation });
+    if (!suiteResult.ok) fail('integration regression failed', suiteResult);
+    const report = {
+      schemaVersion: 1,
+      cases: suiteResult.results.flatMap((item) => item.report?.cases || []),
+    };
     const commit = headOf(integration.path, 'HEAD');
     const headEvidence = verifyEvidence(root, state.change);
     const acceptance = generateAcceptance({
@@ -454,8 +456,8 @@ switch (command) {
       type: state.type,
       changeKey: state.changeKey || null,
       acs: deltaAcs,
-      report: run.report,
-      exitCode: run.exitCode,
+      report,
+      exitCode: 0,
       evidence: headEvidence,
       commit,
       validator: 'builtin',
