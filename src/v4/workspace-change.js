@@ -1,3 +1,4 @@
+import fs from 'node:fs';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { ensureDir, exists, readText, writeText } from '../v3/util/fsx.js';
@@ -240,6 +241,71 @@ export function startWorkspaceChange({
   state.updatedAt = new Date().toISOString();
   writeText(stateFile, JSON.stringify(state, null, 2) + '\n');
   return { ok: true, name, type, sides: created };
+}
+
+/**
+ * 两侧都归档后：更新根 submodule 指针、提交、打 tag，根回到 IDLE。
+ */
+export function finalizeWorkspaceChange({ root, name = null }) {
+  const dir = path.join(root, '.specgate', 'changes');
+  if (!exists(dir)) return { ok: false, code: 'NO_CHANGES', message: '没有 workspace change' };
+  const files = fs.readdirSync(dir).filter((file) => file.endsWith('.json'));
+  if (!files.length) return { ok: false, code: 'NO_CHANGES', message: '没有 workspace change' };
+  const target = name ? name + '.json' : files[0];
+  const file = path.join(dir, target);
+  if (!exists(file))
+    return { ok: false, code: 'CHANGE_NOT_FOUND', message: '找不到 change：' + target };
+  const record = JSON.parse(readText(file));
+  const pending = [];
+  for (const side of record.sides || []) {
+    if (exists(path.join(root, side, 'openspec', 'changes', record.name))) pending.push(side);
+  }
+  if (pending.length) {
+    return {
+      ok: false,
+      code: 'PENDING',
+      message: '仍有子模块未归档：' + pending.join('、'),
+      pending,
+    };
+  }
+  const add = git(root, ['add', ...(record.sides || [])]);
+  if (add.status !== 0) return { ok: false, message: add.stderr };
+  const commit = git(root, [
+    'commit',
+    '--no-gpg-sign',
+    '-q',
+    '-m',
+    'chore(workspace): 更新子模块指针',
+  ]);
+  if (commit.status !== 0) return { ok: false, message: commit.stderr };
+  git(root, ['tag', record.name]);
+  record.status = 'ARCHIVED';
+  record.archivedAt = new Date().toISOString();
+  writeText(file, JSON.stringify(record, null, 2) + '\n');
+  const stateFile = path.join(root, '.specgate', 'state.json');
+  const state = JSON.parse(readText(stateFile));
+  state.phase = 'IDLE';
+  state.change = null;
+  state.type = null;
+  state.updatedAt = new Date().toISOString();
+  writeText(stateFile, JSON.stringify(state, null, 2) + '\n');
+  return { ok: true, name: record.name, tag: record.name, sides: record.sides };
+}
+
+export function summarizeFinalize(result) {
+  if (!result || result.ok === false) {
+    const pending = result?.pending ? '\n待归档：' + result.pending.join('、') : '';
+    return (
+      'workspace 收尾未完成（' +
+      (result?.code || 'ERROR') +
+      '）：' +
+      (result?.message || '未知错误') +
+      pending
+    );
+  }
+  return (
+    'workspace change 已收尾：' + result.name + '\n已更新 submodule 指针并打 tag：' + result.tag
+  );
 }
 
 export function summarizeWorkspaceChange(result) {

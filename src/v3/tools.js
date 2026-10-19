@@ -22,8 +22,10 @@ import { startV4Init, summarizeV4Result } from '../v4/init.js';
 import { adoptWorkspace, summarizeAdopt } from '../v4/adopt.js';
 import { readWorkspace } from '../v4/workspace.js';
 import {
+  finalizeWorkspaceChange,
   prepareWorkspaceChange,
   startWorkspaceChange,
+  summarizeFinalize,
   summarizeWorkspaceChange,
 } from '../v4/workspace-change.js';
 import { appendRun } from './runs.js';
@@ -350,6 +352,12 @@ export function registerTools(ctx, runtime) {
       output: textOutput(),
       async execute(args, exec) {
         const project = runtime.project(exec?.agent);
+        const workspace = readWorkspace(project.root);
+        if (workspace) {
+          const result = finalizeWorkspaceChange({ root: project.root });
+          if (!result.ok) return fail(summarizeFinalize(result), result);
+          return ok(summarizeFinalize(result), result);
+        }
         const guard = ensureV3(project);
         if (!guard.ok) return fail(guard.message, guard);
         const state = project.state;

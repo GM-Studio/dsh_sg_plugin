@@ -7,6 +7,7 @@ import { spawnSync } from 'node:child_process';
 import { createWorkspaceLayout, resolveSelection } from '../../src/v4/workspace.js';
 import { buildWorkspace } from '../../src/v4/build.js';
 import {
+  finalizeWorkspaceChange,
   prepareWorkspaceChange,
   startWorkspaceChange,
   wireSubmodules,
@@ -123,4 +124,46 @@ test('v4 Phase 4c：确认后写入需求并创建 change', async () => {
   assert.ok(
     fs.existsSync(path.join(root, 'api', 'openspec', 'changes', 'add-login', 'requirements.md')),
   );
+});
+
+test('v4 Phase 4d：两侧归档后更新根指针并打 tag', async () => {
+  const root = tempRoot();
+  const selection = resolveSelection({ preset: 'node-fullstack' });
+  createWorkspaceLayout({ root, selection });
+  await buildWorkspace({ root, selection, qualityRunner: quality() });
+  wireSubmodules({ root, sides: selection.sides });
+  const prepared = await prepareWorkspaceChange({
+    root,
+    name: 'add-login',
+    userQuestions: fakeQuestions('确认'),
+  });
+  startWorkspaceChange({ root, name: 'add-login', requirements: prepared.requirements });
+
+  const pending = finalizeWorkspaceChange({ root, name: 'add-login' });
+  assert.equal(pending.ok, false);
+  assert.equal(pending.code, 'PENDING');
+
+  for (const side of ['api', 'web']) {
+    const from = path.join(root, side, 'openspec', 'changes', 'add-login');
+    const to = path.join(root, side, 'openspec', 'changes', 'archive', '2026-10-20-add-login');
+    fs.mkdirSync(path.dirname(to), { recursive: true });
+    fs.renameSync(from, to);
+    git(path.join(root, side), ['add', '-A']);
+    git(path.join(root, side), [
+      '-c',
+      'user.name=T',
+      '-c',
+      'user.email=t@e',
+      'commit',
+      '-q',
+      '-m',
+      'archive add-login',
+    ]);
+  }
+  const done = finalizeWorkspaceChange({ root, name: 'add-login' });
+  assert.equal(done.ok, true, done.message);
+  assert.equal(git(root, ['tag']).includes('add-login'), true);
+  const state = JSON.parse(fs.readFileSync(path.join(root, '.specgate', 'state.json'), 'utf8'));
+  assert.equal(state.phase, 'IDLE');
+  assert.equal(state.change, null);
 });
