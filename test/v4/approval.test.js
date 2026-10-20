@@ -11,7 +11,7 @@ function fake(value) {
   };
 }
 
-test('v4.1 审批：页面包含依赖与命令', async () => {
+test('v4.1 审批：页面简短展示技术栈与依赖，不展开命令', async () => {
   const selection = await selectionFromInitial({
     backend: 'java',
     frontend: 'react',
@@ -21,11 +21,20 @@ test('v4.1 审批：页面包含依赖与命令', async () => {
     },
   });
   const text = approvalText(selection);
+  assert.match(text, /最终确认/);
+  assert.match(text, /java \/ spring-boot \/ 17 \/ maven/);
+  assert.match(text, /react \/ vite \/ typescript/);
   assert.match(text, /Spring Web/);
   assert.match(text, /Lombok/);
-  assert.match(text, /mvnw -B -ntp spotless:apply/);
-  assert.match(text, /pnpm install/);
-  assert.match(text, /一次审批覆盖 api \+ web/);
+  assert.match(text, /必选 8/);
+  assert.match(text, /可选 2/);
+  assert.match(text, /将执行：安装依赖/);
+  assert.doesNotMatch(text, /mvnw|pnpm install/);
+  assert.ok(text.length < 1200, 'approval text too long: ' + text.length);
+  assert.ok(
+    text.split('\n').length <= 20,
+    'approval text too many lines: ' + text.split('\n').length,
+  );
 });
 
 test('v4.1 审批：三种选择与默认跳过', async () => {

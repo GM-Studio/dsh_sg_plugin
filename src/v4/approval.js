@@ -42,14 +42,15 @@ function commandRows(side) {
   return [];
 }
 
-function dependencyLines(side, ids) {
-  return (ids || [])
-    .map((id) => {
-      const item = findDependency(side, id);
-      if (!item) return id;
-      return item.label + (item.version ? ' ' + item.version : '');
-    })
-    .join('、');
+function compactDependencyLine(side, ids, label) {
+  const names = (ids || []).map((id) => {
+    const item = findDependency(side, id);
+    return item ? item.label : id;
+  });
+  if (!names.length) return label + ' 0：（无）';
+  const head = names.slice(0, 5).join('、');
+  const more = names.length > 5 ? '…（共 ' + names.length + ' 个）' : '';
+  return label + ' ' + names.length + '：' + head + more;
 }
 
 export function planForSide(side) {
@@ -58,34 +59,30 @@ export function planForSide(side) {
 
 export function approvalText(selection) {
   const lines = [
-    '# SpecGate v4.1 执行审批',
+    '# SpecGate v4.1 最终确认',
     '',
-    '将执行以下操作（一次审批覆盖 api + web）。批准后自动安装依赖并执行格式化/静态检查/测试/走查；跳过则只生成完整声明、配置和代码。',
+    '请确认技术栈与依赖；批准后安装依赖并执行质量阶段，跳过则仅生成代码。',
     '',
   ];
   for (const side of selection.sides || []) {
     const deps = side.dependencies || {};
-    lines.push('## [' + side.id + '] ' + sideLabel(side));
-    lines.push('');
-    lines.push('- 必选：' + (dependencyLines(side, deps.required) || '（无）'));
-    lines.push('- 可选：' + (dependencyLines(side, deps.optional) || '（无）'));
+    const role = side.role === 'frontend' ? '前端' : '后端';
+    lines.push('[' + side.id + ' ' + role + '] ' + sideLabel(side));
+    lines.push('  ' + compactDependencyLine(side, deps.required, '必选'));
+    lines.push('  ' + compactDependencyLine(side, deps.optional, '可选'));
     if (deps.dropped?.length) {
+      const head = deps.dropped
+        .slice(0, 3)
+        .map((item) => item.id)
+        .join('、');
       lines.push(
-        '- 已取消：' + deps.dropped.map((item) => item.id + '（' + item.reason + '）').join('；'),
+        '  已取消 ' + deps.dropped.length + ' 项：' + head + (deps.dropped.length > 3 ? '…' : ''),
       );
     }
     lines.push('');
-    lines.push('命令：');
-    for (const item of planForSide(side)) {
-      lines.push('  - ' + item.phase + '：' + item.command);
-    }
-    lines.push('');
   }
-  lines.push('网络：安装阶段需要访问包仓库；选择与生成阶段不需要。');
-  lines.push(
-    '失败策略：批准后任一阶段失败会停止该端后续质量阶段，继续生成并提交代码，init 标记 degraded。',
-  );
-  lines.push('');
+  lines.push('将执行：安装依赖 → 格式化 → 静态检查 → 测试 → 内置走查');
+  lines.push('网络：仅安装阶段访问包仓库；失败则降级提交并标记 degraded。');
   return lines.join('\n');
 }
 
@@ -96,7 +93,7 @@ export async function askApproval({ userQuestions, agent, signal, selection }) {
       questions: [
         {
           id: 'sg-v4-quality-approval',
-          header: '依赖与质量审批',
+          header: '最终确认与审批',
           question: approvalText(selection),
           options: [
             { label: '批准并执行', description: '自动安装依赖并执行格式化、静态检查、测试、走查' },

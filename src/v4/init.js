@@ -1,4 +1,3 @@
-import { answerOf, collectRequirements } from '../v3/requirements.js';
 import { buildWorkspace } from './build.js';
 import { wireSubmodules } from './workspace-change.js';
 import fs from 'node:fs';
@@ -15,34 +14,6 @@ import {
 import { applyDetailsToSide, defaultSideDetails, resolveDependencies } from './catalog.js';
 import { askApproval, skipQuality } from './approval.js';
 import { askWizard, summarizeSelection } from './wizard.js';
-
-async function askRequirements({ userQuestions, agent, signal }) {
-  const requirements = await collectRequirements({ userQuestions, agent, signal });
-  const summary = [
-    '需求确认',
-    '',
-    '- 功能：' + (requirements.functional.join('；') || '（空）'),
-    '- 非功能：' + (requirements.nonFunctional.join('；') || '（空）'),
-    '- 约束：' + (requirements.constraints.join('；') || '（空）'),
-    '- 验收：' + (requirements.acceptance.join('；') || '（空）'),
-    '',
-    '确认后才会写入需求文稿与代码。',
-  ].join('\n');
-  const answer = await userQuestions.ask({
-    questions: [
-      {
-        id: 'sg-v4-requirements-confirm',
-        header: '需求确认',
-        question: summary,
-        options: [{ label: '确认' }, { label: '取消' }],
-      },
-    ],
-    agent,
-    signal,
-  });
-  if (answerOf(answer) !== '确认') return { ok: false, code: 'CANCELLED' };
-  return { ok: true, requirements };
-}
 
 function resumeSelection(scan) {
   const backend = scan.workspace.backend;
@@ -190,7 +161,6 @@ export async function startV4Init({
   }
 
   let selection = null;
-  let requirements = null;
   let approved = false;
   let decided = false;
   let rounds = 0;
@@ -208,13 +178,6 @@ export async function startV4Init({
     });
     if (!picked.ok) return picked;
     selection = picked;
-
-    requirements = null;
-    if (canAsk) {
-      const asked = await askRequirements({ userQuestions, agent, signal });
-      if (!asked.ok) return asked;
-      requirements = asked.requirements;
-    }
 
     if (!canAsk) {
       approved = false;
@@ -238,7 +201,6 @@ export async function startV4Init({
   const created = createWorkspaceLayout({
     root,
     selection,
-    requirements,
     approval: approved ? 'approved' : 'skipped',
   });
   if (!created.ok) return created;

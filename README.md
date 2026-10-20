@@ -7,7 +7,7 @@
 ![node](https://img.shields.io/badge/node-%3E%3D20.19.0-brightgreen)
 ![dsh](https://img.shields.io/badge/dsh-%3E%3D0.2.1--rc.2-purple)
 
-> **v4.1（当前）**：sg-init 技术栈向导 —— Java JDK 8/11/13/17/21 × Spring Boot 2.7/3.x/4.x；Python 3.10–3.13 与 2.7（EOL）、FastAPI/Flask/Django；Node 20/22/24、Express/Fastify/NestJS；Vue/React + Vite；必选/可选依赖与最小/推荐/全量预设；一次汇总审批，未批准跳过安装/质量，失败降级提交。
+> **v4.1（当前）**：sg-init 技术栈向导 —— Java JDK 8/11/13/17/21 × Spring Boot 2.7/3.x/4.x；Python 3.10–3.13 与 2.7（EOL）、FastAPI/Flask/Django；Node 20/22/24、Express/Fastify/NestJS；Vue/React + Vite；必选/可选依赖与最小/推荐/全量预设；不再做四维需求盘问，最终审批页紧凑确认技术栈与依赖；未批准跳过安装/质量，失败降级提交。
 >
 > - 需求：[docs/requirements/2026-10-20-v4.1-stack-dependency-selection-requirements.md](docs/requirements/2026-10-20-v4.1-stack-dependency-selection-requirements.md)
 >
