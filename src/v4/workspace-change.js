@@ -72,7 +72,11 @@ export function wireSubmodules({ root, sides }) {
     if (add.status !== 0) return { ok: false, message: add.stderr };
   }
   writeText(path.join(root, '.gitmodules'), modules.join('\n') + '\n');
-  const addAll = git(root, ['add', '.gitmodules', '.gitignore']);
+  const commitPaths = ['.gitmodules', '.gitignore'];
+  for (const relative of ['.specgate/workspace.yaml', '.specgate/init-report.json', 'contracts']) {
+    if (exists(path.join(root, relative))) commitPaths.push(relative);
+  }
+  const addAll = git(root, ['add', ...commitPaths]);
   if (addAll.status !== 0) return { ok: false, message: addAll.stderr };
   const commit = git(root, [
     'commit',

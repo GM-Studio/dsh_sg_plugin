@@ -12,40 +12,9 @@ import {
   WORKSPACE_FILE,
   workspaceSummary,
 } from './workspace.js';
-
-const BACKEND_OPTIONS = ['node', 'python', 'java', 'none'];
-const FRONTEND_OPTIONS = ['vue', 'react', 'none'];
-
-async function askSelection({ userQuestions, agent, signal }) {
-  const answer = await userQuestions.ask({
-    questions: [
-      {
-        id: 'sg-v4-backend',
-        header: '后端技术栈',
-        question: '选择后端技术栈：node / python / java / none',
-        options: BACKEND_OPTIONS.map((value) => ({
-          label: value,
-          description: value === 'java' ? '推荐' : '',
-        })),
-      },
-      {
-        id: 'sg-v4-frontend',
-        header: '前端技术栈',
-        question: '选择前端技术栈：vue / react / none',
-        options: FRONTEND_OPTIONS.map((value) => ({
-          label: value,
-          description: value === 'react' ? '推荐' : '',
-        })),
-      },
-    ],
-    agent,
-    signal,
-  });
-  return {
-    backend: answerOf(answer, 0) || 'none',
-    frontend: answerOf(answer, 1) || 'none',
-  };
-}
+import { applyDetailsToSide, defaultSideDetails, resolveDependencies } from './catalog.js';
+import { askApproval, skipQuality } from './approval.js';
+import { askWizard, summarizeSelection } from './wizard.js';
 
 async function askRequirements({ userQuestions, agent, signal }) {
   const requirements = await collectRequirements({ userQuestions, agent, signal });
@@ -75,62 +44,33 @@ async function askRequirements({ userQuestions, agent, signal }) {
   return { ok: true, requirements };
 }
 
-async function askJavaOptions({ userQuestions, agent, signal }) {
-  const answer = await userQuestions.ask({
-    questions: [
-      {
-        id: 'sg-v4-java-jdk',
-        header: 'Java JDK',
-        question: '选择 JDK 版本',
-        options: ['8', '11', '13', '17', '21'].map((value) => ({ label: value })),
-      },
-      {
-        id: 'sg-v4-java-build',
-        header: '构建工具',
-        question: '选择构建工具',
-        options: [{ label: 'maven' }, { label: 'gradle' }],
-      },
-      {
-        id: 'sg-v4-java-boot',
-        header: 'Spring Boot',
-        question: '选择 Spring Boot 版本',
-        options: [{ label: '2.7.x' }, { label: '3.x' }, { label: '4.x' }],
-      },
-    ],
-    agent,
-    signal,
-  });
-  const jdk = answerOf(answer, 0) || '17';
-  const buildTool = answerOf(answer, 1) || 'maven';
-  const bootVersion = answerOf(answer, 2) || '3.x';
-  if (Number(jdk) < 17 && bootVersion !== '2.7.x') {
-    return {
-      ok: false,
-      code: 'E_STACK_INVALID',
-      message: 'JDK ' + jdk + ' 只能搭配 Spring Boot 2.7.x',
+function resumeSelection(scan) {
+  const backend = scan.workspace.backend;
+  const frontend = scan.workspace.frontend;
+  const selection = resolveSelection({ backend, frontend });
+  if (!selection.ok) return selection;
+  const parsed = new Map((scan.sides || []).map((side) => [side.id, side]));
+  selection.sides = selection.sides.map((side) => {
+    const previous = parsed.get(side.id) || {};
+    const details = {
+      ...defaultSideDetails(side.stack, previous.framework),
+      ...previous,
+      runtimeVersion: previous.runtimeVersion || defaultSideDetails(side.stack).runtimeVersion,
     };
-  }
-  return { ok: true, jdk, buildTool, bootVersion };
-}
-
-async function askQualityApproval({ userQuestions, agent, signal }) {
-  const answer = await userQuestions.ask({
-    questions: [
-      {
-        id: 'sg-v4-quality-approval',
-        header: '依赖与质量审批',
-        question:
-          '是否安装依赖并执行格式化、静态检查、测试、代码走查？未批准则跳过这些阶段，仅生成框架与代码。',
-        options: [
-          { label: '批准并执行', description: '自动安装依赖并跑质量阶段' },
-          { label: '跳过，仅生成代码', description: '不安装、不跑测试/格式化/走查' },
-        ],
-      },
-    ],
-    agent,
-    signal,
+    if (side.stack === 'java') details.jdk = details.runtimeVersion;
+    if (side.stack === 'python') details.pythonVersion = details.runtimeVersion;
+    if (side.stack === 'node') details.nodeVersion = details.runtimeVersion;
+    return applyDetailsToSide(
+      side,
+      details,
+      resolveDependencies(
+        { ...side, ...details },
+        previous.depsPreset || 'recommended',
+        previous.optionalDeps || [],
+      ),
+    );
   });
-  return answerOf(answer) === '批准并执行';
+  return selection;
 }
 
 export function resolveInitRoot(cwd, input, options = {}) {
@@ -182,7 +122,9 @@ export async function startV4Init({
   frontend = null,
   preset = null,
   qualityRunner = null,
+  initial = null,
 }) {
+  const canAsk = Boolean(userQuestions && typeof userQuestions.ask === 'function');
   const scan = scanWorkspace(root);
   if (scan.kind === 'v4') {
     const sides = scan.sides || [];
@@ -198,22 +140,16 @@ export async function startV4Init({
         workspace: scan.workspace,
       };
     }
-    const selection = {
-      backend: scan.workspace.backend,
-      frontend: scan.workspace.frontend,
-      sides,
-      preset: null,
-    };
-    const skipQuality = async () => ({
-      ok: true,
-      skipped: true,
-      reason: '用户未批准安装依赖/质量阶段',
-      stages: [],
-    });
+    const selection = resumeSelection(scan);
+    if (!selection.ok) return selection;
+    const approved = canAsk
+      ? (await askApproval({ userQuestions, agent, signal, selection })) === 'approved'
+      : false;
     const built = await buildWorkspace({
       root,
       selection,
-      qualityRunner: approved ? qualityRunner : skipQuality,
+      qualityRunner: approved ? qualityRunner : skipQuality(),
+      approval: approved ? 'approved' : 'skipped',
     });
     if (!built.ok) {
       return {
@@ -237,6 +173,8 @@ export async function startV4Init({
       phase: 'IDLE',
       build: built,
       submodules: wired,
+      approved,
+      selection,
       message: workspaceSummary(root),
     };
   }
@@ -251,40 +189,65 @@ export async function startV4Init({
     };
   }
 
-  let selection = resolveSelection({ backend, frontend, preset });
-  if (!selection.ok && userQuestions && typeof userQuestions.ask === 'function') {
-    const picked = await askSelection({ userQuestions, agent, signal });
-    selection = resolveSelection(picked);
-  }
-  if (!selection.ok) return selection;
-
-  if (selection.backend === 'java' && userQuestions && typeof userQuestions.ask === 'function') {
-    const java = await askJavaOptions({ userQuestions, agent, signal });
-    if (!java.ok) return java;
-    const api = selection.sides.find((side) => side.id === 'api');
-    if (api) {
-      api.jdk = java.jdk;
-      api.buildTool = java.buildTool;
-      api.bootVersion = java.bootVersion;
-    }
-  }
-
+  let selection = null;
   let requirements = null;
   let approved = false;
-  if (userQuestions && typeof userQuestions.ask === 'function') {
-    const asked = await askRequirements({ userQuestions, agent, signal });
-    if (!asked.ok) return asked;
-    requirements = asked.requirements;
-    try {
-      approved = await askQualityApproval({ userQuestions, agent, signal });
-    } catch {
-      approved = false;
+  let decided = false;
+  let rounds = 0;
+  let wizardInitial = initial || {};
+  while (rounds < 3) {
+    rounds += 1;
+    const picked = await askWizard({
+      userQuestions,
+      agent,
+      signal,
+      initial: wizardInitial,
+      preset,
+      backend,
+      frontend,
+    });
+    if (!picked.ok) return picked;
+    selection = picked;
+
+    requirements = null;
+    if (canAsk) {
+      const asked = await askRequirements({ userQuestions, agent, signal });
+      if (!asked.ok) return asked;
+      requirements = asked.requirements;
     }
+
+    if (!canAsk) {
+      approved = false;
+      decided = true;
+      break;
+    }
+
+    const decision = await askApproval({ userQuestions, agent, signal, selection });
+    if (decision === 'modify') {
+      wizardInitial = { backend: selection.backend, frontend: selection.frontend };
+      continue;
+    }
+    approved = decision === 'approved';
+    decided = true;
+    break;
+  }
+  if (!selection || !decided) {
+    return { ok: false, code: 'CANCELLED', message: '未完成技术栈选择或审批' };
   }
 
-  const created = createWorkspaceLayout({ root, selection, requirements });
+  const created = createWorkspaceLayout({
+    root,
+    selection,
+    requirements,
+    approval: approved ? 'approved' : 'skipped',
+  });
   if (!created.ok) return created;
-  const built = await buildWorkspace({ root, selection, qualityRunner });
+  const built = await buildWorkspace({
+    root,
+    selection,
+    qualityRunner: approved ? qualityRunner : skipQuality(),
+    approval: approved ? 'approved' : 'skipped',
+  });
   if (!built.ok) {
     return {
       ok: false,
@@ -315,6 +278,8 @@ export async function startV4Init({
     phase: 'IDLE',
     build: built,
     submodules: wired,
+    approved,
+    selection,
     message:
       'v4 workspace：' +
       selection.sides.map((side) => side.path + '=' + side.stack).join('，') +
@@ -334,21 +299,25 @@ export function summarizeV4Result(result) {
     );
   }
   const built = result.build?.results || [];
-  return [
-    'SpecGate v4 workspace 已创建（Phase 2：布局 + 后端 CRUD + Git）',
-    '子模块：' + (result.sides || []).join('、'),
+  const degraded = built.some((item) => item.degraded);
+  const lines = [
+    'SpecGate v4 workspace 已创建（技术栈向导 + 依赖选择 + 审批）',
+    '技术栈：',
+    summarizeSelection(result.selection),
     '根配置：.specgate/workspace.yaml',
     '默认需求：每个 submodule 的 openspec/REQ.md v1.0（REQ-001 搭建框架）',
-    ...built.map(
-      (item) =>
-        '- ' +
-        (item.side || '?') +
-        '：' +
-        (item.skipped
-          ? '跳过（' + item.reason + '）'
-          : '提交 ' + String(item.commit || '').slice(0, 8)),
-    ),
-    '子模块：' + (result.submodules?.modules || 0) + ' 个',
-    '下一步：/sg-change <name>（需求盘问与并行门控将在后续接入）',
-  ].join('\n');
+    '审批：' + (result.approved ? '已批准安装/质量阶段' : '未批准，已跳过安装与质量执行'),
+  ];
+  for (const item of built) {
+    const status = item.skipped
+      ? '跳过（' + (item.reason || 'skipped') + '）'
+      : item.degraded
+        ? 'degraded（质量失败，代码已提交）'
+        : '提交 ' + String(item.commit || '').slice(0, 8);
+    lines.push('- ' + (item.side || '?') + '：' + status);
+  }
+  if (degraded) lines.push('注意：至少一端质量阶段失败，详见各端 docs/mvp-scaffold-report.md');
+  lines.push('子模块：' + (result.submodules?.modules || 0) + ' 个');
+  lines.push('下一步：/sg-change <name>');
+  return lines.join('\n');
 }

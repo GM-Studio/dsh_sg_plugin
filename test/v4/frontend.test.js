@@ -74,7 +74,7 @@ test('v4 Phase 3：node 全栈同时生成 api 与 web', async () => {
   const built = await buildWorkspace({ root, selection, qualityRunner: quality(true) });
   assert.equal(built.ok, true);
   assert.equal(built.results.length, 2);
-  assert.ok(fs.existsSync(path.join(root, 'api', 'src', 'items.js')));
+  assert.ok(fs.existsSync(path.join(root, 'api', 'src', 'items.ts')));
   assert.ok(fs.existsSync(path.join(root, 'web', 'src', 'App.jsx')));
   assert.ok(fs.existsSync(path.join(root, 'contracts', 'openapi.yaml')));
 });

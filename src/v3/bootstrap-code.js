@@ -16,6 +16,9 @@ function javaFiles(context) {
   const pkg = pkgOf(context);
   const dir = 'src/main/java/' + pkgPath(context);
   const testDir = 'src/test/java/' + pkgPath(context);
+  const validation = String(context.bootVersion || '2.7.x').startsWith('2')
+    ? 'javax.validation'
+    : 'jakarta.validation';
   const files = {};
   files[dir + '/Item.java'] = lines(
     'package ' + pkg + ';',
@@ -110,8 +113,8 @@ function javaFiles(context) {
     'package ' + pkg + ';',
     '',
     'import java.util.List;',
-    'import javax.validation.Valid;',
-    'import javax.validation.constraints.NotBlank;',
+    'import ' + validation + '.Valid;',
+    'import ' + validation + '.constraints.NotBlank;',
     'import org.springframework.http.HttpStatus;',
     'import org.springframework.http.ResponseEntity;',
     'import org.springframework.web.bind.annotation.DeleteMapping;',

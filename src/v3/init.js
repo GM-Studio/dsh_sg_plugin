@@ -649,15 +649,24 @@ exit /b 1
 
 function javaGradleFiles(context) {
   const bootVersion = JAVA_BOOT_VERSIONS[String(context.bootVersion || '2.7.x')] || '2.7.18';
-  const boot3 = String(context.bootVersion || '').startsWith('3');
+  const modernBoot =
+    String(context.bootVersion || '').startsWith('3') ||
+    String(context.bootVersion || '').startsWith('4');
   const jdk = String(context.jdk || '8');
   const source = jdk === '8' ? '1.8' : jdk;
-  const dependencyManagement = boot3 ? '1.1.6' : '1.0.15.RELEASE';
+  const modern = jdk === '17' || jdk === '21';
+  const spotlessVersion = jdk === '8' ? '5.14.0' : '6.25.0';
+  const gjfVersion = modern ? '1.28.0' : '1.7';
+  const checkstyleVersion = modern ? '10.12.4' : '9.3';
+  const dependencyManagement = modernBoot ? '1.1.7' : '1.0.15.RELEASE';
+  const optionalLines = selectedOptionalItems(context)
+    .map((item) => gradleDependencyLine(item, bootVersion))
+    .join('\n');
   const build = `plugins {
     id 'java'
     id 'org.springframework.boot' version '${bootVersion}'
     id 'io.spring.dependency-management' version '${dependencyManagement}'
-    id 'com.diffplug.spotless' version '6.25.0'
+    id 'com.diffplug.spotless' version '${spotlessVersion}'
     id 'checkstyle'
     id 'com.github.spotbugs' version '6.0.9'
 }
@@ -679,6 +688,7 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-validation'
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
+${optionalLines}
 }
 
 tasks.named('test') {
@@ -687,12 +697,12 @@ tasks.named('test') {
 
 spotless {
     java {
-        googleJavaFormat('1.22.0')
+        googleJavaFormat('${gjfVersion}')
     }
 }
 
 checkstyle {
-    toolVersion = '10.12.4'
+    toolVersion = '${checkstyleVersion}'
 }
 
 spotbugs {
@@ -739,11 +749,73 @@ exit /b 1
   };
 }
 
+function selectedOptionalItems(context) {
+  const dependencies = context.dependencies;
+  if (!dependencies || !Array.isArray(dependencies.optional)) return [];
+  const items = Array.isArray(dependencies.items) ? dependencies.items : [];
+  return dependencies.optional
+    .map((id) => items.find((item) => item.id === id))
+    .filter((item) => item && item.artifact);
+}
+
+function javaArtifact(item, bootVersion) {
+  const boot2 = String(bootVersion).startsWith('2');
+  if (item.id === 'springdoc') {
+    return {
+      group: 'org.springdoc',
+      artifact: boot2 ? 'springdoc-openapi-ui' : 'springdoc-openapi-starter-webmvc-ui',
+      version: boot2 ? '1.8.0' : '2.8.5',
+    };
+  }
+  if (item.id === 'mysql' && boot2) {
+    return { group: 'mysql', artifact: 'mysql-connector-java', version: '8.0.33' };
+  }
+  if (item.id === 'testcontainers') {
+    return { group: 'org.testcontainers', artifact: 'junit-jupiter', version: '1.20.4' };
+  }
+  if (item.id === 'mapstruct') {
+    return { group: 'org.mapstruct', artifact: 'mapstruct', version: '1.6.3' };
+  }
+  const [group, artifact] = String(item.artifact || '').split(':');
+  return {
+    group,
+    artifact,
+    version: item.version && item.version !== 'managed' ? item.version : null,
+  };
+}
+
+function pomDependencyXml(item, bootVersion) {
+  const { group, artifact, version: explicitVersion } = javaArtifact(item, bootVersion);
+  const scope =
+    item.scope && item.scope !== 'compile' ? '\n      <scope>' + item.scope + '</scope>' : '';
+  const version = explicitVersion ? '\n      <version>' + explicitVersion + '</version>' : '';
+  return [
+    '    <dependency>',
+    '      <groupId>' + group + '</groupId>',
+    '      <artifactId>' + artifact + '</artifactId>' + version + scope,
+    '    </dependency>',
+  ].join('\n');
+}
+
+function gradleDependencyLine(item, bootVersion) {
+  const { group, artifact, version } = javaArtifact(item, bootVersion);
+  const scope =
+    item.scope === 'test'
+      ? 'testImplementation'
+      : item.scope === 'runtime'
+        ? 'runtimeOnly'
+        : 'implementation';
+  return '    ' + scope + " '" + group + ':' + artifact + (version ? ':' + version : '') + "'";
+}
+
 function javaPom(context) {
   const jdk = String(context.jdk || '8');
   const bootVersion = JAVA_BOOT_VERSIONS[String(context.bootVersion || '2.7.x')] || '2.7.18';
   const withJpa = context.modules === 'minimal+jpa';
   const javaVersion = jdk === '17' ? '17' : jdk;
+  const optionalXml = selectedOptionalItems(context)
+    .map((item) => pomDependencyXml(item, bootVersion))
+    .join('\n');
   const modern = jdk === '17' || jdk === '21';
   const spotlessVersion = modern ? '3.10.4' : '2.32.0';
   const gjfVersion = modern ? '1.28.0' : '1.7';
@@ -800,6 +872,7 @@ function javaPom(context) {
       <artifactId>spring-boot-starter-test</artifactId>
       <scope>test</scope>
     </dependency>
+${optionalXml}
   </dependencies>
   <build>
     <plugins>

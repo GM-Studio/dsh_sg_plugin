@@ -1,0 +1,68 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { approvalText, askApproval, planForSide, skipQuality } from '../../src/v4/approval.js';
+import { selectionFromInitial } from '../../src/v4/wizard.js';
+
+function fake(value) {
+  return {
+    async ask() {
+      return { answers: [{ id: 'sg-v4-quality-approval', selected: [value] }] };
+    },
+  };
+}
+
+test('v4.1 审批：页面包含依赖与命令', async () => {
+  const selection = await selectionFromInitial({
+    backend: 'java',
+    frontend: 'react',
+    sides: {
+      api: { jdk: '17', buildTool: 'maven', bootVersion: '3.x', preset: 'recommended' },
+      web: { language: 'typescript', preset: 'recommended' },
+    },
+  });
+  const text = approvalText(selection);
+  assert.match(text, /Spring Web/);
+  assert.match(text, /Lombok/);
+  assert.match(text, /mvnw -B -ntp spotless:apply/);
+  assert.match(text, /pnpm install/);
+  assert.match(text, /一次审批覆盖 api \+ web/);
+});
+
+test('v4.1 审批：三种选择与默认跳过', async () => {
+  const selection = await selectionFromInitial({ backend: 'node', frontend: 'none' });
+  assert.equal(await askApproval({ userQuestions: fake('批准并执行'), selection }), 'approved');
+  assert.equal(
+    await askApproval({ userQuestions: fake('跳过，仅生成代码'), selection }),
+    'skipped',
+  );
+  assert.equal(await askApproval({ userQuestions: fake('返回修改'), selection }), 'modify');
+  assert.equal(await askApproval({ userQuestions: null, selection }), 'skipped');
+});
+
+test('v4.1 审批：命令计划按栈生成', async () => {
+  const java = await selectionFromInitial({ backend: 'java', frontend: 'none' });
+  const javaPlan = planForSide(java.sides[0]);
+  assert.equal(
+    javaPlan.some((item) => item.phase === 'install'),
+    true,
+  );
+  assert.equal(
+    javaPlan.some((item) => item.command.includes('spotless:apply')),
+    true,
+  );
+
+  const py = await selectionFromInitial({ backend: 'python', frontend: 'none' });
+  const pyPlan = planForSide(py.sides[0]);
+  assert.equal(
+    pyPlan.some((item) => item.command.includes('pip install')),
+    true,
+  );
+  assert.equal(
+    pyPlan.some((item) => item.command.includes('pytest')),
+    true,
+  );
+
+  const label = await skipQuality('x')({});
+  assert.equal(label.skipped, true);
+  assert.equal(label.reason, 'x');
+});

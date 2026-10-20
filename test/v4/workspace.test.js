@@ -11,6 +11,7 @@ import {
   workspaceSummary,
 } from '../../src/v4/workspace.js';
 import { resolveInitRoot } from '../../src/v4/init.js';
+import { selectionFromInitial } from '../../src/v4/wizard.js';
 
 function tempRoot() {
   return fs.mkdtempSync(path.join(os.tmpdir(), 'sg-v4-ws-'));
@@ -101,4 +102,29 @@ test('v4：--path 支持相对/绝对路径并拒绝文件路径', () => {
   assert.equal(rejected.code, 'E_PATH_NOT_DIR');
 
   assert.equal(resolveInitRoot(cwd, 'missing', { create: false }).code, 'E_PATH_NOT_FOUND');
+});
+
+test('v4.1：workspace.yaml 持久化技术栈/依赖，scan 可读回', async () => {
+  const root = tempRoot();
+  const selection = await selectionFromInitial({
+    backend: 'python',
+    frontend: 'none',
+    sides: {
+      api: {
+        framework: 'fastapi',
+        pythonVersion: '3.12',
+        packageManager: 'pip',
+        preset: 'recommended',
+      },
+    },
+  });
+  createWorkspaceLayout({ root, selection, approval: 'skipped' });
+  const scan = scanWorkspace(root);
+  assert.equal(scan.kind, 'v4');
+  assert.equal(scan.sides[0].stack, 'python');
+  assert.equal(scan.sides[0].framework, 'fastapi');
+  assert.equal(scan.sides[0].runtimeVersion, '3.12');
+  assert.equal(scan.sides[0].depsPreset, 'recommended');
+  assert.equal(scan.sides[0].optionalDeps.includes('sqlalchemy'), true);
+  assert.equal(readWorkspace(root).backend, 'python');
 });

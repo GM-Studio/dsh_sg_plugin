@@ -1,5 +1,15 @@
 # Changelog
 
+## 4.1.0
+
+- **v4 init stack wizard**: after topology, asks Java JDK/build tool/Boot, Python version/framework/packaging, Node version/package manager/language/framework, and frontend language; options are conditional and compatibility-validated.
+- **Versioned dependency catalog**: required and optional dependencies with minimal/recommended/full/custom presets, mutual-exclusion groups, and selected ids written to workspace.yaml, manifests, and reports.
+- **One consolidated approval gate**: lists per-side packages and commands; approve installs and runs format/lint/test/review; skip still generates full manifests/config/code and marks quality skipped.
+- **Degraded failure**: an approved install/quality failure stops that side's remaining stages, continues the other side, commits code with a [degraded] marker, and returns init success with degraded=true.
+- **Framework templates**: FastAPI/Flask/Django (including Python 2.7 legacy Flask/Django), Express/Fastify/NestJS (TypeScript/JavaScript), Vue/React manifests with selected deps; Java optional deps and jakarta.validation for Boot 3/4.
+- **Reports**: side and root .specgate/init-report.json, docs/mvp-scaffold-report.md, and docs/review-report.md.
+- **Tests**: 339 tests, 335 pass / 0 fail / 4 skipped.
+
 ## 3.10.0
 
 - **init now generates the Item CRUD code and tests**: for new java / node / python projects, mvp-scaffold no longer stops at the change package; it writes the Item model, in-memory store, five CRUD endpoints, and full tests.

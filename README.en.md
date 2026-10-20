@@ -2,12 +2,16 @@
 
 [中文](README.md) | **English**
 
-![version](https://img.shields.io/badge/version-3.6.0-blue)
+![version](https://img.shields.io/badge/version-4.1.0-blue)
 ![license](https://img.shields.io/badge/license-MIT-green)
 ![node](https://img.shields.io/badge/node-%3E%3D20.19.0-brightgreen)
 ![dsh](https://img.shields.io/badge/dsh-%3E%3D0.2.1--rc.2-purple)
 
-> **v3.6 (current)**: Java backend support — JDK 8/11/17/21 (LTS), Spring Boot 2.7.x/3.x, Maven/Gradle, JUnit XML adapters, Spotless/Checkstyle/SpotBugs gates, plus the existing Node/Vue/React/Python stacks.
+> **v4.1 (current)**: sg-init stack wizard — Java JDK 8/11/13/17/21 × Spring Boot 2.7/3.x/4.x; Python 3.10–3.13 and 2.7 (EOL) with FastAPI/Flask/Django; Node 20/22/24 with Express/Fastify/NestJS; Vue/React + Vite; required/optional dependencies with minimal/recommended/full presets; one consolidated approval, skip install/quality when not approved, and degrade-and-commit on failure.
+>
+> - Requirements: [docs/requirements/2026-10-20-v4.1-stack-dependency-selection-requirements.md](docs/requirements/2026-10-20-v4.1-stack-dependency-selection-requirements.md)
+>
+> **v3.6**: Java backend support — JDK 8/11/17/21 (LTS), Spring Boot 2.7.x/3.x, Maven/Gradle, JUnit XML adapters, Spotless/Checkstyle/SpotBugs gates, plus the existing Node/Vue/React/Python stacks.
 >
 > - Java details: [`docs/requirements/2026-10-19-v3.6-java-stack-requirements.md`](docs/requirements/2026-10-19-v3.6-java-stack-requirements.md)
 > - Design/matrix: [`docs/design/java-support-review.md`](docs/design/java-support-review.md), [`docs/design/java-version-matrix.md`](docs/design/java-version-matrix.md)
@@ -28,7 +32,7 @@ A Host plugin that brings AgentKit47's gated development workflow to DeepSeek Ha
 | Source | `templates/qoder/` from `AgentKit47-Qoder` (MIT) |
 | Target | DSH `0.2.1-rc.2` and above |
 | Form | workspace bundle, installed into the current DSH profile |
-| Version | `3.6.0` |
+| Version | `4.1.0` |
 
 ---
 

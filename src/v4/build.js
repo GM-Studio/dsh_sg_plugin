@@ -1,79 +1,14 @@
 import fs from 'node:fs';
-import os from 'node:os';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { ensureDir, exists, readText, writeText } from '../v3/util/fsx.js';
 import { scaffoldFiles, writeScaffold } from '../v3/init.js';
 import { bootstrapCodeFiles } from '../v3/bootstrap-code.js';
 import { frontendFiles } from './frontend-code.js';
-
-function hasCommand(command) {
-  const finder = process.platform === 'win32' ? 'where' : 'which';
-  return spawnSync(finder, [command], { encoding: 'utf8' }).status === 0;
-}
-
-function dshRuntimeDependencies() {
-  const base = path.join(os.homedir(), '.dsh', 'dsh-runtimes');
-  try {
-    return fs
-      .readdirSync(base, { withFileTypes: true })
-      .filter((entry) => entry.isDirectory())
-      .map((entry) => path.join(base, entry.name, 'dependencies'))
-      .filter((dir) => exists(dir));
-  } catch {
-    return [];
-  }
-}
-
-function resolveNodeBin() {
-  for (const name of ['DSH_NODE_BIN', 'DSH_NODE', 'NODE_BIN']) {
-    if (process.env[name] && exists(process.env[name])) return process.env[name];
-  }
-  if (hasCommand('node')) return 'node';
-  for (const deps of dshRuntimeDependencies()) {
-    const candidate = path.join(
-      deps,
-      'node',
-      'bin',
-      process.platform === 'win32' ? 'node.exe' : 'node',
-    );
-    if (exists(candidate)) return candidate;
-  }
-  return null;
-}
-
-function pnpmCli() {
-  for (const deps of dshRuntimeDependencies()) {
-    const candidate = path.join(deps, 'pnpm', 'bin', 'pnpm.cjs');
-    if (exists(candidate)) return candidate;
-  }
-  const beside = path.resolve(
-    path.dirname(process.execPath),
-    '..',
-    '..',
-    'pnpm',
-    'bin',
-    'pnpm.cjs',
-  );
-  return exists(beside) ? beside : null;
-}
-
-function runNodeScript(root, script, args, options = {}) {
-  const node = resolveNodeBin();
-  if (!node)
-    return {
-      command: 'node ' + script,
-      status: 1,
-      stdout: '',
-      stderr: 'node not found',
-      durationMs: 0,
-    };
-  const env = {
-    ...(options.env || {}),
-    PATH: path.dirname(node) + path.delimiter + (process.env.PATH || ''),
-  };
-  return run(root, node, [script, ...args], { ...options, env });
-}
+import { executePlan } from './execution.js';
+import { CATALOG_VERSION, findDependency, sideLabel } from './catalog.js';
+import { v4PythonFiles } from './python-code.js';
+import { v4NodeFiles } from './node-code.js';
 
 function run(root, command, args = [], options = {}) {
   const started = Date.now();
@@ -206,18 +141,47 @@ function archiveBootstrap(root) {
   writeText(path.join(root, 'openspec', 'specs', 'mvp', 'spec.md'), specText());
 }
 
+function dependencyLabels(side, ids) {
+  return (ids || [])
+    .map((id) => {
+      const item = findDependency(side, id);
+      return item ? item.label + (item.version ? ' ' + item.version : '') : id;
+    })
+    .join('、');
+}
+
 function reportText({ side, written, quality }) {
   const fence = '\x60\x60\x60';
+  const deps = side.dependencies || {};
+  const qualityStatus = quality?.skipped
+    ? 'skipped'
+    : quality?.ok === false
+      ? 'degraded'
+      : 'passed';
   const lines = [
     '# MVP 框架生成报告',
     '',
     '- side: ' + side.id + ' (' + side.stack + ')',
+    '- stack: ' + sideLabel(side),
     '- generated: ' + written.length,
+    '- depsPreset: ' + (deps.preset || '（无）'),
+    '- required: ' + (dependencyLabels(side, deps.required) || '（无）'),
+    '- optional: ' + (dependencyLabels(side, deps.optional) || '（无）'),
   ];
-  for (const file of written) lines.push('- A ' + file);
-  lines.push('', '## 质量阶段', '');
-  if (quality.skipped) lines.push('- SKIPPED: ' + (quality.reason || '工具链缺失'), '');
-  for (const stage of quality.stages || []) {
+  if (deps.dropped?.length) {
+    lines.push(
+      '- dropped: ' + deps.dropped.map((item) => item.id + '（' + item.reason + '）').join('；'),
+    );
+  }
+  lines.push('', '## 质量阶段', '', '- status: ' + qualityStatus);
+  if (quality?.skipped) lines.push('- SKIPPED: ' + (quality.reason || '用户跳过'), '');
+  if (quality?.ok === false) {
+    lines.push(
+      '- FAILED: ' + (quality.failedStage || 'unknown') + ' — ' + (quality.message || '失败'),
+      '',
+    );
+  }
+  for (const stage of quality?.stages || []) {
     lines.push(
       '### ' + stage.name,
       '',
@@ -233,62 +197,74 @@ function reportText({ side, written, quality }) {
   return lines.join('\n');
 }
 
-async function qualityFor({ root, stack, qualityRunner }) {
+function stageSummary(stage) {
+  return {
+    name: stage.name,
+    command: stage.command,
+    status: stage.status,
+    durationMs: stage.durationMs,
+    output: (String(stage.stdout || '') + String(stage.stderr || '')).trim().slice(0, 2000),
+  };
+}
+
+function writeSideReport(root, side, written, quality, commit = null) {
+  const deps = side.dependencies || {};
+  const payload = {
+    schemaVersion: 1,
+    timestamp: new Date().toISOString(),
+    catalogVersion: CATALOG_VERSION,
+    side: side.id,
+    stack: side.stack,
+    label: sideLabel(side),
+    selection: {
+      framework: side.framework,
+      runtimeVersion: side.runtimeVersion,
+      buildTool: side.buildTool,
+      bootVersion: side.bootVersion,
+      packageManager: side.packageManager,
+      language: side.language,
+    },
+    dependencies: {
+      preset: deps.preset || null,
+      required: deps.required || [],
+      optional: deps.optional || [],
+      dropped: deps.dropped || [],
+    },
+    quality: {
+      status: quality?.skipped ? 'skipped' : quality?.ok === false ? 'degraded' : 'passed',
+      skipped: Boolean(quality?.skipped),
+      degraded: quality?.ok === false,
+      failedStage: quality?.failedStage || null,
+      message: quality?.message || null,
+      stages: (quality?.stages || []).map(stageSummary),
+    },
+    files: written,
+    commit: commit || null,
+  };
+  ensureDir(path.join(root, '.specgate'));
+  writeText(
+    path.join(root, '.specgate', 'init-report.json'),
+    JSON.stringify(payload, null, 2) + '\n',
+  );
+  return payload;
+}
+
+async function qualityFor({ root, side, qualityRunner }) {
   if (typeof qualityRunner === 'function') {
-    const custom = await qualityRunner({ root, stack });
+    const custom = await qualityRunner({ root, stack: side.stack, side });
     return custom && typeof custom.ok === 'boolean' ? custom : { ok: true, stages: [] };
   }
-  const stages = [];
-  if (stack === 'node') {
-    const node = resolveNodeBin();
-    if (!node) return { ok: true, skipped: true, reason: '未找到 Node 工具链', stages: [] };
-    stages.push({ name: 'test', ...run(root, node, ['--test', 'test/items.test.mjs']) });
-  } else if (stack === 'python') {
-    const python = hasCommand('python') ? 'python' : hasCommand('py') ? 'py' : null;
-    if (!python) return { ok: true, skipped: true, reason: '未找到 Python 工具链', stages: [] };
-    const probe = run(root, python, ['-c', 'import pytest']);
-    if (probe.status !== 0)
-      return { ok: true, skipped: true, reason: '未安装 pytest', stages: [probe] };
-    stages.push({ name: 'test', ...run(root, python, ['-m', 'pytest', '-q', 'tests']) });
-  } else if (stack === 'java') {
-    if (!hasCommand('java'))
-      return { ok: true, skipped: true, reason: '未找到 JDK（java）', stages: [] };
-    const wrapper = process.platform === 'win32' ? 'mvnw.cmd' : 'mvnw';
-    const command = hasCommand('mvn') ? 'mvn' : exists(path.join(root, wrapper)) ? wrapper : null;
-    if (!command) return { ok: true, skipped: true, reason: '未找到 Maven', stages: [] };
-    stages.push({ name: 'format', ...run(root, command, ['-B', '-ntp', 'spotless:apply']) });
-    stages.push({ name: 'test', ...run(root, command, ['-B', '-ntp', 'verify']) });
-  } else if (stack === 'vue' || stack === 'react') {
-    const pnpm = pnpmCli();
-    if (pnpm) {
-      const install = runNodeScript(root, pnpm, ['install', '--no-frozen-lockfile'], {
-        env: { PATH: path.dirname(resolveNodeBin()) + path.delimiter + (process.env.PATH || '') },
-      });
-      const installOutput = (install.stdout || '') + (install.stderr || '');
-      if (install.status !== 0 && /ERR_PNPM_IGNORED_BUILDS/.test(installOutput)) {
-        install.status = 0;
-        install.stdout =
-          installOutput + '\n[SpecGate] ignored build scripts; tests will still run.';
-      }
-      stages.push({ name: 'install', ...install });
-      stages.push({ name: 'test', ...runNodeScript(root, pnpm, ['test']) });
-    } else if (hasCommand('npm')) {
-      stages.push({ name: 'install', ...run(root, 'npm', ['install', '--no-audit', '--no-fund']) });
-      stages.push({ name: 'test', ...run(root, 'npm', ['test']) });
-    } else {
-      return { ok: true, skipped: true, reason: '未找到 npm/pnpm', stages: [] };
-    }
-  }
-  const failed = stages.find((stage) => stage.status !== 0);
-  if (failed) {
+  try {
+    return executePlan({ root, side });
+  } catch (error) {
     return {
       ok: false,
       code: 'BOOTSTRAP_QUALITY_FAILED',
-      message: failed.name + ' 失败（exit ' + failed.status + '）',
-      stages,
+      message: error instanceof Error ? error.message : String(error),
+      failedStage: 'executor',
+      stages: [],
     };
   }
-  return { ok: true, stages };
 }
 
 function ensureRepo(root) {
@@ -324,6 +300,36 @@ function prepareRepo(root, side) {
   return { status: 0 };
 }
 
+function writeBackendFiles(root, side) {
+  if (side.stack === 'python' || side.stack === 'node') {
+    const files = side.stack === 'python' ? v4PythonFiles(side) : v4NodeFiles(side);
+    const result = writeScaffold(root, files);
+    return result.written;
+  }
+  const scaffold = scaffoldFiles(side.stack, {
+    ...side,
+    background: '搭建框架',
+    team: 'SpecGate',
+    steps: '1) 框架 2) 业务',
+    jdk: side.jdk || side.runtimeVersion || '17',
+    buildTool: side.buildTool || 'maven',
+    bootVersion: side.bootVersion || '3.x',
+    packageName: side.packageName || 'com.example.demo',
+  });
+  const scaffoldResult = writeScaffold(root, scaffold);
+  const code = bootstrapCodeFiles(side.stack, {
+    packageName: side.packageName || 'com.example.demo',
+    ...side,
+  });
+  const written = [...scaffoldResult.written];
+  for (const [relative, content] of Object.entries(code)) {
+    ensureDir(path.dirname(path.join(root, relative)));
+    writeText(path.join(root, relative), content);
+    if (!written.includes(relative)) written.push(relative);
+  }
+  return written;
+}
+
 export async function buildBackendSide({ root, side, qualityRunner = null }) {
   if (side.role !== 'backend') return { ok: true, skipped: true, reason: 'not-backend' };
   if (!['node', 'python', 'java'].includes(side.stack)) {
@@ -335,51 +341,42 @@ export async function buildBackendSide({ root, side, qualityRunner = null }) {
   const prepared = prepareRepo(root, side);
   if (prepared.status !== 0) return prepared;
 
-  const scaffold = scaffoldFiles(side.stack, {
-    ...side,
-    background: '搭建框架',
-    team: 'SpecGate',
-    steps: '1) 框架 2) 业务',
-    jdk: side.jdk || '8',
-    buildTool: side.buildTool || 'maven',
-    bootVersion: side.bootVersion || '2.7.x',
-  });
-  const scaffoldResult = writeScaffold(root, scaffold);
-  const code = bootstrapCodeFiles(side.stack, { packageName: 'com.example.demo' });
-  const written = [...scaffoldResult.written];
-  for (const [relative, content] of Object.entries(code)) {
-    ensureDir(path.dirname(path.join(root, relative)));
-    writeText(path.join(root, relative), content);
-    if (!written.includes(relative)) written.push(relative);
-  }
+  const written = writeBackendFiles(root, side);
   writeBootstrapChange(root);
 
-  const quality = await qualityFor({ root, stack: side.stack, qualityRunner });
+  const quality = await qualityFor({ root, side, qualityRunner });
+  const degraded = quality?.ok === false;
   const report = path.join(root, 'docs', 'mvp-scaffold-report.md');
   ensureDir(path.dirname(report));
   writeText(report, reportText({ side, written, quality }));
-  if (!quality.ok) {
-    return { ok: false, ...quality, report: 'docs/mvp-scaffold-report.md' };
-  }
+  writeSideReport(root, side, written, quality, null);
 
-  const first = commitAll(root, 'feat(mvp): 搭建 ' + side.stack + ' 框架与 Item CRUD');
+  const suffix = degraded ? ' [degraded]' : '';
+  const first = commitAll(root, 'feat(mvp): 搭建 ' + side.stack + ' 框架与 Item CRUD' + suffix);
   if (first.status !== 0) return first;
   archiveBootstrap(root);
-  const second = commitAll(root, 'chore(bootstrap): 归档 MVP 框架变更');
+  const second = commitAll(root, 'chore(bootstrap): 归档 MVP 框架变更' + suffix);
   if (second.status !== 0) return second;
   const checkout = git(root, ['checkout', 'main']);
   if (checkout.status !== 0) return checkout;
-  const merge = git(root, identity(['merge', '--no-ff', '-m', 'merge bootstrap', 'bootstrap']));
+  const merge = git(
+    root,
+    identity(['merge', '--no-ff', '-m', 'merge bootstrap' + suffix, 'bootstrap']),
+  );
   if (merge.status !== 0) return merge;
   git(root, ['tag', 'mvp-bootstrap']);
   writeText(path.join(root, '.specgate', 'bootstrap.done'), 'done\n');
+  const commit = (git(root, ['rev-parse', 'HEAD']).stdout || '').trim();
   return {
     ok: true,
     side: side.id,
     stack: side.stack,
     written,
     report: 'docs/mvp-scaffold-report.md',
-    commit: (git(root, ['rev-parse', 'HEAD']).stdout || '').trim(),
+    commit,
+    degraded,
+    quality,
+    qualityStatus: quality?.skipped ? 'skipped' : degraded ? 'degraded' : 'passed',
   };
 }
 
@@ -394,7 +391,7 @@ export async function buildFrontendSide({ root, side, qualityRunner = null }) {
   const prepared = prepareRepo(root, side);
   if (prepared.status !== 0) return prepared;
 
-  const files = frontendFiles(side.stack);
+  const files = frontendFiles(side.stack, side);
   const written = [];
   for (const [relative, content] of Object.entries(files)) {
     ensureDir(path.dirname(path.join(root, relative)));
@@ -403,34 +400,43 @@ export async function buildFrontendSide({ root, side, qualityRunner = null }) {
   }
   writeBootstrapChange(root);
 
-  const quality = await qualityFor({ root, stack: side.stack, qualityRunner });
+  const quality = await qualityFor({ root, side, qualityRunner });
+  const degraded = quality?.ok === false;
   const report = path.join(root, 'docs', 'mvp-scaffold-report.md');
   ensureDir(path.dirname(report));
   writeText(report, reportText({ side, written, quality }));
-  if (!quality.ok) return { ok: false, ...quality, report: 'docs/mvp-scaffold-report.md' };
+  writeSideReport(root, side, written, quality, null);
 
-  const first = commitAll(root, 'feat(mvp): 搭建 ' + side.stack + ' 前端与 Item CRUD');
+  const suffix = degraded ? ' [degraded]' : '';
+  const first = commitAll(root, 'feat(mvp): 搭建 ' + side.stack + ' 前端与 Item CRUD' + suffix);
   if (first.status !== 0) return first;
   archiveBootstrap(root);
-  const second = commitAll(root, 'chore(bootstrap): 归档 MVP 框架变更');
+  const second = commitAll(root, 'chore(bootstrap): 归档 MVP 框架变更' + suffix);
   if (second.status !== 0) return second;
   const checkout = git(root, ['checkout', 'main']);
   if (checkout.status !== 0) return checkout;
-  const merge = git(root, identity(['merge', '--no-ff', '-m', 'merge bootstrap', 'bootstrap']));
+  const merge = git(
+    root,
+    identity(['merge', '--no-ff', '-m', 'merge bootstrap' + suffix, 'bootstrap']),
+  );
   if (merge.status !== 0) return merge;
   git(root, ['tag', 'mvp-bootstrap']);
   writeText(path.join(root, '.specgate', 'bootstrap.done'), 'done\n');
+  const commit = (git(root, ['rev-parse', 'HEAD']).stdout || '').trim();
   return {
     ok: true,
     side: side.id,
     stack: side.stack,
     written,
     report: 'docs/mvp-scaffold-report.md',
-    commit: (git(root, ['rev-parse', 'HEAD']).stdout || '').trim(),
+    commit,
+    degraded,
+    quality,
+    qualityStatus: quality?.skipped ? 'skipped' : degraded ? 'degraded' : 'passed',
   };
 }
 
-export async function buildWorkspace({ root, selection, qualityRunner = null }) {
+export async function buildWorkspace({ root, selection, qualityRunner = null, approval = null }) {
   const results = [];
   for (const side of selection.sides) {
     const sideRoot = path.join(root, side.path);
@@ -440,5 +446,51 @@ export async function buildWorkspace({ root, selection, qualityRunner = null }) 
         : await buildBackendSide({ root: sideRoot, side, qualityRunner }),
     );
   }
+  const payload = {
+    schemaVersion: 1,
+    timestamp: new Date().toISOString(),
+    catalogVersion: CATALOG_VERSION,
+    approval:
+      approval ||
+      (results.some((item) => item.qualityStatus === 'passed' || item.qualityStatus === 'degraded')
+        ? 'approved'
+        : 'skipped'),
+    workspace: {
+      backend: selection.backend,
+      frontend: selection.frontend,
+      sides: selection.sides.map((side) => ({
+        id: side.id,
+        path: side.path,
+        stack: side.stack,
+        role: side.role,
+        label: sideLabel(side),
+        dependencies: side.dependencies
+          ? {
+              preset: side.dependencies.preset || null,
+              required: side.dependencies.required || [],
+              optional: side.dependencies.optional || [],
+              dropped: side.dependencies.dropped || [],
+            }
+          : null,
+      })),
+    },
+    results: results.map((item) => ({
+      side: item.side,
+      stack: item.stack,
+      ok: item.ok,
+      skipped: Boolean(item.skipped),
+      degraded: Boolean(item.degraded),
+      qualityStatus:
+        item.qualityStatus || (item.skipped ? 'skipped' : item.degraded ? 'degraded' : 'passed'),
+      report: item.report || null,
+      commit: item.commit || null,
+      reason: item.reason || null,
+    })),
+  };
+  ensureDir(path.join(root, '.specgate'));
+  writeText(
+    path.join(root, '.specgate', 'init-report.json'),
+    JSON.stringify(payload, null, 2) + '\n',
+  );
   return { ok: results.every((item) => item.ok), results };
 }

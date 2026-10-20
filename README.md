@@ -2,12 +2,16 @@
 
 **中文** | [English](README.en.md)
 
-![version](https://img.shields.io/badge/version-3.6.0-blue)
+![version](https://img.shields.io/badge/version-4.1.0-blue)
 ![license](https://img.shields.io/badge/license-MIT-green)
 ![node](https://img.shields.io/badge/node-%3E%3D20.19.0-brightgreen)
 ![dsh](https://img.shields.io/badge/dsh-%3E%3D0.2.1--rc.2-purple)
 
-> **v3.6（当前）**：Java 后端支持 —— JDK 8/11/17/21（LTS）、Spring Boot 2.7.x/3.x、Maven/Gradle、JUnit XML 适配器、Spotless/Checkstyle/SpotBugs 门禁，并与既有的 Node/Vue/React/Python 技术栈并存。
+> **v4.1（当前）**：sg-init 技术栈向导 —— Java JDK 8/11/13/17/21 × Spring Boot 2.7/3.x/4.x；Python 3.10–3.13 与 2.7（EOL）、FastAPI/Flask/Django；Node 20/22/24、Express/Fastify/NestJS；Vue/React + Vite；必选/可选依赖与最小/推荐/全量预设；一次汇总审批，未批准跳过安装/质量，失败降级提交。
+>
+> - 需求：[docs/requirements/2026-10-20-v4.1-stack-dependency-selection-requirements.md](docs/requirements/2026-10-20-v4.1-stack-dependency-selection-requirements.md)
+>
+> **v3.6**：Java 后端支持 —— JDK 8/11/17/21（LTS）、Spring Boot 2.7.x/3.x、Maven/Gradle、JUnit XML 适配器、Spotless/Checkstyle/SpotBugs 门禁，并与既有的 Node/Vue/React/Python 技术栈并存。
 >
 > - Java 细节：[`docs/requirements/2026-10-19-v3.6-java-stack-requirements.md`](docs/requirements/2026-10-19-v3.6-java-stack-requirements.md)
 > - 设计与矩阵：[`docs/design/java-support-review.md`](docs/design/java-support-review.md)、[`docs/design/java-version-matrix.md`](docs/design/java-version-matrix.md)
@@ -28,7 +32,7 @@
 | 来源 | `AgentKit47-Qoder` 的 `templates/qoder/`（MIT） |
 | 目标 | DSH `0.2.1-rc.2` 及以上 |
 | 形态 | workspace bundle，安装到当前 DSH profile |
-| 版本 | `3.6.0` |
+| 版本 | `4.1.0` |
 
 ---
 

@@ -3,6 +3,7 @@ import path from 'node:path';
 import { ensureDir, exists, readText, writeText } from '../v3/util/fsx.js';
 import { initProject, configPath, patchConfigRequirements } from '../v3/change.js';
 import { writeRequirementsBaseline } from '../v3/requirements.js';
+import { CATALOG_VERSION } from './catalog.js';
 
 export const WORKSPACE_FILE = '.specgate/workspace.yaml';
 export const BACKENDS = ['node', 'python', 'java', 'none'];
@@ -64,6 +65,48 @@ export function workspaceYaml(selection) {
     ),
     '',
   ].join('\n');
+}
+
+function sideDetailLines(side) {
+  const deps = side.dependencies || {};
+  const rows = [
+    ['framework', side.framework],
+    ['runtime', side.runtimeVersion],
+    ['buildTool', side.buildTool],
+    ['bootVersion', side.bootVersion],
+    ['packageManager', side.packageManager],
+    ['language', side.language],
+    ['depsPreset', deps.preset],
+    ['requiredDeps', (deps.required || []).join(',')],
+    ['optionalDeps', (deps.optional || []).join(',')],
+  ];
+  return rows
+    .filter(([, value]) => value !== null && value !== undefined && String(value) !== '')
+    .map(([key, value]) => '    ' + key + ': ' + value);
+}
+
+export function workspaceYamlDetailed(selection, options = {}) {
+  const approval = options.approval || 'pending';
+  const lines = [
+    'version: 4',
+    'catalog: ' + CATALOG_VERSION,
+    'approval: ' + approval,
+    'topology: monorepo',
+    'backend: ' + selection.backend,
+    'frontend: ' + selection.frontend,
+    'contracts: contracts/openapi.yaml',
+    'merge: no-ff',
+    'sides:',
+  ];
+  for (const side of selection.sides) {
+    lines.push('  - id: ' + side.id);
+    lines.push('    path: ' + side.path);
+    lines.push('    stack: ' + side.stack);
+    lines.push('    role: ' + side.role);
+    lines.push(...sideDetailLines(side));
+  }
+  lines.push('');
+  return lines.join('\n');
 }
 
 export function readWorkspace(root) {
@@ -156,7 +199,7 @@ function writeSide(sideRoot, side, requirements = null) {
  * Phase 1：只创建 workspace 布局、默认 REQ 与状态；不生成 CRUD、不做 git submodule。
  * 幂等：workspace.yaml 已存在时直接返回 skipped。
  */
-export function createWorkspaceLayout({ root, selection, requirements = null }) {
+export function createWorkspaceLayout({ root, selection, requirements = null, approval = null }) {
   const workspaceFile = path.join(root, WORKSPACE_FILE);
   if (exists(workspaceFile)) {
     return { ok: true, skipped: true, root, workspace: readWorkspace(root) };
@@ -164,7 +207,7 @@ export function createWorkspaceLayout({ root, selection, requirements = null }) 
   ensureDir(path.join(root, '.specgate'));
   ensureDir(path.join(root, 'contracts'));
   writeText(path.join(root, 'contracts', 'openapi.yaml'), openApiYaml());
-  writeText(workspaceFile, workspaceYaml(selection));
+  writeText(workspaceFile, workspaceYamlDetailed(selection, { approval }));
   writeText(
     path.join(root, '.specgate', 'state.json'),
     JSON.stringify(defaultRootState(selection), null, 2) + '\n',
@@ -211,13 +254,42 @@ export function scanWorkspace(root) {
   return { kind: 'existing', entries, stacks };
 }
 
+function yamlScalar(block, key) {
+  const match = new RegExp('(?:^|\\n)\\s*(?:-\\s+)?' + key + ':\\s*(.+)$', 'm').exec(block);
+  return match ? match[1].trim() : null;
+}
+
 function workspaceYamlSides(raw) {
   const sides = [];
-  const regex = /-\s+id:\s*(\S+)\n\s+path:\s*(\S+)\n\s+stack:\s*(\S+)\n\s+role:\s*(\S+)/g;
-  let match = regex.exec(raw);
-  while (match) {
-    sides.push({ id: match[1], path: match[2], stack: match[3], role: match[4] });
-    match = regex.exec(raw);
+  for (const block of String(raw).split(/\n(?= {2}- id: )/)) {
+    const id = yamlScalar(block, 'id');
+    if (!id) continue;
+    const side = {
+      id,
+      path: yamlScalar(block, 'path'),
+      stack: yamlScalar(block, 'stack'),
+      role: yamlScalar(block, 'role'),
+    };
+    for (const [key, field] of [
+      ['framework', 'framework'],
+      ['runtime', 'runtimeVersion'],
+      ['buildTool', 'buildTool'],
+      ['bootVersion', 'bootVersion'],
+      ['packageManager', 'packageManager'],
+      ['language', 'language'],
+      ['depsPreset', 'depsPreset'],
+    ]) {
+      const value = yamlScalar(block, key);
+      if (value) side[field] = value;
+    }
+    for (const [key, field] of [
+      ['requiredDeps', 'requiredDeps'],
+      ['optionalDeps', 'optionalDeps'],
+    ]) {
+      const value = yamlScalar(block, key);
+      if (value !== null) side[field] = value ? value.split(',').map((item) => item.trim()) : [];
+    }
+    sides.push(side);
   }
   return sides;
 }

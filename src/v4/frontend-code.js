@@ -285,6 +285,111 @@ function vueFiles() {
   };
 }
 
-export function frontendFiles(framework) {
-  return framework === 'vue' ? vueFiles() : reactFiles();
+function selectedPackageMap(context) {
+  const deps = context?.dependencies;
+  if (!deps || !Array.isArray(deps.items)) return null;
+  const selected = new Set([...(deps.required || []), ...(deps.optional || [])]);
+  const dependencies = {};
+  const devDependencies = {};
+  for (const item of deps.items) {
+    if (!selected.has(item.id) || !item.name || item.kind === 'file') continue;
+    const dev =
+      item.scope === 'devDependencies' ||
+      item.scope === 'dev' ||
+      item.category === 'test' ||
+      item.category === 'quality' ||
+      item.category === 'lint' ||
+      item.category === 'format';
+    const target = dev ? devDependencies : dependencies;
+    target[item.name] = item.version;
+  }
+  return { dependencies, devDependencies };
+}
+
+function packageJson(context, map) {
+  return (
+    JSON.stringify(
+      {
+        name: 'web',
+        private: true,
+        type: 'module',
+        scripts: {
+          dev: 'vite',
+          build: 'vite build',
+          test: 'vitest run',
+          lint: 'eslint .',
+          format: 'prettier --write .',
+        },
+        ...(map || {}),
+      },
+      null,
+      2,
+    ) + '\n'
+  );
+}
+
+function eslintConfig(framework, language) {
+  const ignores = '  { ignores: ["node_modules/**", "dist/**"] },';
+  if (framework === 'vue') {
+    const rows = ['import pluginVue from "eslint-plugin-vue";'];
+    if (language !== 'javascript') rows.push('import tseslint from "typescript-eslint";');
+    rows.push('', 'export default [', ignores, '  ...pluginVue.configs["flat/essential"],');
+    if (language !== 'javascript') {
+      rows.push(
+        '  { files: ["**/*.ts"], languageOptions: { parser: tseslint.parser }, rules: {} },',
+      );
+    }
+    rows.push('];', '');
+    return rows.join('\n');
+  }
+  const rows = [];
+  if (language !== 'javascript') rows.push('import tseslint from "typescript-eslint";', '');
+  rows.push('export default [', ignores);
+  rows.push(
+    '  { languageOptions: { parserOptions: { ecmaFeatures: { jsx: true } } }, rules: {} },',
+  );
+  if (language !== 'javascript') {
+    rows.push(
+      '  { files: ["**/*.{ts,tsx}"], languageOptions: { parser: tseslint.parser }, rules: {} },',
+    );
+  }
+  rows.push('];', '');
+  return rows.join('\n');
+}
+
+function tsconfig(framework) {
+  return (
+    JSON.stringify(
+      {
+        compilerOptions: {
+          target: 'ES2022',
+          module: 'ESNext',
+          moduleResolution: 'Bundler',
+          jsx: framework === 'react' ? 'react-jsx' : undefined,
+          allowJs: true,
+          checkJs: false,
+          strict: false,
+          noEmit: true,
+          skipLibCheck: true,
+          esModuleInterop: true,
+        },
+        include: ['src/**/*.js', 'src/**/*.jsx', 'src/**/*.ts', 'src/**/*.tsx', 'src/**/*.vue'],
+      },
+      null,
+      2,
+    ) + '\n'
+  );
+}
+
+export function frontendFiles(framework, context = {}) {
+  const files = framework === 'vue' ? vueFiles() : reactFiles();
+  const map = selectedPackageMap(context);
+  if (map) {
+    files['package.json'] = packageJson(context, map);
+    files['eslint.config.js'] = eslintConfig(framework, context.language);
+    if (context.language !== 'javascript') {
+      files['tsconfig.json'] = tsconfig(framework);
+    }
+  }
+  return files;
 }
