@@ -1,5 +1,17 @@
 # 变更记录
 
+## 4.2.0
+
+- **默认单仓**：`sg_init` 生成一个 git 仓库，根目录直接跟踪 `api/`、`web/`、`contracts/` 与 `.specgate/`；不再生成 `.gitmodules`/gitlink。`flattenToSingleRepo` 删除两侧 `.git` 后把两个工作区提交到根仓库。
+- **拓扑可选**：`sg_init({ topology: "single" | "submodule" })`，默认 `single`；`workspace.yaml` 记录实际拓扑。
+- **默认 JDK 8**：Java 向导/目录默认 JDK 8 + Spring Boot 2.7.18 + Maven；JDK 17/21 + Boot 3.x 仍可选择。
+- **JDK 快速发现**：依次检查 `SG_JAVA_HOME`、项目工具链、`JAVA_HOME`/`JDK_HOME`、`PATH`、常见厂商目录；最多探测 24 个候选、单次 3s，命中首个合法 JDK 8 即停。
+- **JDK 8 下载兜底**：未找到时下载 Temurin 8（Windows zip / Unix tar.gz），带 3 次重试与 `curl.exe` 兜底，解压后扁平化并校验 `java -version`。
+- **根编排**：生成 `README.md`、`package.json`、`scripts/dev.mjs`、`scripts/verify.mjs`、`scripts/mvn.mjs`、`.env.example` 与根 `.gitignore`。
+- **前后端联通**：Vite `server.proxy`/`preview.proxy` 把 `/api` 代理到 `127.0.0.1:8080`，端口 strict，`index.html` 补全；前端默认 `real`（仅 Vitest 下 mock）。
+- **质量修复**：JDK 8 使用 Spotless 2.30.0；Maven 本地仓库改到 `.specgate/m2repo`；生成的 `mvnw` 自动发现项目内工具链；解压补齐 Windows 环境。
+- **验收**：在无 JDK/Maven 的干净环境中完成初始化（自动下载 JDK 8/Maven），两端质量阶段通过；生成仓库通过 `npm run dev` 与 `npm run verify`（后端测试、前端 build/test、代理与 CRUD 冒烟）。
+
 ## 3.7.0
 
 - 需求先行初始化：`/sg-init` 在任何技术栈问题之前，先盘问功能（MVP）、非功能、约束与验收标准，两者合成一次确认页。

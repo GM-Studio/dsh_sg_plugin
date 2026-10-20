@@ -7,4 +7,5 @@ Thumbs.db
 coverage/
 .ak47_dsh_stage/
 .specgate/
+.sg-fixed-live-*/
 .npmrc

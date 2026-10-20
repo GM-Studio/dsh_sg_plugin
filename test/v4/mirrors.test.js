@@ -25,10 +25,10 @@ test('v4.1 镜像：生成可编辑配置文件', () => {
   assert.match(fs.readFileSync(files.gradleInit, 'utf8'), /maven\.aliyun\.com/);
 });
 
-test('v4.1 镜像：JDK 11/13/17/21 有国内下载地址，JDK 8 需系统安装', () => {
+test('v4.1 镜像：JDK 8/11/13/17/21 都有下载地址', () => {
   const mirrors = resolveMirrors();
   for (const major of ['11', '13', '17', '21']) {
     assert.match(jdkDownloadUrl(mirrors, major, 'win32', 'x64'), /mirrors\.huaweicloud\.com/);
   }
-  assert.equal(jdkDownloadUrl(mirrors, '8', 'win32', 'x64'), null);
+  assert.match(jdkDownloadUrl(mirrors, '8', 'win32', 'x64'), /adoptium\.net/);
 });

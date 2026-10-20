@@ -124,7 +124,8 @@ export function registerTools(ctx, runtime) {
     {
       name: 'sg_init',
       description:
-        '初始化 SpecGate v4：sg_init({ path?, backend?, frontend?, preset?, adopt? }) 创建 monorepo workspace；' +
+        '初始化 SpecGate v4：sg_init({ path?, topology?, backend?, frontend?, preset?, adopt? }) 创建 workspace；' +
+        '默认 topology=single（根仓库直接记录 api/web），Java 默认 JDK8 + Spring Boot 2.7；' +
         '省略 path 时使用当前目录，支持相对/绝对路径（Windows/Linux/macOS）。' +
         'v3 兼容：sg_init({ req, description, draft }) 走需求先行流程；--v3 可强制。',
       parameters: {
@@ -144,6 +145,11 @@ export function registerTools(ctx, runtime) {
           path: {
             type: 'string',
             description: '目标仓库/工作区路径；相对路径按当前目录解析，支持绝对路径与 ~',
+          },
+          topology: {
+            type: 'string',
+            enum: ['single', 'submodule'],
+            description: '仓库拓扑：single（默认，根仓库直接记录 api/web）或 submodule',
           },
           v4: { type: 'boolean', description: '创建 v4 monorepo workspace' },
           adopt: { type: 'boolean', description: '原地接入存量仓库' },
@@ -206,6 +212,7 @@ export function registerTools(ctx, runtime) {
             backend: input.backend || null,
             frontend: input.frontend || null,
             preset: input.preset || null,
+            topology: input.topology === 'submodule' ? 'submodule' : 'single',
           });
           if (!v4.ok) return fail(summarizeV4Result(v4), v4);
           return ok(summarizeV4Result(v4), v4);

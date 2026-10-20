@@ -149,7 +149,7 @@ export function planProvisioning({
             message:
               'JDK ' +
               side.jdk +
-              ' 没有可解压的国内镜像包；请通过系统包管理器安装，或改用可下载的 JDK 11/13/17/21',
+              ' 没有可解析的下载地址；请通过系统包管理器安装 JDK 8，或改用可下载的 JDK 11/13/17/21',
           };
         }
         actions.push(planAction('jdk', side.jdk, platform, arch, 'jdk-' + side.jdk, mirrors));
@@ -235,51 +235,109 @@ export function provisionSummary(plan) {
 }
 
 async function downloadFile(url, destination) {
-  const response = await fetch(url, {
-    redirect: 'follow',
-    signal: AbortSignal.timeout(15 * 60 * 1000),
-  });
-  if (!response.ok || !response.body) {
-    throw new Error('下载失败 HTTP ' + response.status + '：' + url);
-  }
   fs.mkdirSync(path.dirname(destination), { recursive: true });
   const temp = destination + '.part';
-  await pipeline(Readable.fromWeb(response.body), fs.createWriteStream(temp));
-  fs.renameSync(temp, destination);
-  return destination;
+  let lastError = null;
+  for (let attempt = 1; attempt <= 3; attempt += 1) {
+    try {
+      const response = await fetch(url, {
+        redirect: 'follow',
+        headers: { 'User-Agent': 'SpecGate/4.1 (+https://github.com/GM-Studio/dsh_sg_plugin)' },
+        signal: AbortSignal.timeout(15 * 60 * 1000),
+      });
+      if (!response.ok || !response.body) {
+        throw new Error('下载失败 HTTP ' + response.status + '：' + url);
+      }
+      await pipeline(Readable.fromWeb(response.body), fs.createWriteStream(temp));
+      fs.renameSync(temp, destination);
+      return destination;
+    } catch (error) {
+      lastError = error;
+      try {
+        fs.rmSync(temp, { force: true });
+      } catch {
+        // best-effort
+      }
+      if (attempt < 3) await new Promise((resolve) => setTimeout(resolve, attempt * 1000));
+    }
+  }
+  // Node 的 TLS/代理栈在部分 Windows 环境会失败；curl 作为最后兜底。
+  const curl = spawnSync(
+    'curl.exe',
+    ['-L', '--fail', '--silent', '--show-error', '--output', temp, url],
+    { encoding: 'utf8', timeout: 15 * 60 * 1000, windowsHide: true },
+  );
+  if (curl.status === 0 && exists(temp)) {
+    fs.renameSync(temp, destination);
+    return destination;
+  }
+  throw lastError || new Error('下载失败：' + url);
 }
 
 function extract(archive, target, platform) {
   fs.mkdirSync(target, { recursive: true });
+  const sysRoot = process.env.SystemRoot || process.env.windir || 'C:\\Windows';
+  const tempDir = path.join(path.dirname(target), '.extract-tmp-' + path.basename(target));
+  fs.mkdirSync(tempDir, { recursive: true });
+  const env = {
+    ...process.env,
+    SystemRoot: sysRoot,
+    windir: sysRoot,
+    ComSpec: process.env.ComSpec || path.join(sysRoot, 'System32', 'cmd.exe'),
+    PATHEXT: process.env.PATHEXT || '.COM;.EXE;.BAT;.CMD',
+    PSModulePath:
+      process.env.PSModulePath ||
+      path.join(sysRoot, 'System32', 'WindowsPowerShell', 'v1.0', 'Modules'),
+    TEMP: tempDir,
+    TMP: tempDir,
+    PATH: [path.join(sysRoot, 'System32'), sysRoot, process.env.PATH || process.env.Path || '']
+      .filter(Boolean)
+      .join(';'),
+  };
+  env.Path = env.PATH;
   let result;
-  if (platform === 'win32') {
-    result = spawnSync(
-      'powershell.exe',
-      [
-        '-NoProfile',
-        '-NonInteractive',
-        '-Command',
-        'Expand-Archive -LiteralPath ' +
-          JSON.stringify(archive) +
-          ' -DestinationPath ' +
-          JSON.stringify(target) +
-          ' -Force',
-      ],
-      { encoding: 'utf8', timeout: 10 * 60 * 1000 },
-    );
-  } else if (/\.zip$/i.test(archive)) {
-    result = spawnSync('unzip', ['-q', archive, '-d', target], {
-      encoding: 'utf8',
-      timeout: 10 * 60 * 1000,
-    });
+  if (/\.zip$/i.test(archive)) {
+    if (platform === 'win32') {
+      const powershell = path.join(
+        sysRoot,
+        'System32',
+        'WindowsPowerShell',
+        'v1.0',
+        'powershell.exe',
+      );
+      result = spawnSync(
+        exists(powershell) ? powershell : 'powershell.exe',
+        [
+          '-NoProfile',
+          '-NonInteractive',
+          '-Command',
+          'Expand-Archive -LiteralPath ' +
+            JSON.stringify(archive) +
+            ' -DestinationPath ' +
+            JSON.stringify(target) +
+            ' -Force',
+        ],
+        { encoding: 'utf8', timeout: 10 * 60 * 1000, env },
+      );
+    } else {
+      result = spawnSync('unzip', ['-q', archive, '-d', target], {
+        encoding: 'utf8',
+        timeout: 10 * 60 * 1000,
+        env,
+      });
+    }
   } else {
     result = spawnSync('tar', ['-xzf', archive, '-C', target], {
       encoding: 'utf8',
       timeout: 10 * 60 * 1000,
+      env,
     });
   }
   if (result.status !== 0) {
-    throw new Error('解压失败：' + String(result.stderr || result.stdout || '').slice(-500));
+    throw new Error(
+      '解压失败：' +
+        String(result.stderr || result.stdout || result.error?.message || '').slice(-500),
+    );
   }
 }
 
@@ -306,11 +364,12 @@ function findExecutable(root, names, maxDepth = 6) {
   return walk(root, 0);
 }
 
-function probe(bin, args) {
+function probe(bin, args, env = process.env) {
   const result = spawnSync(bin, args, {
     encoding: 'utf8',
     timeout: 30000,
     windowsHide: true,
+    env,
     shell: process.platform === 'win32' && /\.(cmd|bat)$/i.test(bin),
   });
   return {
@@ -324,6 +383,23 @@ function executableNamesFor(tool, platform) {
   if (tool === 'maven') return platform === 'win32' ? ['mvn.cmd', 'mvn.bat'] : ['mvn'];
   if (tool === 'gradle') return platform === 'win32' ? ['gradle.bat'] : ['gradle'];
   return platform === 'win32' ? ['uv.exe'] : ['uv'];
+}
+
+function flattenSingleDirectory(target) {
+  let entries;
+  try {
+    entries = fs
+      .readdirSync(target, { withFileTypes: true })
+      .filter((entry) => entry.name !== '.DS_Store' && !entry.name.startsWith('.extract-tmp'));
+  } catch {
+    return;
+  }
+  if (entries.length !== 1 || !entries[0].isDirectory()) return;
+  const inner = path.join(target, entries[0].name);
+  for (const entry of fs.readdirSync(inner, { withFileTypes: true })) {
+    fs.renameSync(path.join(inner, entry.name), path.join(target, entry.name));
+  }
+  fs.rmdirSync(inner);
 }
 
 async function provisionOne(action, root, platform) {
@@ -341,10 +417,18 @@ async function provisionOne(action, root, platform) {
     }
   }
   const downloads = path.join(root, '.specgate', 'toolchains', '.downloads');
-  const extension = action.tool === 'gradle' || platform === 'win32' ? '.zip' : '.tar.gz';
+  const fromUrl = (/\.(zip|tar\.gz|tgz)(?:$|[?#])/i.exec(String(action.url || '')) || [])[0];
+  const extension = fromUrl
+    ? fromUrl.replace(/[?#].*$/, '').toLowerCase()
+    : action.tool === 'gradle' || platform === 'win32'
+      ? '.zip'
+      : '.tar.gz';
   const archive = path.join(downloads, action.tool + '-' + action.version + extension);
-  await downloadFile(action.url, archive);
+  if (!exists(archive) || fs.statSync(archive).size === 0) {
+    await downloadFile(action.url, archive);
+  }
   extract(archive, target, platform);
+  flattenSingleDirectory(target);
   try {
     fs.rmSync(archive, { force: true });
   } catch {
@@ -538,7 +622,7 @@ export function verifyToolchain(tools, env) {
   if (tools?.gradle?.path) checks.push(['gradle', tools.gradle.path, ['--version']]);
   if (tools?.uv?.path) checks.push(['uv', tools.uv.path, ['--version']]);
   for (const [name, bin, args] of checks) {
-    const result = probe(bin, args);
+    const result = probe(bin, args, env);
     if (!result.ok)
       return { ok: false, code: 'TOOLCHAIN_VERIFY_FAILED', message: name + ' 无法执行' };
   }

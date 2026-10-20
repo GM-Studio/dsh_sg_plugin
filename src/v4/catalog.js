@@ -1,4 +1,4 @@
-export const CATALOG_VERSION = '4.1.0';
+export const CATALOG_VERSION = '4.2.0';
 
 export const BACKENDS = ['node', 'python', 'java', 'none'];
 export const FRONTENDS = ['vue', 'react', 'none'];
@@ -859,10 +859,10 @@ export function defaultSideDetails(stack, framework = null) {
     return {
       stack: 'java',
       framework: 'spring-boot',
-      runtimeVersion: '17',
-      jdk: '17',
+      runtimeVersion: '8',
+      jdk: '8',
       buildTool: 'maven',
-      bootVersion: '3.x',
+      bootVersion: '2.7.x',
       language: 'java',
       packageManager: 'maven',
     };
@@ -896,6 +896,7 @@ export function defaultSideDetails(stack, framework = null) {
       framework: stack,
       runtimeVersion: null,
       buildTool: 'vite',
+      packageManager: 'npm',
       language: 'typescript',
     };
   }

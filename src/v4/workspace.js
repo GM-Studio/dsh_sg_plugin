@@ -4,6 +4,7 @@ import { ensureDir, exists, readText, writeText } from '../v3/util/fsx.js';
 import { initProject, configPath, patchConfigRequirements } from '../v3/change.js';
 import { writeRequirementsBaseline } from '../v3/requirements.js';
 import { CATALOG_VERSION } from './catalog.js';
+import { rootFiles } from './root-files.js';
 
 export const WORKSPACE_FILE = '.specgate/workspace.yaml';
 export const BACKENDS = ['node', 'python', 'java', 'none'];
@@ -40,13 +41,14 @@ export function resolveSelection(input = {}) {
   if (backend !== 'none') sides.push({ id: 'api', path: 'api', stack: backend, role: 'backend' });
   if (frontend !== 'none')
     sides.push({ id: 'web', path: 'web', stack: frontend, role: 'frontend' });
-  return { ok: true, backend, frontend, sides, preset: input.preset || null };
+  const topology = input.topology === 'submodule' ? 'submodule' : 'single';
+  return { ok: true, backend, frontend, sides, preset: input.preset || null, topology };
 }
 
 export function workspaceYaml(selection) {
   return [
     'version: 4',
-    'topology: monorepo',
+    'topology: ' + (selection.topology || 'single'),
     'backend: ' + selection.backend,
     'frontend: ' + selection.frontend,
     'contracts: contracts/openapi.yaml',
@@ -87,11 +89,13 @@ function sideDetailLines(side) {
 
 export function workspaceYamlDetailed(selection, options = {}) {
   const approval = options.approval || 'pending';
+  const profile = options.profile || 'full';
   const lines = [
     'version: 4',
     'catalog: ' + CATALOG_VERSION,
+    'profile: ' + profile,
     'approval: ' + approval,
-    'topology: monorepo',
+    'topology: ' + (selection.topology || 'single'),
     'backend: ' + selection.backend,
     'frontend: ' + selection.frontend,
     'contracts: contracts/openapi.yaml',
@@ -119,7 +123,8 @@ export function readWorkspace(root) {
   };
   return {
     version: Number(read('version')) || 4,
-    topology: read('topology') || 'monorepo',
+    topology: read('topology') || 'single',
+    profile: read('profile') || 'full',
     backend: read('backend'),
     frontend: read('frontend'),
     contracts: read('contracts'),
@@ -199,7 +204,13 @@ function writeSide(sideRoot, side, requirements = null) {
  * Phase 1：只创建 workspace 布局、默认 REQ 与状态；不生成 CRUD、不做 git submodule。
  * 幂等：workspace.yaml 已存在时直接返回 skipped。
  */
-export function createWorkspaceLayout({ root, selection, requirements = null, approval = null }) {
+export function createWorkspaceLayout({
+  root,
+  selection,
+  requirements = null,
+  approval = null,
+  profile = 'full',
+}) {
   const workspaceFile = path.join(root, WORKSPACE_FILE);
   if (exists(workspaceFile)) {
     return { ok: true, skipped: true, root, workspace: readWorkspace(root) };
@@ -207,7 +218,13 @@ export function createWorkspaceLayout({ root, selection, requirements = null, ap
   ensureDir(path.join(root, '.specgate'));
   ensureDir(path.join(root, 'contracts'));
   writeText(path.join(root, 'contracts', 'openapi.yaml'), openApiYaml());
-  writeText(workspaceFile, workspaceYamlDetailed(selection, { approval }));
+  writeText(workspaceFile, workspaceYamlDetailed(selection, { approval, profile }));
+  for (const [relative, content] of Object.entries(rootFiles(selection))) {
+    const target = path.join(root, relative);
+    if (exists(target)) continue;
+    ensureDir(path.dirname(target));
+    writeText(target, content);
+  }
   writeText(
     path.join(root, '.specgate', 'state.json'),
     JSON.stringify(defaultRootState(selection), null, 2) + '\n',

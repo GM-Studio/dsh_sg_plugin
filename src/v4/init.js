@@ -1,5 +1,5 @@
 import { buildWorkspace } from './build.js';
-import { wireSubmodules } from './workspace-change.js';
+import { flattenToSingleRepo, wireSubmodules } from './workspace-change.js';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -103,6 +103,7 @@ export async function startV4Init({
   preset = null,
   qualityRunner = null,
   initial = null,
+  topology = 'single',
 }) {
   const canAsk = Boolean(userQuestions && typeof userQuestions.ask === 'function');
   const scan = scanWorkspace(root);
@@ -111,7 +112,11 @@ export async function startV4Init({
     const pending = sides.filter(
       (side) => !exists(path.join(root, side.path, '.specgate', 'bootstrap.done')),
     );
-    if (!pending.length && exists(path.join(root, '.gitmodules'))) {
+    const singleDone =
+      topology === 'single' &&
+      exists(path.join(root, '.git')) &&
+      !exists(path.join(root, '.gitmodules'));
+    if (!pending.length && (singleDone || exists(path.join(root, '.gitmodules')))) {
       return {
         ok: true,
         skipped: true,
@@ -122,6 +127,7 @@ export async function startV4Init({
     }
     const selection = resumeSelection(scan);
     if (!selection.ok) return selection;
+    selection.topology = topology;
     const approved = canAsk
       ? (await askApproval({ userQuestions, agent, signal, selection })) === 'approved'
       : false;
@@ -146,7 +152,18 @@ export async function startV4Init({
         results: built.results,
       };
     }
-    const wired = wireSubmodules({ root, sides });
+    const wired =
+      selection.topology === 'single'
+        ? flattenToSingleRepo({ root, sides })
+        : wireSubmodules({ root, sides });
+    if (!wired.ok) {
+      return {
+        ok: false,
+        code: 'WORKSPACE_FINALIZE_FAILED',
+        message: wired.message || 'workspace 收尾失败',
+        build: built,
+      };
+    }
     return {
       ok: true,
       resumed: true,
@@ -235,6 +252,7 @@ export async function startV4Init({
     toolchain.mirrorFiles = mirrorFiles;
   }
 
+  selection.topology = topology;
   const created = createWorkspaceLayout({
     root,
     selection,
@@ -264,12 +282,15 @@ export async function startV4Init({
       results: built.results,
     };
   }
-  const wired = wireSubmodules({ root, sides: selection.sides });
+  const wired =
+    selection.topology === 'single'
+      ? flattenToSingleRepo({ root, sides: selection.sides })
+      : wireSubmodules({ root, sides: selection.sides });
   if (!wired.ok) {
     return {
       ok: false,
-      code: 'SUBMODULE_FAILED',
-      message: wired.message || 'submodule 接入失败',
+      code: 'WORKSPACE_FINALIZE_FAILED',
+      message: wired.message || 'workspace 收尾失败',
       build: built,
     };
   }
@@ -304,6 +325,8 @@ export function summarizeV4Result(result) {
     'SpecGate v4 workspace 已创建（技术栈向导 + 依赖选择 + 审批）',
     '技术栈：',
     summarizeSelection(result.selection),
+    '仓库拓扑：' +
+      (result.selection?.topology === 'submodule' ? 'submodule' : 'single（单仓，根记录两端代码）'),
     '根配置：.specgate/workspace.yaml',
     '默认需求：每个 submodule 的 openspec/REQ.md v1.0（REQ-001 搭建框架）',
     '审批：' + (result.approved ? '已批准安装/质量阶段' : '未批准，已跳过安装与质量执行'),

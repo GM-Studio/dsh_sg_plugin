@@ -1,5 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import { mavenWrapperCmd, mavenWrapperSh } from './env/wrapper.js';
 import { spawnSync } from 'node:child_process';
 import { initProject, createChange, configPath, readConfig } from './change.js';
 import { load, patchState } from './state.js';
@@ -625,23 +626,8 @@ function javaPathOf(context) {
 
 function javaWrapper() {
   return {
-    mvnw: `#!/bin/sh
-# Minimal Maven wrapper. Prefer a full Maven Wrapper distribution in CI.
-if command -v mvn >/dev/null 2>&1; then
-  exec mvn "$@"
-fi
-echo "Maven not found. Install Maven or add the full Maven Wrapper." >&2
-exit 1
-`,
-    'mvnw.cmd': `@echo off
-where mvn >nul 2>nul
-if %ERRORLEVEL%==0 (
-  mvn %*
-  exit /b %ERRORLEVEL%
-)
-echo Maven not found. Install Maven or add the full Maven Wrapper.
-exit /b 1
-`,
+    mvnw: mavenWrapperSh(),
+    'mvnw.cmd': mavenWrapperCmd(),
     '.mvn/wrapper/maven-wrapper.properties':
       'distributionUrl=https\\://repo.maven.apache.org/maven2/org/apache/maven/apache-maven/3.9.11/apache-maven-3.9.11-bin.zip\n',
   };
@@ -817,7 +803,7 @@ function javaPom(context) {
     .map((item) => pomDependencyXml(item, bootVersion))
     .join('\n');
   const modern = jdk === '17' || jdk === '21';
-  const spotlessVersion = modern ? '3.10.4' : '2.32.0';
+  const spotlessVersion = modern ? '3.10.4' : '2.30.0';
   const gjfVersion = modern ? '1.28.0' : '1.7';
   const checkstyleVersion = modern ? '12.3.1' : '9.3';
   return `<?xml version="1.0" encoding="UTF-8"?>

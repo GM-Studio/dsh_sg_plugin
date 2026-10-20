@@ -23,6 +23,7 @@ test('v4：预设与校验', () => {
     backend: 'node',
     frontend: 'react',
     preset: 'node-fullstack',
+    topology: 'single',
     sides: [
       { id: 'api', path: 'api', stack: 'node', role: 'backend' },
       { id: 'web', path: 'web', stack: 'react', role: 'frontend' },

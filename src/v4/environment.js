@@ -88,7 +88,7 @@ function probePython(file, env) {
 }
 
 function probeJava(file, env) {
-  const r = run(file, ['-version'], { env });
+  const r = run(file, ['-version'], { env, timeout: 3000 });
   return r.status === 0 ? { version: firstVersion(r.output), major: javaMajor(r.output) } : null;
 }
 
@@ -209,6 +209,89 @@ function readConfig(env) {
   return config;
 }
 
+function javaExecutableNames(platform) {
+  return platform === 'win32' ? ['java.exe'] : ['java'];
+}
+
+function javaHomeCandidates(root, env, platform) {
+  const homes = [];
+  const add = (value) => {
+    const home = String(value || '')
+      .trim()
+      .replace(/^"|"$/g, '');
+    if (home) homes.push(home);
+  };
+  add(env.SG_JAVA_HOME);
+  add(env.JAVA_HOME);
+  add(env.JDK_HOME);
+  const local = path.join(root, '.specgate', 'toolchains');
+  const parentLocal = path.join(root, '..', '.specgate', 'toolchains');
+  for (const base of [local, parentLocal]) {
+    try {
+      for (const entry of fs.readdirSync(base, { withFileTypes: true })) {
+        if (entry.isDirectory() && /^jdk/i.test(entry.name))
+          homes.push(path.join(base, entry.name));
+      }
+    } catch {
+      // no local toolchain
+    }
+  }
+  const home = envHome(env);
+  const known = [];
+  if (platform === 'win32') {
+    const pf = env.ProgramFiles || env.PROGRAMFILES || 'C:\\Program Files';
+    const pf86 = env['ProgramFiles(x86)'] || env['PROGRAMFILES(X86)'] || 'C:\\Program Files (x86)';
+    const vendors = [
+      'Java',
+      'Eclipse Adoptium',
+      'Eclipse Foundation',
+      'Zulu',
+      'Amazon Corretto',
+      'Microsoft',
+      'BellSoft',
+      'Semeru',
+      'SapMachine',
+      'AdoptOpenJDK',
+    ];
+    for (const base of [pf, pf86]) {
+      for (const vendor of vendors) known.push(path.join(base, vendor));
+    }
+    known.push(path.join(home, '.jdks'));
+    known.push(path.join(home, '.sdkman', 'candidates', 'java'));
+    known.push(path.join(home, 'scoop', 'apps', 'temurin8-jdk'));
+  } else {
+    known.push('/usr/lib/jvm', '/usr/java', '/opt/java', '/Library/Java/JavaVirtualMachines');
+    known.push(path.join(home, '.sdkman', 'candidates', 'java'));
+    known.push(path.join(home, '.jdks'));
+  }
+  for (const base of known) {
+    try {
+      for (const entry of fs.readdirSync(base, { withFileTypes: true })) {
+        if (entry.isDirectory()) homes.push(path.join(base, entry.name));
+        else if (platform === 'darwin' && entry.name.endsWith('.jdk'))
+          homes.push(path.join(base, entry.name, 'Contents', 'Home'));
+      }
+    } catch {
+      // known directory absent
+    }
+  }
+  if (platform === 'darwin') known.push('/Library/Java/JavaVirtualMachines');
+  return [...new Set(homes)];
+}
+
+function javaCandidatePaths(root, env, platform) {
+  const names = javaExecutableNames(platform);
+  const candidates = [];
+  const pushHome = (home) => {
+    if (!home) return;
+    for (const name of names) candidates.push(path.join(home, 'bin', name));
+  };
+  for (const home of javaHomeCandidates(root, env, platform)) pushHome(home);
+  const onPath = findOnPath('java', env, platform);
+  if (onPath) candidates.push(onPath);
+  return [...new Set(candidates)].slice(0, 24);
+}
+
 function readProjectConfig(root) {
   const files = ['.java-version', '.nvmrc', '.node-version', '.python-version', '.tool-versions'];
   const project = { files: [] };
@@ -282,15 +365,29 @@ export async function scanEnvironment({
         version: firstVersion(run(bin, ['--version'], { env }).output),
       });
   }
-  for (const binName of ['java', 'javac']) {
-    const bin = findOnPath(binName, env, platform);
-    if (bin) {
-      const probe = probeJava(bin, env);
-      tools[binName].push({
-        source: 'system',
-        path: bin,
-        version: probe?.version || null,
-        major: probe?.major || null,
+  for (const bin of javaCandidatePaths(root, env, platform)) {
+    if (!exists(bin)) continue;
+    const probe = probeJava(bin, env);
+    if (!probe) continue;
+    if (tools.java.some((item) => item.path === bin)) continue;
+    const home = path.dirname(path.dirname(bin));
+    tools.java.push({
+      source: 'scan',
+      path: bin,
+      home,
+      version: probe.version || null,
+      major: probe.major || null,
+    });
+    const javac =
+      platform === 'win32' ? path.join(home, 'bin', 'javac.exe') : path.join(home, 'bin', 'javac');
+    if (exists(javac) && !tools.javac.some((item) => item.path === javac)) {
+      const jc = run(javac, ['-version'], { env, timeout: 3000 });
+      tools.javac.push({
+        source: 'scan',
+        path: javac,
+        home,
+        version: firstVersion(jc.output),
+        major: javaMajor(jc.output),
       });
     }
   }

@@ -40,10 +40,22 @@ export function resolveMirrors(env = process.env) {
     gradleDist:
       env.SG_GRADLE_DIST || 'https://mirrors.cloud.tencent.com/gradle/gradle-8.14-bin.zip',
     jdk: env.SG_JDK_MIRROR || 'https://mirrors.huaweicloud.com/openjdk',
+    jdk8:
+      env.SG_JDK8_URL ||
+      'https://api.adoptium.net/v3/binary/latest/8/ga/{os}/{arch}/jdk/hotspot/normal/eclipse',
   };
 }
 
 export function jdkDownloadUrl(mirrors, major, platform, arch) {
+  if (Number(major) === 8) {
+    const os8 = platform === 'win32' ? 'windows' : platform === 'darwin' ? 'mac' : 'linux';
+    const cpu8 = arch === 'arm64' ? 'aarch64' : 'x64';
+    const ext8 = platform === 'win32' ? '.zip' : '.tar.gz';
+    return String(mirrors.jdk8 || '')
+      .replaceAll('{os}', os8)
+      .replaceAll('{arch}', cpu8)
+      .replaceAll('{ext}', ext8);
+  }
   const table = {
     11: '11.0.2',
     13: '13.0.2',

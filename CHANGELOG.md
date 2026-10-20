@@ -1,5 +1,17 @@
 # Changelog
 
+## 4.2.0
+
+- **Single repository by default**: `sg_init` now creates one git repository that tracks `api/`, `web/`, `contracts/` and `.specgate/`; no `.gitmodules` and no gitlinks. `flattenToSingleRepo` removes per-side `.git` directories and commits both workspaces to the root repository.
+- **Explicit topology**: `sg_init({ topology: "single" | "submodule" })`, default `single`; `workspace.yaml` records the chosen topology.
+- **Java 8 by default**: the Java wizard/catalog default is JDK 8 + Spring Boot 2.7.18 + Maven; JDK 17/21 + Boot 3.x remain selectable.
+- **Fast JDK discovery**: checks `SG_JAVA_HOME`, project toolchains, `JAVA_HOME`/`JDK_HOME`, `PATH`, and common vendor directories; probes at most 24 candidates with 3s timeouts and stops at the first valid JDK 8.
+- **JDK 8 download fallback**: when no JDK 8 is found, downloads Temurin 8 (zip on Windows, tar.gz on Unix) with retries and a `curl.exe` fallback, flattens the archive and verifies `java -version`.
+- **Root orchestration**: generates `README.md`, `package.json`, `scripts/dev.mjs`, `scripts/verify.mjs`, `scripts/mvn.mjs`, `.env.example` and a root `.gitignore`.
+- **Front-end/back-end wiring**: Vite `server.proxy`/`preview.proxy` forward `/api` to `127.0.0.1:8080`, ports are strict, `index.html` is a complete document, and the front-end defaults to `real` (mock only under Vitest).
+- **Quality fixes**: JDK 8 uses Spotless 2.30.0; Maven uses `.specgate/m2repo`; project-local toolchains are discovered by the generated `mvnw`; archive extraction supplies a complete Windows environment.
+- **Verification**: a clean init (no JDK/Maven on the host) downloaded JDK 8 and Maven, passed both quality stages, and the generated repository passed `npm run dev` and `npm run verify` (back-end tests, front-end build/test, proxy and CRUD smoke).
+
 ## 4.1.0
 
 - **v4 init stack wizard**: after topology, asks Java JDK/build tool/Boot, Python version/framework/packaging, Node version/package manager/language/framework, and frontend language; options are conditional and compatibility-validated.

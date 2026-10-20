@@ -2,7 +2,7 @@
 
 **中文** | [English](README.en.md)
 
-![version](https://img.shields.io/badge/version-4.1.0-blue)
+![version](https://img.shields.io/badge/version-4.2.0-blue)
 ![license](https://img.shields.io/badge/license-MIT-green)
 ![node](https://img.shields.io/badge/node-%3E%3D20.19.0-brightgreen)
 ![dsh](https://img.shields.io/badge/dsh-%3E%3D0.2.1--rc.2-purple)
@@ -32,7 +32,7 @@
 | 来源 | `AgentKit47-Qoder` 的 `templates/qoder/`（MIT） |
 | 目标 | DSH `0.2.1-rc.2` 及以上 |
 | 形态 | workspace bundle，安装到当前 DSH profile |
-| 版本 | `4.1.0` |
+| 版本 | `4.2.0` |
 
 ---
 

@@ -23,7 +23,7 @@ test('v4.1 审批：页面简短展示技术栈与依赖，不展开命令', asy
   const text = approvalText(selection);
   assert.match(text, /最终确认/);
   assert.match(text, /java \/ spring-boot \/ 17 \/ maven/);
-  assert.match(text, /react \/ vite \/ typescript/);
+  assert.match(text, /react \/ vite \/ (npm \/ )?typescript/);
   assert.match(text, /Spring Web/);
   assert.match(text, /Lombok/);
   assert.match(text, /必选 8/);

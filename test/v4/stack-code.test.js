@@ -128,7 +128,8 @@ test('v4.1 模板：前端清单写入选中依赖与 tsconfig', () => {
   });
   const files = frontendFiles('react', side);
   assert.ok(files['tsconfig.json']);
-  assert.match(files['pnpm-workspace.yaml'], /allowBuilds/);
+  assert.match(files['package.json'], /"preview": "vite preview"/);
+  assert.match(files['vite.config.js'], /proxy/);
   assert.match(files['package.json'], /react-router-dom/);
   assert.match(files['package.json'], /typescript/);
   assert.match(files['eslint.config.js'], /typescript-eslint/);

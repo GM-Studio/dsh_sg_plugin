@@ -233,10 +233,18 @@ export function executePlan({ root, side, toolchain = null }) {
     };
   }
   const baseEnv = toolchain ? toolchainEnv(toolchain) : process.env;
-  const env =
+  let env =
     toolchain?.mirrors && toolchain?.mirrorFiles
       ? mirrorEnv(toolchain.mirrors, toolchain.mirrorFiles, baseEnv)
       : baseEnv;
+  if (side.stack === 'java') {
+    const projectRoot = path.resolve(root, '..');
+    const localRepo = path.join(projectRoot, '.specgate', 'm2repo');
+    env = {
+      ...env,
+      MAVEN_OPTS: [env.MAVEN_OPTS, '-Dmaven.repo.local=' + localRepo].filter(Boolean).join(' '),
+    };
+  }
   const results = [];
   for (const [name, command, args, timeout] of stages) {
     let resolved = command;

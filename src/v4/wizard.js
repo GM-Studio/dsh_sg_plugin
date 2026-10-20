@@ -141,7 +141,7 @@ async function askJavaDetails({ userQuestions, agent, signal, side, initial = {}
         ),
       ),
     });
-    jdk = answer.selected[0] || initial.jdk || '17';
+    jdk = answer.selected[0] || initial.jdk || '8';
   }
 
   let buildTool = initial.buildTool;

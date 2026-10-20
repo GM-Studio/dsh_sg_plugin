@@ -2,7 +2,7 @@
 
 [中文](README.md) | **English**
 
-![version](https://img.shields.io/badge/version-4.1.0-blue)
+![version](https://img.shields.io/badge/version-4.2.0-blue)
 ![license](https://img.shields.io/badge/license-MIT-green)
 ![node](https://img.shields.io/badge/node-%3E%3D20.19.0-brightgreen)
 ![dsh](https://img.shields.io/badge/dsh-%3E%3D0.2.1--rc.2-purple)
@@ -32,7 +32,7 @@ A Host plugin that brings AgentKit47's gated development workflow to DeepSeek Ha
 | Source | `templates/qoder/` from `AgentKit47-Qoder` (MIT) |
 | Target | DSH `0.2.1-rc.2` and above |
 | Form | workspace bundle, installed into the current DSH profile |
-| Version | `4.1.0` |
+| Version | `4.2.0` |
 
 ---
 

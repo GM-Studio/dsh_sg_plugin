@@ -19,6 +19,21 @@ function git(root, args) {
   );
 }
 
+function removeDirectory(target) {
+  if (process.platform === 'win32') {
+    spawnSync('cmd.exe', ['/c', 'attrib', '-r', '-s', '-h', path.join(target, '*'), '/s', '/d'], {
+      stdio: 'ignore',
+      windowsHide: true,
+    });
+    const removed = spawnSync('cmd.exe', ['/c', 'rmdir', '/s', '/q', target], {
+      stdio: 'ignore',
+      windowsHide: true,
+    });
+    if (removed.status === 0 || !exists(target)) return;
+  }
+  fs.rmSync(target, { recursive: true, force: true, maxRetries: 5, retryDelay: 100 });
+}
+
 function ensureRootRepo(root) {
   if (!exists(path.join(root, '.git'))) {
     const init = git(root, ['init', '-q']);
@@ -32,6 +47,65 @@ function existingSubmodules(root) {
     exists(path.join(root, '.gitmodules')) &&
     readText(path.join(root, '.gitmodules')).includes('[submodule')
   );
+}
+
+/**
+ * 单仓交付：去掉 side 的 .git 与 .gitmodules，把两端代码作为普通目录提交到根仓库。
+ * 这样 clone 下来就是完整代码，不需要 submodule 初始化。
+ */
+export function flattenToSingleRepo({ root, sides }) {
+  const repo = ensureRootRepo(root);
+  if (repo.status !== 0) return { ok: false, message: repo.stderr || 'git init 失败' };
+  try {
+    fs.rmSync(path.join(root, '.gitmodules'), { force: true });
+    for (const side of sides || []) {
+      removeDirectory(path.join(root, side.path, '.git'));
+    }
+  } catch (error) {
+    return { ok: false, message: String(error?.message || error) };
+  }
+  const reportFile = path.join(root, '.specgate', 'init-report.json');
+  if (exists(reportFile)) {
+    try {
+      const report = JSON.parse(readText(reportFile));
+      report.workspace = report.workspace || {};
+      report.workspace.topology = 'single';
+      for (const item of report.results || []) {
+        if (item.commit) item.sideCommit = item.commit;
+        item.commit = null;
+      }
+      writeText(reportFile, JSON.stringify(report, null, 2) + '\n');
+    } catch {
+      // 报告是辅助信息，坏了不阻断交付
+    }
+  }
+  const add = git(root, ['add', '-A']);
+  if (add.status !== 0) return { ok: false, message: add.stderr || 'git add 失败' };
+  const staged = git(root, ['diff', '--cached', '--name-only']);
+  if (!String(staged.stdout || '').trim()) {
+    return {
+      ok: true,
+      skipped: true,
+      commit: (git(root, ['rev-parse', 'HEAD']).stdout || '').trim(),
+    };
+  }
+  const commit = git(root, [
+    '-c',
+    'user.name=SpecGate',
+    '-c',
+    'user.email=specgate@local',
+    'commit',
+    '--no-gpg-sign',
+    '-q',
+    '-m',
+    'chore(workspace): 单仓合并 api/web',
+  ]);
+  if (commit.status !== 0) return { ok: false, message: commit.stderr || 'git commit 失败' };
+  return {
+    ok: true,
+    skipped: false,
+    commit: (git(root, ['rev-parse', 'HEAD']).stdout || '').trim(),
+  };
 }
 
 /**
@@ -289,12 +363,15 @@ export function finalizeWorkspaceChange({ root, name = null }) {
   }
   const add = git(root, ['add', ...(record.sides || [])]);
   if (add.status !== 0) return { ok: false, message: add.stderr };
+  const topology = readWorkspace(root)?.topology || 'single';
   const commit = git(root, [
     'commit',
     '--no-gpg-sign',
     '-q',
     '-m',
-    'chore(workspace): 更新子模块指针',
+    topology === 'single'
+      ? 'chore(workspace): 合并 change ' + record.name
+      : 'chore(workspace): 更新子模块指针',
   ]);
   if (commit.status !== 0) return { ok: false, message: commit.stderr };
   git(root, ['tag', record.name]);
