@@ -393,6 +393,7 @@ test('v3.8：-req 与自由描述互斥', async () => {
     v4: false,
     adopt: false,
     v3: false,
+    path: null,
     backend: null,
     frontend: null,
     preset: null,

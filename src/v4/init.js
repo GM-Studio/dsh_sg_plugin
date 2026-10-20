@@ -1,6 +1,8 @@
 import { answerOf } from '../v3/requirements.js';
 import { buildWorkspace } from './build.js';
 import { wireSubmodules } from './workspace-change.js';
+import fs from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
 import { exists } from '../v3/util/fsx.js';
 import {
@@ -43,6 +45,38 @@ async function askSelection({ userQuestions, agent, signal }) {
     backend: answerOf(answer, 0) || 'none',
     frontend: answerOf(answer, 1) || 'none',
   };
+}
+
+export function resolveInitRoot(cwd, input, options = {}) {
+  const raw = String(input || '').trim();
+  if (!raw) return { ok: true, root: cwd };
+  let value = raw;
+  if (value === '~' || value.startsWith('~/') || value.startsWith('~\\')) {
+    value = path.join(os.homedir(), value.slice(1));
+  }
+  const absolute = path.isAbsolute(value) ? value : path.resolve(cwd, value);
+  const root = path.normalize(absolute);
+  if (fs.existsSync(root)) {
+    let stat;
+    try {
+      stat = fs.statSync(root);
+    } catch (error) {
+      return { ok: false, code: 'E_PATH_INVALID', message: '路径不可访问：' + root };
+    }
+    if (!stat.isDirectory()) {
+      return { ok: false, code: 'E_PATH_NOT_DIR', message: '不是目录：' + root };
+    }
+    return { ok: true, root };
+  }
+  if (options.create === false) {
+    return { ok: false, code: 'E_PATH_NOT_FOUND', message: '目录不存在：' + root };
+  }
+  try {
+    fs.mkdirSync(root, { recursive: true });
+  } catch (error) {
+    return { ok: false, code: 'E_PATH_CREATE_FAILED', message: '无法创建目录：' + root };
+  }
+  return { ok: true, root, created: true };
 }
 
 export function shouldUseV4Default(root, options = {}) {

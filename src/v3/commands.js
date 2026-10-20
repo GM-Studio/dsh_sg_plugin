@@ -10,7 +10,7 @@ import { loadSkill } from './skills.js';
 import { collectContext, inspectInit, startRequirementsInit, summarizeInitResult } from './init.js';
 import { withNotice } from './notice.js';
 import { maybeBuildBootstrap } from './bootstrap.js';
-import { shouldUseV4Default, startV4Init, summarizeV4Result } from '../v4/init.js';
+import { resolveInitRoot, shouldUseV4Default, startV4Init, summarizeV4Result } from '../v4/init.js';
 import { adoptWorkspace, summarizeAdopt } from '../v4/adopt.js';
 import { readWorkspace } from '../v4/workspace.js';
 import {
@@ -67,6 +67,7 @@ export function parseInitArgs(rawInput) {
   let v4 = false;
   let adopt = false;
   let v3 = false;
+  let targetPath = null;
   let backend = null;
   let frontend = null;
   let preset = null;
@@ -86,6 +87,11 @@ export function parseInitArgs(rawInput) {
       adopt = true;
     } else if (part === '--v3') {
       v3 = true;
+    } else if (part === '--path') {
+      const value = parts[index + 1];
+      if (!value) return { ok: false, code: 'E_ARGS_CONFLICT', message: '--path 需要一个目录路径' };
+      targetPath = value;
+      index += 1;
     } else if (part === '--backend' || part === '--frontend' || part === '--preset') {
       const value = parts[index + 1];
       if (!value) {
@@ -112,6 +118,7 @@ export function parseInitArgs(rawInput) {
     v4,
     adopt,
     v3,
+    path: targetPath,
     backend,
     frontend,
     preset,
@@ -140,15 +147,21 @@ export function registerCommands(ctx, runtime) {
   register({
     name: 'sg-init',
     description:
-      '初始化 SpecGate v4：/sg-init [-req <需求文档>] [自由描述]。确认前不写任何文件，确认后进入 H1_PENDING。',
-    input: { hint: '[-req <需求文档>] [自由描述]' },
+      '初始化 SpecGate v4：/sg-init [--path <目录>] [--backend node|python|java|none] [--frontend vue|react|none] [--preset <name>] [--adopt]。' +
+      '未指定 --path 时使用当前目录；v3 兼容：[-req <需求文档>] [自由描述] [--v3]。',
+    input: { hint: '[--path <目录>] [--backend ...] [--frontend ...] [--preset ...] [--adopt]' },
     async handler(inv) {
-      const root = runtime.getCwd(inv?.agent);
+      const cwd = runtime.getCwd(inv?.agent);
       const userQuestions = runtime.service('userQuestions');
       const parsed = parseInitArgs(inv?.rawInput);
       if (!parsed.ok) {
         return { kind: 'error', text: '初始化失败（' + parsed.code + '）：' + parsed.message };
       }
+      const resolved = resolveInitRoot(cwd, parsed.path, { create: !parsed.adopt });
+      if (!resolved.ok) {
+        return { kind: 'error', text: '初始化失败（' + resolved.code + '）：' + resolved.message };
+      }
+      const root = resolved.root;
 
       if (parsed.adopt) {
         const adopted = adoptWorkspace({ root });

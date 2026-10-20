@@ -10,6 +10,7 @@ import {
   scanWorkspace,
   workspaceSummary,
 } from '../../src/v4/workspace.js';
+import { resolveInitRoot } from '../../src/v4/init.js';
 
 function tempRoot() {
   return fs.mkdtempSync(path.join(os.tmpdir(), 'sg-v4-ws-'));
@@ -81,4 +82,23 @@ test('v4：scan 识别空目录、v4 与存量仓库', () => {
   const existing = tempRoot();
   fs.writeFileSync(path.join(existing, 'package.json'), '{"name":"legacy"}\n', 'utf8');
   assert.equal(scanWorkspace(existing).kind, 'existing');
+});
+
+test('v4：--path 支持相对/绝对路径并拒绝文件路径', () => {
+  const cwd = tempRoot();
+  const relative = resolveInitRoot(cwd, 'workspaces/demo');
+  assert.equal(relative.ok, true);
+  assert.equal(relative.root, path.resolve(cwd, 'workspaces/demo'));
+  assert.equal(fs.existsSync(relative.root), true);
+
+  const absolute = path.join(cwd, 'abs-demo');
+  assert.equal(resolveInitRoot(cwd, absolute).root, absolute);
+
+  const file = path.join(cwd, 'file.txt');
+  fs.writeFileSync(file, 'x', 'utf8');
+  const rejected = resolveInitRoot(cwd, file);
+  assert.equal(rejected.ok, false);
+  assert.equal(rejected.code, 'E_PATH_NOT_DIR');
+
+  assert.equal(resolveInitRoot(cwd, 'missing', { create: false }).code, 'E_PATH_NOT_FOUND');
 });

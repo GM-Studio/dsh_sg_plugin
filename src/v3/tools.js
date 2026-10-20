@@ -18,7 +18,7 @@ import {
 } from './worktrees.js';
 import { createDispatcher } from './dispatch.js';
 import { maybeBuildBootstrap } from './bootstrap.js';
-import { shouldUseV4Default, startV4Init, summarizeV4Result } from '../v4/init.js';
+import { resolveInitRoot, shouldUseV4Default, startV4Init, summarizeV4Result } from '../v4/init.js';
 import { adoptWorkspace, summarizeAdopt } from '../v4/adopt.js';
 import { readWorkspace } from '../v4/workspace.js';
 import { driveWorkspace, summarizeDrive } from '../v4/drive.js';
@@ -124,8 +124,9 @@ export function registerTools(ctx, runtime) {
     {
       name: 'sg_init',
       description:
-        '初始化 SpecGate v3：sg_init({ req }) 导入需求文档；sg_init({ description }) 由 Agent 在对话中澄清；sg_init({ draft }) 提交结构化草稿。' +
-        '确认前不写任何文件，确认后写入需求文档与基线并进入 H1_PENDING。幂等。',
+        '初始化 SpecGate v4：sg_init({ path?, backend?, frontend?, preset?, adopt? }) 创建 monorepo workspace；' +
+        '省略 path 时使用当前目录，支持相对/绝对路径（Windows/Linux/macOS）。' +
+        'v3 兼容：sg_init({ req, description, draft }) 走需求先行流程；--v3 可强制。',
       parameters: {
         type: 'object',
         properties: {
@@ -140,14 +141,28 @@ export function registerTools(ctx, runtime) {
             description:
               '结构化需求草稿：functional/nonFunctional/constraints/acceptance/context 等',
           },
+          path: {
+            type: 'string',
+            description: '目标仓库/工作区路径；相对路径按当前目录解析，支持绝对路径与 ~',
+          },
+          v4: { type: 'boolean', description: '创建 v4 monorepo workspace' },
+          adopt: { type: 'boolean', description: '原地接入存量仓库' },
+          v3: { type: 'boolean', description: '强制走 v3 单仓流程' },
+          backend: { type: 'string', description: 'v4 后端：node/python/java/none' },
+          frontend: { type: 'string', description: 'v4 前端：vue/react/none' },
+          preset: { type: 'string', description: 'v4 预设：node-fullstack 等' },
         },
         additionalProperties: false,
       },
       output: textOutput(),
       async execute(args, exec) {
-        const root = runtime.getCwd(exec?.agent);
+        const cwd = runtime.getCwd(exec?.agent);
         const userQuestions = runtime.service('userQuestions');
         const input = args && typeof args === 'object' ? args : {};
+        const resolved = resolveInitRoot(cwd, input.path, { create: input.adopt !== true });
+        if (!resolved.ok)
+          return fail('初始化失败（' + resolved.code + '）：' + resolved.message, resolved);
+        const root = resolved.root;
         if (input.req && (input.description || input.draft)) {
           return fail(
             '初始化失败（E_ARGS_CONFLICT）：-req 与自由描述/草稿不能同时使用；未写入任何文件。',
