@@ -136,7 +136,7 @@ export function registerCommands(ctx, runtime) {
     try {
       const dispose = commands.register({
         ...definition,
-        handler: withNotice(definition.handler),
+        handler: withNotice(definition.handler, { forceNotice: definition.name === 'sg-init' }),
       });
       if (typeof dispose === 'function') disposers.push(dispose);
     } catch (error) {

@@ -220,20 +220,30 @@ test('v3.8：只含命令事件的新会话追加 notice，非空会话不追加
   assert.equal(appended.length, 1, '非空会话不应重复追加 notice');
 });
 
-test('v3.8：命令结果通过 agent.followup 进入对话历史', async () => {
-  const calls = [];
+test('v3.8：命令结果通过 session notice 进入历史，不调用 followup', async () => {
+  const appended = [];
+  let followups = 0;
   const agent = {
     status: 'idle',
-    followup(payload) {
-      calls.push(payload);
+    followup() {
+      followups += 1;
+    },
+  };
+  const session = {
+    append(message, options) {
+      appended.push({ message, options });
+    },
+    deriveMessages() {
+      return appended.map((entry) => entry.message);
     },
   };
   const wrapped = withNotice(async () => ({ kind: 'success', text: '脚手架已生成：pom.xml' }));
-  const result = await wrapped({ agent });
+  const result = await wrapped({ agent, session });
   assert.equal(result.text, '脚手架已生成：pom.xml');
-  assert.equal(calls.length, 1);
-  assert.equal(calls[0].content[0].text, '脚手架已生成：pom.xml');
-  assert.equal(calls[0].source.kind, 'specgate');
+  assert.equal(followups, 0);
+  assert.equal(appended.length, 1);
+  assert.equal(appended[0].message.content[0].text, '脚手架已生成：pom.xml');
+  assert.equal(appended[0].message.source.kind, 'specgate');
 });
 
 test('v3.8：初始化结果摘要列出脚手架文件与下一步', () => {
