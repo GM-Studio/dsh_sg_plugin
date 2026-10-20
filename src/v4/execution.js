@@ -2,6 +2,8 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { exists } from '../v3/util/fsx.js';
+import { toolchainEnv } from './provision.js';
+import { mirrorEnv } from './mirrors.js';
 
 function hasCommand(command) {
   const finder = process.platform === 'win32' ? 'where' : 'which';
@@ -28,7 +30,8 @@ function run(root, command, args = [], options = {}) {
   };
 }
 
-function resolvePython() {
+function resolvePython(toolchain) {
+  if (toolchain?.python?.path) return toolchain.python.path;
   if (hasCommand('python')) return 'python';
   if (hasCommand('py')) return 'py';
   return null;
@@ -105,7 +108,7 @@ function writeReviewReport(root, side) {
   };
 }
 
-function javaPlan(root, side) {
+function javaPlan(root, side, toolchain) {
   const gradle = side.buildTool === 'gradle';
   const wrapper = path.join(
     root,
@@ -117,33 +120,62 @@ function javaPlan(root, side) {
         ? 'mvnw.cmd'
         : 'mvnw',
   );
-  const command = exists(wrapper) ? wrapper : gradle ? resolvePm('gradle') : resolvePm('mvn');
+  const managed = gradle ? toolchain?.gradle?.path : toolchain?.maven?.path;
+  const command =
+    managed || (exists(wrapper) ? wrapper : gradle ? resolvePm('gradle') : resolvePm('mvn'));
   if (!command) return null;
   if (gradle) {
+    const prefix = toolchain?.mirrorFiles?.gradleInit
+      ? ['-I', toolchain.mirrorFiles.gradleInit]
+      : [];
     return [
-      ['install', command, ['dependencies'], 600000],
-      ['format', command, ['spotlessApply'], 300000],
-      ['lint', command, ['checkstyleMain', 'checkstyleTest'], 300000],
-      ['test', command, ['check'], 300000],
+      ['install', command, [...prefix, 'dependencies'], 600000],
+      ['format', command, [...prefix, 'spotlessApply'], 300000],
+      ['lint', command, [...prefix, 'checkstyleMain', 'checkstyleTest'], 300000],
+      ['test', command, [...prefix, 'check'], 300000],
     ];
   }
+  const prefix = toolchain?.mirrorFiles?.mavenSettings
+    ? ['-s', toolchain.mirrorFiles.mavenSettings]
+    : [];
   return [
-    ['install', command, ['-B', '-ntp', 'dependency:go-offline'], 600000],
-    ['format', command, ['-B', '-ntp', 'spotless:apply'], 300000],
-    ['lint', command, ['-B', '-ntp', 'checkstyle:check'], 300000],
-    ['test', command, ['-B', '-ntp', 'verify'], 300000],
+    ['install', command, [...prefix, '-B', '-ntp', 'dependency:go-offline'], 600000],
+    ['format', command, [...prefix, '-B', '-ntp', 'spotless:apply'], 300000],
+    ['lint', command, [...prefix, '-B', '-ntp', 'checkstyle:check'], 300000],
+    ['test', command, [...prefix, '-B', '-ntp', 'verify'], 300000],
   ];
 }
 
-function pythonPlan(root, side) {
-  const python = resolvePython();
+function pythonPlan(root, side, toolchain) {
+  const python = resolvePython(toolchain);
   if (!python) return null;
   const py2 = String(side.pythonVersion || side.runtimeVersion) === '2.7';
   const stages = [];
-  // Python 2.7 has no stdlib venv; use the interpreter directly and warn in README.
-  if (!py2) stages.push(['install', python, ['-m', 'venv', '.venv'], 300000]);
+  const uv = toolchain?.uv?.path;
+  if (uv && side.packageManager === 'uv') {
+    const venv = path.join(
+      root,
+      '.venv',
+      process.platform === 'win32' ? 'Scripts' : 'bin',
+      process.platform === 'win32' ? 'python.exe' : 'python',
+    );
+    stages.push(['install', uv, ['venv', '.venv'], 300000]);
+    stages.push([
+      'deps',
+      uv,
+      ['pip', 'install', '--python', venv, '-r', 'requirements.txt'],
+      600000,
+    ]);
+  } else {
+    if (!py2) stages.push(['install', python, ['-m', 'venv', '.venv'], 300000]);
+    stages.push([
+      'deps',
+      py2 ? python : 'VENV',
+      ['-m', 'pip', 'install', '-r', 'requirements.txt'],
+      600000,
+    ]);
+  }
   const runner = py2 ? python : 'VENV';
-  stages.push(['deps', runner, ['-m', 'pip', 'install', '-r', 'requirements.txt'], 600000]);
   if (py2) {
     stages.push(['format', runner, ['-m', 'autopep8', '--in-place', '-r', '.'], 300000]);
     stages.push(['lint', runner, ['-m', 'flake8', '.'], 300000]);
@@ -155,24 +187,43 @@ function pythonPlan(root, side) {
   return stages;
 }
 
-function nodePlan(root, side) {
+function nodeRunner(side, toolchain) {
   const pm = side.packageManager || 'pnpm';
+  if (pm === 'pnpm') {
+    const pnpm = toolchain?.pnpm;
+    if (pnpm?.kind === 'node-script' && pnpm.node) {
+      return { command: pnpm.node, prefix: [pnpm.path] };
+    }
+    if (pnpm?.path) return { command: pnpm.path, prefix: [] };
+    const fallback = resolvePm('pnpm') || resolvePm('npm');
+    return fallback ? { command: fallback, prefix: [] } : null;
+  }
   const command = resolvePm(pm);
-  if (!command) return null;
+  return command ? { command, prefix: [] } : null;
+}
+
+function nodePlan(root, side, toolchain) {
+  const runner = nodeRunner(side, toolchain);
+  if (!runner) return null;
+  const pm = side.packageManager || 'pnpm';
   const runScript = (script) => (pm === 'yarn' ? [script] : ['run', script]);
   return [
-    ['install', command, ['install'], 600000],
-    ['format', command, runScript('format'), 300000],
-    ['lint', command, runScript('lint'), 300000],
-    ['test', command, runScript('test'), 300000],
+    ['install', runner.command, [...runner.prefix, 'install'], 600000],
+    ['format', runner.command, [...runner.prefix, ...runScript('format')], 300000],
+    ['lint', runner.command, [...runner.prefix, ...runScript('lint')], 300000],
+    ['test', runner.command, [...runner.prefix, ...runScript('test')], 300000],
   ];
 }
 
-export function executePlan({ root, side }) {
+function isIgnoredBuilds(stage) {
+  return /ERR_PNPM_IGNORED_BUILDS/.test(String(stage.stderr || '') + String(stage.stdout || ''));
+}
+
+export function executePlan({ root, side, toolchain = null }) {
   let stages;
-  if (side.stack === 'java') stages = javaPlan(root, side);
-  else if (side.stack === 'python') stages = pythonPlan(root, side);
-  else stages = nodePlan(root, side);
+  if (side.stack === 'java') stages = javaPlan(root, side, toolchain);
+  else if (side.stack === 'python') stages = pythonPlan(root, side, toolchain);
+  else stages = nodePlan(root, side, toolchain);
   if (!stages) {
     return {
       ok: true,
@@ -181,28 +232,42 @@ export function executePlan({ root, side }) {
       stages: [],
     };
   }
+  const baseEnv = toolchain ? toolchainEnv(toolchain) : process.env;
+  const env =
+    toolchain?.mirrors && toolchain?.mirrorFiles
+      ? mirrorEnv(toolchain.mirrors, toolchain.mirrorFiles, baseEnv)
+      : baseEnv;
   const results = [];
   for (const [name, command, args, timeout] of stages) {
-    const resolved = command === 'VENV' ? venvPython(root) : command;
+    let resolved = command;
+    if (command === 'VENV') resolved = venvPython(root);
+    if (command === 'UV') resolved = toolchain?.uv?.path;
     if (!resolved) {
       const missing = {
         name,
-        command: 'VENV',
+        command,
         status: 1,
         stdout: '',
-        stderr: 'venv python not found',
+        stderr: 'toolchain executable not found',
         durationMs: 0,
       };
       results.push(missing);
       return {
         ok: false,
         code: 'BOOTSTRAP_QUALITY_FAILED',
-        message: name + ' 失败（venv python not found）',
+        message: name + ' 失败（toolchain executable not found）',
         failedStage: name,
         stages: results,
       };
     }
-    const stage = run(root, resolved, args, { name, timeout });
+    let stage = run(root, resolved, args, { name, timeout, env });
+    if (name === 'install' && stage.status !== 0 && isIgnoredBuilds(stage)) {
+      const retry = run(root, resolved, [...args, '--ignore-scripts'], { name, timeout, env });
+      if (retry.status === 0) {
+        retry.warning = 'pnpm ignored build scripts; installed with --ignore-scripts';
+        stage = retry;
+      }
+    }
     results.push(stage);
     if (stage.status !== 0) {
       return {

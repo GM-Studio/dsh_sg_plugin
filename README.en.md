@@ -7,7 +7,7 @@
 ![node](https://img.shields.io/badge/node-%3E%3D20.19.0-brightgreen)
 ![dsh](https://img.shields.io/badge/dsh-%3E%3D0.2.1--rc.2-purple)
 
-> **v4.1 (current)**: sg-init stack wizard — Java JDK 8/11/13/17/21 × Spring Boot 2.7/3.x/4.x; Python 3.10–3.13 and 2.7 (EOL) with FastAPI/Flask/Django; Node 20/22/24 with Express/Fastify/NestJS; Vue/React + Vite; required/optional dependencies with minimal/recommended/full presets; no four-dimension requirements interview, with a compact final approval page for stack and dependencies; skip install/quality when not approved, and degrade-and-commit on failure.
+> **v4.1 (current)**: sg-init stack wizard — Java JDK 8/11/13/17/21 × Spring Boot 2.7/3.x/4.x; Python 3.10–3.13 and 2.7 (EOL) with FastAPI/Flask/Django; Node 20/22/24 with Express/Fastify/NestJS; Vue/React + Vite; required/optional dependencies with minimal/recommended/full presets; no four-dimension requirements interview, with a compact final approval page for stack and dependencies; full environment scan with runtime reuse, and missing Maven/Gradle/JDK/uv provisioned from domestic mirrors into project toolchains; skip install/quality when not approved, and degrade-and-commit on failure.
 >
 > - Requirements: [docs/requirements/2026-10-20-v4.1-stack-dependency-selection-requirements.md](docs/requirements/2026-10-20-v4.1-stack-dependency-selection-requirements.md)
 >

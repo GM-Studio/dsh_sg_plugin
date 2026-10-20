@@ -9,7 +9,10 @@
 - **Degraded failure**: an approved install/quality failure stops that side's remaining stages, continues the other side, commits code with a [degraded] marker, and returns init success with degraded=true.
 - **Framework templates**: FastAPI/Flask/Django (including Python 2.7 legacy Flask/Django), Express/Fastify/NestJS (TypeScript/JavaScript), Vue/React manifests with selected deps; Java optional deps and jakarta.validation for Boot 3/4.
 - **Reports**: side and root .specgate/init-report.json, docs/mvp-scaffold-report.md, and docs/review-report.md.
-- **Tests**: 340 tests, 336 pass / 0 fail / 4 skipped.
+- **Environment preflight and toolchain reuse**: after stack selection, scan DSH runtimes, PATH, config files, registries, and elevation; reuse DSH node/pnpm/python first, then project toolchains, then system tools.
+- **Domestic mirrors by default**: npm/pnpm use npmmirror, PyPI uses Tsinghua/Aliyun, Maven uses Aliyun, Gradle distributions use Tencent, and JDK 11/13/17/21 use Huawei OpenJDK. Editable config files live in .specgate/mirrors.
+- **Project-local provisioning**: missing Maven/Gradle/JDK/uv are downloaded or pip-installed into .specgate/toolchains; pnpm allowBuilds fixes the pnpm 11/12 ERR_PNPM_IGNORED_BUILDS false failure.
+- **Tests**: 347 tests, 343 pass / 0 fail / 4 skipped.
 
 ## 3.10.0
 

@@ -14,6 +14,15 @@ import {
 import { applyDetailsToSide, defaultSideDetails, resolveDependencies } from './catalog.js';
 import { askApproval, skipQuality } from './approval.js';
 import { askWizard, summarizeSelection } from './wizard.js';
+import { scanEnvironment } from './environment.js';
+import {
+  planProvisioning,
+  provisionSummary,
+  provisionToolchain,
+  toolchainEnv,
+  verifyToolchain,
+} from './provision.js';
+import { resolveMirrors, writeMirrorFiles } from './mirrors.js';
 
 function resumeSelection(scan) {
   const backend = scan.workspace.backend;
@@ -165,6 +174,11 @@ export async function startV4Init({
   let decided = false;
   let rounds = 0;
   let wizardInitial = initial || {};
+  const environment = canAsk
+    ? await scanEnvironment({ root, skipNetwork: Boolean(process.env.NODE_TEST_CONTEXT) })
+    : null;
+  let toolchain = null;
+  let finalProvisionPlan = null;
   while (rounds < 3) {
     rounds += 1;
     const picked = await askWizard({
@@ -185,17 +199,40 @@ export async function startV4Init({
       break;
     }
 
-    const decision = await askApproval({ userQuestions, agent, signal, selection });
+    const provisionPlan = planProvisioning({ environment, selection });
+    if (!provisionPlan.ok) return provisionPlan;
+    finalProvisionPlan = provisionPlan;
+    const decision = await askApproval({
+      userQuestions,
+      agent,
+      signal,
+      selection,
+      provisionSummary: provisionSummary(provisionPlan),
+    });
     if (decision === 'modify') {
       wizardInitial = { backend: selection.backend, frontend: selection.frontend };
       continue;
     }
     approved = decision === 'approved';
+    if (approved) {
+      const provisioned = await provisionToolchain({ root, plan: provisionPlan });
+      if (!provisioned.ok) return provisioned;
+      const verified = verifyToolchain(provisioned.tools, toolchainEnv(provisioned.tools));
+      if (!verified.ok) return verified;
+      toolchain = provisioned.tools;
+    }
     decided = true;
     break;
   }
   if (!selection || !decided) {
     return { ok: false, code: 'CANCELLED', message: '未完成技术栈选择或审批' };
+  }
+
+  const mirrors = finalProvisionPlan?.mirrors || resolveMirrors();
+  const mirrorFiles = writeMirrorFiles(root, mirrors);
+  if (toolchain) {
+    toolchain.mirrors = mirrors;
+    toolchain.mirrorFiles = mirrorFiles;
   }
 
   const created = createWorkspaceLayout({
@@ -209,6 +246,7 @@ export async function startV4Init({
     selection,
     qualityRunner: approved ? qualityRunner : skipQuality(),
     approval: approved ? 'approved' : 'skipped',
+    toolchain,
   });
   if (!built.ok) {
     return {

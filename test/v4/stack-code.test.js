@@ -84,6 +84,7 @@ test('v4.1 模板：Node TS/JS 与 NestJS', () => {
   );
   assert.ok(ts['src/items.ts']);
   assert.ok(ts['tsconfig.json']);
+  assert.match(ts['pnpm-workspace.yaml'], /allowBuilds/);
   assert.match(ts['package.json'], /typescript/);
 
   const js = v4NodeFiles(
@@ -127,6 +128,7 @@ test('v4.1 模板：前端清单写入选中依赖与 tsconfig', () => {
   });
   const files = frontendFiles('react', side);
   assert.ok(files['tsconfig.json']);
+  assert.match(files['pnpm-workspace.yaml'], /allowBuilds/);
   assert.match(files['package.json'], /react-router-dom/);
   assert.match(files['package.json'], /typescript/);
   assert.match(files['eslint.config.js'], /typescript-eslint/);

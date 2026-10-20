@@ -249,13 +249,13 @@ function writeSideReport(root, side, written, quality, commit = null) {
   return payload;
 }
 
-async function qualityFor({ root, side, qualityRunner }) {
+async function qualityFor({ root, side, qualityRunner, toolchain = null }) {
   if (typeof qualityRunner === 'function') {
-    const custom = await qualityRunner({ root, stack: side.stack, side });
+    const custom = await qualityRunner({ root, stack: side.stack, side, toolchain });
     return custom && typeof custom.ok === 'boolean' ? custom : { ok: true, stages: [] };
   }
   try {
-    return executePlan({ root, side });
+    return executePlan({ root, side, toolchain });
   } catch (error) {
     return {
       ok: false,
@@ -330,7 +330,7 @@ function writeBackendFiles(root, side) {
   return written;
 }
 
-export async function buildBackendSide({ root, side, qualityRunner = null }) {
+export async function buildBackendSide({ root, side, qualityRunner = null, toolchain = null }) {
   if (side.role !== 'backend') return { ok: true, skipped: true, reason: 'not-backend' };
   if (!['node', 'python', 'java'].includes(side.stack)) {
     return { ok: true, skipped: true, reason: 'unsupported-backend' };
@@ -344,7 +344,7 @@ export async function buildBackendSide({ root, side, qualityRunner = null }) {
   const written = writeBackendFiles(root, side);
   writeBootstrapChange(root);
 
-  const quality = await qualityFor({ root, side, qualityRunner });
+  const quality = await qualityFor({ root, side, qualityRunner, toolchain });
   const degraded = quality?.ok === false;
   const report = path.join(root, 'docs', 'mvp-scaffold-report.md');
   ensureDir(path.dirname(report));
@@ -380,7 +380,7 @@ export async function buildBackendSide({ root, side, qualityRunner = null }) {
   };
 }
 
-export async function buildFrontendSide({ root, side, qualityRunner = null }) {
+export async function buildFrontendSide({ root, side, qualityRunner = null, toolchain = null }) {
   if (side.role !== 'frontend') return { ok: true, skipped: true, reason: 'not-frontend' };
   if (!['vue', 'react'].includes(side.stack)) {
     return { ok: true, skipped: true, reason: 'unsupported-frontend' };
@@ -400,7 +400,7 @@ export async function buildFrontendSide({ root, side, qualityRunner = null }) {
   }
   writeBootstrapChange(root);
 
-  const quality = await qualityFor({ root, side, qualityRunner });
+  const quality = await qualityFor({ root, side, qualityRunner, toolchain });
   const degraded = quality?.ok === false;
   const report = path.join(root, 'docs', 'mvp-scaffold-report.md');
   ensureDir(path.dirname(report));
@@ -436,14 +436,20 @@ export async function buildFrontendSide({ root, side, qualityRunner = null }) {
   };
 }
 
-export async function buildWorkspace({ root, selection, qualityRunner = null, approval = null }) {
+export async function buildWorkspace({
+  root,
+  selection,
+  qualityRunner = null,
+  approval = null,
+  toolchain = null,
+}) {
   const results = [];
   for (const side of selection.sides) {
     const sideRoot = path.join(root, side.path);
     results.push(
       side.role === 'frontend'
-        ? await buildFrontendSide({ root: sideRoot, side, qualityRunner })
-        : await buildBackendSide({ root: sideRoot, side, qualityRunner }),
+        ? await buildFrontendSide({ root: sideRoot, side, qualityRunner, toolchain })
+        : await buildBackendSide({ root: sideRoot, side, qualityRunner, toolchain }),
     );
   }
   const payload = {

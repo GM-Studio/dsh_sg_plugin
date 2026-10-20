@@ -57,13 +57,17 @@ export function planForSide(side) {
   return commandRows(side).map(([phase, command]) => ({ phase, command }));
 }
 
-export function approvalText(selection) {
+export function approvalText(selection, options = {}) {
   const lines = [
     '# SpecGate v4.1 最终确认',
     '',
     '请确认技术栈与依赖；批准后安装依赖并执行质量阶段，跳过则仅生成代码。',
     '',
   ];
+  if (options.provisionSummary) {
+    lines.push('环境：' + String(options.provisionSummary).replace(/\n/g, '；'));
+    lines.push('');
+  }
   for (const side of selection.sides || []) {
     const deps = side.dependencies || {};
     const role = side.role === 'frontend' ? '前端' : '后端';
@@ -86,7 +90,13 @@ export function approvalText(selection) {
   return lines.join('\n');
 }
 
-export async function askApproval({ userQuestions, agent, signal, selection }) {
+export async function askApproval({
+  userQuestions,
+  agent,
+  signal,
+  selection,
+  provisionSummary = null,
+}) {
   if (!userQuestions || typeof userQuestions.ask !== 'function') return 'skipped';
   try {
     const answer = await userQuestions.ask({
@@ -94,7 +104,7 @@ export async function askApproval({ userQuestions, agent, signal, selection }) {
         {
           id: 'sg-v4-quality-approval',
           header: '最终确认与审批',
-          question: approvalText(selection),
+          question: approvalText(selection, { provisionSummary }),
           options: [
             { label: '批准并执行', description: '自动安装依赖并执行格式化、静态检查、测试、走查' },
             { label: '跳过，仅生成代码', description: '不安装、不执行质量阶段；声明与配置照写' },

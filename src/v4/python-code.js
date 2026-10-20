@@ -179,8 +179,8 @@ function fastapi(side) {
     'tests/test_items.py': lines(
       'from fastapi.testclient import TestClient',
       '',
-      'from app.main import app',
       'from app.items import reset_items',
+      'from app.main import app',
       '',
       'client = TestClient(app)',
       '',

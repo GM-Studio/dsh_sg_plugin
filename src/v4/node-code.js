@@ -163,6 +163,14 @@ function baseFiles(side, extra = {}) {
   files[side.framework === 'nestjs' ? 'eslint.config.mjs' : 'eslint.config.js'] =
     eslintConfig(side);
   if (isTs(side)) files['tsconfig.json'] = tsconfig(side);
+  if ((side.packageManager || 'pnpm') === 'pnpm') {
+    files['pnpm-workspace.yaml'] = lines(
+      'allowBuilds:',
+      '  esbuild: true',
+      'onlyBuiltDependencies:',
+      '  - esbuild',
+    );
+  }
   if (side.framework === 'nestjs') {
     files['nest-cli.json'] =
       JSON.stringify({ collection: '@nestjs/schematics', sourceRoot: 'src' }, null, 2) + '\n';

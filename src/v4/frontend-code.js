@@ -95,7 +95,12 @@ function reactFiles() {
       '  test: { environment: "jsdom" },',
       '});',
     ),
-    'pnpm-workspace.yaml': lines('onlyBuiltDependencies:', '  - esbuild'),
+    'pnpm-workspace.yaml': lines(
+      'allowBuilds:',
+      '  esbuild: true',
+      'onlyBuiltDependencies:',
+      '  - esbuild',
+    ),
     'src/api.js': apiSource(),
     'src/main.jsx': lines(
       'import React from "react";',
@@ -209,7 +214,12 @@ function vueFiles() {
       '  test: { environment: "jsdom" },',
       '});',
     ),
-    'pnpm-workspace.yaml': lines('onlyBuiltDependencies:', '  - esbuild'),
+    'pnpm-workspace.yaml': lines(
+      'allowBuilds:',
+      '  esbuild: true',
+      'onlyBuiltDependencies:',
+      '  - esbuild',
+    ),
     'src/api.js': apiSource(),
     'src/main.js': lines(
       'import { createApp } from "vue";',

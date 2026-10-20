@@ -43,8 +43,18 @@ export function wireSubmodules({ root, sides }) {
   if (repo.status !== 0) return { ok: false, message: repo.stderr };
   if (existingSubmodules(root)) return { ok: true, skipped: true };
   ensureDir(path.join(root, '.specgate', 'repos'));
-  if (!exists(path.join(root, '.gitignore'))) {
-    writeText(path.join(root, '.gitignore'), '.specgate/repos/\n');
+  const ignoreFile = path.join(root, '.gitignore');
+  const ignoreText = exists(ignoreFile) ? readText(ignoreFile) : '';
+  const ignoreLines = ['.specgate/repos/', '.specgate/toolchains/'];
+  const missingIgnore = ignoreLines.filter((line) => !ignoreText.includes(line));
+  if (missingIgnore.length) {
+    writeText(
+      ignoreFile,
+      ignoreText +
+        (ignoreText.endsWith('\n') || !ignoreText ? '' : '\n') +
+        missingIgnore.join('\n') +
+        '\n',
+    );
   }
   const modules = [];
   for (const side of sides) {
@@ -73,7 +83,12 @@ export function wireSubmodules({ root, sides }) {
   }
   writeText(path.join(root, '.gitmodules'), modules.join('\n') + '\n');
   const commitPaths = ['.gitmodules', '.gitignore'];
-  for (const relative of ['.specgate/workspace.yaml', '.specgate/init-report.json', 'contracts']) {
+  for (const relative of [
+    '.specgate/workspace.yaml',
+    '.specgate/init-report.json',
+    '.specgate/mirrors',
+    'contracts',
+  ]) {
     if (exists(path.join(root, relative))) commitPaths.push(relative);
   }
   const addAll = git(root, ['add', ...commitPaths]);
