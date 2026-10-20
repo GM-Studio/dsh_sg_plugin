@@ -1,10 +1,79 @@
 import fs from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { ensureDir, exists, readText, writeText } from '../v3/util/fsx.js';
 import { scaffoldFiles, writeScaffold } from '../v3/init.js';
 import { bootstrapCodeFiles } from '../v3/bootstrap-code.js';
 import { frontendFiles } from './frontend-code.js';
+
+function hasCommand(command) {
+  const finder = process.platform === 'win32' ? 'where' : 'which';
+  return spawnSync(finder, [command], { encoding: 'utf8' }).status === 0;
+}
+
+function dshRuntimeDependencies() {
+  const base = path.join(os.homedir(), '.dsh', 'dsh-runtimes');
+  try {
+    return fs
+      .readdirSync(base, { withFileTypes: true })
+      .filter((entry) => entry.isDirectory())
+      .map((entry) => path.join(base, entry.name, 'dependencies'))
+      .filter((dir) => exists(dir));
+  } catch {
+    return [];
+  }
+}
+
+function resolveNodeBin() {
+  for (const name of ['DSH_NODE_BIN', 'DSH_NODE', 'NODE_BIN']) {
+    if (process.env[name] && exists(process.env[name])) return process.env[name];
+  }
+  if (hasCommand('node')) return 'node';
+  for (const deps of dshRuntimeDependencies()) {
+    const candidate = path.join(
+      deps,
+      'node',
+      'bin',
+      process.platform === 'win32' ? 'node.exe' : 'node',
+    );
+    if (exists(candidate)) return candidate;
+  }
+  return null;
+}
+
+function pnpmCli() {
+  for (const deps of dshRuntimeDependencies()) {
+    const candidate = path.join(deps, 'pnpm', 'bin', 'pnpm.cjs');
+    if (exists(candidate)) return candidate;
+  }
+  const beside = path.resolve(
+    path.dirname(process.execPath),
+    '..',
+    '..',
+    'pnpm',
+    'bin',
+    'pnpm.cjs',
+  );
+  return exists(beside) ? beside : null;
+}
+
+function runNodeScript(root, script, args, options = {}) {
+  const node = resolveNodeBin();
+  if (!node)
+    return {
+      command: 'node ' + script,
+      status: 1,
+      stdout: '',
+      stderr: 'node not found',
+      durationMs: 0,
+    };
+  const env = {
+    ...(options.env || {}),
+    PATH: path.dirname(node) + path.delimiter + (process.env.PATH || ''),
+  };
+  return run(root, node, [script, ...args], { ...options, env });
+}
 
 function run(root, command, args = [], options = {}) {
   const started = Date.now();
@@ -14,6 +83,7 @@ function run(root, command, args = [], options = {}) {
     maxBuffer: 32 * 1024 * 1024,
     shell: process.platform === 'win32' && /\.(cmd|bat)$/i.test(command),
     timeout: options.timeout || 600000,
+    env: options.env ? { ...process.env, ...options.env } : process.env,
   });
   return {
     command: [command, ...args].join(' '),
@@ -146,6 +216,7 @@ function reportText({ side, written, quality }) {
   ];
   for (const file of written) lines.push('- A ' + file);
   lines.push('', '## 质量阶段', '');
+  if (quality.skipped) lines.push('- SKIPPED: ' + (quality.reason || '工具链缺失'), '');
   for (const stage of quality.stages || []) {
     lines.push(
       '### ' + stage.name,
@@ -169,17 +240,44 @@ async function qualityFor({ root, stack, qualityRunner }) {
   }
   const stages = [];
   if (stack === 'node') {
-    stages.push({ name: 'test', ...run(root, 'node', ['--test', 'test/items.test.mjs']) });
+    const node = resolveNodeBin();
+    if (!node) return { ok: true, skipped: true, reason: '未找到 Node 工具链', stages: [] };
+    stages.push({ name: 'test', ...run(root, node, ['--test', 'test/items.test.mjs']) });
   } else if (stack === 'python') {
-    stages.push({ name: 'test', ...run(root, 'python', ['-m', 'pytest', '-q', 'tests']) });
+    const python = hasCommand('python') ? 'python' : hasCommand('py') ? 'py' : null;
+    if (!python) return { ok: true, skipped: true, reason: '未找到 Python 工具链', stages: [] };
+    const probe = run(root, python, ['-c', 'import pytest']);
+    if (probe.status !== 0)
+      return { ok: true, skipped: true, reason: '未安装 pytest', stages: [probe] };
+    stages.push({ name: 'test', ...run(root, python, ['-m', 'pytest', '-q', 'tests']) });
   } else if (stack === 'java') {
+    if (!hasCommand('java'))
+      return { ok: true, skipped: true, reason: '未找到 JDK（java）', stages: [] };
     const wrapper = process.platform === 'win32' ? 'mvnw.cmd' : 'mvnw';
-    const command = exists(path.join(root, wrapper)) ? wrapper : 'mvn';
+    const command = hasCommand('mvn') ? 'mvn' : exists(path.join(root, wrapper)) ? wrapper : null;
+    if (!command) return { ok: true, skipped: true, reason: '未找到 Maven', stages: [] };
     stages.push({ name: 'format', ...run(root, command, ['-B', '-ntp', 'spotless:apply']) });
     stages.push({ name: 'test', ...run(root, command, ['-B', '-ntp', 'verify']) });
   } else if (stack === 'vue' || stack === 'react') {
-    stages.push({ name: 'install', ...run(root, 'npm', ['install', '--no-audit', '--no-fund']) });
-    stages.push({ name: 'test', ...run(root, 'npm', ['test']) });
+    const pnpm = pnpmCli();
+    if (pnpm) {
+      const install = runNodeScript(root, pnpm, ['install', '--no-frozen-lockfile'], {
+        env: { PATH: path.dirname(resolveNodeBin()) + path.delimiter + (process.env.PATH || '') },
+      });
+      const installOutput = (install.stdout || '') + (install.stderr || '');
+      if (install.status !== 0 && /ERR_PNPM_IGNORED_BUILDS/.test(installOutput)) {
+        install.status = 0;
+        install.stdout =
+          installOutput + '\n[SpecGate] ignored build scripts; tests will still run.';
+      }
+      stages.push({ name: 'install', ...install });
+      stages.push({ name: 'test', ...runNodeScript(root, pnpm, ['test']) });
+    } else if (hasCommand('npm')) {
+      stages.push({ name: 'install', ...run(root, 'npm', ['install', '--no-audit', '--no-fund']) });
+      stages.push({ name: 'test', ...run(root, 'npm', ['test']) });
+    } else {
+      return { ok: true, skipped: true, reason: '未找到 npm/pnpm', stages: [] };
+    }
   }
   const failed = stages.find((stage) => stage.status !== 0);
   if (failed) {

@@ -132,7 +132,15 @@ export async function startV4Init({
     return {
       ok: false,
       code: 'BUILD_FAILED',
-      message: '脚手架/CRUD/质量阶段失败；详见各 side 的 docs/mvp-scaffold-report.md',
+      message:
+        '脚手架/CRUD/质量阶段失败：' +
+        built.results
+          .map(
+            (item) =>
+              (item.side || 'side') + '=' + (item.reason || item.message || item.code || '失败'),
+          )
+          .join('；') +
+        '；详见各 side 的 docs/mvp-scaffold-report.md',
       results: built.results,
     };
   }
