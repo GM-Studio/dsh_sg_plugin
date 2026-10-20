@@ -125,7 +125,7 @@ function defaultRootState(selection) {
   };
 }
 
-function writeSide(sideRoot, side) {
+function writeSide(sideRoot, side, requirements = null) {
   initProject(sideRoot);
   const config = readText(configPath(sideRoot));
   const patched = config
@@ -133,16 +133,21 @@ function writeSide(sideRoot, side) {
     .replace(/^schemaVersion:\s*3$/m, 'schemaVersion: 4');
   writeText(configPath(sideRoot), patched + '\nstack: ' + side.stack + '\n');
   patchConfigRequirements(sideRoot, { enabled: true, version: 'v1.0' });
-  writeRequirementsBaseline(
-    sideRoot,
-    {
-      functional: ['搭建框架'],
-      nonFunctional: [],
-      constraints: [],
-      acceptance: ['脚手架可启动', 'Item CRUD 可运行', '测试/格式化/静态检查/走查通过'],
-    },
-    { version: 'v1.0' },
-  );
+  const baseline =
+    requirements && Array.isArray(requirements.functional) && requirements.functional.length
+      ? {
+          functional: requirements.functional,
+          nonFunctional: requirements.nonFunctional || [],
+          constraints: requirements.constraints || [],
+          acceptance: requirements.acceptance || [],
+        }
+      : {
+          functional: ['搭建框架'],
+          nonFunctional: [],
+          constraints: [],
+          acceptance: ['脚手架可启动', 'Item CRUD 可运行', '测试/格式化/静态检查/走查通过'],
+        };
+  writeRequirementsBaseline(sideRoot, baseline, { version: 'v1.0' });
   ensureDir(path.join(sideRoot, 'openspec', 'changes'));
   ensureDir(path.join(sideRoot, 'openspec', 'specs'));
 }
@@ -151,7 +156,7 @@ function writeSide(sideRoot, side) {
  * Phase 1：只创建 workspace 布局、默认 REQ 与状态；不生成 CRUD、不做 git submodule。
  * 幂等：workspace.yaml 已存在时直接返回 skipped。
  */
-export function createWorkspaceLayout({ root, selection }) {
+export function createWorkspaceLayout({ root, selection, requirements = null }) {
   const workspaceFile = path.join(root, WORKSPACE_FILE);
   if (exists(workspaceFile)) {
     return { ok: true, skipped: true, root, workspace: readWorkspace(root) };
@@ -167,7 +172,7 @@ export function createWorkspaceLayout({ root, selection }) {
   for (const side of selection.sides) {
     const sideRoot = path.join(root, side.path);
     ensureDir(sideRoot);
-    writeSide(sideRoot, side);
+    writeSide(sideRoot, side, requirements);
   }
   return {
     ok: true,

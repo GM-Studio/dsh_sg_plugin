@@ -340,6 +340,9 @@ export async function buildBackendSide({ root, side, qualityRunner = null }) {
     background: '搭建框架',
     team: 'SpecGate',
     steps: '1) 框架 2) 业务',
+    jdk: side.jdk || '8',
+    buildTool: side.buildTool || 'maven',
+    bootVersion: side.bootVersion || '2.7.x',
   });
   const scaffoldResult = writeScaffold(root, scaffold);
   const code = bootstrapCodeFiles(side.stack, { packageName: 'com.example.demo' });

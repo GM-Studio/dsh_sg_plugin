@@ -613,7 +613,7 @@ function genericChangeFiles() {
   };
 }
 
-const JAVA_BOOT_VERSIONS = { '2.7.x': '2.7.18', '3.x': '3.5.16' };
+const JAVA_BOOT_VERSIONS = { '2.7.x': '2.7.18', '3.x': '3.5.16', '4.x': '4.0.0' };
 
 function javaPackage(context) {
   return String(context.packageName || 'com.example.demo');
