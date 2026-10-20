@@ -25,6 +25,8 @@ import {
   finalizeJavaInitialization,
   resumeJavaInitialization,
 } from '../v4/java-init.js';
+import { JAVA_PRESETS } from '../v4/java-versions.js';
+import { verifyJavaProject } from '../v4/java-verify.js';
 import { resolveInitRoot, shouldUseV4Default, startV4Init, summarizeV4Result } from '../v4/init.js';
 import { adoptWorkspace, summarizeAdopt } from '../v4/adopt.js';
 import { readWorkspace } from '../v4/workspace.js';
@@ -131,7 +133,7 @@ export function registerTools(ctx, runtime) {
     {
       name: 'sg_init',
       description:
-        '初始化 Java/Vue 全栈：sg_init({ path?, quality?:{mode:lenient|strict,generateOnly?}, execution? }) 仅接受完全空目录；默认宽松隔离并发多 agent，主 agent 汇合复验后独立归档；' +
+        '初始化 Java/Vue 全栈：sg_init({ path?, version?, quality?:{mode:lenient|strict,generateOnly?}, execution? }) 仅接受完全空目录；默认仅生成（不安装/不执行），可选版本档 jdk8-boot2.7 / jdk17-boot3.5 / jdk21-boot3.5 / jdk21-boot4.0；' +
         '省略 path 时使用当前目录，支持相对/绝对路径（Windows/Linux/macOS）。' +
         'v3 兼容：sg_init({ req, description, draft }) 走需求先行流程；--v3 可强制。',
       parameters: {
@@ -180,6 +182,12 @@ export function registerTools(ctx, runtime) {
           backend: { type: 'string', description: 'v4 后端：node/python/java/none' },
           frontend: { type: 'string', description: 'v4 前端：vue/react/none' },
           preset: { type: 'string', description: 'v4 预设：node-fullstack 等' },
+          version: {
+            type: 'string',
+            enum: JAVA_PRESETS.map((item) => item.id),
+            description:
+              'Java 版本档：jdk8-boot2.7 / jdk17-boot3.5 / jdk21-boot3.5 / jdk21-boot4.0',
+          },
         },
         additionalProperties: false,
       },
@@ -347,6 +355,22 @@ export function registerTools(ctx, runtime) {
         return result.ok
           ? ok(summarizeJavaInit(result), result)
           : fail(summarizeJavaInit(result), result);
+      },
+    },
+    {
+      name: 'sg_verify',
+      description:
+        '本地验证 Java/Vue 初始化项目：后端 mvn verify，前端 npm install/build/test/lint/format:check；通过后状态为 SMOKE_PASSED，可创建 change。只读源码，不自动修复。',
+      parameters: {
+        type: 'object',
+        properties: { path: { type: 'string', description: '项目根目录，默认当前目录' } },
+        additionalProperties: false,
+      },
+      output: textOutput(),
+      async execute(args, exec) {
+        const root = resolveJavaInitRoot(runtime.getCwd(exec?.agent), args?.path);
+        const result = verifyJavaProject({ root });
+        return result.ok ? ok(result.message, result) : fail(result.message, result);
       },
     },
     {

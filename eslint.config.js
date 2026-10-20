@@ -3,7 +3,15 @@ import globals from 'globals';
 
 export default [
   {
-    ignores: ['node_modules/**', 'dist/**', 'coverage/**', 'assets/**', 'docs/**', '*.tgz'],
+    ignores: [
+      'node_modules/**',
+      'dist/**',
+      'coverage/**',
+      'assets/**',
+      'docs/**',
+      '.specgate/**',
+      '*.tgz',
+    ],
   },
   js.configs.recommended,
   {

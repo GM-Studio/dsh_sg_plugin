@@ -411,11 +411,30 @@ export function createChange(
         message: '初始化报告损坏，不能提前发起变更',
       };
     }
+    let templateVerified = false;
+    if (javaInit && exists(path.join(root, '.specgate', 'golden.json'))) {
+      try {
+        templateVerified =
+          JSON.parse(readText(path.join(root, '.specgate', 'golden.json'))).verified === true;
+      } catch {
+        templateVerified = false;
+      }
+    }
+    if (javaInit && initReport.phase === 'GENERATED_ONLY' && !templateVerified)
+      return {
+        ok: false,
+        code: 'INIT_TEMPLATE_UNVERIFIED',
+        message:
+          '该 Java 版本档的 Golden 模板尚未通过发版验收；先执行 /sg-verify 或完成模板验收后再创建 change',
+      };
     if (
       javaInit &&
       (!initReport ||
         initReport.schemaVersion !== 2 ||
         !(
+          (initReport.phase === 'SMOKE_PASSED' &&
+            initReport.verification?.ok === true &&
+            initReport.verification?.kind === 'local-sg-verify') ||
           (initReport.phase === 'GENERATED_ONLY' &&
             initReport.quality?.generateOnly === true &&
             JSON.parse(readText(javaMarker)).quality?.generateOnly === true) ||

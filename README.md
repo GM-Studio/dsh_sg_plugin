@@ -2,16 +2,18 @@
 
 **中文** | [English](README.en.md)
 
-![version](https://img.shields.io/badge/version-4.1.0-blue)
+![version](https://img.shields.io/badge/version-4.3.0-blue)
 ![license](https://img.shields.io/badge/license-MIT-green)
 ![node](https://img.shields.io/badge/node-%3E%3D20.19.0-brightgreen)
 ![dsh](https://img.shields.io/badge/dsh-%3E%3D0.2.1--rc.2-purple)
 
-> **sg-java 分支（新默认）**：`sg-init` 仅接受完全空目标目录，`.git`、空文件、空子目录也拒绝。确认后生成 Java8 / Spring Boot2.7.18 / Maven + Vue3 / TypeScript / Vite / npm 全栈任务 CRUD 与 H2 文件持久化。生成代码、文档、req v1.0 与单仓 Git 基线后，默认宽松自动隔离并发多 agent 检查、修复、汇合复验，独立归档初始化，不自动创建业务 change。
+> **sg-java 分支（v4.3 默认）**：`sg-init` 仅接受完全空目标目录，`.git`、空文件、空子目录也拒绝。确认后按版本档生成 Java + Spring Boot + Maven + Vue3 / TypeScript / Vite / npm 全栈任务 CRUD 与 H2 文件持久化，写入 req v1.0、单仓 Git 基线；默认**只生成**，不安装依赖、不执行质量命令。
 >
-> 模式：`--lenient`（默认，审查通过；未运行项未验证）、`--strict`（全部实际检查与CRUD持久化通过）、`--generate-only`（只生成，不归档质量通过）。工具 `quality:{mode,generateOnly}`。无多agent时主agent串行执行并通过 `sg_init_finalize` 提交真实证据。附加兼容执行开关：`--test --format --lint --review --verify --install-toolchain`；工具参数 `execution: {test, format, lint, review, verify, installToolchain}`。关闭项标记未验证；开启失败返回失败报告。旧初始化/接入必须显式 `--v3` / `--adopt`。在生成目标目录继续 `sg-change`，沿用 H1/H2/H3 审批。
+> 版本档：`--version jdk8-boot2.7`（默认）、`jdk17-boot3.5`、`jdk21-boot3.5`、`jdk21-boot4.0`（preview）。每个版本档的模板 hash 在 `src/v4/java-versions.js` 的 Golden 清单中登记；只有匹配的已验证模板才允许 `sg-change`。未验证/自定义模板执行 `/sg-verify`。
 >
-> 需求与设计：[需求分析](docs/requirements/2026-10-20-sg-java-init-requirements.zh.md)、[详细设计](docs/design/sg-java-init.zh.md)。Java8/Boot2 已老旧，本示例无认证，不是生产安全承诺。
+> 质量：`--lenient` / `--strict` 显式启动隔离并发 agent（不传则只生成）；`/sg-verify` 本地执行后端 `mvn verify` 与前端 install/build/test/lint/format:check，通过后状态为 `SMOKE_PASSED`。附加兼容执行开关：`--test --format --lint --review --verify --install-toolchain`。旧初始化/接入必须显式 `--v3` / `--adopt`。
+>
+> 需求与设计：[v4.3 需求](docs/requirements/2026-10-21-v4.3-sg-init-closed-loop-requirements.md)、[sg-java 需求](docs/requirements/2026-10-20-sg-java-init-requirements.zh.md)、[详细设计](docs/design/sg-java-init.zh.md)。Java8/Boot2 已老旧，本示例无认证，不是生产安全承诺。
 >
 > **v4.1（历史基线）**：sg-init 技术栈向导 —— Java JDK 8/11/13/17/21 × Spring Boot 2.7/3.x/4.x；Python 3.10–3.13 与 2.7（EOL）、FastAPI/Flask/Django；Node 20/22/24、Express/Fastify/NestJS；Vue/React + Vite；必选/可选依赖与最小/推荐/全量预设；不再做四维需求盘问，最终审批页紧凑确认技术栈与依赖；先全环境扫描并复用运行时，缺失的 Maven/Gradle/JDK/uv 走国内镜像装到项目 toolchains；未批准跳过安装/质量，失败降级提交。
 >

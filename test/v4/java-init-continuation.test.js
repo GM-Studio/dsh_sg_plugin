@@ -10,7 +10,7 @@ import {
   resumeJavaInitialization,
   finalizeJavaInitialization,
 } from '../../src/v4/java-init.js';
-async function fixture(t, quality = {}) {
+async function fixture(t, quality = { mode: 'lenient' }) {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'sg-continuation-'));
   t.after(() => fs.rmSync(root, { recursive: true, force: true }));
   const result = await startJavaInit({

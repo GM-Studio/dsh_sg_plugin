@@ -11,6 +11,7 @@ import { load } from '../../src/v3/state.js';
 import { parseInitArgs, registerCommands } from '../../src/v3/commands.js';
 import { registerTools } from '../../src/v3/tools.js';
 import { createRuntime } from '../../src/v3/runtime.js';
+import { GOLDEN_MANIFEST } from '../../src/v4/java-versions.js';
 
 function temp(t) {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'sg-java-init-'));
@@ -137,9 +138,19 @@ test('default tool and CLI both reject nonempty instead of falling back to v3', 
   );
   assert.deepEqual(fs.readdirSync(root), ['README.md']);
 });
-test('default quality remains pending and cannot bypass guard by report tampering', async (t) => {
+test('default init is generation-only; explicit lenient remains pending and cannot be bypassed', async (t) => {
+  const generatedRoot = temp(t);
+  const generated = await startJavaInit({ root: generatedRoot, userQuestions: approve });
+  assert.equal(generated.code, 'GENERATED_ONLY');
+  assert.equal(generated.report.initializationComplete, false);
+  assert.equal(generated.report.version.id, 'jdk8-boot2.7');
+
   const root = temp(t);
-  const result = await startJavaInit({ root, userQuestions: approve });
+  const result = await startJavaInit({
+    root,
+    userQuestions: approve,
+    quality: { mode: 'lenient' },
+  });
   assert.equal(result.code, 'MAIN_AGENT_PENDING');
   assert.equal(createChange(root, { name: 'premature' }).code, 'INIT_QUALITY_PENDING');
   fs.writeFileSync(
@@ -147,6 +158,53 @@ test('default quality remains pending and cannot bypass guard by report tamperin
     JSON.stringify({ schemaVersion: 1, phase: 'IDLE' }),
   );
   assert.equal(createChange(root, { name: 'tampered' }).code, 'INIT_QUALITY_PENDING');
+});
+
+test('version presets generate the requested Java/Boot stack', async (t) => {
+  const cases = [
+    ['jdk8-boot2.7', '2.7.18', '1.8', false, '8'],
+    ['jdk17-boot3.5', '3.5.16', '17', true, '17'],
+    ['jdk21-boot3.5', '3.5.16', '21', true, '21'],
+    ['jdk21-boot4.0', '4.0.0', '21', true, '21'],
+  ];
+  for (const [version, boot, java, jakarta, jdk] of cases) {
+    const root = temp(t);
+    const result = await startJavaInit({ root, userQuestions: approve, version });
+    assert.equal(result.ok, true, JSON.stringify(result));
+    const pom = fs.readFileSync(path.join(root, 'backend/pom.xml'), 'utf8');
+    assert.ok(pom.includes('<version>' + boot + '</version>'), version + ' boot');
+    assert.ok(pom.includes('<java.version>' + java + '</java.version>'), version + ' java');
+    const task = fs.readFileSync(
+      path.join(root, 'backend/src/main/java/com/example/tasks/Task.java'),
+      'utf8',
+    );
+    assert.equal(task.includes(jakarta ? 'jakarta.persistence' : 'javax.persistence'), true);
+    assert.equal(fs.readFileSync(path.join(root, '.java-version'), 'utf8').trim(), jdk);
+    assert.equal(result.report.version.id, version);
+    assert.equal(result.report.template.verified, Boolean(GOLDEN_MANIFEST.presets[version]));
+    assert.ok(fs.existsSync(path.join(root, '.specgate/golden.json')));
+  }
+});
+
+test('sg_init tool passes the version preset through', async (t) => {
+  const root = temp(t);
+  const { toolMap } = setup(root, approve);
+  const result = await toolMap.get('sg_init').execute({ version: 'jdk17-boot3.5' }, {});
+  assert.equal(result.data.report.version.id, 'jdk17-boot3.5');
+  assert.equal(result.data.report.template.verified, true);
+  assert.ok(fs.existsSync(path.join(root, 'backend/pom.xml')));
+});
+
+test('unknown version fails before writing', async (t) => {
+  const parent = temp(t);
+  const root = path.join(parent, 'unknown');
+  const result = await startJavaInit({
+    root,
+    userQuestions: approve,
+    version: 'jdk11-boot3.0',
+  });
+  assert.equal(result.code, 'E_JAVA_VERSION');
+  assert.equal(fs.existsSync(root), false);
 });
 
 test('quality CLI options reject invalid modes and generation execution conflicts', async (t) => {
@@ -165,7 +223,12 @@ test('quality CLI options reject invalid modes and generation execution conflict
 
 test('tool schema exposes strictly typed optional switches', () => {
   const { toolMap } = setup(os.tmpdir(), approve);
-  const p = toolMap.get('sg_init').parameters.properties.execution;
+  const schema = toolMap.get('sg_init').parameters.properties;
+  assert.equal(parseInitArgs('--version jdk17-boot3.5').version, 'jdk17-boot3.5');
+  assert.equal(schema.version.type, 'string');
+  assert.ok(schema.version.enum.includes('jdk17-boot3.5'));
+  assert.ok(schema.version.enum.includes('jdk21-boot4.0'));
+  const p = schema.execution;
   assert.equal(p.additionalProperties, false);
   assert.deepEqual(Object.keys(p.properties), [
     'test',

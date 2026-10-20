@@ -22,6 +22,7 @@ import { digest } from './util/hash.js';
 import { startJavaInit, resolveJavaInitRoot, summarizeJavaInit } from '../v4/java-init.js';
 import { patchState } from './state.js';
 import { queueJavaInitHandoff } from '../v4/java-init-handoff.js';
+import { verifyJavaProject } from '../v4/java-verify.js';
 
 function tokens(raw) {
   return String(raw || '')
@@ -73,6 +74,7 @@ export function parseInitArgs(rawInput) {
   let backend = null;
   let frontend = null;
   let preset = null;
+  let version = null;
   const execution = {};
   const quality = {};
   const executionFlags = {
@@ -113,6 +115,11 @@ export function parseInitArgs(rawInput) {
       if (part === '--frontend') frontend = value;
       if (part === '--preset') preset = value;
       index += 1;
+    } else if (part === '--version' || part === '--jdk') {
+      const value = parts[index + 1];
+      if (!value) return { ok: false, code: 'E_ARGS_CONFLICT', message: part + ' 需要一个版本档' };
+      version = value;
+      index += 1;
     } else if (part === '--strict' || part === '--lenient') {
       if (quality.mode && quality.mode !== part.slice(2))
         return { ok: false, code: 'E_ARGS_CONFLICT', message: '不能同时选择宽松与严格模式' };
@@ -152,6 +159,7 @@ export function parseInitArgs(rawInput) {
     backend,
     frontend,
     preset,
+    version,
     execution,
     quality,
     description: rest.join(' ').trim(),
@@ -179,9 +187,11 @@ export function registerCommands(ctx, runtime) {
   register({
     name: 'sg-init',
     description:
-      '初始化 Java/Vue 全栈：/sg-init [--path <空目录>] [--lenient|--strict] [--generate-only]。默认宽松自动隔离并发 agent，汇合复验后独立归档；含 .git 的目标亦拒绝。' +
+      '初始化 Java/Vue 全栈：/sg-init [--path <空目录>] [--version jdk8-boot2.7|jdk17-boot3.5|jdk21-boot3.5|jdk21-boot4.0] [--lenient|--strict] [--generate-only]。默认仅生成，不安装、不执行；显式 --lenient/--strict 才启动隔离 agent 质量流程。含 .git 的目标亦拒绝。' +
       '未指定 --path 时使用当前目录；v3 兼容：[-req <需求文档>] [自由描述] [--v3]。',
-    input: { hint: '[--path <目录>] [--backend ...] [--frontend ...] [--preset ...] [--adopt]' },
+    input: {
+      hint: '[--path <目录>] [--version <档>] [--lenient|--strict] [--generate-only] [--adopt]',
+    },
     async handler(inv) {
       const cwd = runtime.getCwd(inv?.agent);
       const userQuestions = runtime.service('userQuestions');
@@ -283,6 +293,20 @@ export function registerCommands(ctx, runtime) {
       if (built.result) result = built.result;
       if (built.skipped && built.reason) result = { ...result, autoBuildSkipped: built.reason };
       return { kind: 'success', text: summarizeInitResult(result) };
+    },
+  });
+
+  register({
+    name: 'sg-verify',
+    description:
+      '本地验证 Java/Vue 初始化项目：后端 mvn verify，前端 install/build/test/lint/format:check。',
+    input: { hint: '[--path <目录>]' },
+    async handler(inv) {
+      const raw = String(inv?.rawInput || '').trim();
+      const target = raw.startsWith('--path ') ? raw.slice(7).trim() : raw;
+      const root = resolveJavaInitRoot(runtime.getCwd(inv?.agent), target);
+      const result = verifyJavaProject({ root });
+      return { kind: result.ok ? 'success' : 'error', text: result.message };
     },
   });
 

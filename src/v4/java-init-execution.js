@@ -246,12 +246,8 @@ function reviewSources(root) {
   }
   for (const side of ['backend', 'frontend']) walk(path.join(root, side));
   const pom = fs.readFileSync(path.join(root, 'backend/pom.xml'), 'utf8');
-  if (
-    !/<java\.version>1\.8<\/java\.version>/.test(pom) &&
-    !/<java\.version>8<\/java\.version>/.test(pom)
-  )
-    findings.push('backend/pom.xml: Java 8 target missing');
-  if (!/2\.7\.18/.test(pom)) findings.push('backend/pom.xml: Spring Boot 2.7.18 missing');
+  if (!/<java\.version>[^<]+<\/java\.version>/.test(pom))
+    findings.push('backend/pom.xml: java.version missing');
   return {
     ok: findings.length === 0,
     findings,
@@ -268,6 +264,11 @@ function reviewSources(root) {
  * Explicit installation defers these probes until after provisioning.
  */
 export async function preflightJavaInit(options = {}) {
+  const javaVersion = String(options.javaVersion || '8');
+  const javaToken = javaVersion === '8' ? '1.8' : javaVersion;
+  const javaPattern = new RegExp(
+    '(?:version\\s+["\']?)' + javaToken.replace('.', '\\.') + '(?:[._\\s"\']|$)',
+  );
   const normalized = normalizeInitExecution(options.execution);
   if (!normalized.ok) return normalized;
   const flags = normalized.execution;
@@ -282,19 +283,19 @@ export async function preflightJavaInit(options = {}) {
     [
       tools.java?.path || (home ? path.join(home, 'bin', 'java' + suffix) : 'java'),
       ['-version'],
-      /(?:version\s+["']?)1\.8(?:[._\s"']|$)/i,
+      javaPattern,
       'Java',
     ],
     [
       home ? path.join(home, 'bin', 'javac' + suffix) : 'javac',
       ['-version'],
-      /javac\s+1\.8(?:[._\s"']|$)/i,
+      new RegExp('javac\\s+' + javaToken.replace('.', '\\.') + '(?:[._\\s"\']|$)'),
       'javac',
     ],
     [
       tools.maven?.path || env.MAVEN_CMD || 'mvn',
       ['-version'],
-      /Java version:\s*1\.8(?:[._\s,]|$)/i,
+      new RegExp('Java version:\\s*' + javaToken.replace('.', '\\.') + '(?:[._\\s,]|$)'),
       'Maven',
     ],
     [tools.npm?.path || 'npm', ['--version'], /\d+\.\d+/, 'npm'],
@@ -327,7 +328,7 @@ export async function preflightJavaInit(options = {}) {
         throw new Error(
           label === 'npm'
             ? 'npm version unavailable'
-            : label + ' must actually use Java 8 (1.8), not a newer JDK',
+            : label + ' must actually use Java ' + javaVersion + ' (not a different JDK)',
         );
     }
     aborted(options.signal);
@@ -337,14 +338,14 @@ export async function preflightJavaInit(options = {}) {
   }
 }
 
-async function installDefault({ root, env, signal, disclose }) {
+async function installDefault({ root, env, signal, disclose, jdk = '8' }) {
   aborted(signal);
   const environment = await scanEnvironment({ root, env, skipNetwork: true });
   const plan = planProvisioning({
     environment,
     selection: {
       sides: [
-        { stack: 'java', jdk: '8', buildTool: 'maven' },
+        { stack: 'java', jdk: String(jdk), buildTool: 'maven' },
         { stack: 'vue', packageManager: 'npm' },
       ],
     },
@@ -394,6 +395,14 @@ export async function executeJavaInit(options = {}) {
   }
   const root = path.resolve(options.root),
     runner = options.runner || defaultRunner;
+  let javaVersion = '8';
+  try {
+    javaVersion = String(
+      JSON.parse(fs.readFileSync(path.join(root, '.specgate', 'monorepo.json'), 'utf8')).jdk || '8',
+    );
+  } catch {
+    javaVersion = '8';
+  }
   const signal = options.signal;
   let env = { ...process.env, ...(options.env || {}) },
     tools = options.toolchain || {};
@@ -479,7 +488,14 @@ export async function executeJavaInit(options = {}) {
     if (flags.installToolchain) {
       writeReport = true; // Explicit provisioning can mutate the project even on failure.
       const result = await stage('installToolchain', () =>
-        (options.installer || installDefault)({ root, env, signal, disclose, runner }),
+        (options.installer || installDefault)({
+          root,
+          env,
+          signal,
+          disclose,
+          runner,
+          jdk: javaVersion,
+        }),
       );
       if (result?.completed?.some((action) => action.url && action.reused === false))
         report.network.observed = true;
@@ -504,6 +520,7 @@ export async function executeJavaInit(options = {}) {
         const result = await preflightJavaInit({
           root,
           execution: { ...flags, installToolchain: false },
+          javaVersion,
           env,
           toolchain: tools,
           runner,

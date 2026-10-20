@@ -16,6 +16,7 @@ import {
 } from './java-init-execution.js';
 import { initProject, patchConfigRequirements } from '../v3/change.js';
 import { writeRequirementsBaseline, answerOf } from '../v3/requirements.js';
+import { goldenStatus, normalizeJavaPreset, templateHash } from './java-versions.js';
 
 export function inspectEmptyTarget(root) {
   try {
@@ -72,7 +73,22 @@ export const JAVA_INIT_REQUIREMENTS = {
   ],
 };
 
-function baselineConfig() {
+function requirementsFor(preset) {
+  return {
+    ...JAVA_INIT_REQUIREMENTS,
+    nonFunctional: [
+      JAVA_INIT_REQUIREMENTS.nonFunctional[0],
+      JAVA_INIT_REQUIREMENTS.nonFunctional[1],
+      '代码文档始终生成；默认仅生成不执行质量命令；可选 /sg-verify 进行本地验证，未执行项明确标注未验证',
+    ],
+    constraints: [
+      preset.label + (preset.legacy ? '；披露旧版本维护风险' : '；使用当前受支持版本线'),
+      ...JAVA_INIT_REQUIREMENTS.constraints.slice(1),
+    ],
+  };
+}
+
+function baselineConfig(preset) {
   return `# Single-repository Java/Vue monorepo using the existing SpecGate gate engine
 workflowVersion: 3
 schemaVersion: 3
@@ -90,7 +106,7 @@ suites:
   - id: backend
     kind: maven
     cwd: backend
-    jdk: "8"
+    jdk: "${preset.jdk}"
     buildTool: maven
     goals: ["-B","-ntp","verify"]
     install: false
@@ -116,22 +132,23 @@ export async function startJavaInit({
   env,
   backend,
   frontend,
-  preset,
+  preset: stackPreset,
   req,
   description,
   draft,
+  version,
 }) {
   const empty = inspectEmptyTarget(root);
   if (!empty.ok) return empty;
   if (
     (backend && backend !== 'java') ||
     (frontend && frontend !== 'vue') ||
-    (preset && preset !== 'java-vue')
+    (stackPreset && stackPreset !== 'java-vue')
   )
     return {
       ok: false,
       code: 'E_STACK_CONFLICT',
-      message: '默认初始化固定 Java8/Spring Boot2/Maven + Vue3；请使用 java-vue 预设',
+      message: '默认初始化固定 Java + Vue；请使用 java-vue 预设',
     };
   if (req || description || draft)
     return {
@@ -139,7 +156,19 @@ export async function startJavaInit({
       code: 'E_ARGS_CONFLICT',
       message: '默认初始化生成固定任务示例需求；自定义需求流程请显式使用 v3',
     };
-  const qualityOptions = normalizeInitQuality(quality);
+  const versionResult = normalizeJavaPreset(version);
+  if (!versionResult.ok) return versionResult;
+  const preset = versionResult.preset;
+  const requirements = requirementsFor(preset);
+  const qualityInput =
+    quality === undefined ||
+    (quality &&
+      typeof quality === 'object' &&
+      !Array.isArray(quality) &&
+      Object.keys(quality).length === 0)
+      ? { generateOnly: true }
+      : quality;
+  const qualityOptions = normalizeInitQuality(qualityInput);
   if (!qualityOptions.ok)
     return { ok: false, code: 'E_QUALITY_OPTIONS', message: qualityOptions.errors.join('；') };
   const normalized = normalizeInitExecution(execution);
@@ -161,9 +190,9 @@ export async function startJavaInit({
         {
           id: 'sg-java-init-confirm',
           header: 'Java/Vue 初始化需求确认',
-          question: `目标：${root}\n完全空目录；单 Git monorepo，Java8/Boot2.7.18/Maven + Vue3/TS/Vite/npm，任务 CRUD + H2 文件持久化，无登录。\n质量模式：${JSON.stringify(qualityOptions.quality)}；默认隔离并发 agent，汇总修复后复验；无服务时主 agent 串行降级。宽松仅走查通过即可归档，未运行标记未验证；严格所有检查与真实 CRUD/持久化必须通过。\n附加执行开关：${JSON.stringify(normalized.execution)}\n仅生成不会归档为验证通过。开启测试/格式化/检查/运行验证可能下载依赖；安装工具链仅显式开启执行。\n代码和文档始终生成；必须执行本地 git init/add/commit 建立单仓基线（不联网）；req v1.0 + 快照基线，后续 sg-change 独立发起并遵守审批。\n旧 Java/Boot 有维护安全风险，本示例不可直接作为生产安全基线。确认后才写入。\n完整需求：${JSON.stringify(JAVA_INIT_REQUIREMENTS, null, 2)}`,
+          question: `目标：${root}\n完全空目录；单 Git monorepo，${preset.label} + Vue3/TS/Vite/npm，任务 CRUD + H2 文件持久化，无登录。\n质量模式：${JSON.stringify(qualityOptions.quality)}；默认仅生成，不安装、不执行；可选 --lenient/--strict 启动 agent 质量流程。\n附加执行开关：${JSON.stringify(normalized.execution)}\n仅生成不会归档为验证通过。开启测试/格式化/检查/运行验证可能下载依赖；安装工具链仅显式开启执行。\n代码和文档始终生成；必须执行本地 git init/add/commit 建立单仓基线（不联网）；req v1.0 + 快照基线，后续 sg-change 独立发起并遵守审批。\n${preset.legacy ? '旧 Java/Boot 有维护安全风险，本示例不可直接作为生产安全基线。' : preset.preview ? 'Boot 4.0 为 preview，需在目标环境验证后再用于生产。' : '使用当前受支持版本线；本示例仍非生产安全基线。'}确认后才写入。\n完整需求：${JSON.stringify(requirements, null, 2)}`,
           options: [
-            { label: '确认', description: '生成后按所选模式启动 agent 质量流程' },
+            { label: '确认', description: '生成后按所选模式执行；默认仅生成' },
             { label: '取消', description: '不写入任何文件' },
           ],
         },
@@ -178,6 +207,7 @@ export async function startJavaInit({
     return { ok: false, code: 'CANCELLED', message: '用户取消；未写入任何文件' };
   const preflight = await preflightJavaInit({
     root,
+    javaVersion: preset.jdk,
     execution: normalized.execution,
     runner,
     env,
@@ -195,7 +225,7 @@ export async function startJavaInit({
   // Build and validate the complete manifest before touching the destination.
   let files;
   try {
-    files = javaFullstackFiles();
+    files = javaFullstackFiles({ preset });
     for (const [relative, content] of Object.entries(files)) {
       const target = path.resolve(root, relative);
       if (
@@ -209,6 +239,8 @@ export async function startJavaInit({
   } catch (error) {
     return { ok: false, code: 'E_TEMPLATE', message: error.message };
   }
+  const hash = templateHash(files);
+  const golden = goldenStatus(preset, hash);
   const approval = {
     source: 'host-userQuestions',
     questionId: 'sg-java-init-confirm',
@@ -217,9 +249,7 @@ export async function startJavaInit({
     mandatoryGitBaseline: true,
     confirmedAt: new Date().toISOString(),
     quality: qualityOptions.quality,
-    requirementsHash: createHash('sha256')
-      .update(JSON.stringify(JAVA_INIT_REQUIREMENTS))
-      .digest('hex'),
+    requirementsHash: createHash('sha256').update(JSON.stringify(requirements)).digest('hex'),
   };
   try {
     fs.mkdirSync(root, { recursive: true });
@@ -230,9 +260,9 @@ export async function startJavaInit({
     }
     const initialized = initProject(root);
     if (!initialized.ok) throw new Error(initialized.message || initialized.code);
-    fs.writeFileSync(path.join(root, '.specgate/config.yaml'), baselineConfig());
+    fs.writeFileSync(path.join(root, '.specgate/config.yaml'), baselineConfig(preset));
     patchConfigRequirements(root, { enabled: true, version: 'v1.0' });
-    writeRequirementsBaseline(root, JAVA_INIT_REQUIREMENTS, { version: 'v1.0' });
+    writeRequirementsBaseline(root, requirements, { version: 'v1.0' });
     fs.writeFileSync(
       path.join(root, '.specgate/monorepo.json'),
       JSON.stringify(
@@ -243,8 +273,34 @@ export async function startJavaInit({
           backend: 'backend',
           frontend: 'frontend',
           stack: 'java-vue',
+          preset: preset.id,
+          jdk: preset.jdk,
+          bootVersion: preset.bootVersion,
+          preview: preset.preview,
+          templateHash: hash,
+          templateVerified: golden.verified,
           execution: normalized.execution,
           quality: qualityOptions.quality,
+        },
+        null,
+        2,
+      ) + '\n',
+    );
+    fs.writeFileSync(
+      path.join(root, '.specgate/golden.json'),
+      JSON.stringify(
+        {
+          schemaVersion: 1,
+          preset: preset.id,
+          label: preset.label,
+          jdk: preset.jdk,
+          bootVersion: preset.bootVersion,
+          preview: preset.preview,
+          legacy: preset.legacy,
+          templateHash: hash,
+          verified: golden.verified,
+          reason: golden.reason,
+          record: golden.record,
         },
         null,
         2,
@@ -263,6 +319,13 @@ export async function startJavaInit({
     schemaVersion: 2,
     generated: true,
     approval,
+    version: {
+      id: preset.id,
+      jdk: preset.jdk,
+      bootVersion: preset.bootVersion,
+      preview: preset.preview,
+    },
+    template: { hash: hash, verified: golden.verified, reason: golden.reason },
     quality: qualityOptions.quality,
     gitBaseline: { mandatory: true, status: 'pending', network: false },
     execution: normalized.execution,
@@ -818,13 +881,19 @@ export async function resumeJavaInitialization({
 }
 
 export function summarizeJavaInit(result) {
-  return (
-    (result.code === 'MAIN_AGENT_PENDING'
+  const prefix =
+    result.code === 'MAIN_AGENT_PENDING'
       ? '初始化待主 agent 继续：'
       : result.code === 'GENERATED_ONLY'
         ? '仅生成完成：'
         : result.ok
           ? '初始化完成：'
-          : '初始化未通过（' + (result.code || 'FAILED') + '）：') + result.message
-  );
+          : '初始化未通过（' + (result.code || 'FAILED') + '）：';
+  const version = result.report?.version
+    ? '\n版本档：' +
+      result.report.version.id +
+      '；Golden：' +
+      (result.report.template?.verified ? '已验证' : '未验证（可执行 /sg-verify）')
+    : '';
+  return prefix + result.message + version;
 }

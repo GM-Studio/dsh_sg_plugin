@@ -1,5 +1,14 @@
 # 变更记录
 
+## 4.3.0（sg-java）
+
+- `sg-init` 默认改为**仅生成**：不安装依赖、不编译、不启动 agent；`--lenient` / `--strict` 才显式进入质量流程。
+- 新增版本档：`jdk8-boot2.7`（默认）、`jdk17-boot3.5`、`jdk21-boot3.5`、`jdk21-boot4.0`（preview）；`--version` 选择，非法组合在生成前拒绝。
+- Golden 清单：每个版本档的模板 hash、验证时间、工具链、命令与结论登记在 `src/v4/java-versions.js`；`sg-init` 写入 `.specgate/golden.json`，未匹配的模板禁止 `sg-change`。
+- 新增 `sg_verify` 工具与 `/sg-verify` 命令：本地执行后端 `mvn verify` 与前端 install/build/test/lint/format:check，写 `.specgate/verify-report.json`，通过后状态 `SMOKE_PASSED`。
+- Boot 4 兼容：`spring-boot-starter-webmvc-test`、`org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc`、Jackson 3 `tools.jackson.databind.ObjectMapper`。
+- 四个版本档均在 Windows + Temurin JDK 8/17/21 + Maven 3.9.9 下完成本地验收：后端 `mvn verify`、前端 build/test/lint/format 全绿。
+
 ## sg-java（未发布）
 
 - 默认初始化严格完全空目录，含 .git、空文件、空目录均拒绝；宿主确认前无生成写入。
