@@ -140,7 +140,7 @@ export function registerCommands(ctx, runtime) {
   register({
     name: 'sg-init',
     description:
-      '初始化 SpecGate v3：/sg-init [-req <需求文档>] [自由描述]。确认前不写任何文件，确认后进入 H1_PENDING。',
+      '初始化 SpecGate v4：/sg-init [-req <需求文档>] [自由描述]。确认前不写任何文件，确认后进入 H1_PENDING。',
     input: { hint: '[-req <需求文档>] [自由描述]' },
     async handler(inv) {
       const root = runtime.getCwd(inv?.agent);
