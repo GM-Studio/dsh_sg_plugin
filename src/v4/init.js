@@ -99,12 +99,49 @@ export async function startV4Init({
 }) {
   const scan = scanWorkspace(root);
   if (scan.kind === 'v4') {
+    const sides = scan.sides || [];
+    const pending = sides.filter(
+      (side) => !exists(path.join(root, side.path, '.specgate', 'bootstrap.done')),
+    );
+    if (!pending.length && exists(path.join(root, '.gitmodules'))) {
+      return {
+        ok: true,
+        skipped: true,
+        phase: 'IDLE',
+        message: workspaceSummary(root),
+        workspace: scan.workspace,
+      };
+    }
+    const selection = {
+      backend: scan.workspace.backend,
+      frontend: scan.workspace.frontend,
+      sides,
+      preset: null,
+    };
+    const built = await buildWorkspace({ root, selection, qualityRunner });
+    if (!built.ok) {
+      return {
+        ok: false,
+        code: 'BUILD_FAILED',
+        message:
+          '恢复构建失败：' +
+          built.results
+            .map(
+              (item) =>
+                (item.side || 'side') + '=' + (item.reason || item.message || item.code || '失败'),
+            )
+            .join('；'),
+        results: built.results,
+      };
+    }
+    const wired = wireSubmodules({ root, sides });
     return {
       ok: true,
-      skipped: true,
+      resumed: true,
       phase: 'IDLE',
+      build: built,
+      submodules: wired,
       message: workspaceSummary(root),
-      workspace: scan.workspace,
     };
   }
   if (scan.kind === 'existing') {
