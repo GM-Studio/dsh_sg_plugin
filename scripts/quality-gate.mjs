@@ -11,6 +11,7 @@ import { execFileSync, spawnSync } from 'node:child_process';
 import { existsSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 import process from 'node:process';
+import { isolatedTestEnvironment } from './quality-test-env.mjs';
 
 const ZERO_SHA = /^0+$/;
 const REVIEW_EXTENSIONS = new Set(['.js', '.mjs', '.cjs', '.ts']);
@@ -231,6 +232,10 @@ function runTests() {
     cwd: repoRoot,
     stdio: 'inherit',
     shell: true,
+    env: isolatedTestEnvironment(
+      process.env,
+      git(['rev-parse', '--local-env-vars']).split(/\r?\n/),
+    ),
   });
   if (result.status !== 0) {
     blocked('代码审查未通过，push 已被阻止', '单元测试失败。修复测试后重新提交，再执行 push。');
