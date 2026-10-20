@@ -68,7 +68,7 @@ function setup(root, services = {}) {
 async function callTool(ctx, name, args = {}) {
   const definition = ctx.toolsMap.get(name);
   assert.ok(definition, 'tool ' + name + ' not registered');
-  return definition.execute(args, { agent: null });
+  return definition.execute(name === 'sg_init' ? { ...args, v3: true } : args, { agent: null });
 }
 
 function fakeQuestions({ confirm = '确认' } = {}) {
@@ -205,7 +205,9 @@ test('v3.8：只含命令事件的新会话追加 notice，非空会话不追加
       return appended.map((entry) => entry.message);
     },
   };
-  const init = await ctx.commandsMap.get('sg-init').handler({ rawInput: '', agent: null, session });
+  const init = await ctx.commandsMap
+    .get('sg-init')
+    .handler({ rawInput: '--v3', agent: null, session });
   assert.equal(init.kind, 'success');
   assert.equal(appended.length, 1);
   assert.equal(appended[0].message.role, 'user');

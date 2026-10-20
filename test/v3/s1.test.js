@@ -46,16 +46,18 @@ function setup(root) {
 async function callTool(ctx, name, args = {}) {
   const definition = ctx.toolsMap.get(name);
   assert.ok(definition, `tool ${name} not registered`);
-  return definition.execute(args, { agent: null });
+  return definition.execute(name === 'sg_init' ? { ...args, v3: true } : args, { agent: null });
 }
 
-test('注册 6 个工具与 5 个命令', () => {
+test('注册 8 个工具与 5 个命令', () => {
   const root = tempRoot();
   const { ctx } = setup(root);
   assert.deepEqual([...ctx.toolsMap.keys()].sort(), [
     'sg_approve',
     'sg_change',
     'sg_init',
+    'sg_init_finalize',
+    'sg_init_resume',
     'sg_run',
     'sg_skill',
     'sg_status',
@@ -117,7 +119,7 @@ test('workflowVersion<3 时 sg_change 被拒', async () => {
 test('命令 /sg-init 与 /sg-change 可用', async () => {
   const root = tempRoot();
   const { ctx } = setup(root);
-  const init = await ctx.commandsMap.get('sg-init').handler({ rawInput: '', agent: null });
+  const init = await ctx.commandsMap.get('sg-init').handler({ rawInput: '--v3', agent: null });
   assert.equal(init.kind, 'success');
   initProject(root);
   const change = await ctx.commandsMap

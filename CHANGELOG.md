@@ -1,5 +1,13 @@
 # Changelog
 
+## sg-java (unreleased)
+
+- Strictly empty default initialization, rejecting Git metadata, zero-byte files and empty subdirectories; host confirmation precedes generation.
+- Runnable Java8/Boot2.7.18/Maven and pinned stable Vue3/TypeScript/Vite/npm task CRUD with H2 file persistence.
+- Default lenient isolated concurrent quality agents; strict actual build/test/lint/format/review/CRUD/persistence, generation-only opt-out, controlled repairs and independent archive. Environmental skips stay unverified; unavailable services hand off to main-agent serial checks with evidence-bound finalize/resume.
+- Single-repository monorepo and frozen req v1.0 baseline in IDLE, ready for independently initiated sg-change with existing approvals.
+- Explicit legacy v3/adopt preserved; default no longer creates bootstrap changes or nested submodules.
+
 ## 4.1.0
 
 - **v4 init stack wizard**: after topology, asks Java JDK/build tool/Boot, Python version/framework/packaging, Node version/package manager/language/framework, and frontend language; options are conditional and compatibility-validated.

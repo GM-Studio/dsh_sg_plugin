@@ -58,7 +58,9 @@ function setup(root, services = {}) {
 }
 
 async function call(ctx, name, args = {}) {
-  return ctx.toolsMap.get(name).execute(args, { agent: null });
+  return ctx.toolsMap
+    .get(name)
+    .execute(name === 'sg_init' ? { ...args, v3: true } : args, { agent: null });
 }
 
 function questions(answers = {}) {
@@ -397,6 +399,8 @@ test('v3.8：-req 与自由描述互斥', async () => {
     backend: null,
     frontend: null,
     preset: null,
+    execution: {},
+    quality: {},
     description: '',
   });
 });

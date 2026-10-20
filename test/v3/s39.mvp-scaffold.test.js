@@ -62,7 +62,7 @@ async function init(stack, extra = {}) {
   const ctx = setup(root, { userQuestions: questions() });
   const result = await ctx.toolsMap
     .get('sg_init')
-    .execute({ draft: draftFor(stack, extra) }, { agent: null });
+    .execute({ v3: true, draft: draftFor(stack, extra) }, { agent: null });
   return { root, result };
 }
 
@@ -149,6 +149,7 @@ test('v3.9：既有项目不注入框架需求、不生成 mvp-scaffold', async 
   const ctx = setup(root, { userQuestions: questions() });
   const result = await ctx.toolsMap.get('sg_init').execute(
     {
+      v3: true,
       draft: {
         background: 'legacy',
         functional: [{ title: '既有功能' }],

@@ -5,6 +5,8 @@ Thumbs.db
 *.log
 *.tgz
 coverage/
+!src/v3/coverage/
+!src/v3/coverage/*.js
 .ak47_dsh_stage/
 .specgate/
 .npmrc

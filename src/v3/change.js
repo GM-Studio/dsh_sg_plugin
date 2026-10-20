@@ -1,4 +1,5 @@
 import path from 'node:path';
+import { spawnSync } from 'node:child_process';
 import { ensureDir, exists, readText, writeText } from './util/fsx.js';
 import { init as initState, load as loadState, patchState } from './state.js';
 import { REQ_VERSION, isRequirementsFrozen } from './requirements.js';
@@ -387,6 +388,73 @@ export function createChange(
     };
   }
 
+  const initReportFile = path.join(root, '.specgate', 'init-report.json');
+  const javaMarker = path.join(root, '.specgate', 'monorepo.json');
+  let javaInit = false;
+  if (exists(javaMarker)) {
+    try {
+      javaInit = JSON.parse(readText(javaMarker)).stack === 'java-vue';
+    } catch {
+      return { ok: false, code: 'INIT_REPORT_INVALID', message: '初始化元数据损坏' };
+    }
+  }
+  if (javaInit && !exists(initReportFile))
+    return { ok: false, code: 'INIT_QUALITY_PENDING', message: 'Java初始化缺少质量报告' };
+  if (exists(initReportFile)) {
+    let initReport;
+    try {
+      initReport = JSON.parse(readText(initReportFile));
+    } catch {
+      return {
+        ok: false,
+        code: 'INIT_REPORT_INVALID',
+        message: '初始化报告损坏，不能提前发起变更',
+      };
+    }
+    if (
+      javaInit &&
+      (!initReport ||
+        initReport.schemaVersion !== 2 ||
+        !(
+          (initReport.phase === 'GENERATED_ONLY' &&
+            initReport.quality?.generateOnly === true &&
+            JSON.parse(readText(javaMarker)).quality?.generateOnly === true) ||
+          (initReport.phase === 'IDLE' &&
+            initReport.initializationComplete === true &&
+            /^[a-f0-9]{40,64}$/.test(initReport.archiveCommit || '') &&
+            /^docs\/initialization\/archive\/[a-f0-9]{40,64}-(lenient|strict)\.json$/.test(
+              initReport.archive || '',
+            ) &&
+            (() => {
+              const committed = spawnSync(
+                'git',
+                ['show', initReport.archiveCommit + ':' + initReport.archive],
+                { cwd: root, encoding: 'utf8', timeout: 10000 },
+              );
+              if (committed.status !== 0 || !exists(path.join(root, initReport.archive)))
+                return false;
+              try {
+                const archived = JSON.parse(committed.stdout);
+                return (
+                  archived.phase === 'QUALITY_ACCEPTED' &&
+                  archived.verification?.archiveAllowed === true &&
+                  JSON.stringify(archived) ===
+                    JSON.stringify(JSON.parse(readText(path.join(root, initReport.archive)))) &&
+                  archived.gitBaseline?.commit === initReport.gitBaseline?.commit &&
+                  JSON.stringify(archived.quality) === JSON.stringify(initReport.quality)
+                );
+              } catch {
+                return false;
+              }
+            })())
+        ))
+    )
+      return {
+        ok: false,
+        code: 'INIT_QUALITY_PENDING',
+        message: '初始化质量流程尚未完成，请先完成/修复初始化审查',
+      };
+  }
   const loaded = loadState(root);
   if (!loaded.ok) return loaded;
   const { state } = loaded;
