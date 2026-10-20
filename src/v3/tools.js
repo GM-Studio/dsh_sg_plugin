@@ -21,7 +21,7 @@ import { maybeBuildBootstrap } from './bootstrap.js';
 import { shouldUseV4Default, startV4Init, summarizeV4Result } from '../v4/init.js';
 import { adoptWorkspace, summarizeAdopt } from '../v4/adopt.js';
 import { readWorkspace } from '../v4/workspace.js';
-import { runWorkspaceSides, summarizeWorkspaceSides } from '../v4/scheduler.js';
+import { driveWorkspace, summarizeDrive } from '../v4/drive.js';
 import {
   finalizeWorkspaceChange,
   prepareWorkspaceChange,
@@ -358,14 +358,12 @@ export function registerTools(ctx, runtime) {
         const project = runtime.project(exec?.agent);
         const workspace = readWorkspace(project.root);
         if (workspace) {
-          const sides = await runWorkspaceSides({ root: project.root });
-          if (!sides.ok) return fail(summarizeWorkspaceSides(sides), sides);
-          const active = sides.results.filter((item) => item.change);
-          if (active.length > 0) {
+          const driven = await driveWorkspace({ root: project.root });
+          if (!driven.ok) return fail(summarizeDrive(driven), driven);
+          if (driven.results.some((item) => item.gate)) {
             return ok(
-              summarizeWorkspaceSides(sides) +
-                '\n请在对应子目录执行 /sg-run 推进各自门控；两侧归档后根会自动收尾。',
-              sides,
+              summarizeDrive(driven) + '\n人工批准后再次执行 /sg-run；两侧归档后根自动收尾。',
+              driven,
             );
           }
           const result = finalizeWorkspaceChange({ root: project.root });
