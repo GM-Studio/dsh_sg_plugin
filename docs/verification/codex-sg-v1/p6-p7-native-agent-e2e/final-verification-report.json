@@ -1,0 +1,475 @@
+{
+  "schemaVersion": 1,
+  "kind": "codex-v1-local",
+  "root": "C:\\Users\\Administrator\\AppData\\Local\\Temp\\sg-native-e2e-priority-20261021-06\\.specgate\\codex\\worktrees\\priority-e2e\\test",
+  "runId": "2026-10-21T10-16-31-073Z-5dc6e826",
+  "preset": "jdk8-boot2.7",
+  "startedAt": "2026-10-21T10:16:31.073Z",
+  "status": "verified",
+  "ok": true,
+  "v1Complete": true,
+  "expectedStages": [
+    "backend-verify",
+    "frontend-install",
+    "frontend-build",
+    "frontend-test",
+    "frontend-lint",
+    "frontend-format",
+    "coverage",
+    "runtime",
+    "frontend-runtime"
+  ],
+  "stages": [
+    {
+      "name": "backend-verify",
+      "command": "C:\\Users\\Administrator\\.m2\\wrapper\\dists\\apache-maven-3.9.11\\03d7e36a140982eea48e22c1dcac01d8862b2550b2939e09a0809bbc5182a5bc\\bin\\mvn.cmd",
+      "args": [
+        "-B",
+        "-ntp",
+        "clean",
+        "verify"
+      ],
+      "cwd": "C:\\Users\\Administrator\\AppData\\Local\\Temp\\sg-native-e2e-priority-20261021-06\\.specgate\\codex\\worktrees\\priority-e2e\\test\\backend",
+      "startedAt": "2026-10-21T10:16:32.744Z",
+      "finishedAt": "2026-10-21T10:16:45.805Z",
+      "durationMs": 13061,
+      "status": 0,
+      "reason": null,
+      "error": null,
+      "log": ".specgate/verify-runs/2026-10-21T10-16-31-241Z-b9b2e87e/backend-verify.log",
+      "tail": [
+        "[INFO] --- spotless:2.30.0:check (default) @ task-api ---",
+        "[INFO] ",
+        "[INFO] --- checkstyle:3.3.1:check (default) @ task-api ---",
+        "[INFO] �?始检查�?��??",
+        "�?查完成�??",
+        "[INFO] You have 0 Checkstyle violations.",
+        "[INFO] ------------------------------------------------------------------------",
+        "[INFO] BUILD SUCCESS",
+        "[INFO] ------------------------------------------------------------------------",
+        "[INFO] Total time:  12.313 s",
+        "[INFO] Finished at: 2026-10-21T18:16:45+08:00",
+        "[INFO] ------------------------------------------------------------------------"
+      ],
+      "tests": {
+        "total": 14,
+        "passed": 14,
+        "skipped": 0
+      }
+    },
+    {
+      "name": "frontend-install",
+      "command": "D:\\Program Files\\nodejs\\npm.cmd",
+      "args": [
+        "ci",
+        "--no-audit",
+        "--no-fund"
+      ],
+      "cwd": "C:\\Users\\Administrator\\AppData\\Local\\Temp\\sg-native-e2e-priority-20261021-06\\.specgate\\codex\\worktrees\\priority-e2e\\test\\frontend",
+      "startedAt": "2026-10-21T10:16:45.820Z",
+      "finishedAt": "2026-10-21T10:16:59.543Z",
+      "durationMs": 13723,
+      "status": 0,
+      "reason": null,
+      "error": null,
+      "log": ".specgate/verify-runs/2026-10-21T10-16-31-241Z-b9b2e87e/frontend-install.log",
+      "tail": [
+        "npm warn deprecated whatwg-encoding@3.1.1: Use @exodus/bytes instead for a more spec-conformant and faster implementation",
+        "added 301 packages in 14s"
+      ]
+    },
+    {
+      "name": "frontend-build",
+      "command": "D:\\Program Files\\nodejs\\npm.cmd",
+      "args": [
+        "run",
+        "build"
+      ],
+      "cwd": "C:\\Users\\Administrator\\AppData\\Local\\Temp\\sg-native-e2e-priority-20261021-06\\.specgate\\codex\\worktrees\\priority-e2e\\test\\frontend",
+      "startedAt": "2026-10-21T10:16:59.555Z",
+      "finishedAt": "2026-10-21T10:17:03.888Z",
+      "durationMs": 4333,
+      "status": 0,
+      "reason": null,
+      "error": null,
+      "log": ".specgate/verify-runs/2026-10-21T10-16-31-241Z-b9b2e87e/frontend-build.log",
+      "tail": [
+        "> task-web@1.0.0 build",
+        "> vue-tsc --noEmit && vite build",
+        "vite v7.3.1 building client environment for production...",
+        "transforming...",
+        "✓ 1423 modules transformed.",
+        "rendering chunks...",
+        "computing gzip size...",
+        "dist/index.html                   0.39 kB │ gzip:  0.26 kB",
+        "dist/assets/index-Crymdwsm.css  345.94 kB │ gzip: 47.92 kB",
+        "dist/assets/index-CZ0JiGWk.js   274.78 kB │ gzip: 96.19 kB",
+        "✓ built in 2.04s"
+      ]
+    },
+    {
+      "name": "frontend-test",
+      "command": "D:\\Program Files\\nodejs\\npm.cmd",
+      "args": [
+        "run",
+        "test",
+        "--",
+        "--reporter=json",
+        "--outputFile=C:\\Users\\Administrator\\AppData\\Local\\Temp\\sg-native-e2e-priority-20261021-06\\.specgate\\codex\\worktrees\\priority-e2e\\test\\.specgate\\verify-runs\\2026-10-21T10-16-31-241Z-b9b2e87e\\frontend-tests.json"
+      ],
+      "cwd": "C:\\Users\\Administrator\\AppData\\Local\\Temp\\sg-native-e2e-priority-20261021-06\\.specgate\\codex\\worktrees\\priority-e2e\\test\\frontend",
+      "startedAt": "2026-10-21T10:17:03.893Z",
+      "finishedAt": "2026-10-21T10:17:06.313Z",
+      "durationMs": 2420,
+      "status": 0,
+      "reason": null,
+      "error": null,
+      "log": ".specgate/verify-runs/2026-10-21T10-16-31-241Z-b9b2e87e/frontend-test.log",
+      "tail": [
+        "-------------|---------|----------|---------|---------|---------------------",
+        "All files    |   96.76 |    97.74 |   95.49 |      97 |                     ",
+        " src         |   95.72 |     97.5 |   94.25 |      96 |                     ",
+        "  App.vue    |   96.23 |     97.5 |   94.25 |   96.55 | 177-178,270-280,305 ",
+        "  main.ts    |       0 |      100 |     100 |       0 | 6                   ",
+        " src/api     |     100 |      100 |     100 |     100 |                     ",
+        "  auth.ts    |     100 |      100 |     100 |     100 |                     ",
+        "  files.ts   |     100 |      100 |     100 |     100 |                     ",
+        "  request.ts |     100 |      100 |     100 |     100 |                     ",
+        "  tasks.ts   |     100 |      100 |     100 |     100 |                     ",
+        "  types.ts   |       0 |        0 |       0 |       0 |                     ",
+        "-------------|---------|----------|---------|---------|---------------------"
+      ],
+      "tests": {
+        "total": 12,
+        "passed": 12,
+        "failed": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "name": "frontend-lint",
+      "command": "D:\\Program Files\\nodejs\\npm.cmd",
+      "args": [
+        "run",
+        "lint"
+      ],
+      "cwd": "C:\\Users\\Administrator\\AppData\\Local\\Temp\\sg-native-e2e-priority-20261021-06\\.specgate\\codex\\worktrees\\priority-e2e\\test\\frontend",
+      "startedAt": "2026-10-21T10:17:06.319Z",
+      "finishedAt": "2026-10-21T10:17:08.070Z",
+      "durationMs": 1751,
+      "status": 0,
+      "reason": null,
+      "error": null,
+      "log": ".specgate/verify-runs/2026-10-21T10-16-31-241Z-b9b2e87e/frontend-lint.log",
+      "tail": [
+        "> task-web@1.0.0 lint",
+        "> eslint . --max-warnings=0"
+      ]
+    },
+    {
+      "name": "frontend-format",
+      "command": "D:\\Program Files\\nodejs\\npm.cmd",
+      "args": [
+        "run",
+        "format:check"
+      ],
+      "cwd": "C:\\Users\\Administrator\\AppData\\Local\\Temp\\sg-native-e2e-priority-20261021-06\\.specgate\\codex\\worktrees\\priority-e2e\\test\\frontend",
+      "startedAt": "2026-10-21T10:17:08.080Z",
+      "finishedAt": "2026-10-21T10:17:08.682Z",
+      "durationMs": 602,
+      "status": 0,
+      "reason": null,
+      "error": null,
+      "log": ".specgate/verify-runs/2026-10-21T10-16-31-241Z-b9b2e87e/frontend-format.log",
+      "tail": [
+        "> task-web@1.0.0 format:check",
+        "> prettier --check .",
+        "Checking formatting...",
+        "All matched files use Prettier code style!"
+      ]
+    },
+    {
+      "name": "coverage",
+      "status": 0,
+      "startedAt": "2026-10-21T10:17:08.687Z",
+      "finishedAt": "2026-10-21T10:17:08.690Z",
+      "durationMs": 3,
+      "command": "internal:coverage-reconciliation",
+      "log": ".specgate/verify-runs/2026-10-21T10-16-31-241Z-b9b2e87e/coverage.log",
+      "coverage": {
+        "ok": true,
+        "backend": {
+          "ok": true,
+          "lines": {
+            "covered": 521,
+            "missed": 14,
+            "rate": 0.9738317757009346
+          },
+          "branches": {
+            "covered": 184,
+            "missed": 36,
+            "rate": 0.8363636363636363
+          }
+        },
+        "frontend": {
+          "lines": {
+            "covered": 227,
+            "missed": 7,
+            "rate": 0.9700854700854701
+          },
+          "branches": {
+            "covered": 217,
+            "missed": 5,
+            "rate": 0.9774774774774775
+          }
+        }
+      },
+      "tail": [
+        "Backend/frontend coverage thresholds passed"
+      ]
+    },
+    {
+      "name": "runtime",
+      "status": 0,
+      "durationMs": 11857,
+      "log": ".specgate/verify-runs/2026-10-21T10-16-31-241Z-b9b2e87e/runtime.log",
+      "tail": [
+        "2026-10-21 18:17:18.403  INFO 27656 --- [           main] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'",
+        "2026-10-21 18:17:19.309  INFO 27656 --- [           main] o.s.s.web.DefaultSecurityFilterChain     : Will secure any request with [org.springframework.security.web.session.DisableEncodeUrlFilter@b2c5e07, org.springframework.security.web.context.request.async.WebAsyncManagerIntegrationFilter@5812f68b, org.springframework.security.web.context.SecurityContextPersistenceFilter@6bffbc6d, org.springframework.security.web.header.HeaderWriterFilter@7a1234bf, org.springframework.security.web.csrf.CsrfFilter@4b40f651, org.springframework.security.web.savedrequest.RequestCacheAwareFilter@7749bf93, org.springframework.security.web.servletapi.SecurityContextHolderAwareRequestFilter@39a2bb97, org.springframework.security.web.authentication.AnonymousAuthenticationFilter@4426bff1, org.springframework.security.web.session.SessionManagementFilter@38aa816f, org.springframework.security.web.access.ExceptionTranslationFilter@31c7528f, org.springframework.security.web.access.intercept.AuthorizationFilter@5bf8fa12]",
+        "2026-10-21 18:17:19.836  INFO 27656 --- [           main] o.s.b.a.e.web.EndpointLinksResolver      : Exposing 2 endpoint(s) beneath base path '/actuator'",
+        "2026-10-21 18:17:19.871  INFO 27656 --- [           main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat started on port(s): 6452 (http) with context path ''",
+        "2026-10-21 18:17:19.884  INFO 27656 --- [           main] com.example.tasks.TaskApplication        : Started TaskApplication in 5.793 seconds (JVM running for 6.23)",
+        "2026-10-21 18:17:19.915  INFO 27656 --- [0.1-6452-exec-2] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring DispatcherServlet 'dispatcherServlet'",
+        "2026-10-21 18:17:19.915  INFO 27656 --- [0.1-6452-exec-2] o.s.web.servlet.DispatcherServlet        : Initializing Servlet 'dispatcherServlet'",
+        "2026-10-21 18:17:19.916  INFO 27656 --- [0.1-6452-exec-2] o.s.web.servlet.DispatcherServlet        : Completed initialization in 1 ms"
+      ],
+      "browser": null
+    },
+    {
+      "name": "frontend-runtime",
+      "scope": "frontend-runtime-only",
+      "fixture": false,
+      "status": 0,
+      "startedAt": "2026-10-21T10:17:21.453Z",
+      "pid": 28156,
+      "terminated": true,
+      "http": {
+        "html": {
+          "url": "http://127.0.0.1:6540/",
+          "status": 200,
+          "contentType": "text/html",
+          "sha256": "19d40c60ebdc9fe3a0a6afcdff256bf587ed77a9c0d90d526fe72859cb56cc29"
+        },
+        "assets": [
+          {
+            "url": "http://127.0.0.1:6540/assets/index-CZ0JiGWk.js",
+            "status": 200,
+            "bytes": 274776,
+            "contentType": "text/javascript",
+            "sha256": "b25d7b3b51140dab48792c3fdbe069532510b7a6d7a1426c51ff30303c9178e7"
+          },
+          {
+            "url": "http://127.0.0.1:6540/assets/index-Crymdwsm.css",
+            "status": 200,
+            "bytes": 345935,
+            "contentType": "text/css",
+            "sha256": "45a3a6bcb6176b9172a8ba1d60f3a3e95ff4804b565fca6dd171db711e7d132b"
+          }
+        ]
+      },
+      "reason": null,
+      "tail": [
+        "  ➜  Local:   http://127.0.0.1:6540/"
+      ],
+      "log": ".specgate/codex-verify-runs/2026-10-21T10-16-31-073Z-5dc6e826/frontend-runtime.log",
+      "command": "D:\\Program Files\\nodejs\\node.exe",
+      "args": [
+        "C:\\Users\\Administrator\\AppData\\Local\\Temp\\sg-native-e2e-priority-20261021-06\\.specgate\\codex\\worktrees\\priority-e2e\\test\\frontend\\node_modules\\vite\\bin\\vite.js",
+        "preview",
+        "--host",
+        "127.0.0.1",
+        "--port",
+        "6540",
+        "--strictPort"
+      ],
+      "cwd": "C:\\Users\\Administrator\\AppData\\Local\\Temp\\sg-native-e2e-priority-20261021-06\\.specgate\\codex\\worktrees\\priority-e2e\\test\\frontend",
+      "termination": {
+        "terminated": true,
+        "closeObserved": true,
+        "exitCode": 1,
+        "exitSignal": null
+      },
+      "finishedAt": "2026-10-21T10:17:22.196Z",
+      "durationMs": 743
+    }
+  ],
+  "policy": {
+    "installSdk": false,
+    "browserRequired": false,
+    "dependenciesAndBuildMayRun": true
+  },
+  "checkedAt": "2026-10-21T10:17:22.202Z",
+  "checks": [
+    {
+      "name": "backend-verify",
+      "status": "passed",
+      "log": ".specgate/verify-runs/2026-10-21T10-16-31-241Z-b9b2e87e/backend-verify.log",
+      "exitCode": 0
+    },
+    {
+      "name": "frontend-install",
+      "status": "passed",
+      "log": ".specgate/verify-runs/2026-10-21T10-16-31-241Z-b9b2e87e/frontend-install.log",
+      "exitCode": 0
+    },
+    {
+      "name": "frontend-build",
+      "status": "passed",
+      "log": ".specgate/verify-runs/2026-10-21T10-16-31-241Z-b9b2e87e/frontend-build.log",
+      "exitCode": 0
+    },
+    {
+      "name": "frontend-test",
+      "status": "passed",
+      "log": ".specgate/verify-runs/2026-10-21T10-16-31-241Z-b9b2e87e/frontend-test.log",
+      "exitCode": 0
+    },
+    {
+      "name": "frontend-lint",
+      "status": "passed",
+      "log": ".specgate/verify-runs/2026-10-21T10-16-31-241Z-b9b2e87e/frontend-lint.log",
+      "exitCode": 0
+    },
+    {
+      "name": "frontend-format",
+      "status": "passed",
+      "log": ".specgate/verify-runs/2026-10-21T10-16-31-241Z-b9b2e87e/frontend-format.log",
+      "exitCode": 0
+    },
+    {
+      "name": "coverage",
+      "status": "passed",
+      "log": ".specgate/verify-runs/2026-10-21T10-16-31-241Z-b9b2e87e/coverage.log",
+      "exitCode": 0
+    },
+    {
+      "name": "runtime",
+      "status": "passed",
+      "log": ".specgate/verify-runs/2026-10-21T10-16-31-241Z-b9b2e87e/runtime.log",
+      "exitCode": 0
+    },
+    {
+      "name": "frontend-runtime",
+      "status": "passed",
+      "log": ".specgate/codex-verify-runs/2026-10-21T10-16-31-073Z-5dc6e826/frontend-runtime.log",
+      "exitCode": 0
+    }
+  ],
+  "reconciliation": {
+    "expected": 9,
+    "executed": 9,
+    "passed": 9,
+    "failed": 0,
+    "notRun": 0
+  },
+  "evidenceFiles": [
+    {
+      "stage": "backend-verify",
+      "path": ".specgate/verify-runs/2026-10-21T10-16-31-241Z-b9b2e87e/backend-verify.log",
+      "sha256": "d195c2bc5b333fbddd0d798aa4d6f11d1d5642f16a1d0a81a8a52091eca6c001"
+    },
+    {
+      "stage": "frontend-install",
+      "path": ".specgate/verify-runs/2026-10-21T10-16-31-241Z-b9b2e87e/frontend-install.log",
+      "sha256": "3e31e6e31ce23d735fbd8198c0899d1f3671a202925b79f5736d34920817665f"
+    },
+    {
+      "stage": "frontend-build",
+      "path": ".specgate/verify-runs/2026-10-21T10-16-31-241Z-b9b2e87e/frontend-build.log",
+      "sha256": "c35deedeaad52744f7cc8a153d909b502c9718d527ec5d1cf41a11ac95ab5682"
+    },
+    {
+      "stage": "frontend-test",
+      "path": ".specgate/verify-runs/2026-10-21T10-16-31-241Z-b9b2e87e/frontend-test.log",
+      "sha256": "8cfdddd167d4229182e3d3d31256a88661da02f3e68c5d32aad2d3aebd0f9b01"
+    },
+    {
+      "stage": "frontend-lint",
+      "path": ".specgate/verify-runs/2026-10-21T10-16-31-241Z-b9b2e87e/frontend-lint.log",
+      "sha256": "b1c01cc81898ce4a38e872414b8184009050a9eea694612cd6ad14e4cc22271a"
+    },
+    {
+      "stage": "frontend-format",
+      "path": ".specgate/verify-runs/2026-10-21T10-16-31-241Z-b9b2e87e/frontend-format.log",
+      "sha256": "11e39185dd796727265c87d36dc643601b047efd4dcd4600f8144a25be077a92"
+    },
+    {
+      "stage": "coverage",
+      "path": ".specgate/verify-runs/2026-10-21T10-16-31-241Z-b9b2e87e/coverage.log",
+      "sha256": "44496d4d4d74133b1633dc9a873abed1c60f110ee05ba86c9796d9ac0e86a81f"
+    },
+    {
+      "stage": "runtime",
+      "path": ".specgate/verify-runs/2026-10-21T10-16-31-241Z-b9b2e87e/runtime.log",
+      "sha256": "672b34e3e8d66d889dd01676a2a38bf5e801a36c98a8977af13a589454f51428"
+    },
+    {
+      "stage": "frontend-runtime",
+      "path": ".specgate/codex-verify-runs/2026-10-21T10-16-31-073Z-5dc6e826/frontend-runtime.log",
+      "sha256": "66b96cf627d4d142bd4b95164e50982276ece538ea0f63fdc7211dea1579e16c"
+    }
+  ],
+  "legacyRunId": "2026-10-21T10-16-31-241Z-b9b2e87e",
+  "environment": {
+    "platform": "win32",
+    "arch": "x64",
+    "java": [
+      {
+        "home": "D:\\Program Files\\JetBrains\\IntelliJ IDEA 2025.3.1\\jbr",
+        "version": "21.0.9",
+        "major": 21,
+        "source": "dir"
+      },
+      {
+        "home": "D:\\Program Files\\JetBrains\\PyCharm 2025.3.1\\jbr",
+        "version": "21.0.9",
+        "major": 21,
+        "source": "dir"
+      },
+      {
+        "home": "D:\\Program Files\\JetBrains\\WebStorm 2025.3.1.1\\jbr",
+        "version": "21.0.9",
+        "major": 21,
+        "source": "dir"
+      },
+      {
+        "home": "D:\\Program Files\\Java\\Jdk17",
+        "version": "17.0.18",
+        "major": 17,
+        "source": "dir"
+      },
+      {
+        "home": "D:\\Program Files\\Java\\Jdk8",
+        "version": "1.8.0_472",
+        "major": 8,
+        "source": "dir"
+      }
+    ],
+    "maven": {
+      "path": "C:\\Users\\Administrator\\.m2\\wrapper\\dists\\apache-maven-3.9.11\\03d7e36a140982eea48e22c1dcac01d8862b2550b2939e09a0809bbc5182a5bc\\bin\\mvn.cmd",
+      "version": "3.9.11"
+    },
+    "node": {
+      "path": "D:\\Program Files\\nodejs\\node.exe",
+      "version": "24.14.0"
+    },
+    "npm": "D:\\Program Files\\nodejs\\npm.cmd",
+    "provisioned": [],
+    "provisionError": null,
+    "scannedAt": "2026-10-21T10:16:32.721Z",
+    "archives": []
+  },
+  "failedStage": null,
+  "sourceHash": "1fbbcfac6ce4bb72cebfb14b1c06e80e6b860ffbb60159c8656c0f5f3e96793c",
+  "finishedAt": "2026-10-21T10:17:22.202Z"
+}

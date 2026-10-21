@@ -1,0 +1,91 @@
+[INFO] Scanning for projects...
+[INFO] 
+[INFO] ------------------------< com.example:task-api >------------------------
+[INFO] Building task-api 1.0.0
+[INFO]   from pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- jacoco:0.8.13:prepare-agent (default) @ task-api ---
+[INFO] argLine set to -javaagent:C:\\Users\\Administrator\\.m2\\repository\\org\\jacoco\\org.jacoco.agent\\0.8.13\\org.jacoco.agent-0.8.13-runtime.jar=destfile=C:\\Users\\Administrator\\AppData\\Local\\Temp\\sg-native-e2e-priority-20261021-03\\.specgate\\codex\\worktrees\\priority-e2e\\test\\backend\\target\\jacoco.exec
+[INFO] 
+[INFO] --- resources:3.2.0:resources (default-resources) @ task-api ---
+[INFO] Using 'UTF-8' encoding to copy filtered resources.
+[INFO] Using 'UTF-8' encoding to copy filtered properties files.
+[INFO] Copying 1 resource
+[INFO] Copying 0 resource
+[INFO] 
+[INFO] --- compiler:3.10.1:compile (default-compile) @ task-api ---
+[INFO] Nothing to compile - all classes are up to date
+[INFO] 
+[INFO] --- resources:3.2.0:testResources (default-testResources) @ task-api ---
+[INFO] Using 'UTF-8' encoding to copy filtered resources.
+[INFO] Using 'UTF-8' encoding to copy filtered properties files.
+[INFO] skip non existing resourceDirectory C:\Users\Administrator\AppData\Local\Temp\sg-native-e2e-priority-20261021-03\.specgate\codex\worktrees\priority-e2e\test\backend\src\test\resources
+[INFO] 
+[INFO] --- compiler:3.10.1:testCompile (default-testCompile) @ task-api ---
+[INFO] Changes detected - recompiling the module!
+[INFO] Compiling 6 source files to C:\Users\Administrator\AppData\Local\Temp\sg-native-e2e-priority-20261021-03\.specgate\codex\worktrees\priority-e2e\test\backend\target\test-classes
+[INFO] 
+[INFO] --- surefire:2.22.2:test (default-test) @ task-api ---
+[INFO] 
+[INFO] -------------------------------------------------------
+[INFO]  T E S T S
+[INFO] -------------------------------------------------------
+[INFO] Running com.example.tasks.PriorityContractTest
+18:11:08.541 [main] DEBUG org.springframework.test.context.BootstrapUtils - Instantiating CacheAwareContextLoaderDelegate from class [org.springframework.test.context.cache.DefaultCacheAwareContextLoaderDelegate]
+18:11:08.554 [main] DEBUG org.springframework.test.context.BootstrapUtils - Instantiating BootstrapContext using constructor [public org.springframework.test.context.support.DefaultBootstrapContext(java.lang.Class,org.springframework.test.context.CacheAwareContextLoaderDelegate)]
+18:11:08.593 [main] DEBUG org.springframework.test.context.BootstrapUtils - Instantiating TestContextBootstrapper for test class [com.example.tasks.PriorityContractTest] from class [org.springframework.boot.test.context.SpringBootTestContextBootstrapper]
+18:11:08.603 [main] INFO org.springframework.boot.test.context.SpringBootTestContextBootstrapper - Neither @ContextConfiguration nor @ContextHierarchy found for test class [com.example.tasks.PriorityContractTest], using SpringBootContextLoader
+18:11:08.607 [main] DEBUG org.springframework.test.context.support.AbstractContextLoader - Did not detect default resource location for test class [com.example.tasks.PriorityContractTest]: class path resource [com/example/tasks/PriorityContractTest-context.xml] does not exist
+18:11:08.607 [main] DEBUG org.springframework.test.context.support.AbstractContextLoader - Did not detect default resource location for test class [com.example.tasks.PriorityContractTest]: class path resource [com/example/tasks/PriorityContractTestContext.groovy] does not exist
+18:11:08.607 [main] INFO org.springframework.test.context.support.AbstractContextLoader - Could not detect default resource locations for test class [com.example.tasks.PriorityContractTest]: no resource found for suffixes {-context.xml, Context.groovy}.
+18:11:08.608 [main] INFO org.springframework.test.context.support.AnnotationConfigContextLoaderUtils - Could not detect default configuration classes for test class [com.example.tasks.PriorityContractTest]: PriorityContractTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+18:11:08.653 [main] DEBUG org.springframework.test.context.support.ActiveProfilesUtils - Could not find an 'annotation declaring class' for annotation type [org.springframework.test.context.ActiveProfiles] and class [com.example.tasks.PriorityContractTest]
+18:11:08.696 [main] DEBUG org.springframework.context.annotation.ClassPathScanningCandidateComponentProvider - Identified candidate component class: file [C:\Users\Administrator\AppData\Local\Temp\sg-native-e2e-priority-20261021-03\.specgate\codex\worktrees\priority-e2e\test\backend\target\classes\com\example\tasks\TaskApplication.class]
+18:11:08.697 [main] INFO org.springframework.boot.test.context.SpringBootTestContextBootstrapper - Found @SpringBootConfiguration com.example.tasks.TaskApplication for test class com.example.tasks.PriorityContractTest
+18:11:08.776 [main] DEBUG org.springframework.boot.test.context.SpringBootTestContextBootstrapper - @TestExecutionListeners is not present for class [com.example.tasks.PriorityContractTest]: using defaults.
+18:11:08.777 [main] INFO org.springframework.boot.test.context.SpringBootTestContextBootstrapper - Loaded default TestExecutionListener class names from location [META-INF/spring.factories]: [org.springframework.boot.test.mock.mockito.MockitoTestExecutionListener, org.springframework.boot.test.mock.mockito.ResetMocksTestExecutionListener, org.springframework.boot.test.autoconfigure.restdocs.RestDocsTestExecutionListener, org.springframework.boot.test.autoconfigure.web.client.MockRestServiceServerResetTestExecutionListener, org.springframework.boot.test.autoconfigure.web.servlet.MockMvcPrintOnlyOnFailureTestExecutionListener, org.springframework.boot.test.autoconfigure.web.servlet.WebDriverTestExecutionListener, org.springframework.boot.test.autoconfigure.webservices.client.MockWebServiceServerTestExecutionListener, org.springframework.test.context.web.ServletTestExecutionListener, org.springframework.test.context.support.DirtiesContextBeforeModesTestExecutionListener, org.springframework.test.context.event.ApplicationEventsTestExecutionListener, org.springframework.test.context.support.DependencyInjectionTestExecutionListener, org.springframework.test.context.support.DirtiesContextTestExecutionListener, org.springframework.test.context.transaction.TransactionalTestExecutionListener, org.springframework.test.context.jdbc.SqlScriptsTestExecutionListener, org.springframework.test.context.event.EventPublishingTestExecutionListener, org.springframework.security.test.context.support.WithSecurityContextTestExecutionListener, org.springframework.security.test.context.support.ReactorContextTestExecutionListener]
+18:11:08.798 [main] INFO org.springframework.boot.test.context.SpringBootTestContextBootstrapper - Using TestExecutionListeners: [org.springframework.test.context.web.ServletTestExecutionListener@5bf523e3, org.springframework.test.context.support.DirtiesContextBeforeModesTestExecutionListener@8d29719, org.springframework.test.context.event.ApplicationEventsTestExecutionListener@65259c53, org.springframework.boot.test.mock.mockito.MockitoTestExecutionListener@4bff28e7, org.springframework.boot.test.autoconfigure.SpringBootDependencyInjectionTestExecutionListener@39e7e040, org.springframework.test.context.support.DirtiesContextTestExecutionListener@2591d23a, org.springframework.test.context.transaction.TransactionalTestExecutionListener@6c1f15df, org.springframework.test.context.jdbc.SqlScriptsTestExecutionListener@5e95b0ab, org.springframework.test.context.event.EventPublishingTestExecutionListener@5876bed9, org.springframework.security.test.context.support.WithSecurityContextTestExecutionListener@73ddb7ef, org.springframework.security.test.context.support.ReactorContextTestExecutionListener@67f8f5a6, org.springframework.boot.test.mock.mockito.ResetMocksTestExecutionListener@141b011a, org.springframework.boot.test.autoconfigure.restdocs.RestDocsTestExecutionListener@7976e536, org.springframework.boot.test.autoconfigure.web.client.MockRestServiceServerResetTestExecutionListener@670a4738, org.springframework.boot.test.autoconfigure.web.servlet.MockMvcPrintOnlyOnFailureTestExecutionListener@47ffdbba, org.springframework.boot.test.autoconfigure.web.servlet.WebDriverTestExecutionListener@ba0018e, org.springframework.boot.test.autoconfigure.webservices.client.MockWebServiceServerTestExecutionListener@45311a99]
+18:11:08.802 [main] DEBUG org.springframework.test.context.support.AbstractDirtiesContextTestExecutionListener - Before test class: context [DefaultTestContext@1a06602f testClass = PriorityContractTest, testInstance = [null], testMethod = [null], testException = [null], mergedContextConfiguration = [WebMergedContextConfiguration@46591e98 testClass = PriorityContractTest, locations = '{}', classes = '{class com.example.tasks.TaskApplication}', contextInitializerClasses = '[]', activeProfiles = '{}', propertySourceLocations = '{}', propertySourceProperties = '{spring.datasource.url=jdbc:h2:mem:priority-contract;DB_CLOSE_DELAY=-1, spring.jpa.hibernate.ddl-auto=update, org.springframework.boot.test.context.SpringBootTestContextBootstrapper=true}', contextCustomizers = set[[ImportsContextCustomizer@5b6cc344 key = [org.springframework.boot.test.autoconfigure.web.servlet.MockMvcWebDriverAutoConfiguration, org.springframework.boot.test.autoconfigure.web.servlet.MockMvcAutoConfiguration, org.springframework.boot.autoconfigure.security.oauth2.client.servlet.OAuth2ClientAutoConfiguration, org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration, org.springframework.boot.autoconfigure.security.servlet.SecurityFilterAutoConfiguration, org.springframework.boot.autoconfigure.security.servlet.UserDetailsServiceAutoConfiguration, org.springframework.boot.autoconfigure.security.oauth2.resource.servlet.OAuth2ResourceServerAutoConfiguration, org.springframework.boot.test.autoconfigure.web.servlet.MockMvcSecurityConfiguration, org.springframework.boot.test.autoconfigure.web.servlet.MockMvcWebClientAutoConfiguration, org.springframework.boot.test.autoconfigure.web.reactive.WebTestClientAutoConfiguration]], org.springframework.boot.test.context.filter.ExcludeFilterContextCustomizer@4346808, org.springframework.boot.test.json.DuplicateJsonObjectContextCustomizerFactory$DuplicateJsonObjectContextCustomizer@5503de1, org.springframework.boot.test.mock.mockito.MockitoContextCustomizer@0, org.springframework.boot.test.web.client.TestRestTemplateContextCustomizer@33e434c8, org.springframework.boot.test.autoconfigure.actuate.metrics.MetricsExportContextCustomizerFactory$DisableMetricExportContextCustomizer@63f6bed1, org.springframework.boot.test.autoconfigure.properties.PropertyMappingContextCustomizer@4b3fa0b3, org.springframework.boot.test.autoconfigure.web.servlet.WebDriverContextCustomizerFactory$Customizer@5a515e5d, org.springframework.test.context.support.DynamicPropertiesContextCustomizer@560d9f65, org.springframework.boot.test.context.SpringBootTestArgs@1, org.springframework.boot.test.context.SpringBootTestWebEnvironment@1ecee32c], resourceBasePath = 'src/main/webapp', contextLoader = 'org.springframework.boot.test.context.SpringBootContextLoader', parent = [null]], attributes = map['org.springframework.test.context.web.ServletTestExecutionListener.activateListener' -> true]], class annotated with @DirtiesContext [false] with mode [null].
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+ :: Spring Boot ::               (v2.7.18)
+
+2026-10-21 18:11:09.189  INFO 9788 --- [           main] com.example.tasks.PriorityContractTest   : Starting PriorityContractTest using Java 1.8.0_472 on MS-RXGWXGBMENQQ with PID 9788 (started by Administrator in C:\Users\Administrator\AppData\Local\Temp\sg-native-e2e-priority-20261021-03\.specgate\codex\worktrees\priority-e2e\test\backend)
+2026-10-21 18:11:09.191  INFO 9788 --- [           main] com.example.tasks.PriorityContractTest   : No active profile set, falling back to 1 default profile: "default"
+2026-10-21 18:11:09.850  INFO 9788 --- [           main] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2026-10-21 18:11:09.894  INFO 9788 --- [           main] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 37 ms. Found 2 JPA repository interfaces.
+2026-10-21 18:11:10.424  INFO 9788 --- [           main] o.hibernate.jpa.internal.util.LogHelper  : HHH000204: Processing PersistenceUnitInfo [name: default]
+2026-10-21 18:11:10.488  INFO 9788 --- [           main] org.hibernate.Version                    : HHH000412: Hibernate ORM core version 5.6.15.Final
+2026-10-21 18:11:10.683  INFO 9788 --- [           main] o.hibernate.annotations.common.Version   : HCANN000001: Hibernate Commons Annotations {5.1.2.Final}
+2026-10-21 18:11:10.783  INFO 9788 --- [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Starting...
+2026-10-21 18:11:10.985  INFO 9788 --- [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Start completed.
+2026-10-21 18:11:11.013  INFO 9788 --- [           main] org.hibernate.dialect.Dialect            : HHH000400: Using dialect: org.hibernate.dialect.H2Dialect
+2026-10-21 18:11:11.580  INFO 9788 --- [           main] o.h.e.t.j.p.i.JtaPlatformInitiator       : HHH000490: Using JtaPlatform implementation: [org.hibernate.engine.transaction.jta.platform.internal.NoJtaPlatform]
+2026-10-21 18:11:11.588  INFO 9788 --- [           main] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
+2026-10-21 18:11:12.157  INFO 9788 --- [           main] o.s.s.web.DefaultSecurityFilterChain     : Will secure any request with [org.springframework.security.web.session.DisableEncodeUrlFilter@544be0ec, org.springframework.security.web.context.request.async.WebAsyncManagerIntegrationFilter@4a4567d9, org.springframework.security.web.context.SecurityContextPersistenceFilter@e8a9379, org.springframework.security.web.header.HeaderWriterFilter@321d82ef, org.springframework.security.web.csrf.CsrfFilter@506ed938, org.springframework.security.web.savedrequest.RequestCacheAwareFilter@63cbbfc6, org.springframework.security.web.servletapi.SecurityContextHolderAwareRequestFilter@17e44bc0, org.springframework.security.web.authentication.AnonymousAuthenticationFilter@701e6082, org.springframework.security.web.session.SessionManagementFilter@795c8395, org.springframework.security.web.access.ExceptionTranslationFilter@249fce3d, org.springframework.security.web.access.intercept.AuthorizationFilter@4a9e0ffc]
+2026-10-21 18:11:13.091  INFO 9788 --- [           main] o.s.b.t.m.w.SpringBootMockServletContext : Initializing Spring TestDispatcherServlet ''
+2026-10-21 18:11:13.091  INFO 9788 --- [           main] o.s.t.web.servlet.TestDispatcherServlet  : Initializing Servlet ''
+2026-10-21 18:11:13.096  INFO 9788 --- [           main] o.s.b.a.e.web.EndpointLinksResolver      : Exposing 1 endpoint(s) beneath base path '/actuator'
+2026-10-21 18:11:13.115  INFO 9788 --- [           main] o.s.t.web.servlet.TestDispatcherServlet  : Completed initialization in 24 ms
+2026-10-21 18:11:13.153  INFO 9788 --- [           main] com.example.tasks.PriorityContractTest   : Started PriorityContractTest in 4.188 seconds (JVM running for 5.152)
+[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 5.23 s - in com.example.tasks.PriorityContractTest
+2026-10-21 18:11:13.742  INFO 9788 --- [ionShutdownHook] j.LocalContainerEntityManagerFactoryBean : Closing JPA EntityManagerFactory for persistence unit 'default'
+2026-10-21 18:11:13.744  INFO 9788 --- [ionShutdownHook] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Shutdown initiated...
+2026-10-21 18:11:13.745  INFO 9788 --- [ionShutdownHook] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Shutdown completed.
+[INFO] 
+[INFO] Results:
+[INFO] 
+[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0
+[INFO] 
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD SUCCESS
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  7.994 s
+[INFO] Finished at: 2026-10-21T18:11:14+08:00
+[INFO] ------------------------------------------------------------------------

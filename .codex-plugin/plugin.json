@@ -1,0 +1,18 @@
+{
+  "name": "specgate-codex",
+  "version": "0.2.0",
+  "description": "SpecGate Codex adapter: state, audit, recovery and Java/Vue generation foundations.",
+  "author": { "name": "andy.zx" },
+  "license": "MIT",
+  "skills": "./skills/",
+  "mcpServers": "./.mcp.json",
+  "requires_local_executor": true,
+  "interface": {
+    "displayName": "SpecGate for Codex",
+    "shortDescription": "Generate projects and inspect workflow state",
+    "longDescription": "Local stdio MCP with project previews, generation, state CAS and recovery controls. Trusted native approval integration is pending.",
+    "developerName": "andy.zx",
+    "category": "Developer Tools",
+    "capabilities": ["Read", "Write"]
+  }
+}

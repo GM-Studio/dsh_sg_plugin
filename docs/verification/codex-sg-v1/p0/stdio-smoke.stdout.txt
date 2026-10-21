@@ -1,0 +1,58 @@
+
+> dsh-plugin-specgate@4.3.1 codex:smoke
+> node scripts/codex-plugin-smoke.mjs --output docs/verification/codex-sg-v1/p0/stdio-smoke.json
+
+{
+  "status": "passed",
+  "scope": "P0-stdio-diagnostics",
+  "command": [
+    "D:\\Program Files\\nodejs\\node.exe",
+    "E:\\ai_workflow\\specgate\\/src/codex/server.js"
+  ],
+  "cwd": "E:\\ai_workflow\\specgate",
+  "startedAt": "2026-10-21T08:20:09.566Z",
+  "endedAt": "2026-10-21T08:20:09.627Z",
+  "exitCode": 0,
+  "signal": null,
+  "stdin": [
+    "{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"initialize\",\"params\":{\"protocolVersion\":\"2025-06-18\",\"capabilities\":{},\"clientInfo\":{\"name\":\"specgate-smoke\",\"version\":\"1.0.0\"}}}",
+    "{\"jsonrpc\":\"2.0\",\"method\":\"notifications/initialized\"}",
+    "{\"jsonrpc\":\"2.0\",\"id\":2,\"method\":\"tools/list\",\"params\":{}}",
+    "{\"jsonrpc\":\"2.0\",\"id\":3,\"method\":\"tools/call\",\"params\":{\"name\":\"health\",\"arguments\":{}}}",
+    "{\"jsonrpc\":\"2.0\",\"id\":4,\"method\":\"tools/call\",\"params\":{\"name\":\"version\",\"arguments\":{}}}",
+    "{\"jsonrpc\":\"2.0\",\"id\":5,\"method\":\"tools/call\",\"params\":{\"name\":\"status\",\"arguments\":{}}}",
+    "{\"jsonrpc\":\"2.0\",\"id\":6,\"method\":\"ping\",\"params\":{}}"
+  ],
+  "stdout": [
+    "{\"jsonrpc\":\"2.0\",\"id\":1,\"result\":{\"protocolVersion\":\"2025-06-18\",\"capabilities\":{\"tools\":{\"listChanged\":false}},\"serverInfo\":{\"name\":\"specgate-codex\",\"version\":\"0.1.0\"},\"instructions\":\"P0 diagnostics only. Project generation, verification, approvals and change execution are not implemented.\"}}",
+    "{\"jsonrpc\":\"2.0\",\"id\":2,\"result\":{\"tools\":[{\"name\":\"health\",\"description\":\"Check whether the local SpecGate Codex MCP adapter is responding. This does not verify a Java/Vue project.\",\"inputSchema\":{\"type\":\"object\",\"properties\":{},\"additionalProperties\":false},\"annotations\":{\"readOnlyHint\":true,\"destructiveHint\":false,\"idempotentHint\":true,\"openWorldHint\":false}},{\"name\":\"version\",\"description\":\"Read Codex adapter, DSH package and supported MCP protocol versions.\",\"inputSchema\":{\"type\":\"object\",\"properties\":{},\"additionalProperties\":false},\"annotations\":{\"readOnlyHint\":true,\"destructiveHint\":false,\"idempotentHint\":true,\"openWorldHint\":false}},{\"name\":\"status\",\"description\":\"Inspect the P0 adapter status and whether the bound project has legacy state. Does not initialize, verify or advance a project.\",\"inputSchema\":{\"type\":\"object\",\"properties\":{},\"additionalProperties\":false},\"annotations\":{\"readOnlyHint\":true,\"destructiveHint\":false,\"idempotentHint\":true,\"openWorldHint\":false}}]}}",
+    "{\"jsonrpc\":\"2.0\",\"id\":3,\"result\":{\"content\":[{\"type\":\"text\",\"text\":\"{\\\"ok\\\":true,\\\"service\\\":\\\"specgate-codex\\\",\\\"stage\\\":\\\"P0\\\",\\\"transport\\\":\\\"stdio\\\"}\"}],\"structuredContent\":{\"ok\":true,\"service\":\"specgate-codex\",\"stage\":\"P0\",\"transport\":\"stdio\"},\"isError\":false}}",
+    "{\"jsonrpc\":\"2.0\",\"id\":4,\"result\":{\"content\":[{\"type\":\"text\",\"text\":\"{\\\"name\\\":\\\"specgate-codex\\\",\\\"version\\\":\\\"0.1.0\\\",\\\"dshVersion\\\":\\\"4.3.1\\\",\\\"protocolVersion\\\":\\\"2025-06-18\\\"}\"}],\"structuredContent\":{\"name\":\"specgate-codex\",\"version\":\"0.1.0\",\"dshVersion\":\"4.3.1\",\"protocolVersion\":\"2025-06-18\"},\"isError\":false}}",
+    "{\"jsonrpc\":\"2.0\",\"id\":5,\"result\":{\"content\":[{\"type\":\"text\",\"text\":\"{\\\"stage\\\":\\\"P0\\\",\\\"projectRoot\\\":\\\"E:\\\\\\\\ai_workflow\\\\\\\\specgate\\\",\\\"workflow\\\":{\\\"status\\\":\\\"not-implemented\\\"},\\\"verification\\\":{\\\"status\\\":\\\"not-run\\\",\\\"scope\\\":\\\"codex-project-workflow\\\"},\\\"legacyStateDetected\\\":false,\\\"trustedApproval\\\":{\\\"status\\\":\\\"unavailable\\\"}}\"}],\"structuredContent\":{\"stage\":\"P0\",\"projectRoot\":\"E:\\\\ai_workflow\\\\specgate\",\"workflow\":{\"status\":\"not-implemented\"},\"verification\":{\"status\":\"not-run\",\"scope\":\"codex-project-workflow\"},\"legacyStateDetected\":false,\"trustedApproval\":{\"status\":\"unavailable\"}},\"isError\":false}}",
+    "{\"jsonrpc\":\"2.0\",\"id\":6,\"result\":{}}"
+  ],
+  "stderr": "",
+  "tools": [
+    "health",
+    "version",
+    "status"
+  ],
+  "projectStatus": {
+    "stage": "P0",
+    "projectRoot": "E:\\ai_workflow\\specgate",
+    "workflow": {
+      "status": "not-implemented"
+    },
+    "verification": {
+      "status": "not-run",
+      "scope": "codex-project-workflow"
+    },
+    "legacyStateDetected": false,
+    "trustedApproval": {
+      "status": "unavailable"
+    }
+  },
+  "hostInstallation": "not-run",
+  "trustedApproval": "not-run",
+  "subagents": "not-run"
+}

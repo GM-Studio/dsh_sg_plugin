@@ -1,0 +1,167 @@
+{
+  "schemaVersion": 1,
+  "kind": "codex-v1-local",
+  "root": "C:\\Users\\Administrator\\AppData\\Local\\Temp\\sg-codex-acceptance-LLdHaE\\jdk8-boot2.7",
+  "runId": "2026-10-21T09-08-35-935Z-a96bed39",
+  "preset": "jdk8-boot2.7",
+  "startedAt": "2026-10-21T09:08:35.937Z",
+  "status": "failed",
+  "ok": false,
+  "v1Complete": false,
+  "expectedStages": [
+    "backend-verify",
+    "frontend-install",
+    "frontend-build",
+    "frontend-test",
+    "frontend-lint",
+    "frontend-format",
+    "coverage",
+    "runtime",
+    "frontend-runtime"
+  ],
+  "stages": [
+    {
+      "name": "backend-verify",
+      "command": "C:\\Users\\Administrator\\.m2\\wrapper\\dists\\apache-maven-3.9.11\\03d7e36a140982eea48e22c1dcac01d8862b2550b2939e09a0809bbc5182a5bc\\bin\\mvn.cmd",
+      "args": [
+        "-B",
+        "-ntp",
+        "clean",
+        "verify"
+      ],
+      "cwd": "C:\\Users\\Administrator\\AppData\\Local\\Temp\\sg-codex-acceptance-LLdHaE\\jdk8-boot2.7\\backend",
+      "startedAt": "2026-10-21T09:08:37.589Z",
+      "finishedAt": "2026-10-21T09:08:43.588Z",
+      "durationMs": 5999,
+      "status": 1,
+      "reason": null,
+      "error": null,
+      "log": ".specgate/verify-runs/2026-10-21T09-08-36-113Z-09d55451/backend-verify.log",
+      "tail": [
+        " @ ",
+        "[ERROR] The build could not read 1 project -> [Help 1]",
+        "[ERROR]   ",
+        "[ERROR]   The project com.example:task-api:1.0.0 (C:\\Users\\Administrator\\AppData\\Local\\Temp\\sg-codex-acceptance-LLdHaE\\jdk8-boot2.7\\backend\\pom.xml) has 1 error",
+        "[ERROR]     Non-resolvable parent POM for com.example:task-api:1.0.0: The following artifacts could not be resolved: org.springframework.boot:spring-boot-starter-parent:pom:2.7.18 (absent): Could not transfer artifact org.springframework.boot:spring-boot-starter-parent:pom:2.7.18 from/to central (https://repo.maven.apache.org/maven2): Permission denied: connect and 'parent.relativePath' points at no local POM @ line 3, column 11 -> [Help 2]",
+        "[ERROR] ",
+        "[ERROR] To see the full stack trace of the errors, re-run Maven with the -e switch.",
+        "[ERROR] Re-run Maven using the -X switch to enable full debug logging.",
+        "[ERROR] ",
+        "[ERROR] For more information about the errors and possible solutions, please read the following articles:",
+        "[ERROR] [Help 1] http://cwiki.apache.org/confluence/display/MAVEN/ProjectBuildingException",
+        "[ERROR] [Help 2] http://cwiki.apache.org/confluence/display/MAVEN/UnresolvableModelException"
+      ]
+    }
+  ],
+  "policy": {
+    "installSdk": false,
+    "browserRequired": false,
+    "dependenciesAndBuildMayRun": true
+  },
+  "checkedAt": "2026-10-21T09:08:43.597Z",
+  "checks": [
+    {
+      "name": "backend-verify",
+      "status": "failed",
+      "log": ".specgate/verify-runs/2026-10-21T09-08-36-113Z-09d55451/backend-verify.log",
+      "exitCode": 1
+    },
+    {
+      "name": "frontend-install",
+      "status": "not-run"
+    },
+    {
+      "name": "frontend-build",
+      "status": "not-run"
+    },
+    {
+      "name": "frontend-test",
+      "status": "not-run"
+    },
+    {
+      "name": "frontend-lint",
+      "status": "not-run"
+    },
+    {
+      "name": "frontend-format",
+      "status": "not-run"
+    },
+    {
+      "name": "coverage",
+      "status": "not-run"
+    },
+    {
+      "name": "runtime",
+      "status": "not-run"
+    },
+    {
+      "name": "frontend-runtime",
+      "status": "not-run"
+    }
+  ],
+  "reconciliation": {
+    "expected": 9,
+    "executed": 1,
+    "passed": 0,
+    "failed": 1,
+    "notRun": 8
+  },
+  "evidenceFiles": [
+    {
+      "stage": "backend-verify",
+      "path": ".specgate/verify-runs/2026-10-21T09-08-36-113Z-09d55451/backend-verify.log",
+      "sha256": "ec251705fc53be8cfd4dfb9e0e6964b2c9b9ceff85222b077bac759a2bcd3a39"
+    }
+  ],
+  "legacyRunId": "2026-10-21T09-08-36-113Z-09d55451",
+  "environment": {
+    "platform": "win32",
+    "arch": "x64",
+    "java": [
+      {
+        "home": "D:\\Program Files\\JetBrains\\IntelliJ IDEA 2025.3.1\\jbr",
+        "version": "21.0.9",
+        "major": 21,
+        "source": "dir"
+      },
+      {
+        "home": "D:\\Program Files\\JetBrains\\PyCharm 2025.3.1\\jbr",
+        "version": "21.0.9",
+        "major": 21,
+        "source": "dir"
+      },
+      {
+        "home": "D:\\Program Files\\JetBrains\\WebStorm 2025.3.1.1\\jbr",
+        "version": "21.0.9",
+        "major": 21,
+        "source": "dir"
+      },
+      {
+        "home": "D:\\Program Files\\Java\\Jdk17",
+        "version": "17.0.18",
+        "major": 17,
+        "source": "dir"
+      },
+      {
+        "home": "D:\\Program Files\\Java\\Jdk8",
+        "version": "1.8.0_472",
+        "major": 8,
+        "source": "dir"
+      }
+    ],
+    "maven": {
+      "path": "C:\\Users\\Administrator\\.m2\\wrapper\\dists\\apache-maven-3.9.11\\03d7e36a140982eea48e22c1dcac01d8862b2550b2939e09a0809bbc5182a5bc\\bin\\mvn.cmd",
+      "version": "3.9.11"
+    },
+    "node": {
+      "path": "D:\\Program Files\\nodejs\\node.exe",
+      "version": "24.14.0"
+    },
+    "npm": "D:\\Program Files\\nodejs\\npm.cmd",
+    "provisioned": [],
+    "provisionError": null,
+    "scannedAt": "2026-10-21T09:08:37.561Z",
+    "archives": []
+  },
+  "failedStage": "backend-verify"
+}

@@ -1,0 +1,20 @@
+
+> task-web@1.0.0 test
+> vitest run --coverage --reporter=json --outputFile=C:\Users\Administrator\AppData\Local\Temp\sg-codex-acceptance-gzsrbB\jdk17-boot3.5\.specgate\verify-runs\2026-10-21T09-09-41-622Z-a1158b45\frontend-tests.json
+
+JSON report written to C:/Users/Administrator/AppData/Local/Temp/sg-codex-acceptance-gzsrbB/jdk17-boot3.5/.specgate/verify-runs/2026-10-21T09-09-41-622Z-a1158b45/frontend-tests.json
+ % Coverage report from v8
+-------------|---------|----------|---------|---------|---------------------
+File         | % Stmts | % Branch | % Funcs | % Lines | Uncovered Line #s   
+-------------|---------|----------|---------|---------|---------------------
+All files    |   96.69 |    97.61 |   95.45 |   96.94 |                     
+ src         |    95.6 |    97.34 |   94.18 |   95.88 |                     
+  App.vue    |   96.13 |    97.34 |   94.18 |   96.44 | 170-171,263-273,298 
+  main.ts    |       0 |      100 |     100 |       0 | 6                   
+ src/api     |     100 |      100 |     100 |     100 |                     
+  auth.ts    |     100 |      100 |     100 |     100 |                     
+  files.ts   |     100 |      100 |     100 |     100 |                     
+  request.ts |     100 |      100 |     100 |     100 |                     
+  tasks.ts   |     100 |      100 |     100 |     100 |                     
+  types.ts   |       0 |        0 |       0 |       0 |                     
+-------------|---------|----------|---------|---------|---------------------

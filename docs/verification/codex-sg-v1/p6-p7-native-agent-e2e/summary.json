@@ -1,0 +1,120 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-10-21",
+  "platform": "win32-x64",
+  "preset": "jdk8-boot2.7",
+  "productRoot": "C:\\Users\\Administrator\\AppData\\Local\\Temp\\sg-native-e2e-priority-20261021-03",
+  "nativeAgents": {
+    "test": {
+      "role": "test",
+      "result": "passed",
+      "cases": ["CASE-AC-1", "CASE-AC-2"],
+      "redStatus": "both-failed-before-implementation",
+      "resultEvidence": "test-agent-result.json"
+    },
+    "frontend": {
+      "role": "frontend",
+      "result": "passed",
+      "commit": "d4e39a586d69068abd12b1069cde01f380f216e2",
+      "checks": ["vitest 11/11", "lint", "format", "build"]
+    },
+    "backend": {
+      "role": "backend",
+      "result": "passed",
+      "commit": "8d1d49565aba5cf6e148de44fedcf437dde9574e",
+      "checks": ["maven 12/12", "spotless", "checkstyle", "frozen contract 2/2"]
+    }
+  },
+  "git": {
+    "freezeCommit": "5f643da5f1d9f0e67e340e11d16d7738a5351029",
+    "frontendMergeCommit": "724975330788855cab9d23ae1900badda1337ecf",
+    "integrationCommit": "a0a593a7d156d32b9dc74568cfee2d38e5f8fa29"
+  },
+  "testFreeze": {
+    "initialHash": "sha256:ed5c432d2a91bfe1f0006b9a721e4137bfd538075338b8c9c767b03fc0f314c1",
+    "finalHash": "sha256:13bc63c9c5a1a6bda58b9bbf8e2fd1fd61b9f1966fa8c292b04df00917ec4654",
+    "replacementReason": "Corrected Checkstyle-invalid JUnit method names without changing assertions or case behavior."
+  },
+  "p6": {
+    "status": "passed",
+    "worktrees": ["frontend", "backend", "integration", "test", "review"],
+    "maxDevelopmentParallel": 2,
+    "redEvidence": "red-evidence.json"
+  },
+  "p7": {
+    "status": "passed",
+    "stateAfter": "REVIEWING",
+    "qualityRunId": "2026-10-21T10-11-05-499Z-5f9b471a",
+    "qualityHash": "sha256:753fa47bd3e95bc6711f9d472bcedd6ed52edf54802df79ba1daa2a5c15860ea",
+    "verificationRunId": "2026-10-21T10-11-29-864Z-8e3e0da4",
+    "verificationStatus": "verified",
+    "verificationStages": {
+      "expected": 9,
+      "executed": 9,
+      "passed": 9,
+      "failed": 0,
+      "notRun": 0
+    },
+    "frozenCases": {
+      "executed": 2,
+      "passed": 2,
+      "failed": 0,
+      "skipped": 0
+    },
+    "tests": {
+      "backend": { "total": 14, "passed": 14, "failed": 0, "skipped": 0 },
+      "frontend": { "total": 12, "passed": 12, "failed": 0, "skipped": 0 }
+    },
+    "coverage": {
+      "backendLines": 0.9738317757009346,
+      "backendBranches": 0.8363636363636363,
+      "frontendLines": 0.9700854700854701,
+      "frontendBranches": 0.9774774774774775,
+      "changedLines": 0.9624413145539906,
+      "changedCovered": 205,
+      "changedExecutable": 213
+    },
+    "p0": 0,
+    "p1": 0
+  },
+  "independentReplay": {
+    "productRoot": "C:\\Users\\Administrator\\AppData\\Local\\Temp\\sg-native-e2e-priority-20261021-06",
+    "status": "passed",
+    "frontendCommit": "0ad28494137dfc2a973f15e2efb9831afadeb106",
+    "backendSourceAgentCommit": "8d1d49565aba5cf6e148de44fedcf437dde9574e",
+    "backendTransportedCommit": "b82cb568e9b953950cfa0041fcb8db0f10e2cf98",
+    "freezeCommit": "2f75400b69e46dc3de27b4c1a9239373e691d417",
+    "integrationCommit": "08da953d28af81e1dd5470688755e42dcba909b8",
+    "qualityRunId": "2026-10-21T10-16-06-698Z-166771f1",
+    "qualityHash": "sha256:89c28f34f61b6955b50fb4e0282ac30c422d403564fac9ad11f51ef9d4689574",
+    "verificationRunId": "2026-10-21T10-16-31-073Z-5dc6e826",
+    "stateAfter": "REVIEWING",
+    "frozenCases": {
+      "executed": 2,
+      "passed": 2,
+      "failed": 0,
+      "skipped": 0
+    },
+    "tests": {
+      "backend": { "total": 14, "passed": 14, "failed": 0, "skipped": 0 },
+      "frontend": { "total": 12, "passed": 12, "failed": 0, "skipped": 0 }
+    },
+    "coverage": {
+      "backendLines": 0.9738317757009346,
+      "backendBranches": 0.8363636363636363,
+      "frontendLines": 0.9700854700854701,
+      "frontendBranches": 0.9774774774774775,
+      "changedLines": 0.9624413145539906,
+      "changedCovered": 205,
+      "changedExecutable": 213
+    },
+    "p0": 0,
+    "p1": 0
+  },
+  "notRun": [
+    "P8 three-tier Review and H3.",
+    "P9 archive, merge to target branch, push and full product E2E.",
+    "Native H1 approval; H1 prerequisite approval in this fixture was synthetic and explicitly labeled."
+  ],
+  "pluginRepositoryCommittedOrPushed": false
+}

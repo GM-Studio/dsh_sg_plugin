@@ -1,0 +1,66 @@
+{
+  "ok": true,
+  "role": "test",
+  "summary": "Frozen backend and frontend priority tests plus a red/green runner are ready. Red mode executed real Maven and Vitest commands and observed both frozen cases fail for implementation-missing reasons.",
+  "assetsPath": "test-assets.json",
+  "runnerSourcePath": "source/runner.mjs",
+  "cases": [
+    {
+      "id": "CASE-AC-1",
+      "acIds": ["AC-1"],
+      "file": "backend/src/test/java/com/example/tasks/PriorityContractTest.java"
+    },
+    {
+      "id": "CASE-AC-2",
+      "acIds": ["AC-2"],
+      "file": "frontend/test/priority-contract.test.ts"
+    }
+  ],
+  "checks": [
+    {
+      "name": "assets-json",
+      "status": "passed",
+      "detail": "role=test; two unique cases; every codeFile exists in the code map; fixture map is nonempty"
+    },
+    {
+      "name": "runner-syntax",
+      "status": "passed",
+      "detail": "node --check source/runner.mjs"
+    },
+    {
+      "name": "red-backend",
+      "status": "passed-expected-failure",
+      "detail": "Maven exit 1: PriorityContractTest cannot compile because Task.getPriority() is absent"
+    },
+    {
+      "name": "red-frontend-install",
+      "status": "passed",
+      "detail": "npm ci exit 0 in the detached red worktree"
+    },
+    {
+      "name": "red-frontend",
+      "status": "passed-expected-failure",
+      "detail": "Vitest exit 1: baseline UI does not contain P4"
+    },
+    {
+      "name": "red-report",
+      "status": "passed",
+      "detail": "CASE-AC-1=fail and CASE-AC-2=fail; runner exit 1"
+    },
+    {
+      "name": "cleanup",
+      "status": "passed",
+      "detail": "The detached red worktree was removed after evidence was written"
+    }
+  ],
+  "evidence": {
+    "redReport": ".specgate/agent-e2e/test-agent-red.json",
+    "backendLog": ".specgate/agent-e2e/test-agent-red.json.backend.log",
+    "frontendInstallLog": ".specgate/agent-e2e/test-agent-red.json.frontend-install.log",
+    "frontendLog": ".specgate/agent-e2e/test-agent-red.json.frontend.log"
+  },
+  "notRun": [
+    "Green mode awaits frontend/backend implementation.",
+    "Full P7 Java/Vue verification awaits P6 integration."
+  ]
+}

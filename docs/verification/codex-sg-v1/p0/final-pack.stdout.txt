@@ -1,0 +1,4526 @@
+[
+  {
+    "id": "dsh-plugin-specgate@4.3.1",
+    "name": "dsh-plugin-specgate",
+    "version": "4.3.1",
+    "size": 1676655,
+    "unpackedSize": 9691582,
+    "shasum": "7848bd3579336b18e20dcbbbab1b1232a3beba16",
+    "integrity": "sha512-d+ZSl/iUzbKiQ6uFnLIh91n0PxG1M9Sigpd04PKPhNvHmuU5JhxreIT2wbWu8B+BCKENHmVoKh5FtcvoMFTYVQ==",
+    "filename": "dsh-plugin-specgate-4.3.1.tgz",
+    "files": [
+      {
+        "path": ".codex-plugin/plugin.json",
+        "size": 622,
+        "mode": 420
+      },
+      {
+        "path": ".mcp.json",
+        "size": 128,
+        "mode": 420
+      },
+      {
+        "path": "CHANGELOG.md",
+        "size": 22519,
+        "mode": 420
+      },
+      {
+        "path": "CHANGELOG.zh.md",
+        "size": 10409,
+        "mode": 420
+      },
+      {
+        "path": "LICENSE",
+        "size": 1064,
+        "mode": 420
+      },
+      {
+        "path": "README.en.md",
+        "size": 38055,
+        "mode": 420
+      },
+      {
+        "path": "README.md",
+        "size": 37875,
+        "mode": 420
+      },
+      {
+        "path": "assets/AGENTS.full.md",
+        "size": 5437,
+        "mode": 420
+      },
+      {
+        "path": "assets/AGENTS.full.zh.md",
+        "size": 5163,
+        "mode": 420
+      },
+      {
+        "path": "assets/examples/example-change/design.md",
+        "size": 280,
+        "mode": 420
+      },
+      {
+        "path": "assets/examples/example-change/design.zh.md",
+        "size": 255,
+        "mode": 420
+      },
+      {
+        "path": "assets/examples/example-change/proposal.md",
+        "size": 312,
+        "mode": 420
+      },
+      {
+        "path": "assets/examples/example-change/proposal.zh.md",
+        "size": 292,
+        "mode": 420
+      },
+      {
+        "path": "assets/examples/example-change/README.md",
+        "size": 422,
+        "mode": 420
+      },
+      {
+        "path": "assets/examples/example-change/README.zh.md",
+        "size": 412,
+        "mode": 420
+      },
+      {
+        "path": "assets/examples/example-change/specs/example/spec.md",
+        "size": 309,
+        "mode": 420
+      },
+      {
+        "path": "assets/examples/example-change/specs/example/spec.zh.md",
+        "size": 258,
+        "mode": 420
+      },
+      {
+        "path": "assets/examples/example-change/tasks.md",
+        "size": 241,
+        "mode": 420
+      },
+      {
+        "path": "assets/examples/example-change/tasks.zh.md",
+        "size": 214,
+        "mode": 420
+      },
+      {
+        "path": "assets/experiences/index.md",
+        "size": 4216,
+        "mode": 420
+      },
+      {
+        "path": "assets/experiences/index.zh.md",
+        "size": 3666,
+        "mode": 420
+      },
+      {
+        "path": "assets/experiences/rules/cli-rules.md",
+        "size": 3024,
+        "mode": 420
+      },
+      {
+        "path": "assets/experiences/rules/cli-rules.zh.md",
+        "size": 2877,
+        "mode": 420
+      },
+      {
+        "path": "assets/experiences/rules/core-architecture-rules.md",
+        "size": 4111,
+        "mode": 420
+      },
+      {
+        "path": "assets/experiences/rules/core-architecture-rules.zh.md",
+        "size": 3711,
+        "mode": 420
+      },
+      {
+        "path": "assets/experiences/rules/docs-rules.md",
+        "size": 5505,
+        "mode": 420
+      },
+      {
+        "path": "assets/experiences/rules/docs-rules.zh.md",
+        "size": 4779,
+        "mode": 420
+      },
+      {
+        "path": "assets/experiences/rules/test-rules.md",
+        "size": 4859,
+        "mode": 420
+      },
+      {
+        "path": "assets/experiences/rules/test-rules.zh.md",
+        "size": 4647,
+        "mode": 420
+      },
+      {
+        "path": "assets/experiences/rules/types-rules.md",
+        "size": 4387,
+        "mode": 420
+      },
+      {
+        "path": "assets/experiences/rules/types-rules.zh.md",
+        "size": 4471,
+        "mode": 420
+      },
+      {
+        "path": "assets/experiences/trigger-guide.md",
+        "size": 2806,
+        "mode": 420
+      },
+      {
+        "path": "assets/experiences/trigger-guide.zh.md",
+        "size": 2513,
+        "mode": 420
+      },
+      {
+        "path": "assets/java-vue/template/.env.example.tpl",
+        "size": 512,
+        "mode": 420
+      },
+      {
+        "path": "assets/java-vue/template/.gitattributes.tpl",
+        "size": 19,
+        "mode": 420
+      },
+      {
+        "path": "assets/java-vue/template/.gitignore.tpl",
+        "size": 333,
+        "mode": 420
+      },
+      {
+        "path": "assets/java-vue/template/.nvmrc.tpl",
+        "size": 3,
+        "mode": 420
+      },
+      {
+        "path": "assets/java-vue/template/backend/.mvn/wrapper/maven-wrapper.properties.tpl",
+        "size": 171,
+        "mode": 420
+      },
+      {
+        "path": "assets/java-vue/template/backend/checkstyle.xml.tpl",
+        "size": 742,
+        "mode": 420
+      },
+      {
+        "path": "assets/java-vue/template/backend/mvnw.cmd.tpl",
+        "size": 8481,
+        "mode": 420
+      },
+      {
+        "path": "assets/java-vue/template/backend/mvnw.tpl",
+        "size": 11790,
+        "mode": 420
+      },
+      {
+        "path": "assets/java-vue/template/backend/pom.xml.tpl",
+        "size": 3725,
+        "mode": 420
+      },
+      {
+        "path": "assets/java-vue/template/backend/src/main/java/com/example/tasks/common/ApiErrorHandler.java.tpl",
+        "size": 4227,
+        "mode": 420
+      },
+      {
+        "path": "assets/java-vue/template/backend/src/main/java/com/example/tasks/common/ApiResponse.java.tpl",
+        "size": 1922,
+        "mode": 420
+      },
+      {
+        "path": "assets/java-vue/template/backend/src/main/java/com/example/tasks/common/BusinessException.java.tpl",
+        "size": 507,
+        "mode": 420
+      },
+      {
+        "path": "assets/java-vue/template/backend/src/main/java/com/example/tasks/common/TraceFilter.java.tpl",
+        "size": 1045,
+        "mode": 420
+      },
+      {
+        "path": "assets/java-vue/template/backend/src/main/java/com/example/tasks/controller/ApiFallbackController.java.tpl",
+        "size": 1138,
+        "mode": 420
+      },
+      {
+        "path": "assets/java-vue/template/backend/src/main/java/com/example/tasks/controller/AuthController.java.tpl",
+        "size": 3130,
+        "mode": 420
+      },
+      {
+        "path": "assets/java-vue/template/backend/src/main/java/com/example/tasks/controller/CsvController.java.tpl",
+        "size": 2177,
+        "mode": 420
+      },
+      {
+        "path": "assets/java-vue/template/backend/src/main/java/com/example/tasks/controller/FileController.java.tpl",
+        "size": 2235,
+        "mode": 420
+      },
+      {
+        "path": "assets/java-vue/template/backend/src/main/java/com/example/tasks/controller/TaskController.java.tpl",
+        "size": 2966,
+        "mode": 420
+      },
+      {
+        "path": "assets/java-vue/template/backend/src/main/java/com/example/tasks/dto/BatchRequest.java.tpl",
+        "size": 570,
+        "mode": 420
+      },
+      {
+        "path": "assets/java-vue/template/backend/src/main/java/com/example/tasks/dto/IdRequest.java.tpl",
+        "size": 306,
+        "mode": 420
+      },
+      {
+        "path": "assets/java-vue/template/backend/src/main/java/com/example/tasks/dto/LoginRequest.java.tpl",
+        "size": 586,
+        "mode": 420
+      },
+      {
+        "path": "assets/java-vue/template/backend/src/main/java/com/example/tasks/dto/TaskRequest.java.tpl",
+        "size": 595,
+        "mode": 420
+      },
+      {
+        "path": "assets/java-vue/template/backend/src/main/java/com/example/tasks/dto/UpdateTaskRequest.java.tpl",
+        "size": 334,
+        "mode": 420
+      },
+      {
+        "path": "assets/java-vue/template/backend/src/main/java/com/example/tasks/entity/StoredFile.java.tpl",
+        "size": 940,
+        "mode": 420
+      },
+      {
+        "path": "assets/java-vue/template/backend/src/main/java/com/example/tasks/entity/Task.java.tpl",
+        "size": 972,
+        "mode": 420
+      },
+      {
+        "path": "assets/java-vue/template/backend/src/main/java/com/example/tasks/repository/StoredFileRepository.java.tpl",
+        "size": 229,
+        "mode": 420
+      },
+      {
+        "path": "assets/java-vue/template/backend/src/main/java/com/example/tasks/repository/TaskRepository.java.tpl",
+        "size": 305,
+        "mode": 420
+      },
+      {
+        "path": "assets/java-vue/template/backend/src/main/java/com/example/tasks/security/LocalAccounts.java.tpl",
+        "size": 3293,
+        "mode": 420
+      },
+      {
+        "path": "assets/java-vue/template/backend/src/main/java/com/example/tasks/security/SecurityConfig.java.tpl",
+        "size": 4568,
+        "mode": 420
+      },
+      {
+        "path": "assets/java-vue/template/backend/src/main/java/com/example/tasks/service/CsvService.java.tpl",
+        "size": 6264,
+        "mode": 420
+      },
+      {
+        "path": "assets/java-vue/template/backend/src/main/java/com/example/tasks/service/FileService.java.tpl",
+        "size": 6764,
+        "mode": 420
+      },
+      {
+        "path": "assets/java-vue/template/backend/src/main/java/com/example/tasks/service/TaskService.java.tpl",
+        "size": 5652,
+        "mode": 420
+      },
+      {
+        "path": "assets/java-vue/template/backend/src/main/java/com/example/tasks/TaskApplication.java.tpl",
+        "size": 316,
+        "mode": 420
+      },
+      {
+        "path": "assets/java-vue/template/backend/src/main/java/com/example/tasks/vo/FileVO.java.tpl",
+        "size": 774,
+        "mode": 420
+      },
+      {
+        "path": "assets/java-vue/template/backend/src/main/java/com/example/tasks/vo/ImportResult.java.tpl",
+        "size": 478,
+        "mode": 420
+      },
+      {
+        "path": "assets/java-vue/template/backend/src/main/java/com/example/tasks/vo/OperationResult.java.tpl",
+        "size": 489,
+        "mode": 420
+      },
+      {
+        "path": "assets/java-vue/template/backend/src/main/java/com/example/tasks/vo/PageResult.java.tpl",
+        "size": 662,
+        "mode": 420
+      },
+      {
+        "path": "assets/java-vue/template/backend/src/main/java/com/example/tasks/vo/TaskVO.java.tpl",
+        "size": 529,
+        "mode": 420
+      },
+      {
+        "path": "assets/java-vue/template/backend/src/main/java/com/example/tasks/vo/UserVO.java.tpl",
+        "size": 368,
+        "mode": 420
+      },
+      {
+        "path": "assets/java-vue/template/backend/src/main/resources/application.properties.tpl",
+        "size": 1065,
+        "mode": 420
+      },
+      {
+        "path": "assets/java-vue/template/backend/src/test/java/com/example/tasks/common/ApiErrorHandlerTest.java.tpl",
+        "size": 1440,
+        "mode": 420
+      },
+      {
+        "path": "assets/java-vue/template/backend/src/test/java/com/example/tasks/security/LocalAccountsTest.java.tpl",
+        "size": 2221,
+        "mode": 420
+      },
+      {
+        "path": "assets/java-vue/template/backend/src/test/java/com/example/tasks/service/FileServiceTest.java.tpl",
+        "size": 6180,
+        "mode": 420
+      },
+      {
+        "path": "assets/java-vue/template/backend/src/test/java/com/example/tasks/TaskApiTest.java.tpl",
+        "size": 20027,
+        "mode": 420
+      },
+      {
+        "path": "assets/java-vue/template/backend/src/test/java/com/example/tasks/TaskPersistenceTest.java.tpl",
+        "size": 2181,
+        "mode": 420
+      },
+      {
+        "path": "assets/java-vue/template/docs/api.md.tpl",
+        "size": 4295,
+        "mode": 420
+      },
+      {
+        "path": "assets/java-vue/template/docs/openapi.yaml.tpl",
+        "size": 25370,
+        "mode": 420
+      },
+      {
+        "path": "assets/java-vue/template/docs/operations.md.tpl",
+        "size": 3099,
+        "mode": 420
+      },
+      {
+        "path": "assets/java-vue/template/docs/security.md.tpl",
+        "size": 1586,
+        "mode": 420
+      },
+      {
+        "path": "assets/java-vue/template/docs/style.md.tpl",
+        "size": 2827,
+        "mode": 420
+      },
+      {
+        "path": "assets/java-vue/template/frontend/.prettierignore.tpl",
+        "size": 48,
+        "mode": 420
+      },
+      {
+        "path": "assets/java-vue/template/frontend/.prettierrc.json.tpl",
+        "size": 83,
+        "mode": 420
+      },
+      {
+        "path": "assets/java-vue/template/frontend/eslint.config.js.tpl",
+        "size": 848,
+        "mode": 420
+      },
+      {
+        "path": "assets/java-vue/template/frontend/index.html.tpl",
+        "size": 290,
+        "mode": 420
+      },
+      {
+        "path": "assets/java-vue/template/frontend/package-lock.json.tpl",
+        "size": 171472,
+        "mode": 420
+      },
+      {
+        "path": "assets/java-vue/template/frontend/package.json.tpl",
+        "size": 975,
+        "mode": 420
+      },
+      {
+        "path": "assets/java-vue/template/frontend/src/api/auth.ts.tpl",
+        "size": 318,
+        "mode": 420
+      },
+      {
+        "path": "assets/java-vue/template/frontend/src/api/files.ts.tpl",
+        "size": 562,
+        "mode": 420
+      },
+      {
+        "path": "assets/java-vue/template/frontend/src/api/request.ts.tpl",
+        "size": 2160,
+        "mode": 420
+      },
+      {
+        "path": "assets/java-vue/template/frontend/src/api/tasks.ts.tpl",
+        "size": 1642,
+        "mode": 420
+      },
+      {
+        "path": "assets/java-vue/template/frontend/src/api/types.ts.tpl",
+        "size": 785,
+        "mode": 420
+      },
+      {
+        "path": "assets/java-vue/template/frontend/src/App.vue.tpl",
+        "size": 15323,
+        "mode": 420
+      },
+      {
+        "path": "assets/java-vue/template/frontend/src/main.ts.tpl",
+        "size": 153,
+        "mode": 420
+      },
+      {
+        "path": "assets/java-vue/template/frontend/src/style.css.tpl",
+        "size": 5853,
+        "mode": 420
+      },
+      {
+        "path": "assets/java-vue/template/frontend/test/api.test.ts.tpl",
+        "size": 5004,
+        "mode": 420
+      },
+      {
+        "path": "assets/java-vue/template/frontend/test/App.test.ts.tpl",
+        "size": 8799,
+        "mode": 420
+      },
+      {
+        "path": "assets/java-vue/template/frontend/tsconfig.json.tpl",
+        "size": 474,
+        "mode": 420
+      },
+      {
+        "path": "assets/java-vue/template/frontend/vite.config.ts.tpl",
+        "size": 1155,
+        "mode": 420
+      },
+      {
+        "path": "assets/java-vue/template/openspec/specs/tasks/spec.md.tpl",
+        "size": 2316,
+        "mode": 420
+      },
+      {
+        "path": "assets/java-vue/template/package.json.tpl",
+        "size": 617,
+        "mode": 420
+      },
+      {
+        "path": "assets/java-vue/template/README.md.tpl",
+        "size": 2306,
+        "mode": 420
+      },
+      {
+        "path": "assets/java-vue/template/scripts/frontend-test.mjs.tpl",
+        "size": 2539,
+        "mode": 420
+      },
+      {
+        "path": "assets/java-vue/template/scripts/run.mjs.tpl",
+        "size": 4967,
+        "mode": 420
+      },
+      {
+        "path": "assets/rules/core-behavior.md",
+        "size": 10842,
+        "mode": 420
+      },
+      {
+        "path": "assets/rules/core-behavior.zh.md",
+        "size": 9004,
+        "mode": 420
+      },
+      {
+        "path": "assets/rules/gate-control.md",
+        "size": 5838,
+        "mode": 420
+      },
+      {
+        "path": "assets/rules/gate-control.zh.md",
+        "size": 5063,
+        "mode": 420
+      },
+      {
+        "path": "assets/rules/spec-vertical-slicing.md",
+        "size": 3170,
+        "mode": 420
+      },
+      {
+        "path": "assets/rules/spec-vertical-slicing.zh.md",
+        "size": 2676,
+        "mode": 420
+      },
+      {
+        "path": "assets/rules/workflow-state.md",
+        "size": 14357,
+        "mode": 420
+      },
+      {
+        "path": "assets/rules/workflow-state.zh.md",
+        "size": 12538,
+        "mode": 420
+      },
+      {
+        "path": "assets/scaffold/java/ItemController.java",
+        "size": 5234,
+        "mode": 420
+      },
+      {
+        "path": "assets/scaffold/java/ItemControllerTest.java",
+        "size": 3579,
+        "mode": 420
+      },
+      {
+        "path": "assets/scaffold/node/items.js",
+        "size": 2522,
+        "mode": 420
+      },
+      {
+        "path": "assets/scaffold/openapi.yaml",
+        "size": 3231,
+        "mode": 420
+      },
+      {
+        "path": "assets/scaffold/python/django-views.py",
+        "size": 2339,
+        "mode": 420
+      },
+      {
+        "path": "assets/scaffold/python/fastapi-items.py",
+        "size": 1789,
+        "mode": 420
+      },
+      {
+        "path": "assets/scaffold/python/flask-app.py",
+        "size": 2364,
+        "mode": 420
+      },
+      {
+        "path": "assets/scaffold/python/items.py",
+        "size": 3645,
+        "mode": 420
+      },
+      {
+        "path": "assets/skills/engineering/README.md",
+        "size": 3688,
+        "mode": 420
+      },
+      {
+        "path": "assets/skills/engineering/README.zh.md",
+        "size": 3204,
+        "mode": 420
+      },
+      {
+        "path": "assets/skills/engineering/sg-skill-architecture-design/SKILL.md",
+        "size": 12827,
+        "mode": 420
+      },
+      {
+        "path": "assets/skills/engineering/sg-skill-architecture-design/SKILL.zh.md",
+        "size": 10510,
+        "mode": 420
+      },
+      {
+        "path": "assets/skills/engineering/sg-skill-code-review/code-review-checklist.md",
+        "size": 13710,
+        "mode": 420
+      },
+      {
+        "path": "assets/skills/engineering/sg-skill-code-review/code-review-checklist.zh.md",
+        "size": 12202,
+        "mode": 420
+      },
+      {
+        "path": "assets/skills/engineering/sg-skill-code-review/SKILL.md",
+        "size": 7615,
+        "mode": 420
+      },
+      {
+        "path": "assets/skills/engineering/sg-skill-code-review/SKILL.zh.md",
+        "size": 7181,
+        "mode": 420
+      },
+      {
+        "path": "assets/skills/engineering/sg-skill-critical-review/SKILL.md",
+        "size": 14995,
+        "mode": 420
+      },
+      {
+        "path": "assets/skills/engineering/sg-skill-critical-review/SKILL.zh.md",
+        "size": 12764,
+        "mode": 420
+      },
+      {
+        "path": "assets/skills/engineering/sg-skill-domain-modeling/SKILL.md",
+        "size": 7372,
+        "mode": 420
+      },
+      {
+        "path": "assets/skills/engineering/sg-skill-domain-modeling/SKILL.zh.md",
+        "size": 6404,
+        "mode": 420
+      },
+      {
+        "path": "assets/skills/engineering/sg-skill-requirements-definition/SKILL.md",
+        "size": 22102,
+        "mode": 420
+      },
+      {
+        "path": "assets/skills/engineering/sg-skill-requirements-definition/SKILL.zh.md",
+        "size": 18860,
+        "mode": 420
+      },
+      {
+        "path": "assets/skills/engineering/sg-skill-systematic-debugging/condition-based-waiting-example.ts",
+        "size": 5059,
+        "mode": 420
+      },
+      {
+        "path": "assets/skills/engineering/sg-skill-systematic-debugging/condition-based-waiting.md",
+        "size": 3516,
+        "mode": 420
+      },
+      {
+        "path": "assets/skills/engineering/sg-skill-systematic-debugging/condition-based-waiting.zh.md",
+        "size": 3631,
+        "mode": 420
+      },
+      {
+        "path": "assets/skills/engineering/sg-skill-systematic-debugging/CREATION-LOG.md",
+        "size": 4268,
+        "mode": 420
+      },
+      {
+        "path": "assets/skills/engineering/sg-skill-systematic-debugging/CREATION-LOG.zh.md",
+        "size": 4387,
+        "mode": 420
+      },
+      {
+        "path": "assets/skills/engineering/sg-skill-systematic-debugging/defense-in-depth.md",
+        "size": 3650,
+        "mode": 420
+      },
+      {
+        "path": "assets/skills/engineering/sg-skill-systematic-debugging/defense-in-depth.zh.md",
+        "size": 3772,
+        "mode": 420
+      },
+      {
+        "path": "assets/skills/engineering/sg-skill-systematic-debugging/find-polluter.sh",
+        "size": 1528,
+        "mode": 420
+      },
+      {
+        "path": "assets/skills/engineering/sg-skill-systematic-debugging/root-cause-tracing.md",
+        "size": 5327,
+        "mode": 420
+      },
+      {
+        "path": "assets/skills/engineering/sg-skill-systematic-debugging/root-cause-tracing.zh.md",
+        "size": 5496,
+        "mode": 420
+      },
+      {
+        "path": "assets/skills/engineering/sg-skill-systematic-debugging/SKILL.md",
+        "size": 17151,
+        "mode": 420
+      },
+      {
+        "path": "assets/skills/engineering/sg-skill-systematic-debugging/SKILL.zh.md",
+        "size": 15803,
+        "mode": 420
+      },
+      {
+        "path": "assets/skills/engineering/sg-skill-systematic-debugging/test-academic.md",
+        "size": 653,
+        "mode": 420
+      },
+      {
+        "path": "assets/skills/engineering/sg-skill-systematic-debugging/test-academic.zh.md",
+        "size": 667,
+        "mode": 420
+      },
+      {
+        "path": "assets/skills/engineering/sg-skill-systematic-debugging/test-pressure-1.md",
+        "size": 1900,
+        "mode": 420
+      },
+      {
+        "path": "assets/skills/engineering/sg-skill-systematic-debugging/test-pressure-1.zh.md",
+        "size": 1958,
+        "mode": 420
+      },
+      {
+        "path": "assets/skills/engineering/sg-skill-systematic-debugging/test-pressure-2.md",
+        "size": 2283,
+        "mode": 420
+      },
+      {
+        "path": "assets/skills/engineering/sg-skill-systematic-debugging/test-pressure-2.zh.md",
+        "size": 2351,
+        "mode": 420
+      },
+      {
+        "path": "assets/skills/engineering/sg-skill-systematic-debugging/test-pressure-3.md",
+        "size": 2692,
+        "mode": 420
+      },
+      {
+        "path": "assets/skills/engineering/sg-skill-systematic-debugging/test-pressure-3.zh.md",
+        "size": 2761,
+        "mode": 420
+      },
+      {
+        "path": "assets/skills/engineering/sg-skill-test-driven-development/deep-modules.md",
+        "size": 1242,
+        "mode": 420
+      },
+      {
+        "path": "assets/skills/engineering/sg-skill-test-driven-development/deep-modules.zh.md",
+        "size": 1192,
+        "mode": 420
+      },
+      {
+        "path": "assets/skills/engineering/sg-skill-test-driven-development/interface-design.md",
+        "size": 615,
+        "mode": 420
+      },
+      {
+        "path": "assets/skills/engineering/sg-skill-test-driven-development/interface-design.zh.md",
+        "size": 603,
+        "mode": 420
+      },
+      {
+        "path": "assets/skills/engineering/sg-skill-test-driven-development/mocking.md",
+        "size": 1488,
+        "mode": 420
+      },
+      {
+        "path": "assets/skills/engineering/sg-skill-test-driven-development/mocking.zh.md",
+        "size": 1401,
+        "mode": 420
+      },
+      {
+        "path": "assets/skills/engineering/sg-skill-test-driven-development/refactoring.md",
+        "size": 407,
+        "mode": 420
+      },
+      {
+        "path": "assets/skills/engineering/sg-skill-test-driven-development/refactoring.zh.md",
+        "size": 333,
+        "mode": 420
+      },
+      {
+        "path": "assets/skills/engineering/sg-skill-test-driven-development/SKILL.md",
+        "size": 10546,
+        "mode": 420
+      },
+      {
+        "path": "assets/skills/engineering/sg-skill-test-driven-development/SKILL.zh.md",
+        "size": 9529,
+        "mode": 420
+      },
+      {
+        "path": "assets/skills/engineering/sg-skill-test-driven-development/tests.md",
+        "size": 1738,
+        "mode": 420
+      },
+      {
+        "path": "assets/skills/engineering/sg-skill-test-driven-development/tests.zh.md",
+        "size": 1608,
+        "mode": 420
+      },
+      {
+        "path": "assets/skills/engineering/sg-skill-triage-brief/SKILL.md",
+        "size": 14547,
+        "mode": 420
+      },
+      {
+        "path": "assets/skills/engineering/sg-skill-triage-brief/SKILL.zh.md",
+        "size": 12415,
+        "mode": 420
+      },
+      {
+        "path": "assets/skills/engineering/sg-skill-vertical-slicing/SKILL.md",
+        "size": 7267,
+        "mode": 420
+      },
+      {
+        "path": "assets/skills/engineering/sg-skill-vertical-slicing/SKILL.zh.md",
+        "size": 6522,
+        "mode": 420
+      },
+      {
+        "path": "assets/skills/engineering/sg-skill-writing-skills/anthropic-best-practices.md",
+        "size": 46975,
+        "mode": 420
+      },
+      {
+        "path": "assets/skills/engineering/sg-skill-writing-skills/anthropic-best-practices.zh.md",
+        "size": 46975,
+        "mode": 420
+      },
+      {
+        "path": "assets/skills/engineering/sg-skill-writing-skills/examples/CLAUDE_MD_TESTING.md",
+        "size": 5612,
+        "mode": 420
+      },
+      {
+        "path": "assets/skills/engineering/sg-skill-writing-skills/examples/CLAUDE_MD_TESTING.zh.md",
+        "size": 5612,
+        "mode": 420
+      },
+      {
+        "path": "assets/skills/engineering/sg-skill-writing-skills/graphviz-conventions.dot",
+        "size": 6141,
+        "mode": 420
+      },
+      {
+        "path": "assets/skills/engineering/sg-skill-writing-skills/persuasion-principles.md",
+        "size": 6095,
+        "mode": 420
+      },
+      {
+        "path": "assets/skills/engineering/sg-skill-writing-skills/persuasion-principles.zh.md",
+        "size": 6095,
+        "mode": 420
+      },
+      {
+        "path": "assets/skills/engineering/sg-skill-writing-skills/render-graphs.js",
+        "size": 4883,
+        "mode": 420
+      },
+      {
+        "path": "assets/skills/engineering/sg-skill-writing-skills/SKILL.md",
+        "size": 22529,
+        "mode": 420
+      },
+      {
+        "path": "assets/skills/engineering/sg-skill-writing-skills/SKILL.zh.md",
+        "size": 22502,
+        "mode": 420
+      },
+      {
+        "path": "assets/skills/engineering/sg-skill-writing-skills/testing-skills-with-subagents.md",
+        "size": 12806,
+        "mode": 420
+      },
+      {
+        "path": "assets/skills/engineering/sg-skill-writing-skills/testing-skills-with-subagents.zh.md",
+        "size": 12806,
+        "mode": 420
+      },
+      {
+        "path": "assets/skills/misc/README.md",
+        "size": 1516,
+        "mode": 420
+      },
+      {
+        "path": "assets/skills/misc/README.zh.md",
+        "size": 1366,
+        "mode": 420
+      },
+      {
+        "path": "assets/skills/misc/sg-skill-prototype/SKILL.md",
+        "size": 21933,
+        "mode": 420
+      },
+      {
+        "path": "assets/skills/misc/sg-skill-prototype/SKILL.zh.md",
+        "size": 19782,
+        "mode": 420
+      },
+      {
+        "path": "assets/skills/misc/sg-skill-zoom-out/SKILL.md",
+        "size": 4028,
+        "mode": 420
+      },
+      {
+        "path": "assets/skills/misc/sg-skill-zoom-out/SKILL.zh.md",
+        "size": 3463,
+        "mode": 420
+      },
+      {
+        "path": "assets/skills/productivity/README.md",
+        "size": 1875,
+        "mode": 420
+      },
+      {
+        "path": "assets/skills/productivity/README.zh.md",
+        "size": 1686,
+        "mode": 420
+      },
+      {
+        "path": "assets/skills/productivity/sg-skill-executing-plans/SKILL.md",
+        "size": 2280,
+        "mode": 420
+      },
+      {
+        "path": "assets/skills/productivity/sg-skill-executing-plans/SKILL.zh.md",
+        "size": 2254,
+        "mode": 420
+      },
+      {
+        "path": "assets/skills/productivity/sg-skill-finishing-a-development-branch/SKILL.md",
+        "size": 4485,
+        "mode": 420
+      },
+      {
+        "path": "assets/skills/productivity/sg-skill-finishing-a-development-branch/SKILL.zh.md",
+        "size": 4461,
+        "mode": 420
+      },
+      {
+        "path": "assets/skills/productivity/sg-skill-using-git-worktrees/SKILL.md",
+        "size": 5901,
+        "mode": 420
+      },
+      {
+        "path": "assets/skills/productivity/sg-skill-using-git-worktrees/SKILL.zh.md",
+        "size": 5745,
+        "mode": 420
+      },
+      {
+        "path": "assets/skills/productivity/sg-skill-writing-plans/SKILL.md",
+        "size": 3404,
+        "mode": 420
+      },
+      {
+        "path": "assets/skills/productivity/sg-skill-writing-plans/SKILL.zh.md",
+        "size": 3407,
+        "mode": 420
+      },
+      {
+        "path": "assets/skills/README.md",
+        "size": 3389,
+        "mode": 420
+      },
+      {
+        "path": "assets/skills/README.zh.md",
+        "size": 3168,
+        "mode": 420
+      },
+      {
+        "path": "assets/skills/replace-git-url.md",
+        "size": 3433,
+        "mode": 420
+      },
+      {
+        "path": "assets/skills/replace-git-url.zh.md",
+        "size": 3309,
+        "mode": 420
+      },
+      {
+        "path": "assets/skills/sg-core/sg-skill-anti-patterns/SKILL.md",
+        "size": 4787,
+        "mode": 420
+      },
+      {
+        "path": "assets/skills/sg-core/sg-skill-anti-patterns/SKILL.zh.md",
+        "size": 3936,
+        "mode": 420
+      },
+      {
+        "path": "assets/sp/sp-skill-brainstorming/SKILL.md",
+        "size": 893,
+        "mode": 420
+      },
+      {
+        "path": "assets/sp/sp-skill-dispatching-parallel-agents/SKILL.md",
+        "size": 922,
+        "mode": 420
+      },
+      {
+        "path": "assets/sp/sp-skill-requesting-and-receiving-code-review/SKILL.md",
+        "size": 1036,
+        "mode": 420
+      },
+      {
+        "path": "assets/sp/sp-skill-subagent-driven-development/SKILL.md",
+        "size": 1082,
+        "mode": 420
+      },
+      {
+        "path": "assets/sp/sp-skill-verification-before-completion/SKILL.md",
+        "size": 809,
+        "mode": 420
+      },
+      {
+        "path": "assets/specgate/briefs/README.md",
+        "size": 1332,
+        "mode": 420
+      },
+      {
+        "path": "assets/specgate/briefs/README.zh.md",
+        "size": 1177,
+        "mode": 420
+      },
+      {
+        "path": "assets/specgate/out-of-scope/README.md",
+        "size": 724,
+        "mode": 420
+      },
+      {
+        "path": "assets/specgate/out-of-scope/README.zh.md",
+        "size": 635,
+        "mode": 420
+      },
+      {
+        "path": "assets/templates/architecture/_index.md.template",
+        "size": 802,
+        "mode": 420
+      },
+      {
+        "path": "assets/templates/architecture/_index.zh.md.template",
+        "size": 700,
+        "mode": 420
+      },
+      {
+        "path": "assets/templates/architecture/01-system-overview.md.template",
+        "size": 1580,
+        "mode": 420
+      },
+      {
+        "path": "assets/templates/architecture/01-system-overview.zh.md.template",
+        "size": 1498,
+        "mode": 420
+      },
+      {
+        "path": "assets/templates/architecture/module.md.template",
+        "size": 1064,
+        "mode": 420
+      },
+      {
+        "path": "assets/templates/architecture/module.zh.md.template",
+        "size": 865,
+        "mode": 420
+      },
+      {
+        "path": "assets/templates/changes/change.md",
+        "size": 133,
+        "mode": 420
+      },
+      {
+        "path": "assets/templates/changes/change.zh.md",
+        "size": 139,
+        "mode": 420
+      },
+      {
+        "path": "assets/templates/changes/format-report.md",
+        "size": 137,
+        "mode": 420
+      },
+      {
+        "path": "assets/templates/changes/format-report.zh.md",
+        "size": 150,
+        "mode": 420
+      },
+      {
+        "path": "assets/templates/changes/review-report.md",
+        "size": 173,
+        "mode": 420
+      },
+      {
+        "path": "assets/templates/changes/review-report.zh.md",
+        "size": 174,
+        "mode": 420
+      },
+      {
+        "path": "assets/templates/changes/tests/cases.md",
+        "size": 221,
+        "mode": 420
+      },
+      {
+        "path": "assets/templates/changes/tests/cases.zh.md",
+        "size": 265,
+        "mode": 420
+      },
+      {
+        "path": "assets/templates/changes/tests/matrix.md",
+        "size": 104,
+        "mode": 420
+      },
+      {
+        "path": "assets/templates/changes/tests/matrix.zh.md",
+        "size": 94,
+        "mode": 420
+      },
+      {
+        "path": "assets/templates/changes/tests/test-report.md",
+        "size": 179,
+        "mode": 420
+      },
+      {
+        "path": "assets/templates/changes/tests/test-report.zh.md",
+        "size": 189,
+        "mode": 420
+      },
+      {
+        "path": "assets/templates/CONTEXT.md",
+        "size": 1898,
+        "mode": 420
+      },
+      {
+        "path": "assets/templates/CONTEXT.zh.md",
+        "size": 1927,
+        "mode": 420
+      },
+      {
+        "path": "assets/templates/deviation-log-template.md",
+        "size": 2574,
+        "mode": 420
+      },
+      {
+        "path": "assets/templates/deviation-log-template.zh.md",
+        "size": 2380,
+        "mode": 420
+      },
+      {
+        "path": "assets/templates/prd/_index.md.template",
+        "size": 691,
+        "mode": 420
+      },
+      {
+        "path": "assets/templates/prd/_index.zh.md.template",
+        "size": 627,
+        "mode": 420
+      },
+      {
+        "path": "assets/templates/prd/module.md.template",
+        "size": 810,
+        "mode": 420
+      },
+      {
+        "path": "assets/templates/prd/module.zh.md.template",
+        "size": 739,
+        "mode": 420
+      },
+      {
+        "path": "assets/templates/prd/vision.md.template",
+        "size": 658,
+        "mode": 420
+      },
+      {
+        "path": "assets/templates/prd/vision.zh.md.template",
+        "size": 620,
+        "mode": 420
+      },
+      {
+        "path": "assets/templates/requirements/REQUIREMENTS.md",
+        "size": 530,
+        "mode": 420
+      },
+      {
+        "path": "assets/templates/requirements/REQUIREMENTS.zh.md",
+        "size": 492,
+        "mode": 420
+      },
+      {
+        "path": "assets/templates/specgate/agent-brief-template.md",
+        "size": 9859,
+        "mode": 420
+      },
+      {
+        "path": "assets/templates/specgate/agent-brief-template.zh.md",
+        "size": 9049,
+        "mode": 420
+      },
+      {
+        "path": "assets/templates/specgate/CONTEXT.md",
+        "size": 1196,
+        "mode": 420
+      },
+      {
+        "path": "assets/templates/specgate/CONTEXT.zh.md",
+        "size": 1351,
+        "mode": 420
+      },
+      {
+        "path": "assets/templates/specgate/out-of-scope-template.md",
+        "size": 6961,
+        "mode": 420
+      },
+      {
+        "path": "assets/templates/specgate/out-of-scope-template.zh.md",
+        "size": 6019,
+        "mode": 420
+      },
+      {
+        "path": "cordis.patch.yml",
+        "size": 80,
+        "mode": 420
+      },
+      {
+        "path": "docs/audits/v3.1-workflow-audit.md",
+        "size": 7152,
+        "mode": 420
+      },
+      {
+        "path": "docs/demos/v3-mvp.md",
+        "size": 2812,
+        "mode": 420
+      },
+      {
+        "path": "docs/demos/v3.1-multistack.md",
+        "size": 4745,
+        "mode": 420
+      },
+      {
+        "path": "docs/design/agent-orchestration-v2.1.md",
+        "size": 13063,
+        "mode": 420
+      },
+      {
+        "path": "docs/design/agent-orchestration-v2.1.zh.md",
+        "size": 13276,
+        "mode": 420
+      },
+      {
+        "path": "docs/design/codex-plugin-p0.zh.md",
+        "size": 6973,
+        "mode": 420
+      },
+      {
+        "path": "docs/design/http-api-convention.zh.md",
+        "size": 1825,
+        "mode": 420
+      },
+      {
+        "path": "docs/design/java-support-review.md",
+        "size": 21160,
+        "mode": 420
+      },
+      {
+        "path": "docs/design/java-version-matrix.md",
+        "size": 27206,
+        "mode": 420
+      },
+      {
+        "path": "docs/design/plugin-architecture.md",
+        "size": 14547,
+        "mode": 420
+      },
+      {
+        "path": "docs/design/plugin-architecture.zh.md",
+        "size": 13091,
+        "mode": 420
+      },
+      {
+        "path": "docs/design/requirements-confirmation.md",
+        "size": 67843,
+        "mode": 420
+      },
+      {
+        "path": "docs/design/requirements-confirmation.zh.md",
+        "size": 59280,
+        "mode": 420
+      },
+      {
+        "path": "docs/design/sg-admin-preview.png",
+        "size": 40505,
+        "mode": 420
+      },
+      {
+        "path": "docs/design/sg-admin-standard-mobile.png",
+        "size": 37104,
+        "mode": 420
+      },
+      {
+        "path": "docs/design/sg-admin-standard-preview.png",
+        "size": 78094,
+        "mode": 420
+      },
+      {
+        "path": "docs/design/sg-java-delivery.zh.md",
+        "size": 4181,
+        "mode": 420
+      },
+      {
+        "path": "docs/design/sg-java-init.zh.md",
+        "size": 3184,
+        "mode": 420
+      },
+      {
+        "path": "docs/design/sg-workflow-audit-2026-10-21.zh.md",
+        "size": 6066,
+        "mode": 420
+      },
+      {
+        "path": "docs/design/verification.md",
+        "size": 20491,
+        "mode": 420
+      },
+      {
+        "path": "docs/design/verification.zh.md",
+        "size": 19625,
+        "mode": 420
+      },
+      {
+        "path": "docs/plans/codex-sg-change-add-v1-progress.md",
+        "size": 2524,
+        "mode": 420
+      },
+      {
+        "path": "docs/plans/codex-sg-change-add-v1.md",
+        "size": 35410,
+        "mode": 420
+      },
+      {
+        "path": "docs/requirements/2026-10-19-v3.4-review-observability-requirements.md",
+        "size": 7333,
+        "mode": 420
+      },
+      {
+        "path": "docs/requirements/2026-10-19-v3.5-env-preflight-quality-requirements.md",
+        "size": 7186,
+        "mode": 420
+      },
+      {
+        "path": "docs/requirements/2026-10-19-v3.6-java-stack-requirements.md",
+        "size": 8843,
+        "mode": 420
+      },
+      {
+        "path": "docs/requirements/2026-10-19-v3.8-init-entries-requirements.md",
+        "size": 22892,
+        "mode": 420
+      },
+      {
+        "path": "docs/requirements/2026-10-19-v3.9-mvp-scaffold-requirements.md",
+        "size": 7105,
+        "mode": 420
+      },
+      {
+        "path": "docs/requirements/2026-10-19-v3.10-bootstrap-autobuild-requirements.md",
+        "size": 4229,
+        "mode": 420
+      },
+      {
+        "path": "docs/requirements/2026-10-20-sg-java-init-requirements.zh.md",
+        "size": 4140,
+        "mode": 420
+      },
+      {
+        "path": "docs/requirements/2026-10-20-v4.0-monorepo-requirements.md",
+        "size": 9937,
+        "mode": 420
+      },
+      {
+        "path": "docs/requirements/2026-10-20-v4.1-stack-dependency-selection-requirements.md",
+        "size": 44457,
+        "mode": 420
+      },
+      {
+        "path": "docs/requirements/2026-10-21-template-style-change-quality-requirements.zh.md",
+        "size": 22627,
+        "mode": 420
+      },
+      {
+        "path": "docs/requirements/2026-10-21-v4.3-sg-init-closed-loop-requirements.md",
+        "size": 18536,
+        "mode": 420
+      },
+      {
+        "path": "docs/requirements/codex-sg-change-add-v1.md",
+        "size": 28843,
+        "mode": 420
+      },
+      {
+        "path": "docs/requirements/REQ.md",
+        "size": 18995,
+        "mode": 420
+      },
+      {
+        "path": "docs/reviews/2026-10-18-workflow-review.zh.md",
+        "size": 18540,
+        "mode": 420
+      },
+      {
+        "path": "docs/reviews/2026-10-19-java-stack-critical-review.md",
+        "size": 4029,
+        "mode": 420
+      },
+      {
+        "path": "docs/spikes/v3-mvp-s0.md",
+        "size": 1373,
+        "mode": 420
+      },
+      {
+        "path": "docs/spikes/v3.1-s0.md",
+        "size": 2314,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-hooks-template/win32/jdk8-boot2.7/backend-coverage.xml",
+        "size": 93308,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-hooks-template/win32/jdk8-boot2.7/backend-verify.log",
+        "size": 30871,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-hooks-template/win32/jdk8-boot2.7/backend-verify.txt",
+        "size": 30871,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-hooks-template/win32/jdk8-boot2.7/coverage.log",
+        "size": 463,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-hooks-template/win32/jdk8-boot2.7/coverage.txt",
+        "size": 463,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-hooks-template/win32/jdk8-boot2.7/frontend-build.log",
+        "size": 407,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-hooks-template/win32/jdk8-boot2.7/frontend-build.txt",
+        "size": 407,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-hooks-template/win32/jdk8-boot2.7/frontend-coverage-summary.json",
+        "size": 2747,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-hooks-template/win32/jdk8-boot2.7/frontend-format.log",
+        "size": 119,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-hooks-template/win32/jdk8-boot2.7/frontend-format.txt",
+        "size": 119,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-hooks-template/win32/jdk8-boot2.7/frontend-install.log",
+        "size": 149,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-hooks-template/win32/jdk8-boot2.7/frontend-install.txt",
+        "size": 149,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-hooks-template/win32/jdk8-boot2.7/frontend-lint.log",
+        "size": 52,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-hooks-template/win32/jdk8-boot2.7/frontend-lint.txt",
+        "size": 52,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-hooks-template/win32/jdk8-boot2.7/frontend-test.log",
+        "size": 1503,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-hooks-template/win32/jdk8-boot2.7/frontend-test.txt",
+        "size": 1503,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-hooks-template/win32/jdk8-boot2.7/frontend-tests.json",
+        "size": 87530,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-hooks-template/win32/jdk8-boot2.7/log-index.json",
+        "size": 795,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-hooks-template/win32/jdk8-boot2.7/report.json",
+        "size": 15921,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-hooks-template/win32/jdk8-boot2.7/runtime.log",
+        "size": 11876,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-hooks-template/win32/jdk8-boot2.7/runtime.txt",
+        "size": 11876,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-hooks-template/win32/jdk8-boot2.7/TEST-com.example.tasks.common.ApiErrorHandlerTest.xml",
+        "size": 30461,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-hooks-template/win32/jdk8-boot2.7/TEST-com.example.tasks.security.LocalAccountsTest.xml",
+        "size": 30455,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-hooks-template/win32/jdk8-boot2.7/TEST-com.example.tasks.service.FileServiceTest.xml",
+        "size": 30738,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-hooks-template/win32/jdk8-boot2.7/TEST-com.example.tasks.TaskApiTest.xml",
+        "size": 31032,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-hooks-template/win32/jdk8-boot2.7/TEST-com.example.tasks.TaskPersistenceTest.xml",
+        "size": 30441,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-hooks-template/win32/jdk17-boot3.5/backend-coverage.xml",
+        "size": 93495,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-hooks-template/win32/jdk17-boot3.5/backend-verify.log",
+        "size": 25342,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-hooks-template/win32/jdk17-boot3.5/backend-verify.txt",
+        "size": 25342,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-hooks-template/win32/jdk17-boot3.5/coverage.log",
+        "size": 464,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-hooks-template/win32/jdk17-boot3.5/coverage.txt",
+        "size": 464,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-hooks-template/win32/jdk17-boot3.5/frontend-build.log",
+        "size": 407,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-hooks-template/win32/jdk17-boot3.5/frontend-build.txt",
+        "size": 407,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-hooks-template/win32/jdk17-boot3.5/frontend-coverage-summary.json",
+        "size": 2754,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-hooks-template/win32/jdk17-boot3.5/frontend-format.log",
+        "size": 119,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-hooks-template/win32/jdk17-boot3.5/frontend-format.txt",
+        "size": 119,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-hooks-template/win32/jdk17-boot3.5/frontend-install.log",
+        "size": 149,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-hooks-template/win32/jdk17-boot3.5/frontend-install.txt",
+        "size": 149,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-hooks-template/win32/jdk17-boot3.5/frontend-lint.log",
+        "size": 52,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-hooks-template/win32/jdk17-boot3.5/frontend-lint.txt",
+        "size": 52,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-hooks-template/win32/jdk17-boot3.5/frontend-test.log",
+        "size": 1505,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-hooks-template/win32/jdk17-boot3.5/frontend-test.txt",
+        "size": 1505,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-hooks-template/win32/jdk17-boot3.5/frontend-tests.json",
+        "size": 87547,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-hooks-template/win32/jdk17-boot3.5/log-index.json",
+        "size": 795,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-hooks-template/win32/jdk17-boot3.5/report.json",
+        "size": 15282,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-hooks-template/win32/jdk17-boot3.5/runtime.log",
+        "size": 11986,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-hooks-template/win32/jdk17-boot3.5/runtime.txt",
+        "size": 11986,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-hooks-template/win32/jdk17-boot3.5/TEST-com.example.tasks.common.ApiErrorHandlerTest.xml",
+        "size": 39347,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-hooks-template/win32/jdk17-boot3.5/TEST-com.example.tasks.security.LocalAccountsTest.xml",
+        "size": 30726,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-hooks-template/win32/jdk17-boot3.5/TEST-com.example.tasks.service.FileServiceTest.xml",
+        "size": 31009,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-hooks-template/win32/jdk17-boot3.5/TEST-com.example.tasks.TaskApiTest.xml",
+        "size": 36192,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-hooks-template/win32/jdk17-boot3.5/TEST-com.example.tasks.TaskPersistenceTest.xml",
+        "size": 38283,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-hooks-template/win32/jdk21-boot3.5/backend-coverage.xml",
+        "size": 93494,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-hooks-template/win32/jdk21-boot3.5/backend-verify.log",
+        "size": 25922,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-hooks-template/win32/jdk21-boot3.5/backend-verify.txt",
+        "size": 25922,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-hooks-template/win32/jdk21-boot3.5/coverage.log",
+        "size": 464,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-hooks-template/win32/jdk21-boot3.5/coverage.txt",
+        "size": 464,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-hooks-template/win32/jdk21-boot3.5/frontend-build.log",
+        "size": 407,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-hooks-template/win32/jdk21-boot3.5/frontend-build.txt",
+        "size": 407,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-hooks-template/win32/jdk21-boot3.5/frontend-coverage-summary.json",
+        "size": 2754,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-hooks-template/win32/jdk21-boot3.5/frontend-format.log",
+        "size": 119,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-hooks-template/win32/jdk21-boot3.5/frontend-format.txt",
+        "size": 119,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-hooks-template/win32/jdk21-boot3.5/frontend-install.log",
+        "size": 149,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-hooks-template/win32/jdk21-boot3.5/frontend-install.txt",
+        "size": 149,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-hooks-template/win32/jdk21-boot3.5/frontend-lint.log",
+        "size": 52,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-hooks-template/win32/jdk21-boot3.5/frontend-lint.txt",
+        "size": 52,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-hooks-template/win32/jdk21-boot3.5/frontend-test.log",
+        "size": 1505,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-hooks-template/win32/jdk21-boot3.5/frontend-test.txt",
+        "size": 1505,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-hooks-template/win32/jdk21-boot3.5/frontend-tests.json",
+        "size": 87535,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-hooks-template/win32/jdk21-boot3.5/log-index.json",
+        "size": 795,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-hooks-template/win32/jdk21-boot3.5/report.json",
+        "size": 15309,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-hooks-template/win32/jdk21-boot3.5/runtime.log",
+        "size": 11983,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-hooks-template/win32/jdk21-boot3.5/runtime.txt",
+        "size": 11983,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-hooks-template/win32/jdk21-boot3.5/TEST-com.example.tasks.common.ApiErrorHandlerTest.xml",
+        "size": 39455,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-hooks-template/win32/jdk21-boot3.5/TEST-com.example.tasks.security.LocalAccountsTest.xml",
+        "size": 31022,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-hooks-template/win32/jdk21-boot3.5/TEST-com.example.tasks.service.FileServiceTest.xml",
+        "size": 32140,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-hooks-template/win32/jdk21-boot3.5/TEST-com.example.tasks.TaskApiTest.xml",
+        "size": 36492,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-hooks-template/win32/jdk21-boot3.5/TEST-com.example.tasks.TaskPersistenceTest.xml",
+        "size": 38584,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-hooks-template/win32/jdk21-boot4.0/backend-coverage.xml",
+        "size": 93495,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-hooks-template/win32/jdk21-boot4.0/backend-verify.log",
+        "size": 27228,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-hooks-template/win32/jdk21-boot4.0/backend-verify.txt",
+        "size": 27228,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-hooks-template/win32/jdk21-boot4.0/coverage.log",
+        "size": 464,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-hooks-template/win32/jdk21-boot4.0/coverage.txt",
+        "size": 464,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-hooks-template/win32/jdk21-boot4.0/frontend-build.log",
+        "size": 407,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-hooks-template/win32/jdk21-boot4.0/frontend-build.txt",
+        "size": 407,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-hooks-template/win32/jdk21-boot4.0/frontend-coverage-summary.json",
+        "size": 2754,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-hooks-template/win32/jdk21-boot4.0/frontend-format.log",
+        "size": 119,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-hooks-template/win32/jdk21-boot4.0/frontend-format.txt",
+        "size": 119,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-hooks-template/win32/jdk21-boot4.0/frontend-install.log",
+        "size": 149,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-hooks-template/win32/jdk21-boot4.0/frontend-install.txt",
+        "size": 149,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-hooks-template/win32/jdk21-boot4.0/frontend-lint.log",
+        "size": 52,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-hooks-template/win32/jdk21-boot4.0/frontend-lint.txt",
+        "size": 52,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-hooks-template/win32/jdk21-boot4.0/frontend-test.log",
+        "size": 1505,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-hooks-template/win32/jdk21-boot4.0/frontend-test.txt",
+        "size": 1505,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-hooks-template/win32/jdk21-boot4.0/frontend-tests.json",
+        "size": 87545,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-hooks-template/win32/jdk21-boot4.0/log-index.json",
+        "size": 795,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-hooks-template/win32/jdk21-boot4.0/report.json",
+        "size": 15317,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-hooks-template/win32/jdk21-boot4.0/runtime.log",
+        "size": 12127,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-hooks-template/win32/jdk21-boot4.0/runtime.txt",
+        "size": 12127,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-hooks-template/win32/jdk21-boot4.0/TEST-com.example.tasks.common.ApiErrorHandlerTest.xml",
+        "size": 46127,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-hooks-template/win32/jdk21-boot4.0/TEST-com.example.tasks.security.LocalAccountsTest.xml",
+        "size": 37070,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-hooks-template/win32/jdk21-boot4.0/TEST-com.example.tasks.service.FileServiceTest.xml",
+        "size": 38189,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-hooks-template/win32/jdk21-boot4.0/TEST-com.example.tasks.TaskApiTest.xml",
+        "size": 42665,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-hooks-template/win32/jdk21-boot4.0/TEST-com.example.tasks.TaskPersistenceTest.xml",
+        "size": 44699,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-java-vue/jdk8-boot2.7/backend-verify.log",
+        "size": 20866,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-java-vue/jdk8-boot2.7/backend-verify.txt",
+        "size": 20866,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-java-vue/jdk8-boot2.7/frontend-build.log",
+        "size": 407,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-java-vue/jdk8-boot2.7/frontend-build.txt",
+        "size": 407,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-java-vue/jdk8-boot2.7/frontend-format.log",
+        "size": 119,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-java-vue/jdk8-boot2.7/frontend-format.txt",
+        "size": 119,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-java-vue/jdk8-boot2.7/frontend-install.log",
+        "size": 149,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-java-vue/jdk8-boot2.7/frontend-install.txt",
+        "size": 149,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-java-vue/jdk8-boot2.7/frontend-lint.log",
+        "size": 52,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-java-vue/jdk8-boot2.7/frontend-lint.txt",
+        "size": 52,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-java-vue/jdk8-boot2.7/frontend-test.log",
+        "size": 387,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-java-vue/jdk8-boot2.7/frontend-test.txt",
+        "size": 387,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-java-vue/jdk8-boot2.7/frontend-tests.json",
+        "size": 2298,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-java-vue/jdk8-boot2.7/log-index.json",
+        "size": 705,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-java-vue/jdk8-boot2.7/report.json",
+        "size": 13052,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-java-vue/jdk8-boot2.7/runtime.log",
+        "size": 9867,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-java-vue/jdk8-boot2.7/runtime.txt",
+        "size": 9867,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-java-vue/jdk8-boot2.7/TEST-com.example.tasks.TaskApiTest.xml",
+        "size": 28633,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-java-vue/jdk8-boot2.7/TEST-com.example.tasks.TaskPersistenceTest.xml",
+        "size": 28562,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-java-vue/jdk17-boot3.5/backend-verify.log",
+        "size": 15165,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-java-vue/jdk17-boot3.5/backend-verify.txt",
+        "size": 15165,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-java-vue/jdk17-boot3.5/frontend-build.log",
+        "size": 407,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-java-vue/jdk17-boot3.5/frontend-build.txt",
+        "size": 407,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-java-vue/jdk17-boot3.5/frontend-format.log",
+        "size": 119,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-java-vue/jdk17-boot3.5/frontend-format.txt",
+        "size": 119,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-java-vue/jdk17-boot3.5/frontend-install.log",
+        "size": 149,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-java-vue/jdk17-boot3.5/frontend-install.txt",
+        "size": 149,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-java-vue/jdk17-boot3.5/frontend-lint.log",
+        "size": 52,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-java-vue/jdk17-boot3.5/frontend-lint.txt",
+        "size": 52,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-java-vue/jdk17-boot3.5/frontend-test.log",
+        "size": 389,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-java-vue/jdk17-boot3.5/frontend-test.txt",
+        "size": 389,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-java-vue/jdk17-boot3.5/frontend-tests.json",
+        "size": 2300,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-java-vue/jdk17-boot3.5/log-index.json",
+        "size": 705,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-java-vue/jdk17-boot3.5/report.json",
+        "size": 13223,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-java-vue/jdk17-boot3.5/runtime.log",
+        "size": 11559,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-java-vue/jdk17-boot3.5/runtime.txt",
+        "size": 11559,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-java-vue/jdk17-boot3.5/TEST-com.example.tasks.TaskApiTest.xml",
+        "size": 33790,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-java-vue/jdk17-boot3.5/TEST-com.example.tasks.TaskPersistenceTest.xml",
+        "size": 36525,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-java-vue/jdk21-boot3.5/backend-verify.log",
+        "size": 15872,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-java-vue/jdk21-boot3.5/backend-verify.txt",
+        "size": 15872,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-java-vue/jdk21-boot3.5/frontend-build.log",
+        "size": 407,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-java-vue/jdk21-boot3.5/frontend-build.txt",
+        "size": 407,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-java-vue/jdk21-boot3.5/frontend-format.log",
+        "size": 119,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-java-vue/jdk21-boot3.5/frontend-format.txt",
+        "size": 119,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-java-vue/jdk21-boot3.5/frontend-install.log",
+        "size": 149,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-java-vue/jdk21-boot3.5/frontend-install.txt",
+        "size": 149,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-java-vue/jdk21-boot3.5/frontend-lint.log",
+        "size": 52,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-java-vue/jdk21-boot3.5/frontend-lint.txt",
+        "size": 52,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-java-vue/jdk21-boot3.5/frontend-test.log",
+        "size": 389,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-java-vue/jdk21-boot3.5/frontend-test.txt",
+        "size": 389,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-java-vue/jdk21-boot3.5/frontend-tests.json",
+        "size": 2301,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-java-vue/jdk21-boot3.5/log-index.json",
+        "size": 705,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-java-vue/jdk21-boot3.5/report.json",
+        "size": 13243,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-java-vue/jdk21-boot3.5/runtime.log",
+        "size": 11525,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-java-vue/jdk21-boot3.5/runtime.txt",
+        "size": 11525,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-java-vue/jdk21-boot3.5/TEST-com.example.tasks.TaskApiTest.xml",
+        "size": 34890,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-java-vue/jdk21-boot3.5/TEST-com.example.tasks.TaskPersistenceTest.xml",
+        "size": 36783,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-java-vue/jdk21-boot4.0/backend-verify.log",
+        "size": 16205,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-java-vue/jdk21-boot4.0/backend-verify.txt",
+        "size": 16205,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-java-vue/jdk21-boot4.0/frontend-build.log",
+        "size": 407,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-java-vue/jdk21-boot4.0/frontend-build.txt",
+        "size": 407,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-java-vue/jdk21-boot4.0/frontend-format.log",
+        "size": 119,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-java-vue/jdk21-boot4.0/frontend-format.txt",
+        "size": 119,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-java-vue/jdk21-boot4.0/frontend-install.log",
+        "size": 149,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-java-vue/jdk21-boot4.0/frontend-install.txt",
+        "size": 149,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-java-vue/jdk21-boot4.0/frontend-lint.log",
+        "size": 52,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-java-vue/jdk21-boot4.0/frontend-lint.txt",
+        "size": 52,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-java-vue/jdk21-boot4.0/frontend-test.log",
+        "size": 389,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-java-vue/jdk21-boot4.0/frontend-test.txt",
+        "size": 389,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-java-vue/jdk21-boot4.0/frontend-tests.json",
+        "size": 2288,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-java-vue/jdk21-boot4.0/log-index.json",
+        "size": 705,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-java-vue/jdk21-boot4.0/report.json",
+        "size": 13212,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-java-vue/jdk21-boot4.0/runtime.log",
+        "size": 11699,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-java-vue/jdk21-boot4.0/runtime.txt",
+        "size": 11699,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-java-vue/jdk21-boot4.0/TEST-com.example.tasks.TaskApiTest.xml",
+        "size": 40941,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-java-vue/jdk21-boot4.0/TEST-com.example.tasks.TaskPersistenceTest.xml",
+        "size": 42724,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-java-vue/plugin-tests.txt",
+        "size": 26821,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-java-vue/provision.json",
+        "size": 1925,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-java-vue/README.md",
+        "size": 2019,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-json-post-crud/frameworks/django/test-contract.txt",
+        "size": 100,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-json-post-crud/frameworks/django/test.txt",
+        "size": 100,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-json-post-crud/frameworks/express-javascript/build.txt",
+        "size": 43,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-json-post-crud/frameworks/express-javascript/install.txt",
+        "size": 124,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-json-post-crud/frameworks/express-javascript/test.txt",
+        "size": 332,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-json-post-crud/frameworks/express-typescript/build.txt",
+        "size": 37,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-json-post-crud/frameworks/express-typescript/install.txt",
+        "size": 124,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-json-post-crud/frameworks/express-typescript/test.txt",
+        "size": 332,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-json-post-crud/frameworks/fastapi/test-contract.txt",
+        "size": 596,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-json-post-crud/frameworks/fastapi/test.txt",
+        "size": 596,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-json-post-crud/frameworks/fastify-javascript/build.txt",
+        "size": 43,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-json-post-crud/frameworks/fastify-javascript/install.txt",
+        "size": 124,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-json-post-crud/frameworks/fastify-javascript/test.txt",
+        "size": 333,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-json-post-crud/frameworks/fastify-typescript/build.txt",
+        "size": 37,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-json-post-crud/frameworks/fastify-typescript/install.txt",
+        "size": 124,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-json-post-crud/frameworks/fastify-typescript/test.txt",
+        "size": 334,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-json-post-crud/frameworks/flask/test-contract.txt",
+        "size": 100,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-json-post-crud/frameworks/flask/test.txt",
+        "size": 100,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-json-post-crud/frameworks/legacy-python/test-contract.txt",
+        "size": 100,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-json-post-crud/frameworks/legacy-python/test.txt",
+        "size": 100,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-json-post-crud/frameworks/nestjs-typescript/build.txt",
+        "size": 27,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-json-post-crud/frameworks/nestjs-typescript/install.txt",
+        "size": 701,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-json-post-crud/frameworks/nestjs-typescript/test.txt",
+        "size": 239,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-json-post-crud/jdk8-boot2.7/backend-verify.log",
+        "size": 20868,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-json-post-crud/jdk8-boot2.7/backend-verify.txt",
+        "size": 20868,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-json-post-crud/jdk8-boot2.7/frontend-build.log",
+        "size": 407,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-json-post-crud/jdk8-boot2.7/frontend-build.txt",
+        "size": 407,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-json-post-crud/jdk8-boot2.7/frontend-format.log",
+        "size": 119,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-json-post-crud/jdk8-boot2.7/frontend-format.txt",
+        "size": 119,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-json-post-crud/jdk8-boot2.7/frontend-install.log",
+        "size": 149,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-json-post-crud/jdk8-boot2.7/frontend-install.txt",
+        "size": 149,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-json-post-crud/jdk8-boot2.7/frontend-lint.log",
+        "size": 52,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-json-post-crud/jdk8-boot2.7/frontend-lint.txt",
+        "size": 52,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-json-post-crud/jdk8-boot2.7/frontend-test.log",
+        "size": 387,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-json-post-crud/jdk8-boot2.7/frontend-test.txt",
+        "size": 387,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-json-post-crud/jdk8-boot2.7/frontend-tests.json",
+        "size": 2318,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-json-post-crud/jdk8-boot2.7/log-index.json",
+        "size": 705,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-json-post-crud/jdk8-boot2.7/report.json",
+        "size": 13051,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-json-post-crud/jdk8-boot2.7/runtime.log",
+        "size": 9865,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-json-post-crud/jdk8-boot2.7/runtime.txt",
+        "size": 9865,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-json-post-crud/jdk8-boot2.7/TEST-com.example.tasks.TaskApiTest.xml",
+        "size": 28759,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-json-post-crud/jdk8-boot2.7/TEST-com.example.tasks.TaskPersistenceTest.xml",
+        "size": 28565,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-json-post-crud/jdk17-boot3.5/backend-verify.log",
+        "size": 15164,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-json-post-crud/jdk17-boot3.5/backend-verify.txt",
+        "size": 15164,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-json-post-crud/jdk17-boot3.5/frontend-build.log",
+        "size": 407,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-json-post-crud/jdk17-boot3.5/frontend-build.txt",
+        "size": 407,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-json-post-crud/jdk17-boot3.5/frontend-format.log",
+        "size": 119,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-json-post-crud/jdk17-boot3.5/frontend-format.txt",
+        "size": 119,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-json-post-crud/jdk17-boot3.5/frontend-install.log",
+        "size": 149,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-json-post-crud/jdk17-boot3.5/frontend-install.txt",
+        "size": 149,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-json-post-crud/jdk17-boot3.5/frontend-lint.log",
+        "size": 52,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-json-post-crud/jdk17-boot3.5/frontend-lint.txt",
+        "size": 52,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-json-post-crud/jdk17-boot3.5/frontend-test.log",
+        "size": 389,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-json-post-crud/jdk17-boot3.5/frontend-test.txt",
+        "size": 389,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-json-post-crud/jdk17-boot3.5/frontend-tests.json",
+        "size": 2319,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-json-post-crud/jdk17-boot3.5/log-index.json",
+        "size": 705,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-json-post-crud/jdk17-boot3.5/report.json",
+        "size": 13228,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-json-post-crud/jdk17-boot3.5/runtime.log",
+        "size": 11563,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-json-post-crud/jdk17-boot3.5/runtime.txt",
+        "size": 11563,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-json-post-crud/jdk17-boot3.5/TEST-com.example.tasks.TaskApiTest.xml",
+        "size": 33912,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-json-post-crud/jdk17-boot3.5/TEST-com.example.tasks.TaskPersistenceTest.xml",
+        "size": 36523,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-json-post-crud/jdk21-boot3.5/backend-verify.log",
+        "size": 15930,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-json-post-crud/jdk21-boot3.5/backend-verify.txt",
+        "size": 15930,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-json-post-crud/jdk21-boot3.5/frontend-build.log",
+        "size": 407,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-json-post-crud/jdk21-boot3.5/frontend-build.txt",
+        "size": 407,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-json-post-crud/jdk21-boot3.5/frontend-format.log",
+        "size": 119,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-json-post-crud/jdk21-boot3.5/frontend-format.txt",
+        "size": 119,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-json-post-crud/jdk21-boot3.5/frontend-install.log",
+        "size": 149,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-json-post-crud/jdk21-boot3.5/frontend-install.txt",
+        "size": 149,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-json-post-crud/jdk21-boot3.5/frontend-lint.log",
+        "size": 52,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-json-post-crud/jdk21-boot3.5/frontend-lint.txt",
+        "size": 52,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-json-post-crud/jdk21-boot3.5/frontend-test.log",
+        "size": 389,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-json-post-crud/jdk21-boot3.5/frontend-test.txt",
+        "size": 389,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-json-post-crud/jdk21-boot3.5/frontend-tests.json",
+        "size": 2318,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-json-post-crud/jdk21-boot3.5/log-index.json",
+        "size": 705,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-json-post-crud/jdk21-boot3.5/report.json",
+        "size": 13252,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-json-post-crud/jdk21-boot3.5/runtime.log",
+        "size": 11561,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-json-post-crud/jdk21-boot3.5/runtime.txt",
+        "size": 11561,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-json-post-crud/jdk21-boot3.5/TEST-com.example.tasks.TaskApiTest.xml",
+        "size": 35028,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-json-post-crud/jdk21-boot3.5/TEST-com.example.tasks.TaskPersistenceTest.xml",
+        "size": 36820,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-json-post-crud/jdk21-boot4.0/backend-verify.log",
+        "size": 16205,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-json-post-crud/jdk21-boot4.0/backend-verify.txt",
+        "size": 16205,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-json-post-crud/jdk21-boot4.0/frontend-build.log",
+        "size": 407,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-json-post-crud/jdk21-boot4.0/frontend-build.txt",
+        "size": 407,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-json-post-crud/jdk21-boot4.0/frontend-format.log",
+        "size": 119,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-json-post-crud/jdk21-boot4.0/frontend-format.txt",
+        "size": 119,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-json-post-crud/jdk21-boot4.0/frontend-install.log",
+        "size": 149,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-json-post-crud/jdk21-boot4.0/frontend-install.txt",
+        "size": 149,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-json-post-crud/jdk21-boot4.0/frontend-lint.log",
+        "size": 52,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-json-post-crud/jdk21-boot4.0/frontend-lint.txt",
+        "size": 52,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-json-post-crud/jdk21-boot4.0/frontend-test.log",
+        "size": 389,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-json-post-crud/jdk21-boot4.0/frontend-test.txt",
+        "size": 389,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-json-post-crud/jdk21-boot4.0/frontend-tests.json",
+        "size": 2320,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-json-post-crud/jdk21-boot4.0/log-index.json",
+        "size": 705,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-json-post-crud/jdk21-boot4.0/report.json",
+        "size": 13213,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-json-post-crud/jdk21-boot4.0/runtime.log",
+        "size": 11704,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-json-post-crud/jdk21-boot4.0/runtime.txt",
+        "size": 11704,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-json-post-crud/jdk21-boot4.0/TEST-com.example.tasks.TaskApiTest.xml",
+        "size": 41063,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-json-post-crud/jdk21-boot4.0/TEST-com.example.tasks.TaskPersistenceTest.xml",
+        "size": 42724,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-json-post-crud/legacy-java/TEST-com.example.tasks.ItemControllerTest.xml",
+        "size": 28953,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-json-post-crud/legacy-java/TEST-com.example.tasks.TaskApiTest.xml",
+        "size": 28453,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-json-post-crud/legacy-java/TEST-com.example.tasks.TaskPersistenceTest.xml",
+        "size": 28261,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-json-post-crud/legacy-java/verify.txt",
+        "size": 28123,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-json-post-crud/legacy-node-tests.txt",
+        "size": 451,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-json-post-crud/node-results.json",
+        "size": 489,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-json-post-crud/plugin-tests.txt",
+        "size": 27005,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-json-post-crud/python-results.json",
+        "size": 208,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-json-post-crud/README.md",
+        "size": 2628,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-repository-hooks/commit/commands/code-assets.log",
+        "size": 18043,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-repository-hooks/commit/commands/commands.jsonl",
+        "size": 17842,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-repository-hooks/commit/commands/format-check.log",
+        "size": 66,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-repository-hooks/commit/commands/plugin-tests.log",
+        "size": 30990,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-repository-hooks/commit/commands/python-format.log",
+        "size": 26,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-repository-hooks/commit/commands/python-static.log",
+        "size": 19,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-repository-hooks/commit/commands/scaffold-format.log",
+        "size": 672,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-repository-hooks/commit/commands/scaffold-tests-static.log",
+        "size": 15772,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-repository-hooks/commit/commands/shell-format.log",
+        "size": 66,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-repository-hooks/commit/commands/shell-syntax-0.log",
+        "size": 0,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-repository-hooks/commit/commands/shell-syntax-1.log",
+        "size": 0,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-repository-hooks/commit/commands/shell-syntax-2.log",
+        "size": 0,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-repository-hooks/commit/commands/static-eslint.log",
+        "size": 0,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-repository-hooks/commit/commands/template-jdk8-boot2.7.log",
+        "size": 3477,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-repository-hooks/commit/commands/template-script-format.log",
+        "size": 66,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-repository-hooks/commit/commands/template-script-frontend-test.mjs.log",
+        "size": 0,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-repository-hooks/commit/commands/template-script-lint.log",
+        "size": 0,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-repository-hooks/commit/commands/template-script-run.mjs.log",
+        "size": 0,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-repository-hooks/commit/reference-report.json",
+        "size": 16836,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-repository-hooks/commit/summary.json",
+        "size": 161948,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-repository-hooks/focused-test.log",
+        "size": 7782,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-repository-hooks/npm-test.log",
+        "size": 31550,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-repository-hooks/push/commands/code-assets.log",
+        "size": 18043,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-repository-hooks/push/commands/commands.jsonl",
+        "size": 26899,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-repository-hooks/push/commands/format-check.log",
+        "size": 66,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-repository-hooks/push/commands/plugin-tests.log",
+        "size": 31001,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-repository-hooks/push/commands/python-format.log",
+        "size": 26,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-repository-hooks/push/commands/python-static.log",
+        "size": 19,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-repository-hooks/push/commands/scaffold-format.log",
+        "size": 672,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-repository-hooks/push/commands/scaffold-tests-static.log",
+        "size": 15772,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-repository-hooks/push/commands/shell-format.log",
+        "size": 66,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-repository-hooks/push/commands/shell-syntax-0.log",
+        "size": 0,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-repository-hooks/push/commands/shell-syntax-1.log",
+        "size": 0,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-repository-hooks/push/commands/shell-syntax-2.log",
+        "size": 0,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-repository-hooks/push/commands/static-eslint.log",
+        "size": 0,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-repository-hooks/push/commands/template-jdk8-boot2.7.log",
+        "size": 3477,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-repository-hooks/push/commands/template-jdk17-boot3.5.log",
+        "size": 3486,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-repository-hooks/push/commands/template-jdk21-boot3.5.log",
+        "size": 3512,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-repository-hooks/push/commands/template-jdk21-boot4.0.log",
+        "size": 3512,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-repository-hooks/push/commands/template-script-format.log",
+        "size": 66,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-repository-hooks/push/commands/template-script-frontend-test.mjs.log",
+        "size": 0,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-repository-hooks/push/commands/template-script-lint.log",
+        "size": 0,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-repository-hooks/push/commands/template-script-run.mjs.log",
+        "size": 0,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-repository-hooks/push/reference-report.json",
+        "size": 16572,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-repository-hooks/push/summary.json",
+        "size": 59620,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-repository-hooks/README.zh.md",
+        "size": 4083,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-standard-template/change-acceptance/acceptance.md",
+        "size": 597,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-standard-template/change-acceptance/change-acceptance.json",
+        "size": 1354,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-standard-template/change-acceptance/verify-full/backend-coverage.xml",
+        "size": 113592,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-standard-template/change-acceptance/verify-full/backend-verify.log",
+        "size": 30266,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-standard-template/change-acceptance/verify-full/browser.log",
+        "size": 756,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-standard-template/change-acceptance/verify-full/coverage.log",
+        "size": 464,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-standard-template/change-acceptance/verify-full/frontend-build.log",
+        "size": 407,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-standard-template/change-acceptance/verify-full/frontend-coverage-summary.json",
+        "size": 3818,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-standard-template/change-acceptance/verify-full/frontend-format.log",
+        "size": 119,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-standard-template/change-acceptance/verify-full/frontend-install.log",
+        "size": 149,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-standard-template/change-acceptance/verify-full/frontend-lint.log",
+        "size": 52,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-standard-template/change-acceptance/verify-full/frontend-test.log",
+        "size": 1876,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-standard-template/change-acceptance/verify-full/frontend-tests.json",
+        "size": 103931,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-standard-template/change-acceptance/verify-full/report.json",
+        "size": 18361,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-standard-template/change-acceptance/verify-full/runtime.log",
+        "size": 19003,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-standard-template/change-acceptance/verify-full/TEST-com.example.tasks.common.ApiErrorHandlerTest.xml",
+        "size": 39725,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-standard-template/change-acceptance/verify-full/TEST-com.example.tasks.NoteApiTest.xml",
+        "size": 36011,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-standard-template/change-acceptance/verify-full/TEST-com.example.tasks.security.LocalAccountsTest.xml",
+        "size": 31433,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-standard-template/change-acceptance/verify-full/TEST-com.example.tasks.service.FileServiceTest.xml",
+        "size": 31716,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-standard-template/change-acceptance/verify-full/TEST-com.example.tasks.TaskApiTest.xml",
+        "size": 36458,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-standard-template/change-acceptance/verify-full/TEST-com.example.tasks.TaskPersistenceTest.xml",
+        "size": 38733,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-standard-template/linux/README.md",
+        "size": 1674,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-standard-template/README.md",
+        "size": 2843,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-standard-template/win32/jdk8-boot2.7-full/backend-coverage.xml",
+        "size": 93308,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-standard-template/win32/jdk8-boot2.7-full/backend-verify.log",
+        "size": 30821,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-standard-template/win32/jdk8-boot2.7-full/browser.log",
+        "size": 755,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-standard-template/win32/jdk8-boot2.7-full/coverage.log",
+        "size": 463,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-standard-template/win32/jdk8-boot2.7-full/frontend-build.log",
+        "size": 407,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-standard-template/win32/jdk8-boot2.7-full/frontend-coverage-summary.json",
+        "size": 2747,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-standard-template/win32/jdk8-boot2.7-full/frontend-format.log",
+        "size": 119,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-standard-template/win32/jdk8-boot2.7-full/frontend-install.log",
+        "size": 149,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-standard-template/win32/jdk8-boot2.7-full/frontend-lint.log",
+        "size": 52,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-standard-template/win32/jdk8-boot2.7-full/frontend-test.log",
+        "size": 1503,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-standard-template/win32/jdk8-boot2.7-full/frontend-tests.json",
+        "size": 87530,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-standard-template/win32/jdk8-boot2.7-full/report.json",
+        "size": 18399,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-standard-template/win32/jdk8-boot2.7-full/results.json",
+        "size": 20915,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-standard-template/win32/jdk8-boot2.7-full/runtime.log",
+        "size": 18581,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-standard-template/win32/jdk8-boot2.7-full/TEST-com.example.tasks.common.ApiErrorHandlerTest.xml",
+        "size": 30461,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-standard-template/win32/jdk8-boot2.7-full/TEST-com.example.tasks.security.LocalAccountsTest.xml",
+        "size": 30453,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-standard-template/win32/jdk8-boot2.7-full/TEST-com.example.tasks.service.FileServiceTest.xml",
+        "size": 30740,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-standard-template/win32/jdk8-boot2.7-full/TEST-com.example.tasks.TaskApiTest.xml",
+        "size": 31033,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-standard-template/win32/jdk8-boot2.7-full/TEST-com.example.tasks.TaskPersistenceTest.xml",
+        "size": 30441,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-standard-template/win32/jdk8-boot2.7/backend-coverage.xml",
+        "size": 93308,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-standard-template/win32/jdk8-boot2.7/backend-verify.log",
+        "size": 30876,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-standard-template/win32/jdk8-boot2.7/backend-verify.txt",
+        "size": 30876,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-standard-template/win32/jdk8-boot2.7/coverage.log",
+        "size": 463,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-standard-template/win32/jdk8-boot2.7/coverage.txt",
+        "size": 463,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-standard-template/win32/jdk8-boot2.7/frontend-build.log",
+        "size": 407,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-standard-template/win32/jdk8-boot2.7/frontend-build.txt",
+        "size": 407,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-standard-template/win32/jdk8-boot2.7/frontend-coverage-summary.json",
+        "size": 2747,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-standard-template/win32/jdk8-boot2.7/frontend-format.log",
+        "size": 119,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-standard-template/win32/jdk8-boot2.7/frontend-format.txt",
+        "size": 119,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-standard-template/win32/jdk8-boot2.7/frontend-install.log",
+        "size": 149,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-standard-template/win32/jdk8-boot2.7/frontend-install.txt",
+        "size": 149,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-standard-template/win32/jdk8-boot2.7/frontend-lint.log",
+        "size": 52,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-standard-template/win32/jdk8-boot2.7/frontend-lint.txt",
+        "size": 52,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-standard-template/win32/jdk8-boot2.7/frontend-test.log",
+        "size": 1503,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-standard-template/win32/jdk8-boot2.7/frontend-test.txt",
+        "size": 1503,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-standard-template/win32/jdk8-boot2.7/frontend-tests.json",
+        "size": 87532,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-standard-template/win32/jdk8-boot2.7/log-index.json",
+        "size": 795,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-standard-template/win32/jdk8-boot2.7/report.json",
+        "size": 15921,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-standard-template/win32/jdk8-boot2.7/runtime.log",
+        "size": 11904,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-standard-template/win32/jdk8-boot2.7/runtime.txt",
+        "size": 11904,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-standard-template/win32/jdk8-boot2.7/TEST-com.example.tasks.common.ApiErrorHandlerTest.xml",
+        "size": 30461,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-standard-template/win32/jdk8-boot2.7/TEST-com.example.tasks.security.LocalAccountsTest.xml",
+        "size": 30455,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-standard-template/win32/jdk8-boot2.7/TEST-com.example.tasks.service.FileServiceTest.xml",
+        "size": 30740,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-standard-template/win32/jdk8-boot2.7/TEST-com.example.tasks.TaskApiTest.xml",
+        "size": 31033,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-standard-template/win32/jdk8-boot2.7/TEST-com.example.tasks.TaskPersistenceTest.xml",
+        "size": 30441,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-standard-template/win32/jdk17-boot3.5/backend-coverage.xml",
+        "size": 93495,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-standard-template/win32/jdk17-boot3.5/backend-verify.log",
+        "size": 25288,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-standard-template/win32/jdk17-boot3.5/backend-verify.txt",
+        "size": 25288,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-standard-template/win32/jdk17-boot3.5/coverage.log",
+        "size": 464,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-standard-template/win32/jdk17-boot3.5/coverage.txt",
+        "size": 464,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-standard-template/win32/jdk17-boot3.5/frontend-build.log",
+        "size": 407,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-standard-template/win32/jdk17-boot3.5/frontend-build.txt",
+        "size": 407,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-standard-template/win32/jdk17-boot3.5/frontend-coverage-summary.json",
+        "size": 2754,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-standard-template/win32/jdk17-boot3.5/frontend-format.log",
+        "size": 119,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-standard-template/win32/jdk17-boot3.5/frontend-format.txt",
+        "size": 119,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-standard-template/win32/jdk17-boot3.5/frontend-install.log",
+        "size": 149,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-standard-template/win32/jdk17-boot3.5/frontend-install.txt",
+        "size": 149,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-standard-template/win32/jdk17-boot3.5/frontend-lint.log",
+        "size": 52,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-standard-template/win32/jdk17-boot3.5/frontend-lint.txt",
+        "size": 52,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-standard-template/win32/jdk17-boot3.5/frontend-test.log",
+        "size": 1505,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-standard-template/win32/jdk17-boot3.5/frontend-test.txt",
+        "size": 1505,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-standard-template/win32/jdk17-boot3.5/frontend-tests.json",
+        "size": 87546,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-standard-template/win32/jdk17-boot3.5/log-index.json",
+        "size": 795,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-standard-template/win32/jdk17-boot3.5/report.json",
+        "size": 15282,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-standard-template/win32/jdk17-boot3.5/runtime.log",
+        "size": 11986,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-standard-template/win32/jdk17-boot3.5/runtime.txt",
+        "size": 11986,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-standard-template/win32/jdk17-boot3.5/TEST-com.example.tasks.common.ApiErrorHandlerTest.xml",
+        "size": 39345,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-standard-template/win32/jdk17-boot3.5/TEST-com.example.tasks.security.LocalAccountsTest.xml",
+        "size": 30723,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-standard-template/win32/jdk17-boot3.5/TEST-com.example.tasks.service.FileServiceTest.xml",
+        "size": 31006,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-standard-template/win32/jdk17-boot3.5/TEST-com.example.tasks.TaskApiTest.xml",
+        "size": 36167,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-standard-template/win32/jdk17-boot3.5/TEST-com.example.tasks.TaskPersistenceTest.xml",
+        "size": 38245,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-standard-template/win32/jdk21-boot3.5/backend-coverage.xml",
+        "size": 93495,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-standard-template/win32/jdk21-boot3.5/backend-verify.log",
+        "size": 25919,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-standard-template/win32/jdk21-boot3.5/backend-verify.txt",
+        "size": 25919,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-standard-template/win32/jdk21-boot3.5/coverage.log",
+        "size": 464,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-standard-template/win32/jdk21-boot3.5/coverage.txt",
+        "size": 464,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-standard-template/win32/jdk21-boot3.5/frontend-build.log",
+        "size": 407,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-standard-template/win32/jdk21-boot3.5/frontend-build.txt",
+        "size": 407,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-standard-template/win32/jdk21-boot3.5/frontend-coverage-summary.json",
+        "size": 2754,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-standard-template/win32/jdk21-boot3.5/frontend-format.log",
+        "size": 119,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-standard-template/win32/jdk21-boot3.5/frontend-format.txt",
+        "size": 119,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-standard-template/win32/jdk21-boot3.5/frontend-install.log",
+        "size": 149,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-standard-template/win32/jdk21-boot3.5/frontend-install.txt",
+        "size": 149,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-standard-template/win32/jdk21-boot3.5/frontend-lint.log",
+        "size": 52,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-standard-template/win32/jdk21-boot3.5/frontend-lint.txt",
+        "size": 52,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-standard-template/win32/jdk21-boot3.5/frontend-test.log",
+        "size": 1505,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-standard-template/win32/jdk21-boot3.5/frontend-test.txt",
+        "size": 1505,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-standard-template/win32/jdk21-boot3.5/frontend-tests.json",
+        "size": 87545,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-standard-template/win32/jdk21-boot3.5/log-index.json",
+        "size": 795,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-standard-template/win32/jdk21-boot3.5/report.json",
+        "size": 15300,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-standard-template/win32/jdk21-boot3.5/runtime.log",
+        "size": 11950,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-standard-template/win32/jdk21-boot3.5/runtime.txt",
+        "size": 11950,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-standard-template/win32/jdk21-boot3.5/TEST-com.example.tasks.common.ApiErrorHandlerTest.xml",
+        "size": 39455,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-standard-template/win32/jdk21-boot3.5/TEST-com.example.tasks.security.LocalAccountsTest.xml",
+        "size": 31022,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-standard-template/win32/jdk21-boot3.5/TEST-com.example.tasks.service.FileServiceTest.xml",
+        "size": 32138,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-standard-template/win32/jdk21-boot3.5/TEST-com.example.tasks.TaskApiTest.xml",
+        "size": 36490,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-standard-template/win32/jdk21-boot3.5/TEST-com.example.tasks.TaskPersistenceTest.xml",
+        "size": 38583,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-standard-template/win32/jdk21-boot4.0/backend-coverage.xml",
+        "size": 93495,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-standard-template/win32/jdk21-boot4.0/backend-verify.log",
+        "size": 27223,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-standard-template/win32/jdk21-boot4.0/backend-verify.txt",
+        "size": 27223,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-standard-template/win32/jdk21-boot4.0/coverage.log",
+        "size": 464,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-standard-template/win32/jdk21-boot4.0/coverage.txt",
+        "size": 464,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-standard-template/win32/jdk21-boot4.0/frontend-build.log",
+        "size": 407,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-standard-template/win32/jdk21-boot4.0/frontend-build.txt",
+        "size": 407,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-standard-template/win32/jdk21-boot4.0/frontend-coverage-summary.json",
+        "size": 2754,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-standard-template/win32/jdk21-boot4.0/frontend-format.log",
+        "size": 119,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-standard-template/win32/jdk21-boot4.0/frontend-format.txt",
+        "size": 119,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-standard-template/win32/jdk21-boot4.0/frontend-install.log",
+        "size": 149,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-standard-template/win32/jdk21-boot4.0/frontend-install.txt",
+        "size": 149,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-standard-template/win32/jdk21-boot4.0/frontend-lint.log",
+        "size": 52,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-standard-template/win32/jdk21-boot4.0/frontend-lint.txt",
+        "size": 52,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-standard-template/win32/jdk21-boot4.0/frontend-test.log",
+        "size": 1505,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-standard-template/win32/jdk21-boot4.0/frontend-test.txt",
+        "size": 1505,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-standard-template/win32/jdk21-boot4.0/frontend-tests.json",
+        "size": 87548,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-standard-template/win32/jdk21-boot4.0/log-index.json",
+        "size": 795,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-standard-template/win32/jdk21-boot4.0/report.json",
+        "size": 15309,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-standard-template/win32/jdk21-boot4.0/runtime.log",
+        "size": 12097,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-standard-template/win32/jdk21-boot4.0/runtime.txt",
+        "size": 12097,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-standard-template/win32/jdk21-boot4.0/TEST-com.example.tasks.common.ApiErrorHandlerTest.xml",
+        "size": 46123,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-standard-template/win32/jdk21-boot4.0/TEST-com.example.tasks.security.LocalAccountsTest.xml",
+        "size": 37068,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-standard-template/win32/jdk21-boot4.0/TEST-com.example.tasks.service.FileServiceTest.xml",
+        "size": 38186,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-standard-template/win32/jdk21-boot4.0/TEST-com.example.tasks.TaskApiTest.xml",
+        "size": 42664,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/2026-10-21-standard-template/win32/jdk21-boot4.0/TEST-com.example.tasks.TaskPersistenceTest.xml",
+        "size": 44694,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/codex-sg-v1/p0/final-focused-command.json",
+        "size": 768,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/codex-sg-v1/p0/final-focused.stderr.txt",
+        "size": 0,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/codex-sg-v1/p0/final-focused.stdout.txt",
+        "size": 1031,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/codex-sg-v1/p0/final-format-check-command.json",
+        "size": 525,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/codex-sg-v1/p0/final-format-check.stderr.txt",
+        "size": 0,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/codex-sg-v1/p0/final-format-check.stdout.txt",
+        "size": 130,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/codex-sg-v1/p0/final-lint-command.json",
+        "size": 493,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/codex-sg-v1/p0/final-lint.stderr.txt",
+        "size": 0,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/codex-sg-v1/p0/final-lint.stdout.txt",
+        "size": 46,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/codex-sg-v1/p0/final-npm-test-command.json",
+        "size": 608,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/codex-sg-v1/p0/final-npm-test.stderr.txt",
+        "size": 0,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/codex-sg-v1/p0/final-npm-test.stdout.txt",
+        "size": 34165,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/codex-sg-v1/p0/focused-command.json",
+        "size": 619,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/codex-sg-v1/p0/focused.stderr.txt",
+        "size": 0,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/codex-sg-v1/p0/focused.stdout.txt",
+        "size": 953,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/codex-sg-v1/p0/format-check-command.json",
+        "size": 496,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/codex-sg-v1/p0/format-check.stderr.txt",
+        "size": 0,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/codex-sg-v1/p0/format-check.stdout.txt",
+        "size": 130,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/codex-sg-v1/p0/lint-command.json",
+        "size": 464,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/codex-sg-v1/p0/lint.stderr.txt",
+        "size": 0,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/codex-sg-v1/p0/lint.stdout.txt",
+        "size": 46,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/codex-sg-v1/p0/npm-test.json",
+        "size": 596,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/codex-sg-v1/p0/npm-test.stderr.txt",
+        "size": 0,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/codex-sg-v1/p0/npm-test.stdout.txt",
+        "size": 34065,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/codex-sg-v1/p0/pack-dry-run-command.json",
+        "size": 563,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/codex-sg-v1/p0/pack-dry-run.stderr.txt",
+        "size": 1139,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/codex-sg-v1/p0/pack-dry-run.stdout.txt",
+        "size": 568,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/codex-sg-v1/p0/pack-isolated-cache-command.json",
+        "size": 844,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/codex-sg-v1/p0/pack-isolated-cache.stderr.txt",
+        "size": 211,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/codex-sg-v1/p0/pack-isolated-cache.stdout.txt",
+        "size": 128969,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/codex-sg-v1/p0/repository-scan.json",
+        "size": 53990,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/codex-sg-v1/p0/stdio-smoke-command.json",
+        "size": 637,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/codex-sg-v1/p0/stdio-smoke.json",
+        "size": 4612,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/codex-sg-v1/p0/stdio-smoke.stderr.txt",
+        "size": 0,
+        "mode": 420
+      },
+      {
+        "path": "docs/verification/codex-sg-v1/p0/stdio-smoke.stdout.txt",
+        "size": 4751,
+        "mode": 420
+      },
+      {
+        "path": "icon.svg",
+        "size": 483,
+        "mode": 420
+      },
+      {
+        "path": "index.js",
+        "size": 1710,
+        "mode": 420
+      },
+      {
+        "path": "locale/en.json",
+        "size": 195,
+        "mode": 420
+      },
+      {
+        "path": "locale/zh.json",
+        "size": 184,
+        "mode": 420
+      },
+      {
+        "path": "package.json",
+        "size": 2202,
+        "mode": 420
+      },
+      {
+        "path": "scripts/codex-plugin-smoke.mjs",
+        "size": 5725,
+        "mode": 420
+      },
+      {
+        "path": "skills/sg-codex/SKILL.md",
+        "size": 2012,
+        "mode": 420
+      },
+      {
+        "path": "src/codex/protocol.js",
+        "size": 3310,
+        "mode": 420
+      },
+      {
+        "path": "src/codex/server.js",
+        "size": 2346,
+        "mode": 420
+      },
+      {
+        "path": "src/codex/tools.js",
+        "size": 1967,
+        "mode": 420
+      },
+      {
+        "path": "src/v3/acceptance.js",
+        "size": 1535,
+        "mode": 420
+      },
+      {
+        "path": "src/v3/approvals.js",
+        "size": 3187,
+        "mode": 420
+      },
+      {
+        "path": "src/v3/archive.js",
+        "size": 6145,
+        "mode": 420
+      },
+      {
+        "path": "src/v3/bootstrap-code.js",
+        "size": 14158,
+        "mode": 420
+      },
+      {
+        "path": "src/v3/bootstrap.js",
+        "size": 11383,
+        "mode": 420
+      },
+      {
+        "path": "src/v3/change.js",
+        "size": 22221,
+        "mode": 420
+      },
+      {
+        "path": "src/v3/commands.js",
+        "size": 16345,
+        "mode": 420
+      },
+      {
+        "path": "src/v3/coverage/jacoco.js",
+        "size": 4358,
+        "mode": 420
+      },
+      {
+        "path": "src/v3/dispatch.js",
+        "size": 2997,
+        "mode": 420
+      },
+      {
+        "path": "src/v3/env-scan.js",
+        "size": 9159,
+        "mode": 420
+      },
+      {
+        "path": "src/v3/env/gradle.js",
+        "size": 2341,
+        "mode": 420
+      },
+      {
+        "path": "src/v3/env/install.js",
+        "size": 4555,
+        "mode": 420
+      },
+      {
+        "path": "src/v3/env/java.js",
+        "size": 10132,
+        "mode": 420
+      },
+      {
+        "path": "src/v3/env/maven.js",
+        "size": 3027,
+        "mode": 420
+      },
+      {
+        "path": "src/v3/env/node.js",
+        "size": 7746,
+        "mode": 420
+      },
+      {
+        "path": "src/v3/env/python.js",
+        "size": 4907,
+        "mode": 420
+      },
+      {
+        "path": "src/v3/evidence.js",
+        "size": 2633,
+        "mode": 420
+      },
+      {
+        "path": "src/v3/executor.js",
+        "size": 22221,
+        "mode": 420
+      },
+      {
+        "path": "src/v3/formatter.js",
+        "size": 4741,
+        "mode": 420
+      },
+      {
+        "path": "src/v3/gate-card.js",
+        "size": 10516,
+        "mode": 420
+      },
+      {
+        "path": "src/v3/gate-summary.js",
+        "size": 10069,
+        "mode": 420
+      },
+      {
+        "path": "src/v3/guards.js",
+        "size": 2141,
+        "mode": 420
+      },
+      {
+        "path": "src/v3/init.js",
+        "size": 94507,
+        "mode": 420
+      },
+      {
+        "path": "src/v3/java-detect.js",
+        "size": 10930,
+        "mode": 420
+      },
+      {
+        "path": "src/v3/java-reports.js",
+        "size": 2748,
+        "mode": 420
+      },
+      {
+        "path": "src/v3/lock.js",
+        "size": 2832,
+        "mode": 420
+      },
+      {
+        "path": "src/v3/notice.js",
+        "size": 5487,
+        "mode": 420
+      },
+      {
+        "path": "src/v3/openspec/apply.js",
+        "size": 2297,
+        "mode": 420
+      },
+      {
+        "path": "src/v3/openspec/parser.js",
+        "size": 4533,
+        "mode": 420
+      },
+      {
+        "path": "src/v3/openspec/validator.js",
+        "size": 3107,
+        "mode": 420
+      },
+      {
+        "path": "src/v3/phase.js",
+        "size": 9136,
+        "mode": 420
+      },
+      {
+        "path": "src/v3/plan.js",
+        "size": 12525,
+        "mode": 420
+      },
+      {
+        "path": "src/v3/pool.js",
+        "size": 13414,
+        "mode": 420
+      },
+      {
+        "path": "src/v3/quality.js",
+        "size": 7296,
+        "mode": 420
+      },
+      {
+        "path": "src/v3/report.js",
+        "size": 2400,
+        "mode": 420
+      },
+      {
+        "path": "src/v3/requirements-doc.js",
+        "size": 25915,
+        "mode": 420
+      },
+      {
+        "path": "src/v3/requirements.js",
+        "size": 12229,
+        "mode": 420
+      },
+      {
+        "path": "src/v3/reverse.js",
+        "size": 16422,
+        "mode": 420
+      },
+      {
+        "path": "src/v3/review.js",
+        "size": 5462,
+        "mode": 420
+      },
+      {
+        "path": "src/v3/runs.js",
+        "size": 1912,
+        "mode": 420
+      },
+      {
+        "path": "src/v3/runtime.js",
+        "size": 1558,
+        "mode": 420
+      },
+      {
+        "path": "src/v3/scheduler.js",
+        "size": 1896,
+        "mode": 420
+      },
+      {
+        "path": "src/v3/skills.js",
+        "size": 2714,
+        "mode": 420
+      },
+      {
+        "path": "src/v3/state.js",
+        "size": 6112,
+        "mode": 420
+      },
+      {
+        "path": "src/v3/status-query.js",
+        "size": 1789,
+        "mode": 420
+      },
+      {
+        "path": "src/v3/status.js",
+        "size": 7448,
+        "mode": 420
+      },
+      {
+        "path": "src/v3/suites.js",
+        "size": 21601,
+        "mode": 420
+      },
+      {
+        "path": "src/v3/template-quality.js",
+        "size": 2612,
+        "mode": 420
+      },
+      {
+        "path": "src/v3/template-style.js",
+        "size": 4741,
+        "mode": 420
+      },
+      {
+        "path": "src/v3/testrunner.js",
+        "size": 1587,
+        "mode": 420
+      },
+      {
+        "path": "src/v3/toolchain.js",
+        "size": 7971,
+        "mode": 420
+      },
+      {
+        "path": "src/v3/tools.js",
+        "size": 50324,
+        "mode": 420
+      },
+      {
+        "path": "src/v3/util/fsx.js",
+        "size": 1869,
+        "mode": 420
+      },
+      {
+        "path": "src/v3/util/git.js",
+        "size": 848,
+        "mode": 420
+      },
+      {
+        "path": "src/v3/util/hash.js",
+        "size": 962,
+        "mode": 420
+      },
+      {
+        "path": "src/v3/worktrees.js",
+        "size": 7528,
+        "mode": 420
+      },
+      {
+        "path": "src/v4/adopt.js",
+        "size": 5310,
+        "mode": 420
+      },
+      {
+        "path": "src/v4/approval.js",
+        "size": 3378,
+        "mode": 420
+      },
+      {
+        "path": "src/v4/browser-e2e.js",
+        "size": 10814,
+        "mode": 420
+      },
+      {
+        "path": "src/v4/build.js",
+        "size": 17569,
+        "mode": 420
+      },
+      {
+        "path": "src/v4/catalog.js",
+        "size": 38936,
+        "mode": 420
+      },
+      {
+        "path": "src/v4/coverage-evidence.js",
+        "size": 2296,
+        "mode": 420
+      },
+      {
+        "path": "src/v4/drive.js",
+        "size": 2887,
+        "mode": 420
+      },
+      {
+        "path": "src/v4/environment.js",
+        "size": 10108,
+        "mode": 420
+      },
+      {
+        "path": "src/v4/execution.js",
+        "size": 9369,
+        "mode": 420
+      },
+      {
+        "path": "src/v4/frontend-code.js",
+        "size": 12844,
+        "mode": 420
+      },
+      {
+        "path": "src/v4/init.js",
+        "size": 10091,
+        "mode": 420
+      },
+      {
+        "path": "src/v4/java-env.js",
+        "size": 19525,
+        "mode": 420
+      },
+      {
+        "path": "src/v4/java-fullstack-template.js",
+        "size": 1831,
+        "mode": 420
+      },
+      {
+        "path": "src/v4/java-init.js",
+        "size": 17924,
+        "mode": 420
+      },
+      {
+        "path": "src/v4/java-runtime.js",
+        "size": 5582,
+        "mode": 420
+      },
+      {
+        "path": "src/v4/java-verify.js",
+        "size": 30408,
+        "mode": 420
+      },
+      {
+        "path": "src/v4/java-versions.js",
+        "size": 15611,
+        "mode": 420
+      },
+      {
+        "path": "src/v4/mirrors.js",
+        "size": 4937,
+        "mode": 420
+      },
+      {
+        "path": "src/v4/node-code.js",
+        "size": 22236,
+        "mode": 420
+      },
+      {
+        "path": "src/v4/provision.js",
+        "size": 19560,
+        "mode": 420
+      },
+      {
+        "path": "src/v4/python-code.js",
+        "size": 10575,
+        "mode": 420
+      },
+      {
+        "path": "src/v4/scheduler.js",
+        "size": 2286,
+        "mode": 420
+      },
+      {
+        "path": "src/v4/verify-evidence.js",
+        "size": 6993,
+        "mode": 420
+      },
+      {
+        "path": "src/v4/wizard.js",
+        "size": 17752,
+        "mode": 420
+      },
+      {
+        "path": "src/v4/workspace-change.js",
+        "size": 11727,
+        "mode": 420
+      },
+      {
+        "path": "src/v4/workspace.js",
+        "size": 10047,
+        "mode": 420
+      }
+    ],
+    "entryCount": 902,
+    "bundled": []
+  }
+]

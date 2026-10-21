@@ -1,0 +1,3 @@
+{"at":"2026-10-21T09:08:45.799Z","phase":"scan","message":"扫描 JDK / Maven / Node 环境…"}
+{"at":"2026-10-21T09:08:47.309Z","phase":"stage","message":"执行 backend-verify：C:\\Users\\Administrator\\.m2\\wrapper\\dists\\apache-maven-3.9.11\\03d7e36a140982eea48e22c1dcac01d8862b2550b2939e09a0809bbc5182a5bc\\bin\\mvn.cmd -B -ntp clean verify"}
+{"at":"2026-10-21T09:08:56.336Z","phase":"stage-failed","message":"backend-verify 失败（exit 1）"}

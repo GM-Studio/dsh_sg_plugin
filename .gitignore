@@ -4,6 +4,7 @@ dist/
 Thumbs.db
 *.log
 !docs/verification/2026-10-21-standard-template/**/*.log
+!docs/verification/codex-sg-v1/**/*.log
 *.tgz
 coverage/
 !src/v3/coverage/

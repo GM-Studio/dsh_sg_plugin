@@ -1,0 +1,78 @@
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+ :: Spring Boot ::               (v2.7.18)
+
+2026-10-21 17:16:57.102  INFO 26732 --- [           main] com.example.tasks.TaskApplication        : Starting TaskApplication v1.0.0 using Java 1.8.0_472 on MS-RXGWXGBMENQQ with PID 26732 (C:\Users\Administrator\AppData\Local\Temp\sg-codex-acceptance-yEExtg\jdk8-boot2.7\backend\target\task-api-1.0.0.jar started by Administrator in C:\Users\Administrator\AppData\Local\Temp\sg-codex-acceptance-yEExtg\jdk8-boot2.7\backend)
+2026-10-21 17:16:57.104  INFO 26732 --- [           main] com.example.tasks.TaskApplication        : No active profile set, falling back to 1 default profile: "default"
+2026-10-21 17:16:57.553  INFO 26732 --- [           main] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2026-10-21 17:16:57.580  INFO 26732 --- [           main] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 22 ms. Found 2 JPA repository interfaces.
+2026-10-21 17:16:58.199  INFO 26732 --- [           main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat initialized with port(s): 12580 (http)
+2026-10-21 17:16:58.204  INFO 26732 --- [           main] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
+2026-10-21 17:16:58.205  INFO 26732 --- [           main] org.apache.catalina.core.StandardEngine  : Starting Servlet engine: [Apache Tomcat/9.0.83]
+2026-10-21 17:16:58.247  INFO 26732 --- [           main] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring embedded WebApplicationContext
+2026-10-21 17:16:58.247  INFO 26732 --- [           main] w.s.c.ServletWebServerApplicationContext : Root WebApplicationContext: initialization completed in 1119 ms
+2026-10-21 17:16:58.476  INFO 26732 --- [           main] o.hibernate.jpa.internal.util.LogHelper  : HHH000204: Processing PersistenceUnitInfo [name: default]
+2026-10-21 17:16:58.534  INFO 26732 --- [           main] org.hibernate.Version                    : HHH000412: Hibernate ORM core version 5.6.15.Final
+2026-10-21 17:16:58.642  INFO 26732 --- [           main] o.hibernate.annotations.common.Version   : HCANN000001: Hibernate Commons Annotations {5.1.2.Final}
+2026-10-21 17:16:58.706  INFO 26732 --- [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Starting...
+2026-10-21 17:16:58.870  INFO 26732 --- [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Start completed.
+2026-10-21 17:16:58.888  INFO 26732 --- [           main] org.hibernate.dialect.Dialect            : HHH000400: Using dialect: org.hibernate.dialect.H2Dialect
+2026-10-21 17:16:59.209  INFO 26732 --- [           main] o.h.e.t.j.p.i.JtaPlatformInitiator       : HHH000490: Using JtaPlatform implementation: [org.hibernate.engine.transaction.jta.platform.internal.NoJtaPlatform]
+2026-10-21 17:16:59.215  INFO 26732 --- [           main] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
+2026-10-21 17:16:59.924  INFO 26732 --- [           main] o.s.s.web.DefaultSecurityFilterChain     : Will secure any request with [org.springframework.security.web.session.DisableEncodeUrlFilter@336f1079, org.springframework.security.web.context.request.async.WebAsyncManagerIntegrationFilter@2f16c6b3, org.springframework.security.web.context.SecurityContextPersistenceFilter@8c3619e, org.springframework.security.web.header.HeaderWriterFilter@7749bf93, org.springframework.security.web.csrf.CsrfFilter@27eedb64, org.springframework.security.web.savedrequest.RequestCacheAwareFilter@6f63b475, org.springframework.security.web.servletapi.SecurityContextHolderAwareRequestFilter@5bf8fa12, org.springframework.security.web.authentication.AnonymousAuthenticationFilter@34158c08, org.springframework.security.web.session.SessionManagementFilter@39a2bb97, org.springframework.security.web.access.ExceptionTranslationFilter@6bffbc6d, org.springframework.security.web.access.intercept.AuthorizationFilter@1a20270e]
+2026-10-21 17:17:00.311  INFO 26732 --- [           main] o.s.b.a.e.web.EndpointLinksResolver      : Exposing 2 endpoint(s) beneath base path '/actuator'
+2026-10-21 17:17:00.341  INFO 26732 --- [           main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat started on port(s): 12580 (http) with context path ''
+2026-10-21 17:17:00.347  INFO 26732 --- [           main] com.example.tasks.TaskApplication        : Started TaskApplication in 3.442 seconds (JVM running for 3.677)
+2026-10-21 17:17:00.382  INFO 26732 --- [.1-12580-exec-2] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring DispatcherServlet 'dispatcherServlet'
+2026-10-21 17:17:00.382  INFO 26732 --- [.1-12580-exec-2] o.s.web.servlet.DispatcherServlet        : Initializing Servlet 'dispatcherServlet'
+2026-10-21 17:17:00.383  INFO 26732 --- [.1-12580-exec-2] o.s.web.servlet.DispatcherServlet        : Completed initialization in 1 ms
+2026-10-21 17:17:01.409  INFO 26732 --- [       Thread-2] o.apache.catalina.core.StandardService   : Stopping service [Tomcat]
+2026-10-21 17:17:01.410  INFO 26732 --- [       Thread-2] o.a.c.c.C.[Tomcat].[localhost].[/]       : Destroying Spring FrameworkServlet 'dispatcherServlet'
+2026-10-21 17:17:01.417  INFO 26732 --- [       Thread-2] j.LocalContainerEntityManagerFactoryBean : Closing JPA EntityManagerFactory for persistence unit 'default'
+2026-10-21 17:17:01.421  INFO 26732 --- [       Thread-2] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Shutdown initiated...
+2026-10-21 17:17:01.431  INFO 26732 --- [       Thread-2] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Shutdown completed.
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+ :: Spring Boot ::               (v2.7.18)
+
+2026-10-21 17:17:01.957  INFO 17948 --- [           main] com.example.tasks.TaskApplication        : Starting TaskApplication v1.0.0 using Java 1.8.0_472 on MS-RXGWXGBMENQQ with PID 17948 (C:\Users\Administrator\AppData\Local\Temp\sg-codex-acceptance-yEExtg\jdk8-boot2.7\backend\target\task-api-1.0.0.jar started by Administrator in C:\Users\Administrator\AppData\Local\Temp\sg-codex-acceptance-yEExtg\jdk8-boot2.7\backend)
+2026-10-21 17:17:01.958  INFO 17948 --- [           main] com.example.tasks.TaskApplication        : No active profile set, falling back to 1 default profile: "default"
+2026-10-21 17:17:02.417  INFO 17948 --- [           main] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2026-10-21 17:17:02.448  INFO 17948 --- [           main] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 25 ms. Found 2 JPA repository interfaces.
+2026-10-21 17:17:03.011  INFO 17948 --- [           main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat initialized with port(s): 12580 (http)
+2026-10-21 17:17:03.017  INFO 17948 --- [           main] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
+2026-10-21 17:17:03.017  INFO 17948 --- [           main] org.apache.catalina.core.StandardEngine  : Starting Servlet engine: [Apache Tomcat/9.0.83]
+2026-10-21 17:17:03.110  INFO 17948 --- [           main] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring embedded WebApplicationContext
+2026-10-21 17:17:03.110  INFO 17948 --- [           main] w.s.c.ServletWebServerApplicationContext : Root WebApplicationContext: initialization completed in 1130 ms
+2026-10-21 17:17:03.341  INFO 17948 --- [           main] o.hibernate.jpa.internal.util.LogHelper  : HHH000204: Processing PersistenceUnitInfo [name: default]
+2026-10-21 17:17:03.395  INFO 17948 --- [           main] org.hibernate.Version                    : HHH000412: Hibernate ORM core version 5.6.15.Final
+2026-10-21 17:17:03.498  INFO 17948 --- [           main] o.hibernate.annotations.common.Version   : HCANN000001: Hibernate Commons Annotations {5.1.2.Final}
+2026-10-21 17:17:03.559  INFO 17948 --- [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Starting...
+2026-10-21 17:17:03.703  INFO 17948 --- [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Start completed.
+2026-10-21 17:17:03.725  INFO 17948 --- [           main] org.hibernate.dialect.Dialect            : HHH000400: Using dialect: org.hibernate.dialect.H2Dialect
+2026-10-21 17:17:04.075  INFO 17948 --- [           main] o.h.e.t.j.p.i.JtaPlatformInitiator       : HHH000490: Using JtaPlatform implementation: [org.hibernate.engine.transaction.jta.platform.internal.NoJtaPlatform]
+2026-10-21 17:17:04.080  INFO 17948 --- [           main] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
+2026-10-21 17:17:04.734  INFO 17948 --- [           main] o.s.s.web.DefaultSecurityFilterChain     : Will secure any request with [org.springframework.security.web.session.DisableEncodeUrlFilter@5812f68b, org.springframework.security.web.context.request.async.WebAsyncManagerIntegrationFilter@4426bff1, org.springframework.security.web.context.SecurityContextPersistenceFilter@1b84f475, org.springframework.security.web.header.HeaderWriterFilter@2f62ea70, org.springframework.security.web.csrf.CsrfFilter@42b02722, org.springframework.security.web.savedrequest.RequestCacheAwareFilter@13330ac6, org.springframework.security.web.servletapi.SecurityContextHolderAwareRequestFilter@3ad2e17, org.springframework.security.web.authentication.AnonymousAuthenticationFilter@3c7c886c, org.springframework.security.web.session.SessionManagementFilter@53f6fd09, org.springframework.security.web.access.ExceptionTranslationFilter@2b76ff4e, org.springframework.security.web.access.intercept.AuthorizationFilter@29ca3d04]
+2026-10-21 17:17:05.136  INFO 17948 --- [           main] o.s.b.a.e.web.EndpointLinksResolver      : Exposing 2 endpoint(s) beneath base path '/actuator'
+2026-10-21 17:17:05.169  INFO 17948 --- [           main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat started on port(s): 12580 (http) with context path ''
+2026-10-21 17:17:05.177  INFO 17948 --- [           main] com.example.tasks.TaskApplication        : Started TaskApplication in 3.42 seconds (JVM running for 3.677)
+2026-10-21 17:17:05.251  INFO 17948 --- [.1-12580-exec-1] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring DispatcherServlet 'dispatcherServlet'
+2026-10-21 17:17:05.251  INFO 17948 --- [.1-12580-exec-1] o.s.web.servlet.DispatcherServlet        : Initializing Servlet 'dispatcherServlet'
+2026-10-21 17:17:05.252  INFO 17948 --- [.1-12580-exec-1] o.s.web.servlet.DispatcherServlet        : Completed initialization in 1 ms
+
+HTTP login/CSRF/roles/CRUD/pagination/batch/CSV/files/restart/logout passed
+2026-10-21 17:17:06.254  INFO 17948 --- [       Thread-2] o.apache.catalina.core.StandardService   : Stopping service [Tomcat]
+2026-10-21 17:17:06.255  INFO 17948 --- [       Thread-2] o.a.c.c.C.[Tomcat].[localhost].[/]       : Destroying Spring FrameworkServlet 'dispatcherServlet'
+2026-10-21 17:17:06.260  INFO 17948 --- [       Thread-2] j.LocalContainerEntityManagerFactoryBean : Closing JPA EntityManagerFactory for persistence unit 'default'
+2026-10-21 17:17:06.262  INFO 17948 --- [       Thread-2] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Shutdown initiated...
+2026-10-21 17:17:06.272  INFO 17948 --- [       Thread-2] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Shutdown completed.

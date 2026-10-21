@@ -1,0 +1,49 @@
+{
+  "schemaVersion": 1,
+  "mode": "green",
+  "cases": [
+    {
+      "id": "CASE-AC-1",
+      "status": "pass",
+      "file": "backend/src/test/java/com/example/tasks/PriorityContractTest.java"
+    },
+    {
+      "id": "CASE-AC-2",
+      "status": "pass",
+      "file": "frontend/test/priority-contract.test.ts"
+    }
+  ],
+  "commands": {
+    "backend": {
+      "command": "C:\\Users\\Administrator\\AppData\\Local\\Temp\\sg-native-e2e-priority-20261021-03\\.specgate\\codex\\worktrees\\priority-e2e\\test\\backend\\mvnw.cmd",
+      "args": [
+        "-B",
+        "-ntp",
+        "-Dtest=PriorityContractTest",
+        "test"
+      ],
+      "cwd": "C:\\Users\\Administrator\\AppData\\Local\\Temp\\sg-native-e2e-priority-20261021-03\\.specgate\\codex\\worktrees\\priority-e2e\\test\\backend",
+      "status": 0
+    },
+    "frontendInstall": {
+      "command": "D:\\Program Files\\nodejs\\npm.cmd",
+      "args": [
+        "ci",
+        "--no-audit",
+        "--no-fund"
+      ],
+      "cwd": "C:\\Users\\Administrator\\AppData\\Local\\Temp\\sg-native-e2e-priority-20261021-03\\.specgate\\codex\\worktrees\\priority-e2e\\test\\frontend",
+      "status": 0
+    },
+    "frontend": {
+      "command": "D:\\Program Files\\nodejs\\node.exe",
+      "args": [
+        "C:\\Users\\Administrator\\AppData\\Local\\Temp\\sg-native-e2e-priority-20261021-03\\.specgate\\codex\\worktrees\\priority-e2e\\test\\frontend\\node_modules\\vitest\\vitest.mjs",
+        "run",
+        "test/priority-contract.test.ts"
+      ],
+      "cwd": "C:\\Users\\Administrator\\AppData\\Local\\Temp\\sg-native-e2e-priority-20261021-03\\.specgate\\codex\\worktrees\\priority-e2e\\test\\frontend",
+      "status": 0
+    }
+  }
+}

@@ -1,0 +1,6 @@
+{
+  "ok": false,
+  "code": "VERIFY_EVIDENCE_INCOMPLETE",
+  "message": "最新验证尚未完整通过",
+  "v1Complete": false
+}

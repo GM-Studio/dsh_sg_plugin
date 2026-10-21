@@ -1,0 +1,24 @@
+{
+  "ok": true,
+  "summary": "Frontend priority editing and P<n> display are implemented and committed in the isolated -06 frontend worktree.",
+  "commit": "0ad28494137dfc2a973f15e2efb9831afadeb106",
+  "files": [
+    "frontend/src/App.vue",
+    "frontend/src/api/types.ts",
+    "frontend/src/style.css"
+  ],
+  "commands": [
+    { "name": "npm ci", "status": 0 },
+    { "name": "npm run format", "status": 0 },
+    { "name": "npm run lint", "status": 0 },
+    { "name": "npm run build", "status": 0 },
+    {
+      "name": "npm test",
+      "status": 0,
+      "detail": "2 files, 11 existing Vitest tests passed"
+    }
+  ],
+  "notRun": [
+    "The frozen priority-contract test runs in the P7 test worktree after integration."
+  ]
+}

@@ -1,0 +1,15 @@
+{"at":"2026-10-21T09:09:39.017Z","phase":"scan","message":"扫描 JDK / Maven / Node 环境…"}
+{"at":"2026-10-21T09:09:40.531Z","phase":"stage","message":"执行 backend-verify：C:\\Users\\Administrator\\.m2\\wrapper\\dists\\apache-maven-3.9.11\\03d7e36a140982eea48e22c1dcac01d8862b2550b2939e09a0809bbc5182a5bc\\bin\\mvn.cmd -B -ntp clean verify"}
+{"at":"2026-10-21T09:09:54.824Z","phase":"stage-done","message":"backend-verify 通过"}
+{"at":"2026-10-21T09:09:54.824Z","phase":"stage","message":"执行 frontend-install：D:\\Program Files\\nodejs\\npm.cmd ci --no-audit --no-fund"}
+{"at":"2026-10-21T09:10:06.935Z","phase":"stage-done","message":"frontend-install 通过"}
+{"at":"2026-10-21T09:10:06.935Z","phase":"stage","message":"执行 frontend-build：D:\\Program Files\\nodejs\\npm.cmd run build"}
+{"at":"2026-10-21T09:10:11.232Z","phase":"stage-done","message":"frontend-build 通过"}
+{"at":"2026-10-21T09:10:11.232Z","phase":"stage","message":"执行 frontend-test：D:\\Program Files\\nodejs\\npm.cmd run test -- --reporter=json --outputFile=C:\\Users\\Administrator\\AppData\\Local\\Temp\\sg-codex-acceptance-gzsrbB\\jdk8-boot2.7\\.specgate\\verify-runs\\2026-10-21T09-09-39-012Z-19347b89\\frontend-tests.json"}
+{"at":"2026-10-21T09:10:13.553Z","phase":"stage-done","message":"frontend-test 通过"}
+{"at":"2026-10-21T09:10:13.553Z","phase":"stage","message":"执行 frontend-lint：D:\\Program Files\\nodejs\\npm.cmd run lint"}
+{"at":"2026-10-21T09:10:15.361Z","phase":"stage-done","message":"frontend-lint 通过"}
+{"at":"2026-10-21T09:10:15.361Z","phase":"stage","message":"执行 frontend-format：D:\\Program Files\\nodejs\\npm.cmd run format:check"}
+{"at":"2026-10-21T09:10:15.917Z","phase":"stage-done","message":"frontend-format 通过"}
+{"at":"2026-10-21T09:10:15.924Z","phase":"stage","message":"执行 runtime：启动后端、HTTP CRUD、重启持久化"}
+{"at":"2026-10-21T09:10:25.968Z","phase":"stage-done","message":"runtime 通过"}

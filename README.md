@@ -1,5 +1,7 @@
 # SpecGate for DSH
 
+> **Codex 原生适配开发中**：独立插件骨架和本地 stdio MCP 已覆盖 P0–P9 核心，包括初始化、真实验证、需求、计划/测试冻结、并行开发、质量门、三档 Review、H3 与归档发布。真实 Review/H3 可信宿主链路仍待验收；缺少服务器角色提供器时工具 fail-closed。[P8/P9 设计](docs/design/codex-p8-p9-review-release.zh.md) · [实施进度](docs/plans/codex-sg-change-add-v1-progress.md)。现有 DSH 入口保持兼容。
+
 **中文** | [English](README.en.md)
 
 ![version](https://img.shields.io/badge/version-4.3.0-blue)

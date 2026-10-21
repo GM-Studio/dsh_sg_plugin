@@ -1,5 +1,7 @@
 # SpecGate for DSH
 
+> **Codex adapter in development**: the independent plugin and local stdio MCP cover the P0–P9 core, including initialization, real verification, requirement/plan/test freeze, parallel development, quality, three-tier Review, H3, and release. The trusted native Review/H3 host path still needs acceptance; tools fail closed when server-owned role providers are absent. See the [P8/P9 design (Chinese)](docs/design/codex-p8-p9-review-release.zh.md) and [implementation progress (Chinese)](docs/plans/codex-sg-change-add-v1-progress.md). Existing DSH entry points remain compatible.
+
 [中文](README.md) | **English**
 
 ![version](https://img.shields.io/badge/version-4.3.1-blue)

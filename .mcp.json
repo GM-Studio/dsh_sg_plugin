@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "specgate": {
+      "command": "node",
+      "args": ["${PLUGIN_ROOT}/src/codex/server.js"]
+    }
+  }
+}

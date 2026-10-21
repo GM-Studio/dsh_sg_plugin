@@ -1,0 +1,280 @@
+{
+  "scope": "codex-java-vue-windows-matrix",
+  "startedAt": "2026-10-21T09:16:17.287Z",
+  "platform": "win32",
+  "arch": "x64",
+  "node": "v24.14.0",
+  "workspace": "C:\\Users\\Administrator\\AppData\\Local\\Temp\\sg-codex-acceptance-yEExtg",
+  "concurrency": 2,
+  "sdkDownloads": false,
+  "goldenUpdated": false,
+  "linux": "not-run",
+  "presets": [
+    {
+      "preset": "jdk8-boot2.7",
+      "status": "passed",
+      "root": "C:\\Users\\Administrator\\AppData\\Local\\Temp\\sg-codex-acceptance-yEExtg\\jdk8-boot2.7",
+      "startedAt": "2026-10-21T09:16:17.288Z",
+      "code": "VERIFIED",
+      "failedStage": null,
+      "checks": [
+        {
+          "name": "backend-verify",
+          "status": "passed",
+          "log": ".specgate/verify-runs/2026-10-21T09-16-19-932Z-282cfc27/backend-verify.log",
+          "exitCode": 0
+        },
+        {
+          "name": "frontend-install",
+          "status": "passed",
+          "log": ".specgate/verify-runs/2026-10-21T09-16-19-932Z-282cfc27/frontend-install.log",
+          "exitCode": 0
+        },
+        {
+          "name": "frontend-build",
+          "status": "passed",
+          "log": ".specgate/verify-runs/2026-10-21T09-16-19-932Z-282cfc27/frontend-build.log",
+          "exitCode": 0
+        },
+        {
+          "name": "frontend-test",
+          "status": "passed",
+          "log": ".specgate/verify-runs/2026-10-21T09-16-19-932Z-282cfc27/frontend-test.log",
+          "exitCode": 0
+        },
+        {
+          "name": "frontend-lint",
+          "status": "passed",
+          "log": ".specgate/verify-runs/2026-10-21T09-16-19-932Z-282cfc27/frontend-lint.log",
+          "exitCode": 0
+        },
+        {
+          "name": "frontend-format",
+          "status": "passed",
+          "log": ".specgate/verify-runs/2026-10-21T09-16-19-932Z-282cfc27/frontend-format.log",
+          "exitCode": 0
+        },
+        {
+          "name": "coverage",
+          "status": "passed",
+          "log": ".specgate/verify-runs/2026-10-21T09-16-19-932Z-282cfc27/coverage.log",
+          "exitCode": 0
+        },
+        {
+          "name": "runtime",
+          "status": "passed",
+          "log": ".specgate/verify-runs/2026-10-21T09-16-19-932Z-282cfc27/runtime.log",
+          "exitCode": 0
+        },
+        {
+          "name": "frontend-runtime",
+          "status": "passed",
+          "log": ".specgate/codex-verify-runs/2026-10-21T09-16-19-745Z-c15e2ac1/frontend-runtime.log",
+          "exitCode": 0
+        }
+      ],
+      "reason": null,
+      "endedAt": "2026-10-21T09:17:06.868Z"
+    },
+    {
+      "preset": "jdk17-boot3.5",
+      "status": "passed",
+      "root": "C:\\Users\\Administrator\\AppData\\Local\\Temp\\sg-codex-acceptance-yEExtg\\jdk17-boot3.5",
+      "startedAt": "2026-10-21T09:16:17.411Z",
+      "code": "VERIFIED",
+      "failedStage": null,
+      "checks": [
+        {
+          "name": "backend-verify",
+          "status": "passed",
+          "log": ".specgate/verify-runs/2026-10-21T09-16-22-459Z-1be276ed/backend-verify.log",
+          "exitCode": 0
+        },
+        {
+          "name": "frontend-install",
+          "status": "passed",
+          "log": ".specgate/verify-runs/2026-10-21T09-16-22-459Z-1be276ed/frontend-install.log",
+          "exitCode": 0
+        },
+        {
+          "name": "frontend-build",
+          "status": "passed",
+          "log": ".specgate/verify-runs/2026-10-21T09-16-22-459Z-1be276ed/frontend-build.log",
+          "exitCode": 0
+        },
+        {
+          "name": "frontend-test",
+          "status": "passed",
+          "log": ".specgate/verify-runs/2026-10-21T09-16-22-459Z-1be276ed/frontend-test.log",
+          "exitCode": 0
+        },
+        {
+          "name": "frontend-lint",
+          "status": "passed",
+          "log": ".specgate/verify-runs/2026-10-21T09-16-22-459Z-1be276ed/frontend-lint.log",
+          "exitCode": 0
+        },
+        {
+          "name": "frontend-format",
+          "status": "passed",
+          "log": ".specgate/verify-runs/2026-10-21T09-16-22-459Z-1be276ed/frontend-format.log",
+          "exitCode": 0
+        },
+        {
+          "name": "coverage",
+          "status": "passed",
+          "log": ".specgate/verify-runs/2026-10-21T09-16-22-459Z-1be276ed/coverage.log",
+          "exitCode": 0
+        },
+        {
+          "name": "runtime",
+          "status": "passed",
+          "log": ".specgate/verify-runs/2026-10-21T09-16-22-459Z-1be276ed/runtime.log",
+          "exitCode": 0
+        },
+        {
+          "name": "frontend-runtime",
+          "status": "passed",
+          "log": ".specgate/codex-verify-runs/2026-10-21T09-16-22-253Z-926abbd9/frontend-runtime.log",
+          "exitCode": 0
+        }
+      ],
+      "reason": null,
+      "endedAt": "2026-10-21T09:17:19.217Z"
+    },
+    {
+      "preset": "jdk21-boot3.5",
+      "status": "passed",
+      "root": "C:\\Users\\Administrator\\AppData\\Local\\Temp\\sg-codex-acceptance-yEExtg\\jdk21-boot3.5",
+      "startedAt": "2026-10-21T09:17:06.868Z",
+      "code": "VERIFIED",
+      "failedStage": null,
+      "checks": [
+        {
+          "name": "backend-verify",
+          "status": "passed",
+          "log": ".specgate/verify-runs/2026-10-21T09-17-09-256Z-bf2e4795/backend-verify.log",
+          "exitCode": 0
+        },
+        {
+          "name": "frontend-install",
+          "status": "passed",
+          "log": ".specgate/verify-runs/2026-10-21T09-17-09-256Z-bf2e4795/frontend-install.log",
+          "exitCode": 0
+        },
+        {
+          "name": "frontend-build",
+          "status": "passed",
+          "log": ".specgate/verify-runs/2026-10-21T09-17-09-256Z-bf2e4795/frontend-build.log",
+          "exitCode": 0
+        },
+        {
+          "name": "frontend-test",
+          "status": "passed",
+          "log": ".specgate/verify-runs/2026-10-21T09-17-09-256Z-bf2e4795/frontend-test.log",
+          "exitCode": 0
+        },
+        {
+          "name": "frontend-lint",
+          "status": "passed",
+          "log": ".specgate/verify-runs/2026-10-21T09-17-09-256Z-bf2e4795/frontend-lint.log",
+          "exitCode": 0
+        },
+        {
+          "name": "frontend-format",
+          "status": "passed",
+          "log": ".specgate/verify-runs/2026-10-21T09-17-09-256Z-bf2e4795/frontend-format.log",
+          "exitCode": 0
+        },
+        {
+          "name": "coverage",
+          "status": "passed",
+          "log": ".specgate/verify-runs/2026-10-21T09-17-09-256Z-bf2e4795/coverage.log",
+          "exitCode": 0
+        },
+        {
+          "name": "runtime",
+          "status": "passed",
+          "log": ".specgate/verify-runs/2026-10-21T09-17-09-256Z-bf2e4795/runtime.log",
+          "exitCode": 0
+        },
+        {
+          "name": "frontend-runtime",
+          "status": "passed",
+          "log": ".specgate/codex-verify-runs/2026-10-21T09-17-09-065Z-970cbfea/frontend-runtime.log",
+          "exitCode": 0
+        }
+      ],
+      "reason": null,
+      "endedAt": "2026-10-21T09:17:57.739Z"
+    },
+    {
+      "preset": "jdk21-boot4.0",
+      "status": "passed",
+      "root": "C:\\Users\\Administrator\\AppData\\Local\\Temp\\sg-codex-acceptance-yEExtg\\jdk21-boot4.0",
+      "startedAt": "2026-10-21T09:17:19.218Z",
+      "code": "VERIFIED",
+      "failedStage": null,
+      "checks": [
+        {
+          "name": "backend-verify",
+          "status": "passed",
+          "log": ".specgate/verify-runs/2026-10-21T09-17-21-327Z-af038d2b/backend-verify.log",
+          "exitCode": 0
+        },
+        {
+          "name": "frontend-install",
+          "status": "passed",
+          "log": ".specgate/verify-runs/2026-10-21T09-17-21-327Z-af038d2b/frontend-install.log",
+          "exitCode": 0
+        },
+        {
+          "name": "frontend-build",
+          "status": "passed",
+          "log": ".specgate/verify-runs/2026-10-21T09-17-21-327Z-af038d2b/frontend-build.log",
+          "exitCode": 0
+        },
+        {
+          "name": "frontend-test",
+          "status": "passed",
+          "log": ".specgate/verify-runs/2026-10-21T09-17-21-327Z-af038d2b/frontend-test.log",
+          "exitCode": 0
+        },
+        {
+          "name": "frontend-lint",
+          "status": "passed",
+          "log": ".specgate/verify-runs/2026-10-21T09-17-21-327Z-af038d2b/frontend-lint.log",
+          "exitCode": 0
+        },
+        {
+          "name": "frontend-format",
+          "status": "passed",
+          "log": ".specgate/verify-runs/2026-10-21T09-17-21-327Z-af038d2b/frontend-format.log",
+          "exitCode": 0
+        },
+        {
+          "name": "coverage",
+          "status": "passed",
+          "log": ".specgate/verify-runs/2026-10-21T09-17-21-327Z-af038d2b/coverage.log",
+          "exitCode": 0
+        },
+        {
+          "name": "runtime",
+          "status": "passed",
+          "log": ".specgate/verify-runs/2026-10-21T09-17-21-327Z-af038d2b/runtime.log",
+          "exitCode": 0
+        },
+        {
+          "name": "frontend-runtime",
+          "status": "passed",
+          "log": ".specgate/codex-verify-runs/2026-10-21T09-17-21-157Z-f3f4cd78/frontend-runtime.log",
+          "exitCode": 0
+        }
+      ],
+      "reason": null,
+      "endedAt": "2026-10-21T09:18:08.743Z"
+    }
+  ],
+  "endedAt": "2026-10-21T09:18:08.743Z",
+  "status": "passed"
+}

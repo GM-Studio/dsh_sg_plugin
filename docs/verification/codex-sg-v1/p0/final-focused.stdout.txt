@@ -1,0 +1,18 @@
+✔ Codex manifest and MCP entry stay contained in the shipped plugin (1.2725ms)
+✔ offline tarball install launches the packaged entry from a different project cwd (7866.4443ms)
+✔ smoke evidence rejects stdout pollution after the final reply (58.8931ms)
+✔ stdio handshake and diagnostic tools leave a nonempty project unchanged (58.304ms)
+✔ unknown versions negotiate the supported version; invalid initialize can be corrected (55.6716ms)
+✔ lifecycle rejects calls before handshake and repeated initialization (55.0841ms)
+✔ malformed JSON, batch messages and invalid envelopes do not terminate the server (56.0395ms)
+✔ tools reject forged approvals, arguments and unknown methods; notifications get no reply (56.2997ms)
+✔ large and truncated frames fail closed; an empty EOF exits cleanly (177.3772ms)
+✔ project root comes from startup options; invalid options cannot start a workflow (124.2923ms)
+ℹ tests 10
+ℹ suites 0
+ℹ pass 10
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 8072.323

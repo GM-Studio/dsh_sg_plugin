@@ -1,0 +1,21 @@
+{
+  "command": "npm pack --dry-run --json --ignore-scripts",
+  "argv": [
+    "D:\\Program Files\\nodejs\\node.exe",
+    "D:\\Program Files\\nodejs\\node_modules\\npm\\bin\\npm-cli.js",
+    "pack",
+    "--dry-run",
+    "--json",
+    "--ignore-scripts"
+  ],
+  "cwd": "E:\\ai_workflow\\specgate",
+  "startedAt": "2026-10-21T08:20:08.567Z",
+  "endedAt": "2026-10-21T08:20:09.406Z",
+  "exitCode": 4294963248,
+  "signal": null,
+  "error": null,
+  "stdout": "pack-dry-run.stdout.txt",
+  "stderr": "pack-dry-run.stderr.txt",
+  "platform": "win32",
+  "node": "v24.14.0"
+}
