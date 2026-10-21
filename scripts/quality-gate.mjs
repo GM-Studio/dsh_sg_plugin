@@ -116,6 +116,14 @@ function mergeBaseOf(ref) {
   }
 }
 
+function upstreamRef() {
+  try {
+    return git(['rev-parse', '--abbrev-ref', '--symbolic-full-name', '@{upstream}']).trim();
+  } catch {
+    return null;
+  }
+}
+
 function resolveBase(candidate) {
   if (
     candidate &&
@@ -124,7 +132,8 @@ function resolveBase(candidate) {
   ) {
     return mergeBaseOf(candidate) || candidate;
   }
-  for (const ref of ['origin/main', 'origin/master', 'main', 'master']) {
+  const upstream = upstreamRef();
+  for (const ref of [upstream, 'origin/main', 'origin/master', 'main', 'master'].filter(Boolean)) {
     if (gitSucceeds(['rev-parse', '--verify', `${ref}^{commit}`])) {
       const base = mergeBaseOf(ref);
       if (base) return base;
