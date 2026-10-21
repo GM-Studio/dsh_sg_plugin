@@ -55,7 +55,7 @@
     "access": "public"
   },
   "scripts": {
-    "test": "node --test",
+    "test": "node --import ./test/setup-temp.mjs --test",
     "lint": "eslint .",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
