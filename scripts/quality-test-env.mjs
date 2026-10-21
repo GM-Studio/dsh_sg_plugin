@@ -3,6 +3,9 @@
 export function isolatedTestEnvironment(env, localVariables) {
   const excluded = new Set(localVariables.map((name) => name.toUpperCase()));
   return Object.fromEntries(
-    Object.entries(env).filter(([name]) => !excluded.has(name.toUpperCase())),
+    Object.entries(env).filter(
+      ([name]) =>
+        !excluded.has(name.toUpperCase()) && !/^GIT_CONFIG_(?:KEY|VALUE)_[0-9]+$/i.test(name),
+    ),
   );
 }

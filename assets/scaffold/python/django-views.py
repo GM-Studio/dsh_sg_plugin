@@ -26,10 +26,14 @@ class ItemList(APIView):
         global _sequence
         payload = request.data if isinstance(request.data, dict) else {}
         name = payload.get("name")
-        if not isinstance(name, type(u"")) or not name.strip():
+        if not isinstance(name, type("")) or not name.strip():
             return Response({"error": "name is required"}, status=400)
         _sequence += 1
-        item = {"id": _sequence, "name": name.strip(), "description": payload.get("description", "")}
+        item = {
+            "id": _sequence,
+            "name": name.strip(),
+            "description": payload.get("description", ""),
+        }
         _items[item["id"]] = item
         return Response(item, status=201)
 
@@ -57,8 +61,12 @@ class ItemMutation(APIView):
         if action != "update":
             return Response({"error": "not found"}, status=404)
         name = payload.get("name")
-        if not isinstance(name, type(u"")) or not name.strip():
+        if not isinstance(name, type("")) or not name.strip():
             return Response({"error": "name is required"}, status=400)
-        item = {"id": item_id, "name": name.strip(), "description": payload.get("description", "")}
+        item = {
+            "id": item_id,
+            "name": name.strip(),
+            "description": payload.get("description", ""),
+        }
         _items[item_id] = item
         return Response(item)

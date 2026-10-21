@@ -1,0 +1,98 @@
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+
+ :: Spring Boot ::               (v3.5.16)
+
+2026-10-21T13:56:58.781+08:00  INFO 28380 --- [           main] com.example.tasks.TaskApplication        : Starting TaskApplication v1.0.0 using Java 17.0.18 with PID 28380 (E:\ai_workflow\specgate\.specgate\template-qa\1792562131371\jdk17-boot3.5\backend\target\task-api-1.0.0.jar started by Administrator in E:\ai_workflow\specgate\.specgate\template-qa\1792562131371\jdk17-boot3.5\backend)
+2026-10-21T13:56:58.782+08:00  INFO 28380 --- [           main] com.example.tasks.TaskApplication        : No active profile set, falling back to 1 default profile: "default"
+2026-10-21T13:56:59.575+08:00  INFO 28380 --- [           main] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2026-10-21T13:56:59.614+08:00  INFO 28380 --- [           main] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 33 ms. Found 2 JPA repository interfaces.
+2026-10-21T13:57:00.135+08:00  INFO 28380 --- [           main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat initialized with port 4810 (http)
+2026-10-21T13:57:00.146+08:00  INFO 28380 --- [           main] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
+2026-10-21T13:57:00.146+08:00  INFO 28380 --- [           main] o.apache.catalina.core.StandardEngine    : Starting Servlet engine: [Apache Tomcat/10.1.55]
+2026-10-21T13:57:00.173+08:00  INFO 28380 --- [           main] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring embedded WebApplicationContext
+2026-10-21T13:57:00.173+08:00  INFO 28380 --- [           main] w.s.c.ServletWebServerApplicationContext : Root WebApplicationContext: initialization completed in 1365 ms
+2026-10-21T13:57:00.537+08:00  INFO 28380 --- [           main] o.hibernate.jpa.internal.util.LogHelper  : HHH000204: Processing PersistenceUnitInfo [name: default]
+2026-10-21T13:57:00.628+08:00  INFO 28380 --- [           main] org.hibernate.Version                    : HHH000412: Hibernate ORM core version 6.6.53.Final
+2026-10-21T13:57:00.651+08:00  INFO 28380 --- [           main] o.h.c.internal.RegionFactoryInitiator    : HHH000026: Second-level cache disabled
+2026-10-21T13:57:00.839+08:00  INFO 28380 --- [           main] o.s.o.j.p.SpringPersistenceUnitInfo      : No LoadTimeWeaver setup: ignoring JPA class transformer
+2026-10-21T13:57:00.856+08:00  INFO 28380 --- [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Starting...
+2026-10-21T13:57:00.981+08:00  INFO 28380 --- [           main] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Added connection conn0: url=jdbc:h2:file:E:/ai_workflow/specgate/.specgate/template-qa/1792562131371/jdk17-boot3.5/.specgate/verify-db-M1Tqe1/tasks user=SA
+2026-10-21T13:57:00.982+08:00  INFO 28380 --- [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Start completed.
+2026-10-21T13:57:01.014+08:00  INFO 28380 --- [           main] org.hibernate.orm.connections.pooling    : HHH10001005: Database info:
+	Database JDBC URL [Connecting through datasource 'HikariDataSource (HikariPool-1)']
+	Database driver: undefined/unknown
+	Database version: 2.3.232
+	Autocommit mode: undefined/unknown
+	Isolation level: undefined/unknown
+	Minimum pool size: undefined/unknown
+	Maximum pool size: undefined/unknown
+2026-10-21T13:57:01.516+08:00  INFO 28380 --- [           main] o.h.e.t.j.p.i.JtaPlatformInitiator       : HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2026-10-21T13:57:01.554+08:00  INFO 28380 --- [           main] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
+2026-10-21T13:57:02.039+08:00  INFO 28380 --- [           main] r$InitializeUserDetailsManagerConfigurer : Global AuthenticationManager configured with UserDetailsService bean with name localUsersOnly
+2026-10-21T13:57:02.715+08:00  INFO 28380 --- [           main] o.s.b.a.e.web.EndpointLinksResolver      : Exposing 2 endpoints beneath base path '/actuator'
+2026-10-21T13:57:02.887+08:00  INFO 28380 --- [           main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat started on port 4810 (http) with context path '/'
+2026-10-21T13:57:02.899+08:00  INFO 28380 --- [           main] com.example.tasks.TaskApplication        : Started TaskApplication in 4.461 seconds (process running for 4.833)
+2026-10-21T13:57:03.092+08:00  INFO 28380 --- [0.1-4810-exec-1] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring DispatcherServlet 'dispatcherServlet'
+2026-10-21T13:57:03.092+08:00  INFO 28380 --- [0.1-4810-exec-1] o.s.web.servlet.DispatcherServlet        : Initializing Servlet 'dispatcherServlet'
+2026-10-21T13:57:03.093+08:00  INFO 28380 --- [0.1-4810-exec-1] o.s.web.servlet.DispatcherServlet        : Completed initialization in 0 ms
+2026-10-21T13:57:04.175+08:00  INFO 28380 --- [       Thread-2] o.s.b.w.e.tomcat.GracefulShutdown        : Commencing graceful shutdown. Waiting for active requests to complete
+2026-10-21T13:57:04.178+08:00  INFO 28380 --- [tomcat-shutdown] o.s.b.w.e.tomcat.GracefulShutdown        : Graceful shutdown complete
+2026-10-21T13:57:04.181+08:00  INFO 28380 --- [       Thread-2] j.LocalContainerEntityManagerFactoryBean : Closing JPA EntityManagerFactory for persistence unit 'default'
+2026-10-21T13:57:04.182+08:00  INFO 28380 --- [       Thread-2] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Shutdown initiated...
+2026-10-21T13:57:04.238+08:00  INFO 28380 --- [       Thread-2] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Shutdown completed.
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+
+ :: Spring Boot ::               (v3.5.16)
+
+2026-10-21T13:57:04.957+08:00  INFO 22212 --- [           main] com.example.tasks.TaskApplication        : Starting TaskApplication v1.0.0 using Java 17.0.18 with PID 22212 (E:\ai_workflow\specgate\.specgate\template-qa\1792562131371\jdk17-boot3.5\backend\target\task-api-1.0.0.jar started by Administrator in E:\ai_workflow\specgate\.specgate\template-qa\1792562131371\jdk17-boot3.5\backend)
+2026-10-21T13:57:04.958+08:00  INFO 22212 --- [           main] com.example.tasks.TaskApplication        : No active profile set, falling back to 1 default profile: "default"
+2026-10-21T13:57:05.753+08:00  INFO 22212 --- [           main] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2026-10-21T13:57:05.792+08:00  INFO 22212 --- [           main] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 31 ms. Found 2 JPA repository interfaces.
+2026-10-21T13:57:06.282+08:00  INFO 22212 --- [           main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat initialized with port 4810 (http)
+2026-10-21T13:57:06.298+08:00  INFO 22212 --- [           main] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
+2026-10-21T13:57:06.298+08:00  INFO 22212 --- [           main] o.apache.catalina.core.StandardEngine    : Starting Servlet engine: [Apache Tomcat/10.1.55]
+2026-10-21T13:57:06.324+08:00  INFO 22212 --- [           main] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring embedded WebApplicationContext
+2026-10-21T13:57:06.325+08:00  INFO 22212 --- [           main] w.s.c.ServletWebServerApplicationContext : Root WebApplicationContext: initialization completed in 1339 ms
+2026-10-21T13:57:06.672+08:00  INFO 22212 --- [           main] o.hibernate.jpa.internal.util.LogHelper  : HHH000204: Processing PersistenceUnitInfo [name: default]
+2026-10-21T13:57:06.710+08:00  INFO 22212 --- [           main] org.hibernate.Version                    : HHH000412: Hibernate ORM core version 6.6.53.Final
+2026-10-21T13:57:06.731+08:00  INFO 22212 --- [           main] o.h.c.internal.RegionFactoryInitiator    : HHH000026: Second-level cache disabled
+2026-10-21T13:57:06.873+08:00  INFO 22212 --- [           main] o.s.o.j.p.SpringPersistenceUnitInfo      : No LoadTimeWeaver setup: ignoring JPA class transformer
+2026-10-21T13:57:06.889+08:00  INFO 22212 --- [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Starting...
+2026-10-21T13:57:07.011+08:00  INFO 22212 --- [           main] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Added connection conn0: url=jdbc:h2:file:E:/ai_workflow/specgate/.specgate/template-qa/1792562131371/jdk17-boot3.5/.specgate/verify-db-M1Tqe1/tasks user=SA
+2026-10-21T13:57:07.012+08:00  INFO 22212 --- [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Start completed.
+2026-10-21T13:57:07.043+08:00  INFO 22212 --- [           main] org.hibernate.orm.connections.pooling    : HHH10001005: Database info:
+	Database JDBC URL [Connecting through datasource 'HikariDataSource (HikariPool-1)']
+	Database driver: undefined/unknown
+	Database version: 2.3.232
+	Autocommit mode: undefined/unknown
+	Isolation level: undefined/unknown
+	Minimum pool size: undefined/unknown
+	Maximum pool size: undefined/unknown
+2026-10-21T13:57:07.487+08:00  INFO 22212 --- [           main] o.h.e.t.j.p.i.JtaPlatformInitiator       : HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2026-10-21T13:57:07.515+08:00  INFO 22212 --- [           main] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
+2026-10-21T13:57:07.971+08:00  INFO 22212 --- [           main] r$InitializeUserDetailsManagerConfigurer : Global AuthenticationManager configured with UserDetailsService bean with name localUsersOnly
+2026-10-21T13:57:08.618+08:00  INFO 22212 --- [           main] o.s.b.a.e.web.EndpointLinksResolver      : Exposing 2 endpoints beneath base path '/actuator'
+2026-10-21T13:57:08.687+08:00  INFO 22212 --- [           main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat started on port 4810 (http) with context path '/'
+2026-10-21T13:57:08.696+08:00  INFO 22212 --- [           main] com.example.tasks.TaskApplication        : Started TaskApplication in 4.04 seconds (process running for 4.409)
+2026-10-21T13:57:09.014+08:00  INFO 22212 --- [0.1-4810-exec-1] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring DispatcherServlet 'dispatcherServlet'
+2026-10-21T13:57:09.014+08:00  INFO 22212 --- [0.1-4810-exec-1] o.s.web.servlet.DispatcherServlet        : Initializing Servlet 'dispatcherServlet'
+2026-10-21T13:57:09.016+08:00  INFO 22212 --- [0.1-4810-exec-1] o.s.web.servlet.DispatcherServlet        : Completed initialization in 2 ms
+
+HTTP login/CSRF/roles/CRUD/pagination/batch/CSV/files/restart/logout passed
+2026-10-21T13:57:10.054+08:00  INFO 22212 --- [       Thread-2] o.s.b.w.e.tomcat.GracefulShutdown        : Commencing graceful shutdown. Waiting for active requests to complete
+2026-10-21T13:57:10.064+08:00  INFO 22212 --- [tomcat-shutdown] o.s.b.w.e.tomcat.GracefulShutdown        : Graceful shutdown complete
+2026-10-21T13:57:10.069+08:00  INFO 22212 --- [       Thread-2] j.LocalContainerEntityManagerFactoryBean : Closing JPA EntityManagerFactory for persistence unit 'default'
+2026-10-21T13:57:10.071+08:00  INFO 22212 --- [       Thread-2] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Shutdown initiated...
+2026-10-21T13:57:10.286+08:00  INFO 22212 --- [       Thread-2] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Shutdown completed.

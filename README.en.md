@@ -591,8 +591,10 @@ See [verification.md](docs/design/verification.md) for the full record.
 Every code file changed by a push must pass review and formatting before it reaches the remote:
 
 - **Local hooks**: run `npm run hooks:install` once per clone to install `pre-commit` and `pre-push`.
-  - `pre-commit`: runs ESLint on staged JS/TS files, then Prettier formats them and re-stages the result.
-  - `pre-push`: runs ESLint, `npm test` and `prettier --check` on every file changed by the push; any failure aborts the push with an error report.
+  - `pre-commit`: exports staged Git blobs to an isolated snapshot, checks supported code types and runs plugin tests. Java/Vue template changes additionally run real JDK8 template acceptance.
+  - `pre-push`: checks each pushed ref snapshot, including deletion-triggered tests; affected templates additionally run four-preset Windows acceptance. Missing tools or failed checks block the operation.
+  - Hooks are check-only: they never format or stage files. Failure evidence lives in `.specgate/hooks-runs/`. JS/TS/Vue use ESLint and Prettier, Python uses Ruff, Shell uses Bash syntax checks and the Prettier shell plugin. Templates are checked in materialized projects; unsupported code blocks. External TS reference examples receive static checks, not an external-project build claim.
+  - Install hooks explicitly after cloning. The installer respects the effective hooksPath and preserves custom hooks; use `hooks:check` to diagnose missing/stale hooks. Linux template acceptance remains deferred.
 - **CI re-check**: the `review-and-format` job in `.github/workflows/ci.yml` reviews and format-checks changed files on push and pull request. Enable branch protection on the main branch and require `review-and-format` and `test` as status checks.
 - **Commands**:
 
@@ -600,10 +602,12 @@ Every code file changed by a push must pass review and formatting before it reac
   |---------|---------|
   | `npm run lint` | Full-repository ESLint |
   | `npm run format:check` | Full-repository Prettier check |
-  | `npm run gate` | Run the full gate against the diff from `origin/main` |
-  | `npm run gate:fix` | Format the current changes and stage them |
+  | `npm run gate` | Check HEAD changes against the branch upstream |
+  | `npm run gate:fix` | Explicitly format changed files without staging; review template output before copying it back |
+  | `npm run hooks:check` | Diagnose installed hooks against the versioned sources |
 
-> GitHub Actions runs after a push succeeds and cannot retract commits that are already on the remote; the local `pre-push` hook is what actually blocks the push. Branch protection stops merges whose checks did not pass, so commits created with `--no-verify` are still caught by CI.
+> CI runs after pushing and local hooks can be bypassed with `--no-verify`. Server branch protection requires separate approval/configuration; it was not modified or verified here. sg-java pushes trigger Windows template CI; Linux templates only run when manually requested through include_linux.
+> The third-party Apache Maven Wrapper is pinned to reviewed content hashes; changes/deletions block until wrapper-specific validation is added. Generated JS launchers get syntax, ESLint and format checks. Successful and failed command/runtime evidence is retained under `.specgate/hooks-runs/`. Python/Shell reference assets get static/syntax/format checks and plugin regression, not a claim of external-framework business acceptance.
 
 ## Development
 

@@ -1,5 +1,7 @@
 import js from '@eslint/js';
 import globals from 'globals';
+import tseslint from 'typescript-eslint';
+import vue from 'eslint-plugin-vue';
 
 export default [
   {
@@ -7,8 +9,6 @@ export default [
       'node_modules/**',
       'dist/**',
       'coverage/**',
-      'assets/**',
-      'docs/**',
       '.specgate/**',
       '.sg-fixed-live-*/**',
       '.ak47_dsh_stage/**',
@@ -16,6 +16,16 @@ export default [
     ],
   },
   js.configs.recommended,
+  ...tseslint.configs.recommended.map((config) => ({ ...config, files: ['**/*.ts'] })),
+  ...vue.configs['flat/recommended'],
+  {
+    files: ['**/*.vue'],
+    languageOptions: { parserOptions: { parser: tseslint.parser } },
+  },
+  {
+    files: ['assets/skills/**/render-graphs.js'],
+    languageOptions: { sourceType: 'commonjs' },
+  },
   {
     files: ['**/*.{js,mjs,cjs}'],
     languageOptions: {

@@ -43,10 +43,14 @@ def items():
         return reply(list(_items.values()))
     payload = json_body()
     name = payload.get("name")
-    if not isinstance(name, type(u"")) or not name.strip():
+    if not isinstance(name, type("")) or not name.strip():
         return reply({"error": "name is required"}, 400)
     _sequence += 1
-    item = {"id": _sequence, "name": name.strip(), "description": payload.get("description", "")}
+    item = {
+        "id": _sequence,
+        "name": name.strip(),
+        "description": payload.get("description", ""),
+    }
     _items[item["id"]] = item
     return reply(item, 201)
 
@@ -71,9 +75,13 @@ def mutate():
         del _items[item_id]
         return reply({"id": item_id, "deleted": True})
     name = payload.get("name")
-    if not isinstance(name, type(u"")) or not name.strip():
+    if not isinstance(name, type("")) or not name.strip():
         return reply({"error": "name is required"}, 400)
-    item = {"id": item_id, "name": name.strip(), "description": payload.get("description", "")}
+    item = {
+        "id": item_id,
+        "name": name.strip(),
+        "description": payload.get("description", ""),
+    }
     _items[item_id] = item
     return reply(item)
 

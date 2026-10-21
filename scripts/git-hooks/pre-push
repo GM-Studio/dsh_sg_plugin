@@ -3,4 +3,4 @@
 # Blocks the push when review, tests or formatting fails; prints the error report.
 set -e
 ROOT=$(git rev-parse --show-toplevel) || exit 1
-exec node "$ROOT/scripts/quality-gate.mjs" --stage=push --fix
+exec node "$ROOT/scripts/quality-gate.mjs" --stage=push --check

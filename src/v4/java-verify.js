@@ -347,16 +347,22 @@ async function verifyJavaProjectUnlocked({
   const scoped = ['machine', 'user'].map((scope) =>
     mergeEnvironment({ env: { ...env, ...persistent[scope] }, platform }),
   );
-  scan.extraJavaRoots = scoped.flatMap((scope) =>
-    Object.entries(scope)
-      .filter(([key]) => /^(?:SG_)?(?:JAVA.*HOME|JDK_HOME)$/i.test(key))
-      .map(([, value]) => value),
-  );
-  scan.extraMavenRoots = scoped.flatMap((scope) =>
-    Object.entries(scope)
-      .filter(([key]) => /^(?:SG_)?(?:MAVEN_HOME|M2_HOME)$/i.test(key))
-      .map(([, value]) => value),
-  );
+  scan.extraJavaRoots = [
+    ...(scan.extraJavaRoots || []),
+    ...scoped.flatMap((scope) =>
+      Object.entries(scope)
+        .filter(([key]) => /^(?:SG_)?(?:JAVA.*HOME|JDK_HOME)$/i.test(key))
+        .map(([, value]) => value),
+    ),
+  ];
+  scan.extraMavenRoots = [
+    ...(scan.extraMavenRoots || []),
+    ...scoped.flatMap((scope) =>
+      Object.entries(scope)
+        .filter(([key]) => /^(?:SG_)?(?:MAVEN_HOME|M2_HOME)$/i.test(key))
+        .map(([, value]) => value),
+    ),
+  ];
   const evidence = createVerification(root, preset, { full });
   const finish = (status, code, message, extra = {}) => {
     const phase =

@@ -2,4 +2,4 @@
 # Installed by `npm run hooks:install`.
 set -e
 ROOT=$(git rev-parse --show-toplevel) || exit 1
-exec node "$ROOT/scripts/quality-gate.mjs" --stage=commit --fix
+exec node "$ROOT/scripts/quality-gate.mjs" --stage=commit --check

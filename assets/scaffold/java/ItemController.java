@@ -29,38 +29,49 @@ public class ItemController {
   private final ItemStore store;
 
   /** Creates the controller. */
-  public ItemController(ItemStore store) { this.store = store; }
+  public ItemController(ItemStore store) {
+    this.store = store;
+  }
 
   /** Lists items. */
   @GetMapping
-  public List<Item> list() { return store.list(); }
+  public List<Item> list() {
+    return store.list();
+  }
 
   /** Gets an item. */
   @GetMapping("/{id}")
   public ResponseEntity<Object> get(@PathVariable long id) {
-    return store.get(id).map(item -> ResponseEntity.ok((Object) item))
-        .orElseGet(() -> ResponseEntity.status(404).body(Collections.singletonMap("error", "not found")));
+    return store
+        .get(id)
+        .map(item -> ResponseEntity.ok((Object) item))
+        .orElseGet(
+            () -> ResponseEntity.status(404).body(Collections.singletonMap("error", "not found")));
   }
 
   /** Creates an item from JSON. */
   @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE)
   public ResponseEntity<Item> create(@Valid @RequestBody ItemRequest request) {
-    return ResponseEntity.status(201).body(store.create(request.getName(), request.getDescription()));
+    return ResponseEntity.status(201)
+        .body(store.create(request.getName(), request.getDescription()));
   }
 
   /** Updates an item with its id in the JSON body. */
   @PostMapping(value = "/update", consumes = MediaType.APPLICATION_JSON_VALUE)
   public ResponseEntity<Object> update(@Valid @RequestBody UpdateRequest request) {
-    return store.update(request.getId(), request.getName(), request.getDescription())
+    return store
+        .update(request.getId(), request.getName(), request.getDescription())
         .map(item -> ResponseEntity.ok((Object) item))
-        .orElseGet(() -> ResponseEntity.status(404).body(Collections.singletonMap("error", "not found")));
+        .orElseGet(
+            () -> ResponseEntity.status(404).body(Collections.singletonMap("error", "not found")));
   }
 
   /** Deletes an item and returns a JSON receipt. */
   @PostMapping(value = "/delete", consumes = MediaType.APPLICATION_JSON_VALUE)
   public ResponseEntity<Map<String, Object>> delete(@Valid @RequestBody IdRequest request) {
     if (!store.delete(request.getId())) {
-      return ResponseEntity.status(404).body(Collections.<String, Object>singletonMap("error", "not found"));
+      return ResponseEntity.status(404)
+          .body(Collections.<String, Object>singletonMap("error", "not found"));
     }
     Map<String, Object> receipt = new LinkedHashMap<>();
     receipt.put("id", request.getId());
@@ -71,7 +82,8 @@ public class ItemController {
   /** Returns JSON for malformed bodies and validation errors. */
   @ExceptionHandler({MethodArgumentNotValidException.class, HttpMessageNotReadableException.class})
   public ResponseEntity<Map<String, String>> invalid(Exception exception) {
-    return ResponseEntity.badRequest().body(Collections.singletonMap("error", "invalid JSON request"));
+    return ResponseEntity.badRequest()
+        .body(Collections.singletonMap("error", "invalid JSON request"));
   }
 
   /** Returns JSON for unsupported methods. */
@@ -83,7 +95,8 @@ public class ItemController {
   /** Returns JSON for unsupported content types. */
   @ExceptionHandler(HttpMediaTypeNotSupportedException.class)
   public ResponseEntity<Map<String, String>> contentType(Exception exception) {
-    return ResponseEntity.status(415).body(Collections.singletonMap("error", "use application/json"));
+    return ResponseEntity.status(415)
+        .body(Collections.singletonMap("error", "use application/json"));
   }
 
   /** Create request. */
@@ -91,30 +104,50 @@ public class ItemController {
     @NotBlank private String name;
     private String description;
     /** Returns name. */
-    public String getName() { return name; }
+    public String getName() {
+      return name;
+    }
     /** Sets name. */
-    public void setName(String name) { this.name = name; }
+    public void setName(String name) {
+      this.name = name;
+    }
     /** Returns description. */
-    public String getDescription() { return description; }
+    public String getDescription() {
+      return description;
+    }
     /** Sets description. */
-    public void setDescription(String description) { this.description = description; }
+    public void setDescription(String description) {
+      this.description = description;
+    }
   }
 
   /** Delete request. */
   public static class IdRequest {
-    @NotNull @Min(1) private Long id;
+    @NotNull
+    @Min(1)
+    private Long id;
     /** Returns id. */
-    public Long getId() { return id; }
+    public Long getId() {
+      return id;
+    }
     /** Sets id. */
-    public void setId(Long id) { this.id = id; }
+    public void setId(Long id) {
+      this.id = id;
+    }
   }
 
   /** Update request. */
   public static class UpdateRequest extends ItemRequest {
-    @NotNull @Min(1) private Long id;
+    @NotNull
+    @Min(1)
+    private Long id;
     /** Returns id. */
-    public Long getId() { return id; }
+    public Long getId() {
+      return id;
+    }
     /** Sets id. */
-    public void setId(Long id) { this.id = id; }
+    public void setId(Long id) {
+      this.id = id;
+    }
   }
 }

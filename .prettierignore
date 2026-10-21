@@ -1,8 +1,12 @@
 node_modules/
 dist/
 coverage/
-assets/
-docs/
+assets/**/*.tpl
+assets/**/*.template
+docs/verification/**/*.json
+docs/verification/**/*.txt
+docs/verification/**/*.log
+docs/verification/**/*.xml
 *.md
 *.tgz
 package-lock.json

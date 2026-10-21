@@ -9,6 +9,8 @@ test('hook test environment strips repository-local variables without mutating p
     git_index_file: 'index',
     GIT_CONFIG_PARAMETERS: 'hooks',
     GIT_TERMINAL_PROMPT: '0',
+    GIT_CONFIG_KEY_0: 'core.hooksPath',
+    GIT_CONFIG_VALUE_0: 'unrelated-hooks',
   };
   const result = isolatedTestEnvironment(parent, [
     'GIT_DIR',

@@ -60,15 +60,21 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "gate": "node scripts/quality-gate.mjs --stage=push",
-    "gate:fix": "node scripts/quality-gate.mjs --stage=all --fix --no-tests",
+    "gate:fix": "node scripts/quality-format.mjs",
     "hooks:install": "node scripts/install-hooks.mjs",
+    "hooks:check": "node scripts/install-hooks.mjs --check",
     "pack:check": "npm pack --dry-run",
     "prepublishOnly": "npm test && npm run pack:check"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
     "eslint": "^10.13.0",
+    "eslint-plugin-vue": "10.11.1",
     "globals": "^17.13.0",
-    "prettier": "^3.9.10"
+    "prettier": "^3.9.10",
+    "prettier-plugin-sh": "0.20.2",
+    "typescript": "5.9.3",
+    "typescript-eslint": "8.72.0",
+    "vue-eslint-parser": "10.3.0"
   }
 }

@@ -605,8 +605,12 @@ openspec/
 推送到远程前，本次 push 涉及的所有代码文件必须通过审查与格式化：
 
 - **本地钩子**：克隆后执行一次 `npm run hooks:install`，安装 `pre-commit` 与 `pre-push`。
-  - `pre-commit`：对暂存区的 JS/TS 文件执行 ESLint；通过后用 Prettier 格式化并重新暂存。
-  - `pre-push`：对本次 push 的全部变更文件执行 ESLint、`npm test` 和 `prettier --check`；任一失败即中止 push 并输出错误信息。
+  - `pre-commit`：从 Git 暂存区导出隔离快照，执行对应语言的静态/格式检查与插件全测；Java/Vue 模板相关变更追加 JDK8 实际构建、前端检查/测试、覆盖率与 HTTP 验收。
+  - `pre-push`：逐个待推送 ref 检查真实快照；模板相关变更追加 Windows 四档实际验收。纯删除代码也触发测试，缺少工具或检查失败均阻止操作。
+  - 钩子只检查，不格式化、不重新暂存。部分暂存文件的未暂存修改不进入检查；失败证据位于 `.specgate/hooks-runs/`。
+  - JS/TS/Vue 使用 ESLint（含 TS/Vue 解析器）与 Prettier，Python 使用 Ruff，Shell 使用 Bash 语法检查和 Prettier shell 插件。Java/Vue `.tpl` 通过物化项目工具检查，旧 Java/独立资源样例有单独验收；未知代码类型阻断。TS 参考样例仅静态检查，不声称其外部项目可编译。
+  - 克隆后手动安装钩子；`hooks:check` 诊断实际 hooksPath。安装器保留自定义钩子并提示冲突。Linux 模板验收继续暂缓，Windows 模板 CI 在 sg-java 推送时触发。
+  - Apache Maven Wrapper 是第三方启动资产：只接受已审查的原始内容哈希；修改/删除会阻断，必须先增加对应检查器。模板启动 JS 脚本另行执行语法、ESLint 与格式检查。成功和失败的命令日志/验收证据均保留在 `.specgate/hooks-runs/`。Python/Shell 参考代码只声明 Ruff/语法/格式及插件回归，不声称外部框架项目的业务验收已通过。
 - **CI 复核**：`.github/workflows/ci.yml` 的 `review-and-format` job 在 push / PR 时对变更文件执行审查与格式检查。主分支应开启分支保护，把 `review-and-format` 与 `test` 设为必需状态检查。
 - **命令**：
 
@@ -614,10 +618,11 @@ openspec/
   |------|------|
   | `npm run lint` | ESLint 全量检查 |
   | `npm run format:check` | Prettier 全量检查 |
-  | `npm run gate` | 按当前分支与 `origin/main` 的差异执行一次完整门禁 |
-  | `npm run gate:fix` | 自动格式化本次变更并暂存 |
+  | `npm run gate` | 按 HEAD 与当前分支 upstream 的差异执行推送检查 |
+  | `npm run gate:fix` | 显式格式化本次修改（不暂存）；模板输出需人工审查回写 |
+  | `npm run hooks:check` | 检查当前工作区钩子是否已安装并匹配版本 |
 
-> GitHub Actions 在 push 成功之后才运行，无法撤回已经推送的提交；真正阻止推送的是本地 `pre-push` 钩子。服务端通过分支保护阻止未通过检查的合并，使用 `--no-verify` 绕过本地钩子的提交仍会被 CI 拦下。
+> GitHub Actions 在推送后运行；本地钩子可以被 `--no-verify` 绕过。服务端分支保护需要另行配置并审批，本次没有修改或验证远仓分支保护。Linux 模板矩阵仅在手动选择 include_linux 时执行，不产生未运行的通过记录。
 
 ## 开发
 

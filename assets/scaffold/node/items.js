@@ -45,7 +45,11 @@ export async function handleItems(req, res) {
     send(res, 405, { error: 'use GET for queries and POST for mutations' });
     return true;
   }
-  if (!String(req.headers['content-type'] || '').toLowerCase().startsWith('application/json')) {
+  if (
+    !String(req.headers['content-type'] || '')
+      .toLowerCase()
+      .startsWith('application/json')
+  ) {
     send(res, 415, { error: 'use application/json' });
     return true;
   }
@@ -77,7 +81,11 @@ export async function handleItems(req, res) {
     send(res, 400, { error: 'name is required' });
     return true;
   }
-  const item = { id: action ? id : ++sequence, name: body.name.trim(), description: body.description || '' };
+  const item = {
+    id: action ? id : ++sequence,
+    name: body.name.trim(),
+    description: body.description || '',
+  };
   items.set(item.id, item);
   send(res, action ? 200 : 201, item);
   return true;

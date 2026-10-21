@@ -2,7 +2,7 @@ name: CI
 
 on:
   push:
-    branches: [main, master, feat/v3-mvp]
+    branches: [main, master, feat/v3-mvp, sg-java]
   pull_request:
 
 permissions:
@@ -19,7 +19,9 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - run: npm install --ignore-scripts --no-audit --no-fund
+      - run: npm ci --ignore-scripts --no-audit --no-fund
+      - uses: astral-sh/setup-uv@v6
+      - run: uv tool install ruff==0.15.10
       - name: Review and format-check changed files
         env:
           BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
@@ -37,7 +39,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
-      - run: npm install --ignore-scripts --no-audit --no-fund
+      - run: npm ci --ignore-scripts --no-audit --no-fund
       - run: npm run lint
       - run: npm test
       - run: npm run pack:check

@@ -1,4 +1,5 @@
 """Run against a generated framework app with SG_CONTRACT_FRAMEWORK set."""
+
 import os
 
 framework = os.environ["SG_CONTRACT_FRAMEWORK"]
@@ -6,16 +7,20 @@ if framework == "fastapi":
     from fastapi.testclient import TestClient
     from app.main import app
     from app.items import reset_items
+
     client = TestClient(app)
 elif framework == "flask":
     from app import app, reset_items
+
     client = app.test_client()
 else:
     os.environ["DJANGO_SETTINGS_MODULE"] = "config.settings"
     import django
+
     django.setup()
     from rest_framework.test import APIClient
     from items.views import reset_items
+
     client = APIClient()
 
 

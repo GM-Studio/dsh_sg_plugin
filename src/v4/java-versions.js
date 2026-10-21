@@ -68,15 +68,15 @@ export const GOLDEN_MANIFEST = {
   requiredPlatforms: ['win32', 'linux'],
   presets: {
     'jdk8-boot2.7': {
-      templateHash: 'beb6f3f4bdfeb37b2aa8c2910de50ac6ad5efaf80af1aa1fe573febca7f3ec20',
-      verifiedAt: '2026-10-21T04:16:09.826Z',
+      templateHash: 'eaa6e64e4092b72e97dca631bd4dbe2f5c28b6bf2d50891581415982f93b8ae1',
+      verifiedAt: '2026-10-21T05:56:17.467Z',
       verifiedBy: 'local:win32 x64',
       toolchain: 'JDK 1.8.0_472 + Maven 3.9.11 + Node 24.14.0',
       commands: [
         'C:\\Users\\Administrator\\.m2\\wrapper\\dists\\apache-maven-3.9.11\\03d7e36a140982eea48e22c1dcac01d8862b2550b2939e09a0809bbc5182a5bc\\bin\\mvn.cmd -B -ntp clean verify',
         'D:\\Program Files\\nodejs\\npm.cmd ci --no-audit --no-fund',
         'D:\\Program Files\\nodejs\\npm.cmd run build',
-        'D:\\Program Files\\nodejs\\npm.cmd run test -- --reporter=json --outputFile=E:\\ai_workflow\\specgate\\.specgate\\template-qa\\1792556122916\\jdk8-boot2.7\\.specgate\\verify-runs\\2026-10-21T04-15-23-917Z-9a3259c0\\frontend-tests.json',
+        'D:\\Program Files\\nodejs\\npm.cmd run test -- --reporter=json --outputFile=E:\\ai_workflow\\specgate\\.specgate\\template-qa\\1792562131371\\jdk8-boot2.7\\.specgate\\verify-runs\\2026-10-21T05-55-32-316Z-023ce469\\frontend-tests.json',
         'D:\\Program Files\\nodejs\\npm.cmd run lint',
         'D:\\Program Files\\nodejs\\npm.cmd run format:check',
         'internal:coverage-reconciliation',
@@ -85,26 +85,26 @@ export const GOLDEN_MANIFEST = {
       platforms: {
         win32: {
           result: 'passed',
-          verifiedAt: '2026-10-21T04:16:09.826Z',
-          evidence: 'docs/verification/2026-10-21-standard-template/win32/jdk8-boot2.7/report.json',
+          verifiedAt: '2026-10-21T05:56:17.467Z',
+          evidence: 'docs/verification/2026-10-21-hooks-template/win32/jdk8-boot2.7/report.json',
         },
         linux: {
           result: 'not-run',
         },
       },
-      evidence: 'docs/verification/2026-10-21-standard-template/win32/jdk8-boot2.7/report.json',
+      evidence: 'docs/verification/2026-10-21-hooks-template/win32/jdk8-boot2.7/report.json',
       matrixComplete: false,
     },
     'jdk17-boot3.5': {
-      templateHash: 'e7d8d92a48c90f0e57643e22a8dac74fdd1acc1c96872c1232a4674bfaf0413a',
-      verifiedAt: '2026-10-21T04:17:04.538Z',
+      templateHash: '01bb8f8e6ee7965632e6d9af519866b99b91f7c9d396c282b036e6c1116af73d',
+      verifiedAt: '2026-10-21T05:57:10.333Z',
       verifiedBy: 'local:win32 x64',
       toolchain: 'JDK 17.0.18 + Maven 3.9.11 + Node 24.14.0',
       commands: [
         'C:\\Users\\Administrator\\.m2\\wrapper\\dists\\apache-maven-3.9.11\\03d7e36a140982eea48e22c1dcac01d8862b2550b2939e09a0809bbc5182a5bc\\bin\\mvn.cmd -B -ntp clean verify',
         'D:\\Program Files\\nodejs\\npm.cmd ci --no-audit --no-fund',
         'D:\\Program Files\\nodejs\\npm.cmd run build',
-        'D:\\Program Files\\nodejs\\npm.cmd run test -- --reporter=json --outputFile=E:\\ai_workflow\\specgate\\.specgate\\template-qa\\1792556122916\\jdk17-boot3.5\\.specgate\\verify-runs\\2026-10-21T04-16-10-933Z-613bddb0\\frontend-tests.json',
+        'D:\\Program Files\\nodejs\\npm.cmd run test -- --reporter=json --outputFile=E:\\ai_workflow\\specgate\\.specgate\\template-qa\\1792562131371\\jdk17-boot3.5\\.specgate\\verify-runs\\2026-10-21T05-56-18-401Z-cf279324\\frontend-tests.json',
         'D:\\Program Files\\nodejs\\npm.cmd run lint',
         'D:\\Program Files\\nodejs\\npm.cmd run format:check',
         'internal:coverage-reconciliation',
@@ -113,27 +113,26 @@ export const GOLDEN_MANIFEST = {
       platforms: {
         win32: {
           result: 'passed',
-          verifiedAt: '2026-10-21T04:17:04.538Z',
-          evidence:
-            'docs/verification/2026-10-21-standard-template/win32/jdk17-boot3.5/report.json',
+          verifiedAt: '2026-10-21T05:57:10.333Z',
+          evidence: 'docs/verification/2026-10-21-hooks-template/win32/jdk17-boot3.5/report.json',
         },
         linux: {
           result: 'not-run',
         },
       },
-      evidence: 'docs/verification/2026-10-21-standard-template/win32/jdk17-boot3.5/report.json',
+      evidence: 'docs/verification/2026-10-21-hooks-template/win32/jdk17-boot3.5/report.json',
       matrixComplete: false,
     },
     'jdk21-boot3.5': {
-      templateHash: 'e08a16cf0d6c4c62375b37f81eef65a4aef8b3a9fb53420bead5d3f53f329c97',
-      verifiedAt: '2026-10-21T04:17:52.103Z',
+      templateHash: '62e065e449b91c1b6aa895a483252ec2d89688855cd6e184ed0c8ee49f216aea',
+      verifiedAt: '2026-10-21T05:57:55.749Z',
       verifiedBy: 'local:win32 x64',
       toolchain: 'JDK 21.0.9 + Maven 3.9.11 + Node 24.14.0',
       commands: [
         'C:\\Users\\Administrator\\.m2\\wrapper\\dists\\apache-maven-3.9.11\\03d7e36a140982eea48e22c1dcac01d8862b2550b2939e09a0809bbc5182a5bc\\bin\\mvn.cmd -B -ntp clean verify',
         'D:\\Program Files\\nodejs\\npm.cmd ci --no-audit --no-fund',
         'D:\\Program Files\\nodejs\\npm.cmd run build',
-        'D:\\Program Files\\nodejs\\npm.cmd run test -- --reporter=json --outputFile=E:\\ai_workflow\\specgate\\.specgate\\template-qa\\1792556122916\\jdk21-boot3.5\\.specgate\\verify-runs\\2026-10-21T04-17-05-436Z-da37ef8d\\frontend-tests.json',
+        'D:\\Program Files\\nodejs\\npm.cmd run test -- --reporter=json --outputFile=E:\\ai_workflow\\specgate\\.specgate\\template-qa\\1792562131371\\jdk21-boot3.5\\.specgate\\verify-runs\\2026-10-21T05-57-11-269Z-2c22cd97\\frontend-tests.json',
         'D:\\Program Files\\nodejs\\npm.cmd run lint',
         'D:\\Program Files\\nodejs\\npm.cmd run format:check',
         'internal:coverage-reconciliation',
@@ -142,27 +141,26 @@ export const GOLDEN_MANIFEST = {
       platforms: {
         win32: {
           result: 'passed',
-          verifiedAt: '2026-10-21T04:17:52.103Z',
-          evidence:
-            'docs/verification/2026-10-21-standard-template/win32/jdk21-boot3.5/report.json',
+          verifiedAt: '2026-10-21T05:57:55.749Z',
+          evidence: 'docs/verification/2026-10-21-hooks-template/win32/jdk21-boot3.5/report.json',
         },
         linux: {
           result: 'not-run',
         },
       },
-      evidence: 'docs/verification/2026-10-21-standard-template/win32/jdk21-boot3.5/report.json',
+      evidence: 'docs/verification/2026-10-21-hooks-template/win32/jdk21-boot3.5/report.json',
       matrixComplete: false,
     },
     'jdk21-boot4.0': {
-      templateHash: '6c2a3870dd34b30db66ce1e9eb26ad754e2749014596861740ab0f30f71feb21',
-      verifiedAt: '2026-10-21T04:18:42.332Z',
+      templateHash: '8c5cd1904aa4d679e10a54cec884a36ca33e87f1fa231ffa5a2f5c830a7ec5b7',
+      verifiedAt: '2026-10-21T05:58:43.396Z',
       verifiedBy: 'local:win32 x64',
       toolchain: 'JDK 21.0.9 + Maven 3.9.11 + Node 24.14.0',
       commands: [
         'C:\\Users\\Administrator\\.m2\\wrapper\\dists\\apache-maven-3.9.11\\03d7e36a140982eea48e22c1dcac01d8862b2550b2939e09a0809bbc5182a5bc\\bin\\mvn.cmd -B -ntp clean verify',
         'D:\\Program Files\\nodejs\\npm.cmd ci --no-audit --no-fund',
         'D:\\Program Files\\nodejs\\npm.cmd run build',
-        'D:\\Program Files\\nodejs\\npm.cmd run test -- --reporter=json --outputFile=E:\\ai_workflow\\specgate\\.specgate\\template-qa\\1792556122916\\jdk21-boot4.0\\.specgate\\verify-runs\\2026-10-21T04-17-53-231Z-caed2644\\frontend-tests.json',
+        'D:\\Program Files\\nodejs\\npm.cmd run test -- --reporter=json --outputFile=E:\\ai_workflow\\specgate\\.specgate\\template-qa\\1792562131371\\jdk21-boot4.0\\.specgate\\verify-runs\\2026-10-21T05-57-56-720Z-bf6f3272\\frontend-tests.json',
         'D:\\Program Files\\nodejs\\npm.cmd run lint',
         'D:\\Program Files\\nodejs\\npm.cmd run format:check',
         'internal:coverage-reconciliation',
@@ -171,15 +169,14 @@ export const GOLDEN_MANIFEST = {
       platforms: {
         win32: {
           result: 'passed',
-          verifiedAt: '2026-10-21T04:18:42.332Z',
-          evidence:
-            'docs/verification/2026-10-21-standard-template/win32/jdk21-boot4.0/report.json',
+          verifiedAt: '2026-10-21T05:58:43.396Z',
+          evidence: 'docs/verification/2026-10-21-hooks-template/win32/jdk21-boot4.0/report.json',
         },
         linux: {
           result: 'not-run',
         },
       },
-      evidence: 'docs/verification/2026-10-21-standard-template/win32/jdk21-boot4.0/report.json',
+      evidence: 'docs/verification/2026-10-21-hooks-template/win32/jdk21-boot4.0/report.json',
       preview: true,
       matrixComplete: false,
     },

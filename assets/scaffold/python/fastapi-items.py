@@ -50,7 +50,9 @@ def create_item(payload: ItemInput):
     if not payload.name.strip():
         raise HTTPException(status_code=422, detail="name is required")
     _sequence += 1
-    item = Item(id=_sequence, name=payload.name.strip(), description=payload.description)
+    item = Item(
+        id=_sequence, name=payload.name.strip(), description=payload.description
+    )
     _items[item.id] = item
     return item
 
@@ -61,7 +63,9 @@ def update_item(payload: UpdateInput):
         raise HTTPException(status_code=422, detail="name is required")
     if payload.id not in _items:
         raise HTTPException(status_code=404, detail="not found")
-    item = Item(id=payload.id, name=payload.name.strip(), description=payload.description)
+    item = Item(
+        id=payload.id, name=payload.name.strip(), description=payload.description
+    )
     _items[payload.id] = item
     return item
 

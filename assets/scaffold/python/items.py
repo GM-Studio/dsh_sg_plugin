@@ -59,12 +59,18 @@ def handle_items(handler):
             _send(handler, 400, {"error": "invalid id"})
         else:
             item = STORE.get(int(action))
-            _send(handler, 200, item) if item else _send(handler, 404, {"error": "not found"})
+            _send(handler, 200, item) if item else _send(
+                handler, 404, {"error": "not found"}
+            )
         return True
     if handler.command != "POST":
         _send(handler, 405, {"error": "use GET for queries and POST for mutations"})
         return True
-    if not handler.headers.get("content-type", "").lower().startswith("application/json"):
+    if (
+        not handler.headers.get("content-type", "")
+        .lower()
+        .startswith("application/json")
+    ):
         _send(handler, 415, {"error": "use application/json"})
         return True
     try:
@@ -94,6 +100,10 @@ def handle_items(handler):
     if not isinstance(name, str) or not name.strip():
         _send(handler, 400, {"error": "name is required"})
         return True
-    item = STORE.update(item_id, name.strip(), payload.get("description", "")) if action else STORE.create(name.strip(), payload.get("description", ""))
+    item = (
+        STORE.update(item_id, name.strip(), payload.get("description", ""))
+        if action
+        else STORE.create(name.strip(), payload.get("description", ""))
+    )
     _send(handler, 200 if action else 201, item)
     return True
