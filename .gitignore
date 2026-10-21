@@ -8,5 +8,6 @@ coverage/
 !src/v3/coverage/
 !src/v3/coverage/*.js
 .ak47_dsh_stage/
+.sg-fixed-live-*/
 .specgate/
 .npmrc
