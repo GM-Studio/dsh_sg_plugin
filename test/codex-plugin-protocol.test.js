@@ -4,7 +4,8 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
+import { resolveProjectRoot } from '../src/codex/server.js';
 
 const root = fileURLToPath(new URL('../', import.meta.url));
 const server = path.join(root, 'src/codex/server.js');
@@ -16,6 +17,32 @@ const initialize = (id = 1, protocolVersion = '2025-06-18') => ({
 });
 const ready = { jsonrpc: '2.0', method: 'notifications/initialized' };
 const request = (id, method, params = {}) => ({ jsonrpc: '2.0', id, method, params });
+
+test('MCP roots bind tools to the target project instead of the plugin cache', async () => {
+  const pluginRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'sg-plugin-cache-'));
+  const project = fs.mkdtempSync(path.join(os.tmpdir(), 'sg-project-root-'));
+  const calls = [];
+  const peer = {
+    capabilities: () => ({ rootsSupported: true }),
+    request: async (method) => {
+      calls.push(method);
+      return {
+        roots: [
+          { uri: pathToFileURL(pluginRoot).href, name: 'plugin cache' },
+          { uri: pathToFileURL(project).href, name: 'project' },
+        ],
+      };
+    },
+  };
+  assert.equal(await resolveProjectRoot(peer, pluginRoot), fs.realpathSync(project));
+  assert.deepEqual(calls, ['roots/list']);
+  assert.equal(
+    await resolveProjectRoot(peer, pluginRoot, {
+      env: { SPECGATE_PROJECT_ROOT: project, PLUGIN_ROOT: pluginRoot },
+    }),
+    fs.realpathSync(project),
+  );
+});
 
 function exchange(messages, { cwd, args = [], input } = {}) {
   const result = spawnSync(process.execPath, [server, ...args], {
@@ -79,12 +106,20 @@ test('stdio handshake and diagnostic tools leave a nonempty project unchanged', 
       'sg_plan_generate',
       'sg_plan_freeze_contracts',
       'sg_plan_freeze_tests',
+      'sg_test_design_prepare',
+      'sg_test_design_freeze',
+      'sg_test_replace_assets',
       'sg_development_inspect',
       'sg_development_prepare',
       'sg_development_run',
+      'sg_development_rework',
+      'sg_development_repair',
       'sg_quality_inspect',
       'sg_quality_run',
+      'sg_format_inspect',
+      'sg_format_run',
       'sg_review_inspect',
+      'sg_review_prepare',
       'sg_review_run',
       'sg_review_request_h3',
       'sg_release_preview',
@@ -104,6 +139,7 @@ test('stdio handshake and diagnostic tools leave a nonempty project unchanged', 
         'sg_plan_inspect',
         'sg_development_inspect',
         'sg_quality_inspect',
+        'sg_format_inspect',
         'sg_review_inspect',
         'sg_release_preview',
       ].includes(tool.name),
@@ -162,7 +198,7 @@ test('lifecycle rejects calls before handshake and repeated initialization', () 
   assert.equal(result.messages[0].error.code, -32002);
   assert.equal(result.messages[2].error.code, -32002);
   assert.equal(result.messages[3].error.code, -32600);
-  assert.equal(result.messages[4].result.tools.length, 30);
+  assert.equal(result.messages[4].result.tools.length, 38);
 });
 
 test('malformed JSON, batch messages and invalid envelopes do not terminate the server', () => {

@@ -9,6 +9,7 @@ function peerError(code, message) {
 export function createMcpPeer({ send, timeoutMs = 120000 } = {}) {
   if (typeof send !== 'function') throw new TypeError('A protocol sender is required');
   let elicitationSupported = false;
+  let rootsSupported = false;
   let closed = false;
   const pending = new Map();
   return {
@@ -17,19 +18,27 @@ export function createMcpPeer({ send, timeoutMs = 120000 } = {}) {
         capabilities.elicitation !== null &&
         typeof capabilities.elicitation === 'object' &&
         !Array.isArray(capabilities.elicitation);
+      rootsSupported =
+        capabilities.roots !== null &&
+        typeof capabilities.roots === 'object' &&
+        !Array.isArray(capabilities.roots);
     },
     capabilities() {
-      return { elicitationSupported, trustedUserIdentity: false };
+      return { elicitationSupported, rootsSupported, trustedUserIdentity: false };
     },
     request(method, params, { signal, timeoutMs: requestedTimeout = timeoutMs } = {}) {
       if (closed) return Promise.reject(peerError('PEER_CLOSED', 'MCP peer is disconnected'));
-      if (method !== 'elicitation/create')
+      if (!['elicitation/create', 'roots/list'].includes(method))
         return Promise.reject(
-          peerError('PEER_METHOD_UNSUPPORTED', 'Only elicitation/create is supported'),
+          peerError('PEER_METHOD_UNSUPPORTED', 'Only elicitation and roots requests are supported'),
         );
-      if (!elicitationSupported)
+      if (method === 'elicitation/create' && !elicitationSupported)
         return Promise.reject(
           peerError('ELICITATION_UNSUPPORTED', 'MCP client does not advertise elicitation'),
+        );
+      if (method === 'roots/list' && !rootsSupported)
+        return Promise.reject(
+          peerError('ROOTS_UNSUPPORTED', 'MCP client does not advertise roots'),
         );
       if (signal?.aborted)
         return Promise.reject(peerError('PEER_CANCELLED', 'User interaction cancelled'));

@@ -2,7 +2,11 @@
   "mcpServers": {
     "specgate": {
       "command": "node",
-      "args": ["${PLUGIN_ROOT}/src/codex/server.js"]
+      "args": ["${PLUGIN_ROOT}/src/codex/server.js"],
+      "env": {
+        "SPECGATE_INTERACTIVE_APPROVAL": "1",
+        "SPECGATE_NATIVE_AGENTS": "1"
+      }
     }
   }
 }

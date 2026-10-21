@@ -361,6 +361,12 @@ function coverageVerifier({
 
 test('quality passes only with frozen green cases, real logs, both coverage sides and changed-line coverage', async () => {
   const context = await fixture();
+  const generatedTest = path.join(
+    context.development.worktrees.test.path,
+    'backend/src/test/java/com/example/GeneratedByPreviousRunTest.java',
+  );
+  fs.mkdirSync(path.dirname(generatedTest), { recursive: true });
+  fs.writeFileSync(generatedTest, 'final class GeneratedByPreviousRunTest {}\n');
   const service = createQualityService({
     projectRoot: context.root,
     store: context.store,
@@ -370,12 +376,13 @@ test('quality passes only with frozen green cases, real logs, both coverage side
   });
   const result = await service.run({ expectedVersion: await context.version() });
   assert.equal(result.ok, true, JSON.stringify(result));
-  assert.equal(result.state.phase, 'REVIEWING');
+  assert.equal(result.state.phase, 'FORMATTING');
   assert.equal(result.quality.coverage.changed.rate >= 0.9, true);
   assert.equal(result.quality.cases[0].status, 'pass');
   assert.equal(Number.isFinite(Date.parse(result.quality.command.startedAt)), true);
   assert.equal(Number.isFinite(Date.parse(result.quality.command.finishedAt)), true);
   assert.equal(result.quality.command.durationMs >= 0, true);
+  assert.equal(fs.existsSync(generatedTest), false);
   for (const relative of [
     result.quality.testLog,
     result.quality.stdoutLog,

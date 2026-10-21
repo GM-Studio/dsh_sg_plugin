@@ -80,9 +80,14 @@ async function setup(args) {
   const { root, control } = context(args);
   if (fs.existsSync(root)) throw new Error(`Target already exists: ${root}`);
   fs.mkdirSync(control, { recursive: true });
-  const preview = previewInit({ root, preset: 'jdk8-boot2.7' });
+  const preset = args.preset || 'jdk8-boot2.7';
+  const preview = previewInit({ root, preset });
   if (!preview.ok) throw new Error(JSON.stringify(preview));
-  const initialized = await executeInit({ root, previewHash: preview.previewHash });
+  const initialized = await executeInit({
+    root,
+    preset: preview.preset,
+    previewHash: preview.previewHash,
+  });
   if (!initialized.ok) throw new Error(JSON.stringify(initialized));
   const baseline = await verifyProject({ root });
   if (!baseline.ok) throw new Error(JSON.stringify(baseline));
@@ -208,6 +213,7 @@ async function setup(args) {
     root,
     changeId,
     requirementsPath,
+    preset,
     baselineRunId: baseline.report?.runId,
     phase: contracts.state.phase,
   });
@@ -216,6 +222,7 @@ async function setup(args) {
       ok: true,
       root,
       phase: contracts.state.phase,
+      preset,
       baselineRunId: baseline.report?.runId,
     }) + '\n',
   );

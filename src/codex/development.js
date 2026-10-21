@@ -6,7 +6,7 @@ import { fileURLToPath } from 'node:url';
 import { canonicalJson, hashValue } from './events.js';
 
 const SOURCE_ROOT = path.resolve(fileURLToPath(new URL('../..', import.meta.url)));
-const ROLES = Object.freeze(['frontend', 'backend', 'integration', 'test', 'review']);
+const ROLES = Object.freeze(['frontend', 'backend', 'integration', 'test', 'review', 'format']);
 const DEVELOPMENT_ROLES = Object.freeze(['frontend', 'backend']);
 const MAX_OUTPUT_BYTES = 4 * 1024 * 1024;
 const COMMAND_TIMEOUT_MS = 10 * 60 * 1000;
@@ -310,10 +310,14 @@ function worktreeList(root) {
   return entries;
 }
 
-function createWorktree(root, changeId, role, freezeCommit) {
-  const relative = `.specgate/codex/worktrees/${changeId}/${role}`;
+function createWorktree(root, changeId, role, freezeCommit, round = null) {
+  const relative = round
+    ? `.specgate/codex/worktrees/${changeId}/round-${round}/${role}`
+    : `.specgate/codex/worktrees/${changeId}/${role}`;
   const target = path.join(root, relative);
-  const branch = `sg/codex/${changeId}/${role}`;
+  const branch = round
+    ? `sg/codex/${changeId}/round-${round}/${role}`
+    : `sg/codex/${changeId}/${role}`;
   const registered = worktreeList(root);
   const existing = registered.find((entry) => {
     if (!fs.existsSync(entry.path)) return false;
@@ -347,6 +351,14 @@ function createWorktree(root, changeId, role, freezeCommit) {
   if (runGit(target, ['rev-parse', 'HEAD']) !== freezeCommit)
     fail('WORKTREE_BROKEN', 'A new role worktree did not start from the freeze commit');
   return { role, path: target, branch, reused: false };
+}
+
+export function createPrecompletedRoleProvider() {
+  return async (role) => ({
+    ok: true,
+    precompleted: true,
+    summary: `${role} completed by a native Codex subagent`,
+  });
 }
 
 function cleanWorktree(worktree, label) {
@@ -665,6 +677,12 @@ export function createDevelopmentService({
     if (runGit(worktree, ['rev-parse', '--abbrev-ref', 'HEAD']) !== record.branch)
       return failure('WORKTREE_BROKEN', 'The role worktree is on the wrong branch');
     const previousHead = runGit(worktree, ['rev-parse', 'HEAD']);
+    const roleBaseCommit =
+      Number.isInteger(development.round) &&
+      Number.isInteger(development.reworkRound) &&
+      development.reworkBaseCommit
+        ? development.reworkBaseCommit
+        : development.freezeCommit;
     let result;
     try {
       result = await roleProvider(role, {
@@ -704,18 +722,18 @@ export function createDevelopmentService({
     if (head === previousHead && result.precompleted !== true)
       return failure('NO_COMMIT', 'The role provider did not create a commit');
     if (result.precompleted === true) {
-      if (head === development.freezeCommit)
+      if (head === roleBaseCommit)
         return failure('NO_COMMIT', 'The precompleted role branch has no freeze-following commit');
       try {
-        runGit(root, ['merge-base', '--is-ancestor', development.freezeCommit, head]);
+        runGit(root, ['merge-base', '--is-ancestor', roleBaseCommit, head]);
       } catch {
         return failure(
           'ROLE_COMMIT_INVALID',
-          'The precompleted role commit is not descended from the freeze commit',
+          'The precompleted role commit is not descended from its role base commit',
         );
       }
     }
-    const entries = parseChangedFiles(root, development.freezeCommit, head);
+    const entries = parseChangedFiles(root, roleBaseCommit, head);
     if (!entries.length)
       return failure('NO_CHANGES', 'The role branch has no change against the freeze commit');
     const violations = [];
@@ -922,7 +940,9 @@ export function createDevelopmentService({
         model: details.model,
         tests: details.tests,
       };
-      let pending = [...DEVELOPMENT_ROLES];
+      let pending = DEVELOPMENT_ROLES.filter(
+        (role) => development.roles?.[role]?.status !== 'skipped',
+      );
       const lastErrors = {};
       while (pending.length) {
         if (signal?.aborted) return failure('CANCELLED', 'Development was cancelled');
@@ -1026,7 +1046,9 @@ export function createDevelopmentService({
       });
       if (!integrating.ok) return integrating;
       development = integrating.state.context.development;
-      for (const role of DEVELOPMENT_ROLES) {
+      for (const role of DEVELOPMENT_ROLES.filter(
+        (entry) => development.roles?.[entry]?.status !== 'skipped',
+      )) {
         const merged = await mergeRole(development, role, challenge, { signal });
         if (!merged.ok) return { ...merged, development: merged.development || development };
         development = merged.development;
@@ -1038,6 +1060,152 @@ export function createDevelopmentService({
         to: 'TESTING',
       });
       return tested.ok ? { ...tested, development: tested.state.context.development } : tested;
+    });
+  }
+
+  async function prepareRound(
+    args,
+    { phase, findings, source, eventKey, activeRoles = DEVELOPMENT_ROLES },
+  ) {
+    return protect(async () => {
+      const loaded = await current(args, [phase]);
+      if (!loaded.ok) return loaded;
+      const checked = await checkedPlan();
+      if (!checked.ok) return checked;
+      if (!Array.isArray(findings) || !findings.length)
+        return failure('REPAIR_NOT_REQUIRED', `${source} has no blocking findings`);
+      const previous = loaded.state.context?.development;
+      if (!object(previous) || !object(previous.worktrees))
+        return failure('DEVELOPMENT_REQUIRED', 'Development worktrees are unavailable');
+      const integration = previous.worktrees.integration;
+      if (!object(integration) || !fs.existsSync(integration.path))
+        return failure('WORKTREE_MISSING', 'The integration worktree is unavailable');
+      cleanWorktree(integration.path, 'The integration worktree');
+      if (runGit(integration.path, ['rev-parse', '--abbrev-ref', 'HEAD']) !== integration.branch)
+        return failure('WORKTREE_BROKEN', 'The integration worktree changed branch');
+      const repairBaseCommit = runGit(integration.path, ['rev-parse', 'HEAD']);
+      const round = (Number.isInteger(previous.reworkRound) ? previous.reworkRound : 0) + 1;
+      const worktrees = { ...previous.worktrees };
+      const history = Array.isArray(previous.history) ? [...previous.history] : [];
+      history.push({
+        round: Number.isInteger(previous.reworkRound) ? previous.reworkRound : 0,
+        worktrees: Object.fromEntries(
+          ['frontend', 'backend', 'format'].map((role) => [role, previous.worktrees[role]]),
+        ),
+        source: eventKey,
+        findings,
+        recordedAt: new Date().toISOString(),
+      });
+      const rolesToCreate = [...new Set([...activeRoles, 'format'])];
+      for (const role of rolesToCreate)
+        worktrees[role] = createWorktree(
+          root,
+          loaded.state.changeId,
+          role,
+          repairBaseCommit,
+          round,
+        );
+      const roles = Object.fromEntries(
+        DEVELOPMENT_ROLES.map((role) => [
+          role,
+          activeRoles.includes(role)
+            ? {
+                status: 'pending',
+                attempts: 0,
+                commit: repairBaseCommit,
+                worktree: worktrees[role].path,
+                branch: worktrees[role].branch,
+              }
+            : {
+                ...(previous.roles?.[role] || {}),
+                status: 'skipped',
+                worktree: worktrees[role]?.path || null,
+                branch: worktrees[role]?.branch || null,
+              },
+        ]),
+      );
+      const reworkPatch = JSON.parse(
+        JSON.stringify({
+          worktrees,
+          roles,
+          rounds: [],
+          merged: [],
+          conflicts: [],
+          round,
+          reworkRound: round,
+          repairBaseCommit,
+          reworkBaseCommit: repairBaseCommit,
+          repairFindings: findings,
+          reworkFindings: findings,
+          history,
+        }),
+      );
+      const saved = await saveDevelopment(reworkPatch, loaded.state.version);
+      if (!saved.ok) return saved;
+      const moved = await store.transition({
+        expectedVersion: saved.state.version,
+        to: 'DEVELOPING',
+      });
+      return moved.ok
+        ? {
+            ...moved,
+            development: moved.state.context.development,
+            [eventKey]: {
+              round,
+              baseCommit: repairBaseCommit,
+              findings,
+              worktrees: {
+                frontend: worktrees.frontend,
+                backend: worktrees.backend,
+                format: worktrees.format,
+              },
+            },
+          }
+        : moved;
+    });
+  }
+
+  async function prepareRework(args = {}) {
+    const loaded = await store.inspect();
+    if (!loaded.ok) return loaded;
+    const blocking = Array.isArray(loaded.state.context?.review?.blocking)
+      ? loaded.state.context.review.blocking
+      : [];
+    if (loaded.state.context?.review?.status !== 'failed' || !blocking.length)
+      return failure('REWORK_NOT_REQUIRED', 'Review has no blocking findings to rework');
+    return prepareRound(args, {
+      phase: 'REVIEWING',
+      findings: blocking,
+      source: 'review',
+      eventKey: 'rework',
+    });
+  }
+
+  async function prepareRepair(args = {}) {
+    const loaded = await store.inspect();
+    if (!loaded.ok) return loaded;
+    const defects = Array.isArray(loaded.state.context?.quality?.defects)
+      ? loaded.state.context.quality.defects
+      : [];
+    if (loaded.state.context?.quality?.status !== 'failed' || !defects.length)
+      return failure('REPAIR_NOT_REQUIRED', 'Quality has no failing defects to repair');
+    const declaredOwners = defects
+      .flatMap((defect) => (Array.isArray(defect.owners) ? defect.owners : []))
+      .filter((role) => DEVELOPMENT_ROLES.includes(role));
+    const messageText = defects.map((defect) => defect.message || '').join('\n');
+    const activeRoles = declaredOwners.length
+      ? declaredOwners
+      : /frontend/i.test(messageText)
+        ? ['frontend']
+        : /backend/i.test(messageText)
+          ? ['backend']
+          : [...DEVELOPMENT_ROLES];
+    return prepareRound(args, {
+      phase: 'TESTING',
+      findings: defects,
+      source: 'quality',
+      eventKey: 'repair',
+      activeRoles: [...new Set(activeRoles)],
     });
   }
 
@@ -1059,15 +1227,20 @@ export function createDevelopmentService({
       if (digest(evidence) !== development.red.hash)
         return failure('DEVELOPMENT_EVIDENCE_CHANGED', 'Red baseline evidence was modified');
       const worktrees = {};
+      const integrationCommit = development.merged?.at(-1)?.integrationCommit;
       for (const role of ROLES) {
         const entry = development.worktrees[role];
         if (!object(entry) || !fs.existsSync(entry.path))
           return failure('WORKTREE_MISSING', `The ${role} worktree no longer exists`);
-        if (runGit(entry.path, ['rev-parse', '--abbrev-ref', 'HEAD']) !== entry.branch)
+        const branch = runGit(entry.path, ['rev-parse', '--abbrev-ref', 'HEAD']);
+        const head = runGit(entry.path, ['rev-parse', 'HEAD']);
+        const detachedAtIntegration =
+          (role === 'test' || role === 'review') && branch === 'HEAD' && head === integrationCommit;
+        if (branch !== entry.branch && !detachedAtIntegration)
           return failure('WORKTREE_BROKEN', `The ${role} worktree branch changed`);
         worktrees[role] = {
           ...entry,
-          head: runGit(entry.path, ['rev-parse', 'HEAD']),
+          head,
           clean:
             runGit(entry.path, ['status', '--porcelain', '--untracked-files=all']).length === 0,
         };
@@ -1080,5 +1253,5 @@ export function createDevelopmentService({
     });
   }
 
-  return Object.freeze({ prepare, run, inspect });
+  return Object.freeze({ prepare, prepareRework, prepareRepair, run, inspect });
 }

@@ -1,0 +1,173 @@
+# Codex 源码加载与原生 Agent Quickstart
+
+本 Quickstart 让 Codex 从当前 SpecGate 源码目录加载插件，并在目标项目中安装真实 subagent 配置。适用于 Codex CLI 0.163.0 及后续支持 portable plugin、`mcp.json`、subagents 和 elicitation 的版本。
+
+## 1. 准备源码
+
+```bash
+git clone <specgate-source>
+cd specgate
+npm ci
+node scripts/codex-source-setup.mjs --project <absolute-project-path> --check
+```
+
+插件源码根目录必须同时存在：
+
+```text
+plugin.json
+mcp.json
+skills/
+assets/codex/agents/
+```
+
+`plugin.json` 是 portable Agent Plugins manifest，`mcp.json` 声明本地 stdio MCP。根目录的 `.agents/plugins/marketplace.json` 把当前 checkout 暴露为 `specgate-source` marketplace。
+
+## 2. 从源码目录加载 Codex 插件
+
+保持源码依赖安装完成，然后执行：
+
+```bash
+codex plugin marketplace add <absolute-specgate-source-path>
+codex plugin add specgate-codex@specgate-source
+codex plugin list
+codex mcp list
+```
+
+预期结果：
+
+- `codex plugin list` 显示 `specgate-codex@specgate-source` 为 `installed, enabled`。
+- `codex mcp list` 显示 `specgate` 为 enabled。
+- 新启动的 Codex 会话能看到 `sg_init`、`sg_verify`、`sg_change_add`、`sg_test_design_prepare`、`sg_development_run`、`sg_quality_run`、`sg_format_run`、`sg_review_prepare` 等工具。
+
+安装或更新插件后必须启动新的 Codex 会话。修改源码后重新执行：
+
+```bash
+codex plugin add specgate-codex@specgate-source
+```
+
+## 3. 安装项目级 Agent
+
+项目执行 `sg_init` 并完成 baseline 提交后：
+
+```bash
+node <absolute-specgate-source-path>/scripts/codex-source-setup.mjs \
+  --project <absolute-project-path>
+```
+
+脚本只写入以下受管内容：
+
+- `.codex/agents/specgate_test_designer.toml`
+- `.codex/agents/specgate_frontend.toml`
+- `.codex/agents/specgate_backend.toml`
+- `.codex/agents/specgate_tester.toml`
+- `.codex/agents/specgate_formatter.toml`
+- `.codex/agents/specgate_reviewer.toml`
+- `AGENTS.md` 中由 `<!-- specgate-codex:begin -->` 包围的受管块
+- `.codex/config.toml` 中由 `# specgate-codex:config-begin` 包围的项目级 MCP 配置
+
+已有同名自定义 Agent 内容不同时脚本 fail-closed，不会覆盖。
+
+脚本同时把受管本地文件写入 Git 的 `.git/info/exclude`：
+
+- `/.codex/`
+- `/AGENTS.md`（仅当该文件未 tracked）
+
+这样 setup 自身不会让主工作区变 dirty，也不会影响其他克隆或共享仓库。若
+`AGENTS.md` 已被 Git tracked，脚本不会把它加入本地 exclude，而是在结果的
+`git.trackedAgents`、`git.dirtyManagedPaths` 和 `git.warning` 中明确报告；
+必须先提交这次受管修改，再执行 `sg_test_design_prepare`。
+
+项目级配置会关闭插件 cache cwd 下的 `specgate` server，并启动：
+
+```toml
+[mcp_servers.specgate_project]
+command = "node"
+args = ["<source>/src/codex/server.js", "--project-root", "<absolute-project>"]
+```
+
+这样 MCP 状态始终绑定目标项目，而不是 `~/.codex/plugins/cache/...`。Codex 0.163 的 plugin server 默认从插件目录启动，`roots/list` 在部分 exec 会话中不可用，因此 Quickstart 使用项目级显式绑定作为可靠路径。
+
+## 4. 启动 Codex
+
+```bash
+codex -C <absolute-project-path>
+```
+
+然后在会话里明确调用：
+
+```text
+$sg-codex 按原生 Agent 编排执行当前 change。
+测试用例必须先写并冻结；随后同时派发 specgate_frontend 和
+specgate_backend；等待二者提交；再派发 specgate_tester；
+测试全通过后派发 specgate_formatter；最后派发 specgate_reviewer。
+Blocking Review 必须进入新 round 并重新走完整闭环。
+```
+
+也可直接说“按 AGENTS.md 和 sg-codex Skill 的强制顺序执行”。Codex 会根据项目或 Skill 指令派发 subagents。
+
+## 5. 阶段与工具
+
+| 阶段 | Codex 主 Agent | 子 Agent / MCP |
+| --- | --- | --- |
+| 测试设计 | `sg_test_design_prepare` | `specgate_test_designer` → `sg_test_design_freeze` |
+| 前后端开发 | `sg_development_prepare` | 同时派发 `specgate_frontend`、`specgate_backend` |
+| 集成 | `sg_development_run` | MCP 校验 commit、路径、freeze 后代并合并 |
+| 测试 | 等待 Tester | `specgate_tester` → `sg_quality_run` |
+| 格式化 | 等待 Formatter | `specgate_formatter` → `sg_format_run` |
+| Review | 等待 Reviewer | `specgate_reviewer` → `sg_review_prepare` / `sg_review_run` |
+| 高风险回修 | `sg_development_rework` | 新一轮 frontend/backend/format worktree，重跑完整闭环 |
+
+原生 Test runner 的 canonical 契约是：`--tests` 指向直接包含 `runner.mjs`
+的绝对 `specgate-tests/` 根目录；所有测试资产相对该目录解析，不能再追加
+一层 `specgate-tests/`。MCP 对早期已冻结的 runner 只在“没有生成报告”时做一次
+父目录兼容回退；已经生成明确失败报告的 runner 不会被重试或掩盖。
+
+Test Designer 必须在冻结前运行项目格式化、lint 与 import-order 检查。若冻结后
+发现测试源码自身格式错误或 runner CLI 契约错误，使用
+`sg_test_replace_assets` 由 Test Designer 提交受控修订；MCP 会保留旧 manifest
+并生成带 reason 的 v2，不应把这类缺陷派给前后端开发 Agent。
+
+## 6. 审批
+
+portable `mcp.json` 显式设置：
+
+```json
+{
+  "SPECGATE_INTERACTIVE_APPROVAL": "1",
+  "SPECGATE_NATIVE_AGENTS": "1"
+}
+```
+
+审批 actor 由启动 MCP 的 OS 用户派生，来源标记为 `codex-mcp-os-user`。它不是工具参数，也不能由模型提交。H1/H3 仍必须通过 Codex/MCP elicitation 展示给用户，绑定当前 artifact hash，并经过单次消费和持久审计。
+
+若 Codex 客户端不声明 elicitation，或用户拒绝/超时，门禁保持 pending/blocked。不得自动批准。
+
+## 7. 故障检查
+
+```bash
+codex plugin marketplace list
+codex plugin list
+codex mcp list
+node scripts/codex-source-setup.mjs --project <project> --check
+```
+
+若 Agent 未出现，检查：
+
+- 是否在新会话中运行；
+- `.codex/agents/` 是否有六个 `specgate_*.toml`；
+- 项目是否信任并加载 `.codex/config.toml`；
+- `AGENTS.md` 受管块是否存在；
+- `git status --short` 是否仍显示 `.codex/` 或 setup 新建的 `AGENTS.md`；
+- 若 `AGENTS.md` 原本已 tracked，是否已提交 setup 写入的受管块；
+- Codex 是否启用 subagents（默认启用，也可显式设置 `[agents] enabled=true`）。
+
+若曾用同一个 marketplace 名称安装旧版本，先删除旧插件和 marketplace，再重新添加：
+
+```bash
+codex plugin remove specgate-codex@<old-marketplace-name>
+codex plugin marketplace remove <old-marketplace-name>
+```
+
+源码 marketplace 使用独立名称 `specgate-source`，避免个人 marketplace 中同名旧 catalog 覆盖新 checkout。
+
+MCP server 不能自己创建 Codex subagent；它负责 prepare、challenge、commit 校验、evidence 和状态推进。派发动作必须由 Codex 主 Agent 执行，这是当前 Codex 公开控制面的边界。

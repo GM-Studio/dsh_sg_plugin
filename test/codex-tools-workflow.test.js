@@ -4,10 +4,31 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { createStateStore } from '../src/codex/state-machine.js';
-import { createToolRegistry } from '../src/codex/workflow-tools.js';
+import { createToolRegistry, nativeTestRunnerSpec } from '../src/codex/workflow-tools.js';
 
 const temp = () => fs.mkdtempSync(path.join(os.tmpdir(), 'sg-codex-tools-'));
 const data = (result) => result.structuredContent;
+
+test('native runner receives the manifest test root instead of its frozen snapshot parent', () => {
+  const worktree = path.resolve('/project/.specgate/worktrees/example/test');
+  const testsDirectory = path.resolve('/project/.specgate/codex/changes/example/tests/v1-frozen');
+  const reportPath = '.specgate/codex/native-green-report.json';
+  const spec = nativeTestRunnerSpec({
+    mode: 'green',
+    worktree,
+    testsDirectory,
+    reportPath,
+  });
+  const tests = spec.args[spec.args.indexOf('--tests') + 1];
+  assert.equal(spec.adapter.endsWith('native-test-runner.mjs'), true);
+  assert.equal(spec.args[0], spec.adapter);
+  assert.equal(spec.args[1], spec.runner);
+  assert.equal(spec.runner, path.join(testsDirectory, 'specgate-tests', 'runner.mjs'));
+  assert.equal(tests, path.join(testsDirectory, 'specgate-tests'));
+  assert.equal(spec.args[spec.args.indexOf('--snapshot') + 1], testsDirectory);
+  assert.equal(spec.cwd, worktree);
+  assert.equal(spec.args[spec.args.indexOf('--report') + 1], path.join(worktree, reportPath));
+});
 
 test('state inspection is read-only and mutation schemas require a current version', async () => {
   const projectRoot = temp();
@@ -87,6 +108,7 @@ test('the public tool set cannot import approvals or arbitrarily change phases',
     'sg_plan_generate',
     'sg_plan_freeze_contracts',
     'sg_plan_freeze_tests',
+    'sg_test_replace_assets',
     'sg_development_inspect',
     'sg_development_prepare',
     'sg_development_run',
@@ -145,6 +167,29 @@ test('plan and development tools expose only versions and frozen content, never 
   );
   assert.equal(registry.validate('sg_quality_run', { expectedVersion: 0 }), true);
   assert.equal(registry.validate('sg_review_run', { expectedVersion: 0, mode: 'strict' }), true);
+  const replacementAssets = {
+    role: 'test',
+    cases: [{ id: 'CASE-1', acIds: ['AC-1'], codeFiles: ['specgate-tests/runner.mjs'] }],
+    code: { 'specgate-tests/runner.mjs': 'console.log("ok");\n' },
+    fixtures: {},
+    coverage: { lines: 80, branches: 70 },
+  };
+  assert.equal(
+    registry.validate('sg_test_replace_assets', {
+      expectedVersion: 0,
+      reason: 'Format the frozen test source without changing behavior.',
+      assets: replacementAssets,
+    }),
+    true,
+  );
+  assert.equal(
+    registry.validate('sg_test_replace_assets', {
+      expectedVersion: 0,
+      reason: 'Invalid role',
+      assets: { ...replacementAssets, role: 'developer' },
+    }),
+    false,
+  );
   assert.equal(
     registry.validate('sg_review_run', {
       expectedVersion: 0,
@@ -155,7 +200,7 @@ test('plan and development tools expose only versions and frozen content, never 
   assert.equal(registry.validate('sg_release_archive', { expectedVersion: 0, force: true }), false);
   assert.deepEqual(fs.readdirSync(projectRoot), []);
   const status = data(await registry.call('status', {}));
-  assert.equal(status.planning.testRole, 'available');
+  assert.equal(status.planning.testRole, 'server-provider');
   assert.equal(status.development.status, 'available');
   assert.deepEqual(status.development.fixedWorktrees, [
     'frontend',
@@ -163,6 +208,7 @@ test('plan and development tools expose only versions and frozen content, never 
     'integration',
     'test',
     'review',
+    'format',
   ]);
   assert.equal(status.quality.status, 'available');
   assert.equal(status.quality.verifier, 'custom');

@@ -1,6 +1,6 @@
 # SpecGate for DSH
 
-> **Codex 原生适配开发中**：独立插件骨架和本地 stdio MCP 已覆盖 P0–P9 核心，包括初始化、真实验证、需求、计划/测试冻结、并行开发、质量门、三档 Review、H3 与归档发布。真实 Review/H3 可信宿主链路仍待验收；缺少服务器角色提供器时工具 fail-closed。[P8/P9 设计](docs/design/codex-p8-p9-review-release.zh.md) · [实施进度](docs/plans/codex-sg-change-add-v1-progress.md)。现有 DSH 入口保持兼容。
+> **Codex 原生适配**：插件现提供 portable `plugin.json` / `mcp.json`、源码 marketplace、交互式 H1/H3 elicitation，以及 Test Designer、Frontend、Backend、Tester、Formatter、Reviewer 六个项目级 Agent。主 Codex Agent 按强制 Skill 派发真实 subagents；MCP 在独立 worktree 校验 commit、路径、测试和 Review 证据。参见 [Codex 源码加载 Quickstart](docs/quickstart-codex-source.zh.md)。
 
 **中文** | [English](README.en.md)
 
@@ -597,7 +597,9 @@ openspec/
 - 并行 worktree 要求工作区 clean；dirty 项目自动降级串行，不隔离未提交改动。
 - 合并冲突不会自动解决；worktree 与分支会保留，需人工合并后重新执行 `sg_run`。
 - 幂等 `--force` 只对追加类操作开放；状态类转换通过推进阶段自然重跑。
-- Agent 角色仅限 `implementer`、`tester` 与只读审查角色；插件不提供角色目录。
+- 以上角色限制属于旧版 DSH v3 执行器；v4 Codex 适配通过项目级
+  `.codex/agents/` 提供 Test Designer、Frontend、Backend、Tester、Formatter、
+  Reviewer 六个真实 subagent，由主 Codex Agent 按 `sg-codex` Skill 派发。
 - 不替代 AgentKit47 CLI 的 `init/upgrade/doctor/validate`；SpecGate 是 DSH Host 插件，不是独立 CLI。
 - 插件不提供 MCP server 或 MCP 工具；DSH 侧的 MCP 能力与本插件相互独立。
 - **升级提示**：前身插件 0.2.0 早期构建中的 `ak47_selftest_append` 会污染会话日志；升级后请在新会话中继续，旧会话若已出现 `tool_use` / `tool_result` 400 错误不要复用。

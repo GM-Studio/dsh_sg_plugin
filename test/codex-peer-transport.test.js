@@ -31,7 +31,11 @@ test('server-initiated responses are correlated privately and cannot be supplied
     peer.receive({ jsonrpc: '2.0', id: sent[0].id, result: { action: 'accept' } }),
     false,
   );
-  assert.deepEqual(peer.capabilities(), { elicitationSupported: true, trustedUserIdentity: false });
+  assert.deepEqual(peer.capabilities(), {
+    elicitationSupported: true,
+    rootsSupported: false,
+    trustedUserIdentity: false,
+  });
   peer.close();
 });
 

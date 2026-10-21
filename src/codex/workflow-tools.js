@@ -1,5 +1,6 @@
 import path from 'node:path';
 import fs from 'node:fs';
+import { fileURLToPath } from 'node:url';
 import { TOOLS as DIAGNOSTICS, callDiagnostic } from './tools.js';
 import { createStateStore } from './state-machine.js';
 import { createApprovalAuthority } from './approvals.js';
@@ -7,7 +8,7 @@ import { previewInit, executeInit } from './init.js';
 import { JAVA_PRESETS } from '../v4/java-versions.js';
 import { CHANGE_TOOLS, CHANGE_METHODS, callChangeTool } from './change-tools.js';
 import { createChangeAddService } from './change-add.js';
-import { createDevelopmentService } from './development.js';
+import { createDevelopmentService, createPrecompletedRoleProvider } from './development.js';
 import { createPlanService } from './plan.js';
 import { PLAN_TOOLS, callPlanTool } from './plan-tools.js';
 import { createQualityService } from './quality.js';
@@ -16,8 +17,12 @@ import { createReviewService } from './review.js';
 import { REVIEW_TOOLS, callReviewTool } from './review-tools.js';
 import { createReleaseService } from './release.js';
 import { RELEASE_TOOLS, callReleaseTool } from './release-tools.js';
+import { createPeerUserInputProvider } from './host-input.js';
+import { createFormatService, createNativeFormatter } from './format.js';
+import { FORMAT_TOOLS, callFormatTool } from './format-tools.js';
 
 const object = (value) => value !== null && typeof value === 'object' && !Array.isArray(value);
+const NATIVE_RUNNER_ADAPTER = fileURLToPath(new URL('./native-test-runner.mjs', import.meta.url));
 const version = {
   type: 'integer',
   minimum: 0,
@@ -50,6 +55,33 @@ const definition = (name, description, properties = {}, required = [], readOnly 
     openWorldHint: false,
   },
 });
+
+export function nativeTestRunnerSpec({ mode, worktree, testsDirectory, reportPath }) {
+  const testRoot = path.join(testsDirectory, 'specgate-tests');
+  const runner = path.join(testRoot, 'runner.mjs');
+  return {
+    command: process.execPath,
+    args: [
+      NATIVE_RUNNER_ADAPTER,
+      runner,
+      '--mode',
+      mode,
+      '--root',
+      worktree,
+      '--tests',
+      testRoot,
+      '--snapshot',
+      testsDirectory,
+      '--report',
+      path.join(worktree, reportPath),
+    ],
+    cwd: worktree,
+    reportPath,
+    adapter: NATIVE_RUNNER_ADAPTER,
+    runner,
+    testRoot,
+  };
+}
 
 const WORKFLOW_TOOLS = [
   definition(
@@ -200,8 +232,56 @@ export function createToolRegistry({
   qualityVerifier,
   qualityTimeoutMs,
   reviewRoleProvider,
+  trustedUserIdentity,
+  nativeAgents = false,
+  formatter,
 } = {}) {
   const root = path.resolve(projectRoot);
+  const effectiveDevelopmentRoleProvider =
+    developmentRoleProvider || (nativeAgents ? createPrecompletedRoleProvider() : undefined);
+  const effectiveRedRunner =
+    redRunner ||
+    (nativeAgents
+      ? async () => {
+          const checked = await plans().inspect();
+          if (!checked.ok) throw Object.assign(new Error(checked.message), { code: checked.code });
+          const testsDirectory = path.join(root, checked.ref.tests.directory);
+          const reportPath = '.specgate/codex/native-red-report.json';
+          const specification = nativeTestRunnerSpec({
+            mode: 'red',
+            worktree: root,
+            testsDirectory,
+            reportPath,
+          });
+          if (!fs.existsSync(specification.runner))
+            throw Object.assign(new Error('Frozen native runner is unavailable'), {
+              code: 'RED_RUNNER_UNAVAILABLE',
+            });
+          return specification;
+        }
+      : undefined);
+  const effectiveQualityTestRunner =
+    qualityTestRunner ||
+    (nativeAgents
+      ? async ({ worktree }) => {
+          const checked = await plans().inspect();
+          if (!checked.ok) throw Object.assign(new Error(checked.message), { code: checked.code });
+          const testsDirectory = path.join(root, checked.ref.tests.directory);
+          const reportPath = '.specgate/codex/native-green-report.json';
+          const specification = nativeTestRunnerSpec({
+            mode: 'green',
+            worktree,
+            testsDirectory,
+            reportPath,
+          });
+          if (!fs.existsSync(specification.runner))
+            throw Object.assign(new Error('Frozen native runner is unavailable'), {
+              code: 'TEST_RUNNER_UNAVAILABLE',
+            });
+          return specification;
+        }
+      : undefined);
+  const effectiveFormatter = formatter || (nativeAgents ? createNativeFormatter() : undefined);
   let store;
   const stateStore = () =>
     (store ||= createStateStore({ projectRoot: root, authorizeGate: authority.authorizeGate }));
@@ -209,6 +289,7 @@ export function createToolRegistry({
   // manufacture a trusted user identity. Gate integration stays unavailable.
   const authority = createApprovalAuthority({
     request: requestPeer,
+    trustedPeerIdentity: trustedUserIdentity,
     resolveGateArtifact: ({ gate, state }) => ({
       scope: state?.changeId,
       artifactHash:
@@ -227,12 +308,19 @@ export function createToolRegistry({
       if (!appended.ok) throw new Error('Cannot persist approval audit');
     },
   });
+  const effectiveInitializationApproval =
+    initializationApprovalProvider || (trustedUserIdentity ? authority : undefined);
   let changeService;
   const changes = () =>
     (changeService ||= createChangeAddService({
       projectRoot: root,
       store: stateStore(),
       approvalAuthority: authority,
+      userInputProvider: createPeerUserInputProvider({
+        requestPeer,
+        peerCapabilities,
+        trustedUserIdentity,
+      }),
     }));
   let planService;
   const plans = () =>
@@ -247,8 +335,8 @@ export function createToolRegistry({
       projectRoot: root,
       store: stateStore(),
       planService: plans(),
-      roleProvider: developmentRoleProvider,
-      redRunner,
+      roleProvider: effectiveDevelopmentRoleProvider,
+      redRunner: effectiveRedRunner,
     }));
   let qualityService;
   const quality = () =>
@@ -256,7 +344,7 @@ export function createToolRegistry({
       projectRoot: root,
       store: stateStore(),
       planService: plans(),
-      testRunner: qualityTestRunner,
+      testRunner: effectiveQualityTestRunner,
       verifier: qualityVerifier,
       timeoutMs: qualityTimeoutMs,
     }));
@@ -276,12 +364,21 @@ export function createToolRegistry({
       store: stateStore(),
       planService: plans(),
     }));
+  let formatService;
+  const formatting = () =>
+    (formatService ||= createFormatService({
+      projectRoot: root,
+      store: stateStore(),
+      planService: plans(),
+      formatter: effectiveFormatter,
+    }));
   const definitions = [
     ...DIAGNOSTICS,
     ...WORKFLOW_TOOLS,
     ...CHANGE_TOOLS,
     ...PLAN_TOOLS,
     ...QUALITY_TOOLS,
+    ...FORMAT_TOOLS,
     ...REVIEW_TOOLS,
     ...RELEASE_TOOLS,
   ];
@@ -331,26 +428,49 @@ export function createToolRegistry({
             };
             data.planning = {
               status: 'available',
-              testRole: typeof planRoleProvider === 'function' ? 'available' : 'unavailable',
+              testRole:
+                typeof planRoleProvider === 'function'
+                  ? 'server-provider'
+                  : nativeAgents
+                    ? 'native-subagent'
+                    : 'unavailable',
             };
             data.development = {
               status:
-                typeof redRunner === 'function' && typeof developmentRoleProvider === 'function'
+                typeof effectiveRedRunner === 'function' &&
+                typeof effectiveDevelopmentRoleProvider === 'function'
                   ? 'available'
                   : 'unavailable',
-              redRunner: typeof redRunner === 'function' ? 'available' : 'unavailable',
+              redRunner: typeof effectiveRedRunner === 'function' ? 'available' : 'unavailable',
               roleProvider:
-                typeof developmentRoleProvider === 'function' ? 'available' : 'unavailable',
-              fixedWorktrees: ['frontend', 'backend', 'integration', 'test', 'review'],
+                typeof effectiveDevelopmentRoleProvider === 'function'
+                  ? 'available'
+                  : 'unavailable',
+              fixedWorktrees: ['frontend', 'backend', 'integration', 'test', 'review', 'format'],
             };
             data.quality = {
-              status: typeof qualityTestRunner === 'function' ? 'available' : 'unavailable',
-              testRunner: typeof qualityTestRunner === 'function' ? 'available' : 'unavailable',
+              status:
+                typeof effectiveQualityTestRunner === 'function' ? 'available' : 'unavailable',
+              testRunner:
+                typeof effectiveQualityTestRunner === 'function' ? 'available' : 'unavailable',
               verifier: typeof qualityVerifier === 'function' ? 'custom' : 'verifyProject',
             };
+            data.formatting = {
+              status: typeof effectiveFormatter === 'function' ? 'available' : 'unavailable',
+              worktree: 'dedicated',
+              requiredAfterTests: true,
+            };
             data.review = {
-              status: typeof reviewRoleProvider === 'function' ? 'available' : 'unavailable',
-              reviewAgent: typeof reviewRoleProvider === 'function' ? 'available' : 'unavailable',
+              status:
+                typeof reviewRoleProvider === 'function' || nativeAgents
+                  ? 'available'
+                  : 'unavailable',
+              reviewAgent:
+                typeof reviewRoleProvider === 'function'
+                  ? 'server-provider'
+                  : nativeAgents
+                    ? 'native-report'
+                    : 'unavailable',
               h3Approval: available.available ? 'available' : 'unavailable',
             };
             data.release = {
@@ -385,6 +505,8 @@ export function createToolRegistry({
         if (name === 'sg_cancel') return result(await stateStore().cancel(args));
         if (QUALITY_TOOLS.some((entry) => entry.name === name))
           return result(await callQualityTool(quality(), name, args, { signal }));
+        if (FORMAT_TOOLS.some((entry) => entry.name === name))
+          return result(await callFormatTool(formatting(), name, args));
         if (REVIEW_TOOLS.some((entry) => entry.name === name))
           return result(await callReviewTool({ review: review() }, name, args, { signal }));
         if (RELEASE_TOOLS.some((entry) => entry.name === name))
@@ -409,7 +531,7 @@ export function createToolRegistry({
           return result(
             await executeInit(
               { ...input, previewHash: args.previewHash },
-              { approvalProvider: initializationApprovalProvider, signal },
+              { approvalProvider: effectiveInitializationApproval, signal },
             ),
           );
         return result({ ok: false, code: 'UNKNOWN_TOOL', message: 'Tool is not available' });

@@ -130,6 +130,7 @@ test('legal migrations and opaque server gate hook protect H1 and H3', async () 
     'DEVELOPING',
     'INTEGRATING',
     'TESTING',
+    'FORMATTING',
     'REVIEWING',
     'H3_PENDING',
   ]) {

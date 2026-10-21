@@ -169,6 +169,7 @@ async function fixture({ mutateAfterRequest = false } = {}) {
     'DEVELOPING',
     'INTEGRATING',
     'TESTING',
+    'FORMATTING',
     'REVIEWING',
   ]) {
     const current = await store.inspect();
@@ -247,6 +248,36 @@ test('risk selection escalates public contracts and Review enters H3 only on a v
     }),
     'standard',
   );
+});
+
+test('native Reviewer receives a read-only challenge and submits a validated report', async () => {
+  const context = await fixture();
+  const service = createReviewService({
+    projectRoot: context.root,
+    store: context.store,
+    planService: context.planService,
+    approvalAuthority: context.authority,
+  });
+  const prepared = await service.prepare({ expectedVersion: await context.version() });
+  assert.equal(prepared.ok, true, JSON.stringify(prepared));
+  assert.equal(prepared.challenge.reviewedCommit, undefined);
+  assert.equal(prepared.challenge.integrationCommit, context.integrationCommit);
+  assert.equal(prepared.challenge.qualityHash, context.quality.hash);
+  assert.equal(prepared.challenge.mode, 'strict');
+  const result = await service.run({
+    expectedVersion: await context.version(),
+    report: {
+      mode: prepared.challenge.mode,
+      reviewedCommit: prepared.challenge.integrationCommit,
+      qualityHash: prepared.challenge.qualityHash,
+      summary: 'Native Reviewer inspected the fixed commit without writes.',
+      verdict: 'pass',
+      findings: [],
+    },
+  });
+  assert.equal(result.ok, true, JSON.stringify(result));
+  assert.equal(result.state.phase, 'H3_PENDING');
+  assert.equal((await service.inspect()).review.report.verdict, 'pass');
 });
 
 test('severity thresholds differ across lenient, standard and strict modes', () => {

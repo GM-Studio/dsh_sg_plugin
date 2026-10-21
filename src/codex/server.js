@@ -1,13 +1,67 @@
 import path from 'node:path';
-import { pathToFileURL } from 'node:url';
+import fs from 'node:fs';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import { createProtocol, rpcError } from './protocol.js';
 import { createMcpPeer } from './peer.js';
 import { createToolRegistry } from './workflow-tools.js';
+import { interactiveHostIdentity } from './host-input.js';
 
 export const MAX_MESSAGE_BYTES = 1024 * 1024;
 
+function ordinaryProjectRoot(value) {
+  if (typeof value !== 'string' || !value) return null;
+  try {
+    const root = fs.realpathSync(path.resolve(value));
+    return fs.lstatSync(root).isDirectory() ? root : null;
+  } catch {
+    return null;
+  }
+}
+
+export async function resolveProjectRoot(
+  peer,
+  fallback,
+  { env = process.env, timeoutMs = 5000 } = {},
+) {
+  const configured = ordinaryProjectRoot(env.SPECGATE_PROJECT_ROOT);
+  if (configured) return configured;
+  if (peer.capabilities().rootsSupported !== true) return path.resolve(fallback);
+  try {
+    const result = await peer.request('roots/list', {}, { timeoutMs });
+    const roots = Array.isArray(result?.roots) ? result.roots : [];
+    const pluginRoot = ordinaryProjectRoot(env.PLUGIN_ROOT) || ordinaryProjectRoot(fallback);
+    for (const entry of roots) {
+      if (typeof entry?.uri !== 'string') continue;
+      let candidate = entry.uri;
+      if (candidate.startsWith('file:')) {
+        try {
+          candidate = fileURLToPath(candidate);
+        } catch {
+          continue;
+        }
+      }
+      const root = ordinaryProjectRoot(candidate);
+      if (!root) continue;
+      const relativeToPlugin = pluginRoot ? path.relative(pluginRoot, root) : null;
+      if (
+        (pluginRoot && root === pluginRoot) ||
+        (relativeToPlugin &&
+          !relativeToPlugin.startsWith('..' + path.sep) &&
+          relativeToPlugin !== '..')
+      )
+        continue;
+      return root;
+    }
+  } catch {
+    // Roots are optional; retain the host-provided fallback.
+  }
+  return path.resolve(fallback);
+}
+
 export function serveStdio({
   projectRoot = process.cwd(),
+  trustedUserIdentity = interactiveHostIdentity(),
+  nativeAgents = process.env.SPECGATE_NATIVE_AGENTS === '1',
   input = process.stdin,
   output = process.stdout,
   onFailure = () => {},
@@ -22,15 +76,36 @@ export function serveStdio({
     if (message !== null) output.write(`${JSON.stringify(message)}\n`);
   };
   const peer = createMcpPeer({ send });
-  const registry = toolRegistryFactory({
-    projectRoot: path.resolve(projectRoot),
+  const registryOptions = {
     requestPeer: peer.request,
     peerCapabilities: peer.capabilities,
+    trustedUserIdentity,
+    nativeAgents,
+  };
+  let registry = toolRegistryFactory({
+    ...registryOptions,
+    projectRoot: path.resolve(projectRoot),
   });
+  const dynamicRegistry = {
+    get definitions() {
+      return registry.definitions;
+    },
+    validate(name, args) {
+      return typeof registry.validate === 'function' ? registry.validate(name, args) : true;
+    },
+    call(name, args, context) {
+      return registry.call(name, args, context);
+    },
+  };
   const dispatch = createProtocol({
     projectRoot: path.resolve(projectRoot),
-    registry,
-    onInitialize: peer.initialize,
+    registry: dynamicRegistry,
+    onInitialize: async (capabilities) => {
+      peer.initialize(capabilities);
+      const resolved = await resolveProjectRoot(peer, projectRoot);
+      if (resolved !== path.resolve(projectRoot))
+        registry = toolRegistryFactory({ ...registryOptions, projectRoot: resolved });
+    },
   });
   const close = () => {
     peer.close();
@@ -85,7 +160,7 @@ export function serveStdio({
       queuedToolActive &&
       (message?.method === 'ping' ||
         (message?.method === 'tools/call' &&
-          registry.definitions.some(
+          dynamicRegistry.definitions.some(
             (tool) => tool.name === message.params?.name && tool.annotations?.readOnlyHint === true,
           )));
     if (

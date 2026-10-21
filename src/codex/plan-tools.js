@@ -3,6 +3,12 @@ const expectedVersion = {
   minimum: 0,
   description: 'Current state version; stale versions are rejected.',
 };
+const reason = {
+  type: 'string',
+  minLength: 1,
+  maxLength: 2048,
+  description: 'Bounded reason for replacing previously frozen test assets.',
+};
 const content = {
   oneOf: [
     {
@@ -23,6 +29,27 @@ const artifact = {
     content,
   },
   required: ['version', 'content'],
+  additionalProperties: false,
+};
+const contentMap = {
+  type: 'object',
+  minProperties: 1,
+  additionalProperties: {
+    type: 'string',
+    minLength: 1,
+    maxLength: 1024 * 1024,
+  },
+};
+const testAssets = {
+  type: 'object',
+  properties: {
+    role: { type: 'string', const: 'test' },
+    cases: { type: 'array', items: { type: 'object', additionalProperties: true } },
+    code: contentMap,
+    fixtures: contentMap,
+    coverage: { type: 'object', additionalProperties: true },
+  },
+  required: ['role', 'cases', 'code', 'fixtures', 'coverage'],
   additionalProperties: false,
 };
 const definition = (name, description, properties = {}, required = [], readOnly = false) => ({
@@ -64,6 +91,24 @@ export const PLAN_TOOLS = Object.freeze([
     ['expectedVersion'],
   ),
   definition(
+    'sg_test_design_prepare',
+    'Create the dedicated test-design Git worktree and return the manifest/contract challenge for a real Codex Test Designer subagent.',
+    { expectedVersion },
+    ['expectedVersion'],
+  ),
+  definition(
+    'sg_test_design_freeze',
+    'Read the clean committed test-design worktree, validate every file and AC mapping, then freeze immutable executable tests.',
+    { expectedVersion },
+    ['expectedVersion'],
+  ),
+  definition(
+    'sg_test_replace_assets',
+    'Replace frozen executable tests after a Test Designer revision, preserving the prior manifest and recording the bounded reason.',
+    { expectedVersion, reason, assets: testAssets },
+    ['expectedVersion', 'reason', 'assets'],
+  ),
+  definition(
     'sg_development_inspect',
     'Inspect the five fixed worktrees, red baseline evidence, role commits and integration state without writing.',
     {},
@@ -82,6 +127,18 @@ export const PLAN_TOOLS = Object.freeze([
     { expectedVersion },
     ['expectedVersion'],
   ),
+  definition(
+    'sg_development_rework',
+    'Return blocking Review findings to new round-specific frontend/backend/format worktrees and restart development.',
+    { expectedVersion },
+    ['expectedVersion'],
+  ),
+  definition(
+    'sg_development_repair',
+    'Return failed quality defects to new round-specific frontend/backend/format worktrees and restart development.',
+    { expectedVersion },
+    ['expectedVersion'],
+  ),
 ]);
 
 export async function callPlanTool(services, name, args = {}, { signal } = {}) {
@@ -95,12 +152,22 @@ export async function callPlanTool(services, name, args = {}, { signal } = {}) {
       return plans.freezeContracts(args);
     case 'sg_plan_freeze_tests':
       return plans.freezeTests(args);
+    case 'sg_test_design_prepare':
+      return plans.testDesignPrepare(args);
+    case 'sg_test_design_freeze':
+      return plans.testDesignFreeze(args);
+    case 'sg_test_replace_assets':
+      return plans.replaceTests(args);
     case 'sg_development_inspect':
       return development.inspect();
     case 'sg_development_prepare':
       return development.prepare(args, { signal });
     case 'sg_development_run':
       return development.run(args, { signal });
+    case 'sg_development_rework':
+      return development.prepareRework(args);
+    case 'sg_development_repair':
+      return development.prepareRepair(args);
     default:
       return {
         ok: false,

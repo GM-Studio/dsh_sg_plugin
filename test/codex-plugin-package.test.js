@@ -22,6 +22,8 @@ test('Codex manifest and MCP entry stay contained in the shipped plugin', () => 
   const server = config.mcpServers.specgate;
   assert.equal(server.command, 'node');
   assert.deepEqual(server.args, ['${PLUGIN_ROOT}/src/codex/server.js']);
+  assert.equal(server.env.SPECGATE_NATIVE_AGENTS, '1');
+  assert.equal(server.env.SPECGATE_INTERACTIVE_APPROVAL, '1');
   assert.equal(server.cwd, undefined, 'keep the host project cwd rather than the plugin root');
   assert.match(
     fs.readFileSync(path.join(root, manifest.skills, 'sg-codex/SKILL.md'), 'utf8'),
@@ -62,10 +64,17 @@ test(
       npm(['pack', '--json', '--ignore-scripts', '--pack-destination', fixture], root),
     );
     for (const file of [
+      '.agents/plugins/marketplace.json',
       '.codex-plugin/plugin.json',
       '.mcp.json',
+      'plugin.json',
+      'mcp.json',
       'src/codex/server.js',
       'skills/sg-codex/SKILL.md',
+      'skills/setup/SKILL.md',
+      'assets/codex/agents/specgate_frontend.toml',
+      'assets/codex/agents/specgate_reviewer.toml',
+      'scripts/codex-source-setup.mjs',
       'scripts/codex-plugin-smoke.mjs',
       'index.js',
     ]) {
@@ -118,7 +127,7 @@ test('smoke evidence rejects stdout pollution after the final reply', async () =
     path.join(fixture, '.codex-plugin/plugin.json'),
   );
   fs.writeFileSync(
-    path.join(fixture, '.mcp.json'),
+    path.join(fixture, 'mcp.json'),
     JSON.stringify({
       mcpServers: { specgate: { command: 'node', args: ['${PLUGIN_ROOT}/noisy.mjs'] } },
     }),

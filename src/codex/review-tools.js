@@ -14,6 +14,12 @@ const definition = (name, description, properties = {}, required = [], readOnly 
     openWorldHint: false,
   },
 });
+const reviewReport = {
+  type: 'object',
+  additionalProperties: true,
+  description:
+    'Structured report returned by the read-only Codex Reviewer; server validation binds it to the current diff and quality.',
+};
 
 export const REVIEW_TOOLS = Object.freeze([
   definition(
@@ -22,6 +28,18 @@ export const REVIEW_TOOLS = Object.freeze([
     {},
     [],
     true,
+  ),
+  definition(
+    'sg_review_prepare',
+    'Align the dedicated review worktree, compute Review mode/risks/diff and return a read-only challenge for the Reviewer Agent.',
+    {
+      expectedVersion,
+      mode: {
+        type: 'string',
+        enum: ['lenient', 'standard', 'strict'],
+      },
+    },
+    ['expectedVersion'],
   ),
   definition(
     'sg_review_run',
@@ -33,6 +51,7 @@ export const REVIEW_TOOLS = Object.freeze([
         enum: ['lenient', 'standard', 'strict'],
         description: 'Optional user override; otherwise selected from structured risk signals.',
       },
+      report: reviewReport,
     },
     ['expectedVersion'],
   ),
@@ -47,6 +66,7 @@ export const REVIEW_TOOLS = Object.freeze([
 export async function callReviewTool(services, name, args = {}, { signal } = {}) {
   const { review } = services;
   if (name === 'sg_review_inspect') return review.inspect();
+  if (name === 'sg_review_prepare') return review.prepare(args);
   if (name === 'sg_review_run') return review.run(args, { signal });
   if (name === 'sg_review_request_h3') return review.requestH3(args, { signal });
   return { ok: false, code: 'UNKNOWN_TOOL', message: 'Tool is not available' };

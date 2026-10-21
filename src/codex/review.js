@@ -351,11 +351,14 @@ export function createReviewService({
       );
     if (
       !object(args) ||
-      Object.keys(args).some((key) => !['expectedVersion', 'mode'].includes(key)) ||
+      Object.keys(args).some((key) => !['expectedVersion', 'mode', 'report'].includes(key)) ||
       !Number.isSafeInteger(args.expectedVersion) ||
       args.expectedVersion < 0
     )
-      return failure('INVALID_ARGUMENT', 'Only expectedVersion and an optional mode are accepted');
+      return failure(
+        'INVALID_ARGUMENT',
+        'Only expectedVersion, mode and a structured Review report are accepted',
+      );
     if (args.mode !== undefined && !MODES.includes(args.mode))
       return failure('INVALID_ARGUMENT', 'mode must be lenient, standard or strict');
     const loaded = await store.inspect();
@@ -395,11 +398,51 @@ export function createReviewService({
     return review;
   }
 
+  async function prepareReview(args = {}) {
+    const loaded = await current(args, ['REVIEWING']);
+    if (!loaded.ok) return loaded;
+    const checked = await planService.inspect();
+    if (!checked.ok) return checked;
+    const quality = currentQuality(loaded.state);
+    const development = loaded.state.context?.development;
+    const integration = development?.worktrees?.integration;
+    if (!object(integration) || !fs.existsSync(integration.path))
+      return failure('INTEGRATION_WORKTREE_MISSING', 'Integration worktree is unavailable');
+    const integrationCommit = git(integration.path, ['rev-parse', 'HEAD']);
+    const review = alignReviewWorktree(development, integrationCommit);
+    const diff = parseDiff(integration.path, development.freezeCommit, integrationCommit);
+    const signals = riskSignals(diff, quality.body);
+    const recommended = selectReviewMode(signals, diff);
+    const mode = args.mode || recommended;
+    return {
+      ok: true,
+      state: loaded.state,
+      challenge: {
+        operation: 'review',
+        changeId: loaded.state.changeId,
+        mode,
+        recommendedMode: recommended,
+        risks: signals,
+        worktree: review.path,
+        integrationCommit,
+        freezeCommit: development.freezeCommit,
+        quality: quality.body,
+        qualityHash: quality.hash,
+        plan: checked.plan,
+        contract: checked.ref.contract,
+        model: checked.ref.model,
+        diff,
+        requirements: checked.plan.graph.acs,
+      },
+    };
+  }
+
   async function run(args = {}, { signal } = {}) {
     return protect(async () => {
       const loaded = await current(args, ['REVIEWING']);
       if (!loaded.ok) return loaded;
-      if (typeof roleProvider !== 'function')
+      const suppliedReport = args.report;
+      if (typeof roleProvider !== 'function' && !object(suppliedReport))
         return failure('REVIEW_PROVIDER_UNAVAILABLE', 'A server-owned Review Agent is required');
       const checked = await planService.inspect();
       if (!checked.ok) return checked;
@@ -421,23 +464,26 @@ export function createReviewService({
       const beforeMain = status(root);
       let report;
       try {
-        report = await roleProvider('review', {
-          operation: 'review',
-          changeId: loaded.state.changeId,
-          mode,
-          recommendedMode: recommended,
-          risks: signals,
-          worktree: review.path,
-          integrationCommit,
-          freezeCommit: development.freezeCommit,
-          quality: quality.body,
-          plan: checked.plan,
-          contract: checked.ref.contract,
-          model: checked.ref.model,
-          diff,
-          requirements: checked.plan.graph.acs,
-          signal,
-        });
+        report =
+          suppliedReport ||
+          (await roleProvider('review', {
+            operation: 'review',
+            changeId: loaded.state.changeId,
+            mode,
+            recommendedMode: recommended,
+            risks: signals,
+            worktree: review.path,
+            integrationCommit,
+            freezeCommit: development.freezeCommit,
+            quality: quality.body,
+            qualityHash: quality.hash,
+            plan: checked.plan,
+            contract: checked.ref.contract,
+            model: checked.ref.model,
+            diff,
+            requirements: checked.plan.graph.acs,
+            signal,
+          }));
       } catch (error) {
         return failure(error.code || 'REVIEW_PROVIDER_FAILED', error.message);
       }
@@ -646,5 +692,9 @@ export function createReviewService({
     });
   }
 
-  return Object.freeze({ run, requestH3, inspect });
+  async function prepare(args = {}) {
+    return protect(() => prepareReview(args));
+  }
+
+  return Object.freeze({ prepare, run, requestH3, inspect });
 }

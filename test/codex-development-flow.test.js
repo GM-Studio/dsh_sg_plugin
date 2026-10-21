@@ -250,7 +250,7 @@ test('red baseline requires a real failing command mapped to every frozen case b
   const prepared = await service.prepare({ expectedVersion: await ready.version() });
   assert.equal(prepared.ok, true, JSON.stringify(prepared));
   assert.equal(prepared.state.phase, 'DEVELOPING');
-  const roles = ['frontend', 'backend', 'integration', 'test', 'review'];
+  const roles = ['frontend', 'backend', 'integration', 'test', 'review', 'format'];
   assert.deepEqual(Object.keys(prepared.development.worktrees).sort(), roles.sort());
   for (const role of roles) {
     const worktree = prepared.development.worktrees[role];
@@ -304,6 +304,15 @@ test('frontend and backend run concurrently in isolated worktrees and merge only
   assert.equal(
     git(completed.development.worktrees.review.path, ['rev-parse', 'HEAD']),
     completed.development.freezeCommit,
+  );
+  const integrationCommit = git(integration, ['rev-parse', 'HEAD']);
+  git(completed.development.worktrees.test.path, ['checkout', '--detach', integrationCommit]);
+  const inspected = await service.inspect();
+  assert.equal(inspected.ok, true, JSON.stringify(inspected));
+  assert.equal(inspected.development.worktrees.test.head, integrationCommit);
+  assert.equal(
+    inspected.development.worktrees.test.branch,
+    completed.development.worktrees.test.branch,
   );
 });
 

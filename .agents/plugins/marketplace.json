@@ -1,0 +1,20 @@
+{
+  "name": "specgate-source",
+  "interface": {
+    "displayName": "SpecGate Source Checkout"
+  },
+  "plugins": [
+    {
+      "name": "specgate-codex",
+      "source": {
+        "source": "local",
+        "path": "./"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Developer Tools"
+    }
+  ]
+}

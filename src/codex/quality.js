@@ -620,6 +620,21 @@ export function createQualityService({
   function alignTestWorktree(test, integrationCommit) {
     const head = git(test.path, ['rev-parse', 'HEAD']);
     if (head !== integrationCommit) {
+      const untracked = git(test.path, ['ls-files', '--others', '--exclude-standard'])
+        .split('\n')
+        .filter(Boolean);
+      const unsafe = untracked.filter((relative) => !isTestPath(relative));
+      if (unsafe.length)
+        fail(
+          'TEST_WORKTREE_DIRTY',
+          `The test worktree contains unrelated untracked files: ${unsafe.join(', ')}`,
+        );
+      for (const relative of untracked) {
+        const target = path.resolve(test.path, relative);
+        if (!inside(test.path, target))
+          fail('UNSAFE_PATH', 'An untracked test artifact escaped the test worktree');
+        fs.unlinkSync(target);
+      }
       if (git(test.path, ['status', '--porcelain', '--untracked-files=all']))
         fail('TEST_WORKTREE_DIRTY', 'The test worktree has changes before alignment');
       git(test.path, ['checkout', '--detach', integrationCommit]);
@@ -1039,7 +1054,7 @@ export function createQualityService({
       if (!saved.ok) return saved;
       const reviewing = await store.transition({
         expectedVersion: saved.state.version,
-        to: 'REVIEWING',
+        to: 'FORMATTING',
       });
       return reviewing.ok ? { ...reviewing, quality } : reviewing;
     });

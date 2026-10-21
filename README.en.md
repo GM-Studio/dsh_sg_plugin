@@ -1,6 +1,6 @@
 # SpecGate for DSH
 
-> **Codex adapter in development**: the independent plugin and local stdio MCP cover the P0–P9 core, including initialization, real verification, requirement/plan/test freeze, parallel development, quality, three-tier Review, H3, and release. The trusted native Review/H3 host path still needs acceptance; tools fail closed when server-owned role providers are absent. See the [P8/P9 design (Chinese)](docs/design/codex-p8-p9-review-release.zh.md) and [implementation progress (Chinese)](docs/plans/codex-sg-change-add-v1-progress.md). Existing DSH entry points remain compatible.
+> **Codex native adapter**: portable `plugin.json` / `mcp.json`, source-marketplace loading, interactive H1/H3 elicitation, and six project agents for Test Design, Frontend, Backend, Testing, Formatting, and Review. The main Codex agent dispatches real subagents; MCP validates their isolated-worktree commits, paths, tests, and Review evidence. See the [source-loading quickstart (Chinese)](docs/quickstart-codex-source.zh.md).
 
 [中文](README.md) | **English**
 
@@ -583,7 +583,10 @@ See [verification.md](docs/design/verification.md) for the full record.
 - Parallel worktrees require a clean working tree; dirty projects degrade to serial and do not isolate uncommitted changes.
 - Merge conflicts are not resolved automatically; the worktree and branch are kept, and you must merge manually and re-run `sg_run`.
 - Idempotent `--force` applies to append-type operations; state transitions are naturally re-run by advancing the phase.
-- Agent roles are limited to `implementer`, `tester`, and review-only roles; the plugin does not ship a role catalog.
+- That role restriction belongs to the legacy DSH v3 executor. The v4 Codex
+  adapter installs six real project subagents under `.codex/agents/` (Test
+  Designer, Frontend, Backend, Tester, Formatter, Reviewer), dispatched by the
+  main Codex agent through the `sg-codex` Skill.
 - Does not replace the AgentKit47 CLI's `init/upgrade/doctor/validate`; SpecGate is a DSH Host plugin, not a standalone CLI.
 - The plugin provides no MCP server or MCP tools; MCP capabilities on the DSH side are independent of this plugin.
 - **Upgrade note**: the predecessor plugin's early 0.2.0 `ak47_selftest_append` polluted the session log; continue in a new session and do not reuse old sessions that already show `tool_use` / `tool_result` 400 errors.

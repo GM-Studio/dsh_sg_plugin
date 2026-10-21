@@ -49,7 +49,11 @@ async function setup(args) {
   fs.mkdirSync(control, { recursive: true });
   const preview = previewInit({ root, preset: 'jdk8-boot2.7' });
   if (!preview.ok) throw new Error(JSON.stringify(preview));
-  const initialized = await executeInit({ root, previewHash: preview.previewHash });
+  const initialized = await executeInit({
+    root,
+    preset: preview.preset,
+    previewHash: preview.previewHash,
+  });
   if (!initialized.ok) throw new Error(JSON.stringify(initialized));
   const baseline = await verifyProject({ root });
   if (!baseline.ok)

@@ -1,5 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { canonicalJson, hashValue, verifyEventChain } from './events.js';
 
@@ -41,6 +42,73 @@ const inside = (root, target) => {
     (!path.isAbsolute(relative) && relative !== '..' && !relative.startsWith('..' + path.sep))
   );
 };
+
+function git(root, args) {
+  return execFileSync('git', args, {
+    cwd: root,
+    encoding: 'utf8',
+    stdio: ['ignore', 'pipe', 'pipe'],
+    windowsHide: true,
+    timeout: 60000,
+  }).trim();
+}
+
+function registeredWorktree(root, target) {
+  const output = git(root, ['worktree', 'list', '--porcelain']);
+  const entries = [];
+  let current = null;
+  for (const line of output.split('\n')) {
+    if (line.startsWith('worktree ')) {
+      if (current) entries.push(current);
+      current = { path: path.resolve(line.slice(9)) };
+    } else if (current && line.startsWith('HEAD ')) current.head = line.slice(5);
+    else if (current && line.startsWith('branch ')) current.branch = line.slice(7);
+  }
+  if (current) entries.push(current);
+  return entries.find((entry) => {
+    if (!fs.existsSync(entry.path)) return false;
+    try {
+      return fs.realpathSync(entry.path) === fs.realpathSync(target);
+    } catch {
+      return false;
+    }
+  });
+}
+
+function createRegisteredWorktree(root, relative, branch, baseCommit) {
+  const target = path.join(root, relative);
+  const existing = registeredWorktree(root, target);
+  if (existing) {
+    if (existing.branch !== `refs/heads/${branch}`)
+      fail('TEST_WORKTREE_BROKEN', 'The test-design worktree is on the wrong branch');
+    return { path: target, branch, reused: true };
+  }
+  if (fs.existsSync(target)) fail('TEST_WORKTREE_BROKEN', 'The test-design path is not registered');
+  let current = root;
+  for (const part of relative.split('/').slice(0, -1)) {
+    current = path.join(current, part);
+    try {
+      fs.mkdirSync(current, 0o700);
+    } catch (error) {
+      if (error.code !== 'EEXIST') throw error;
+    }
+    const stat = fs.lstatSync(current);
+    if (stat.isSymbolicLink() || !stat.isDirectory())
+      fail('UNSAFE_PATH', 'The test-design workspace contains an unsafe directory');
+  }
+  try {
+    git(root, ['show-ref', '--verify', '--quiet', `refs/heads/${branch}`]);
+    fail('TEST_WORKTREE_BRANCH_EXISTS', 'A stale test-design branch already exists');
+  } catch (error) {
+    if (error.code === 'TEST_WORKTREE_BRANCH_EXISTS') throw error;
+  }
+  try {
+    git(root, ['worktree', 'add', '-b', branch, target, baseCommit]);
+  } catch (error) {
+    fail('TEST_WORKTREE_CREATE_FAILED', error.message);
+  }
+  return { path: target, branch, reused: false };
+}
 
 function acList(snapshot) {
   if (!Array.isArray(snapshot?.requirements) || !snapshot.requirements.length)
@@ -576,6 +644,127 @@ export function createPlanService({ projectRoot, store, roleProvider } = {}) {
       Object.values(assets.fixtures).every(text)
     );
   }
+
+  async function recordTestAssets(loaded, checked, assets, extra = {}) {
+    if (!validateAssets(assets, checked.plan.graph))
+      return failure(
+        'TEST_ASSETS_INVALID',
+        'Test assets require valid AC mappings, executable code, fixtures and coverage targets',
+      );
+    const files = {
+      ...assets.code,
+      ...assets.fixtures,
+      'cases.json': canonicalJson(assets.cases) + '\n',
+      'cases.md':
+        '# Frozen test cases\n\n' +
+        assets.cases
+          .map(
+            (entry) =>
+              `## ${entry.id}\n\n${entry.description}\n\nAC: ${entry.acIds.join(', ')}\nCode: ${entry.codeFiles.join(', ')}\n`,
+          )
+          .join('\n'),
+    };
+    if (
+      ['cases.json', 'cases.md'].some(
+        (relative) =>
+          Object.hasOwn(assets.code, relative) || Object.hasOwn(assets.fixtures, relative),
+      )
+    )
+      return failure(
+        'TEST_ASSETS_INVALID',
+        'cases.json and cases.md are reserved for the human-readable case index',
+      );
+    const body = {
+      schemaVersion: 1,
+      kind: 'tests',
+      version: 1,
+      requirementsHash: checked.plan.requirementsHash,
+      planHash: checked.ref.hash,
+      contractHash: checked.ref.contract.hash,
+      modelHash: checked.ref.model.hash,
+      role: 'test',
+      coverage: assets.coverage,
+      cases: assets.cases,
+      files: Object.fromEntries(
+        Object.entries(files).map(([relative, content]) => [relative, digest(content)]),
+      ),
+      ...extra,
+    };
+    const directory = `.specgate/codex/changes/${loaded.state.changeId}/tests/v1-${hashValue(body)}`;
+    for (const [relative, content] of Object.entries(files))
+      immutable(directory + '/' + relative, content);
+    const tests = { ...freeze(directory, 'manifest', body), directory };
+    const saved = await update(loaded.state, { ...checked.ref, tests });
+    if (!saved.ok) return saved;
+    const moved = await store.transition({
+      expectedVersion: saved.state.version,
+      to: 'TEST_CASES_FROZEN',
+    });
+    return { ...moved, tests: body };
+  }
+
+  function testManifest(worktree) {
+    const relative = 'specgate-tests.json';
+    const target = path.join(worktree, relative);
+    const stat = fs.lstatSync(target);
+    if (stat.isSymbolicLink() || !stat.isFile() || stat.nlink > 1 || stat.size > 4 * 1024 * 1024)
+      fail('TEST_MANIFEST_INVALID', 'specgate-tests.json must be an ordinary bounded file');
+    let manifest;
+    try {
+      manifest = JSON.parse(fs.readFileSync(target, 'utf8'));
+    } catch {
+      fail('TEST_MANIFEST_INVALID', 'specgate-tests.json is not valid JSON');
+    }
+    if (
+      !object(manifest) ||
+      manifest.schemaVersion !== 1 ||
+      !Array.isArray(manifest.code) ||
+      !Array.isArray(manifest.fixtures) ||
+      !manifest.code.length ||
+      !text(manifest.runner) ||
+      !manifest.code.includes(manifest.runner) ||
+      !object(manifest.coverage)
+    )
+      fail(
+        'TEST_MANIFEST_INVALID',
+        'Test manifest requires schemaVersion 1, code, fixtures, runner and coverage',
+      );
+    const readFiles = (entries) =>
+      Object.fromEntries(
+        entries.map((relative) => {
+          if (!safeRelative(relative) || !relative.startsWith('specgate-tests/'))
+            fail('TEST_MANIFEST_INVALID', 'Test files must stay under specgate-tests/');
+          const file = path.resolve(worktree, relative);
+          if (!inside(worktree, file)) fail('TEST_MANIFEST_INVALID', 'Test file escaped worktree');
+          let current = worktree;
+          for (const part of relative.split('/')) {
+            current = path.join(current, part);
+            const entry = fs.lstatSync(current);
+            if (entry.isSymbolicLink())
+              fail('TEST_MANIFEST_INVALID', 'Test files cannot be symlinks');
+            if (current === file) {
+              if (!entry.isFile() || entry.nlink > 1 || entry.size > 4 * 1024 * 1024)
+                fail('TEST_MANIFEST_INVALID', 'Test files must be ordinary bounded files');
+            } else if (!entry.isDirectory()) {
+              fail('TEST_MANIFEST_INVALID', 'Test file parents must be ordinary directories');
+            }
+          }
+          return [relative, fs.readFileSync(file, 'utf8')];
+        }),
+      );
+    return {
+      manifestHash: digest(manifest),
+      assets: {
+        role: 'test',
+        cases: manifest.cases,
+        code: readFiles(manifest.code),
+        fixtures: readFiles(manifest.fixtures),
+        coverage: manifest.coverage,
+      },
+      runner: manifest.runner,
+    };
+  }
+
   return Object.freeze({
     inspect: () => protect(inspect),
     generate: (args = {}) =>
@@ -661,60 +850,105 @@ export function createPlanService({ projectRoot, store, roleProvider } = {}) {
         } catch {
           return failure('TEST_ROLE_UNAVAILABLE', 'The Test role provider did not produce assets');
         }
-        if (!validateAssets(assets, checked.plan.graph))
+        return recordTestAssets(loaded, checked, assets);
+      }),
+    testDesignPrepare: (args = {}) =>
+      protect(async () => {
+        const loaded = await current(args, ['TEST_DESIGN']);
+        if (!loaded.ok) return loaded;
+        const checked = await inspect();
+        if (!checked.ok) return checked;
+        if (!checked.ref.contract || !checked.ref.model)
           return failure(
-            'TEST_ASSETS_INVALID',
-            'Test assets require valid AC mappings, executable code, fixtures and coverage targets',
+            'CONTRACT_FREEZE_REQUIRED',
+            'Freeze contract and model before test design',
           );
-        const files = {
-          ...assets.code,
-          ...assets.fixtures,
-          'cases.json': canonicalJson(assets.cases) + '\n',
-          'cases.md':
-            '# Frozen test cases\n\n' +
-            assets.cases
-              .map(
-                (entry) =>
-                  `## ${entry.id}\n\n${entry.description}\n\nAC: ${entry.acIds.join(', ')}\nCode: ${entry.codeFiles.join(', ')}\n`,
-              )
-              .join('\n'),
+        if (git(root, ['status', '--porcelain', '--untracked-files=all']))
+          return failure('GIT_NOT_CLEAN', 'The main worktree must be clean before test design');
+        const baseCommit = git(root, ['rev-parse', 'HEAD']);
+        const relative = `.specgate/codex/worktrees/${loaded.state.changeId}/test-design`;
+        const branch = `sg/codex/${loaded.state.changeId}/test-design`;
+        let worktree;
+        try {
+          worktree = createRegisteredWorktree(root, relative, branch, baseCommit);
+        } catch (error) {
+          return failure(error.code || 'TEST_WORKTREE_FAILED', error.message);
+        }
+        const testDesign = {
+          schemaVersion: 1,
+          path: worktree.path,
+          relative,
+          branch,
+          baseCommit,
+          manifest: 'specgate-tests.json',
+          preparedAt: new Date().toISOString(),
         };
+        const saved = await update(loaded.state, { ...checked.ref, testDesign });
+        return saved.ok
+          ? {
+              ...saved,
+              testDesign,
+              challenge: {
+                requirements: checked.plan.graph,
+                contract: verifyRef(checked.ref.contract),
+                model: verifyRef(checked.ref.model),
+                manifest: 'specgate-tests.json',
+                testRoot: 'specgate-tests/',
+              },
+            }
+          : saved;
+      }),
+    testDesignFreeze: (args = {}) =>
+      protect(async () => {
+        const loaded = await current(args, ['TEST_DESIGN']);
+        if (!loaded.ok) return loaded;
+        const checked = await inspect();
+        if (!checked.ok) return checked;
+        const prepared = checked.ref.testDesign;
+        if (!object(prepared) || !text(prepared.path))
+          return failure('TEST_DESIGN_REQUIRED', 'Prepare the test-design worktree first');
+        const worktree = path.resolve(prepared.path);
+        if (!inside(root, worktree) || !fs.existsSync(worktree))
+          return failure('TEST_WORKTREE_MISSING', 'The test-design worktree is unavailable');
+        if (git(worktree, ['rev-parse', '--abbrev-ref', 'HEAD']) !== prepared.branch)
+          return failure('TEST_WORKTREE_BROKEN', 'The test-design worktree changed branch');
+        if (git(worktree, ['status', '--porcelain', '--untracked-files=all']))
+          return failure('TEST_WORKTREE_DIRTY', 'Commit all test assets before freezing');
+        const head = git(worktree, ['rev-parse', 'HEAD']);
+        if (head === prepared.baseCommit)
+          return failure('TEST_COMMIT_REQUIRED', 'The Test Designer did not create a commit');
+        const changed = git(worktree, ['diff', '--name-only', prepared.baseCommit, head])
+          .split('\n')
+          .filter(Boolean);
         if (
-          ['cases.json', 'cases.md'].some(
+          !changed.length ||
+          changed.some(
             (relative) =>
-              Object.hasOwn(assets.code, relative) || Object.hasOwn(assets.fixtures, relative),
+              relative !== 'specgate-tests.json' && !relative.startsWith('specgate-tests/'),
           )
         )
           return failure(
-            'TEST_ASSETS_INVALID',
-            'cases.json and cases.md are reserved for the human-readable case index',
+            'TEST_ROLE_POLICY_VIOLATION',
+            'Test Designer may only add specgate-tests.json and specgate-tests/ files',
           );
-        const body = {
-          schemaVersion: 1,
-          kind: 'tests',
-          version: 1,
-          requirementsHash: checked.plan.requirementsHash,
-          planHash: checked.ref.hash,
-          contractHash: checked.ref.contract.hash,
-          modelHash: checked.ref.model.hash,
-          role: 'test',
-          coverage: assets.coverage,
-          cases: assets.cases,
-          files: Object.fromEntries(
-            Object.entries(files).map(([relative, content]) => [relative, digest(content)]),
-          ),
-        };
-        const directory = `.specgate/codex/changes/${loaded.state.changeId}/tests/v1-${hashValue(body)}`;
-        for (const [relative, content] of Object.entries(files))
-          immutable(directory + '/' + relative, content);
-        const tests = { ...freeze(directory, 'manifest', body), directory };
-        const saved = await update(loaded.state, { ...checked.ref, tests });
-        if (!saved.ok) return saved;
-        const moved = await store.transition({
-          expectedVersion: saved.state.version,
-          to: 'TEST_CASES_FROZEN',
+        let materialized;
+        try {
+          materialized = testManifest(worktree);
+        } catch (error) {
+          return failure(error.code || 'TEST_MANIFEST_INVALID', error.message);
+        }
+        return recordTestAssets(loaded, checked, materialized.assets, {
+          source: {
+            kind: 'native-codex-subagent',
+            role: 'test-designer',
+            worktree: path.relative(root, worktree).replace(/\\/g, '/'),
+            branch: prepared.branch,
+            baseCommit: prepared.baseCommit,
+            commit: head,
+            manifestHash: materialized.manifestHash,
+            runner: materialized.runner,
+          },
         });
-        return { ...moved, tests: body };
       }),
     replaceTests: (args = {}) =>
       protect(async () => {

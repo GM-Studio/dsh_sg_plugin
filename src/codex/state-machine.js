@@ -14,6 +14,7 @@ export const MAIN_PHASES = Object.freeze([
   'DEVELOPING',
   'INTEGRATING',
   'TESTING',
+  'FORMATTING',
   'REVIEWING',
   'H3_PENDING',
   'ARCHIVING',
@@ -37,6 +38,8 @@ const table = Object.fromEntries(
 );
 table.H1_PENDING.push('REQ_CLARIFYING');
 table.H3_PENDING.push('REVIEWING');
+table.REVIEWING.push('DEVELOPING');
+table.TESTING.push('DEVELOPING');
 table.ARCHIVING.push('ARCHIVED_NOT_PUSHED', 'PUSH_FAILED', 'ROLLBACKING');
 table.PUSH_FAILED = ['ROLLBACKING'];
 table.ROLLBACKING = ['CANCELLED'];
@@ -284,15 +287,17 @@ export function createStateStore({ projectRoot, authorizeGate, lockTimeoutMs } =
             ? 'gate.entered'
             : args.to === 'TESTING'
               ? 'test.started'
-              : args.to === 'REVIEWING'
-                ? 'review.started'
-                : args.to === 'PUSH_FAILED'
-                  ? 'push.failed'
-                  : args.to === 'CANCELLED'
-                    ? 'workflow.cancelled'
-                    : TERMINAL.has(args.to)
-                      ? 'archive.completed'
-                      : 'state.transitioned';
+              : args.to === 'FORMATTING'
+                ? 'format.started'
+                : args.to === 'REVIEWING'
+                  ? 'review.started'
+                  : args.to === 'PUSH_FAILED'
+                    ? 'push.failed'
+                    : args.to === 'CANCELLED'
+                      ? 'workflow.cancelled'
+                      : TERMINAL.has(args.to)
+                        ? 'archive.completed'
+                        : 'state.transitioned';
         return {
           ok: true,
           type,

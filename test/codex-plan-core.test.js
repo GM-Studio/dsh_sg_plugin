@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import { execFileSync } from 'node:child_process';
 import { createStateStore } from '../src/codex/state-machine.js';
 import { createApprovalAuthority } from '../src/codex/approvals.js';
 import { canonicalJson, hashValue } from '../src/codex/events.js';
@@ -122,6 +123,21 @@ const assets = (count = 1) => ({
   fixtures: { 'fixtures/task.json': '{"id":"fixture-task"}\n' },
   coverage: { lines: 80, branches: 70 },
 });
+
+function git(cwd, args) {
+  return execFileSync('git', args, {
+    cwd,
+    encoding: 'utf8',
+    stdio: ['ignore', 'pipe', 'pipe'],
+    windowsHide: true,
+  }).trim();
+}
+
+function commitAll(cwd, message) {
+  git(cwd, ['add', '-A']);
+  git(cwd, ['commit', '-q', '-m', message]);
+  return git(cwd, ['rev-parse', 'HEAD']);
+}
 
 test('dynamic AC task graph includes every required role, mapping and ordering without a fixed task count', () => {
   const small = buildTaskGraph({ requirements: requirements(1) });
@@ -363,4 +379,71 @@ test('controlled test replacement preserves v1 and records a hash-bound v2 manif
   assert.equal(event.type, 'test.assets.replaced');
   assert.equal(event.payload.previousHash, before.context.plan.tests.hash);
   assert.equal(event.payload.hash, replaced.state.context.plan.tests.hash);
+});
+
+test('native Test Designer freezes only committed specgate test assets from its worktree', async () => {
+  const context = await fixture();
+  git(context.root, ['init', '-q']);
+  git(context.root, ['config', 'user.email', 'test@example.com']);
+  git(context.root, ['config', 'user.name', 'test']);
+  fs.writeFileSync(path.join(context.root, '.gitignore'), '.specgate/\n');
+  fs.mkdirSync(path.join(context.root, 'backend'), { recursive: true });
+  fs.writeFileSync(path.join(context.root, 'backend', 'App.java'), 'final class App {}\n');
+  commitAll(context.root, 'product baseline');
+  assert.equal(
+    (await context.service.generate({ expectedVersion: await context.version() })).ok,
+    true,
+  );
+  assert.equal(
+    (
+      await context.service.freezeContracts({
+        expectedVersion: await context.version(),
+        ...contracts,
+      })
+    ).ok,
+    true,
+  );
+  const prepared = await context.service.testDesignPrepare({
+    expectedVersion: await context.version(),
+  });
+  assert.equal(prepared.ok, true, JSON.stringify(prepared));
+  const worktree = prepared.testDesign.path;
+  fs.mkdirSync(path.join(worktree, 'specgate-tests'), { recursive: true });
+  fs.writeFileSync(
+    path.join(worktree, 'specgate-tests', 'case.test.mjs'),
+    "import test from 'node:test'; import assert from 'node:assert/strict'; test('case',()=>assert.fail('red'));\n",
+  );
+  fs.writeFileSync(
+    path.join(worktree, 'specgate-tests', 'runner.mjs'),
+    "import fs from 'node:fs'; const args=process.argv; const report=args[args.indexOf('--report')+1]; fs.writeFileSync(report, JSON.stringify({cases:[{id:'CASE-AC-1',status:'fail'}]})); process.exit(1);\n",
+  );
+  fs.writeFileSync(path.join(worktree, 'specgate-tests', 'fixture.json'), '{"id":"fixture"}\n');
+  fs.writeFileSync(
+    path.join(worktree, 'specgate-tests.json'),
+    JSON.stringify({
+      schemaVersion: 1,
+      code: ['specgate-tests/case.test.mjs', 'specgate-tests/runner.mjs'],
+      fixtures: ['specgate-tests/fixture.json'],
+      runner: 'specgate-tests/runner.mjs',
+      coverage: { lines: 80, branches: 70 },
+      cases: [
+        {
+          id: 'CASE-AC-1',
+          acIds: ['AC-1'],
+          description: 'Prove AC-1.',
+          codeFiles: ['specgate-tests/case.test.mjs'],
+        },
+      ],
+    }) + '\n',
+  );
+  const commit = commitAll(worktree, 'test: freeze native acceptance assets');
+  const frozen = await context.service.testDesignFreeze({
+    expectedVersion: await context.version(),
+  });
+  assert.equal(frozen.ok, true, JSON.stringify(frozen));
+  assert.equal(frozen.state.phase, 'TEST_CASES_FROZEN');
+  assert.equal(frozen.tests.source.commit, commit);
+  assert.equal(frozen.tests.source.role, 'test-designer');
+  assert.equal(fs.existsSync(path.join(context.root, 'backend', 'specgate-tests.json')), false);
+  assert.equal((await context.service.inspect()).ok, true);
 });

@@ -46,14 +46,15 @@ export function createProtocol({
         return rpcError(id, -32602, 'protocolVersion, capabilities and clientInfo are required');
       }
       lifecycle = 'initializing';
-      onInitialize?.(params.capabilities);
-      return success({
-        protocolVersion: PROTOCOL_VERSION,
-        capabilities: { tools: { listChanged: false } },
-        serverInfo: SERVER_INFO,
-        instructions:
-          'Codex state kernel and generation adapter. Read sg_state for CAS versions and sg_init_preview before sg_init. Trusted native user identity is not configured: approval gates and nonempty initialization fail closed. Change orchestration is not yet enabled.',
-      });
+      return Promise.resolve(onInitialize?.(params.capabilities, params.clientInfo)).then(() =>
+        success({
+          protocolVersion: PROTOCOL_VERSION,
+          capabilities: { tools: { listChanged: false } },
+          serverInfo: SERVER_INFO,
+          instructions:
+            'SpecGate state, subagent handoff and evidence kernel. Read sg_state for CAS versions. Use the sg-codex Skill. The main Codex agent MUST spawn specgate_test_designer first, then specgate_frontend and specgate_backend concurrently, then specgate_tester, specgate_formatter and specgate_reviewer in that order. Blocking Review starts a new development round. Never substitute main-thread role simulation or model-supplied approval for native subagents and user-visible elicitation.',
+        }),
+      );
     }
     if (lifecycle !== 'ready')
       return rpcError(id, -32002, 'Complete the MCP initialize handshake first');
