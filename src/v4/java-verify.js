@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { spawnSync } from 'node:child_process';
+import net from 'node:net';
+import { spawn, spawnSync } from 'node:child_process';
 import { normalizeJavaPreset } from './java-versions.js';
 
 function readJson(file) {
@@ -97,7 +98,147 @@ function run(name, command, args, cwd, env, timeoutMs) {
   };
 }
 
-export function verifyJavaProject({ root, env = process.env, timeoutMs = 15 * 60 * 1000 } = {}) {
+function freePort() {
+  return new Promise((resolve, reject) => {
+    const server = net.createServer();
+    server.once('error', reject);
+    server.listen(0, '127.0.0.1', () => {
+      const port = server.address().port;
+      server.close(() => resolve(port));
+    });
+  });
+}
+
+function waitExit(child, timeoutMs = 15000) {
+  if (!child || child.exitCode !== null) return Promise.resolve();
+  return new Promise((resolve) => {
+    const timer = setTimeout(resolve, timeoutMs);
+    child.once('exit', () => {
+      clearTimeout(timer);
+      resolve();
+    });
+  });
+}
+
+async function waitHealthy(url, timeoutMs = 60000) {
+  const deadline = Date.now() + timeoutMs;
+  while (Date.now() < deadline) {
+    try {
+      const response = await fetch(url, { signal: AbortSignal.timeout(3000) });
+      if (response.ok) return true;
+    } catch {
+      // Server is still starting.
+    }
+    await new Promise((resolve) => setTimeout(resolve, 300));
+  }
+  return false;
+}
+
+async function runRuntimeSmoke({ root, javaHome, env }) {
+  const backend = path.join(root, 'backend');
+  const target = path.join(backend, 'target');
+  const jar = fs
+    .readdirSync(target)
+    .filter((name) => name.endsWith('.jar') && !name.endsWith('.original'))
+    .map((name) => path.join(target, name))[0];
+  if (!jar) return { name: 'runtime', status: 1, durationMs: 0, tail: ['No backend jar'] };
+  const dbDir = fs.mkdtempSync(path.join(root, '.specgate', 'verify-db-'));
+  const port = await freePort();
+  const base = 'http://127.0.0.1:' + port;
+  const childEnv = {
+    ...env,
+    BACKEND_PORT: String(port),
+    MANAGEMENT_ENDPOINT_SHUTDOWN_ENABLED: 'true',
+    MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE: 'health,shutdown',
+    DB_URL:
+      'jdbc:h2:file:' + path.join(dbDir, 'tasks').replace(/\\/g, '/') + ';DB_CLOSE_ON_EXIT=FALSE',
+  };
+  const java = path.join(javaHome, 'bin', process.platform === 'win32' ? 'java.exe' : 'java');
+  const logs = [];
+  let child = null;
+  const startedAt = Date.now();
+  function start() {
+    child = spawn(java, ['-jar', jar], {
+      cwd: backend,
+      env: childEnv,
+      stdio: ['ignore', 'pipe', 'pipe'],
+      windowsHide: true,
+    });
+    child.stdout.on('data', (chunk) => logs.push(String(chunk)));
+    child.stderr.on('data', (chunk) => logs.push(String(chunk)));
+  }
+  async function stop() {
+    const current = child;
+    child = null;
+    if (!current || current.exitCode !== null) return;
+    try {
+      await fetch(base + '/actuator/shutdown', {
+        method: 'POST',
+        signal: AbortSignal.timeout(5000),
+      });
+    } catch {
+      // Fall back to terminating the process below.
+    }
+    await waitExit(current, 8000);
+    if (current.exitCode === null) {
+      if (process.platform === 'win32')
+        spawnSync('taskkill', ['/pid', String(current.pid), '/T', '/F'], { stdio: 'ignore' });
+      else current.kill('SIGTERM');
+      await waitExit(current);
+    }
+  }
+  try {
+    start();
+    if (!(await waitHealthy(base + '/actuator/health')))
+      throw new Error('Backend did not become healthy');
+    const created = await fetch(base + '/api/tasks', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ title: 'sg-verify', completed: false }),
+      signal: AbortSignal.timeout(10000),
+    });
+    if (created.status !== 201) throw new Error('POST /api/tasks returned ' + created.status);
+    const task = await created.json();
+    await stop();
+    start();
+    if (!(await waitHealthy(base + '/actuator/health'))) throw new Error('Backend restart failed');
+    const listed = await fetch(base + '/api/tasks', { signal: AbortSignal.timeout(10000) });
+    if (listed.status !== 200) throw new Error('GET /api/tasks returned ' + listed.status);
+    const items = await listed.json();
+    if (!Array.isArray(items) || !items.some((item) => item.id === task.id))
+      throw new Error('Task did not survive backend restart');
+    const deleted = await fetch(base + '/api/tasks/' + task.id, {
+      method: 'DELETE',
+      signal: AbortSignal.timeout(10000),
+    });
+    if (deleted.status !== 204) throw new Error('DELETE /api/tasks returned ' + deleted.status);
+    return {
+      name: 'runtime',
+      status: 0,
+      durationMs: Date.now() - startedAt,
+      tail: logs.join('').split(/\r?\n/).filter(Boolean).slice(-8),
+    };
+  } catch (error) {
+    return {
+      name: 'runtime',
+      status: 1,
+      durationMs: Date.now() - startedAt,
+      tail: [
+        ...logs.join('').split(/\r?\n/).filter(Boolean).slice(-8),
+        String(error.message || error),
+      ],
+    };
+  } finally {
+    await stop();
+    fs.rmSync(dbDir, { recursive: true, force: true });
+  }
+}
+
+export async function verifyJavaProject({
+  root,
+  env = process.env,
+  timeoutMs = 15 * 60 * 1000,
+} = {}) {
   root = path.resolve(root);
   const marker = path.join(root, '.specgate', 'monorepo.json');
   if (!fs.existsSync(marker)) {
@@ -192,6 +333,11 @@ export function verifyJavaProject({ root, env = process.env, timeoutMs = 15 * 60
       break;
     }
   }
+  if (!failed) {
+    const runtime = await runRuntimeSmoke({ root, javaHome, env: commandEnv });
+    stages.push(runtime);
+    if (runtime.status !== 0) failed = runtime;
+  }
   const ok = !failed;
   const report = {
     schemaVersion: 1,
@@ -230,7 +376,7 @@ export function verifyJavaProject({ root, env = process.env, timeoutMs = 15 * 60
     ok,
     code: ok ? 'SMOKE_PASSED' : 'VERIFY_FAILED',
     message: ok
-      ? '本地验证通过：后端 verify、前端 build/test/lint/format 全部通过。'
+      ? '本地验证通过：后端 verify、前端 build/test/lint/format、启动/CRUD/重启持久化全部通过。'
       : '本地验证失败于 ' + failed.name + '；代码已保留，可修复后重试。',
     report,
   };

@@ -67,8 +67,8 @@ export const GOLDEN_MANIFEST = {
   updatedAt: '2026-10-21',
   presets: {
     'jdk8-boot2.7': {
-      templateHash: '79307952c25a1f91cecba52a911315f61699b2bd4999d80b80cb882ff45ecd08',
-      verifiedAt: '2026-10-21T07:47:17+08:00',
+      templateHash: 'a2e3afa72bb50c2e0173f2eeec11cfa5b106e1a7e9f02358b90aac3d09376a49',
+      verifiedAt: '2026-10-21T08:08:43+08:00',
       verifiedBy: 'local:Windows 10 x64',
       toolchain: 'Eclipse Temurin JDK 8u504 + Maven 3.9.9',
       commands: [
@@ -82,8 +82,8 @@ export const GOLDEN_MANIFEST = {
       result: 'passed',
     },
     'jdk17-boot3.5': {
-      templateHash: 'd75863850ba55b38336935024800dac92b93829e5d4ce649c9d3f848200105ea',
-      verifiedAt: '2026-10-21T07:48:05+08:00',
+      templateHash: '98ac41ce10e784853e50829f233095c31c74a3857925b6e69f0ceed389e67c1a',
+      verifiedAt: '2026-10-21T08:09:02+08:00',
       verifiedBy: 'local:Windows 10 x64',
       toolchain: 'Eclipse Temurin JDK 17.0.20.1 + Maven 3.9.9',
       commands: [
@@ -97,8 +97,8 @@ export const GOLDEN_MANIFEST = {
       result: 'passed',
     },
     'jdk21-boot3.5': {
-      templateHash: 'e4e4a841110e6f5938626f23c2a7f7b9890f2b31751a9cef3f3b54f5ce5ee5d3',
-      verifiedAt: '2026-10-21T07:47:17+08:00',
+      templateHash: '5a842f3f8e8e5e35d91579acb85323a258c1134a70e16eb1822ebafa7a12e421',
+      verifiedAt: '2026-10-21T08:09:18+08:00',
       verifiedBy: 'local:Windows 10 x64',
       toolchain: 'Eclipse Temurin JDK 21.0.12.1 + Maven 3.9.9',
       commands: [
@@ -112,8 +112,8 @@ export const GOLDEN_MANIFEST = {
       result: 'passed',
     },
     'jdk21-boot4.0': {
-      templateHash: '745c0a178173aab95edc233e20d82797ac0a18d9bc2bdc6ecabde875e126be37',
-      verifiedAt: '2026-10-21T07:51:37+08:00',
+      templateHash: '3699e57cd1e05504ffc662ba4fb99681b258e35ea2cda2083d7e36a3eafd547d',
+      verifiedAt: '2026-10-21T08:09:33+08:00',
       verifiedBy: 'local:Windows 10 x64',
       toolchain: 'Eclipse Temurin JDK 21.0.12.1 + Maven 3.9.9',
       commands: [

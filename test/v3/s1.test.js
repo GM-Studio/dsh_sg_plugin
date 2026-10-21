@@ -49,15 +49,13 @@ async function callTool(ctx, name, args = {}) {
   return definition.execute(name === 'sg_init' ? { ...args, v3: true } : args, { agent: null });
 }
 
-test('注册 9 个工具与 6 个命令', () => {
+test('注册 7 个工具与 6 个命令', () => {
   const root = tempRoot();
   const { ctx } = setup(root);
   assert.deepEqual([...ctx.toolsMap.keys()].sort(), [
     'sg_approve',
     'sg_change',
     'sg_init',
-    'sg_init_finalize',
-    'sg_init_resume',
     'sg_run',
     'sg_skill',
     'sg_status',

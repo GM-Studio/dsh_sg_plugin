@@ -1,5 +1,7 @@
 # sg-java 初始化详细设计（多 agent 修订）
 
+> 历史文档：sg-java 4.3 起已移除 sg-init 内置多 agent 验收/测试/交付流程；当前需求与实现以 [v4.3 需求](../requirements/2026-10-21-v4.3-sg-init-closed-loop-requirements.md) 为准。
+
 ## 输入与确认
 默认 Java8/Boot2.7.18/Maven + Vue3/TS/Vite/npm；仅完全空目录，含 .git/零字节文件/空目录拒绝。宿主确认前不写入，确认后复查。quality 严格校验 mode=lenient|strict、generateOnly:boolean，默认 lenient/false。CLI --lenient/--strict/--mode、--generate-only。原 execution 六开关为附加兼容执行，不替代 agent 审查；仅生成与开启附加执行冲突拒绝。显式 v3/adopt 保留旧流程。
 

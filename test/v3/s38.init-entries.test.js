@@ -400,8 +400,6 @@ test('v3.8：-req 与自由描述互斥', async () => {
     frontend: null,
     preset: null,
     version: null,
-    execution: {},
-    quality: {},
     description: '',
   });
 });

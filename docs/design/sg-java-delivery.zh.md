@@ -1,5 +1,7 @@
 # sg-java 交付与验证记录
 
+> 历史文档：sg-java 4.3 起已移除 sg-init 内置多 agent 验收/测试/交付流程；当前需求与实现以 [v4.3 需求](../requirements/2026-10-21-v4.3-sg-init-closed-loop-requirements.md) 为准。
+
 ## 源码与边界
 实现位于隔离 sg-java worktree，原 feat/v4-monorepo 工作区保留。未自动提交或发布插件源码；新生成项目 Git 基线与初始化归档属于确认授权。
 

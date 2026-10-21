@@ -1,5 +1,7 @@
 # sg-java：sg-init 初始化需求分析（已确认）
 
+> 历史文档：sg-java 4.3 起已移除 sg-init 内置多 agent 验收/测试/交付流程；当前需求与实现以 [v4.3 需求](../requirements/2026-10-21-v4.3-sg-init-closed-loop-requirements.md) 为准。
+
 ## 确认与源码基线
 - 用户于 2026-10-20 在需求确认对话框批准实施。
 - 源码：E:\ai_workflow\specgate，基准 feat/v4-monorepo HEAD 0f4661f。

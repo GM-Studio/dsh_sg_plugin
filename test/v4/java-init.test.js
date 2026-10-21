@@ -18,7 +18,14 @@ function temp(t) {
   t.after(() => fs.rmSync(root, { recursive: true, force: true }));
   return root;
 }
-const approve = { ask: async () => ({ answers: [{ selected: ['确认'] }] }) };
+const approve = {
+  ask: async ({ questions }) => ({
+    answers: questions.map((question) => ({
+      id: question.id,
+      selected: [question.id === 'sg-java-init-version' ? 'jdk8-boot2.7' : '确认'],
+    })),
+  }),
+};
 
 test('strict empty rule rejects Git, zero files, and empty folders without writes', async (t) => {
   for (const entry of ['.git', 'zero.txt', 'empty']) {
@@ -30,13 +37,13 @@ test('strict empty rule rejects Git, zero files, and empty folders without write
     assert.deepEqual(fs.readdirSync(root), [entry]);
   }
 });
-test('missing questions, cancellation, invalid flags and stack conflicts do not create target', async (t) => {
-  const parent = temp(t),
-    root = path.join(parent, 'missing');
+
+test('missing questions, cancellation, and stack conflicts do not create target', async (t) => {
+  const parent = temp(t);
+  const root = path.join(parent, 'missing');
   for (const args of [
     {},
     { userQuestions: { ask: async () => ({ answers: [{ selected: ['取消'] }] }) } },
-    { execution: { test: 'true' } },
     { backend: 'node' },
   ]) {
     const result = await startJavaInit({ root, ...args });
@@ -44,51 +51,50 @@ test('missing questions, cancellation, invalid flags and stack conflicts do not 
     assert.equal(fs.existsSync(root), false);
   }
 });
+
 test('recheck rejects files introduced during confirmation', async (t) => {
   const root = temp(t);
   const result = await startJavaInit({
     root,
     userQuestions: {
-      ask: async () => {
-        fs.writeFileSync(path.join(root, 'external'), '');
-        return { answers: [{ selected: ['确认'] }] };
+      ask: async ({ questions }) => {
+        for (const question of questions)
+          if (question.id === 'sg-java-init-confirm')
+            fs.writeFileSync(path.join(root, 'external'), '');
+        return {
+          answers: questions.map((question) => ({
+            id: question.id,
+            selected: [question.id === 'sg-java-init-version' ? 'jdk8-boot2.7' : '确认'],
+          })),
+        };
       },
     },
   });
   assert.equal(result.code, 'E_TARGET_NOT_EMPTY');
   assert.deepEqual(fs.readdirSync(root), ['external']);
 });
-test('generation-only has no quality execution; frozen req and root gate workflow accept independent change', async (t) => {
+
+test('default init generates code, req baseline, golden metadata and Git baseline', async (t) => {
   const root = temp(t);
-  let calls = 0;
-  const result = await startJavaInit({
-    root,
-    userQuestions: approve,
-    quality: { generateOnly: true },
-    runner: () => {
-      calls++;
-      throw Error('must not execute');
-    },
-  });
+  const result = await startJavaInit({ root, userQuestions: approve });
   assert.equal(result.ok, true, JSON.stringify(result));
-  assert.equal(calls, 0);
   assert.equal(result.code, 'GENERATED_ONLY');
   assert.equal(result.report.initializationComplete, false);
-  assert.equal(result.report.gitBaseline.status, 'passed');
-  assert.equal(result.report.gitBaseline.network, false);
-  assert.equal(result.report.approval.source, 'host-userQuestions');
-  assert.match(result.report.approval.requirementsHash, /^[a-f0-9]{64}$/);
+  assert.equal(result.report.quality.generateOnly, true);
+  assert.equal(result.report.version.id, 'jdk8-boot2.7');
+  assert.equal(result.report.template.verified, true);
   assert.equal(fs.existsSync(path.join(root, 'backend/pom.xml')), true);
   assert.equal(fs.existsSync(path.join(root, 'frontend/package.json')), true);
+  assert.equal(fs.existsSync(path.join(root, 'frontend/package-lock.json')), true);
+  assert.equal(fs.existsSync(path.join(root, '.specgate/golden.json')), true);
   assert.equal(fs.existsSync(path.join(root, '.gitmodules')), false);
-  assert.equal(fs.existsSync(path.join(root, '.specgate/workspace.yaml')), false);
   assert.equal(load(root).state.phase, 'IDLE');
   assert.equal(load(root).state.change, null);
   assert.equal(isRequirementsFrozen(root).ok, true);
   const suites = readSuites(readConfig(root));
   assert.equal(validateSuites(root, suites).ok, true);
   assert.deepEqual(
-    suites.map((s) => s.id),
+    suites.map((item) => item.id),
     ['backend', 'frontend'],
   );
   const head = spawnSync('git', ['rev-parse', 'HEAD'], {
@@ -105,59 +111,19 @@ test('generation-only has no quality execution; frozen req and root gate workflo
   assert.equal(load(root).state.phase, 'H1_PENDING');
   assert.equal(load(root).state.approvals.H1.issuedAt, null);
 });
-test('CLI execution flags are independent and unknown flags fail closed', () => {
-  assert.deepEqual(parseInitArgs('--test --format --no-test').execution, {
-    test: false,
-    format: true,
-  });
-  assert.equal(parseInitArgs('--typo').ok, false);
-  assert.deepEqual(parseInitArgs('').execution, {});
-});
 
-function setup(root, questions) {
-  const toolMap = new Map(),
-    commandMap = new Map();
-  const ctx = {
-    get: (n) => (n === 'userQuestions' ? questions : undefined),
-    tools: { register: (d) => toolMap.set(d.name, d) },
-    commands: { register: (d) => commandMap.set(d.name, d) },
-  };
-  const runtime = createRuntime(ctx, { root });
-  registerTools(ctx, runtime);
-  registerCommands(ctx, runtime);
-  return { toolMap, commandMap };
-}
-test('default tool and CLI both reject nonempty instead of falling back to v3', async (t) => {
+test('re-init is idempotent and a copied workspace can create a change', async (t) => {
   const root = temp(t);
-  fs.writeFileSync(path.join(root, 'README.md'), 'keep');
-  const { toolMap, commandMap } = setup(root, approve);
-  assert.equal((await toolMap.get('sg_init').execute({}, {})).data.code, 'E_TARGET_NOT_EMPTY');
-  assert.match(
-    (await commandMap.get('sg-init').handler({ rawInput: '' })).text,
-    /E_TARGET_NOT_EMPTY/,
-  );
-  assert.deepEqual(fs.readdirSync(root), ['README.md']);
-});
-test('default init is generation-only; explicit lenient remains pending and cannot be bypassed', async (t) => {
-  const generatedRoot = temp(t);
-  const generated = await startJavaInit({ root: generatedRoot, userQuestions: approve });
-  assert.equal(generated.code, 'GENERATED_ONLY');
-  assert.equal(generated.report.initializationComplete, false);
-  assert.equal(generated.report.version.id, 'jdk8-boot2.7');
-
-  const root = temp(t);
-  const result = await startJavaInit({
-    root,
-    userQuestions: approve,
-    quality: { mode: 'lenient' },
-  });
-  assert.equal(result.code, 'MAIN_AGENT_PENDING');
-  assert.equal(createChange(root, { name: 'premature' }).code, 'INIT_QUALITY_PENDING');
-  fs.writeFileSync(
-    path.join(root, '.specgate/init-report.json'),
-    JSON.stringify({ schemaVersion: 1, phase: 'IDLE' }),
-  );
-  assert.equal(createChange(root, { name: 'tampered' }).code, 'INIT_QUALITY_PENDING');
+  const first = await startJavaInit({ root, userQuestions: approve });
+  assert.equal(first.ok, true);
+  const again = await startJavaInit({ root, userQuestions: approve });
+  assert.equal(again.skipped, true);
+  assert.equal(again.code, 'ALREADY_INITIALIZED');
+  const cloneParent = temp(t);
+  const clone = path.join(cloneParent, 'clone');
+  fs.cpSync(root, clone, { recursive: true });
+  const change = createChange(clone, { name: 'clone-change' });
+  assert.equal(change.ok, true);
 });
 
 test('version presets generate the requested Java/Boot stack', async (t) => {
@@ -182,7 +148,6 @@ test('version presets generate the requested Java/Boot stack', async (t) => {
     assert.equal(fs.readFileSync(path.join(root, '.java-version'), 'utf8').trim(), jdk);
     assert.equal(result.report.version.id, version);
     assert.equal(result.report.template.verified, Boolean(GOLDEN_MANIFEST.presets[version]));
-    assert.ok(fs.existsSync(path.join(root, '.specgate/golden.json')));
   }
 });
 
@@ -207,35 +172,29 @@ test('unknown version fails before writing', async (t) => {
   assert.equal(fs.existsSync(root), false);
 });
 
-test('quality CLI options reject invalid modes and generation execution conflicts', async (t) => {
-  assert.deepEqual(parseInitArgs('--strict').quality, { mode: 'strict' });
-  assert.deepEqual(parseInitArgs('--generate-only').quality, { generateOnly: true });
-  assert.equal(parseInitArgs('--mode fast').ok, false);
-  assert.equal(parseInitArgs('--strict --lenient').ok, false);
-  const result = await startJavaInit({
-    root: temp(t),
-    userQuestions: approve,
-    quality: { generateOnly: true },
-    execution: { test: true },
-  });
-  assert.equal(result.code, 'E_ARGS_CONFLICT');
-});
-
-test('tool schema exposes strictly typed optional switches', () => {
+test('CLI version flag and tool schema keep the generation-only surface', () => {
+  assert.equal(parseInitArgs('--version jdk17-boot3.5').version, 'jdk17-boot3.5');
+  assert.equal(parseInitArgs('--strict').ok, false);
+  assert.equal(parseInitArgs('--generate-only').ok, false);
   const { toolMap } = setup(os.tmpdir(), approve);
   const schema = toolMap.get('sg_init').parameters.properties;
-  assert.equal(parseInitArgs('--version jdk17-boot3.5').version, 'jdk17-boot3.5');
   assert.equal(schema.version.type, 'string');
   assert.ok(schema.version.enum.includes('jdk17-boot3.5'));
   assert.ok(schema.version.enum.includes('jdk21-boot4.0'));
-  const p = schema.execution;
-  assert.equal(p.additionalProperties, false);
-  assert.deepEqual(Object.keys(p.properties), [
-    'test',
-    'format',
-    'lint',
-    'review',
-    'verify',
-    'installToolchain',
-  ]);
+  assert.equal(schema.execution, undefined);
+  assert.equal(schema.quality, undefined);
 });
+
+function setup(root, questions) {
+  const toolMap = new Map();
+  const commandMap = new Map();
+  const ctx = {
+    get: (name) => (name === 'userQuestions' ? questions : undefined),
+    tools: { register: (definition) => toolMap.set(definition.name, definition) },
+    commands: { register: (definition) => commandMap.set(definition.name, definition) },
+  };
+  const runtime = createRuntime(ctx, { root });
+  registerTools(ctx, runtime);
+  registerCommands(ctx, runtime);
+  return { toolMap, commandMap };
+}

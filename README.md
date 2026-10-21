@@ -7,11 +7,11 @@
 ![node](https://img.shields.io/badge/node-%3E%3D20.19.0-brightgreen)
 ![dsh](https://img.shields.io/badge/dsh-%3E%3D0.2.1--rc.2-purple)
 
-> **sg-java 分支（v4.3 默认）**：`sg-init` 仅接受完全空目标目录，`.git`、空文件、空子目录也拒绝。确认后按版本档生成 Java + Spring Boot + Maven + Vue3 / TypeScript / Vite / npm 全栈任务 CRUD 与 H2 文件持久化，写入 req v1.0、单仓 Git 基线；默认**只生成**，不安装依赖、不执行质量命令。
+> **sg-java 分支（v4.3 默认）**：`sg-init` 仅接受完全空目标目录（`.git`、空文件、空子目录也拒绝）；已初始化的 Java/Vue workspace 幂等跳过。确认后按版本档生成 Java + Spring Boot + Maven + Vue3 / TypeScript / Vite / npm 全栈任务 CRUD 与 H2 文件持久化，写入 req v1.0、单仓 Git 基线；**只生成**，不安装依赖、不执行质量命令。
 >
 > 版本档：`--version jdk8-boot2.7`（默认）、`jdk17-boot3.5`、`jdk21-boot3.5`、`jdk21-boot4.0`（preview）。每个版本档的模板 hash 在 `src/v4/java-versions.js` 的 Golden 清单中登记；只有匹配的已验证模板才允许 `sg-change`。未验证/自定义模板执行 `/sg-verify`。
 >
-> 质量：`--lenient` / `--strict` 显式启动隔离并发 agent（不传则只生成）；`/sg-verify` 本地执行后端 `mvn verify` 与前端 install/build/test/lint/format:check，通过后状态为 `SMOKE_PASSED`。附加兼容执行开关：`--test --format --lint --review --verify --install-toolchain`。旧初始化/接入必须显式 `--v3` / `--adopt`。
+> 质量：初始化不启动 agent；需要本地验证时执行 `/sg-verify`：后端 `mvn verify`，前端 install/build/test/lint/format:check，启动后端执行 HTTP CRUD 与正常重启持久化，通过后状态为 `SMOKE_PASSED`。旧初始化/接入必须显式 `--v3` / `--adopt`。
 >
 > 需求与设计：[v4.3 需求](docs/requirements/2026-10-21-v4.3-sg-init-closed-loop-requirements.md)、[sg-java 需求](docs/requirements/2026-10-20-sg-java-init-requirements.zh.md)、[详细设计](docs/design/sg-java-init.zh.md)。Java8/Boot2 已老旧，本示例无认证，不是生产安全承诺。
 >

@@ -2,10 +2,11 @@
 
 ## 4.3.0（sg-java）
 
-- `sg-init` 默认改为**仅生成**：不安装依赖、不编译、不启动 agent；`--lenient` / `--strict` 才显式进入质量流程。
-- 新增版本档：`jdk8-boot2.7`（默认）、`jdk17-boot3.5`、`jdk21-boot3.5`、`jdk21-boot4.0`（preview）；`--version` 选择，非法组合在生成前拒绝。
+- `sg-init` 改为**仅生成**：不安装依赖、不编译、不启动 agent；移除内置多 agent 验收/测试/交付流程与 `sg_init_finalize` / `sg_init_resume` 工具。需要本地验证时执行 `/sg-verify`。
+- 新增版本档：`jdk8-boot2.7`（默认）、`jdk17-boot3.5`、`jdk21-boot3.5`、`jdk21-boot4.0`（preview）；`--version` 选择，未指定时交互选择，非法组合在生成前拒绝。
+- 重复执行 `sg-init` 在已初始化的 Java/Vue workspace 上幂等跳过；`.specgate/state.json` 不再忽略，clone 后可直接创建 change。
 - Golden 清单：每个版本档的模板 hash、验证时间、工具链、命令与结论登记在 `src/v4/java-versions.js`；`sg-init` 写入 `.specgate/golden.json`，未匹配的模板禁止 `sg-change`。
-- 新增 `sg_verify` 工具与 `/sg-verify` 命令：本地执行后端 `mvn verify` 与前端 install/build/test/lint/format:check，写 `.specgate/verify-report.json`，通过后状态 `SMOKE_PASSED`。
+- 新增 `sg_verify` 工具与 `/sg-verify` 命令：后端 `mvn verify`、前端 install/build/test/lint/format:check，并启动后端执行 HTTP CRUD 与正常重启持久化；写 `.specgate/verify-report.json`，通过后状态 `SMOKE_PASSED`。
 - Boot 4 兼容：`spring-boot-starter-webmvc-test`、`org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc`、Jackson 3 `tools.jackson.databind.ObjectMapper`。
 - 四个版本档均在 Windows + Temurin JDK 8/17/21 + Maven 3.9.9 下完成本地验收：后端 `mvn verify`、前端 build/test/lint/format 全绿。
 
@@ -13,7 +14,7 @@
 
 - 默认初始化严格完全空目录，含 .git、空文件、空目录均拒绝；宿主确认前无生成写入。
 - 生成 Java8/Boot2.7.18/Maven + 稳定 Vue3/TS/Vite/npm 前后端分离任务 CRUD，H2 文件持久化。
-- 默认宽松隔离并发多 agent 测试/静态/格式化/语义走查，主 agent 受控修复汇合复验独立归档；严格真实 CRUD/重启持久化全过，仅生成不归档质量通过。无服务主 agent 串行降级，finalize/resume 绑定真实证据；未执行项未验证。
+- （历史，4.3 已移除）默认宽松隔离并发多 agent 测试/静态/格式化/语义走查；该流程不再由 sg-init 启动。
 - 单仓 monorepo、req v1.0 快照、IDLE 基线，后续 sg-change 独立发起并保留审批。
 - 显式 v3/adopt 旧入口保留；默认不再自动创建/归档首个 change 或嵌套 submodule。
 

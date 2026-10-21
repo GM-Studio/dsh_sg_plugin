@@ -21,7 +21,6 @@ import {
 import { digest } from './util/hash.js';
 import { startJavaInit, resolveJavaInitRoot, summarizeJavaInit } from '../v4/java-init.js';
 import { patchState } from './state.js';
-import { queueJavaInitHandoff } from '../v4/java-init-handoff.js';
 import { verifyJavaProject } from '../v4/java-verify.js';
 
 function tokens(raw) {
@@ -75,16 +74,6 @@ export function parseInitArgs(rawInput) {
   let frontend = null;
   let preset = null;
   let version = null;
-  const execution = {};
-  const quality = {};
-  const executionFlags = {
-    '--test': 'test',
-    '--format': 'format',
-    '--lint': 'lint',
-    '--review': 'review',
-    '--verify': 'verify',
-    '--install-toolchain': 'installToolchain',
-  };
   const rest = [];
   for (let index = 0; index < parts.length; index += 1) {
     const part = parts[index];
@@ -120,22 +109,6 @@ export function parseInitArgs(rawInput) {
       if (!value) return { ok: false, code: 'E_ARGS_CONFLICT', message: part + ' 需要一个版本档' };
       version = value;
       index += 1;
-    } else if (part === '--strict' || part === '--lenient') {
-      if (quality.mode && quality.mode !== part.slice(2))
-        return { ok: false, code: 'E_ARGS_CONFLICT', message: '不能同时选择宽松与严格模式' };
-      quality.mode = part.slice(2);
-    } else if (part === '--generate-only') {
-      quality.generateOnly = true;
-    } else if (part === '--mode') {
-      if (!['lenient', 'strict'].includes(parts[index + 1]))
-        return { ok: false, code: 'E_ARGS_CONFLICT', message: '--mode 需要 lenient 或 strict' };
-      if (quality.mode && quality.mode !== parts[index + 1])
-        return { ok: false, code: 'E_ARGS_CONFLICT', message: '质量模式冲突' };
-      quality.mode = parts[++index];
-    } else if (executionFlags[part]) {
-      execution[executionFlags[part]] = true;
-    } else if (part.startsWith('--no-') && executionFlags['--' + part.slice(5)]) {
-      execution[executionFlags['--' + part.slice(5)]] = false;
     } else if (part.startsWith('--')) {
       return { ok: false, code: 'E_ARGS_CONFLICT', message: '未知初始化开关：' + part };
     } else {
@@ -160,8 +133,6 @@ export function parseInitArgs(rawInput) {
     frontend,
     preset,
     version,
-    execution,
-    quality,
     description: rest.join(' ').trim(),
   };
 }
@@ -187,10 +158,10 @@ export function registerCommands(ctx, runtime) {
   register({
     name: 'sg-init',
     description:
-      '初始化 Java/Vue 全栈：/sg-init [--path <空目录>] [--version jdk8-boot2.7|jdk17-boot3.5|jdk21-boot3.5|jdk21-boot4.0] [--lenient|--strict] [--generate-only]。默认仅生成，不安装、不执行；显式 --lenient/--strict 才启动隔离 agent 质量流程。含 .git 的目标亦拒绝。' +
+      '初始化 Java/Vue 全栈：/sg-init [--path <空目录>] [--version jdk8-boot2.7|jdk17-boot3.5|jdk21-boot3.5|jdk21-boot4.0]。只生成代码、req v1.0 与 Git 基线，不安装、不编译、不启动 agent。含 .git 的目标亦拒绝。' +
       '未指定 --path 时使用当前目录；v3 兼容：[-req <需求文档>] [自由描述] [--v3]。',
     input: {
-      hint: '[--path <目录>] [--version <档>] [--lenient|--strict] [--generate-only] [--adopt]',
+      hint: '[--path <目录>] [--version <档>] [--adopt]',
     },
     async handler(inv) {
       const cwd = runtime.getCwd(inv?.agent);
@@ -199,40 +170,17 @@ export function registerCommands(ctx, runtime) {
       if (!parsed.ok) {
         return { kind: 'error', text: '初始化失败（' + parsed.code + '）：' + parsed.message };
       }
-      if (
-        (parsed.v3 || parsed.adopt) &&
-        (Object.keys(parsed.execution).length || Object.keys(parsed.quality).length)
-      )
-        return {
-          kind: 'error',
-          text: '初始化失败（E_ARGS_CONFLICT）：执行开关仅适用于默认 Java/Vue 初始化',
-        };
       if (parsed.v3 && parsed.adopt)
         return { kind: 'error', text: '初始化失败（E_ARGS_CONFLICT）：v3 与 adopt 不能同时使用' };
       if (!parsed.v3 && !parsed.adopt) {
         const result = await startJavaInit({
           root: resolveJavaInitRoot(cwd, parsed.path),
           userQuestions,
-          runtime,
           agent: inv?.agent,
           signal: inv?.signal,
           ...parsed,
         });
-        const handoff = queueJavaInitHandoff({
-          runtime,
-          agent: inv?.agent,
-          signal: inv?.signal,
-          result,
-        });
-        const suffix =
-          result.code === 'MAIN_AGENT_PENDING'
-            ? handoff.queued
-              ? '\n已安排下一回合主 agent 串行继续；尚未完成质量验收。'
-              : '\n自动交接不可用（' +
-                handoff.reason +
-                '）；请主 agent 按返回计划串行执行并调用 sg_init_finalize。'
-            : '';
-        return { kind: result.ok ? 'success' : 'error', text: summarizeJavaInit(result) + suffix };
+        return { kind: result.ok ? 'success' : 'error', text: summarizeJavaInit(result) };
       }
       const resolved = resolveInitRoot(cwd, parsed.path, { create: !parsed.adopt });
       if (!resolved.ok) {
@@ -305,7 +253,7 @@ export function registerCommands(ctx, runtime) {
       const raw = String(inv?.rawInput || '').trim();
       const target = raw.startsWith('--path ') ? raw.slice(7).trim() : raw;
       const root = resolveJavaInitRoot(runtime.getCwd(inv?.agent), target);
-      const result = verifyJavaProject({ root });
+      const result = await verifyJavaProject({ root });
       return { kind: result.ok ? 'success' : 'error', text: result.message };
     },
   });

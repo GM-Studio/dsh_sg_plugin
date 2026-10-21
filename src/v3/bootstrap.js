@@ -175,6 +175,22 @@ function markTasksDone(root, change) {
   writeText(file, readText(file).replace(/^(\s*-\s*)\[ \]/gm, '$1[x]'));
 }
 
+function renameWithRetry(from, to) {
+  let lastError;
+  for (let attempt = 0; attempt < 8; attempt += 1) {
+    try {
+      fs.renameSync(from, to);
+      return;
+    } catch (error) {
+      lastError = error;
+      if (!['EPERM', 'EBUSY', 'EACCES', 'ENOTEMPTY'].includes(error.code) || attempt === 7)
+        throw error;
+      Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 50 * (attempt + 1));
+    }
+  }
+  throw lastError;
+}
+
 function archiveBootstrap(root, change) {
   for (const file of collectDelta(root, change)) {
     const specsPath = path.join(root, 'openspec', 'specs', file.capability, 'spec.md');
@@ -188,7 +204,7 @@ function archiveBootstrap(root, change) {
   const from = path.join(root, 'openspec', 'changes', change);
   const to = path.join(root, 'openspec', 'changes', 'archive', day + '-' + change);
   ensureDir(path.dirname(to));
-  fs.renameSync(from, to);
+  renameWithRetry(from, to);
   patchState(root, (draft) => {
     draft.phase = 'IDLE';
     draft.change = null;

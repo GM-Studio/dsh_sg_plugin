@@ -18,13 +18,7 @@ import {
 } from './worktrees.js';
 import { createDispatcher } from './dispatch.js';
 import { maybeBuildBootstrap } from './bootstrap.js';
-import {
-  startJavaInit,
-  resolveJavaInitRoot,
-  summarizeJavaInit,
-  finalizeJavaInitialization,
-  resumeJavaInitialization,
-} from '../v4/java-init.js';
+import { startJavaInit, resolveJavaInitRoot, summarizeJavaInit } from '../v4/java-init.js';
 import { JAVA_PRESETS } from '../v4/java-versions.js';
 import { verifyJavaProject } from '../v4/java-verify.js';
 import { resolveInitRoot, shouldUseV4Default, startV4Init, summarizeV4Result } from '../v4/init.js';
@@ -133,7 +127,7 @@ export function registerTools(ctx, runtime) {
     {
       name: 'sg_init',
       description:
-        '初始化 Java/Vue 全栈：sg_init({ path?, version?, quality?:{mode:lenient|strict,generateOnly?}, execution? }) 仅接受完全空目录；默认仅生成（不安装/不执行），可选版本档 jdk8-boot2.7 / jdk17-boot3.5 / jdk21-boot3.5 / jdk21-boot4.0；' +
+        '初始化 Java/Vue 全栈：sg_init({ path?, version? }) 仅接受完全空目录；只生成代码、req v1.0 与 Git 基线，不安装、不编译、不启动 agent；可选版本档 jdk8-boot2.7 / jdk17-boot3.5 / jdk21-boot3.5 / jdk21-boot4.0；' +
         '省略 path 时使用当前目录，支持相对/绝对路径（Windows/Linux/macOS）。' +
         'v3 兼容：sg_init({ req, description, draft }) 走需求先行流程；--v3 可强制。',
       parameters: {
@@ -153,28 +147,6 @@ export function registerTools(ctx, runtime) {
           path: {
             type: 'string',
             description: '目标仓库/工作区路径；相对路径按当前目录解析，支持绝对路径与 ~',
-          },
-          quality: {
-            type: 'object',
-            additionalProperties: false,
-            properties: {
-              mode: { type: 'string', enum: ['lenient', 'strict'] },
-              generateOnly: { type: 'boolean' },
-            },
-            description: '默认宽松自动多 agent；strict 全部真实验证；generateOnly 仅生成未验证',
-          },
-          execution: {
-            type: 'object',
-            additionalProperties: false,
-            properties: {
-              test: { type: 'boolean' },
-              format: { type: 'boolean' },
-              lint: { type: 'boolean' },
-              review: { type: 'boolean' },
-              verify: { type: 'boolean' },
-              installToolchain: { type: 'boolean' },
-            },
-            description: '可选执行开关，默认全部 false；关闭只生成代码与文档',
           },
           v4: { type: 'boolean', description: '兼容参数，默认生成 Java/Vue monorepo' },
           adopt: { type: 'boolean', description: '原地接入存量仓库' },
@@ -196,13 +168,6 @@ export function registerTools(ctx, runtime) {
         const cwd = runtime.getCwd(exec?.agent);
         const userQuestions = runtime.service('userQuestions');
         const input = args && typeof args === 'object' ? args : {};
-        if (
-          (input.v3 || input.adopt) &&
-          (Object.keys(input.execution || {}).length || Object.keys(input.quality || {}).length)
-        )
-          return fail('初始化失败（E_ARGS_CONFLICT）：execution 开关仅适用于默认 Java/Vue 初始化', {
-            code: 'E_ARGS_CONFLICT',
-          });
         if (input.v3 && input.adopt)
           return fail('初始化失败（E_ARGS_CONFLICT）：v3 与 adopt 不能同时使用', {
             code: 'E_ARGS_CONFLICT',
@@ -212,7 +177,6 @@ export function registerTools(ctx, runtime) {
             ...input,
             root: resolveJavaInitRoot(cwd, input.path),
             userQuestions,
-            runtime,
             agent: exec?.agent,
             signal: exec?.signal,
           });
@@ -301,66 +265,9 @@ export function registerTools(ctx, runtime) {
       },
     },
     {
-      name: 'sg_init_resume',
-      description:
-        '继续待处理初始化；受控提交生成代码修复，重新绑定基线并重跑质量审查，不覆盖需求/审批。',
-      parameters: { type: 'object', properties: { path: { type: 'string' } } },
-      output: textOutput(),
-      async execute(args, exec) {
-        const root = resolveJavaInitRoot(runtime.getCwd(exec?.agent), args.path);
-        const result = await resumeJavaInitialization({
-          root,
-          runtime,
-          parent: exec?.agent,
-          signal: exec?.signal,
-        });
-        return result.ok
-          ? ok(summarizeJavaInit(result), result)
-          : fail(summarizeJavaInit(result), result);
-      },
-    },
-    {
-      name: 'sg_init_finalize',
-      description:
-        '完成主 agent 串行降级初始化：实际审查后提交 pending token 与四阶段报告文件路径。不是人工 gate 审批。',
-      parameters: {
-        type: 'object',
-        required: ['token', 'reports'],
-        properties: {
-          path: { type: 'string' },
-          token: { type: 'object' },
-          reports: {
-            type: 'object',
-            required: ['test', 'lint', 'format', 'review'],
-            additionalProperties: false,
-            properties: {
-              test: { type: 'string' },
-              lint: { type: 'string' },
-              format: { type: 'string' },
-              review: { type: 'string' },
-            },
-          },
-        },
-      },
-      output: textOutput(),
-      async execute(args, exec) {
-        const root = resolveJavaInitRoot(runtime.getCwd(exec?.agent), args.path);
-        const result = await finalizeJavaInitialization({
-          root,
-          token: args.token,
-          reports: args.reports,
-          parent: exec?.agent,
-          signal: exec?.signal,
-        });
-        return result.ok
-          ? ok(summarizeJavaInit(result), result)
-          : fail(summarizeJavaInit(result), result);
-      },
-    },
-    {
       name: 'sg_verify',
       description:
-        '本地验证 Java/Vue 初始化项目：后端 mvn verify，前端 npm install/build/test/lint/format:check；通过后状态为 SMOKE_PASSED，可创建 change。只读源码，不自动修复。',
+        '本地验证 Java/Vue 初始化项目：后端 mvn verify，前端 npm install/build/test/lint/format:check，随后启动后端、HTTP CRUD、重启持久化；通过后状态为 SMOKE_PASSED，可创建 change。只读源码，不自动修复。',
       parameters: {
         type: 'object',
         properties: { path: { type: 'string', description: '项目根目录，默认当前目录' } },
@@ -369,7 +276,7 @@ export function registerTools(ctx, runtime) {
       output: textOutput(),
       async execute(args, exec) {
         const root = resolveJavaInitRoot(runtime.getCwd(exec?.agent), args?.path);
-        const result = verifyJavaProject({ root });
+        const result = await verifyJavaProject({ root });
         return result.ok ? ok(result.message, result) : fail(result.message, result);
       },
     },

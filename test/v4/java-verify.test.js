@@ -11,14 +11,14 @@ function temp(t) {
   return root;
 }
 
-test('verify rejects a non-Java workspace without writing', (t) => {
+test('verify rejects a non-Java workspace without writing', async (t) => {
   const root = temp(t);
-  const result = verifyJavaProject({ root, env: { PATH: '' } });
+  const result = await verifyJavaProject({ root, env: { PATH: '' } });
   assert.equal(result.code, 'E_NOT_JAVA_PROJECT');
   assert.equal(fs.existsSync(path.join(root, '.specgate', 'verify-report.json')), false);
 });
 
-test('verify blocks honestly when the local toolchain is missing', (t) => {
+test('verify blocks honestly when the local toolchain is missing', async (t) => {
   const root = temp(t);
   fs.mkdirSync(path.join(root, '.specgate'), { recursive: true });
   fs.writeFileSync(
@@ -30,7 +30,7 @@ test('verify blocks honestly when the local toolchain is missing', (t) => {
       preset: 'jdk17-boot3.5',
     }),
   );
-  const result = verifyJavaProject({ root, env: { PATH: '' } });
+  const result = await verifyJavaProject({ root, env: { PATH: '' } });
   assert.equal(result.ok, false);
   assert.equal(result.code, 'VERIFY_BLOCKED');
   assert.match(result.message, /JDK 17/);
