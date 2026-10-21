@@ -121,6 +121,22 @@ function writeBootstrapChange(root) {
   writeText(path.join(dir, 'tasks.md'), tasksText());
 }
 
+function renameWithRetry(from, to) {
+  let lastError;
+  for (let attempt = 0; attempt < 8; attempt += 1) {
+    try {
+      fs.renameSync(from, to);
+      return;
+    } catch (error) {
+      lastError = error;
+      if (!['EPERM', 'EBUSY', 'EACCES', 'ENOTEMPTY'].includes(error.code) || attempt === 7)
+        throw error;
+      Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 50 * (attempt + 1));
+    }
+  }
+  throw lastError;
+}
+
 function archiveBootstrap(root) {
   const dir = path.join(root, 'openspec', 'changes', 'bootstrap');
   if (!exists(dir)) return;
@@ -136,7 +152,7 @@ function archiveBootstrap(root) {
     new Date().toISOString().slice(0, 10) + '-bootstrap',
   );
   ensureDir(path.dirname(target));
-  fs.renameSync(dir, target);
+  renameWithRetry(dir, target);
   ensureDir(path.join(root, 'openspec', 'specs', 'mvp'));
   writeText(path.join(root, 'openspec', 'specs', 'mvp', 'spec.md'), specText());
 }
