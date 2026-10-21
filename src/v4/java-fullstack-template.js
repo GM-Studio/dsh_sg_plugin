@@ -4,10 +4,9 @@ import { fileURLToPath } from 'node:url';
 import { applyJavaPreset } from './java-versions.js';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
-const packageLock = fs.readFileSync(
-  path.join(here, '..', '..', 'assets', 'java-vue', 'package-lock.json'),
-  'utf8',
-);
+const packageLock = fs
+  .readFileSync(path.join(here, '..', '..', 'assets', 'java-vue', 'package-lock.json'), 'utf8')
+  .replace(/\r\n/g, '\n');
 
 // Complete deterministic Java/Vue monorepo template. Values are already formatter-normalized.
 export function javaFullstackFiles(options = {}) {
