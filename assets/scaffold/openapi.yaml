@@ -1,0 +1,114 @@
+openapi: 3.0.3
+info:
+  title: SpecGate MVP API
+  version: 1.0.0
+  description: GET queries; POST JSON mutations; all responses are JSON.
+paths:
+  /api/items:
+    get:
+      responses:
+        '200':
+          description: Items
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/Item' }
+    post:
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ItemInput' }
+      responses:
+        '201':
+          description: Created item
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Item' }
+        '400': { $ref: '#/components/responses/Invalid' }
+  /api/items/{id}:
+    get:
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer, minimum: 1 }
+      responses:
+        '200':
+          description: Item
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Item' }
+        '404': { $ref: '#/components/responses/Missing' }
+  /api/items/update:
+    post:
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              allOf:
+                - { $ref: '#/components/schemas/ItemInput' }
+                - { $ref: '#/components/schemas/IdInput' }
+      responses:
+        '200':
+          description: Updated item
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Item' }
+        '400': { $ref: '#/components/responses/Invalid' }
+        '404': { $ref: '#/components/responses/Missing' }
+  /api/items/delete:
+    post:
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/IdInput' }
+      responses:
+        '200':
+          description: Deleted item receipt
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [id, deleted]
+                properties:
+                  id: { type: integer, minimum: 1 }
+                  deleted: { type: boolean, enum: [true] }
+        '400': { $ref: '#/components/responses/Invalid' }
+        '404': { $ref: '#/components/responses/Missing' }
+components:
+  schemas:
+    IdInput:
+      type: object
+      required: [id]
+      properties:
+        id: { type: integer, minimum: 1 }
+    ItemInput:
+      type: object
+      required: [name]
+      properties:
+        name: { type: string, minLength: 1 }
+        description: { type: string, default: '' }
+    Item:
+      allOf:
+        - { $ref: '#/components/schemas/IdInput' }
+        - { $ref: '#/components/schemas/ItemInput' }
+    Error:
+      type: object
+      properties:
+        error: { type: string }
+        detail: {}
+  responses:
+    Invalid:
+      description: Invalid JSON request
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+    Missing:
+      description: Item not found
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }

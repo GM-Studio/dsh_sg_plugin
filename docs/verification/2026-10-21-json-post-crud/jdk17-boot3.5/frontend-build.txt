@@ -1,0 +1,13 @@
+
+> task-web@1.0.0 build
+> vue-tsc --noEmit && vite build
+
+vite v7.3.1 building client environment for production...
+transforming...
+✓ 1420 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                   0.39 kB │ gzip:  0.26 kB
+dist/assets/index--6zrFHlc.css  344.85 kB │ gzip: 47.60 kB
+dist/assets/index-BWXCVtS1.js   154.28 kB │ gzip: 56.55 kB
+✓ built in 1.97s

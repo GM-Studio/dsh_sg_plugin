@@ -44,15 +44,28 @@ export function statusData(project) {
       nextAction: '/sg-init',
     };
   }
+  let initialization = null;
+  try {
+    const file = path.join(root, '.specgate/init-report.json');
+    const marker = path.join(root, '.specgate/monorepo.json');
+    if (exists(file) && exists(marker) && JSON.parse(readText(marker)).stack === 'java-vue')
+      initialization = JSON.parse(readText(file));
+  } catch {
+    /* Status remains available for a damaged report. */
+  }
   return {
     initialized: true,
+    initialization,
     root,
     workflowVersion: Number(config?.workflowVersion) || null,
     change: state.change,
     changeKey: state.changeKey || null,
     type: state.type,
     phase: state.phase,
-    nextAction: nextActionFor(state),
+    nextAction:
+      !state.change && initialization && !initialization.initializationComplete
+        ? '执行 /sg-verify 完成当前项目的真实质量验证'
+        : nextActionFor(state),
     tasks: taskSummary(state),
     suites: state.plan?.suites || null,
     runtime: state.runtime || null,
@@ -98,6 +111,13 @@ export function renderStatus(project) {
     `任务：共 ${data.tasks.total}，merged ${data.tasks.merged}，失败 ${data.tasks.failed}，进行中 ${data.tasks.running}`,
     `证据：headSeq=${data.evidence?.headSeq ?? 0}`,
   ];
+  if (data.initialization) {
+    lines.push(
+      `初始化验证：${data.initialization.phase}（${data.initialization.initializationComplete ? '已通过本地验证' : '尚未通过本地验证'}）`,
+    );
+    if (data.initialization.verification?.report)
+      lines.push(`验证报告：${data.initialization.verification.report}`);
+  }
   if (data.blockedReason) lines.push(`阻塞：${data.blockedReason}`);
   if (data.phase === 'H0_PENDING' && data.context) {
     lines.push(`H0 背景：${data.context.background}`);

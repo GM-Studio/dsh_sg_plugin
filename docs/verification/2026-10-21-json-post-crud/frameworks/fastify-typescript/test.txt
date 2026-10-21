@@ -1,0 +1,14 @@
+
+> test
+> vitest run
+
+
+ RUN  v2.1.9 E:/ai_workflow/specgate/.specgate/crud-qa/fastify-typescript
+
+ ✓ test/items.test.ts (2 tests) 109ms
+
+ Test Files  1 passed (1)
+      Tests  2 passed (2)
+   Start at  09:50:14
+   Duration  436ms (transform 25ms, setup 0ms, collect 102ms, tests 109ms, environment 0ms, prepare 65ms)
+

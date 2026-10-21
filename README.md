@@ -11,7 +11,7 @@
 >
 > 版本档：`--version jdk8-boot2.7`（默认）、`jdk17-boot3.5`、`jdk21-boot3.5`、`jdk21-boot4.0`（preview）。每个版本档的模板 hash 在 `src/v4/java-versions.js` 的 Golden 清单中登记；只有匹配的已验证模板才允许 `sg-change`。未验证/自定义模板执行 `/sg-verify`。
 >
-> 质量：初始化不启动 agent；需要本地验证时执行 `/sg-verify`：后端 `mvn verify`，前端 install/build/test/lint/format:check，启动后端执行 HTTP CRUD 与正常重启持久化，通过后状态为 `SMOKE_PASSED`。旧初始化/接入必须显式 `--v3` / `--adopt`。
+> 质量：初始化不启动 agent；需要本地验证时执行 `/sg-verify`（或 `sg_verify({ path, install })`）：先跨平台扫描 JDK/Maven/Node（环境变量、PATH、常见安装目录），缺少 JDK 17/21 或 Maven 时自动装到项目 `.specgate/toolchains`（`--no-install` 可关闭），再执行后端 `mvn verify`、前端 install/build/test/lint/format:check，并启动后端执行 HTTP CRUD 与正常重启持久化，通过后状态为 `SMOKE_PASSED`。确认页只展示操作目录与技术栈。旧初始化/接入必须显式 `--v3` / `--adopt`。
 >
 > 需求与设计：[v4.3 需求](docs/requirements/2026-10-21-v4.3-sg-init-closed-loop-requirements.md)、[sg-java 需求](docs/requirements/2026-10-20-sg-java-init-requirements.zh.md)、[详细设计](docs/design/sg-java-init.zh.md)。Java8/Boot2 已老旧，本示例无认证，不是生产安全承诺。
 >
@@ -75,6 +75,18 @@
 - [许可证](#许可证)
 
 ---
+
+## 当前默认入口（2026-10-21 修复）
+
+默认 `sg-init` 生成 Java/Vue + Element Plus 最小管理界面，**只生成、未验证**，不会声称已运行测试。执行 `/sg-verify` 才实际运行 Maven clean verify、前端构建/测试/静态与格式检查、HTTP CRUD 和重启持久化。
+
+生成 API 统一使用 **GET 查询、POST 写入、JSON 请求和响应**：修改为 `/api/tasks/update`，删除为 `/api/tasks/delete`，id 位于 JSON body；删除返回 200 JSON 回执。[接口约定](docs/design/http-api-convention.zh.md)同样适用于旧版 Java/Node/Python 和前端 CRUD 示例。
+
+环境发现顺序为持久/进程变量、PATH、常见安装目录和项目 toolchains；缺少 JDK/Maven 时先弹出自定义路径对话框，空输入继续项目内下载安装，`--no-install` 禁止安装。也支持 `sg_verify({ path, javaHome, mavenHome, install })`。
+
+每次验证的完整日志与 JUnit/Vitest 原始报告保存在 `.specgate/verify-runs/<runId>/`，最新摘要在 `.specgate/verify-report.json`；七个阶段全部通过才写 `SMOKE_PASSED`。失败、阻塞与取消均使旧成功状态失效，`sg-status` 同时显示初始化验证状态。
+
+全面扫描与工作流说明见 [SG 工作流审计](docs/design/sg-workflow-audit-2026-10-21.zh.md)。下文 v3 初始化自动构建与四维澄清说明属于显式旧流程，不代表当前默认 `sg-init` 行为。
 
 ## 概述
 

@@ -1,0 +1,14 @@
+
+> test
+> vitest run
+
+
+ RUN  v2.1.9 E:/ai_workflow/specgate/.specgate/crud-qa/fastify-javascript
+
+ ✓ test/items.test.js (2 tests) 105ms
+
+ Test Files  1 passed (1)
+      Tests  2 passed (2)
+   Start at  09:50:13
+   Duration  428ms (transform 17ms, setup 0ms, collect 90ms, tests 105ms, environment 0ms, prepare 67ms)
+

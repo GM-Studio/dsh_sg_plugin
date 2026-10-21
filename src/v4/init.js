@@ -17,7 +17,6 @@ import { askWizard, summarizeSelection } from './wizard.js';
 import { scanEnvironment } from './environment.js';
 import {
   planProvisioning,
-  provisionSummary,
   provisionToolchain,
   toolchainEnv,
   verifyToolchain,
@@ -123,7 +122,7 @@ export async function startV4Init({
     const selection = resumeSelection(scan);
     if (!selection.ok) return selection;
     const approved = canAsk
-      ? (await askApproval({ userQuestions, agent, signal, selection })) === 'approved'
+      ? (await askApproval({ userQuestions, agent, signal, selection, root })) === 'approved'
       : false;
     const built = await buildWorkspace({
       root,
@@ -207,7 +206,7 @@ export async function startV4Init({
       agent,
       signal,
       selection,
-      provisionSummary: provisionSummary(provisionPlan),
+      root,
     });
     if (decision === 'modify') {
       wizardInitial = { backend: selection.backend, frontend: selection.frontend };

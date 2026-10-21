@@ -1263,10 +1263,15 @@ function mvpScaffoldFiles(stack, context = {}) {
     ['AC-003', '查询不存在的条目', 'GET /api/items/{id}', '404'],
     ['AC-004', '创建条目', 'POST /api/items {"name":"demo"}', '201，返回包含 id 的条目'],
     ['AC-005', '创建缺少 name', 'POST /api/items {}', '400'],
-    ['AC-006', '更新存在的条目', 'PUT /api/items/{id} {"name":"updated"}', '200，返回更新后的条目'],
-    ['AC-007', '更新不存在的条目', 'PUT /api/items/{id} {"name":"x"}', '404'],
-    ['AC-008', '删除存在的条目', 'DELETE /api/items/{id}', '204'],
-    ['AC-009', '删除不存在的条目', 'DELETE /api/items/{id}', '404'],
+    [
+      'AC-006',
+      '更新存在的条目',
+      'POST /api/items/update {"id":1,"name":"updated"}',
+      '200，返回更新后的条目',
+    ],
+    ['AC-007', '更新不存在的条目', 'POST /api/items/update {"id":999,"name":"x"}', '404'],
+    ['AC-008', '删除存在的条目', 'POST /api/items/delete {"id":1}', '200 JSON 回执'],
+    ['AC-009', '删除不存在的条目', 'POST /api/items/delete {"id":999}', '404'],
     ['AC-010', '全接口测试与静态检查', testCommand, '退出码 0，全部用例通过'],
   ];
 
@@ -1303,8 +1308,8 @@ function mvpScaffoldFiles(stack, context = {}) {
       deps: ['T-001'],
       lines: [
         '- [ ] POST /api/items（name 必填，201）',
-        '- [ ] PUT /api/items/{id}（含 404/400）',
-        '- [ ] DELETE /api/items/{id}（含 404）',
+        '- [ ] POST /api/items/update（含 404/400）',
+        '- [ ] POST /api/items/delete（含 404）',
       ],
     },
     {
@@ -1325,10 +1330,10 @@ function mvpScaffoldFiles(stack, context = {}) {
     ['TC-003', 'AC-003', 'integration', 'GET /api/items/{id} 404'],
     ['TC-004', 'AC-004', 'integration', 'POST /api/items 创建'],
     ['TC-005', 'AC-005', 'unit', 'POST /api/items 缺 name 返回 400'],
-    ['TC-006', 'AC-006', 'integration', 'PUT /api/items/{id} 更新'],
-    ['TC-007', 'AC-007', 'integration', 'PUT /api/items/{id} 404'],
-    ['TC-008', 'AC-008', 'integration', 'DELETE /api/items/{id} 204'],
-    ['TC-009', 'AC-009', 'integration', 'DELETE /api/items/{id} 404'],
+    ['TC-006', 'AC-006', 'integration', 'POST /api/items/update 更新'],
+    ['TC-007', 'AC-007', 'integration', 'POST /api/items/update 404'],
+    ['TC-008', 'AC-008', 'integration', 'POST /api/items/delete 200 JSON'],
+    ['TC-009', 'AC-009', 'integration', 'POST /api/items/delete 404'],
     ['TC-010', 'AC-010', 'quality', testCommand + ' 全绿'],
   ];
 
@@ -1358,8 +1363,8 @@ function mvpScaffoldFiles(stack, context = {}) {
       '- GET /api/items\n' +
       '- GET /api/items/{id}\n' +
       '- POST /api/items\n' +
-      '- PUT /api/items/{id}\n' +
-      '- DELETE /api/items/{id}\n' +
+      '- POST /api/items/update\n' +
+      '- POST /api/items/delete\n' +
       '内存存储，不引入数据库/外部服务；补齐全接口测试与静态检查。\n\n' +
       '## 非目标\n' +
       '不实现业务域接口；不做持久化、鉴权、分页、文件上传。\n\n' +
@@ -2035,7 +2040,8 @@ function docToInterviewDraft(doc, extra = {}) {
 const BACKEND_STACKS = ['java', 'node', 'python'];
 const FRAMEWORK_REQUIREMENT_MARKER = 'MVP 框架与 Item CRUD 示例';
 const FRAMEWORK_REQUIREMENT_TITLE = 'MVP 框架与 Item CRUD 示例（框架基线）';
-const FRAMEWORK_ACCEPTANCE = '启动项目后 Item CRUD 全接口测试通过（GET/POST/PUT/DELETE + 404/400）';
+const FRAMEWORK_ACCEPTANCE =
+  '启动项目后 Item CRUD 全接口测试通过（GET 查询 / POST JSON 写入 + 404/400）';
 
 function supportsMvpScaffold(stack) {
   return BACKEND_STACKS.includes(String(stack || ''));

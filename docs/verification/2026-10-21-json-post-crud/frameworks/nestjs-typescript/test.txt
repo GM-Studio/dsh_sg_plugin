@@ -1,0 +1,13 @@
+
+> test
+> jest --runInBand
+
+PASS test/items.spec.ts
+  items api
+    √ crud (119 ms)
+
+Test Suites: 1 passed, 1 total
+Tests:       1 passed, 1 total
+Snapshots:   0 total
+Time:        1.77 s, estimated 2 s
+Ran all test suites.

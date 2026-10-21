@@ -52,7 +52,9 @@ function proposalText(stack) {
     '新项目只有脚手架，没有可运行的 CRUD 样例。',
     '',
     '## 目标',
-    '在 ' + stack + ' 上实现通用 Item CRUD：GET/POST/PUT/DELETE /api/items（含 /{id}），内存存储。',
+    '在 ' +
+      stack +
+      ' 上实现通用 Item CRUD：GET 查询 / POST JSON 写入 /api/items（含 /{id}），内存存储。',
     '',
     '## 非目标',
     '不做持久化、鉴权、分页。',
@@ -73,7 +75,7 @@ function specText() {
     ['AC-005', '创建缺少 name 返回 400'],
     ['AC-006', '更新条目'],
     ['AC-007', '更新不存在返回 404'],
-    ['AC-008', '删除条目返回 204'],
+    ['AC-008', '删除条目返回 200 JSON 回执'],
     ['AC-009', '删除不存在返回 404'],
     ['AC-010', '格式化/静态检查/测试通过'],
   ];
@@ -104,7 +106,7 @@ function tasksText() {
     '',
     '## T-002 写入接口',
     '<!-- sg:task {"id":"T-002","title":"写入接口","ac":["AC-004","AC-005","AC-006","AC-007","AC-008","AC-009"],"deps":["T-001"],"parallel":false} -->',
-    '- [ ] 实现 POST/PUT/DELETE',
+    '- [ ] 实现 POST 新增/修改/删除',
     '',
     '## T-003 测试与质量',
     '<!-- sg:task {"id":"T-003","title":"测试与质量","ac":["AC-010"],"deps":["T-001","T-002"],"parallel":false} -->',

@@ -11,7 +11,7 @@ function fake(value) {
   };
 }
 
-test('v4.1 审批：页面简短展示技术栈与依赖，不展开命令', async () => {
+test('v4.1 审批：详情仅展示操作目录与技术栈', async () => {
   const selection = await selectionFromInitial({
     backend: 'java',
     frontend: 'react',
@@ -20,15 +20,14 @@ test('v4.1 审批：页面简短展示技术栈与依赖，不展开命令', asy
       web: { language: 'typescript', preset: 'recommended' },
     },
   });
-  const text = approvalText(selection);
-  assert.match(text, /最终确认/);
+  const text = approvalText(selection, {
+    root: '/projects/my app',
+    provisionSummary: 'verbose environment',
+  });
+  assert.ok(text.includes('操作目录：\n/projects/my app'));
   assert.match(text, /java \/ spring-boot \/ 17 \/ maven/);
   assert.match(text, /react \/ vite \/ typescript/);
-  assert.match(text, /Spring Web/);
-  assert.match(text, /Lombok/);
-  assert.match(text, /必选 8/);
-  assert.match(text, /可选 2/);
-  assert.match(text, /将执行：安装依赖/);
+  assert.doesNotMatch(text, /Spring Web|Lombok|必选|可选|将执行|verbose environment/);
   assert.doesNotMatch(text, /mvnw|pnpm install/);
   assert.ok(text.length < 1200, 'approval text too long: ' + text.length);
   assert.ok(

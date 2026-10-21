@@ -1,5 +1,27 @@
 # Changelog
 
+## Unreleased: JSON POST CRUD convention
+
+- Unified generated APIs around GET queries and POST JSON mutations, with body ids at `/update` and `/delete` and a 200 JSON deletion receipt.
+- Updated Java Golden presets, legacy Java/Node/Python generators, framework scaffolds, Vue/React clients, generated OpenAPI and requirement/test assets.
+- Added real client/server contract checks and revalidated all four Java presets before recording new Golden hashes in a separate evidence archive.
+
+## Unreleased: initialization and verification reconciliation
+
+- Added a minimal Element Plus administration UI with pinned dependencies to Java/Vue templates.
+- Recorded unrun initialization checks explicitly and reconciled seven verification stages against full logs, fresh JUnit XML and Vitest JSON. Blocked, failed and cancelled retries invalidate previous success.
+- Validated executable toolchains, read Windows/Linux persistent configuration, prompted for custom paths before project-local installation, and enabled JDK 8 downloads. Fixed archive formats and Windows extraction quoting.
+- Added verification locking, cancellation, actual HTTP CRUD/graceful-restart checks, initialization status visibility, toolchain/evidence Git ignores, and a Windows/Ubuntu template acceptance matrix.
+
+## 4.3.1
+
+- Confirmation pages now show only the target directory and the technology stack.
+- Command results now reach the conversation history: DSH command invocations expose only the agent, so notices resolve agent.session; long commands write a start notice and a final result instead of leaving a blank session.
+- sg-verify / sg_verify preflight scans JDK, Maven and Node across environment variables, PATH and common installation directories on Windows, Linux and macOS.
+- Missing JDK 17/21 or Maven is provisioned into project .specgate/toolchains automatically; install:false / --no-install disables it. JDK 8 gets explicit winget/choco/apt/brew guidance.
+- Fixed Windows invocations of npm.cmd / mvn.cmd under paths containing spaces.
+- Added regression coverage in test/v4/java-env.test.js and test/v3/notice.test.js.
+
 ## sg-java (unreleased)
 
 - Strictly empty default initialization, rejecting Git metadata, zero-byte files and empty subdirectories; host confirmation precedes generation.

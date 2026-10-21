@@ -234,25 +234,39 @@ export function provisionSummary(plan) {
   return lines.join('\n') || '复用当前环境';
 }
 
-async function downloadFile(url, destination) {
+async function downloadFile(url, destination, signal) {
   const response = await fetch(url, {
     redirect: 'follow',
-    signal: AbortSignal.timeout(15 * 60 * 1000),
+    signal: signal
+      ? AbortSignal.any([signal, AbortSignal.timeout(15 * 60 * 1000)])
+      : AbortSignal.timeout(15 * 60 * 1000),
   });
   if (!response.ok || !response.body) {
     throw new Error('下载失败 HTTP ' + response.status + '：' + url);
   }
   fs.mkdirSync(path.dirname(destination), { recursive: true });
   const temp = destination + '.part';
-  await pipeline(Readable.fromWeb(response.body), fs.createWriteStream(temp));
+  try {
+    await pipeline(Readable.fromWeb(response.body), fs.createWriteStream(temp), { signal });
+  } catch (error) {
+    fs.rmSync(temp, { force: true });
+    throw error;
+  }
   fs.renameSync(temp, destination);
   return destination;
+}
+
+export function archiveExtension(url, platform = process.platform) {
+  const pathname = new URL(url, 'https://local.invalid').pathname;
+  if (/\.(tar\.gz|tgz)$/i.test(pathname)) return '.tar.gz';
+  if (/\.zip$/i.test(pathname)) return '.zip';
+  return platform === 'win32' ? '.zip' : '.tar.gz';
 }
 
 function extract(archive, target, platform) {
   fs.mkdirSync(target, { recursive: true });
   let result;
-  if (platform === 'win32') {
+  if (platform === 'win32' && /\.zip$/i.test(archive)) {
     result = spawnSync(
       'powershell.exe',
       [
@@ -260,9 +274,13 @@ function extract(archive, target, platform) {
         '-NonInteractive',
         '-Command',
         'Expand-Archive -LiteralPath ' +
-          JSON.stringify(archive) +
+          "'" +
+          archive.replace(/'/g, "''") +
+          "'" +
           ' -DestinationPath ' +
-          JSON.stringify(target) +
+          "'" +
+          target.replace(/'/g, "''") +
+          "'" +
           ' -Force',
       ],
       { encoding: 'utf8', timeout: 10 * 60 * 1000 },
@@ -326,8 +344,12 @@ function executableNamesFor(tool, platform) {
   return platform === 'win32' ? ['uv.exe'] : ['uv'];
 }
 
-async function provisionOne(action, root, platform) {
+async function provisionOne(action, root, platform, signal) {
   const target = path.join(root, action.target);
+  const toolchainsRoot = path.resolve(root, '.specgate', 'toolchains');
+  const relative = path.relative(toolchainsRoot, path.resolve(target));
+  if (!relative || relative.startsWith('..') || path.isAbsolute(relative))
+    throw new Error('工具链安装目标必须位于项目 .specgate/toolchains 内');
   const names = executableNamesFor(action.tool, platform);
   if (exists(target)) {
     const existing = findExecutable(target, names);
@@ -341,12 +363,13 @@ async function provisionOne(action, root, platform) {
     }
   }
   const downloads = path.join(root, '.specgate', 'toolchains', '.downloads');
-  const extension = action.tool === 'gradle' || platform === 'win32' ? '.zip' : '.tar.gz';
+  const extension = archiveExtension(action.archive || action.url, platform);
   const archive = path.join(downloads, action.tool + '-' + action.version + extension);
-  await downloadFile(action.url, archive);
-  extract(archive, target, platform);
+  if (!action.archive) await downloadFile(action.url, archive, signal);
+  if (signal?.aborted) throw new Error('用户取消安装');
+  extract(action.archive || archive, target, platform);
   try {
-    fs.rmSync(archive, { force: true });
+    if (!action.archive) fs.rmSync(archive, { force: true });
   } catch {
     // best-effort
   }
@@ -445,18 +468,19 @@ async function provisionUv(root, plan) {
   return { path: found, reused: false };
 }
 
-export async function provisionToolchain({ root, plan, platform = process.platform }) {
+export async function provisionToolchain({ root, plan, platform = process.platform, signal }) {
   if (!plan || plan.ok === false) return plan;
   const tools = { ...(plan.tools || {}) };
   const completed = [];
   for (const action of plan.actions || []) {
     try {
+      if (signal?.aborted) throw new Error('用户取消安装');
       const result =
         action.kind === 'pip-install'
           ? await provisionUv(root, plan)
           : action.kind === 'npm-install'
             ? await provisionPnpm(root, plan)
-            : await provisionOne(action, root, platform);
+            : await provisionOne(action, root, platform, signal);
       completed.push({ ...action, ...result });
       if (action.tool === 'jdk') {
         tools.java = {

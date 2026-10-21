@@ -267,16 +267,33 @@ export function registerTools(ctx, runtime) {
     {
       name: 'sg_verify',
       description:
-        '本地验证 Java/Vue 初始化项目：后端 mvn verify，前端 npm install/build/test/lint/format:check，随后启动后端、HTTP CRUD、重启持久化；通过后状态为 SMOKE_PASSED，可创建 change。只读源码，不自动修复。',
+        '本地验证 Java/Vue 初始化项目：先跨平台扫描并预检 JDK/Maven/Node（环境变量、PATH、常见安装目录），缺失时按需下载到项目 .specgate/toolchains，再执行后端 mvn verify 与前端 npm install/build/test/lint/format:check，随后启动后端、HTTP CRUD、重启持久化；通过后状态为 SMOKE_PASSED，可创建 change。只读源码，不自动修复。',
       parameters: {
         type: 'object',
-        properties: { path: { type: 'string', description: '项目根目录，默认当前目录' } },
+        properties: {
+          path: { type: 'string', description: '项目根目录，默认当前目录' },
+          javaHome: { type: 'string', description: '自定义 JDK 安装根目录' },
+          mavenHome: { type: 'string', description: '自定义 Maven 安装根目录' },
+          install: {
+            type: 'boolean',
+            description:
+              '缺少 JDK 8/17/21 或 Maven 时先询问自定义路径，再自动下载到项目内（默认 true）；false 时禁止下载安装',
+          },
+        },
         additionalProperties: false,
       },
       output: textOutput(),
       async execute(args, exec) {
         const root = resolveJavaInitRoot(runtime.getCwd(exec?.agent), args?.path);
-        const result = await verifyJavaProject({ root });
+        const result = await verifyJavaProject({
+          root,
+          install: args?.install !== false,
+          signal: exec?.signal,
+          userQuestions: runtime.service('userQuestions'),
+          agent: exec?.agent,
+          javaHome: args?.javaHome,
+          mavenHome: args?.mavenHome,
+        });
         return result.ok ? ok(result.message, result) : fail(result.message, result);
       },
     },

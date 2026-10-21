@@ -44,6 +44,18 @@ export function resolveMirrors(env = process.env) {
 }
 
 export function jdkDownloadUrl(mirrors, major, platform, arch) {
+  if (!['x64', 'arm64'].includes(arch) || !['win32', 'linux', 'darwin'].includes(platform))
+    return null;
+  if (Number(major) === 8) {
+    const os = platform === 'win32' ? 'windows' : platform === 'darwin' ? 'mac' : 'linux';
+    return (
+      'https://api.adoptium.net/v3/binary/latest/8/ga/' +
+      os +
+      '/' +
+      (arch === 'arm64' ? 'aarch64' : 'x64') +
+      '/jdk/hotspot/normal/eclipse'
+    );
+  }
   const table = {
     11: '11.0.2',
     13: '13.0.2',

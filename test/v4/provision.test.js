@@ -1,6 +1,17 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { planProvisioning, provisionSummary, toolchainEnv } from '../../src/v4/provision.js';
+import {
+  archiveExtension,
+  planProvisioning,
+  provisionSummary,
+  toolchainEnv,
+} from '../../src/v4/provision.js';
+
+test('archive format follows the URL rather than the operating system', () => {
+  assert.equal(archiveExtension('https://example.org/maven.zip', 'linux'), '.zip');
+  assert.equal(archiveExtension('https://example.org/jdk.tar.gz?download=1', 'win32'), '.tar.gz');
+  assert.equal(archiveExtension('https://api.adoptium.net/v3/binary/latest/8', 'linux'), '.tar.gz');
+});
 
 function env(overrides = {}) {
   return {

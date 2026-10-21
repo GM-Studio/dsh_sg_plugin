@@ -56,3 +56,20 @@ test('status --verbose 显示 runs 时间线，--json 带 runs', () => {
   assert.equal(data.runs[0].role, 'implementer');
   assert.ok(fs.existsSync(path.join(root, '.specgate', 'runs', 'status-demo.jsonl')));
 });
+
+test('generation-only Java initialization directs status to actual verification', (t) => {
+  const root = tempRoot();
+  t.after(() => fs.rmSync(root, { recursive: true, force: true }));
+  initProject(root);
+  fs.writeFileSync(
+    path.join(root, '.specgate/monorepo.json'),
+    JSON.stringify({ stack: 'java-vue' }),
+  );
+  fs.writeFileSync(
+    path.join(root, '.specgate/init-report.json'),
+    JSON.stringify({ phase: 'GENERATED_ONLY', initializationComplete: false }),
+  );
+  const { project } = loadProjectAt(root);
+  assert.match(renderStatusAt(project), /初始化验证：GENERATED_ONLY/);
+  assert.match(statusJsonAt(project).nextAction, /sg-verify/);
+});

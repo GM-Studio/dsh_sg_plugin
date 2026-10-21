@@ -181,7 +181,8 @@ test('v3.10：三栈代码模板包含 5 个 CRUD 接口', () => {
     assert.match(text, /\/api\/items/);
     assert.match(text, /GET|get/);
     assert.match(text, /POST|post/);
-    assert.match(text, /PUT|put/);
-    assert.match(text, /DELETE|delete/);
+    assert.match(text, /\/update/);
+    assert.match(text, /\/delete/);
+    assert.doesNotMatch(text, /@PutMapping|@DeleteMapping|method: "PUT"|method: "DELETE"/);
   }
 });

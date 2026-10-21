@@ -10,6 +10,8 @@ export default [
       'assets/**',
       'docs/**',
       '.specgate/**',
+      '.sg-fixed-live-*/**',
+      '.ak47_dsh_stage/**',
       '*.tgz',
     ],
   },

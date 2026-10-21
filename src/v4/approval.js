@@ -1,4 +1,4 @@
-import { findDependency, sideLabel } from './catalog.js';
+import { sideLabel } from './catalog.js';
 
 function commandRows(side) {
   const stack = side.stack;
@@ -42,61 +42,20 @@ function commandRows(side) {
   return [];
 }
 
-function compactDependencyLine(side, ids, label) {
-  const names = (ids || []).map((id) => {
-    const item = findDependency(side, id);
-    return item ? item.label : id;
-  });
-  if (!names.length) return label + ' 0：（无）';
-  const head = names.slice(0, 5).join('、');
-  const more = names.length > 5 ? '…（共 ' + names.length + ' 个）' : '';
-  return label + ' ' + names.length + '：' + head + more;
-}
-
 export function planForSide(side) {
   return commandRows(side).map(([phase, command]) => ({ phase, command }));
 }
 
 export function approvalText(selection, options = {}) {
-  const lines = [
-    '# SpecGate v4.1 最终确认',
-    '',
-    '请确认技术栈与依赖；批准后安装依赖并执行质量阶段，跳过则仅生成代码。',
-    '',
-  ];
-  if (options.provisionSummary) {
-    lines.push('环境：' + String(options.provisionSummary).replace(/\n/g, '；'));
-    lines.push('');
-  }
+  const lines = ['操作目录：', options.root || selection.root || '当前工作目录', '', '技术栈：'];
   for (const side of selection.sides || []) {
-    const deps = side.dependencies || {};
     const role = side.role === 'frontend' ? '前端' : '后端';
-    lines.push('[' + side.id + ' ' + role + '] ' + sideLabel(side));
-    lines.push('  ' + compactDependencyLine(side, deps.required, '必选'));
-    lines.push('  ' + compactDependencyLine(side, deps.optional, '可选'));
-    if (deps.dropped?.length) {
-      const head = deps.dropped
-        .slice(0, 3)
-        .map((item) => item.id)
-        .join('、');
-      lines.push(
-        '  已取消 ' + deps.dropped.length + ' 项：' + head + (deps.dropped.length > 3 ? '…' : ''),
-      );
-    }
-    lines.push('');
+    lines.push(role + '：' + sideLabel(side));
   }
-  lines.push('将执行：安装依赖 → 格式化 → 静态检查 → 测试 → 内置走查');
-  lines.push('网络：仅安装阶段访问包仓库；失败则降级提交并标记 degraded。');
   return lines.join('\n');
 }
 
-export async function askApproval({
-  userQuestions,
-  agent,
-  signal,
-  selection,
-  provisionSummary = null,
-}) {
+export async function askApproval({ userQuestions, agent, signal, selection, root }) {
   if (!userQuestions || typeof userQuestions.ask !== 'function') return 'skipped';
   try {
     const answer = await userQuestions.ask({
@@ -104,7 +63,7 @@ export async function askApproval({
         {
           id: 'sg-v4-quality-approval',
           header: '最终确认与审批',
-          question: approvalText(selection, { provisionSummary }),
+          question: approvalText(selection, { root }),
           options: [
             { label: '批准并执行', description: '自动安装依赖并执行格式化、静态检查、测试、走查' },
             { label: '跳过，仅生成代码', description: '不安装、不执行质量阶段；声明与配置照写' },

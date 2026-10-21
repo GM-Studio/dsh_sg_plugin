@@ -52,6 +52,30 @@ test('missing questions, cancellation, and stack conflicts do not create target'
   }
 });
 
+test('confirmation details only show directory and selected stack', async (t) => {
+  const root = temp(t);
+  let detail;
+  const result = await startJavaInit({
+    root,
+    version: 'jdk17-boot3.5',
+    userQuestions: {
+      ask: async ({ questions }) => {
+        detail = questions[0];
+        return { answers: [{ selected: ['取消'] }] };
+      },
+    },
+  });
+  assert.equal(result.code, 'CANCELLED');
+  assert.equal(detail.header, '初始化确认');
+  assert.ok(detail.question.includes(root));
+  assert.match(detail.question, /Java ?17|JDK ?17/i);
+  assert.ok(detail.question.includes('Maven / H2'));
+  assert.ok(detail.question.includes('Vue 3 / TypeScript / Vite / npm'));
+  assert.equal(detail.question.split('\n').length, 6);
+  assert.doesNotMatch(detail.question, /完整需求|functional|git init|CRUD|快照/);
+  assert.deepEqual(fs.readdirSync(root), []);
+});
+
 test('recheck rejects files introduced during confirmation', async (t) => {
   const root = temp(t);
   const result = await startJavaInit({
@@ -170,6 +194,14 @@ test('unknown version fails before writing', async (t) => {
   });
   assert.equal(result.code, 'E_JAVA_VERSION');
   assert.equal(fs.existsSync(root), false);
+});
+
+test('sg-verify command advertises preflight and --no-install', () => {
+  const { commandMap } = setup(os.tmpdir(), approve);
+  const command = commandMap.get('sg-verify');
+  assert.ok(command);
+  assert.equal(command.input.hint.includes('--no-install'), true);
+  assert.match(command.description, /扫描/);
 });
 
 test('CLI version flag and tool schema keep the generation-only surface', () => {

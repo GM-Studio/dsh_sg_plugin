@@ -1,0 +1,18 @@
+[
+  {
+    "case": "fastapi",
+    "test": 0
+  },
+  {
+    "case": "flask",
+    "test": 0
+  },
+  {
+    "case": "django",
+    "test": 0
+  },
+  {
+    "case": "legacy-python",
+    "test": 0
+  }
+]

@@ -49,7 +49,8 @@ test('Java8 Boot CRUD validation health and actual file restart test', () => {
   assert.match(files['backend/src/main/resources/application.properties'], /jdbc:h2:file:/);
   assert.doesNotMatch(files['backend/src/main/resources/application.properties'], /jdbc:h2:mem:/);
   assert.match(files[base + 'TaskController.java'], /ResponseEntity.created/);
-  assert.match(files[base + 'TaskController.java'], /ResponseEntity.noContent/);
+  assert.match(files[base + 'TaskController.java'], /@PostMapping\("\/delete"\)/);
+  assert.match(files[base + 'TaskController.java'], /response.put\("deleted", true\)/);
   assert.match(files[base + 'TaskRequest.java'], /@NotBlank/);
   assert.ok(files[base + 'TaskRequest.java'].includes('@Size(max = 200)'));
   assert.match(
@@ -68,6 +69,10 @@ test('compatible exact frontend pins and safe functional CRUD scripts', () => {
   const files = javaFullstackFiles();
   const pkg = JSON.parse(files['frontend/package.json']);
   assert.equal(pkg.dependencies.vue, '3.5.30');
+  assert.equal(pkg.dependencies['element-plus'], '2.11.8');
+  assert.match(files['frontend/src/App.vue'], /class="sidebar"/);
+  assert.match(files['frontend/src/App.vue'], /el-card|el-button/);
+  assert.match(files['frontend/src/main.ts'], /element-plus\/dist\/index.css/);
   assert.equal(pkg.devDependencies.vite, '7.3.1');
   for (const version of Object.values({ ...pkg.dependencies, ...pkg.devDependencies }))
     assert.match(version, /^[0-9]+[.][0-9]+[.][0-9]+$/);

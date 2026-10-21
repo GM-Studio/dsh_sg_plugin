@@ -1,0 +1,41 @@
+{
+  "checkedAt": "2026-10-21T01:33:34.976Z",
+  "platform": "win32",
+  "arch": "x64",
+  "ok": true,
+  "reused": [
+    {
+      "tool": "jdk",
+      "version": "8",
+      "url": "https://api.adoptium.net/v3/binary/latest/8/ga/windows/x64/jdk/hotspot/normal/eclipse",
+      "target": ".specgate/toolchains/jdk-8",
+      "path": "E:\\ai_workflow\\specgate\\.specgate\\provision-qa\\.specgate\\toolchains\\jdk-8\\jdk8u504-b01\\bin\\java.exe",
+      "home": "E:\\ai_workflow\\specgate\\.specgate\\provision-qa\\.specgate\\toolchains\\jdk-8\\jdk8u504-b01",
+      "reused": true
+    },
+    {
+      "tool": "maven",
+      "version": "3.9.11",
+      "url": "https://maven.aliyun.com/repository/public/org/apache/maven/apache-maven/3.9.11/apache-maven-3.9.11-bin.zip",
+      "target": ".specgate/toolchains/apache-maven-3.9.11",
+      "path": "E:\\ai_workflow\\specgate\\.specgate\\provision-qa\\.specgate\\toolchains\\apache-maven-3.9.11\\apache-maven-3.9.11\\bin\\mvn.cmd",
+      "home": "E:\\ai_workflow\\specgate\\.specgate\\provision-qa\\.specgate\\toolchains\\apache-maven-3.9.11\\apache-maven-3.9.11",
+      "reused": true
+    }
+  ],
+  "java": [
+    {
+      "home": "E:\\ai_workflow\\specgate\\.specgate\\provision-qa\\.specgate\\toolchains\\jdk-8\\jdk8u504-b01",
+      "java": "E:\\ai_workflow\\specgate\\.specgate\\provision-qa\\.specgate\\toolchains\\jdk-8\\jdk8u504-b01\\bin\\java.exe",
+      "javac": "E:\\ai_workflow\\specgate\\.specgate\\provision-qa\\.specgate\\toolchains\\jdk-8\\jdk8u504-b01\\bin\\javac.exe",
+      "version": "1.8.0_504",
+      "major": 8,
+      "source": "env:JAVA_HOME"
+    }
+  ],
+  "maven": {
+    "path": "E:\\ai_workflow\\specgate\\.specgate\\provision-qa\\.specgate\\toolchains\\apache-maven-3.9.11\\apache-maven-3.9.11\\bin\\mvn.cmd",
+    "home": "E:\\ai_workflow\\specgate\\.specgate\\provision-qa\\.specgate\\toolchains\\apache-maven-3.9.11\\apache-maven-3.9.11",
+    "version": "3.9.11"
+  }
+}

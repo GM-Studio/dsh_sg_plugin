@@ -4,6 +4,7 @@ import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { javaFullstackFiles } from './java-fullstack-template.js';
+import { VERIFY_STAGES } from './verify-evidence.js';
 import { JAVA_PRESETS, goldenStatus, normalizeJavaPreset, templateHash } from './java-versions.js';
 import { initProject, patchConfigRequirements } from '../v3/change.js';
 import { writeRequirementsBaseline, answerOf } from '../v3/requirements.js';
@@ -45,6 +46,7 @@ export function resolveJavaInitRoot(cwd, input) {
 export const JAVA_INIT_REQUIREMENTS = {
   functional: [
     '用户通过 Vue 页面新增、查看、编辑、删除任务，调用真实 Java /api/tasks API',
+    '查询接口使用 GET；新增、修改、删除使用 POST JSON body，所有响应为 JSON，删除返回 200 回执',
     '任务以 H2 文件库持久化，后端重启后保留数据',
     '提供健康检查和可配置端口，前后端独立构建与启动',
   ],
@@ -107,21 +109,14 @@ function baselineConfig(preset) {
   ].join(NL);
 }
 
-function confirmationText(root, preset, requirements) {
+function confirmationText(root, preset) {
   return [
-    '目标：' + root,
-    '完全空目录；单 Git monorepo；' +
-      preset.label +
-      ' + Vue3/TS/Vite/npm；任务 CRUD + H2 文件持久化；无登录。',
-    '初始化默认只生成：不安装依赖、不编译、不执行质量命令；需要本地验证时执行 /sg-verify。',
-    '必须执行本地 git init/add/commit 建立单仓基线（不联网）；req v1.0 + 快照基线，后续 sg-change 独立发起。',
-    preset.legacy
-      ? '旧 Java/Boot 有维护安全风险，本示例不可直接作为生产安全基线。'
-      : preset.preview
-        ? 'Boot 4.0 为 preview，需在目标环境验证后再用于生产。'
-        : '使用当前受支持版本线；本示例仍非生产安全基线。',
-    '确认后才写入。',
-    '完整需求：' + JSON.stringify(requirements, null, 2),
+    '操作目录：',
+    root,
+    '',
+    '技术栈：',
+    '后端：' + preset.label + ' / Maven / H2',
+    '前端：Vue 3 / TypeScript / Vite / npm',
   ].join(NL);
 }
 
@@ -231,8 +226,8 @@ export async function startJavaInit({
       questions: [
         {
           id: 'sg-java-init-confirm',
-          header: 'Java/Vue 初始化需求确认',
-          question: confirmationText(root, preset, requirements),
+          header: '初始化确认',
+          question: confirmationText(root, preset),
           options: [
             { label: '确认', description: '生成代码、req v1.0 与 Git 基线；不安装、不执行' },
             { label: '取消', description: '不写入任何文件' },
@@ -351,7 +346,7 @@ export async function startJavaInit({
     },
     template: { hash: hash, verified: golden.verified, reason: golden.reason },
     quality: { generateOnly: true },
-    execution: {},
+    execution: Object.fromEntries(VERIFY_STAGES.map((name) => [name, 'not-run'])),
     gitBaseline: { mandatory: true, status: 'pending', network: false },
     phase: 'GENERATED_ONLY',
     initializationComplete: false,

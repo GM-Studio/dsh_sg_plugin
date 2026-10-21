@@ -20,10 +20,14 @@ export function noticeSummary(result, fallback) {
   return fallback || 'SpecGate 命令完成';
 }
 
+/** 本次命令已写入“开始”notice 的会话：结束时仍需写回结果。 */
+const commandSessions = new WeakSet();
+
 /** 新会话的第一条命令才需要 notice：非空会话与运行中的 agent 都不追加。 */
 export function needsCommandNotice(session, agent, options = {}) {
   if (!session || typeof session.append !== 'function') return false;
   if (agent && agent.status === 'running') return false;
+  if (commandSessions.has(session)) return true;
   if (options.force === true) return true;
   if (typeof session.deriveMessages === 'function') {
     return session.deriveMessages().length === 0;
@@ -31,9 +35,19 @@ export function needsCommandNotice(session, agent, options = {}) {
   return false;
 }
 
+export function sessionOf(invocation, options = {}) {
+  // DSH 的命令 invocation 只有 agent（无 session）；活动会话要从 agent.session 取。
+  return (
+    options.session ??
+    (invocation && invocation.session) ??
+    (invocation && invocation.agent && invocation.agent.session) ??
+    null
+  );
+}
+
 export function appendCommandNotice(invocation, result, options = {}) {
-  const session = options.session ?? (invocation && invocation.session);
-  const agent = options.agent;
+  const session = sessionOf(invocation, options);
+  const agent = options.agent ?? (invocation && invocation.agent);
   if (!needsCommandNotice(session, agent, options))
     return { appended: false, reason: 'not-eligible' };
   const summary =
@@ -53,9 +67,44 @@ export function appendCommandNotice(invocation, result, options = {}) {
     // 只在会话末尾追加，绝不插入到工具调用与工具结果之间。
     session.append(message, { surfaceOp: 'append' });
   } catch {
+    commandSessions.delete(session);
     return { appended: false, reason: 'append-failed' };
   }
+  commandSessions.delete(session);
   return { appended: true, summary };
+}
+
+function blankSession(session, agent) {
+  if (!session || typeof session.append !== 'function') return false;
+  if (agent && agent.status === 'running') return false;
+  if (typeof session.deriveMessages !== 'function') return false;
+  try {
+    return session.deriveMessages().length === 0;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * 长命令开始时先写入一条“已开始”notice：新会话会立即进入对话页，
+ * 用户不必等到命令结束才知道执行了什么。
+ */
+export function beginCommandNotice(invocation, text) {
+  const session = sessionOf(invocation);
+  if (!blankSession(session, invocation && invocation.agent)) return { started: false };
+  const summary = firstLine(text, 'SpecGate 命令开始');
+  const message = {
+    role: 'user',
+    source: { kind: 'specgate', form: 'notice', summary },
+    content: [{ type: 'text', text: String(text || summary) }],
+  };
+  try {
+    session.append(message, { surfaceOp: 'append' });
+  } catch {
+    return { started: false };
+  }
+  commandSessions.add(session);
+  return { started: true };
 }
 
 /**
@@ -87,7 +136,7 @@ export function withNotice(handler, options = {}) {
     }
     try {
       deliverCommandResult(invocation, result, {
-        session: invocation && invocation.session,
+        session: sessionOf(invocation, options),
         agent: invocation && invocation.agent,
         kind: options.kind,
         fallback: options.fallback,

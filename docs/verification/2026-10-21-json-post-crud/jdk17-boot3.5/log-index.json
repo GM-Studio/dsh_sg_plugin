@@ -1,0 +1,9 @@
+{
+  ".specgate/verify-runs/2026-10-21T01-47-14-100Z-19111b02/backend-verify.log": "backend-verify.txt",
+  ".specgate/verify-runs/2026-10-21T01-47-14-100Z-19111b02/frontend-install.log": "frontend-install.txt",
+  ".specgate/verify-runs/2026-10-21T01-47-14-100Z-19111b02/frontend-build.log": "frontend-build.txt",
+  ".specgate/verify-runs/2026-10-21T01-47-14-100Z-19111b02/frontend-test.log": "frontend-test.txt",
+  ".specgate/verify-runs/2026-10-21T01-47-14-100Z-19111b02/frontend-lint.log": "frontend-lint.txt",
+  ".specgate/verify-runs/2026-10-21T01-47-14-100Z-19111b02/frontend-format.log": "frontend-format.txt",
+  ".specgate/verify-runs/2026-10-21T01-47-14-100Z-19111b02/runtime.log": "runtime.txt"
+}

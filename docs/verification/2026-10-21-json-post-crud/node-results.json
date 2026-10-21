@@ -1,0 +1,32 @@
+[
+  {
+    "case": "express-javascript",
+    "install": 0,
+    "build": 0,
+    "test": 0
+  },
+  {
+    "case": "express-typescript",
+    "install": 0,
+    "build": 0,
+    "test": 0
+  },
+  {
+    "case": "fastify-javascript",
+    "install": 0,
+    "build": 0,
+    "test": 0
+  },
+  {
+    "case": "fastify-typescript",
+    "install": 0,
+    "build": 0,
+    "test": 0
+  },
+  {
+    "case": "nestjs-typescript",
+    "install": 0,
+    "build": 0,
+    "test": 0
+  }
+]

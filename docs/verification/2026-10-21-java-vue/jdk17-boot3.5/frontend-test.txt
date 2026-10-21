@@ -1,0 +1,5 @@
+
+> task-web@1.0.0 test
+> vitest run --reporter=json --outputFile=E:\ai_workflow\specgate\.specgate\template-qa\1792545900027\jdk17-boot3.5\.specgate\verify-runs\2026-10-21T01-25-40-173Z-53383bb4\frontend-tests.json
+
+JSON report written to E:/ai_workflow/specgate/.specgate/template-qa/1792545900027/jdk17-boot3.5/.specgate/verify-runs/2026-10-21T01-25-40-173Z-53383bb4/frontend-tests.json

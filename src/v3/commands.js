@@ -8,7 +8,7 @@ import { ensureV3 } from './tools.js';
 import { headCommit, isGitRepo } from './util/git.js';
 import { loadSkill } from './skills.js';
 import { collectContext, inspectInit, startRequirementsInit, summarizeInitResult } from './init.js';
-import { withNotice } from './notice.js';
+import { beginCommandNotice, withNotice } from './notice.js';
 import { maybeBuildBootstrap } from './bootstrap.js';
 import { resolveInitRoot, shouldUseV4Default, startV4Init, summarizeV4Result } from '../v4/init.js';
 import { adoptWorkspace, summarizeAdopt } from '../v4/adopt.js';
@@ -247,13 +247,38 @@ export function registerCommands(ctx, runtime) {
   register({
     name: 'sg-verify',
     description:
-      '本地验证 Java/Vue 初始化项目：后端 mvn verify，前端 install/build/test/lint/format:check。',
-    input: { hint: '[--path <目录>]' },
+      '本地验证 Java/Vue 初始化项目：先扫描并预检 JDK/Maven/Node（Windows/Linux/macOS），缺失时尝试安装到项目内，再执行后端 mvn verify 与前端 install/build/test/lint/format。',
+    input: { hint: '[--path <目录>] [--no-install]' },
     async handler(inv) {
-      const raw = String(inv?.rawInput || '').trim();
-      const target = raw.startsWith('--path ') ? raw.slice(7).trim() : raw;
+      const parts = splitArgs(inv?.rawInput);
+      let target = null;
+      let install = true;
+      for (let index = 0; index < parts.length; index += 1) {
+        const part = parts[index];
+        if (part === '--path') {
+          target = parts[index + 1] || null;
+          if (!target) return { kind: 'error', text: '--path 需要一个目录参数' };
+          index += 1;
+        } else if (part === '--no-install') {
+          install = false;
+        } else if (!target) {
+          target = part;
+        } else {
+          return { kind: 'error', text: '未知参数：' + part };
+        }
+      }
       const root = resolveJavaInitRoot(runtime.getCwd(inv?.agent), target);
-      const result = await verifyJavaProject({ root });
+      beginCommandNotice(
+        inv,
+        ['SpecGate 验证开始', '目录：' + root, '正在扫描 JDK / Maven / Node 环境…'].join('\n'),
+      );
+      const result = await verifyJavaProject({
+        root,
+        install,
+        signal: inv?.signal,
+        userQuestions: runtime.service('userQuestions'),
+        agent: inv?.agent,
+      });
       return { kind: result.ok ? 'success' : 'error', text: result.message };
     },
   });

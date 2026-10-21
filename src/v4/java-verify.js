@@ -3,28 +3,27 @@ import path from 'node:path';
 import net from 'node:net';
 import { spawn, spawnSync } from 'node:child_process';
 import { normalizeJavaPreset } from './java-versions.js';
+import {
+  discoverJava,
+  discoverMaven,
+  discoverNode,
+  formatEnvironmentScan,
+  installGuidance,
+  javaRoots,
+  mavenRoots,
+  mergeEnvironment,
+  readPersistentEnvironment,
+  discoverArchives,
+} from './java-env.js';
+import { answerOf } from '../v3/requirements.js';
+import { createVerification, executeVerificationStage } from './verify-evidence.js';
+import { collectJavaReports } from '../v3/java-reports.js';
+import { isProcessAlive, inspect as inspectRunLock } from '../v3/lock.js';
+import { provisionToolchain } from './provision.js';
+import { jdkDownloadUrl, resolveMirrors } from './mirrors.js';
 
 function readJson(file) {
   return JSON.parse(fs.readFileSync(file, 'utf8'));
-}
-
-function findFile(root, name, depth = 6) {
-  if (depth < 0) return null;
-  let entries;
-  try {
-    entries = fs.readdirSync(root, { withFileTypes: true });
-  } catch {
-    return null;
-  }
-  for (const entry of entries) {
-    const full = path.join(root, entry.name);
-    if (entry.isFile() && entry.name.toLowerCase() === name.toLowerCase()) return full;
-    if (entry.isDirectory()) {
-      const found = findFile(full, name, depth - 1);
-      if (found) return found;
-    }
-  }
-  return null;
 }
 
 function toolchainRoots(root) {
@@ -39,63 +38,65 @@ function toolchainRoots(root) {
   return roots;
 }
 
-function javaMajor(home) {
-  try {
-    const release = fs.readFileSync(path.join(home, 'release'), 'utf8');
-    const match = /JAVA_VERSION="([^"]+)"/.exec(release);
-    if (match) {
-      const parts = match[1].split('.');
-      return parts[0] === '1' ? Number(parts[1]) : Number(parts[0]);
-    }
-  } catch {
-    // JAVA_HOME may not look like a JDK; probe below handles it.
-  }
-  return null;
-}
-
-function resolveJavaHome(root, jdk, env) {
-  const explicit = env.SG_JAVA_HOME;
-  if (explicit && javaMajor(explicit) === Number(jdk)) return explicit;
-  for (const base of toolchainRoots(root)) {
-    const dir = path.join(base, 'jdk-' + jdk);
-    const java = findFile(dir, 'java.exe', 4);
-    if (java) return path.dirname(path.dirname(java));
-  }
-  if (env.JAVA_HOME && javaMajor(env.JAVA_HOME) === Number(jdk)) return env.JAVA_HOME;
-  return null;
-}
-
-function resolveMaven(root, env) {
-  if (env.MAVEN_CMD) return env.MAVEN_CMD;
-  for (const base of toolchainRoots(root)) {
-    const found = findFile(base, 'mvn.cmd', 4);
-    if (found) return found;
-  }
-  const onPath = spawnSync(process.platform === 'win32' ? 'where' : 'which', ['mvn'], {
-    encoding: 'utf8',
-  });
-  if (onPath.status === 0) return String(onPath.stdout).split(/\r?\n/).filter(Boolean)[0];
-  return null;
-}
-
-function run(name, command, args, cwd, env, timeoutMs) {
-  const started = Date.now();
-  const result = spawnSync(command, args, {
-    cwd,
-    encoding: 'utf8',
-    maxBuffer: 64 * 1024 * 1024,
-    timeout: timeoutMs,
+export function scanToolchains({
+  root,
+  env = process.env,
+  platform = process.platform,
+  scan = {},
+}) {
+  const homedir = scan.homedir;
+  const toolchains = toolchainRoots(root);
+  const java = discoverJava({
     env,
-    shell: process.platform === 'win32' && /\.(cmd|bat)$/i.test(command),
+    platform,
+    homedir,
+    roots: [
+      ...(scan.javaRoots || javaRoots({ env, platform, homedir })),
+      ...(scan.extraJavaRoots || []),
+      ...toolchains,
+    ],
+    probe: scan.probe,
   });
-  const text = [result.stdout, result.stderr, result.error?.message].filter(Boolean).join('\n');
-  return {
-    name,
-    command: [command, ...args].join(' '),
-    status: result.status === null ? 1 : result.status,
-    durationMs: Date.now() - started,
-    tail: text.split(/\r?\n/).filter(Boolean).slice(-12),
-  };
+  const javaHome = pickJavaHome(java, scan.requestedJdk);
+  const mavenEnv = javaHome
+    ? {
+        ...env,
+        JAVA_HOME: javaHome,
+        PATH:
+          path.join(javaHome, 'bin') +
+          (platform === 'win32' ? ';' : ':') +
+          (env.PATH || env.Path || ''),
+      }
+    : env;
+  const maven = discoverMaven({
+    env: mavenEnv,
+    platform,
+    homedir,
+    roots: [
+      ...(scan.mavenRoots || mavenRoots({ env, platform, homedir })),
+      ...(scan.extraMavenRoots || []),
+      ...toolchains,
+    ],
+    probe: scan.probe,
+  });
+  const node = discoverNode({
+    env,
+    platform,
+    homedir,
+    fallbackNode: scan.node || process.execPath,
+  });
+  return { java, maven, node, npm: (node && node.npm) || null };
+}
+
+export function pickJavaHome(javaScan, major) {
+  const found = (javaScan?.homes || []).find((item) => Number(item.major) === Number(major));
+  return found ? found.home : null;
+}
+
+function npmPlan(npmPath, nodePath, args) {
+  if (!npmPath) return process.platform === 'win32' ? ['npm.cmd', args] : ['npm', args];
+  if (/\.(c?js|mjs)$/i.test(npmPath)) return [nodePath || process.execPath, [npmPath, ...args]];
+  return [npmPath, args];
 }
 
 function freePort() {
@@ -120,9 +121,10 @@ function waitExit(child, timeoutMs = 15000) {
   });
 }
 
-async function waitHealthy(url, timeoutMs = 60000) {
+async function waitHealthy(url, timeoutMs = 60000, signal, child) {
   const deadline = Date.now() + timeoutMs;
   while (Date.now() < deadline) {
+    if (signal?.aborted || (child && child.exitCode !== null) || child?.spawnFailure) return false;
     try {
       const response = await fetch(url, { signal: AbortSignal.timeout(3000) });
       if (response.ok) return true;
@@ -134,7 +136,7 @@ async function waitHealthy(url, timeoutMs = 60000) {
   return false;
 }
 
-async function runRuntimeSmoke({ root, javaHome, env }) {
+async function runRuntimeSmoke({ root, javaHome, env, signal, directory }) {
   const backend = path.join(root, 'backend');
   const target = path.join(backend, 'target');
   const jar = fs
@@ -155,6 +157,13 @@ async function runRuntimeSmoke({ root, javaHome, env }) {
   };
   const java = path.join(javaHome, 'bin', process.platform === 'win32' ? 'java.exe' : 'java');
   const logs = [];
+  const logFile = path.join(directory, 'runtime.log');
+  const fd = fs.openSync(logFile, 'w');
+  const capture = (chunk) => {
+    fs.writeSync(fd, chunk);
+    logs.push(String(chunk));
+    if (logs.length > 40) logs.shift();
+  };
   let child = null;
   const startedAt = Date.now();
   function start() {
@@ -164,13 +173,18 @@ async function runRuntimeSmoke({ root, javaHome, env }) {
       stdio: ['ignore', 'pipe', 'pipe'],
       windowsHide: true,
     });
-    child.stdout.on('data', (chunk) => logs.push(String(chunk)));
-    child.stderr.on('data', (chunk) => logs.push(String(chunk)));
+    child.stdout.on('data', capture);
+    child.stderr.on('data', capture);
+    const launched = child;
+    launched.once('error', (error) => {
+      launched.spawnFailure = true;
+      capture(Buffer.from(error.message));
+    });
   }
   async function stop() {
     const current = child;
     child = null;
-    if (!current || current.exitCode !== null) return;
+    if (!current || current.exitCode !== null || !current.pid) return current?.exitCode === 0;
     try {
       await fetch(base + '/actuator/shutdown', {
         method: 'POST',
@@ -180,16 +194,23 @@ async function runRuntimeSmoke({ root, javaHome, env }) {
       // Fall back to terminating the process below.
     }
     await waitExit(current, 8000);
+    const graceful = current.exitCode === 0;
     if (current.exitCode === null) {
-      if (process.platform === 'win32')
-        spawnSync('taskkill', ['/pid', String(current.pid), '/T', '/F'], { stdio: 'ignore' });
-      else current.kill('SIGTERM');
+      if (process.platform === 'win32') {
+        const killed = spawnSync('taskkill', ['/pid', String(current.pid), '/T', '/F'], {
+          stdio: 'ignore',
+          windowsHide: true,
+          timeout: 2000,
+        });
+        if (killed.status !== 0) current.kill('SIGKILL');
+      } else current.kill('SIGKILL');
       await waitExit(current);
     }
+    return graceful;
   }
   try {
     start();
-    if (!(await waitHealthy(base + '/actuator/health')))
+    if (!(await waitHealthy(base + '/actuator/health', 60000, signal, child)))
       throw new Error('Backend did not become healthy');
     const created = await fetch(base + '/api/tasks', {
       method: 'POST',
@@ -199,23 +220,59 @@ async function runRuntimeSmoke({ root, javaHome, env }) {
     });
     if (created.status !== 201) throw new Error('POST /api/tasks returned ' + created.status);
     const task = await created.json();
-    await stop();
+    const read = await fetch(base + '/api/tasks/' + task.id, {
+      signal: AbortSignal.timeout(10000),
+    });
+    if (read.status !== 200 || (await read.json()).title !== 'sg-verify')
+      throw new Error('GET task mismatch');
+    const updated = await fetch(base + '/api/tasks/update', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ id: task.id, title: 'sg-verify-updated', completed: true }),
+      signal: AbortSignal.timeout(10000),
+    });
+    if (updated.status !== 200 || (await updated.json()).completed !== true)
+      throw new Error('POST task update failed');
+    if (!(await stop()))
+      throw new Error(
+        'Backend did not shut down normally; persistence verification requires a graceful restart',
+      );
+    if (signal?.aborted) throw new Error('Verification cancelled');
     start();
-    if (!(await waitHealthy(base + '/actuator/health'))) throw new Error('Backend restart failed');
+    if (!(await waitHealthy(base + '/actuator/health', 60000, signal, child)))
+      throw new Error('Backend restart failed');
     const listed = await fetch(base + '/api/tasks', { signal: AbortSignal.timeout(10000) });
     if (listed.status !== 200) throw new Error('GET /api/tasks returned ' + listed.status);
     const items = await listed.json();
-    if (!Array.isArray(items) || !items.some((item) => item.id === task.id))
+    if (
+      !Array.isArray(items) ||
+      !items.some(
+        (item) =>
+          item.id === task.id && item.title === 'sg-verify-updated' && item.completed === true,
+      )
+    )
       throw new Error('Task did not survive backend restart');
-    const deleted = await fetch(base + '/api/tasks/' + task.id, {
-      method: 'DELETE',
+    const deleted = await fetch(base + '/api/tasks/delete', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ id: task.id }),
       signal: AbortSignal.timeout(10000),
     });
-    if (deleted.status !== 204) throw new Error('DELETE /api/tasks returned ' + deleted.status);
+    if (deleted.status !== 200)
+      throw new Error('POST /api/tasks/delete returned ' + deleted.status);
+    const receipt = await deleted.json();
+    if (receipt.id !== task.id || receipt.deleted !== true)
+      throw new Error('Deletion JSON receipt mismatch');
+    const absent = await fetch(base + '/api/tasks/' + task.id, {
+      signal: AbortSignal.timeout(10000),
+    });
+    if (absent.status !== 404) throw new Error('Deleted task still exists');
+    fs.writeSync(fd, '\nHTTP create/read/update/restart/list/delete/404 passed\n');
     return {
       name: 'runtime',
       status: 0,
       durationMs: Date.now() - startedAt,
+      log: path.relative(root, logFile).replace(/\\/g, '/'),
       tail: logs.join('').split(/\r?\n/).filter(Boolean).slice(-8),
     };
   } catch (error) {
@@ -223,6 +280,7 @@ async function runRuntimeSmoke({ root, javaHome, env }) {
       name: 'runtime',
       status: 1,
       durationMs: Date.now() - startedAt,
+      log: path.relative(root, logFile).replace(/\\/g, '/'),
       tail: [
         ...logs.join('').split(/\r?\n/).filter(Boolean).slice(-8),
         String(error.message || error),
@@ -230,14 +288,23 @@ async function runRuntimeSmoke({ root, javaHome, env }) {
     };
   } finally {
     await stop();
+    fs.closeSync(fd);
     fs.rmSync(dbDir, { recursive: true, force: true });
   }
 }
 
-export async function verifyJavaProject({
+async function verifyJavaProjectUnlocked({
   root,
   env = process.env,
   timeoutMs = 15 * 60 * 1000,
+  install = false,
+  scan = {},
+  onProgress,
+  signal,
+  userQuestions,
+  agent,
+  javaHome: customJavaHome,
+  mavenHome: customMavenHome,
 } = {}) {
   root = path.resolve(root);
   const marker = path.join(root, '.specgate', 'monorepo.json');
@@ -250,134 +317,504 @@ export async function verifyJavaProject({
   } catch (error) {
     return { ok: false, code: 'E_METADATA_INVALID', message: error.message };
   }
+  if (metadata.stack !== 'java-vue')
+    return { ok: false, code: 'E_NOT_JAVA_PROJECT', message: '不是 Java/Vue monorepo 初始化项目' };
   const normalized = normalizeJavaPreset(metadata.preset);
   if (!normalized.ok) return normalized;
   const preset = normalized.preset;
-  const javaHome = resolveJavaHome(root, preset.jdk, env);
-  const maven = resolveMaven(root, env);
+  const platform = scan.platform || process.platform;
+  const arch = scan.arch || process.arch;
+  scan = { ...scan, requestedJdk: preset.jdk };
+  const persistent = env === process.env ? readPersistentEnvironment({ platform, env }) : {};
+  env = mergeEnvironment({ ...persistent, env, platform });
+  // A stale inherited JAVA_HOME must not hide a newly installed persistent scope.
+  const scoped = ['machine', 'user'].map((scope) =>
+    mergeEnvironment({ env: { ...env, ...persistent[scope] }, platform }),
+  );
+  scan.extraJavaRoots = scoped.flatMap((scope) =>
+    Object.entries(scope)
+      .filter(([key]) => /^(?:SG_)?(?:JAVA.*HOME|JDK_HOME)$/i.test(key))
+      .map(([, value]) => value),
+  );
+  scan.extraMavenRoots = scoped.flatMap((scope) =>
+    Object.entries(scope)
+      .filter(([key]) => /^(?:SG_)?(?:MAVEN_HOME|M2_HOME)$/i.test(key))
+      .map(([, value]) => value),
+  );
+  const evidence = createVerification(root, preset);
+  const finish = (status, code, message, extra = {}) => {
+    const report = evidence.save({
+      ...extra,
+      status,
+      ok: status === 'smoke-passed',
+      finishedAt: new Date().toISOString(),
+    });
+    return { ok: report.ok, code, message, report };
+  };
+  if (signal?.aborted)
+    return finish('cancelled', 'VERIFY_CANCELLED', '用户取消验证；未执行质量命令。');
+  let savedPaths = {};
+  try {
+    savedPaths = readJson(path.join(root, '.specgate', 'toolchain-paths.json'));
+  } catch {
+    /* First run. */
+  }
+  if (customJavaHome || savedPaths.javaHome)
+    env.SG_JAVA_HOME = customJavaHome || savedPaths.javaHome;
+  if (customMavenHome || savedPaths.mavenHome)
+    env.SG_MAVEN_HOME = customMavenHome || savedPaths.mavenHome;
+  const progress = (phase, message) => {
+    try {
+      if (typeof onProgress === 'function') onProgress({ phase, message });
+    } catch {
+      // 进度回调只是可见性增强，不能影响验证。
+    }
+  };
+
+  progress('scan', '扫描 JDK / Maven / Node 环境…');
+  let toolchains = scanToolchains({ root, env, platform, scan });
+  const hasRequestedJdk = () => pickJavaHome(toolchains.java, preset.jdk) !== null;
+  let provisioned = [];
+  let provisionError = null;
+  const customArchives = {};
+
+  if ((!hasRequestedJdk() || !toolchains.maven) && userQuestions?.ask) {
+    const missingTools = [
+      !hasRequestedJdk() ? 'jdk' : null,
+      !toolchains.maven ? 'maven' : null,
+    ].filter(Boolean);
+    try {
+      const answer = await userQuestions.ask({
+        questions: missingTools.map((tool) => ({
+          id: 'sg-verify-' + tool + '-path',
+          header: tool === 'jdk' ? 'JDK 路径' : 'Maven 路径',
+          question:
+            '未找到可用的 ' +
+            (tool === 'jdk' ? 'JDK ' + preset.jdk : 'Maven 3.9.x') +
+            '。可输入自定义安装目录、bin 目录、可执行文件或 ZIP/tar.gz 压缩包完整路径。留空或选择继续将' +
+            (install
+              ? '自动下载并安装到项目 .specgate/toolchains。'
+              : '报告缺失（当前禁止自动安装）。'),
+          options: [
+            {
+              label: '继续',
+              description: install
+                ? '没有自定义路径，使用项目内自动安装'
+                : '保留代码并报告缺少环境',
+            },
+            { label: '取消', description: '终止本次验证，不下载安装' },
+          ],
+        })),
+        agent,
+        signal,
+      });
+      for (let index = 0; index < missingTools.length; index++) {
+        const value = String(answerOf(answer, index) || '').trim();
+        if (value === '取消' || signal?.aborted)
+          return finish('cancelled', 'VERIFY_CANCELLED', '用户取消验证；未下载安装。');
+        if (!value || value === '继续') continue;
+        const tool = missingTools[index];
+        let location = value.replace(/^["']|["']$/g, '');
+        if (/^~(?:[/\\]|$)/.test(location))
+          location = path.join(
+            env.USERPROFILE || env.HOME || scan.homedir || '',
+            location.slice(1),
+          );
+        location = path.resolve(root, location);
+        if (/\.(zip|tar\.gz|tgz)$/i.test(location)) {
+          customArchives[tool] = location;
+          continue;
+        }
+        if (/^(?:java(?:c)?(?:\.exe)?|mvn(?:\.(?:cmd|bat|exe))?)$/i.test(path.basename(location)))
+          location = path.dirname(location);
+        if (path.basename(location).toLowerCase() === 'bin') location = path.dirname(location);
+        if (tool === 'jdk') env.SG_JAVA_HOME = location;
+        else env.SG_MAVEN_HOME = location;
+      }
+      toolchains = scanToolchains({ root, env, platform, scan });
+      const validated = {};
+      const selectedJava = pickJavaHome(toolchains.java, preset.jdk);
+      if (selectedJava && selectedJava === env.SG_JAVA_HOME) validated.javaHome = selectedJava;
+      if (toolchains.maven?.home === env.SG_MAVEN_HOME) validated.mavenHome = toolchains.maven.home;
+      if (Object.keys(validated).length)
+        fs.writeFileSync(
+          path.join(root, '.specgate/toolchain-paths.json'),
+          JSON.stringify({ ...savedPaths, ...validated }, null, 2) + '\n',
+        );
+    } catch (error) {
+      return finish(
+        signal?.aborted ? 'cancelled' : 'blocked',
+        signal?.aborted ? 'VERIFY_CANCELLED' : 'VERIFY_BLOCKED',
+        '自定义路径对话框未完成：' + error.message,
+      );
+    }
+  }
+
+  if (install && (!hasRequestedJdk() || !toolchains.maven)) {
+    const mirrors = resolveMirrors(env);
+    const actions = [];
+    if (!hasRequestedJdk()) {
+      const url = jdkDownloadUrl(mirrors, preset.jdk, platform, arch);
+      if (url) {
+        actions.push({
+          tool: 'jdk',
+          version: String(preset.jdk),
+          kind: 'download',
+          url,
+          target: '.specgate/toolchains/jdk-' + preset.jdk,
+          requiresElevation: false,
+          archive: customArchives.jdk,
+        });
+      }
+    }
+    if (!toolchains.maven) {
+      actions.push({
+        tool: 'maven',
+        version: '3.9.11',
+        kind: 'download',
+        url:
+          platform !== 'win32' && !env.SG_MAVEN_DIST
+            ? mirrors.mavenDist.replace(/\.zip$/, '.tar.gz')
+            : mirrors.mavenDist,
+        target: '.specgate/toolchains/apache-maven-3.9.11',
+        requiresElevation: false,
+        archive: customArchives.maven,
+      });
+    }
+    if (actions.length) {
+      progress(
+        'provision',
+        '自动安装到项目内：' + actions.map((item) => item.tool + ' ' + item.version).join('、'),
+      );
+      const result = await provisionToolchain({
+        root,
+        platform,
+        signal,
+        plan: { ok: true, tools: {}, actions, warnings: [], mirrors },
+      });
+      if (!result.ok) provisionError = result.message;
+      provisioned = result.completed || [];
+      toolchains = scanToolchains({
+        root,
+        env,
+        platform,
+        scan: {
+          ...scan,
+          javaRoots: [...(scan.javaRoots || javaRoots({ env, platform })), ...toolchainRoots(root)],
+          mavenRoots: [
+            ...(scan.mavenRoots || mavenRoots({ env, platform })),
+            ...toolchainRoots(root),
+          ],
+        },
+      });
+    }
+  }
+
+  const javaHome = pickJavaHome(toolchains.java, preset.jdk);
+  const maven = toolchains.maven ? toolchains.maven.path : null;
+  const npm = toolchains.npm;
   const missing = [];
   if (!javaHome) missing.push('JDK ' + preset.jdk);
   if (!maven) missing.push('Maven 3.9.x');
+  if (!toolchains.node) missing.push('Node 22.12+ / 24');
+  if (!npm) missing.push('npm');
+  const environment = {
+    platform,
+    arch,
+    java: (toolchains.java.homes || []).map((item) => ({
+      home: item.home,
+      version: item.version,
+      major: item.major,
+      source: item.source,
+    })),
+    maven: toolchains.maven
+      ? { path: toolchains.maven.path, version: toolchains.maven.version }
+      : null,
+    node: toolchains.node ? { path: toolchains.node.node, version: toolchains.node.version } : null,
+    npm,
+    provisioned: provisioned.map((item) => ({
+      tool: item.tool,
+      version: item.version,
+      path: item.path || null,
+      reused: item.reused === true,
+    })),
+    provisionError,
+    scannedAt: new Date().toISOString(),
+    archives: discoverArchives({
+      roots: [
+        path.join(root, '.specgate/toolchains/.downloads'),
+        path.join(env.USERPROFILE || env.HOME || scan.homedir || root, 'Downloads'),
+      ],
+    }),
+  };
+  evidence.save({ environment });
+  if (signal?.aborted) return finish('cancelled', 'VERIFY_CANCELLED', '用户取消验证。');
   if (missing.length) {
-    const report = {
-      schemaVersion: 1,
-      preset: preset.id,
-      status: 'blocked',
-      ok: false,
-      missing,
-      checkedAt: new Date().toISOString(),
-      stages: [],
-    };
-    fs.writeFileSync(
-      path.join(root, '.specgate', 'verify-report.json'),
-      JSON.stringify(report, null, 2) + '\n',
-    );
-    return {
-      ok: false,
-      code: 'VERIFY_BLOCKED',
-      message:
-        '缺少本地验证前置条件：' +
-        missing.join('、') +
-        '；请先安装，或把 JDK 放入 .specgate/toolchains/jdk-' +
-        preset.jdk +
-        '。生成代码已保留。',
-      report,
-    };
+    const guidance = installGuidance({
+      jdk: missing.includes('JDK ' + preset.jdk) ? preset.jdk : null,
+      needMaven: !maven,
+      platform,
+    }).join('\n');
+    const message = [
+      formatEnvironmentScan({
+        java: toolchains.java,
+        maven: toolchains.maven,
+        node: toolchains.node,
+        npm,
+      }),
+      '缺少本地验证前置条件：' + missing.join('、') + '（生成代码已保留）。',
+      provisionError ? '自动安装未能完成：' + provisionError : null,
+      'JDK 8/17/21 与 Maven 支持项目内自动安装；可通过自定义路径或 JAVA_HOME/MAVEN_HOME 复用。',
+      guidance,
+    ]
+      .filter(Boolean)
+      .join('\n');
+    return finish('blocked', 'VERIFY_BLOCKED', message, { missing, environment, guidance });
   }
+
   const commandEnv = {
     ...env,
     JAVA_HOME: javaHome,
-    PATH: path.join(javaHome, 'bin') + path.delimiter + (env.PATH || env.Path || ''),
+    PATH: [
+      path.dirname(toolchains.node.node),
+      path.join(javaHome, 'bin'),
+      path.dirname(maven),
+      env.PATH || env.Path || '',
+    ].join(path.delimiter),
+    MAVEN_CMD: maven,
   };
   commandEnv.Path = commandEnv.PATH;
   const stages = [];
+  const npmCommand = (args) =>
+    npmPlan(npm, toolchains.node ? toolchains.node.node : process.execPath, args);
   const plan = [
-    ['backend-verify', maven, ['-B', '-ntp', 'verify'], path.join(root, 'backend')],
+    ['backend-verify', maven, ['-B', '-ntp', 'clean', 'verify'], path.join(root, 'backend')],
     [
       'frontend-install',
-      process.platform === 'win32' ? 'npm.cmd' : 'npm',
-      ['install', '--no-audit', '--no-fund'],
+      ...npmCommand([
+        fs.existsSync(path.join(root, 'frontend', 'package-lock.json')) ? 'ci' : 'install',
+        '--no-audit',
+        '--no-fund',
+      ]),
       path.join(root, 'frontend'),
     ],
-    [
-      'frontend-build',
-      process.platform === 'win32' ? 'npm.cmd' : 'npm',
-      ['run', 'build'],
-      path.join(root, 'frontend'),
-    ],
+    ['frontend-build', ...npmCommand(['run', 'build']), path.join(root, 'frontend')],
     [
       'frontend-test',
-      process.platform === 'win32' ? 'npm.cmd' : 'npm',
-      ['run', 'test'],
+      ...npmCommand([
+        'run',
+        'test',
+        '--',
+        '--reporter=json',
+        '--outputFile=' + path.join(evidence.directory, 'frontend-tests.json'),
+      ]),
       path.join(root, 'frontend'),
     ],
-    [
-      'frontend-lint',
-      process.platform === 'win32' ? 'npm.cmd' : 'npm',
-      ['run', 'lint'],
-      path.join(root, 'frontend'),
-    ],
-    [
-      'frontend-format',
-      process.platform === 'win32' ? 'npm.cmd' : 'npm',
-      ['run', 'format:check'],
-      path.join(root, 'frontend'),
-    ],
+    ['frontend-lint', ...npmCommand(['run', 'lint']), path.join(root, 'frontend')],
+    ['frontend-format', ...npmCommand(['run', 'format:check']), path.join(root, 'frontend')],
   ];
+  evidence.save({
+    plan: plan.map(([name, command, args, cwd]) => ({ name, command, args, cwd })),
+    toolchain: { javaHome, maven },
+  });
   let failed = null;
   for (const [name, command, args, cwd] of plan) {
-    const stage = run(name, command, args, cwd, commandEnv, timeoutMs);
+    if (signal?.aborted) {
+      const cancelled = {
+        name: 'cancelled',
+        status: 1,
+        durationMs: 0,
+        tail: ['用户取消：剩余阶段未执行'],
+      };
+      failed = cancelled;
+      break;
+    }
+    progress('stage', '执行 ' + name + '：' + command + ' ' + args.join(' '));
+    const stage = await executeVerificationStage({
+      name,
+      command,
+      args,
+      cwd,
+      env: commandEnv,
+      timeoutMs,
+      signal,
+      directory: evidence.directory,
+      root,
+    });
+    if (stage.status === 0 && name === 'backend-verify') {
+      const collected = collectJavaReports(cwd, { suiteId: 'backend', worktree: root });
+      const cases = collected.report?.cases || [];
+      stage.tests = {
+        total: cases.length,
+        passed: cases.filter((item) => item.status === 'pass').length,
+        skipped: cases.filter((item) => item.status === 'skip').length,
+      };
+      if (
+        !collected.ok ||
+        !cases.length ||
+        stage.tests.passed !== cases.length ||
+        collected.files.some(
+          (file) => fs.statSync(file).mtimeMs < Date.parse(stage.startedAt) - 2000,
+        )
+      ) {
+        stage.status = 1;
+        stage.tail.push('JUnit 对账失败：必须有本次运行生成且全部通过的真实用例，不能跳过测试。');
+      }
+      if (collected.ok)
+        for (const file of collected.files)
+          fs.copyFileSync(file, path.join(evidence.directory, path.basename(file)));
+    }
+    if (stage.status === 0 && name === 'frontend-test') {
+      try {
+        const tests = readJson(path.join(evidence.directory, 'frontend-tests.json'));
+        stage.tests = {
+          total: tests.numTotalTests,
+          passed: tests.numPassedTests,
+          failed: tests.numFailedTests,
+          skipped: tests.numPendingTests,
+        };
+        if (
+          !tests.numTotalTests ||
+          tests.numTotalTests !== tests.numPassedTests ||
+          tests.success !== true
+        )
+          throw new Error('测试必须实际执行且全部通过');
+      } catch (error) {
+        stage.status = 1;
+        stage.tail.push('Vitest 对账失败：' + error.message);
+      }
+    }
     stages.push(stage);
+    evidence.save({ stages });
+    progress(
+      stage.status === 0 ? 'stage-done' : 'stage-failed',
+      name + (stage.status === 0 ? ' 通过' : ' 失败（exit ' + stage.status + '）'),
+    );
     if (stage.status !== 0) {
       failed = stage;
       break;
     }
   }
+
   if (!failed) {
-    const runtime = await runRuntimeSmoke({ root, javaHome, env: commandEnv });
-    stages.push(runtime);
-    if (runtime.status !== 0) failed = runtime;
-  }
-  const ok = !failed;
-  const report = {
-    schemaVersion: 1,
-    preset: preset.id,
-    label: preset.label,
-    status: ok ? 'smoke-passed' : 'failed',
-    ok,
-    checkedAt: new Date().toISOString(),
-    toolchain: { javaHome, maven },
-    stages,
-    failedStage: failed ? failed.name : null,
-  };
-  fs.writeFileSync(
-    path.join(root, '.specgate', 'verify-report.json'),
-    JSON.stringify(report, null, 2) + '\n',
-  );
-  const initFile = path.join(root, '.specgate', 'init-report.json');
-  if (fs.existsSync(initFile)) {
-    try {
-      const init = readJson(initFile);
-      init.phase = ok ? 'SMOKE_PASSED' : 'VERIFY_FAILED';
-      init.initializationComplete = ok;
-      init.verification = {
-        kind: 'local-sg-verify',
-        ok,
-        checkedAt: report.checkedAt,
-        report: '.specgate/verify-report.json',
-        failedStage: report.failedStage,
+    if (signal?.aborted) {
+      failed = {
+        name: 'cancelled',
+        status: 1,
+        durationMs: 0,
+        tail: ['用户取消：运行时冒烟未执行'],
       };
-      fs.writeFileSync(initFile, JSON.stringify(init, null, 2) + '\n');
-    } catch {
-      // The verification report remains readable even if init-report is corrupt.
+    } else {
+      progress('stage', '执行 runtime：启动后端、HTTP CRUD、重启持久化');
+      let runtime;
+      try {
+        runtime = await runRuntimeSmoke({
+          root,
+          javaHome,
+          env: commandEnv,
+          signal,
+          directory: evidence.directory,
+        });
+      } catch (error) {
+        runtime = { name: 'runtime', status: 1, tail: [error.message], durationMs: 0 };
+      }
+      stages.push(runtime);
+      evidence.save({ stages });
+      progress(
+        runtime.status === 0 ? 'stage-done' : 'stage-failed',
+        'runtime ' + (runtime.status === 0 ? '通过' : '失败'),
+      );
+      if (runtime.status !== 0) failed = runtime;
     }
   }
-  return {
-    ok,
-    code: ok ? 'SMOKE_PASSED' : 'VERIFY_FAILED',
-    message: ok
-      ? '本地验证通过：后端 verify、前端 build/test/lint/format、启动/CRUD/重启持久化全部通过。'
-      : '本地验证失败于 ' + failed.name + '；代码已保留，可修复后重试。',
-    report,
-  };
+  const ok = !failed;
+  return finish(
+    signal?.aborted ? 'cancelled' : ok ? 'smoke-passed' : 'failed',
+    signal?.aborted ? 'VERIFY_CANCELLED' : ok ? 'SMOKE_PASSED' : 'VERIFY_FAILED',
+    ok
+      ? [
+          '本地验证通过：后端 verify、前端 build/test/lint/format、启动/CRUD/重启持久化全部通过。',
+          'JDK：' + javaHome,
+          'Maven：' + maven,
+          '报告：.specgate/verify-report.json',
+        ].join('\n')
+      : [
+          '本地验证失败于 ' + failed.name + '；代码已保留，可修复后重试。',
+          ...(failed.tail || []).slice(-6).map((line) => '  ' + line),
+          '报告：.specgate/verify-report.json',
+        ].join('\n'),
+    { stages, failedStage: failed ? failed.name : null },
+  );
+}
+
+/** Serialize verification so installs, builds and the latest report cannot race. */
+export async function verifyJavaProject(options = {}) {
+  const root = path.resolve(options.root || '.');
+  const lock = path.join(root, '.specgate', 'verify.lock');
+  if (!fs.existsSync(path.join(root, '.specgate', 'monorepo.json')))
+    return verifyJavaProjectUnlocked({ ...options, root });
+  if (inspectRunLock(root).locked)
+    return {
+      ok: false,
+      code: 'VERIFY_LOCKED',
+      message: '已有 sg-run 正在执行，请等待结束后验证。',
+    };
+  let fd;
+  for (let attempt = 0; attempt < 2; attempt++) {
+    try {
+      fd = fs.openSync(lock, 'wx');
+      fs.writeSync(fd, JSON.stringify({ pid: process.pid }));
+      break;
+    } catch (error) {
+      if (error.code !== 'EEXIST') throw error;
+      let holder;
+      try {
+        holder = readJson(lock);
+      } catch {
+        return {
+          ok: false,
+          code: 'VERIFY_LOCKED',
+          message: '验证锁损坏，请确认没有运行中的验证后移除 .specgate/verify.lock。',
+        };
+      }
+      if (isProcessAlive(holder.pid))
+        return {
+          ok: false,
+          code: 'VERIFY_LOCKED',
+          message: '当前项目已有正在执行的验证，请等待结束。',
+        };
+      fs.unlinkSync(lock);
+    }
+  }
+  if (fd === undefined) return { ok: false, code: 'VERIFY_LOCKED', message: '无法获取验证锁。' };
+  try {
+    return await verifyJavaProjectUnlocked({ ...options, root });
+  } catch (error) {
+    let report = null;
+    try {
+      report = readJson(path.join(root, '.specgate/verify-report.json'));
+      report.ok = false;
+      report.status = 'failed';
+      report.error = error.message;
+      report.finishedAt = new Date().toISOString();
+      const text = JSON.stringify(report, null, 2) + '\n';
+      fs.writeFileSync(path.join(root, '.specgate/verify-report.json'), text);
+      if (/^[\w-]+$/.test(report.runId))
+        fs.writeFileSync(
+          path.join(root, '.specgate/verify-runs', report.runId, 'report.json'),
+          text,
+        );
+    } catch {
+      /* Preserve original error when reporting storage is unavailable. */
+    }
+    return {
+      ok: false,
+      code: 'VERIFY_FAILED',
+      message: '验证异常，未通过：' + error.message,
+      report,
+    };
+  } finally {
+    fs.closeSync(fd);
+    fs.unlinkSync(lock);
+  }
 }

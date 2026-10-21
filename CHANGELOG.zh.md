@@ -1,5 +1,28 @@
 # 变更记录
 
+## 未发布：统一 JSON POST CRUD
+
+- 所有生成模板统一 GET 查询、POST 新增/修改/删除；修改和删除使用 `/update`、`/delete`，id 在 JSON body 中，删除返回 200 JSON 回执。
+- 同步四个 Java Golden 版本档、旧 Java/Node/Python、多框架脚手架、Vue/React 客户端、生成 OpenAPI 与需求/任务/测试。
+- 加入跨模板约定检查与真实客户端/服务端契约回归；四版本档及各框架真实验收后重新登记 Golden，旧证据保留历史含义。
+
+## 未发布：初始化与验证对账
+
+- Java/Vue 模板接入 Element Plus 最小管理界面与固定依赖锁文件。
+- 初始化检查明确为未执行；验证记录独立 runId、完整日志、JUnit/Vitest 用例对账、七阶段清单，失败/阻塞/取消同步清除旧成功状态。
+- 环境发现验证实际可执行性，读取 Windows/Linux 持久环境配置，缺失时先询问自定义路径，再项目内下载安装；支持 JDK 8，修复压缩包格式与 Windows 解压路径引用。
+- 加入验证互斥、子进程取消与真实 CRUD/正常重启检查；sg-status 显示初始化验证状态；生成项目忽略工具链与大体积证据。
+- 新增真实模板验收脚本和 Windows/Ubuntu × 四版本档验收 CI。
+
+## 4.3.1
+
+- 确认页只显示**操作目录**与**技术栈**：不再展开完整需求 JSON、依赖清单和执行命令。
+- 修复命令结果不进入对话历史：DSH 的命令 invocation 只有 agent（没有 session），现从 agent.session 回写 notice；新窗口执行长命令会先写入「已开始」，结束后写入结果，不再停留在欢迎页。
+- sg-verify / sg_verify 增加跨平台环境扫描与预检：JAVA_HOME/JDK_HOME、PATH、Windows 常见目录（Jdk8/Jdk17、Program Files、~/.jdks、JetBrains JBR）、Linux（/usr/lib/jvm、SDKMAN）、macOS（JavaVirtualMachines）；Maven 覆盖 MAVEN_HOME/M2_HOME、PATH、~/.m2/wrapper、JetBrains；同时扫描 Node/npm。
+- 缺少 JDK 17/21 或 Maven 时自动下载到项目内 .specgate/toolchains 后继续验证；install:false 或 /sg-verify --no-install 可关闭。JDK 8 等无镜像版本给出 winget/choco/apt/brew 安装建议。
+- 修复 Windows 下含空格的 npm.cmd / mvn.cmd 调用（ComSpec + verbatim 参数）。
+- 新增 test/v4/java-env.test.js 与 test/v3/notice.test.js 回归测试。
+
 ## 4.3.0（sg-java）
 
 - `sg-init` 改为**仅生成**：不安装依赖、不编译、不启动 agent；移除内置多 agent 验收/测试/交付流程与 `sg_init_finalize` / `sg_init_resume` 工具。需要本地验证时执行 `/sg-verify`。
