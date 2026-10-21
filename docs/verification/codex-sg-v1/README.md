@@ -1,8 +1,26 @@
 # Codex SG v1 验证记录
 
-当前执行分支为 `sg-codex`。P0–P9 核心与本地回归已实施；原生 Test/Frontend/Backend Agent 的 P6→P7 生成产品 E2E 已通过。完整 v1 仍受真实 Review/H3 可信宿主链路和真实 remote push 验收阻塞。
+当前执行分支为 `sg-codex`。P0–P9 核心与本地回归已实施；原生 Test/Frontend/Backend Agent 的 Task priority P6→P7 生成产品 E2E 已通过。Customer CRM 又完成了 P6→P9 的隔离构建、测试、严格 Review、合成 H3 和本地 bare remote 归档 push。完整 v1 仍受本轮原生角色调度、真实 Review/H3 可信宿主链路和生产 remote push 验收阻塞。
 
-## 最新增量：P5/P9
+## 最新增量：Customer CRM P6 → P9
+
+| 检查 | 实际结果 | 证据 |
+|---|---|---|
+| Customer red → green | 4/4 cases 先失败，最终全部通过 | [验收结果](customer-crm-native-e2e/README.md) |
+| 后端/前端测试 | 15/15、12/12 通过，0 skipped | [verification](customer-crm-native-e2e/verification-report.json) |
+| 真实验证阶段 | 9/9 passed，0 not-run | [verification](customer-crm-native-e2e/verification-report.json) |
+| Changed-line coverage | 349/382 = 91.36%，unavailable 0 | [quality](customer-crm-native-e2e/quality-report.json) |
+| strict Review | pass，P0–P3 blocking findings 0 | [review](customer-crm-native-e2e/review-report.json) |
+| 本地归档/push | merge `d19e7a4`；bare remote `master` 同 hash | [archive](customer-crm-native-e2e/archive-report.json) |
+| 产品规模 | source+tests 4,099 行，低于 10,000 | [summary](customer-crm-native-e2e/summary.json) |
+| 原生 Agent 边界 | Test/Frontend/Backend/Review 均为 `not-run` | [summary](customer-crm-native-e2e/summary.json) |
+| 插件回归 | 556 总计；555 通过，0 失败，1 个既有 py3.12 跳过 | [summary](customer-crm-native-e2e/summary.json) |
+| lint / format / pack | 全部通过；pack 包含 1,225 个文件 | [summary](customer-crm-native-e2e/summary.json) |
+| E2E fixture checker | JDK8 物化后 3/3 后端测试通过，Checkstyle 0 违规 | [summary](customer-crm-native-e2e/summary.json) |
+
+这次验收真实证明核心 workflow、构建、测试、覆盖率、Review validator、H3 hash/CAS 和 Git archive/push 可以串联完成；实现与 Review fallback 由主线程完成，不把任务消费失败写成原生 Agent 通过。H1/H3 为 synthetic fixture approval，push 目标是本地 bare remote。
+
+## 前序增量：P5/P9
 
 | 检查 | 实际结果 | 证据 |
 |---|---|---|
@@ -46,8 +64,8 @@ P0 专项测试真实执行了离线 tarball 安装和安装后入口启动；�
 ## 尚未验证
 
 - Codex Desktop 原生审批的可信用户来源；
-- 产品 MCP 对原生 subagent 的自动宿主桥、取消和生命周期接入；本次 E2E 使用验收编排调用原生 Agent；
-- 真实 Review Agent、可信 H3 和真实 remote push；
+- 产品 MCP 对原生 subagent 的自动宿主桥、取消和生命周期接入；Customer CRM 原生角色未消费任务；
+- 本轮真实 Review Agent、可信 H1/H3 和生产 remote push；
 - Linux 四档真实验收和完整项目覆盖率门。
 
 P3 的 Windows 四档结果已保存于 [windows-run-3](p3/windows-run-3/matrix.json)，Linux 明确保持 `not-run`。[P0 AC 映射](p0/acceptance-map.json)继续作为历史记录，不能被 P6 的合成角色测试替代。

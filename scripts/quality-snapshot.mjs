@@ -136,6 +136,14 @@ export function classifyFile(name) {
     !/^assets\/scaffold\/java\/ItemController(Test)?\.java$/.test(name)
   )
     return 'unsupported';
+  if (name.startsWith('assets/e2e/customer/')) {
+    if (
+      /^assets\/e2e\/customer\/backend\/[A-Za-z0-9]+\.java$/.test(name) ||
+      /^assets\/e2e\/customer\/source\/backend\/src\/main\/java\/.+\.java$/.test(name)
+    )
+      return 'customer-e2e';
+    if (name.endsWith('.java')) return 'unsupported';
+  }
   if (/\.(png|jpg|svg|xml|md|txt|log|dot)$/.test(name)) return 'data';
   if (name.endsWith('.template') && effective.endsWith('.md')) return 'data';
   if (name.startsWith('docs/verification/') && /\.json$/.test(name)) return 'data';

@@ -83,3 +83,47 @@ if (files.some((name) => name.startsWith('assets/scaffold/java/'))) {
     { cwd: root, env },
   );
 }
+if (
+  files.some(
+    (name) =>
+      /^assets\/e2e\/customer\/backend\/[A-Za-z0-9]+\.java$/.test(name) ||
+      /^assets\/e2e\/customer\/source\/backend\/src\/main\/java\/.+\.java$/.test(name),
+  )
+) {
+  const preset = normalizeJavaPreset('jdk8-boot2.7').preset;
+  const generated = javaFullstackFiles({ preset });
+  const root = fs.mkdtempSync(path.resolve('.specgate/customer-e2e-check-'));
+  const write = (name, text) => {
+    const file = path.join(root, name);
+    fs.mkdirSync(path.dirname(file), { recursive: true });
+    fs.writeFileSync(file, text);
+  };
+  for (const [name, text] of Object.entries(generated)) write(name, text);
+
+  const customerRoot = path.join(process.cwd(), 'assets/e2e/customer');
+  fs.cpSync(path.join(customerRoot, 'source'), root, { recursive: true });
+  write(
+    'backend/src/test/java/com/example/tasks/CustomerApiTest.java',
+    fs.readFileSync(path.join(customerRoot, 'backend/CustomerApiTest.java'), 'utf8'),
+  );
+
+  const tools = scanToolchains({
+    root: process.env.SG_QUALITY_REPOSITORY || process.cwd(),
+    scan: { requestedJdk: '8' },
+  });
+  const java = pickJavaHome(tools.java, '8');
+  if (!java || !tools.maven)
+    throw new Error('JDK8 and Maven required for Customer E2E asset verification');
+  const env = {
+    ...process.env,
+    JAVA_HOME: java,
+    PATH: path.join(java, 'bin') + path.delimiter + (process.env.PATH || ''),
+  };
+  env.Path = env.PATH;
+  executeCommand(
+    'customer-e2e-tests-static',
+    tools.maven.path,
+    ['-B', '-ntp', '-Dtest=CustomerApiTest', 'test', 'checkstyle:check'],
+    { cwd: path.join(root, 'backend'), env },
+  );
+}

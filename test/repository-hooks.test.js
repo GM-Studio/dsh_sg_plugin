@@ -73,6 +73,14 @@ test('coverage routes templates and assets, rejects unsupported code and selects
   assert.equal(classifyFile('assets/java-vue/template/frontend/ignored.java.tpl'), 'unsupported');
   assert.equal(classifyFile('test/fixtures/reference-note/ignored.ts.tpl'), 'unsupported');
   assert.equal(classifyFile('assets/scaffold/java/nested/ItemController.java'), 'unsupported');
+  assert.equal(classifyFile('assets/e2e/customer/backend/CustomerApiTest.java'), 'customer-e2e');
+  assert.equal(
+    classifyFile(
+      'assets/e2e/customer/source/backend/src/main/java/com/example/tasks/service/CustomerService.java',
+    ),
+    'customer-e2e',
+  );
+  assert.equal(classifyFile('assets/e2e/customer/unreviewed/Unsafe.java'), 'unsupported');
   assert.deepEqual(
     checksFor(['assets/java-vue/template/frontend/src/App.vue.tpl'], 'commit').presets,
     ['jdk8-boot2.7'],
@@ -112,6 +120,22 @@ test('installer preserves custom hooks and diagnoses stale managed hooks atomica
   assert.throws(() => installHooks({ root }), /custom|自定义/i);
   assert.equal(fs.readFileSync(path.join(hooks, 'pre-commit'), 'utf8'), '#!/bin/sh\necho custom\n');
   assert.equal(fs.existsSync(path.join(hooks, 'pre-push')), false);
+});
+
+test('customer E2E assets invoke their materialized Java checker', async () => {
+  if (process.platform !== 'win32') return;
+  const { root } = fixture();
+  const commands = [];
+  await runChecks({
+    root,
+    files: ['assets/e2e/customer/backend/CustomerApiTest.java'],
+    stage: 'commit',
+    execute: (label, _command, args) => commands.push({ label, args }),
+  });
+  assert.ok(commands.some(({ label }) => label === 'plugin-tests'));
+  const assetCheck = commands.find(({ label }) => label === 'code-assets');
+  assert.ok(assetCheck);
+  assert.ok(assetCheck.args.includes('assets/e2e/customer/backend/CustomerApiTest.java'));
 });
 
 test('installer upgrades only exact old managed hooks and preserves user additions', () => {

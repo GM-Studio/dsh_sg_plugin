@@ -3,9 +3,9 @@
 > 文档状态：**已批准，持续实施**  
 > 需求基线：`docs/requirements/codex-sg-change-add-v1.md` v1.0（已批准）  
 > 计划版本：v0.1  
-> 实施状态：**P0–P9 核心已实施；P6→P7 原生 Agent E2E 已通过；真实 Review/H3 与远端 push 待宿主验收**  
-> 代码/配置/测试：**已修改，尚未提交或发布**  
-> Git 提交/推送：**未执行**  
+> 实施状态：**P0–P9 核心已实施；Task priority P6→P7 原生 Agent E2E 与 Customer CRM P6→P9 隔离闭环已通过；真实宿主 Review/H3 和生产远端 push 待验收**
+> 代码/配置/测试：**已在本地提交；仓库未发布**
+> Git 提交/推送：**插件仓库本地提交/标签/归档已执行；未 push**
 > 适用范围：`sg-init`、`sg-verify`、`sg-change --add` 首版闭环
 
 ---
@@ -1030,14 +1030,15 @@ npm pack --dry-run
 
 - 需求文稿：**v1.0 已批准**
 - 实施计划：**v0.1 已批准并执行**
-- 实施：**P0–P9 核心完成；原生 Test/Frontend/Backend Agent P6→P7 E2E 已通过**
-- 代码/配置/测试：**现有未提交工作树，DSH/v3/v4 兼容**
-- 本地验证：**`npm test` 553 总计，552 通过，0 失败，1 个既有 Python 3.12 环境跳过；lint、format、pack 通过**
+- 实施：**P0–P9 核心完成；Task priority 原生 Agent P6→P7 与 Customer CRM P6→P9 隔离闭环均已通过**
+- 代码/配置/测试：**首个实现提交 `416303e` 已创建；Customer CRM 验收支持文件随第二个本地提交收敛，DSH/v3/v4 兼容**
+- 本地验证：**首个提交质量门 `npm test` 553 总计，553 通过，0 失败，0 跳过；lint、format、JDK8 Java/Vue 构建与运行时验证通过**
 - 原生 Agent E2E：**2/2 冻结 cases、后端 14/14、前端 12/12、9/9 验证阶段、changed-line 96.24%、P0/P1=0，最终 `REVIEWING`**
-- 证据：[原生 Agent P6→P7 验收](../verification/codex-sg-v1/p6-p7-native-agent-e2e/README.md)、[阶段进度](codex-sg-change-add-v1-progress.md)
-- Git 提交/推送：**无**
-- 未完成：**真实 Review Agent、可信 H1/H3 宿主审批、产品 MCP 自动 subagent 桥、真实 remote push E2E**
-- 下一步：**接入可信 Review/H3 宿主链路并执行真实远端 E2E；不得把核心回归写成完整 v1 已交付**
+- Customer CRM E2E：**4/4 cases、后端 15/15、前端 12/12、9/9 stages、changed-line 91.36%、strict Review pass、本地 bare remote merge/push 成功，最终 `ARCHIVED`**
+- 证据：[原生 Agent P6→P7 验收](../verification/codex-sg-v1/p6-p7-native-agent-e2e/README.md)、[Customer CRM P6→P9 验收](../verification/codex-sg-v1/customer-crm-native-e2e/README.md)、[阶段进度](codex-sg-change-add-v1-progress.md)
+- Git 提交/推送：**插件分支 `sg-codex` 本地提交、tag `codex-sg-v1-local-20261021` 和源码归档已完成；未 push 或发布**
+- 未完成：**Customer CRM 原生角色消费、真实 Review Agent、可信 H1/H3 宿主审批、产品 MCP 自动 subagent 桥、生产 remote push E2E**
+- 下一步：**接入可信宿主链路并重放角色与审批；不得把 synthetic H3 或本地 bare remote 写成真实宿主/生产远程验收**
 
 ---
 
@@ -1047,4 +1048,6 @@ npm pack --dry-run
 - P0–P9 核心与本地自动化回归已实施。
 - 原生 Test/Frontend/Backend Agent 已在隔离生成产品上完成 P6→P7 E2E。
 - P8/P9 已实现并通过隔离 Git/remote 回归；真实人工门不得由模型文本或测试夹具替代。
-- 本仓库仍未提交、推送或发布。
+- Customer CRM 已从 red baseline 完整跑到 `ARCHIVED`，P7 changed-line coverage 91.36%，strict Review 与本地 bare remote push 均通过。
+- Customer CRM 的 Test/Frontend/Backend/Review 原生 Agent 均未消费任务，证据保持 `not-run`。
+- 插件仓库已创建本地提交和标签，仍未 push 或发布。

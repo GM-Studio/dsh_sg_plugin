@@ -1,0 +1,583 @@
+{
+  "ok": true,
+  "state": {
+    "changeId": "customer-crm",
+    "checkpoint": {
+      "id": "customer-crm:21",
+      "label": "TESTING",
+      "phase": "TESTING",
+      "recordedAt": "2026-10-21T10:55:23.346Z",
+      "version": 21
+    },
+    "context": {
+      "artifacts": {
+        "requirements": {
+          "hash": "sha256:66a4c8233574d2200771dae98e3429deb06dc165780814a3a037194c336992df",
+          "revision": 1
+        }
+      },
+      "changeAdd": {
+        "frozen": {
+          "authority": "REQ_FROZEN-gate-transition",
+          "hash": "sha256:66a4c8233574d2200771dae98e3429deb06dc165780814a3a037194c336992df",
+          "path": ".specgate/codex/changes/customer-crm/requirements/revision-1.json",
+          "revision": 1
+        }
+      },
+      "development": {
+        "changeId": "customer-crm",
+        "conflicts": [],
+        "contractHash": "sha256:8a66e9f17580eee9f248e1174c9d775fa1807048a51152689fb93696f46bd8be",
+        "freezeCommit": "edbc04656c880de8d17d1058e48a62bf9851b99f",
+        "merged": [
+          {
+            "branch": "sg/codex/customer-crm/frontend",
+            "integrationCommit": "03aaf8e2bc420d53386a692c799bc7ef7a2617a7",
+            "mergedAt": "2026-10-21T10:55:23.119Z",
+            "role": "frontend",
+            "roleCommit": "40aa779deae60ff187683db9dcacbab6527c1a3b"
+          },
+          {
+            "branch": "sg/codex/customer-crm/backend",
+            "integrationCommit": "1adb065b736c7acba31343e0a72c2572164f87df",
+            "mergedAt": "2026-10-21T10:55:23.332Z",
+            "role": "backend",
+            "roleCommit": "45a8b82ef8bac35ffee9e2e04272513c51954ba3"
+          }
+        ],
+        "modelHash": "sha256:2fdd0e44b2da44ae17dbb8d6669dfea72cec881f801cc7854c9c9092ca42607d",
+        "preparedAt": "2026-10-21T10:47:30.180Z",
+        "red": {
+          "cases": [
+            {
+              "id": "CASE-AC-1",
+              "status": "fail"
+            },
+            {
+              "id": "CASE-AC-2",
+              "status": "fail"
+            },
+            {
+              "id": "CASE-AC-3",
+              "status": "fail"
+            },
+            {
+              "id": "CASE-AC-4",
+              "status": "fail"
+            }
+          ],
+          "exitCode": 1,
+          "hash": "sha256:966865bfb751aa1b2b12dba56bad9737b4660174e305d1a0fa801cca30763927",
+          "ok": true,
+          "path": ".specgate/codex/changes/customer-crm/red/2026-10-21T10-47-29-361Z-0c79fd8d-b66a-443b-b7d9-ee8192326d73/evidence.json"
+        },
+        "requirementsHash": "sha256:124825cb25e6569422c2514e748a6b2a00f0b5e45f9a7f26e65f7bdc1435b904",
+        "roles": {
+          "backend": {
+            "attempts": 1,
+            "branch": "sg/codex/customer-crm/backend",
+            "commit": "45a8b82ef8bac35ffee9e2e04272513c51954ba3",
+            "files": [
+              "backend/src/main/java/com/example/tasks/controller/CustomerController.java",
+              "backend/src/main/java/com/example/tasks/dto/CustomerRequest.java",
+              "backend/src/main/java/com/example/tasks/dto/UpdateCustomerRequest.java",
+              "backend/src/main/java/com/example/tasks/entity/Customer.java",
+              "backend/src/main/java/com/example/tasks/repository/CustomerRepository.java",
+              "backend/src/main/java/com/example/tasks/service/CustomerService.java",
+              "backend/src/main/java/com/example/tasks/vo/CustomerSummaryVO.java",
+              "backend/src/main/java/com/example/tasks/vo/CustomerVO.java"
+            ],
+            "status": "completed",
+            "summary": "Customer CRUD, validation, unique email, filtering and summary API implemented by the primary agent because the native backend thread did not consume the task.",
+            "worktree": "C:\\Users\\Administrator\\AppData\\Local\\Temp\\sg-customer-crm-native-20261021-03\\.specgate\\codex\\worktrees\\customer-crm\\backend"
+          },
+          "frontend": {
+            "attempts": 1,
+            "branch": "sg/codex/customer-crm/frontend",
+            "commit": "40aa779deae60ff187683db9dcacbab6527c1a3b",
+            "files": [
+              "frontend/src/App.vue",
+              "frontend/src/api/customers.ts",
+              "frontend/src/api/types.ts",
+              "frontend/src/components/CustomerPanel.vue",
+              "frontend/src/style.css"
+            ],
+            "status": "completed",
+            "summary": "Customer panel, CRUD API client and Customers navigation implemented by the primary agent because the native frontend thread did not consume the task.",
+            "worktree": "C:\\Users\\Administrator\\AppData\\Local\\Temp\\sg-customer-crm-native-20261021-03\\.specgate\\codex\\worktrees\\customer-crm\\frontend"
+          }
+        },
+        "rounds": [
+          {
+            "at": "2026-10-21T10:55:22.887Z",
+            "results": [
+              {
+                "code": null,
+                "commit": "40aa779deae60ff187683db9dcacbab6527c1a3b",
+                "files": [
+                  "frontend/src/App.vue",
+                  "frontend/src/api/customers.ts",
+                  "frontend/src/api/types.ts",
+                  "frontend/src/components/CustomerPanel.vue",
+                  "frontend/src/style.css"
+                ],
+                "ok": true,
+                "role": "frontend"
+              },
+              {
+                "code": null,
+                "commit": "45a8b82ef8bac35ffee9e2e04272513c51954ba3",
+                "files": [
+                  "backend/src/main/java/com/example/tasks/controller/CustomerController.java",
+                  "backend/src/main/java/com/example/tasks/dto/CustomerRequest.java",
+                  "backend/src/main/java/com/example/tasks/dto/UpdateCustomerRequest.java",
+                  "backend/src/main/java/com/example/tasks/entity/Customer.java",
+                  "backend/src/main/java/com/example/tasks/repository/CustomerRepository.java",
+                  "backend/src/main/java/com/example/tasks/service/CustomerService.java",
+                  "backend/src/main/java/com/example/tasks/vo/CustomerSummaryVO.java",
+                  "backend/src/main/java/com/example/tasks/vo/CustomerVO.java"
+                ],
+                "ok": true,
+                "role": "backend"
+              }
+            ]
+          }
+        ],
+        "schemaVersion": 1,
+        "testsHash": "sha256:45147b50c61922d4058a9936326aecd3cd7d311c59ceaf82ee5863cae7b35d1f",
+        "worktrees": {
+          "backend": {
+            "branch": "sg/codex/customer-crm/backend",
+            "path": "C:\\Users\\Administrator\\AppData\\Local\\Temp\\sg-customer-crm-native-20261021-03\\.specgate\\codex\\worktrees\\customer-crm\\backend",
+            "reused": false,
+            "role": "backend"
+          },
+          "frontend": {
+            "branch": "sg/codex/customer-crm/frontend",
+            "path": "C:\\Users\\Administrator\\AppData\\Local\\Temp\\sg-customer-crm-native-20261021-03\\.specgate\\codex\\worktrees\\customer-crm\\frontend",
+            "reused": false,
+            "role": "frontend"
+          },
+          "integration": {
+            "branch": "sg/codex/customer-crm/integration",
+            "path": "C:\\Users\\Administrator\\AppData\\Local\\Temp\\sg-customer-crm-native-20261021-03\\.specgate\\codex\\worktrees\\customer-crm\\integration",
+            "reused": false,
+            "role": "integration"
+          },
+          "review": {
+            "branch": "sg/codex/customer-crm/review",
+            "path": "C:\\Users\\Administrator\\AppData\\Local\\Temp\\sg-customer-crm-native-20261021-03\\.specgate\\codex\\worktrees\\customer-crm\\review",
+            "reused": false,
+            "role": "review"
+          },
+          "test": {
+            "branch": "sg/codex/customer-crm/test",
+            "path": "C:\\Users\\Administrator\\AppData\\Local\\Temp\\sg-customer-crm-native-20261021-03\\.specgate\\codex\\worktrees\\customer-crm\\test",
+            "reused": false,
+            "role": "test"
+          }
+        }
+      },
+      "plan": {
+        "contract": {
+          "hash": "sha256:8a66e9f17580eee9f248e1174c9d775fa1807048a51152689fb93696f46bd8be",
+          "path": ".specgate/codex/changes/customer-crm/plan/contract-8a66e9f17580eee9f248e1174c9d775fa1807048a51152689fb93696f46bd8be.json",
+          "version": 1
+        },
+        "hash": "sha256:124825cb25e6569422c2514e748a6b2a00f0b5e45f9a7f26e65f7bdc1435b904",
+        "model": {
+          "hash": "sha256:2fdd0e44b2da44ae17dbb8d6669dfea72cec881f801cc7854c9c9092ca42607d",
+          "path": ".specgate/codex/changes/customer-crm/plan/model-2fdd0e44b2da44ae17dbb8d6669dfea72cec881f801cc7854c9c9092ca42607d.json",
+          "version": 1
+        },
+        "path": ".specgate/codex/changes/customer-crm/plan/plan-124825cb25e6569422c2514e748a6b2a00f0b5e45f9a7f26e65f7bdc1435b904.json",
+        "tests": {
+          "directory": ".specgate/codex/changes/customer-crm/tests/v1-45147b50c61922d4058a9936326aecd3cd7d311c59ceaf82ee5863cae7b35d1f",
+          "hash": "sha256:45147b50c61922d4058a9936326aecd3cd7d311c59ceaf82ee5863cae7b35d1f",
+          "path": ".specgate/codex/changes/customer-crm/tests/v1-45147b50c61922d4058a9936326aecd3cd7d311c59ceaf82ee5863cae7b35d1f/manifest-45147b50c61922d4058a9936326aecd3cd7d311c59ceaf82ee5863cae7b35d1f.json",
+          "version": 1
+        },
+        "version": 1
+      }
+    },
+    "phase": "TESTING",
+    "resumePhase": null,
+    "retries": {},
+    "schemaVersion": 1,
+    "version": 21
+  },
+  "event": {
+    "changeId": "customer-crm",
+    "hash": "04b0b5fd987760aba7314558c2e9d6a6bcd6fb145d9b2f04ec05068a70459bd0",
+    "payload": {
+      "from": "INTEGRATING",
+      "to": "TESTING"
+    },
+    "previousHash": "0cc454a66ccaf103c2888fc4fe4f21e12d36e540ebe824c40fa1ada25ecb223b",
+    "schemaVersion": 1,
+    "sequence": 21,
+    "state": {
+      "changeId": "customer-crm",
+      "checkpoint": {
+        "id": "customer-crm:21",
+        "label": "TESTING",
+        "phase": "TESTING",
+        "recordedAt": "2026-10-21T10:55:23.346Z",
+        "version": 21
+      },
+      "context": {
+        "artifacts": {
+          "requirements": {
+            "hash": "sha256:66a4c8233574d2200771dae98e3429deb06dc165780814a3a037194c336992df",
+            "revision": 1
+          }
+        },
+        "changeAdd": {
+          "frozen": {
+            "authority": "REQ_FROZEN-gate-transition",
+            "hash": "sha256:66a4c8233574d2200771dae98e3429deb06dc165780814a3a037194c336992df",
+            "path": ".specgate/codex/changes/customer-crm/requirements/revision-1.json",
+            "revision": 1
+          }
+        },
+        "development": {
+          "changeId": "customer-crm",
+          "conflicts": [],
+          "contractHash": "sha256:8a66e9f17580eee9f248e1174c9d775fa1807048a51152689fb93696f46bd8be",
+          "freezeCommit": "edbc04656c880de8d17d1058e48a62bf9851b99f",
+          "merged": [
+            {
+              "branch": "sg/codex/customer-crm/frontend",
+              "integrationCommit": "03aaf8e2bc420d53386a692c799bc7ef7a2617a7",
+              "mergedAt": "2026-10-21T10:55:23.119Z",
+              "role": "frontend",
+              "roleCommit": "40aa779deae60ff187683db9dcacbab6527c1a3b"
+            },
+            {
+              "branch": "sg/codex/customer-crm/backend",
+              "integrationCommit": "1adb065b736c7acba31343e0a72c2572164f87df",
+              "mergedAt": "2026-10-21T10:55:23.332Z",
+              "role": "backend",
+              "roleCommit": "45a8b82ef8bac35ffee9e2e04272513c51954ba3"
+            }
+          ],
+          "modelHash": "sha256:2fdd0e44b2da44ae17dbb8d6669dfea72cec881f801cc7854c9c9092ca42607d",
+          "preparedAt": "2026-10-21T10:47:30.180Z",
+          "red": {
+            "cases": [
+              {
+                "id": "CASE-AC-1",
+                "status": "fail"
+              },
+              {
+                "id": "CASE-AC-2",
+                "status": "fail"
+              },
+              {
+                "id": "CASE-AC-3",
+                "status": "fail"
+              },
+              {
+                "id": "CASE-AC-4",
+                "status": "fail"
+              }
+            ],
+            "exitCode": 1,
+            "hash": "sha256:966865bfb751aa1b2b12dba56bad9737b4660174e305d1a0fa801cca30763927",
+            "ok": true,
+            "path": ".specgate/codex/changes/customer-crm/red/2026-10-21T10-47-29-361Z-0c79fd8d-b66a-443b-b7d9-ee8192326d73/evidence.json"
+          },
+          "requirementsHash": "sha256:124825cb25e6569422c2514e748a6b2a00f0b5e45f9a7f26e65f7bdc1435b904",
+          "roles": {
+            "backend": {
+              "attempts": 1,
+              "branch": "sg/codex/customer-crm/backend",
+              "commit": "45a8b82ef8bac35ffee9e2e04272513c51954ba3",
+              "files": [
+                "backend/src/main/java/com/example/tasks/controller/CustomerController.java",
+                "backend/src/main/java/com/example/tasks/dto/CustomerRequest.java",
+                "backend/src/main/java/com/example/tasks/dto/UpdateCustomerRequest.java",
+                "backend/src/main/java/com/example/tasks/entity/Customer.java",
+                "backend/src/main/java/com/example/tasks/repository/CustomerRepository.java",
+                "backend/src/main/java/com/example/tasks/service/CustomerService.java",
+                "backend/src/main/java/com/example/tasks/vo/CustomerSummaryVO.java",
+                "backend/src/main/java/com/example/tasks/vo/CustomerVO.java"
+              ],
+              "status": "completed",
+              "summary": "Customer CRUD, validation, unique email, filtering and summary API implemented by the primary agent because the native backend thread did not consume the task.",
+              "worktree": "C:\\Users\\Administrator\\AppData\\Local\\Temp\\sg-customer-crm-native-20261021-03\\.specgate\\codex\\worktrees\\customer-crm\\backend"
+            },
+            "frontend": {
+              "attempts": 1,
+              "branch": "sg/codex/customer-crm/frontend",
+              "commit": "40aa779deae60ff187683db9dcacbab6527c1a3b",
+              "files": [
+                "frontend/src/App.vue",
+                "frontend/src/api/customers.ts",
+                "frontend/src/api/types.ts",
+                "frontend/src/components/CustomerPanel.vue",
+                "frontend/src/style.css"
+              ],
+              "status": "completed",
+              "summary": "Customer panel, CRUD API client and Customers navigation implemented by the primary agent because the native frontend thread did not consume the task.",
+              "worktree": "C:\\Users\\Administrator\\AppData\\Local\\Temp\\sg-customer-crm-native-20261021-03\\.specgate\\codex\\worktrees\\customer-crm\\frontend"
+            }
+          },
+          "rounds": [
+            {
+              "at": "2026-10-21T10:55:22.887Z",
+              "results": [
+                {
+                  "code": null,
+                  "commit": "40aa779deae60ff187683db9dcacbab6527c1a3b",
+                  "files": [
+                    "frontend/src/App.vue",
+                    "frontend/src/api/customers.ts",
+                    "frontend/src/api/types.ts",
+                    "frontend/src/components/CustomerPanel.vue",
+                    "frontend/src/style.css"
+                  ],
+                  "ok": true,
+                  "role": "frontend"
+                },
+                {
+                  "code": null,
+                  "commit": "45a8b82ef8bac35ffee9e2e04272513c51954ba3",
+                  "files": [
+                    "backend/src/main/java/com/example/tasks/controller/CustomerController.java",
+                    "backend/src/main/java/com/example/tasks/dto/CustomerRequest.java",
+                    "backend/src/main/java/com/example/tasks/dto/UpdateCustomerRequest.java",
+                    "backend/src/main/java/com/example/tasks/entity/Customer.java",
+                    "backend/src/main/java/com/example/tasks/repository/CustomerRepository.java",
+                    "backend/src/main/java/com/example/tasks/service/CustomerService.java",
+                    "backend/src/main/java/com/example/tasks/vo/CustomerSummaryVO.java",
+                    "backend/src/main/java/com/example/tasks/vo/CustomerVO.java"
+                  ],
+                  "ok": true,
+                  "role": "backend"
+                }
+              ]
+            }
+          ],
+          "schemaVersion": 1,
+          "testsHash": "sha256:45147b50c61922d4058a9936326aecd3cd7d311c59ceaf82ee5863cae7b35d1f",
+          "worktrees": {
+            "backend": {
+              "branch": "sg/codex/customer-crm/backend",
+              "path": "C:\\Users\\Administrator\\AppData\\Local\\Temp\\sg-customer-crm-native-20261021-03\\.specgate\\codex\\worktrees\\customer-crm\\backend",
+              "reused": false,
+              "role": "backend"
+            },
+            "frontend": {
+              "branch": "sg/codex/customer-crm/frontend",
+              "path": "C:\\Users\\Administrator\\AppData\\Local\\Temp\\sg-customer-crm-native-20261021-03\\.specgate\\codex\\worktrees\\customer-crm\\frontend",
+              "reused": false,
+              "role": "frontend"
+            },
+            "integration": {
+              "branch": "sg/codex/customer-crm/integration",
+              "path": "C:\\Users\\Administrator\\AppData\\Local\\Temp\\sg-customer-crm-native-20261021-03\\.specgate\\codex\\worktrees\\customer-crm\\integration",
+              "reused": false,
+              "role": "integration"
+            },
+            "review": {
+              "branch": "sg/codex/customer-crm/review",
+              "path": "C:\\Users\\Administrator\\AppData\\Local\\Temp\\sg-customer-crm-native-20261021-03\\.specgate\\codex\\worktrees\\customer-crm\\review",
+              "reused": false,
+              "role": "review"
+            },
+            "test": {
+              "branch": "sg/codex/customer-crm/test",
+              "path": "C:\\Users\\Administrator\\AppData\\Local\\Temp\\sg-customer-crm-native-20261021-03\\.specgate\\codex\\worktrees\\customer-crm\\test",
+              "reused": false,
+              "role": "test"
+            }
+          }
+        },
+        "plan": {
+          "contract": {
+            "hash": "sha256:8a66e9f17580eee9f248e1174c9d775fa1807048a51152689fb93696f46bd8be",
+            "path": ".specgate/codex/changes/customer-crm/plan/contract-8a66e9f17580eee9f248e1174c9d775fa1807048a51152689fb93696f46bd8be.json",
+            "version": 1
+          },
+          "hash": "sha256:124825cb25e6569422c2514e748a6b2a00f0b5e45f9a7f26e65f7bdc1435b904",
+          "model": {
+            "hash": "sha256:2fdd0e44b2da44ae17dbb8d6669dfea72cec881f801cc7854c9c9092ca42607d",
+            "path": ".specgate/codex/changes/customer-crm/plan/model-2fdd0e44b2da44ae17dbb8d6669dfea72cec881f801cc7854c9c9092ca42607d.json",
+            "version": 1
+          },
+          "path": ".specgate/codex/changes/customer-crm/plan/plan-124825cb25e6569422c2514e748a6b2a00f0b5e45f9a7f26e65f7bdc1435b904.json",
+          "tests": {
+            "directory": ".specgate/codex/changes/customer-crm/tests/v1-45147b50c61922d4058a9936326aecd3cd7d311c59ceaf82ee5863cae7b35d1f",
+            "hash": "sha256:45147b50c61922d4058a9936326aecd3cd7d311c59ceaf82ee5863cae7b35d1f",
+            "path": ".specgate/codex/changes/customer-crm/tests/v1-45147b50c61922d4058a9936326aecd3cd7d311c59ceaf82ee5863cae7b35d1f/manifest-45147b50c61922d4058a9936326aecd3cd7d311c59ceaf82ee5863cae7b35d1f.json",
+            "version": 1
+          },
+          "version": 1
+        }
+      },
+      "phase": "TESTING",
+      "resumePhase": null,
+      "retries": {},
+      "schemaVersion": 1,
+      "version": 21
+    },
+    "timestamp": "2026-10-21T10:55:23.346Z",
+    "type": "test.started"
+  },
+  "snapshotPending": false,
+  "development": {
+    "changeId": "customer-crm",
+    "conflicts": [],
+    "contractHash": "sha256:8a66e9f17580eee9f248e1174c9d775fa1807048a51152689fb93696f46bd8be",
+    "freezeCommit": "edbc04656c880de8d17d1058e48a62bf9851b99f",
+    "merged": [
+      {
+        "branch": "sg/codex/customer-crm/frontend",
+        "integrationCommit": "03aaf8e2bc420d53386a692c799bc7ef7a2617a7",
+        "mergedAt": "2026-10-21T10:55:23.119Z",
+        "role": "frontend",
+        "roleCommit": "40aa779deae60ff187683db9dcacbab6527c1a3b"
+      },
+      {
+        "branch": "sg/codex/customer-crm/backend",
+        "integrationCommit": "1adb065b736c7acba31343e0a72c2572164f87df",
+        "mergedAt": "2026-10-21T10:55:23.332Z",
+        "role": "backend",
+        "roleCommit": "45a8b82ef8bac35ffee9e2e04272513c51954ba3"
+      }
+    ],
+    "modelHash": "sha256:2fdd0e44b2da44ae17dbb8d6669dfea72cec881f801cc7854c9c9092ca42607d",
+    "preparedAt": "2026-10-21T10:47:30.180Z",
+    "red": {
+      "cases": [
+        {
+          "id": "CASE-AC-1",
+          "status": "fail"
+        },
+        {
+          "id": "CASE-AC-2",
+          "status": "fail"
+        },
+        {
+          "id": "CASE-AC-3",
+          "status": "fail"
+        },
+        {
+          "id": "CASE-AC-4",
+          "status": "fail"
+        }
+      ],
+      "exitCode": 1,
+      "hash": "sha256:966865bfb751aa1b2b12dba56bad9737b4660174e305d1a0fa801cca30763927",
+      "ok": true,
+      "path": ".specgate/codex/changes/customer-crm/red/2026-10-21T10-47-29-361Z-0c79fd8d-b66a-443b-b7d9-ee8192326d73/evidence.json"
+    },
+    "requirementsHash": "sha256:124825cb25e6569422c2514e748a6b2a00f0b5e45f9a7f26e65f7bdc1435b904",
+    "roles": {
+      "backend": {
+        "attempts": 1,
+        "branch": "sg/codex/customer-crm/backend",
+        "commit": "45a8b82ef8bac35ffee9e2e04272513c51954ba3",
+        "files": [
+          "backend/src/main/java/com/example/tasks/controller/CustomerController.java",
+          "backend/src/main/java/com/example/tasks/dto/CustomerRequest.java",
+          "backend/src/main/java/com/example/tasks/dto/UpdateCustomerRequest.java",
+          "backend/src/main/java/com/example/tasks/entity/Customer.java",
+          "backend/src/main/java/com/example/tasks/repository/CustomerRepository.java",
+          "backend/src/main/java/com/example/tasks/service/CustomerService.java",
+          "backend/src/main/java/com/example/tasks/vo/CustomerSummaryVO.java",
+          "backend/src/main/java/com/example/tasks/vo/CustomerVO.java"
+        ],
+        "status": "completed",
+        "summary": "Customer CRUD, validation, unique email, filtering and summary API implemented by the primary agent because the native backend thread did not consume the task.",
+        "worktree": "C:\\Users\\Administrator\\AppData\\Local\\Temp\\sg-customer-crm-native-20261021-03\\.specgate\\codex\\worktrees\\customer-crm\\backend"
+      },
+      "frontend": {
+        "attempts": 1,
+        "branch": "sg/codex/customer-crm/frontend",
+        "commit": "40aa779deae60ff187683db9dcacbab6527c1a3b",
+        "files": [
+          "frontend/src/App.vue",
+          "frontend/src/api/customers.ts",
+          "frontend/src/api/types.ts",
+          "frontend/src/components/CustomerPanel.vue",
+          "frontend/src/style.css"
+        ],
+        "status": "completed",
+        "summary": "Customer panel, CRUD API client and Customers navigation implemented by the primary agent because the native frontend thread did not consume the task.",
+        "worktree": "C:\\Users\\Administrator\\AppData\\Local\\Temp\\sg-customer-crm-native-20261021-03\\.specgate\\codex\\worktrees\\customer-crm\\frontend"
+      }
+    },
+    "rounds": [
+      {
+        "at": "2026-10-21T10:55:22.887Z",
+        "results": [
+          {
+            "code": null,
+            "commit": "40aa779deae60ff187683db9dcacbab6527c1a3b",
+            "files": [
+              "frontend/src/App.vue",
+              "frontend/src/api/customers.ts",
+              "frontend/src/api/types.ts",
+              "frontend/src/components/CustomerPanel.vue",
+              "frontend/src/style.css"
+            ],
+            "ok": true,
+            "role": "frontend"
+          },
+          {
+            "code": null,
+            "commit": "45a8b82ef8bac35ffee9e2e04272513c51954ba3",
+            "files": [
+              "backend/src/main/java/com/example/tasks/controller/CustomerController.java",
+              "backend/src/main/java/com/example/tasks/dto/CustomerRequest.java",
+              "backend/src/main/java/com/example/tasks/dto/UpdateCustomerRequest.java",
+              "backend/src/main/java/com/example/tasks/entity/Customer.java",
+              "backend/src/main/java/com/example/tasks/repository/CustomerRepository.java",
+              "backend/src/main/java/com/example/tasks/service/CustomerService.java",
+              "backend/src/main/java/com/example/tasks/vo/CustomerSummaryVO.java",
+              "backend/src/main/java/com/example/tasks/vo/CustomerVO.java"
+            ],
+            "ok": true,
+            "role": "backend"
+          }
+        ]
+      }
+    ],
+    "schemaVersion": 1,
+    "testsHash": "sha256:45147b50c61922d4058a9936326aecd3cd7d311c59ceaf82ee5863cae7b35d1f",
+    "worktrees": {
+      "backend": {
+        "branch": "sg/codex/customer-crm/backend",
+        "path": "C:\\Users\\Administrator\\AppData\\Local\\Temp\\sg-customer-crm-native-20261021-03\\.specgate\\codex\\worktrees\\customer-crm\\backend",
+        "reused": false,
+        "role": "backend"
+      },
+      "frontend": {
+        "branch": "sg/codex/customer-crm/frontend",
+        "path": "C:\\Users\\Administrator\\AppData\\Local\\Temp\\sg-customer-crm-native-20261021-03\\.specgate\\codex\\worktrees\\customer-crm\\frontend",
+        "reused": false,
+        "role": "frontend"
+      },
+      "integration": {
+        "branch": "sg/codex/customer-crm/integration",
+        "path": "C:\\Users\\Administrator\\AppData\\Local\\Temp\\sg-customer-crm-native-20261021-03\\.specgate\\codex\\worktrees\\customer-crm\\integration",
+        "reused": false,
+        "role": "integration"
+      },
+      "review": {
+        "branch": "sg/codex/customer-crm/review",
+        "path": "C:\\Users\\Administrator\\AppData\\Local\\Temp\\sg-customer-crm-native-20261021-03\\.specgate\\codex\\worktrees\\customer-crm\\review",
+        "reused": false,
+        "role": "review"
+      },
+      "test": {
+        "branch": "sg/codex/customer-crm/test",
+        "path": "C:\\Users\\Administrator\\AppData\\Local\\Temp\\sg-customer-crm-native-20261021-03\\.specgate\\codex\\worktrees\\customer-crm\\test",
+        "reused": false,
+        "role": "test"
+      }
+    }
+  }
+}

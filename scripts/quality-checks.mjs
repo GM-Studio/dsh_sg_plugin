@@ -125,7 +125,9 @@ export async function runChecks({
       'Windows template acceptance required; Linux template acceptance remains deferred.',
     );
   if (
-    kinds.some(([, kind]) => ['reference-template', 'java-scaffold'].includes(kind)) &&
+    kinds.some(([, kind]) =>
+      ['reference-template', 'java-scaffold', 'customer-e2e'].includes(kind),
+    ) &&
     (process.platform === 'win32' || stage !== 'ci')
   )
     execute(
@@ -134,7 +136,9 @@ export async function runChecks({
       [
         'scripts/quality-assets.mjs',
         ...kinds
-          .filter(([, kind]) => ['reference-template', 'java-scaffold'].includes(kind))
+          .filter(([, kind]) =>
+            ['reference-template', 'java-scaffold', 'customer-e2e'].includes(kind),
+          )
           .map(([name]) => name),
       ],
       { cwd: root, env: acceptanceEnv },

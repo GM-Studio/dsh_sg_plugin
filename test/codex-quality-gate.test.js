@@ -8,7 +8,7 @@ import { createApprovalAuthority } from '../src/codex/approvals.js';
 import { createDevelopmentService } from '../src/codex/development.js';
 import { canonicalJson, hashValue } from '../src/codex/events.js';
 import { createPlanService } from '../src/codex/plan.js';
-import { createQualityService } from '../src/codex/quality.js';
+import { computeChangedCoverage, createQualityService } from '../src/codex/quality.js';
 import { createStateStore } from '../src/codex/state-machine.js';
 import { VERIFY_STAGES } from '../src/v4/verify-evidence.js';
 
@@ -449,6 +449,86 @@ test('insufficient changed-line coverage cannot advance even when aggregate cove
   assert.equal(result.code, 'CHANGED_COVERAGE_BELOW_THRESHOLD');
   assert.equal((await context.store.inspect()).state.phase, 'TESTING');
   assert.equal(result.retryAllowed, true);
+});
+
+test('a declaration-only Java interface does not become unavailable changed coverage', () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'sg-codex-interface-coverage-'));
+  git(root, ['init', '-q']);
+  git(root, ['config', 'user.email', 'test@example.com']);
+  git(root, ['config', 'user.name', 'test']);
+  const javaRoot = path.join(root, 'backend/src/main/java/com/example');
+  fs.mkdirSync(javaRoot, { recursive: true });
+  fs.mkdirSync(path.join(root, 'frontend/coverage'), { recursive: true });
+  const repository = path.join(javaRoot, 'CustomerRepository.java');
+  const service = path.join(javaRoot, 'CustomerService.java');
+  fs.writeFileSync(
+    repository,
+    'package com.example; public interface CustomerRepository { String NAME = "customers"; List<Customer> findAll(); }\n',
+  );
+  fs.writeFileSync(
+    service,
+    'package com.example; public class CustomerService { int count() { return 1; } }\n',
+  );
+  const base = commitAll(root, 'base');
+
+  fs.writeFileSync(
+    repository,
+    'package com.example; public interface CustomerRepository { String NAME = "customers"; List<Customer> findAll(); Customer save(Customer customer); }\n',
+  );
+  fs.writeFileSync(
+    service,
+    'package com.example; public class CustomerService { int count() { return 2; } }\n',
+  );
+  const head = commitAll(root, 'changed production');
+  fs.writeFileSync(path.join(root, 'frontend/coverage/coverage-final.json'), '{}');
+  fs.mkdirSync(path.join(root, 'backend/target/site/jacoco'), { recursive: true });
+  fs.writeFileSync(
+    path.join(root, 'backend/target/site/jacoco/jacoco.xml'),
+    [
+      '<report>',
+      '<package name="com/example">',
+      '<sourcefile name="CustomerService.java"><line nr="1" mi="0" ci="1"/></sourcefile>',
+      '</package>',
+      '</report>',
+    ].join('\n'),
+  );
+
+  const coverage = computeChangedCoverage({ root, base, head });
+  assert.equal(coverage.ok, true, JSON.stringify(coverage));
+  assert.equal(coverage.sides.backend.unavailable, 0, JSON.stringify(coverage));
+  assert.equal(coverage.executable, 1, JSON.stringify(coverage));
+  assert.equal(coverage.covered, 1, JSON.stringify(coverage));
+});
+
+test('a Java class without JaCoCo evidence remains unavailable changed coverage', () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'sg-codex-class-coverage-'));
+  git(root, ['init', '-q']);
+  git(root, ['config', 'user.email', 'test@example.com']);
+  git(root, ['config', 'user.name', 'test']);
+  const javaRoot = path.join(root, 'backend/src/main/java/com/example');
+  fs.mkdirSync(javaRoot, { recursive: true });
+  fs.mkdirSync(path.join(root, 'frontend/coverage'), { recursive: true });
+  const service = path.join(javaRoot, 'CustomerService.java');
+  fs.writeFileSync(
+    service,
+    'package com.example; public class CustomerService { int count() { return 1; } }\n',
+  );
+  const base = commitAll(root, 'base');
+  fs.writeFileSync(
+    service,
+    'package com.example; public class CustomerService { int count() { return 2; } }\n',
+  );
+  const head = commitAll(root, 'changed production');
+  fs.writeFileSync(path.join(root, 'frontend/coverage/coverage-final.json'), '{}');
+  fs.mkdirSync(path.join(root, 'backend/target/site/jacoco'), { recursive: true });
+  fs.writeFileSync(
+    path.join(root, 'backend/target/site/jacoco/jacoco.xml'),
+    '<report><package name="com/example"></package></report>',
+  );
+
+  const coverage = computeChangedCoverage({ root, base, head });
+  assert.equal(coverage.ok, false, JSON.stringify(coverage));
+  assert.equal(coverage.sides.backend.unavailable, 1, JSON.stringify(coverage));
 });
 
 test('aggregate coverage below either side threshold blocks Review', async () => {

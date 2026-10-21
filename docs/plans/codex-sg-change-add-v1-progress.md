@@ -14,10 +14,10 @@
 | P3 真实验证 | 已实施，Windows 四档证据通过；Linux `not-run` | [Windows run-3](../verification/codex-sg-v1/p3/windows-run-3/matrix.json) 四档均为 `passed`，构建、测试、lint、格式、覆盖率和运行时证据已保存 |
 | P4 需求闭环 | 核心已实施，模拟可信审批测试通过；真实宿主 H1 `not-run` | 3×5 澄清、批判、H1 绑定快照、单 active change、CAS 与审计链已覆盖；默认宿主审批仍不可伪造 |
 | P5 计划/契约/测试冻结 | 核心已实施，回归通过 | 动态 AC 任务图、契约/模型/测试 hash、Test 角色注入和只读复核已覆盖；布尔红标志不能推进 |
-| P6 并行开发/worktree | 已通过原生 Frontend/Backend Agent 生成产品 E2E | 原生 subagent 在固定 role worktree 独立提交，P6 服务复核 freeze 后代、角色边界并以 exact commit 合入 integration；五个 worktree 与 red baseline 均有证据 |
-| P7 测试质量门 | 已通过原生 Test Agent 与真实生成产品 E2E | 冻结 cases 2/2、后端 14/14、前端 12/12、9/9 验证阶段、changed-line 96.24%、P0/P1=0，最终进入 `REVIEWING` |
-| P8 三档 Review/H3 | 核心已实施，自动回归通过；真实 Review/H3 `not-run` | 风险选档、只读 Review、P0–P3 门、findings 证据、H3 复合 hash 与审批后 CAS 已覆盖；原生 Review 线程未执行 challenge |
-| P9 归档/push/E2E | 核心已实施，真实 Git 回归通过；真实 H3-gated E2E `not-run` | H3 前拒绝归档、H3 后 merge、无 remote、push 失败、成功本地 bare remote、无 force 与证据保留已覆盖 |
+| P6 并行开发/worktree | 原生 Agent Task priority E2E 已通过；Customer CRM 的主线程实现也通过服务门 | Task priority 由原生 Frontend/Backend Agent 独立提交；Customer CRM 的原生角色 `not-run`，但五个 worktree、角色边界、red baseline 和 exact commit 合并验证真实通过 |
+| P7 测试质量门 | 两类生成产品均通过真实质量门 | Task priority：2/2 cases、后端 14/14、前端 12/12、9/9 stages、96.24%。Customer CRM：4/4 cases、后端 15/15、前端 12/12、9/9 stages、91.36%，最终均进入 `REVIEWING` |
+| P8 三档 Review/H3 | 核心回归通过；Customer CRM strict Review 与 synthetic H3 通过 | Review 风险选档和只读校验真实通过；主线程 fallback 生成 strict pass 报告。原生 Review Agent 未消费 challenge，H3 不是可信宿主用户审批 |
+| P9 归档/push/E2E | Customer CRM 完整本地 E2E 通过；生产远端仍 `not-run` | H3 后真实 merge 为 `d19e7a4`，push 到隔离 bare remote 成功并进入 `ARCHIVED`；没有 push 生产/第三方远端 |
 
 ## P0 检查点
 
@@ -60,6 +60,21 @@ P6 使用实际临时 Git 仓库和子进程验证失败基线、五个 worktree
 
 P8/P9 的 Review、H3、归档与 push 编排已经实现并通过隔离回归。自动化 H3 使用合成审批，只为验证审批安全边界；真实 Codex Desktop Review Agent 在本轮未消费 challenge，真实 H3 可信用户审批也未在宿主中完成，因此两者保持 `not-run`，不能写成完整 v1 已交付。
 
-## 下一步暂停点
+## Customer CRM P6 → P9 完整隔离验收
 
-P0–P9 核心实现与本地自动验收已完成。剩余阻塞是宿主可信链路：真实 Review Agent 执行、可信 H3 审批、以及对真实 remote 执行 H3 后归档/push。只要这些环节可用，即可按现有工具直接执行，不需要重写状态机或释放逻辑。
+- [验收说明与证据索引](../verification/codex-sg-v1/customer-crm-native-e2e/README.md)
+- [结构化验收结果](../verification/codex-sg-v1/customer-crm-native-e2e/summary.json)
+- 产品源码与测试共 56 文件、4,099 行；Customer delta 13 文件、739 added lines，低于 10,000 行限制。
+- red baseline 4/4 失败后，Frontend `40aa779`、Backend `45a8b82` 合入 Integration `1adb065`。
+- P7 冻结 cases 4/4、后端 15/15、前端 12/12、9/9 验证阶段；changed-line 349/382 = 91.36%，P0/P1=0。
+- P8 strict Review 通过，Review hash `sha256:39e3…6496`；无 P0–P3 findings。
+- H3 复合 hash `sha256:2504…17c3`；fixture approval 单次消费后进入 `ARCHIVING`。
+- P9 merge commit `d19e7a455c0efc914ed50b2775f1e4b398c0b768`，push 到隔离 bare remote 的 `master` 成功，最终状态 `ARCHIVED`。
+- 插件最终回归：556 总计，555 通过，0 失败，1 个既有 Python 3.12 环境跳过；lint、format check 和 pack dry-run（1,225 files）通过。
+- Customer E2E 资产新增仓库级 checker：在 JDK8 生成模板上物化 Customer 源码/测试，3/3 后端测试通过且 Checkstyle 0 违规。
+
+本轮 Customer CRM 的 Test、Frontend、Backend、Review 原生 Agent 均未消费任务，证据中明确为 `not-run`；产品实现、runner 注入和 Review fallback 由主线程完成。此事实与已通过的原生 Task priority P6→P7 E2E 分开记录。
+
+## 当前暂停点
+
+P0–P9 核心实现、本地自动验收和 Customer CRM P6→P9 隔离闭环已完成。剩余阻塞是宿主可信链路：本轮原生角色调度未消费任务、真实 Review Agent 未执行、可信 H1/H3 审批未发生，以及对生产/第三方 remote 的 push 未执行。只要这些宿主能力可用，即可按现有工具重放，不需要重写状态机或释放逻辑。

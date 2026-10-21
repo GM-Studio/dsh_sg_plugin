@@ -403,6 +403,23 @@ function changedLineRanges(root, base, head) {
   return files;
 }
 
+function isDeclarationOnlyJavaInterface(source) {
+  if (typeof source !== 'string') return false;
+  const withoutComments = source.replace(/\/\*[\s\S]*?\*\//g, ' ').replace(/\/\/[^\r\n]*/g, ' ');
+  const normalized = withoutComments
+    .replace(/"(?:\\.|[^"\\])*"/g, '""')
+    .replace(/'(?:\\.|[^'\\])*'/g, "''");
+  const declaration =
+    /\binterface\s+[A-Za-z_$][\w$]*(?:\s*<[^{}]*>)?(?:\s+extends\s+[^{}\r\n]+)?\s*\{/.exec(
+      normalized,
+    );
+  if (!declaration) return false;
+  const start = declaration.index + declaration[0].lastIndexOf('{');
+  const end = normalized.lastIndexOf('}');
+  if (end <= start) return false;
+  return !/[{}]/.test(normalized.slice(start + 1, end));
+}
+
 function javaCoverage(root, changed) {
   const file = path.join(root, 'backend/target/site/jacoco/jacoco.xml');
   if (!fs.existsSync(file))
@@ -432,6 +449,14 @@ function javaCoverage(root, changed) {
       if (matches.length === 1) body = matches[0][1];
     }
     if (!body) {
+      const sourceFile = path.join(root, relative);
+      if (inside(root, sourceFile)) {
+        try {
+          if (isDeclarationOnlyJavaInterface(fs.readFileSync(sourceFile, 'utf8'))) continue;
+        } catch {
+          // An unreadable source file still has no verifiable executable coverage.
+        }
+      }
       unavailable += 1;
       continue;
     }
