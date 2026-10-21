@@ -158,7 +158,7 @@ test('stdio handshake and diagnostic tools leave a nonempty project unchanged', 
   assert.equal(status.projectRoot, cwd);
   assert.equal(status.verification.status, 'not-run');
   assert.equal(status.workflow.status, 'kernel-only');
-  assert.equal(status.legacyStateDetected, true);
+  assert.equal(status.legacyStateDetected, undefined);
   assert.deepEqual(result.messages[5].result, {});
   assert.equal(fs.readFileSync(path.join(cwd, '.specgate/state.json'), 'utf8'), legacy);
   assert.equal(fs.readFileSync(path.join(cwd, 'business.txt'), 'utf8'), 'preserve me');
@@ -180,7 +180,7 @@ test('unknown versions negotiate the supported version; invalid initialize can b
   const manifest = JSON.parse(fs.readFileSync(path.join(root, '.codex-plugin/plugin.json')));
   assert.equal(version.version, manifest.version);
   assert.equal(
-    version.dshVersion,
+    version.packageVersion,
     JSON.parse(fs.readFileSync(path.join(root, 'package.json'))).version,
   );
 });

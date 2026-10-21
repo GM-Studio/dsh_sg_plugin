@@ -18,7 +18,11 @@ plugin.json
 mcp.json
 skills/
 assets/codex/agents/
+src/codex/server.js
 ```
+
+共享运行时代码位于 `src/codex/core/`。本分支不包含旧版本入口或版本命名
+兼容目录，Codex 是唯一支持的运行面。
 
 `plugin.json` 是 portable Agent Plugins manifest，`mcp.json` 声明本地 stdio MCP。根目录的 `.agents/plugins/marketplace.json` 把当前 checkout 暴露为 `specgate-source` marketplace。
 
@@ -107,15 +111,15 @@ Blocking Review 必须进入新 round 并重新走完整闭环。
 
 ## 5. 阶段与工具
 
-| 阶段 | Codex 主 Agent | 子 Agent / MCP |
-| --- | --- | --- |
-| 测试设计 | `sg_test_design_prepare` | `specgate_test_designer` → `sg_test_design_freeze` |
-| 前后端开发 | `sg_development_prepare` | 同时派发 `specgate_frontend`、`specgate_backend` |
-| 集成 | `sg_development_run` | MCP 校验 commit、路径、freeze 后代并合并 |
-| 测试 | 等待 Tester | `specgate_tester` → `sg_quality_run` |
-| 格式化 | 等待 Formatter | `specgate_formatter` → `sg_format_run` |
-| Review | 等待 Reviewer | `specgate_reviewer` → `sg_review_prepare` / `sg_review_run` |
-| 高风险回修 | `sg_development_rework` | 新一轮 frontend/backend/format worktree，重跑完整闭环 |
+| 阶段       | Codex 主 Agent           | 子 Agent / MCP                                              |
+| ---------- | ------------------------ | ----------------------------------------------------------- |
+| 测试设计   | `sg_test_design_prepare` | `specgate_test_designer` → `sg_test_design_freeze`          |
+| 前后端开发 | `sg_development_prepare` | 同时派发 `specgate_frontend`、`specgate_backend`            |
+| 集成       | `sg_development_run`     | MCP 校验 commit、路径、freeze 后代并合并                    |
+| 测试       | 等待 Tester              | `specgate_tester` → `sg_quality_run`                        |
+| 格式化     | 等待 Formatter           | `specgate_formatter` → `sg_format_run`                      |
+| Review     | 等待 Reviewer            | `specgate_reviewer` → `sg_review_prepare` / `sg_review_run` |
+| 高风险回修 | `sg_development_rework`  | 新一轮 frontend/backend/format worktree，重跑完整闭环       |
 
 原生 Test runner 的 canonical 契约是：`--tests` 指向直接包含 `runner.mjs`
 的绝对 `specgate-tests/` 根目录；所有测试资产相对该目录解析，不能再追加

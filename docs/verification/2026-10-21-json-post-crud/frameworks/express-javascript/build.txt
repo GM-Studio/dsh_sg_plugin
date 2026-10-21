@@ -1,4 +1,0 @@
-
-> build
-> node --check src/server.js
-

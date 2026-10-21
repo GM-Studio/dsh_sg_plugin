@@ -75,5 +75,16 @@ npm run format:check
 npm run pack:check
 ```
 
-Full repository result: 576 tests, 575 passed, 0 failed and 1 existing Python
-environment skip. Lint, formatting and the packed-plugin smoke check passed.
+Codex-only repository result: 161 tests, 161 passed, 0 failed and 0 skipped.
+Lint, formatting, the 157-file / 1.1 MB unpacked package check and packaged MCP
+stdio smoke all passed.
+
+The post-cleanup real matrix initialized and verified all four Java presets:
+
+- `jdk8-boot2.7`
+- `jdk17-boot3.5`
+- `jdk21-boot3.5`
+- `jdk21-boot4.0`
+
+Each preset passed Maven verify, frontend install/build/test/lint/format, HTTP
+CRUD and graceful-restart persistence.

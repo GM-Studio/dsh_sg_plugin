@@ -1,4 +1,0 @@
-- insert:
-    - id: specgate
-      name: 'dsh-plugin-specgate'
-      config: {}

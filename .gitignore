@@ -3,13 +3,9 @@ dist/
 .DS_Store
 Thumbs.db
 *.log
-!docs/verification/2026-10-21-standard-template/**/*.log
 !docs/verification/codex-sg-v1/**/*.log
 *.tgz
 coverage/
-!src/v3/coverage/
-!src/v3/coverage/*.js
-.ak47_dsh_stage/
 .sg-fixed-live-*/
 .specgate/
 .npmrc

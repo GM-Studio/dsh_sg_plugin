@@ -1,4 +1,4 @@
-import { startJavaInit } from '../v4/java-init.js';
+import { startJavaInit } from './core/java/java-init.js';
 
 // Private staging worker. The parent supplies a clean Git environment and empty
 // template/hooks directory. This callback unlocks generation only; it is never

@@ -1,12 +1,11 @@
 {
-  "name": "dsh-plugin-specgate",
-  "version": "4.3.1",
+  "name": "specgate-codex",
+  "version": "0.3.0",
   "private": false,
   "type": "module",
-  "description": "SpecGate — spec-driven gated workflow for DeepSeek Harness: project init, gates, skills, OpenSpec state and parallel agents.",
+  "description": "SpecGate for Codex: spec-first delivery with native subagents, isolated worktrees and auditable evidence.",
   "keywords": [
-    "dsh",
-    "deepseek-harness",
+    "codex",
     "spec-driven",
     "workflow",
     "gates",
@@ -23,11 +22,6 @@
   "bugs": {
     "url": "https://github.com/GM-Studio/dsh_sg_plugin/issues"
   },
-  "exports": {
-    ".": "./index.js",
-    "./locale/*.json": "./locale/*.json",
-    "./icon": "./icon.svg"
-  },
   "files": [
     ".codex-plugin/plugin.json",
     ".agents/plugins/marketplace.json",
@@ -38,27 +32,19 @@
     "scripts/codex-plugin-smoke.mjs",
     "scripts/codex-source-setup.mjs",
     "scripts/verify-codex-matrix.mjs",
-    "index.js",
-    "src",
-    "assets",
-    "docs",
-    "cordis.patch.yml",
-    "locale",
-    "icon.svg",
+    "src/codex",
+    "assets/codex",
+    "assets/java-vue/template",
+    "docs/quickstart-codex-source.zh.md",
+    "docs/verification/codex-sg-v1/crm-native-agent-workflow/README.md",
     "README.md",
     "README.en.md",
     "CHANGELOG.md",
     "CHANGELOG.zh.md",
     "LICENSE"
   ],
-  "dsh": {
-    "bundle": {
-      "patch": "./cordis.patch.yml"
-    }
-  },
   "engines": {
-    "node": ">=20.19.0",
-    "dsh": ">=0.2.1-rc.2"
+    "node": ">=20.19.0"
   },
   "publishConfig": {
     "access": "public"
@@ -72,22 +58,13 @@
     "lint": "eslint .",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "gate": "node scripts/quality-gate.mjs --stage=push",
-    "gate:fix": "node scripts/quality-format.mjs",
-    "hooks:install": "node scripts/install-hooks.mjs",
-    "hooks:check": "node scripts/install-hooks.mjs --check",
     "pack:check": "npm pack --dry-run",
     "prepublishOnly": "npm test && npm run pack:check"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
     "eslint": "^10.13.0",
-    "eslint-plugin-vue": "10.11.1",
     "globals": "^17.13.0",
-    "prettier": "^3.9.10",
-    "prettier-plugin-sh": "0.20.2",
-    "typescript": "5.9.3",
-    "typescript-eslint": "8.72.0",
-    "vue-eslint-parser": "10.3.0"
+    "prettier": "^3.9.10"
   }
 }

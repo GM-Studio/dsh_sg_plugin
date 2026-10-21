@@ -5,7 +5,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { previewInit, executeInit } from '../src/codex/init.js';
-import { JAVA_PRESETS, GOLDEN_MANIFEST } from '../src/v4/java-versions.js';
+import { JAVA_PRESETS, GOLDEN_MANIFEST } from '../src/codex/core/java/java-versions.js';
 
 function temp(t) {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'sg-codex-init-'));

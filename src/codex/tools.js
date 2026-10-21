@@ -11,9 +11,9 @@ export const SERVER_INFO = { name: manifest.name, version: manifest.version };
 const descriptions = {
   health:
     'Check whether the local SpecGate Codex MCP adapter is responding. This does not verify a Java/Vue project.',
-  version: 'Read Codex adapter, DSH package and supported MCP protocol versions.',
+  version: 'Read the Codex plugin package and supported MCP protocol versions.',
   status:
-    'Inspect the P0 adapter status and whether the bound project has legacy state. Does not initialize, verify or advance a project.',
+    'Inspect the bound Codex workflow without initializing, verifying or advancing a project.',
 };
 
 export const TOOLS = Object.entries(descriptions).map(([name, description]) => ({
@@ -35,7 +35,7 @@ export function callDiagnostic(name, { projectRoot, protocolVersion }) {
       data = { ok: true, service: SERVER_INFO.name, stage: 'P0', transport: 'stdio' };
       break;
     case 'version':
-      data = { ...SERVER_INFO, dshVersion: pkg.version, protocolVersion };
+      data = { ...SERVER_INFO, packageVersion: pkg.version, protocolVersion };
       break;
     case 'status':
       data = {
@@ -43,7 +43,6 @@ export function callDiagnostic(name, { projectRoot, protocolVersion }) {
         projectRoot: path.resolve(projectRoot),
         workflow: { status: 'not-implemented' },
         verification: { status: 'not-run', scope: 'codex-project-workflow' },
-        legacyStateDetected: fs.existsSync(path.join(projectRoot, '.specgate/state.json')),
         trustedApproval: { status: 'unavailable' },
       };
       break;

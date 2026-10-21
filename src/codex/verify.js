@@ -5,13 +5,13 @@ import net from 'node:net';
 import { fileURLToPath } from 'node:url';
 import { createHash, randomUUID } from 'node:crypto';
 import { spawn, spawnSync } from 'node:child_process';
-import { verifyJavaProject } from '../v4/java-verify.js';
-import { VERIFY_STAGES } from '../v4/verify-evidence.js';
-import { javaFullstackFiles } from '../v4/java-fullstack-template.js';
-import { normalizeJavaPreset } from '../v4/java-versions.js';
-import { mavenRoots } from '../v4/java-env.js';
-import { projectSourceHash } from '../v3/template-style.js';
-import { patchState } from '../v3/state.js';
+import { verifyJavaProject } from './core/java/java-verify.js';
+import { VERIFY_STAGES } from './core/java/verify-evidence.js';
+import { javaFullstackFiles } from './core/java/java-fullstack-template.js';
+import { normalizeJavaPreset } from './core/java/java-versions.js';
+import { mavenRoots } from './core/java/java-env.js';
+import { projectSourceHash } from './core/template-style.js';
+import { patchState } from './core/state.js';
 
 const SOURCE_ROOT = path.resolve(fileURLToPath(new URL('../..', import.meta.url)));
 const EXPECTED_STAGES = [...VERIFY_STAGES, 'frontend-runtime'];
@@ -165,7 +165,7 @@ function inspectProject(input) {
   return { ok: true, root, preset: normalized.preset };
 }
 
-/** Bounded read-only search; v4 subsequently probes Maven versions and reuses valid installations. */
+/** Bounded read-only search; verification subsequently probes Maven and reuses valid installations. */
 export function discoverIdeMavenRoots({
   env = process.env,
   platform = process.platform,
@@ -677,11 +677,14 @@ export function validateVerificationEvidence({ root } = {}) {
       !/^[\w-]+$/.test(report.legacyRunId) ||
       !fs.existsSync(legacyFile)
     )
-      return failure('VERIFY_EVIDENCE_INVALID', '缺少本次 v4 原始运行报告');
+      return failure('VERIFY_EVIDENCE_INVALID', '缺少本次验证的原始运行报告');
     const legacyText = fs.readFileSync(legacyFile, 'utf8');
     const latestLegacy = path.join(root, '.specgate/verify-report.json');
     if (!fs.existsSync(latestLegacy) || fs.readFileSync(latestLegacy, 'utf8') !== legacyText)
-      return failure('VERIFY_EVIDENCE_INVALID', 'v4 最新运行已变化，旧 Codex 验证证据不能继续使用');
+      return failure(
+        'VERIFY_EVIDENCE_INVALID',
+        '最新验证运行已变化，旧 Codex 验证证据不能继续使用',
+      );
     const legacy = JSON.parse(legacyText);
     if (
       legacy.ok !== true ||
@@ -692,7 +695,7 @@ export function validateVerificationEvidence({ root } = {}) {
           legacy.stages?.filter((stage) => stage.name === name && stage.status === 0).length !== 1,
       )
     )
-      return failure('VERIFY_EVIDENCE_INVALID', 'v4 原始运行报告未通过或与当前源码不一致');
+      return failure('VERIFY_EVIDENCE_INVALID', '原始运行报告未通过或与当前源码不一致');
     const init = JSON.parse(fs.readFileSync(path.join(root, '.specgate/init-report.json'), 'utf8'));
     if (
       init.initializationComplete !== true ||
@@ -785,7 +788,7 @@ export async function verifyProject(
       report.failedStage = 'legacy-reconciliation';
       saveReport(root, report, directory);
       return {
-        ...failure('VERIFY_INCOMPLETE', 'v4 实际证据与当前源码未完成对账'),
+        ...failure('VERIFY_INCOMPLETE', '实际证据与当前源码未完成对账'),
         report,
         legacyReport: legacy.report,
       };

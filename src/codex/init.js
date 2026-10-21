@@ -4,8 +4,8 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createHash } from 'node:crypto';
 import { spawn, spawnSync } from 'node:child_process';
-import { javaFullstackFiles } from '../v4/java-fullstack-template.js';
-import { goldenStatus, normalizeJavaPreset, templateHash } from '../v4/java-versions.js';
+import { javaFullstackFiles } from './core/java/java-fullstack-template.js';
+import { goldenStatus, normalizeJavaPreset, templateHash } from './core/java/java-versions.js';
 
 const SOURCE_ROOT = path.resolve(fileURLToPath(new URL('../..', import.meta.url)));
 const RUNTIME_NAMES = [
@@ -593,7 +593,7 @@ export async function executeInit(input = {}, { approvalProvider, signal } = {})
       overwritten: [],
       baselineScope: 'generated-files-only',
     };
-    report.template.source = 'v4-golden-template';
+    report.template.source = 'codex-java-vue-template';
     report.template.contentMatchesTemplate = preview.files.conflicts.length === 0;
     report.gitBaseline = { mandatory: true, status: 'pending', network: false, tag: null };
     fs.writeFileSync(

@@ -1,7 +1,0 @@
-{
-  "error": {
-    "code": "EPERM",
-    "summary": "Error: EPERM: operation not permitted, open 'C:\\Users\\Administrator\\AppData\\Local\\npm-cache\\_cacache\\tmp\\dcc49106'",
-    "detail": "The operation was rejected by your operating system.\nIt's possible that the file was already in use (by a text editor or antivirus),\nor that you lack permissions to access it.\n\nIf you believe this might be a permissions issue, please double-check the\npermissions of the file and its containing directories, or try running\nthe command again as root/Administrator."
-  }
-}

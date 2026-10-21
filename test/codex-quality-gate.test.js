@@ -10,7 +10,7 @@ import { canonicalJson, hashValue } from '../src/codex/events.js';
 import { createPlanService } from '../src/codex/plan.js';
 import { computeChangedCoverage, createQualityService } from '../src/codex/quality.js';
 import { createStateStore } from '../src/codex/state-machine.js';
-import { VERIFY_STAGES } from '../src/v4/verify-evidence.js';
+import { VERIFY_STAGES } from '../src/codex/core/java/verify-evidence.js';
 
 function git(cwd, args) {
   return execFileSync('git', args, {

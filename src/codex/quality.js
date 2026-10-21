@@ -5,9 +5,9 @@ import { randomUUID } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { canonicalJson, hashValue } from './events.js';
 import { verifyProject } from './verify.js';
-import { VERIFY_STAGES } from '../v4/verify-evidence.js';
-import { commandSpec } from '../v4/verify-evidence.js';
-import { reconcileCoverage } from '../v4/coverage-evidence.js';
+import { VERIFY_STAGES } from './core/java/verify-evidence.js';
+import { commandSpec } from './core/java/verify-evidence.js';
+import { reconcileCoverage } from './core/java/coverage-evidence.js';
 
 const SOURCE_ROOT = path.resolve(fileURLToPath(new URL('../..', import.meta.url)));
 const EXPECTED_STAGES = Object.freeze([...VERIFY_STAGES, 'frontend-runtime']);

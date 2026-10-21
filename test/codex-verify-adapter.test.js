@@ -10,8 +10,8 @@ import {
   discoverIdeMavenRoots,
   validateVerificationEvidence,
 } from '../src/codex/verify.js';
-import { projectSourceHash } from '../src/v3/template-style.js';
-import { VERIFY_STAGES } from '../src/v4/verify-evidence.js';
+import { projectSourceHash } from '../src/codex/core/template-style.js';
+import { VERIFY_STAGES } from '../src/codex/core/java/verify-evidence.js';
 
 function temp(t) {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'sg-codex-verify-'));

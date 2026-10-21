@@ -5,7 +5,7 @@ import { TOOLS as DIAGNOSTICS, callDiagnostic } from './tools.js';
 import { createStateStore } from './state-machine.js';
 import { createApprovalAuthority } from './approvals.js';
 import { previewInit, executeInit } from './init.js';
-import { JAVA_PRESETS } from '../v4/java-versions.js';
+import { JAVA_PRESETS } from './core/java/java-versions.js';
 import { CHANGE_TOOLS, CHANGE_METHODS, callChangeTool } from './change-tools.js';
 import { createChangeAddService } from './change-add.js';
 import { createDevelopmentService, createPrecompletedRoleProvider } from './development.js';

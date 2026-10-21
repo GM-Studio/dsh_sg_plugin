@@ -1,3 +1,0 @@
-  ➜  Local:   http://127.0.0.1:6540/
-
-HTTP evidence: {"html":{"url":"http://127.0.0.1:6540/","status":200,"contentType":"text/html","sha256":"19d40c60ebdc9fe3a0a6afcdff256bf587ed77a9c0d90d526fe72859cb56cc29"},"assets":[{"url":"http://127.0.0.1:6540/assets/index-CZ0JiGWk.js","status":200,"bytes":274776,"contentType":"text/javascript","sha256":"b25d7b3b51140dab48792c3fdbe069532510b7a6d7a1426c51ff30303c9178e7"},{"url":"http://127.0.0.1:6540/assets/index-Crymdwsm.css","status":200,"bytes":345935,"contentType":"text/css","sha256":"45a3a6bcb6176b9172a8ba1d60f3a3e95ff4804b565fca6dd171db711e7d132b"}]}

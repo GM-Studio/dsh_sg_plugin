@@ -4,7 +4,7 @@ import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { previewInit, executeInit } from '../src/codex/init.js';
 import { verifyProject, validateVerificationEvidence } from '../src/codex/verify.js';
-import { JAVA_PRESETS } from '../src/v4/java-versions.js';
+import { JAVA_PRESETS } from '../src/codex/core/java/java-versions.js';
 
 // Generates only isolated acceptance fixtures. It never initializes the plugin
 // repository, modifies a user project, downloads SDKs or updates Golden hashes.

@@ -87,7 +87,7 @@ fall back to serial main-thread simulation.
    - Spawn `specgate_frontend` and `specgate_backend` concurrently with the
      returned round-specific worktrees and the exact Review findings.
    - Repeat `sg_development_run -> sg_quality_run -> sg_format_run ->
-     sg_review_prepare/run` until the Review passes or the retry ceiling blocks.
+sg_review_prepare/run` until the Review passes or the retry ceiling blocks.
 10. H3 and archive:
     - Request H3 through the native user-visible approval channel.
     - Run archive only after a consumed H3 approval. Never force push or retry a

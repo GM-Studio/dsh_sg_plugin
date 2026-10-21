@@ -29,7 +29,22 @@ test('Codex manifest and MCP entry stay contained in the shipped plugin', () => 
     fs.readFileSync(path.join(root, manifest.skills, 'sg-codex/SKILL.md'), 'utf8'),
     /^---\r?\nname: sg-codex\r?\ndescription: .+/,
   );
-  assert.equal(readJson(path.join(root, 'package.json')).exports['.'], './index.js');
+  const packageJson = readJson(path.join(root, 'package.json'));
+  assert.equal(packageJson.name, 'specgate-codex');
+  assert.equal(packageJson.exports, undefined);
+  assert.equal(packageJson.files.includes('src/codex'), true);
+  for (const removed of ['index.js', 'cordis.patch.yml'])
+    assert.equal(fs.existsSync(path.join(root, removed)), false, `${removed} must stay removed`);
+  assert.deepEqual(fs.readdirSync(path.join(root, 'src')), ['codex']);
+  const runtimeFiles = fs
+    .readdirSync(path.join(root, 'src/codex'), { recursive: true, withFileTypes: true })
+    .filter((entry) => entry.isFile() && /\.(?:js|mjs)$/.test(entry.name));
+  for (const entry of runtimeFiles) {
+    const file = path.join(entry.parentPath, entry.name);
+    const source = fs.readFileSync(file, 'utf8');
+    assert.doesNotMatch(source, /(?:from|import\()\s*['"][^'"]*v[34]/i, file);
+    assert.doesNotMatch(source, /\bDSH\b/, file);
+  }
 });
 
 test(
@@ -74,9 +89,10 @@ test(
       'skills/setup/SKILL.md',
       'assets/codex/agents/specgate_frontend.toml',
       'assets/codex/agents/specgate_reviewer.toml',
+      'assets/java-vue/template/backend/pom.xml.tpl',
+      'src/codex/core/java/java-versions.js',
       'scripts/codex-source-setup.mjs',
       'scripts/codex-plugin-smoke.mjs',
-      'index.js',
     ]) {
       assert.ok(
         packed.files.some((entry) => entry.path === file),
@@ -101,7 +117,7 @@ test(
       ],
       installRoot,
     );
-    const pluginRoot = path.join(installRoot, 'node_modules/dsh-plugin-specgate');
+    const pluginRoot = path.join(installRoot, 'node_modules/specgate-codex');
     const { smokePlugin } = await import('../scripts/codex-plugin-smoke.mjs');
     const projectRoot = path.join(fixture, 'project 中文');
     fs.mkdirSync(projectRoot);
@@ -113,9 +129,8 @@ test(
     assert.equal(evidence.projectStatus.verification.status, 'not-run');
     assert.equal(evidence.projectStatus.projectRoot, projectRoot);
     assert.deepEqual(fs.readdirSync(projectRoot), []);
-    const dsh = await import(pathToFileURL(path.join(pluginRoot, 'index.js')).href);
-    assert.equal(dsh.name, 'specgate');
-    assert.equal(typeof dsh.apply, 'function');
+    assert.equal(fs.existsSync(path.join(pluginRoot, 'index.js')), false);
+    assert.deepEqual(fs.readdirSync(path.join(pluginRoot, 'src')), ['codex']);
   },
 );
 
