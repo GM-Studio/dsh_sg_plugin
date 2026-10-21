@@ -3,6 +3,7 @@ import { spawnSync } from 'node:child_process';
 import { ensureDir, exists, readText, writeText } from './util/fsx.js';
 import { init as initState, load as loadState, patchState } from './state.js';
 import { REQ_VERSION, isRequirementsFrozen } from './requirements.js';
+import { loadTemplateStyle } from './template-style.js';
 
 export const CONFIG_FILE = 'config.yaml';
 export const CHANGE_NAME_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
@@ -295,14 +296,23 @@ export function readConfig(root) {
   return parseConfig(readText(file));
 }
 
-export function ensureGitignore(root) {
+export function ensureGitignore(root, { keepStateTracked = false } = {}) {
   const file = path.join(root, '.gitignore');
   const current = exists(file) ? readText(file) : '';
-  const lines = new Set(current.split(/\r?\n/).map((line) => line.trim()));
-  const missing = IGNORE_ENTRIES.filter((entry) => !lines.has(entry));
-  if (missing.length === 0) return { ok: true, added: [] };
-  const prefix = current && !current.endsWith('\n') ? `${current}\n` : current;
-  writeText(file, `${prefix}${missing.join('\n')}\n`);
+  const currentLines = current.split(/\r?\n/);
+  const lines = new Set(currentLines.map((line) => line.trim()));
+  const entries = IGNORE_ENTRIES.filter(
+    (entry) => !(keepStateTracked && entry === '.specgate/state.json'),
+  );
+  const missing = entries.filter((entry) => !lines.has(entry));
+  const keptLines = keepStateTracked
+    ? currentLines.filter((line) => line.trim() !== '.specgate/state.json')
+    : currentLines;
+  const removedState = keepStateTracked && lines.has('.specgate/state.json');
+  if (missing.length === 0 && !removedState) return { ok: true, added: [] };
+  const prefix = keptLines.join('\n');
+  const normalizedPrefix = prefix && !prefix.endsWith('\n') ? `${prefix}\n` : prefix;
+  writeText(file, `${normalizedPrefix}${missing.join('\n')}\n`);
   return { ok: true, added: missing };
 }
 
@@ -353,7 +363,7 @@ export function initProject(root, options = {}) {
     }
   }
 
-  const ignore = ensureGitignore(root);
+  const ignore = ensureGitignore(root, options);
   const state = initState(root);
   if (!state.ok) return state;
 
@@ -371,6 +381,10 @@ export function createChange(
   root,
   { name, type = 'feature', baseCommit = null, changeKey = null, requirements = null } = {},
 ) {
+  const style = loadTemplateStyle(root, {
+    required: readConfig(root)?.templateStyle?.required === true,
+  });
+  if (!style.ok) return style;
   if (!CHANGE_NAME_PATTERN.test(String(name || ''))) {
     return {
       ok: false,
@@ -432,7 +446,7 @@ export function createChange(
       (!initReport ||
         initReport.schemaVersion !== 2 ||
         !(
-          (initReport.phase === 'SMOKE_PASSED' &&
+          (['SMOKE_PASSED', 'VERIFIED'].includes(initReport.phase) &&
             initReport.verification?.ok === true &&
             initReport.verification?.kind === 'local-sg-verify') ||
           (initReport.phase === 'GENERATED_ONLY' &&
@@ -523,6 +537,17 @@ export function createChange(
     'tests/mapping.json': `${JSON.stringify({ schemaVersion: 1, change: name, requirements: [], automation: [] }, null, 2)}\n`,
     'tests/touched.json': `${JSON.stringify({ schemaVersion: 1, modify: [], delete: [], bootstrap: [] }, null, 2)}\n`,
   };
+  if (!style.skipped) {
+    files['template-context.md'] = '# 项目固定规范与实际样例\n\n' + style.prompt + '\n';
+    files['template-references.json'] =
+      JSON.stringify(
+        { version: style.version, manifestHash: style.manifestHash, references: style.references },
+        null,
+        2,
+      ) + '\n';
+    files['design.md'] +=
+      '\n## 模板参照\n\n实现与测试规划必须阅读 template-context.md 和 template-references.json，并参照项目固定样例。\n';
+  }
   for (const [relative, content] of Object.entries(files)) {
     writeText(path.join(changeDir, relative), content);
   }

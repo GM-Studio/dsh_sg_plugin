@@ -1,4 +1,7 @@
 import { poolDispatch } from './pool.js';
+import fs from 'node:fs';
+import path from 'node:path';
+import { loadTemplateStyle, projectSourceHash } from './template-style.js';
 
 /**
  * Dispatch one role turn.
@@ -19,6 +22,35 @@ export function createDispatcher(runtime) {
     root,
     change,
   }) {
+    const style = loadTemplateStyle(worktree, {
+      required: Boolean(root && fs.existsSync(path.join(root, '.specgate/template-style.json'))),
+    });
+    if (!style.ok) return style;
+    if (!style.skipped) {
+      prompt = prompt + '\n\n' + style.prompt;
+      if (role === 'reviewer')
+        prompt +=
+          '\n走查 JSON 另须包含 sourceHash="' +
+          projectSourceHash(worktree) +
+          '"、templateManifestHash="' +
+          style.manifestHash +
+          '"、checklist 对象。checklist 的 layering/transactions/errors/authentication/files/templateStyle/tests 七项各为 {"status":"pass|fail","reason":"具体走查依据"}；不得把 lint 当作走查。';
+      const directory = path.join(root || worktree, '.specgate/runs');
+      fs.mkdirSync(directory, { recursive: true });
+      fs.appendFileSync(
+        path.join(directory, 'template-references.jsonl'),
+        JSON.stringify({
+          at: new Date().toISOString(),
+          role,
+          change,
+          task: task?.id,
+          worktree,
+          version: style.version,
+          manifestHash: style.manifestHash,
+          references: style.references,
+        }) + '\n',
+      );
+    }
     const scripted = runtime.agentRunner();
     if (typeof scripted === 'function') {
       const result = await scripted({ role, task, worktree, prompt, skills });

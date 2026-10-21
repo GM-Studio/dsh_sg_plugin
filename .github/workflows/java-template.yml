@@ -5,6 +5,8 @@ on:
   pull_request:
     paths:
       - 'src/v4/java-*.js'
+      - 'src/v3/template-*.js'
+      - 'src/v4/coverage-evidence.js'
       - 'src/v4/verify-evidence.js'
       - 'src/v4/provision.js'
       - 'src/v4/mirrors.js'
@@ -43,7 +45,7 @@ jobs:
           distribution: temurin
           java-version: ${{ matrix.java }}
           cache: maven
-          cache-dependency-path: src/v4/java-fullstack-template.js
+          cache-dependency-path: assets/java-vue/template/backend/pom.xml.tpl
       - run: npm ci --ignore-scripts --no-audit --no-fund
       - run: node scripts/verify-java-template.mjs ${{ matrix.preset }}
       - uses: actions/upload-artifact@v4

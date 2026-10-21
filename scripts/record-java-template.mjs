@@ -1,7 +1,7 @@
 // Promote only complete, real acceptance runs whose template hashes still match.
 import fs from 'node:fs';
 import path from 'node:path';
-import { JAVA_PRESETS, templateHash } from '../src/v4/java-versions.js';
+import { JAVA_PRESETS, GOLDEN_MANIFEST, templateHash } from '../src/v4/java-versions.js';
 import { javaFullstackFiles } from '../src/v4/java-fullstack-template.js';
 import { VERIFY_STAGES } from '../src/v4/verify-evidence.js';
 
@@ -19,14 +19,18 @@ for (const preset of JAVA_PRESETS) {
   )
     throw new Error('Missing, failed or stale template acceptance: ' + preset.id);
   const report = item.report;
+  const expectedStages = report.expectedStages || VERIFY_STAGES;
   if (
-    report.reconciliation?.passed !== 7 ||
+    report.reconciliation?.passed !== expectedStages.length ||
     report.reconciliation?.notRun !== 0 ||
-    VERIFY_STAGES.some(
+    expectedStages.some(
       (name) => !report.stages.some((stage) => stage.name === name && stage.status === 0),
     )
   )
     throw new Error('Incomplete reconciliation: ' + preset.id);
+  const coverage = report.stages.find((stage) => stage.name === 'coverage')?.coverage;
+  if (!coverage?.ok || !report.sourceHash)
+    throw new Error('Missing final source/coverage evidence: ' + preset.id);
   for (const name of ['backend-verify', 'frontend-test']) {
     const tests = report.stages.find((stage) => stage.name === name).tests;
     if (!tests?.total || tests.total !== tests.passed)
@@ -41,10 +45,12 @@ for (const preset of JAVA_PRESETS) {
 const manifest = {
   schemaVersion: 1,
   updatedAt: new Date().toISOString().slice(0, 10),
+  requiredPlatforms: ['win32', 'linux'],
   presets: {},
 };
 for (const { preset, item, report, origin } of records) {
-  const destination = evidenceBase + '/' + preset.id;
+  const platform = report.environment.platform;
+  const destination = evidenceBase + '/' + platform + '/' + preset.id;
   fs.mkdirSync(destination, { recursive: true });
   fs.cpSync(origin, destination, { recursive: true });
   const logArchive = {};
@@ -71,11 +77,26 @@ for (const { preset, item, report, origin } of records) {
       report.environment.node.version,
     commands: report.stages
       .filter((stage) => stage.command)
-      .map((stage) => [stage.command, ...stage.args].join(' ')),
+      .map((stage) => [stage.command, ...(stage.args || [])].join(' ')),
     result: 'passed',
+    platforms: {
+      ...(GOLDEN_MANIFEST.presets[preset.id]?.templateHash === item.templateHash
+        ? GOLDEN_MANIFEST.presets[preset.id].platforms
+        : {}),
+      [platform]: {
+        result: 'passed',
+        verifiedAt: report.finishedAt,
+        evidence: destination + '/report.json',
+      },
+    },
     evidence: destination + '/report.json',
     ...(preset.preview ? { preview: true } : {}),
   };
+  for (const required of manifest.requiredPlatforms)
+    manifest.presets[preset.id].platforms[required] ||= { result: 'not-run' };
+  manifest.presets[preset.id].matrixComplete = manifest.requiredPlatforms.every(
+    (required) => manifest.presets[preset.id].platforms[required].result === 'passed',
+  );
 }
 const source = 'src/v4/java-versions.js';
 const original = fs.readFileSync(source, 'utf8');

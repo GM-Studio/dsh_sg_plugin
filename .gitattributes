@@ -1,1 +1,4 @@
 scripts/git-hooks/* text eol=lf
+# Preserve original acceptance output, including tool-generated whitespace.
+docs/verification/2026-10-21-standard-template/**/*.log -text -whitespace
+docs/verification/2026-10-21-standard-template/**/*.txt -text -whitespace

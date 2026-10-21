@@ -20,6 +20,7 @@ test('pickVersion 支持精确、主版本与范围', () => {
   assert.equal(pickVersion('18.19.0', versions), '18.19.0');
   assert.equal(pickVersion('18', versions), '18.19.0');
   assert.equal(pickVersion('>=20 <23', versions), '22.3.0');
+  assert.equal(pickVersion('^22.12.0 || ^24.0.0', versions), '24.1.0');
   assert.equal(pickVersion('v22', versions), '22.3.0');
   assert.equal(pickVersion('99', versions), null);
 });
@@ -49,6 +50,7 @@ test('readNodeRequirement 回退到 engines', () => {
 
 test('nodeDirCandidates 读取本机 nvm 版本', (t) => {
   const candidates = nodeDirCandidates(process.env);
+  assert.ok(candidates.some((item) => item.tool === 'current'));
   if (candidates.length === 0) {
     t.skip('本机没有可用的 Node 版本管理器');
     return;

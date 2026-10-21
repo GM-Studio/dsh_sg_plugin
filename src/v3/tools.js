@@ -1,4 +1,5 @@
 import { createChange } from './change.js';
+import { verifyTemplateProject } from './template-quality.js';
 import { renderStatusAt, statusJsonAt, resolveRepoPath, loadProjectAt } from './status-query.js';
 import { renderStatus } from './status.js';
 import { exists } from './util/fsx.js';
@@ -108,6 +109,26 @@ export function ensureV3(project) {
 
 function formatErrors(errors) {
   return errors.map((item) => `- ${item}`).join('\n');
+}
+
+function commitManagedState(root, message) {
+  const managed = new Set(['.specgate/state.json', '.specgate/init-report.json']);
+  try {
+    const status = git(root, ['status', '--porcelain', '--untracked-files=all'])
+      .split(/\r?\n/)
+      .filter(Boolean);
+    const pathOf = (line) => line.replace(/^\s*[MADRCU?!]{1,2}\s+/, '');
+    if (status.some((line) => !managed.has(pathOf(line))))
+      return { ok: false, message: '工作树存在非受管修改，无法记录最终状态' };
+    if (status.length === 0) return { ok: true, skipped: true };
+    for (const file of managed) {
+      if (fs.existsSync(path.join(root, file))) git(root, ['add', file]);
+    }
+    git(root, ['commit', '-q', '-m', message]);
+    return { ok: true };
+  } catch (error) {
+    return { ok: false, message: error.message };
+  }
 }
 
 /** 老项目接入时由 SpecGate 自己生成、因而可以安全提交的路径（REQ-010）。 */
@@ -267,7 +288,7 @@ export function registerTools(ctx, runtime) {
     {
       name: 'sg_verify',
       description:
-        '本地验证 Java/Vue 初始化项目：先跨平台扫描并预检 JDK/Maven/Node（环境变量、PATH、常见安装目录），缺失时按需下载到项目 .specgate/toolchains，再执行后端 mvn verify 与前端 npm install/build/test/lint/format:check，随后启动后端、HTTP CRUD、重启持久化；通过后状态为 SMOKE_PASSED，可创建 change。只读源码，不自动修复。',
+        '本地验证 Java/Vue 初始化项目：先跨平台扫描并预检 JDK/Maven/Node（环境变量、PATH、常见安装目录），缺失时按需下载到项目 .specgate/toolchains，再执行后端 mvn verify 与前端 npm install/build/test/lint/format:check，随后启动后端、HTTP CRUD、重启持久化；full=true 追加真实浏览器 CRUD，通过后状态为 VERIFIED。只读源码，不自动修复。',
       parameters: {
         type: 'object',
         properties: {
@@ -278,6 +299,11 @@ export function registerTools(ctx, runtime) {
             type: 'boolean',
             description:
               '缺少 JDK 8/17/21 或 Maven 时先询问自定义路径，再自动下载到项目内（默认 true）；false 时禁止下载安装',
+          },
+          full: {
+            type: 'boolean',
+            description:
+              '追加真实浏览器登录、CRUD、权限与后端重启持久化验收；通过后状态为 VERIFIED',
           },
         },
         additionalProperties: false,
@@ -293,6 +319,7 @@ export function registerTools(ctx, runtime) {
           agent: exec?.agent,
           javaHome: args?.javaHome,
           mavenHome: args?.mavenHome,
+          full: args?.full === true,
         });
         return result.ok ? ok(result.message, result) : fail(result.message, result);
       },
@@ -647,8 +674,6 @@ export function registerTools(ctx, runtime) {
                     .split('\n')
                     .filter(Boolean)
                 : [];
-              const commit = headOf(integration.path, 'HEAD');
-
               const integrationToolchain = ensureToolchain({
                 root: project.root,
                 worktree: integration.path,
@@ -662,6 +687,14 @@ export function registerTools(ctx, runtime) {
                   integrationToolchain,
                 );
               }
+              const templateQuality = await verifyTemplateProject({
+                root: project.root,
+                worktree: integration.path,
+                change,
+                task: { id: 'INTEGRATION' },
+              });
+              if (!templateQuality.ok) return fail(templateQuality.message, templateQuality);
+              const commit = headOf(integration.path, 'HEAD');
               const suitesResult = runAllSuites({
                 root: project.root,
                 state,
@@ -760,6 +793,7 @@ export function registerTools(ctx, runtime) {
                     integrationVerdict,
                     reviewDiff,
                     suitesResult.message || '',
+                    integration.path,
                   );
                   reviewErrors = checked.errors;
                   if (
@@ -842,6 +876,11 @@ export function registerTools(ctx, runtime) {
                 draft.evidence = { headSeq: evidence.seq, headHash: evidence.hash };
               });
               if (!saved.ok) return fail(saved.message, saved);
+              const finalState = commitManagedState(
+                project.root,
+                `chore(${state.change}): 记录最终状态`,
+              );
+              if (!finalState.ok) return fail(finalState.message, finalState);
               return ok(
                 `集成回归通过，验收报告已生成（${deltaAcs.size} 个 AC），integration commit ${String(finalCommit).slice(0, 8)}。请审阅后执行 /sg-approve H3。`,
                 { acceptance: acceptance.rows, commit: finalCommit },
@@ -878,6 +917,11 @@ export function registerTools(ctx, runtime) {
                 draft.evidence = { headSeq: evidence.seq, headHash: evidence.hash };
               });
               if (!saved.ok) return fail(saved.message, saved);
+              const finalState = commitManagedState(
+                project.root,
+                `chore(${state.change}): 记录归档完成状态`,
+              );
+              if (!finalState.ok) return fail(finalState.message, finalState);
               return ok(
                 `归档完成：tag ${result.tag}，specs 已更新，change 已移动到 openspec/changes/archive/。`,
                 result,

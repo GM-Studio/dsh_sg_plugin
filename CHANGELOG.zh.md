@@ -9,7 +9,9 @@
 ## 未发布：初始化与验证对账
 
 - Java/Vue 模板接入 Element Plus 最小管理界面与固定依赖锁文件。
-- 初始化检查明确为未执行；验证记录独立 runId、完整日志、JUnit/Vitest 用例对账、七阶段清单，失败/阻塞/取消同步清除旧成功状态。
+- 初始化检查明确为未执行；验证记录独立 runId、完整日志、JUnit/Vitest 用例对账、标准 8 阶段清单，失败/阻塞/取消同步清除旧成功状态。
+- `--full` 增加真实浏览器登录、CRUD、重启持久化与 viewer 权限阶段；通过后写入 `VERIFIED`，归档/tag 要求 `VERIFIED`。
+- 生成模板加入标准 Maven Wrapper；`.specgate/state.json` 与 `init-report.json` 纳入 Git 基线，真实 clone 后可继续创建 change。
 - 环境发现验证实际可执行性，读取 Windows/Linux 持久环境配置，缺失时先询问自定义路径，再项目内下载安装；支持 JDK 8，修复压缩包格式与 Windows 解压路径引用。
 - 加入验证互斥、子进程取消与真实 CRUD/正常重启检查；sg-status 显示初始化验证状态；生成项目忽略工具链与大体积证据。
 - 新增真实模板验收脚本和 Windows/Ubuntu × 四版本档验收 CI。

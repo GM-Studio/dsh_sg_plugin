@@ -5,7 +5,9 @@ import { configPath, parseConfig } from './change.js';
 import { exists, readText } from './util/fsx.js';
 import { git } from './util/git.js';
 import { appendRun } from './runs.js';
-import { detectQuality } from './quality.js';
+import { detectQuality, qualityEnvironment } from './quality.js';
+import { ensureToolchain } from './toolchain.js';
+import { commandSpec } from '../v4/verify-evidence.js';
 
 export function formatterCommand(root, worktree = root, stack = null) {
   const file = configPath(root);
@@ -61,11 +63,17 @@ export function runFormatter({ root, worktree, change, task }) {
   const copy = path.join(copyDir, `format-${change}-${task.id}.md`);
   try {
     const started = Date.now();
-    const run = spawnSync(command[0], command.slice(1), {
+    const toolchain = ensureToolchain({ root, worktree: target, change, task });
+    if (!toolchain.ok) return toolchain;
+    const spec = commandSpec(command[0], command.slice(1));
+    const run = spawnSync(spec.command, spec.args, {
       cwd: target,
+      env: qualityEnvironment(target),
       encoding: 'utf8',
       maxBuffer: 8 * 1024 * 1024,
-      shell: process.platform === 'win32',
+      shell: false,
+      windowsVerbatimArguments: spec.windowsVerbatimArguments,
+      windowsHide: true,
     });
     const durationMs = Date.now() - started;
     const status = run.status ?? 1;

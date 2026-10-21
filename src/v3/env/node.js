@@ -41,6 +41,17 @@ function compareVersions(a, b) {
 }
 
 export function pickVersion(requirement, versions) {
+  const alternatives = String(requirement || '')
+    .split('||')
+    .map((item) => item.trim())
+    .filter(Boolean);
+  if (alternatives.length > 1) {
+    const matches = alternatives
+      .map((alternative) => pickVersion(alternative, versions))
+      .filter(Boolean);
+    matches.sort(compareVersions);
+    return matches.length ? matches[matches.length - 1] : null;
+  }
   if (!requirement) return null;
   const cleaned = String(requirement).trim().replace(/^v/, '');
   if (versions.includes(cleaned)) return cleaned;
@@ -84,7 +95,13 @@ function nvmRoots(env) {
 }
 
 export function nodeDirCandidates(env = process.env) {
-  const candidates = [];
+  const candidates = [
+    {
+      tool: 'current',
+      version: String(process.version || '').replace(/^v/, ''),
+      dir: path.dirname(process.execPath),
+    },
+  ];
 
   for (const root of nvmRoots(env)) {
     if (!exists(root)) continue;

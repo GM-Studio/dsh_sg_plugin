@@ -215,8 +215,8 @@ export function parseJunitXml(
       : /<skipped\b/.test(body)
         ? 'skip'
         : 'pass';
-    const ac = [...name.matchAll(/(?:\[)?(AC[-_]\d{3,})(?:\])?/g)].map((item) =>
-      item[1].replace('_', '-'),
+    const ac = [...name.matchAll(/(?:^|[^A-Za-z0-9])AC[-_]?(\d{3,})(?=[_\]\s]|$)/g)].map(
+      (item) => 'AC-' + item[1],
     );
     index += 1;
     cases.push({
@@ -593,6 +593,7 @@ export function runOneSuite({
       });
     }
     run = runTestCommand({ argv: suite.argv, cwd, env });
+    run.coverage = run.report?.coverage || null;
   }
 
   if (run.exitCode !== 0) {

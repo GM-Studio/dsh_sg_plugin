@@ -2,6 +2,7 @@ import path from 'node:path';
 import { exists, readText } from './util/fsx.js';
 import { canonicalJson, digest, norm, sha256 } from './util/hash.js';
 import { readSuites, validateSuites } from './change.js';
+import { loadTemplateStyle } from './template-style.js';
 
 const TASK_RE = /^<!--\s*sg:task\s+(\{.*\})\s*-->\s*$/;
 const CASE_RE = /^\|\s*(TC-\d{3,})\s*\|\s*([^|]*)\|\s*([^|]*)\|\s*(.*?)\s*\|\s*$/;
@@ -86,6 +87,7 @@ export function loadPlan(root, change) {
   const touched = readJson(path.join(dir, 'tests', 'touched.json'), 'tests/touched.json');
   return {
     dir,
+    templateStyle: loadTemplateStyle(root),
     designText: exists(path.join(dir, 'design.md')) ? readText(path.join(dir, 'design.md')) : '',
     tasks: tasks.tasks,
     tasksErrors: tasks.errors,
@@ -344,6 +346,7 @@ export function validatePlan({
 
 export function computePlanHash({ plan, command, suites = null }) {
   const payload = {
+    templateStyle: plan.templateStyle?.skipped ? null : plan.templateStyle?.manifestHash || null,
     design: sha256(norm(plan.designText)),
     cases: sha256(norm(JSON.stringify(plan.cases))),
     mappingRequirements: plan.mapping?.requirements || [],

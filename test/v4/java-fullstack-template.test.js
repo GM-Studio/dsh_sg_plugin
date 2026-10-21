@@ -48,15 +48,15 @@ test('Java8 Boot CRUD validation health and actual file restart test', () => {
   assert.match(files['backend/pom.xml'], /maven-checkstyle-plugin/);
   assert.match(files['backend/src/main/resources/application.properties'], /jdbc:h2:file:/);
   assert.doesNotMatch(files['backend/src/main/resources/application.properties'], /jdbc:h2:mem:/);
-  assert.match(files[base + 'TaskController.java'], /ResponseEntity.created/);
-  assert.match(files[base + 'TaskController.java'], /@PostMapping\("\/delete"\)/);
-  assert.match(files[base + 'TaskController.java'], /response.put\("deleted", true\)/);
-  assert.match(files[base + 'TaskRequest.java'], /@NotBlank/);
-  assert.ok(files[base + 'TaskRequest.java'].includes('@Size(max = 200)'));
-  assert.match(
-    files[base + 'ApiErrorHandler.java'],
-    /INTERNAL_SERVER_ERROR, "Internal server error"/,
-  );
+  assert.ok(files['backend/mvnw']);
+  assert.ok(files['backend/mvnw.cmd']);
+  assert.match(files['backend/.mvn/wrapper/maven-wrapper.properties'], /apache-maven\/3\.9\.11/);
+  assert.match(files[base + 'controller/TaskController.java'], /ResponseEntity.created/);
+  assert.match(files[base + 'controller/TaskController.java'], /@PostMapping\("\/delete"\)/);
+  assert.match(files[base + 'service/TaskService.java'], /new OperationResult\(id, true, 1\)/);
+  assert.match(files[base + 'dto/TaskRequest.java'], /@NotBlank/);
+  assert.ok(files[base + 'dto/TaskRequest.java'].includes('@Size(max = 200)'));
+  assert.match(files[base + 'common/ApiErrorHandler.java'], /"INTERNAL", "Internal server error"/);
   const persistence = files['backend/src/test/java/com/example/tasks/TaskPersistenceTest.java'];
   assert.match(persistence, /AC002_/);
   assert.ok(persistence.includes('try (ConfigurableApplicationContext first'));

@@ -52,7 +52,7 @@ test('missing questions, cancellation, and stack conflicts do not create target'
   }
 });
 
-test('confirmation details only show directory and selected stack', async (t) => {
+test('confirmation details show the generated baseline and allow returning to the version choice', async (t) => {
   const root = temp(t);
   let detail;
   const result = await startJavaInit({
@@ -71,8 +71,15 @@ test('confirmation details only show directory and selected stack', async (t) =>
   assert.match(detail.question, /Java ?17|JDK ?17/i);
   assert.ok(detail.question.includes('Maven / H2'));
   assert.ok(detail.question.includes('Vue 3 / TypeScript / Vite / npm'));
-  assert.equal(detail.question.split('\n').length, 6);
-  assert.doesNotMatch(detail.question, /完整需求|functional|git init|CRUD|快照/);
+  assert.match(detail.question, /文件数：\d+/);
+  assert.match(detail.question, /Golden：(?:\d{4}-\d{2}-\d{2}T|模板内容与验收记录不一致)/);
+  assert.match(detail.question, /IDEA：/);
+  assert.match(detail.question, /预计耗时：2–5 秒/);
+  assert.match(detail.question, /失败后：目标目录不会留下半成品/);
+  assert.deepEqual(
+    detail.options.map((option) => option.label),
+    ['确认', '返回修改', '取消'],
+  );
   assert.deepEqual(fs.readdirSync(root), []);
 });
 
@@ -111,9 +118,38 @@ test('default init generates code, req baseline, golden metadata and Git baselin
   assert.equal(fs.existsSync(path.join(root, 'frontend/package.json')), true);
   assert.equal(fs.existsSync(path.join(root, 'frontend/package-lock.json')), true);
   assert.equal(fs.existsSync(path.join(root, '.specgate/golden.json')), true);
+  assert.equal(fs.existsSync(path.join(root, '.specgate/state.json')), true);
+  assert.equal(fs.existsSync(path.join(root, '.specgate/init-report.json')), true);
+  assert.doesNotMatch(
+    fs.readFileSync(path.join(root, '.gitignore'), 'utf8'),
+    /^\.specgate\/state\.json$/m,
+  );
+  assert.deepEqual(
+    spawnSync(
+      'git',
+      ['ls-files', '.specgate/state.json', '.specgate/init-report.json', '.specgate/golden.json'],
+      {
+        cwd: root,
+        encoding: 'utf8',
+      },
+    )
+      .stdout.trim()
+      .split(/\r?\n/)
+      .sort(),
+    ['.specgate/golden.json', '.specgate/init-report.json', '.specgate/state.json'],
+  );
+  assert.equal(
+    spawnSync('git', ['status', '--short'], { cwd: root, encoding: 'utf8' }).stdout.trim(),
+    '',
+  );
+  assert.equal(
+    spawnSync('git', ['tag', '-l', 'init-baseline'], { cwd: root, encoding: 'utf8' }).stdout.trim(),
+    'init-baseline',
+  );
   assert.equal(fs.existsSync(path.join(root, '.gitmodules')), false);
   assert.equal(load(root).state.phase, 'IDLE');
   assert.equal(load(root).state.change, null);
+  assert.equal(load(root).state.initialization.goldenId, 'jdk8-boot2.7');
   assert.equal(isRequirementsFrozen(root).ok, true);
   const suites = readSuites(readConfig(root));
   assert.equal(validateSuites(root, suites).ok, true);
@@ -136,7 +172,7 @@ test('default init generates code, req baseline, golden metadata and Git baselin
   assert.equal(load(root).state.approvals.H1.issuedAt, null);
 });
 
-test('re-init is idempotent and a copied workspace can create a change', async (t) => {
+test('re-init is idempotent and a real Git clone can create a change', async (t) => {
   const root = temp(t);
   const first = await startJavaInit({ root, userQuestions: approve });
   assert.equal(first.ok, true);
@@ -145,9 +181,12 @@ test('re-init is idempotent and a copied workspace can create a change', async (
   assert.equal(again.code, 'ALREADY_INITIALIZED');
   const cloneParent = temp(t);
   const clone = path.join(cloneParent, 'clone');
-  fs.cpSync(root, clone, { recursive: true });
+  const cloned = spawnSync('git', ['clone', '-q', root, clone], { encoding: 'utf8' });
+  assert.equal(cloned.status, 0, cloned.stderr);
+  assert.equal(load(clone).ok, true);
+  assert.equal(fs.existsSync(path.join(clone, '.specgate/init-report.json')), true);
   const change = createChange(clone, { name: 'clone-change' });
-  assert.equal(change.ok, true);
+  assert.equal(change.ok, true, JSON.stringify(change));
 });
 
 test('version presets generate the requested Java/Boot stack', async (t) => {
@@ -165,7 +204,7 @@ test('version presets generate the requested Java/Boot stack', async (t) => {
     assert.ok(pom.includes('<version>' + boot + '</version>'), version + ' boot');
     assert.ok(pom.includes('<java.version>' + java + '</java.version>'), version + ' java');
     const task = fs.readFileSync(
-      path.join(root, 'backend/src/main/java/com/example/tasks/Task.java'),
+      path.join(root, 'backend/src/main/java/com/example/tasks/entity/Task.java'),
       'utf8',
     );
     assert.equal(task.includes(jakarta ? 'jakarta.persistence' : 'javax.persistence'), true);
@@ -201,6 +240,7 @@ test('sg-verify command advertises preflight and --no-install', () => {
   const command = commandMap.get('sg-verify');
   assert.ok(command);
   assert.equal(command.input.hint.includes('--no-install'), true);
+  assert.equal(command.input.hint.includes('--full'), true);
   assert.match(command.description, /扫描/);
 });
 

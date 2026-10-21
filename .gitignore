@@ -3,6 +3,7 @@ dist/
 .DS_Store
 Thumbs.db
 *.log
+!docs/verification/2026-10-21-standard-template/**/*.log
 *.tgz
 coverage/
 !src/v3/coverage/

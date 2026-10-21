@@ -247,12 +247,13 @@ export function registerCommands(ctx, runtime) {
   register({
     name: 'sg-verify',
     description:
-      '本地验证 Java/Vue 初始化项目：先扫描并预检 JDK/Maven/Node（Windows/Linux/macOS），缺失时尝试安装到项目内，再执行后端 mvn verify 与前端 install/build/test/lint/format。',
-    input: { hint: '[--path <目录>] [--no-install]' },
+      '本地验证 Java/Vue 初始化项目：先扫描并预检 JDK/Maven/Node（Windows/Linux/macOS），缺失时尝试安装到项目内，再执行后端 mvn verify 与前端 install/build/test/lint/format；--full 追加真实浏览器 CRUD 与重启持久化。',
+    input: { hint: '[--path <目录>] [--no-install] [--full]' },
     async handler(inv) {
       const parts = splitArgs(inv?.rawInput);
       let target = null;
       let install = true;
+      let full = false;
       for (let index = 0; index < parts.length; index += 1) {
         const part = parts[index];
         if (part === '--path') {
@@ -261,6 +262,8 @@ export function registerCommands(ctx, runtime) {
           index += 1;
         } else if (part === '--no-install') {
           install = false;
+        } else if (part === '--full') {
+          full = true;
         } else if (!target) {
           target = part;
         } else {
@@ -278,6 +281,7 @@ export function registerCommands(ctx, runtime) {
         signal: inv?.signal,
         userQuestions: runtime.service('userQuestions'),
         agent: inv?.agent,
+        full,
       });
       return { kind: result.ok ? 'success' : 'error', text: result.message };
     },

@@ -1,0 +1,19 @@
+
+> task-web@1.0.0 dev
+> vite --host 127.0.0.1 --port 13321
+
+
+
+  VITE v7.3.1  ready in 223 ms
+
+
+  ➜  Local:   http://127.0.0.1:13321/
+
+[24084:6156:1021/124030.350:ERROR:components\edge_ess\vbs_encoder.cc:100] LoadEnclaveImageW failed, error code 577
+
+
+DevTools listening on ws://127.0.0.1:13325/devtools/browser/81fc731a-a839-481c-9b65-d906a67b2bfd
+
+[24084:6156:1021/124032.152:ERROR:chrome\browser\task_manager\providers\fallback_task_provider.cc:126] Every renderer should have at least one task provided by a primary task provider. If a "Renderer" fallback task is shown, it is a bug. If you have repro steps, please file a new bug and tag it as a dependency of crbug.com/40528867.
+
+Browser login/CRUD/restart persistence/viewer permissions passed

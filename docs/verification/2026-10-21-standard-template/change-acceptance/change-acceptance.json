@@ -1,0 +1,35 @@
+{
+  "ok": true,
+  "root": "E:\\ai_workflow\\specgate\\.specgate\\change-qa\\1792557325244",
+  "phase": "DONE",
+  "roleAdapter": "deterministic; actual Maven/Vitest/HTTP checks, no model claim",
+  "verification": {
+    "full": true,
+    "phase": "VERIFIED",
+    "report": ".specgate/verify-runs/2026-10-21T04-39-35-221Z-61884352/report.json"
+  },
+  "roles": [
+    {
+      "role": "implementer",
+      "sourceHash": "6e42e86ded0ec34fabc9b98374a48fcfe04627b7e380f724a3a219ffecdef7d0",
+      "manifestHash": "85867e02360de8d60b3d5b3e56901a1536eb6c7d99339829b36b77d1b7aae8d3"
+    },
+    {
+      "role": "tester",
+      "sourceHash": "314e406503254386f2f795cfac49f41934f9b05f2f071e173607fb5440fe061d",
+      "manifestHash": "85867e02360de8d60b3d5b3e56901a1536eb6c7d99339829b36b77d1b7aae8d3"
+    },
+    {
+      "role": "reviewer",
+      "sourceHash": "566956ba5b23cbfcc117f2a07349e86eb0aeaca7434429ffb49eaec216eed9ea",
+      "manifestHash": "85867e02360de8d60b3d5b3e56901a1536eb6c7d99339829b36b77d1b7aae8d3"
+    },
+    {
+      "role": "reviewer",
+      "sourceHash": "566956ba5b23cbfcc117f2a07349e86eb0aeaca7434429ffb49eaec216eed9ea",
+      "manifestHash": "85867e02360de8d60b3d5b3e56901a1536eb6c7d99339829b36b77d1b7aae8d3"
+    }
+  ],
+  "finalSourceHash": "566956ba5b23cbfcc117f2a07349e86eb0aeaca7434429ffb49eaec216eed9ea",
+  "at": "2026-10-21T04:42:37.089Z"
+}

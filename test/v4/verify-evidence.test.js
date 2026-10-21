@@ -3,7 +3,11 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { createVerification, executeVerificationStage } from '../../src/v4/verify-evidence.js';
+import {
+  createVerification,
+  executeVerificationStage,
+  FULL_VERIFY_STAGES,
+} from '../../src/v4/verify-evidence.js';
 
 test('real process evidence preserves full output, arguments, exit code and unexecuted stages', async (t) => {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'sg-evidence-'));
@@ -33,9 +37,17 @@ test('real process evidence preserves full output, arguments, exit code and unex
   assert.ok(stage.startedAt && stage.finishedAt);
   assert.match(fs.readFileSync(path.join(root, stage.log), 'utf8'), /^first/);
   assert.ok(!stage.tail.includes('first'));
-  assert.equal(evidence.report.reconciliation.notRun, 6);
+  assert.equal(evidence.report.reconciliation.notRun, 7);
   assert.equal(evidence.report.checks[1].status, 'not-run');
   assert.equal(evidence.report.ok, false);
+});
+
+test('full verification declares the browser stage as required', (t) => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'sg-evidence-full-'));
+  t.after(() => fs.rmSync(root, { recursive: true, force: true }));
+  const evidence = createVerification(root, { id: 'test', label: 'Test' }, { full: true });
+  assert.deepEqual(evidence.report.expectedStages, FULL_VERIFY_STAGES);
+  assert.equal(evidence.report.reconciliation.notRun, FULL_VERIFY_STAGES.length);
 });
 
 test('cancelling a running process terminates it and records cancellation', async (t) => {

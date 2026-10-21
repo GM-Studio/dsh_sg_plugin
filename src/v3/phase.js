@@ -7,7 +7,8 @@ import { parseDelta, parseSpec } from './openspec/parser.js';
 import { validateDeltaFiles } from './openspec/validator.js';
 import { discoverSuites, loadPlan, computePlanHash, validatePlan } from './plan.js';
 import { checkApprovalHash } from './approvals.js';
-import { requirementsConfig } from './change.js';
+import { requirementsConfig, readConfig } from './change.js';
+import { loadTemplateStyle } from './template-style.js';
 import { extractReqIds, isRequirementsFrozen, parseReqBaseline } from './requirements.js';
 
 const PROPOSAL_SECTIONS = ['问题', '目标', '非目标', '影响面'];
@@ -112,6 +113,10 @@ export function checkM1({ root, state }) {
     return { ok: false, errors: ['没有进行中的 change'] };
   }
   const errors = [...checkProposal(root, state.change)];
+  const style = loadTemplateStyle(root, {
+    required: readConfig(root)?.templateStyle?.required === true,
+  });
+  if (!style.ok) errors.push(style.message);
   const requirementCheck = checkRequirements({ root, change: state.change });
   errors.push(...requirementCheck.errors);
   const files = collectDelta(root, state.change);
@@ -178,6 +183,9 @@ export function checkM2({ root, state, config }) {
   if (!state?.change) return { ok: false, errors: ['没有进行中的 change'] };
   const plan = loadPlan(root, state.change);
   const errors = [];
+  if (!plan.templateStyle.ok) errors.push(plan.templateStyle.message);
+  if (config?.templateStyle?.required && plan.templateStyle.skipped)
+    errors.push('缺少项目固定模板样例，禁止进入实现');
   for (const title of DESIGN_SECTIONS) {
     if (!new RegExp(`^##\\s*${title}\\s*$`, 'm').test(plan.designText)) {
       errors.push(`design 缺少「${title}」小节`);

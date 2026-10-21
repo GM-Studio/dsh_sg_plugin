@@ -11,7 +11,7 @@
 >
 > 版本档：`--version jdk8-boot2.7`（默认）、`jdk17-boot3.5`、`jdk21-boot3.5`、`jdk21-boot4.0`（preview）。每个版本档的模板 hash 在 `src/v4/java-versions.js` 的 Golden 清单中登记；只有匹配的已验证模板才允许 `sg-change`。未验证/自定义模板执行 `/sg-verify`。
 >
-> 质量：初始化不启动 agent；需要本地验证时执行 `/sg-verify`（或 `sg_verify({ path, install })`）：先跨平台扫描 JDK/Maven/Node（环境变量、PATH、常见安装目录），缺少 JDK 17/21 或 Maven 时自动装到项目 `.specgate/toolchains`（`--no-install` 可关闭），再执行后端 `mvn verify`、前端 install/build/test/lint/format:check，并启动后端执行 HTTP CRUD 与正常重启持久化，通过后状态为 `SMOKE_PASSED`。确认页只展示操作目录与技术栈。旧初始化/接入必须显式 `--v3` / `--adopt`。
+> 质量：初始化不启动 agent；需要本地验证时执行 `/sg-verify`（或 `sg_verify({ path, install })`）：先跨平台扫描 JDK/Maven/Node（环境变量、PATH、常见安装目录），缺少 JDK 17/21 或 Maven 时自动装到项目 `.specgate/toolchains`（`--no-install` 可关闭），再执行后端 `mvn verify`、前端 install/build/test/lint/format:check，并启动后端执行 HTTP CRUD 与正常重启持久化，通过后状态为 `SMOKE_PASSED`；`--full` 追加真实浏览器 CRUD、重启持久化和只读权限检查，通过后为 `VERIFIED`。确认页只展示操作目录与技术栈。旧初始化/接入必须显式 `--v3` / `--adopt`。
 >
 > 需求与设计：[v4.3 需求](docs/requirements/2026-10-21-v4.3-sg-init-closed-loop-requirements.md)、[sg-java 需求](docs/requirements/2026-10-20-sg-java-init-requirements.zh.md)、[详细设计](docs/design/sg-java-init.zh.md)。Java8/Boot2 已老旧，本示例无认证，不是生产安全承诺。
 >
@@ -40,7 +40,7 @@
 | 来源 | `AgentKit47-Qoder` 的 `templates/qoder/`（MIT） |
 | 目标 | DSH `0.2.1-rc.2` 及以上 |
 | 形态 | workspace bundle，安装到当前 DSH profile |
-| 版本 | `4.1.0` |
+| 版本 | `4.3.1` |
 
 ---
 
@@ -84,7 +84,7 @@
 
 环境发现顺序为持久/进程变量、PATH、常见安装目录和项目 toolchains；缺少 JDK/Maven 时先弹出自定义路径对话框，空输入继续项目内下载安装，`--no-install` 禁止安装。也支持 `sg_verify({ path, javaHome, mavenHome, install })`。
 
-每次验证的完整日志与 JUnit/Vitest 原始报告保存在 `.specgate/verify-runs/<runId>/`，最新摘要在 `.specgate/verify-report.json`；七个阶段全部通过才写 `SMOKE_PASSED`。失败、阻塞与取消均使旧成功状态失效，`sg-status` 同时显示初始化验证状态。
+每次验证的完整日志与 JUnit/Vitest 原始报告保存在 `.specgate/verify-runs/<runId>/`，最新摘要在 `.specgate/verify-report.json`；标准验证 8 个阶段全部通过才写 `SMOKE_PASSED`，`--full` 的第 9 个 browser 阶段通过才写 `VERIFIED`。失败、阻塞与取消均使旧成功状态失效，`sg-status` 同时显示初始化验证状态。
 
 全面扫描与工作流说明见 [SG 工作流审计](docs/design/sg-workflow-audit-2026-10-21.zh.md)。下文 v3 初始化自动构建与四维澄清说明属于显式旧流程，不代表当前默认 `sg-init` 行为。
 
@@ -106,13 +106,13 @@ SpecGate 是一套**规格驱动 + 人工门控**的开发工作流。它把"AI 
 
 设计上的三条硬约束：
 
-1. **只有显式入口** —— 5 个命令、6 个工具，没有隐式触发。
+1. **只有显式入口** —— 6 个命令、7 个工具，没有隐式触发。
 2. **机器先裁决，人再批准** —— `M1`/`M2` 不通过，`sg_run` 直接拒绝推进，人工门根本不会出现。
 3. **批准即冻结** —— 人工批准会给产物生成哈希，之后任何修改都会使批准失效。
 
 ## 核心特性
 
-- **只有显式入口**：插件对外暴露的一切都必须主动调用 —— 5 个 `/sg-*` 命令与 6 个 `sg_*` 工具。没有任何命令会自动运行，也没有任何 Skill 会被注册进会话技能目录。
+- **只有显式入口**：插件对外暴露的一切都必须主动调用 —— 当前 6 个 `/sg-*` 命令与 7 个 `sg_*` 工具。没有任何命令会自动运行，也没有任何 Skill 会被注册进会话技能目录。
 - **唯一的自动面 —— 写入守卫**：`src/v3/guards.js` 拦截 `write` / `edit` 工具，拒绝对编排器专属路径的写入。这是唯一无需请求就会生效的行为（见[写入与守卫](#写入与守卫)）。
 - **项目初始化（三种入口 + 确认前零写）**：`/sg-init` 支持 `-req <需求文档>`、自由描述、无参纯对话三种入口；Agent 按模板逐维澄清功能/非功能/约束/验收，**确认前不写任何文件**。确认页同时展示需求文档与技术栈，确认即 H0：写入 `docs/requirements/REQ.md`、派生 `openspec/REQ.md` 与只读快照，并一次性生成脚手架与首个 change：后端栈（java/node/python）的 change 固定为 `mvp-scaffold`（MVP框架搭建），随后自动生成 Item CRUD 代码与测试、跑格式化/静态检查/测试/reviewer，成功后归档并回到 `IDLE`；失败则停 `H1_PENDING` 并保留报告。问答不可用时 fail-closed（禁止自动确认）。幂等 —— 重复执行报告“幂等跳过”，不覆盖既有基线。
 - **老项目接入**：在已有代码的仓库里执行 `/sg-init` 会扫描项目、反推需求草稿并生成 `docs/requirements-scan.md`，**不生成任何脚手架**；只在缺少仓库时补 `git init`，已有仓库保持原状，且只提交 SpecGate 自己生成的资产。
@@ -572,13 +572,13 @@ openspec/
 └── specs/<capability>/spec.md   # 只在归档时写入
 ```
 
-`/sg-init` 还会把以下内容追加进 `.gitignore`：`.specgate/state.json`、`.specgate/run.lock`、`.specgate/init-result.json`、`.specgate/worktrees/`、`.specgate/evidence/`、`.specgate/backups/`、`.specgate/gates/`、`.specgate/runs/`。
+旧版 v3 初始化会把 `.specgate/state.json` 等运行态文件追加进 `.gitignore`；Java/Vue v4.3 初始化则把 `.specgate/state.json` 与 `.specgate/init-report.json` 纳入 Git 基线，确保真实 clone 后 `sg-status`/`sg-change` 可用。
 
 对全新项目，确认页确认后立即写入 `docs/requirements/REQ.md`、`openspec/REQ.md`、`openspec/history/v1.0/REQ.md`、`project-context.md`、`AGENTS.md`、`docs/glossary.md`、`docs/adr/0001-initial.md`、`.github/workflows/ci.yml`，以及首个 change：java/node/python 为 `mvp-scaffold`（proposal「MVP框架搭建」），随后自动生成 Item CRUD 代码与测试、跑格式化/静态检查/测试/reviewer；成功后归档并回到 `IDLE`，失败则保留 `H1_PENDING` 与 `docs/mvp-scaffold-report.md`。其他栈仍为 `add-version`。后端新项目的需求基线第一条固定为 `REQ-001 MVP 框架与 Item CRUD 示例（框架基线）`，业务需求从 `REQ-002` 开始。老项目只写需求文档、基线与只读快照，不生成脚手架。
 
 ## 验证
 
-- **301 个测试，297 通过 / 0 失败 / 4 跳过**（`node --test`；跳过项是本机缺少 Node 18 的环境用例）。`s36` 覆盖需求文档派生与 M1，`s38` 覆盖三种入口与 fail-closed，`s39` 覆盖 `mvp-scaffold` 与三栈模板，`s40` 覆盖自动生成、质量失败与归档。
+- **全量 `npm test` 当前通过**；具体用例数、跳过项和失败项以命令输出为准。模板验收同时记录 Maven、npm、覆盖率、HTTP 与浏览器阶段的真实证据。
 - `M1` 拒绝缺少 问题 / 目标 / 非目标 / 影响面 任一段的 proposal，以及存在未解析验收标准引用的增量。
 - `M2` 拒绝缺少四个段落任一的 design、存在环的任务图、没有用例覆盖的 AC，以及无法发现的测试套件。
 - 批准哈希：`H1` 之后修改 `proposal.md`/`specs/**`，或 `H2` 之后修改计划，都会使批准失效并强制重新批准。

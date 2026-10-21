@@ -6,7 +6,8 @@ import { startJavaInit } from '../src/v4/java-init.js';
 import { javaFullstackFiles } from '../src/v4/java-fullstack-template.js';
 import { verifyJavaProject } from '../src/v4/java-verify.js';
 
-const requested = process.argv[2];
+const full = process.argv.includes('--full');
+const requested = process.argv.slice(2).find((item) => !item.startsWith('--'));
 const presets = requested ? JAVA_PRESETS.filter((item) => item.id === requested) : JAVA_PRESETS;
 if (!presets.length) throw new Error('Unknown preset: ' + requested);
 const parent = path.resolve('.specgate/template-qa/' + Date.now());
@@ -20,22 +21,29 @@ for (const preset of presets) {
     userQuestions: { ask: async () => ({ answers: [{ selected: ['确认'] }] }) },
   });
   if (!init.ok) throw new Error(JSON.stringify(init));
+  const generatedHash = init.report.template.hash;
   console.log('VERIFY ' + root);
   const result = await verifyJavaProject({
     root,
     install: false,
+    full,
     onProgress: (event) => console.log(event.message),
   });
   const record = {
     preset: preset.id,
-    templateHash: templateHash(javaFullstackFiles({ preset })),
+    templateHash: generatedHash,
     root,
     ...result,
   };
   results.push(record);
+  if (templateHash(javaFullstackFiles({ preset })) !== generatedHash) {
+    record.ok = false;
+    record.code = 'TEMPLATE_CHANGED_DURING_ACCEPTANCE';
+    record.message = 'Template source changed during acceptance; rerun the final content';
+  }
   fs.writeFileSync(path.join(parent, 'results.json'), JSON.stringify(results, null, 2) + '\n');
-  console.log(result.message);
-  if (!result.ok) {
+  console.log(record.message);
+  if (!record.ok) {
     process.exitCode = 1;
     break;
   }

@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { randomUUID } from 'node:crypto';
 import { spawn, spawnSync } from 'node:child_process';
+import { patchState } from '../v3/state.js';
 
 export const VERIFY_STAGES = [
   'backend-verify',
@@ -10,10 +11,13 @@ export const VERIFY_STAGES = [
   'frontend-test',
   'frontend-lint',
   'frontend-format',
+  'coverage',
   'runtime',
 ];
+export const FULL_VERIFY_STAGES = [...VERIFY_STAGES, 'browser'];
 
-export function createVerification(root, preset) {
+export function createVerification(root, preset, { full = false } = {}) {
+  const expectedStages = full ? FULL_VERIFY_STAGES : VERIFY_STAGES;
   const runId = new Date().toISOString().replace(/[:.]/g, '-') + '-' + randomUUID().slice(0, 8);
   const directory = path.join(root, '.specgate', 'verify-runs', runId);
   fs.mkdirSync(directory, { recursive: true });
@@ -26,14 +30,14 @@ export function createVerification(root, preset) {
     ok: false,
     startedAt: new Date().toISOString(),
     stages: [],
-    expectedStages: VERIFY_STAGES,
+    expectedStages,
   };
   function save(patch = {}) {
     Object.assign(report, patch, { checkedAt: new Date().toISOString() });
     if (
       report.ok &&
-      (report.stages.length !== VERIFY_STAGES.length ||
-        VERIFY_STAGES.some(
+      (report.stages.length !== expectedStages.length ||
+        expectedStages.some(
           (name) =>
             report.stages.filter((stage) => stage.name === name && stage.status === 0).length !== 1,
         ))
@@ -42,13 +46,13 @@ export function createVerification(root, preset) {
     const passed = report.stages.filter((stage) => stage.status === 0).length;
     const failed = report.stages.filter((stage) => stage.status !== 0).length;
     report.reconciliation = {
-      expected: VERIFY_STAGES.length,
+      expected: expectedStages.length,
       executed: report.stages.length,
       passed,
       failed,
-      notRun: VERIFY_STAGES.length - report.stages.length,
+      notRun: expectedStages.length - report.stages.length,
     };
-    report.checks = VERIFY_STAGES.map((name) => {
+    report.checks = expectedStages.map((name) => {
       const stage = report.stages.find((item) => item.name === name);
       return {
         name,
@@ -67,7 +71,8 @@ export function createVerification(root, preset) {
     const initFile = path.join(root, '.specgate', 'init-report.json');
     if (fs.existsSync(initFile)) {
       const init = JSON.parse(fs.readFileSync(initFile, 'utf8'));
-      init.phase = report.ok ? 'SMOKE_PASSED' : 'VERIFY_' + report.status.toUpperCase();
+      init.phase =
+        report.phase || (report.ok ? 'SMOKE_PASSED' : 'VERIFY_' + report.status.toUpperCase());
       init.initializationComplete = report.ok;
       init.verification = {
         kind: 'local-sg-verify',
@@ -80,13 +85,34 @@ export function createVerification(root, preset) {
       init.execution = Object.fromEntries(report.checks.map((check) => [check.name, check.status]));
       fs.writeFileSync(initFile, JSON.stringify(init, null, 2) + '\n');
     }
+    const stateFile = path.join(root, '.specgate', 'state.json');
+    if (fs.existsSync(stateFile)) {
+      const saved = patchState(root, (draft) => {
+        const phase =
+          report.phase || (report.ok ? 'SMOKE_PASSED' : 'VERIFY_' + report.status.toUpperCase());
+        draft.initialization = {
+          ...(draft.initialization || {}),
+          phase,
+          initializationComplete: report.ok,
+          verification: {
+            kind: 'local-sg-verify',
+            ok: report.ok,
+            runId,
+            checkedAt: report.checkedAt,
+            report: '.specgate/verify-runs/' + runId + '/report.json',
+            failedStage: report.failedStage || null,
+          },
+        };
+      });
+      if (!saved.ok) throw new Error('Unable to persist verification state: ' + saved.message);
+    }
     return report;
   }
   save();
   return { report, save, directory };
 }
 
-function commandSpec(command, args) {
+export function commandSpec(command, args) {
   if (process.platform !== 'win32' || !/\.(cmd|bat)$/i.test(command)) return { command, args };
   const quote = (value) => {
     if (/["\r\n%&|<>^!]/.test(value)) throw new Error('Unsafe Windows command argument');

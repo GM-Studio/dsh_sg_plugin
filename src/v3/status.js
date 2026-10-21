@@ -53,6 +53,7 @@ export function statusData(project) {
   } catch {
     /* Status remains available for a damaged report. */
   }
+  if (state.initialization) initialization = { ...state.initialization, ...(initialization || {}) };
   return {
     initialized: true,
     initialization,
@@ -115,6 +116,13 @@ export function renderStatus(project) {
     lines.push(
       `初始化验证：${data.initialization.phase}（${data.initialization.initializationComplete ? '已通过本地验证' : '尚未通过本地验证'}）`,
     );
+    const goldenId = data.initialization.goldenId || data.initialization.version?.id || '未知';
+    const templateHash =
+      data.initialization.templateHash || data.initialization.template?.hash || '';
+    lines.push(`Golden：${goldenId}${templateHash ? ' / ' + templateHash.slice(0, 12) + '…' : ''}`);
+    const pendingPlatforms =
+      data.initialization.pendingPlatforms || data.initialization.template?.pendingPlatforms || [];
+    if (pendingPlatforms.length) lines.push(`待验收平台：${pendingPlatforms.join(', ')}`);
     if (data.initialization.verification?.report)
       lines.push(`验证报告：${data.initialization.verification.report}`);
   }

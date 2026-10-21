@@ -65,71 +65,123 @@ export const JAVA_PRESETS = [
 export const GOLDEN_MANIFEST = {
   schemaVersion: 1,
   updatedAt: '2026-10-21',
+  requiredPlatforms: ['win32', 'linux'],
   presets: {
     'jdk8-boot2.7': {
-      templateHash: 'ebd6e0d9c8bf4c984e7eddd2ae2d7bba80d57e63a81d3fb7e8c9793e1dbf6418',
-      verifiedAt: '2026-10-21T01:47:13.670Z',
+      templateHash: 'beb6f3f4bdfeb37b2aa8c2910de50ac6ad5efaf80af1aa1fe573febca7f3ec20',
+      verifiedAt: '2026-10-21T04:16:09.826Z',
       verifiedBy: 'local:win32 x64',
       toolchain: 'JDK 1.8.0_472 + Maven 3.9.11 + Node 24.14.0',
       commands: [
         'C:\\Users\\Administrator\\.m2\\wrapper\\dists\\apache-maven-3.9.11\\03d7e36a140982eea48e22c1dcac01d8862b2550b2939e09a0809bbc5182a5bc\\bin\\mvn.cmd -B -ntp clean verify',
         'D:\\Program Files\\nodejs\\npm.cmd ci --no-audit --no-fund',
         'D:\\Program Files\\nodejs\\npm.cmd run build',
-        'D:\\Program Files\\nodejs\\npm.cmd run test -- --reporter=json --outputFile=E:\\ai_workflow\\specgate\\.specgate\\template-qa\\1792547192172\\jdk8-boot2.7\\.specgate\\verify-runs\\2026-10-21T01-46-32-832Z-386ace66\\frontend-tests.json',
+        'D:\\Program Files\\nodejs\\npm.cmd run test -- --reporter=json --outputFile=E:\\ai_workflow\\specgate\\.specgate\\template-qa\\1792556122916\\jdk8-boot2.7\\.specgate\\verify-runs\\2026-10-21T04-15-23-917Z-9a3259c0\\frontend-tests.json',
         'D:\\Program Files\\nodejs\\npm.cmd run lint',
         'D:\\Program Files\\nodejs\\npm.cmd run format:check',
+        'internal:coverage-reconciliation',
       ],
       result: 'passed',
-      evidence: 'docs/verification/2026-10-21-json-post-crud/jdk8-boot2.7/report.json',
+      platforms: {
+        win32: {
+          result: 'passed',
+          verifiedAt: '2026-10-21T04:16:09.826Z',
+          evidence: 'docs/verification/2026-10-21-standard-template/win32/jdk8-boot2.7/report.json',
+        },
+        linux: {
+          result: 'not-run',
+        },
+      },
+      evidence: 'docs/verification/2026-10-21-standard-template/win32/jdk8-boot2.7/report.json',
+      matrixComplete: false,
     },
     'jdk17-boot3.5': {
-      templateHash: '85f7a8cdebc2e9aa3b6070af71d3d7190683ce0555066b28939efb2dc1070a20',
-      verifiedAt: '2026-10-21T01:48:00.550Z',
+      templateHash: 'e7d8d92a48c90f0e57643e22a8dac74fdd1acc1c96872c1232a4674bfaf0413a',
+      verifiedAt: '2026-10-21T04:17:04.538Z',
       verifiedBy: 'local:win32 x64',
       toolchain: 'JDK 17.0.18 + Maven 3.9.11 + Node 24.14.0',
       commands: [
         'C:\\Users\\Administrator\\.m2\\wrapper\\dists\\apache-maven-3.9.11\\03d7e36a140982eea48e22c1dcac01d8862b2550b2939e09a0809bbc5182a5bc\\bin\\mvn.cmd -B -ntp clean verify',
         'D:\\Program Files\\nodejs\\npm.cmd ci --no-audit --no-fund',
         'D:\\Program Files\\nodejs\\npm.cmd run build',
-        'D:\\Program Files\\nodejs\\npm.cmd run test -- --reporter=json --outputFile=E:\\ai_workflow\\specgate\\.specgate\\template-qa\\1792547192172\\jdk17-boot3.5\\.specgate\\verify-runs\\2026-10-21T01-47-14-100Z-19111b02\\frontend-tests.json',
+        'D:\\Program Files\\nodejs\\npm.cmd run test -- --reporter=json --outputFile=E:\\ai_workflow\\specgate\\.specgate\\template-qa\\1792556122916\\jdk17-boot3.5\\.specgate\\verify-runs\\2026-10-21T04-16-10-933Z-613bddb0\\frontend-tests.json',
         'D:\\Program Files\\nodejs\\npm.cmd run lint',
         'D:\\Program Files\\nodejs\\npm.cmd run format:check',
+        'internal:coverage-reconciliation',
       ],
       result: 'passed',
-      evidence: 'docs/verification/2026-10-21-json-post-crud/jdk17-boot3.5/report.json',
+      platforms: {
+        win32: {
+          result: 'passed',
+          verifiedAt: '2026-10-21T04:17:04.538Z',
+          evidence:
+            'docs/verification/2026-10-21-standard-template/win32/jdk17-boot3.5/report.json',
+        },
+        linux: {
+          result: 'not-run',
+        },
+      },
+      evidence: 'docs/verification/2026-10-21-standard-template/win32/jdk17-boot3.5/report.json',
+      matrixComplete: false,
     },
     'jdk21-boot3.5': {
-      templateHash: '3b2451d286fad66f6f31f5bb2bb653798b72b8bae5290284d3b7e84d2380c9b9',
-      verifiedAt: '2026-10-21T01:48:40.334Z',
+      templateHash: 'e08a16cf0d6c4c62375b37f81eef65a4aef8b3a9fb53420bead5d3f53f329c97',
+      verifiedAt: '2026-10-21T04:17:52.103Z',
       verifiedBy: 'local:win32 x64',
       toolchain: 'JDK 21.0.9 + Maven 3.9.11 + Node 24.14.0',
       commands: [
         'C:\\Users\\Administrator\\.m2\\wrapper\\dists\\apache-maven-3.9.11\\03d7e36a140982eea48e22c1dcac01d8862b2550b2939e09a0809bbc5182a5bc\\bin\\mvn.cmd -B -ntp clean verify',
         'D:\\Program Files\\nodejs\\npm.cmd ci --no-audit --no-fund',
         'D:\\Program Files\\nodejs\\npm.cmd run build',
-        'D:\\Program Files\\nodejs\\npm.cmd run test -- --reporter=json --outputFile=E:\\ai_workflow\\specgate\\.specgate\\template-qa\\1792547192172\\jdk21-boot3.5\\.specgate\\verify-runs\\2026-10-21T01-48-01-184Z-93974417\\frontend-tests.json',
+        'D:\\Program Files\\nodejs\\npm.cmd run test -- --reporter=json --outputFile=E:\\ai_workflow\\specgate\\.specgate\\template-qa\\1792556122916\\jdk21-boot3.5\\.specgate\\verify-runs\\2026-10-21T04-17-05-436Z-da37ef8d\\frontend-tests.json',
         'D:\\Program Files\\nodejs\\npm.cmd run lint',
         'D:\\Program Files\\nodejs\\npm.cmd run format:check',
+        'internal:coverage-reconciliation',
       ],
       result: 'passed',
-      evidence: 'docs/verification/2026-10-21-json-post-crud/jdk21-boot3.5/report.json',
+      platforms: {
+        win32: {
+          result: 'passed',
+          verifiedAt: '2026-10-21T04:17:52.103Z',
+          evidence:
+            'docs/verification/2026-10-21-standard-template/win32/jdk21-boot3.5/report.json',
+        },
+        linux: {
+          result: 'not-run',
+        },
+      },
+      evidence: 'docs/verification/2026-10-21-standard-template/win32/jdk21-boot3.5/report.json',
+      matrixComplete: false,
     },
     'jdk21-boot4.0': {
-      templateHash: 'c0d138ee94f9a6ccc0782043c104b0cf83d7e2cf6e141392f34398f3d5503823',
-      verifiedAt: '2026-10-21T01:49:47.345Z',
+      templateHash: '6c2a3870dd34b30db66ce1e9eb26ad754e2749014596861740ab0f30f71feb21',
+      verifiedAt: '2026-10-21T04:18:42.332Z',
       verifiedBy: 'local:win32 x64',
       toolchain: 'JDK 21.0.9 + Maven 3.9.11 + Node 24.14.0',
       commands: [
         'C:\\Users\\Administrator\\.m2\\wrapper\\dists\\apache-maven-3.9.11\\03d7e36a140982eea48e22c1dcac01d8862b2550b2939e09a0809bbc5182a5bc\\bin\\mvn.cmd -B -ntp clean verify',
         'D:\\Program Files\\nodejs\\npm.cmd ci --no-audit --no-fund',
         'D:\\Program Files\\nodejs\\npm.cmd run build',
-        'D:\\Program Files\\nodejs\\npm.cmd run test -- --reporter=json --outputFile=E:\\ai_workflow\\specgate\\.specgate\\template-qa\\1792547346704\\jdk21-boot4.0\\.specgate\\verify-runs\\2026-10-21T01-49-07-238Z-9c54636c\\frontend-tests.json',
+        'D:\\Program Files\\nodejs\\npm.cmd run test -- --reporter=json --outputFile=E:\\ai_workflow\\specgate\\.specgate\\template-qa\\1792556122916\\jdk21-boot4.0\\.specgate\\verify-runs\\2026-10-21T04-17-53-231Z-caed2644\\frontend-tests.json',
         'D:\\Program Files\\nodejs\\npm.cmd run lint',
         'D:\\Program Files\\nodejs\\npm.cmd run format:check',
+        'internal:coverage-reconciliation',
       ],
       result: 'passed',
-      evidence: 'docs/verification/2026-10-21-json-post-crud/jdk21-boot4.0/report.json',
+      platforms: {
+        win32: {
+          result: 'passed',
+          verifiedAt: '2026-10-21T04:18:42.332Z',
+          evidence:
+            'docs/verification/2026-10-21-standard-template/win32/jdk21-boot4.0/report.json',
+        },
+        linux: {
+          result: 'not-run',
+        },
+      },
+      evidence: 'docs/verification/2026-10-21-standard-template/win32/jdk21-boot4.0/report.json',
       preview: true,
+      matrixComplete: false,
     },
   },
 };
@@ -161,10 +213,10 @@ function readmeFor(readme, preset) {
     '# Java ' + preset.jdk + ' + Spring Boot ' + preset.bootVersion + ' + Vue task monorepo',
   );
   value = value.replace(
-    'Maintained Java 8 JDK, Maven 3.9.11 (3.9.x supported). Set JAVA_HOME and put its bin on PATH.',
-    'JDK ' +
+    'Maintained Java 8 JDK and Maven 3.9.x. Set JAVA_HOME; Maven Wrapper (`backend/mvnw` or `backend/mvnw.cmd`) uses Maven 3.9.11.',
+    'Maintained JDK ' +
       preset.jdk +
-      ' (maintained vendor distribution). Set JAVA_HOME and put its bin on PATH. Maven 3.9.x is supported.',
+      '. Set JAVA_HOME; Maven Wrapper (`backend/mvnw` or `backend/mvnw.cmd`) uses Maven 3.9.11.',
   );
   value = value.replace(
     'docs/security.md for the mandatory legacy-stack risk assessment.',
@@ -213,7 +265,8 @@ function securityFor(security, preset) {
     ' and H2 ' +
     preset.h2 +
     ' for a local demonstration. Pinned versions ensure compatibility, not security; review dependency advisories and SBOMs before deployment.\n\n' +
-    'This application is a local demonstration: no authentication, authorization, CSRF protection, rate limiting or production migration framework is supplied. Do not expose it to untrusted networks. Default loopback binding, disabled H2 console, safe Vue text interpolation and generic server errors reduce accidental exposure but do NOT replace those controls. Keep DB files private and protect backups.\n\n';
+    security.slice(0, security.indexOf('## Legacy stack')) +
+    '\n';
   return header + (tail ? tail + '\n' : '');
 }
 
@@ -238,6 +291,7 @@ export function applyJavaPreset(files, preset) {
       out[key] = out[key]
         .replaceAll('javax.persistence', 'jakarta.persistence')
         .replaceAll('javax.validation', 'jakarta.validation')
+        .replaceAll('javax.servlet', 'jakarta.servlet')
         .replace(
           /(?:^import (?!static ).+;\n)+/gm,
           (block) => block.trimEnd().split('\n').sort().join('\n') + '\n',
@@ -252,28 +306,37 @@ export function applyJavaPreset(files, preset) {
       );
     }
     if (String(preset.bootVersion).startsWith('4')) {
-      const testFile = 'backend/src/test/java/com/example/tasks/TaskApiTest.java';
+      for (const name of Object.keys(out).filter((name) => name.endsWith('.java'))) {
+        out[name] = out[name].replaceAll(
+          'org.springframework.boot.web.servlet.error.ErrorController',
+          'org.springframework.boot.webmvc.error.ErrorController',
+        );
+      }
       out['backend/pom.xml'] = out['backend/pom.xml'].replace(
         '    <dependency><groupId>org.springframework.boot</groupId><artifactId>spring-boot-starter-test</artifactId><scope>test</scope></dependency>',
         '    <dependency><groupId>org.springframework.boot</groupId><artifactId>spring-boot-starter-test</artifactId><scope>test</scope></dependency>\n' +
           '    <dependency><groupId>org.springframework.boot</groupId><artifactId>spring-boot-starter-webmvc-test</artifactId><scope>test</scope></dependency>',
       );
-      let test = out[testFile];
-      test = test
-        .replace('import com.fasterxml.jackson.databind.ObjectMapper;\n', '')
-        .replace(
-          'import org.springframework.test.web.servlet.MockMvc;',
-          'import org.springframework.test.web.servlet.MockMvc;\nimport tools.jackson.databind.ObjectMapper;',
-        )
-        .replace(
-          'import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;\n',
-          '',
-        )
-        .replace(
-          'import org.springframework.boot.test.context.SpringBootTest;',
-          'import org.springframework.boot.test.context.SpringBootTest;\nimport org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;',
-        );
-      out[testFile] = test;
+      for (const testFile of Object.keys(out).filter(
+        (name) => name.startsWith('backend/src/test/') && name.endsWith('.java'),
+      )) {
+        let test = out[testFile];
+        test = test
+          .replace('import com.fasterxml.jackson.databind.ObjectMapper;\n', '')
+          .replace(
+            'import org.springframework.test.web.servlet.MockMvc;',
+            'import org.springframework.test.web.servlet.MockMvc;\nimport tools.jackson.databind.ObjectMapper;',
+          )
+          .replace(
+            'import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;\n',
+            '',
+          )
+          .replace(
+            'import org.springframework.boot.test.context.SpringBootTest;',
+            'import org.springframework.boot.test.context.SpringBootTest;\nimport org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;',
+          );
+        out[testFile] = test;
+      }
     }
   }
   out['.java-version'] = preset.jdk + '\n';
@@ -309,7 +372,17 @@ export function goldenStatus(preset, hash) {
       record,
     };
   }
-  return { verified: true, reason: null, record };
+  if (record.result !== 'passed') return { verified: false, reason: '模板验收记录未通过', record };
+  const pendingPlatforms = (GOLDEN_MANIFEST.requiredPlatforms || []).filter(
+    (platform) => record.platforms?.[platform]?.result !== 'passed',
+  );
+  return {
+    verified: true,
+    reason: null,
+    record,
+    matrixComplete: pendingPlatforms.length === 0,
+    pendingPlatforms,
+  };
 }
 
 export function listJavaPresets() {

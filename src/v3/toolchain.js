@@ -49,6 +49,21 @@ function baseInstallCommand(root, managerName) {
 }
 
 export function planToolchain(root, worktree = root, stack = null) {
+  if (
+    exists(path.join(worktree, 'backend/pom.xml')) &&
+    exists(path.join(worktree, 'frontend/package.json')) &&
+    exists(path.join(worktree, '.specgate/template-style.json'))
+  ) {
+    return {
+      ok: true,
+      packages: [],
+      configs: [],
+      skipped: false,
+      java: true,
+      monorepo: true,
+      hasLockfile: true,
+    };
+  }
   const pkgFile = path.join(worktree, 'package.json');
   const java =
     stack === 'java' ||
@@ -101,6 +116,21 @@ export function ensureToolchain({
 }) {
   const plan = planToolchain(root, worktree, stack);
   if (!plan.ok || plan.skipped) return plan;
+  if (plan.monorepo && !exists(path.join(worktree, 'frontend/node_modules'))) {
+    if (!install) return { ...plan, ok: false, message: '模板检查缺少前端依赖；请安装后重试' };
+    const run = spawnSync(process.execPath, [path.join(worktree, 'scripts/run.mjs'), 'install'], {
+      cwd: worktree,
+      encoding: 'utf8',
+      maxBuffer: 16 * 1024 * 1024,
+      windowsHide: true,
+    });
+    if (run.status !== 0)
+      return {
+        ok: false,
+        code: 'TOOLCHAIN_INSTALL_FAILED',
+        message: run.stderr || '前端依赖安装失败',
+      };
+  }
   if (plan.java) return { ...plan, generated: [], installed: false };
   if (!plan.hasLockfile) return { ...plan, skipped: true, reason: 'NO_LOCKFILE' };
   const generated = [];

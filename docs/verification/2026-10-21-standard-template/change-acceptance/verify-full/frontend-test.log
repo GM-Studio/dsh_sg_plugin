@@ -1,0 +1,23 @@
+
+> task-web@1.0.0 test
+> vitest run --coverage --reporter=json --outputFile=E:\ai_workflow\specgate\.specgate\change-qa\1792557325244\.specgate\worktrees\add-reference-notes\integration\.specgate\verify-runs\2026-10-21T04-39-35-221Z-61884352\frontend-tests.json
+
+JSON report written to E:/ai_workflow/specgate/.specgate/change-qa/1792557325244/.specgate/worktrees/add-reference-notes/integration/.specgate/verify-runs/2026-10-21T04-39-35-221Z-61884352/frontend-tests.json
+ % Coverage report from v8
+-----------------|---------|----------|---------|---------|---------------------
+File             | % Stmts | % Branch | % Funcs | % Lines | Uncovered Line #s   
+-----------------|---------|----------|---------|---------|---------------------
+All files        |   96.91 |    97.08 |   96.21 |   97.44 |                     
+ src             |    95.6 |    97.34 |   94.18 |   95.88 |                     
+  App.vue        |   96.13 |    97.34 |   94.18 |   96.44 | 171-172,264-274,299 
+  main.ts        |       0 |      100 |     100 |       0 | 6                   
+ src/api         |     100 |      100 |     100 |     100 |                     
+  auth.ts        |     100 |      100 |     100 |     100 |                     
+  files.ts       |     100 |      100 |     100 |     100 |                     
+  notes.ts       |     100 |      100 |     100 |     100 |                     
+  request.ts     |     100 |      100 |     100 |     100 |                     
+  tasks.ts       |     100 |      100 |     100 |     100 |                     
+  types.ts       |       0 |        0 |       0 |       0 |                     
+ src/components  |   97.77 |    93.33 |     100 |     100 |                     
+  NotesPanel.vue |   97.77 |    93.33 |     100 |     100 | 15-21               
+-----------------|---------|----------|---------|---------|---------------------

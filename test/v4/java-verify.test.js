@@ -4,6 +4,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { verifyJavaProject } from '../../src/v4/java-verify.js';
+import { VERIFY_STAGES } from '../../src/v4/verify-evidence.js';
 
 const exe = (name) => (process.platform === 'win32' ? name + '.exe' : name);
 
@@ -57,8 +58,8 @@ test('verify blocks honestly when the local toolchain is missing', async (t) => 
   assert.equal(report.preset, 'jdk17-boot3.5');
   assert.deepEqual(report.stages, []);
   assert.match(result.message, /安装建议/);
-  assert.equal(report.reconciliation.expected, 7);
-  assert.equal(report.reconciliation.notRun, 7);
+  assert.equal(report.reconciliation.expected, VERIFY_STAGES.length);
+  assert.equal(report.reconciliation.notRun, VERIFY_STAGES.length);
 });
 
 test('blocked retry invalidates previous success and writes a distinct run report', async (t) => {

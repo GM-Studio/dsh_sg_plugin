@@ -1,7 +1,8 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import { spawnSync } from 'node:child_process';
 import { git, headOf } from './worktrees.js';
-import { currentBranch, isClean } from './util/git.js';
+import { currentBranch } from './util/git.js';
 import { applyDeltaToText } from './openspec/apply.js';
 import { collectDelta } from './phase.js';
 import { ensureDir, exists, readText, writeText } from './util/fsx.js';
@@ -18,6 +19,34 @@ function removeDir(target) {
   fs.rmSync(target, { recursive: true, force: true });
 }
 
+function mergeIntegration(root, change, integrationBranch) {
+  const message = `merge ${change}`;
+  const merge = spawnSync(
+    'git',
+    ['merge', '--no-ff', '--no-commit', '-m', message, integrationBranch],
+    {
+      cwd: root,
+      encoding: 'utf8',
+      windowsHide: true,
+      timeout: 60000,
+    },
+  );
+  if (merge.status !== 0) {
+    const conflicts = git(root, ['status', '--porcelain', '--untracked-files=all'])
+      .split(/\r?\n/)
+      .filter((line) => /^\s*(UU|AA|AU|UA|DU|UD)\s+/.test(line));
+    const managed = new Set(['.specgate/state.json', '.specgate/init-report.json']);
+    const paths = conflicts.map((line) => line.replace(/^\s*[MADRCU?!]{1,2}\s+/, ''));
+    if (!paths.length || paths.some((file) => !managed.has(file)))
+      throw new Error(merge.stderr || merge.stdout || 'integration merge failed');
+    for (const file of paths) {
+      git(root, ['checkout', '--ours', '--', file]);
+      git(root, ['add', file]);
+    }
+  }
+  git(root, ['commit', '-q', '-m', message]);
+}
+
 export function nextTag(root) {
   let tags = [];
   try {
@@ -32,13 +61,40 @@ export function nextTag(root) {
 }
 
 export function archiveChange({ root, change, integrationBranch, backupDir, tag, evidenceHead }) {
-  const mainBefore = headOf(root, 'HEAD');
   if (!integrationBranch) {
     return { ok: false, code: 'NO_INTEGRATION', message: '没有 integration 分支' };
   }
-  if (!isClean(root)) {
+  const marker = path.join(root, '.specgate', 'monorepo.json');
+  if (exists(marker) && JSON.parse(readText(marker)).stack === 'java-vue') {
+    let initReport = null;
+    try {
+      initReport = JSON.parse(readText(path.join(root, '.specgate', 'init-report.json')));
+    } catch {
+      return { ok: false, code: 'RELEASE_NOT_VERIFIED', message: '缺少可用的完整验证报告' };
+    }
+    if (initReport.phase !== 'VERIFIED')
+      return {
+        ok: false,
+        code: 'RELEASE_NOT_VERIFIED',
+        message: '发布/tag 需要 VERIFIED；请先执行 /sg-verify --full',
+      };
+  }
+  const status = git(root, ['status', '--porcelain', '--untracked-files=all'])
+    .split(/\r?\n/)
+    .filter(Boolean);
+  const managed = new Set(['.specgate/state.json', '.specgate/init-report.json']);
+  const pathOf = (line) => line.replace(/^\s*[MADRCU?!]{1,2}\s+/, '');
+  const onlyManaged = status.length > 0 && status.every((line) => managed.has(pathOf(line)));
+  if (status.length > 0 && !onlyManaged) {
     return { ok: false, code: 'MAIN_DIRTY', message: '主工作树不干净，不能归档' };
   }
+  if (onlyManaged) {
+    for (const file of managed) {
+      if (fs.existsSync(path.join(root, file))) git(root, ['add', file]);
+    }
+    git(root, ['commit', '-q', '-m', `chore(${change}): 记录归档前状态`]);
+  }
+  const mainBefore = headOf(root, 'HEAD');
   const branch = currentBranch(root);
   if (!['main', 'master'].includes(branch)) {
     return {
@@ -57,7 +113,7 @@ export function archiveChange({ root, change, integrationBranch, backupDir, tag,
 
   let createdTag = null;
   try {
-    git(root, ['merge', '--no-ff', '-m', `merge ${change}`, integrationBranch]);
+    mergeIntegration(root, change, integrationBranch);
 
     for (const file of collectDelta(root, change)) {
       const specsPath = path.join(root, 'openspec', 'specs', file.capability, 'spec.md');

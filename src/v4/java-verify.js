@@ -1,6 +1,11 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import net from 'node:net';
+import { randomUUID } from 'node:crypto';
+import { exerciseAdminApi } from './java-runtime.js';
+import { runBrowserSmoke } from './browser-e2e.js';
+import { reconcileCoverage } from './coverage-evidence.js';
+import { projectSourceHash } from '../v3/template-style.js';
 import { spawn, spawnSync } from 'node:child_process';
 import { normalizeJavaPreset } from './java-versions.js';
 import {
@@ -136,7 +141,16 @@ async function waitHealthy(url, timeoutMs = 60000, signal, child) {
   return false;
 }
 
-async function runRuntimeSmoke({ root, javaHome, env, signal, directory }) {
+async function runRuntimeSmoke({
+  root,
+  javaHome,
+  env,
+  signal,
+  directory,
+  full = false,
+  npm = null,
+  nodePath = null,
+}) {
   const backend = path.join(root, 'backend');
   const target = path.join(backend, 'target');
   const jar = fs
@@ -150,6 +164,9 @@ async function runRuntimeSmoke({ root, javaHome, env, signal, directory }) {
   const childEnv = {
     ...env,
     BACKEND_PORT: String(port),
+    APP_ADMIN_PASSWORD: randomUUID(),
+    APP_VIEWER_PASSWORD: randomUUID(),
+    FILE_DIRECTORY: path.join(dbDir, 'uploads'),
     MANAGEMENT_ENDPOINT_SHUTDOWN_ENABLED: 'true',
     MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE: 'health,shutdown',
     DB_URL:
@@ -166,6 +183,26 @@ async function runRuntimeSmoke({ root, javaHome, env, signal, directory }) {
   };
   let child = null;
   const startedAt = Date.now();
+  const shutdown = async () => {
+    const { sessionClient } = await import('./java-runtime.js');
+    const admin = sessionClient(base);
+    await admin.write('/api/auth/login', {
+      username: 'admin',
+      password: childEnv.APP_ADMIN_PASSWORD,
+    });
+    const csrf = await admin.json('/api/auth/csrf');
+    await admin.send('/actuator/shutdown', {
+      method: 'POST',
+      headers: { 'X-CSRF-TOKEN': csrf.token },
+    });
+  };
+  const restartBackend = async (shutdownFn) => {
+    if (!(await stop(shutdownFn))) throw new Error('Backend did not shut down normally');
+    if (signal?.aborted) throw new Error('Verification cancelled');
+    start();
+    if (!(await waitHealthy(base + '/actuator/health', 60000, signal, child)))
+      throw new Error('Backend restart failed');
+  };
   function start() {
     child = spawn(java, ['-jar', jar], {
       cwd: backend,
@@ -181,15 +218,17 @@ async function runRuntimeSmoke({ root, javaHome, env, signal, directory }) {
       capture(Buffer.from(error.message));
     });
   }
-  async function stop() {
+  async function stop(shutdown) {
     const current = child;
     child = null;
     if (!current || current.exitCode !== null || !current.pid) return current?.exitCode === 0;
     try {
-      await fetch(base + '/actuator/shutdown', {
-        method: 'POST',
-        signal: AbortSignal.timeout(5000),
-      });
+      if (shutdown) await shutdown();
+      else
+        await fetch(base + '/actuator/shutdown', {
+          method: 'POST',
+          signal: AbortSignal.timeout(5000),
+        });
     } catch {
       // Fall back to terminating the process below.
     }
@@ -212,68 +251,44 @@ async function runRuntimeSmoke({ root, javaHome, env, signal, directory }) {
     start();
     if (!(await waitHealthy(base + '/actuator/health', 60000, signal, child)))
       throw new Error('Backend did not become healthy');
-    const created = await fetch(base + '/api/tasks', {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ title: 'sg-verify', completed: false }),
-      signal: AbortSignal.timeout(10000),
+    await exerciseAdminApi({
+      base,
+      env: childEnv,
+      restart: restartBackend,
+      log: (message) => fs.writeSync(fd, '\n' + message + '\n'),
     });
-    if (created.status !== 201) throw new Error('POST /api/tasks returned ' + created.status);
-    const task = await created.json();
-    const read = await fetch(base + '/api/tasks/' + task.id, {
-      signal: AbortSignal.timeout(10000),
-    });
-    if (read.status !== 200 || (await read.json()).title !== 'sg-verify')
-      throw new Error('GET task mismatch');
-    const updated = await fetch(base + '/api/tasks/update', {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ id: task.id, title: 'sg-verify-updated', completed: true }),
-      signal: AbortSignal.timeout(10000),
-    });
-    if (updated.status !== 200 || (await updated.json()).completed !== true)
-      throw new Error('POST task update failed');
-    if (!(await stop()))
-      throw new Error(
-        'Backend did not shut down normally; persistence verification requires a graceful restart',
-      );
-    if (signal?.aborted) throw new Error('Verification cancelled');
-    start();
-    if (!(await waitHealthy(base + '/actuator/health', 60000, signal, child)))
-      throw new Error('Backend restart failed');
-    const listed = await fetch(base + '/api/tasks', { signal: AbortSignal.timeout(10000) });
-    if (listed.status !== 200) throw new Error('GET /api/tasks returned ' + listed.status);
-    const items = await listed.json();
-    if (
-      !Array.isArray(items) ||
-      !items.some(
-        (item) =>
-          item.id === task.id && item.title === 'sg-verify-updated' && item.completed === true,
-      )
-    )
-      throw new Error('Task did not survive backend restart');
-    const deleted = await fetch(base + '/api/tasks/delete', {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ id: task.id }),
-      signal: AbortSignal.timeout(10000),
-    });
-    if (deleted.status !== 200)
-      throw new Error('POST /api/tasks/delete returned ' + deleted.status);
-    const receipt = await deleted.json();
-    if (receipt.id !== task.id || receipt.deleted !== true)
-      throw new Error('Deletion JSON receipt mismatch');
-    const absent = await fetch(base + '/api/tasks/' + task.id, {
-      signal: AbortSignal.timeout(10000),
-    });
-    if (absent.status !== 404) throw new Error('Deleted task still exists');
-    fs.writeSync(fd, '\nHTTP create/read/update/restart/list/delete/404 passed\n');
+    let browser = null;
+    if (full) {
+      const frontendPort = await freePort();
+      const frontendPlan = npmPlan(npm, nodePath, [
+        'run',
+        'dev',
+        '--',
+        '--host',
+        '127.0.0.1',
+        '--port',
+        String(frontendPort),
+      ]);
+      browser = await runBrowserSmoke({
+        root,
+        backendPort: port,
+        frontendPort,
+        env: childEnv,
+        frontendCommand: frontendPlan[0],
+        frontendArgs: frontendPlan[1],
+        restart: () => restartBackend(shutdown),
+        signal,
+        directory,
+        log: (message) => fs.writeSync(fd, '\n' + message + '\n'),
+      });
+    }
     return {
       name: 'runtime',
       status: 0,
       durationMs: Date.now() - startedAt,
       log: path.relative(root, logFile).replace(/\\/g, '/'),
       tail: logs.join('').split(/\r?\n/).filter(Boolean).slice(-8),
+      browser,
     };
   } catch (error) {
     return {
@@ -287,7 +302,7 @@ async function runRuntimeSmoke({ root, javaHome, env, signal, directory }) {
       ],
     };
   } finally {
-    await stop();
+    await stop(shutdown);
     fs.closeSync(fd);
     fs.rmSync(dbDir, { recursive: true, force: true });
   }
@@ -305,6 +320,7 @@ async function verifyJavaProjectUnlocked({
   agent,
   javaHome: customJavaHome,
   mavenHome: customMavenHome,
+  full = false,
 } = {}) {
   root = path.resolve(root);
   const marker = path.join(root, '.specgate', 'monorepo.json');
@@ -341,12 +357,19 @@ async function verifyJavaProjectUnlocked({
       .filter(([key]) => /^(?:SG_)?(?:MAVEN_HOME|M2_HOME)$/i.test(key))
       .map(([, value]) => value),
   );
-  const evidence = createVerification(root, preset);
+  const evidence = createVerification(root, preset, { full });
   const finish = (status, code, message, extra = {}) => {
+    const phase =
+      status === 'verified'
+        ? 'VERIFIED'
+        : status === 'smoke-passed'
+          ? 'SMOKE_PASSED'
+          : 'VERIFY_' + status.toUpperCase();
     const report = evidence.save({
       ...extra,
+      phase,
       status,
-      ok: status === 'smoke-passed',
+      ok: status === 'smoke-passed' || status === 'verified',
       finishedAt: new Date().toISOString(),
     });
     return { ok: report.ok, code, message, report };
@@ -585,6 +608,8 @@ async function verifyJavaProjectUnlocked({
   };
   commandEnv.Path = commandEnv.PATH;
   const stages = [];
+  const initialCodeHash = projectSourceHash(root, { ignoreLocks: true });
+  evidence.save({ codeSourceHash: initialCodeHash });
   const npmCommand = (args) =>
     npmPlan(npm, toolchains.node ? toolchains.node.node : process.execPath, args);
   const plan = [
@@ -685,6 +710,8 @@ async function verifyJavaProjectUnlocked({
       }
     }
     stages.push(stage);
+    if (name === 'frontend-install' && stage.status === 0)
+      evidence.save({ sourceHash: projectSourceHash(root) });
     evidence.save({ stages });
     progress(
       stage.status === 0 ? 'stage-done' : 'stage-failed',
@@ -694,6 +721,30 @@ async function verifyJavaProjectUnlocked({
       failed = stage;
       break;
     }
+  }
+
+  if (!failed) {
+    const startedAt = new Date().toISOString();
+    const coverage = reconcileCoverage(root, {
+      since: Date.parse(evidence.report.startedAt),
+      directory: evidence.directory,
+    });
+    const log = path.join(evidence.directory, 'coverage.log');
+    fs.writeFileSync(log, JSON.stringify(coverage, null, 2) + '\n');
+    const stage = {
+      name: 'coverage',
+      status: coverage.ok ? 0 : 1,
+      startedAt,
+      finishedAt: new Date().toISOString(),
+      durationMs: Date.now() - Date.parse(startedAt),
+      command: 'internal:coverage-reconciliation',
+      log: path.relative(root, log).replace(/\\/g, '/'),
+      coverage,
+      tail: [coverage.ok ? 'Backend/frontend coverage thresholds passed' : coverage.message],
+    };
+    stages.push(stage);
+    evidence.save({ stages });
+    if (!coverage.ok) failed = stage;
   }
 
   if (!failed) {
@@ -714,26 +765,58 @@ async function verifyJavaProjectUnlocked({
           env: commandEnv,
           signal,
           directory: evidence.directory,
+          full,
+          npm,
+          nodePath: toolchains.node?.node || null,
         });
       } catch (error) {
         runtime = { name: 'runtime', status: 1, tail: [error.message], durationMs: 0 };
       }
       stages.push(runtime);
+      if (full && runtime.browser) {
+        stages.push(runtime.browser);
+        if (runtime.browser.status !== 0) failed = runtime.browser;
+      }
       evidence.save({ stages });
       progress(
-        runtime.status === 0 ? 'stage-done' : 'stage-failed',
-        'runtime ' + (runtime.status === 0 ? '通过' : '失败'),
+        runtime.status === 0 && (!full || runtime.browser?.status === 0)
+          ? 'stage-done'
+          : 'stage-failed',
+        'runtime ' +
+          (runtime.status === 0 ? '通过' : '失败') +
+          (full && runtime.browser
+            ? '；browser ' + (runtime.browser.status === 0 ? '通过' : '失败')
+            : ''),
       );
       if (runtime.status !== 0) failed = runtime;
     }
   }
+  if (
+    !failed &&
+    (evidence.report.sourceHash !== projectSourceHash(root) ||
+      initialCodeHash !== projectSourceHash(root, { ignoreLocks: true }))
+  ) {
+    failed = {
+      name: 'source-changed',
+      status: 1,
+      tail: ['源码在验证期间变化；先前证据不能标记最终内容通过'],
+    };
+  }
   const ok = !failed;
   return finish(
-    signal?.aborted ? 'cancelled' : ok ? 'smoke-passed' : 'failed',
-    signal?.aborted ? 'VERIFY_CANCELLED' : ok ? 'SMOKE_PASSED' : 'VERIFY_FAILED',
+    signal?.aborted ? 'cancelled' : ok ? (full ? 'verified' : 'smoke-passed') : 'failed',
+    signal?.aborted
+      ? 'VERIFY_CANCELLED'
+      : ok
+        ? full
+          ? 'VERIFIED'
+          : 'SMOKE_PASSED'
+        : 'VERIFY_FAILED',
     ok
       ? [
-          '本地验证通过：后端 verify、前端 build/test/lint/format、启动/CRUD/重启持久化全部通过。',
+          full
+            ? '完整本地验证通过：后端 verify、前端 build/test/lint/format、HTTP CRUD、浏览器 CRUD 与重启持久化全部通过。'
+            : '本地验证通过：后端 verify、前端 build/test/lint/format、启动/CRUD/重启持久化全部通过。',
           'JDK：' + javaHome,
           'Maven：' + maven,
           '报告：.specgate/verify-report.json',

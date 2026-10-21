@@ -4,6 +4,31 @@ import { spawnSync } from 'node:child_process';
 import { configPath, parseConfig } from './change.js';
 import { exists, readText } from './util/fsx.js';
 import { appendRun } from './runs.js';
+import { scanToolchains, pickJavaHome } from '../v4/java-verify.js';
+import { commandSpec } from '../v4/verify-evidence.js';
+
+export function qualityEnvironment(worktree) {
+  if (
+    !exists(path.join(worktree, 'backend/pom.xml')) ||
+    !exists(path.join(worktree, '.specgate/template-style.json'))
+  )
+    return process.env;
+  const major = readText(path.join(worktree, '.java-version')).trim();
+  const tools = scanToolchains({ root: worktree, scan: { requestedJdk: major } });
+  const javaHome = pickJavaHome(tools.java, major);
+  if (!javaHome || !tools.maven?.path)
+    throw new Error('模板质量检查缺少 JDK/Maven；先运行 sg-verify 配置环境');
+  return {
+    ...process.env,
+    JAVA_HOME: javaHome,
+    MAVEN_CMD: tools.maven.path,
+    PATH: [
+      path.join(javaHome, 'bin'),
+      path.dirname(tools.maven.path),
+      process.env.PATH || process.env.Path || '',
+    ].join(path.delimiter),
+  };
+}
 
 function venvPython(worktree) {
   const win = path.join(worktree, '.venv', 'Scripts', 'python.exe');
@@ -130,16 +155,26 @@ export function detectQuality({ root, worktree, stack }) {
 
 export function runQualityStage({ root, worktree, change, task, stage, stack }) {
   const command = detectQuality({ root, worktree, stack })[stage];
-  if (!command) return { ok: true, skipped: true, stage };
-  const dir = path.join(worktree, 'openspec', 'changes', change, 'reviews');
+  if (!command)
+    return {
+      ok: !exists(path.join(worktree, '.specgate/template-style.json')),
+      skipped: true,
+      stage,
+    };
+  const label = [change, task.id].join('-').replace(/[^a-zA-Z0-9_-]/g, '_');
+  const dir = path.join(root, '.specgate', 'runs', 'quality', label);
   fs.mkdirSync(dir, { recursive: true });
-  const report = path.join(dir, `${stage}-report.md`);
+  const report = path.join(dir, `${stage}-${Date.now()}.md`);
   const started = Date.now();
-  const run = spawnSync(command[0], command.slice(1), {
+  const spec = commandSpec(command[0], command.slice(1));
+  const run = spawnSync(spec.command, spec.args, {
     cwd: worktree,
+    env: qualityEnvironment(worktree),
     encoding: 'utf8',
     maxBuffer: 16 * 1024 * 1024,
-    shell: process.platform === 'win32',
+    shell: false,
+    windowsVerbatimArguments: spec.windowsVerbatimArguments,
+    windowsHide: true,
   });
   const durationMs = Date.now() - started;
   const status = run.status ?? 1;

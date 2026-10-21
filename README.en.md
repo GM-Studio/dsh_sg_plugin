@@ -2,7 +2,7 @@
 
 [中文](README.md) | **English**
 
-![version](https://img.shields.io/badge/version-4.1.0-blue)
+![version](https://img.shields.io/badge/version-4.3.1-blue)
 ![license](https://img.shields.io/badge/license-MIT-green)
 ![node](https://img.shields.io/badge/node-%3E%3D20.19.0-brightgreen)
 ![dsh](https://img.shields.io/badge/dsh-%3E%3D0.2.1--rc.2-purple)
@@ -11,7 +11,7 @@
 >
 > Generated APIs use GET for queries and POST JSON bodies for all mutations. Update/delete use `/api/tasks/update` and `/api/tasks/delete` with body ids; deletion returns a 200 JSON receipt. This convention also covers legacy Java/Node/Python scaffolds and Vue/React clients.
 >
-> Run `/sg-verify` for real Maven clean verify, frontend build/tests/lint/format checks and HTTP CRUD with graceful-restart persistence. Discovery reads persistent/process variables, PATH and common directories; missing JDK/Maven prompts for custom paths before project-local download. JDK 8 is supported. Use `--no-install` to prohibit installation or `sg_verify({path,javaHome,mavenHome,install})` to supply paths. Independent reports, complete logs, JUnit XML and Vitest JSON live under `.specgate/verify-runs/<runId>/`. All seven stages must pass before `SMOKE_PASSED`; blocked, failed and cancelled retries invalidate previous success. Historical v3 automatic initialization descriptions below apply only to explicit legacy flows. See the [workflow audit](docs/design/sg-workflow-audit-2026-10-21.zh.md).
+> Run `/sg-verify` for real Maven clean verify, frontend build/tests/lint/format checks and HTTP CRUD with graceful-restart persistence. `--full` adds browser login, CRUD, restart persistence and viewer permission checks and produces `VERIFIED`. Discovery reads persistent/process variables, PATH and common directories; missing JDK/Maven prompts for custom paths before project-local download. JDK 8 is supported. Use `--no-install` to prohibit installation or `sg_verify({path,javaHome,mavenHome,install})` to supply paths. Independent reports, complete logs, JUnit XML and Vitest JSON live under `.specgate/verify-runs/<runId>/`. All eight standard stages—or nine full stages—must pass; blocked, failed and cancelled retries invalidate previous success. Historical v3 automatic initialization descriptions below apply only to explicit legacy flows. See the [workflow audit](docs/design/sg-workflow-audit-2026-10-21.zh.md).
 >
 > **v4.1 (historical baseline)**: sg-init stack wizard — Java JDK 8/11/13/17/21 × Spring Boot 2.7/3.x/4.x; Python 3.10–3.13 and 2.7 (EOL) with FastAPI/Flask/Django; Node 20/22/24 with Express/Fastify/NestJS; Vue/React + Vite; required/optional dependencies with minimal/recommended/full presets; no four-dimension requirements interview, with a compact final approval page for stack and dependencies; full environment scan with runtime reuse, and missing Maven/Gradle/JDK/uv provisioned from domestic mirrors into project toolchains; skip install/quality when not approved, and degrade-and-commit on failure.
 >
@@ -38,7 +38,7 @@ A Host plugin that brings AgentKit47's gated development workflow to DeepSeek Ha
 | Source | `templates/qoder/` from `AgentKit47-Qoder` (MIT) |
 | Target | DSH `0.2.1-rc.2` and above |
 | Form | workspace bundle, installed into the current DSH profile |
-| Version | `4.1.0` |
+| Version | `4.3.1` |
 
 ---
 
@@ -92,13 +92,13 @@ archive (spec delta applied to openspec/specs/)
 
 Three hard constraints shape the design:
 
-1. **Explicit entry points only** — five commands and six tools, nothing implicit.
+1. **Explicit entry points only** — six commands and seven tools, nothing implicit.
 2. **Machines check first, humans approve second** — when `M1`/`M2` fail, `sg_run` refuses to advance and the human gate never appears.
 3. **Approval freezes the artifact** — approving hashes the artifact, so any later edit invalidates the approval.
 
 ## Capabilities
 
-- **Explicit-only entry points.** Everything the plugin exposes is invoked deliberately: five `/sg-*` commands and six `sg_*` tools. No command auto-runs, and no skill is registered into the session catalog.
+- **Explicit-only entry points.** Everything the plugin exposes is invoked deliberately: six `/sg-*` commands and seven `sg_*` tools. No command auto-runs, and no skill is registered into the session catalog.
 - **One automatic surface — the write guard.** `src/v3/guards.js` intercepts the `write` / `edit` tools and rejects writes to orchestrator-owned paths. This is the only thing that acts without being asked (see [Writes and guards](#writes-and-guards)).
 - **Project initialization (three entries, zero writes before confirmation)**: `/sg-init` accepts `-req <document>`, a free-form description, or no arguments for agent-led dialogue. The agent clarifies functional/non-functional/constraints/acceptance against the template and writes nothing before confirmation. The confirmation page shows both the requirements document and the tech stack; confirming is H0: it writes `docs/requirements/REQ.md`, derives `openspec/REQ.md` plus the read-only snapshot, and creates the scaffold and first change in one shot: backend stacks (java/node/python) get `mvp-scaffold` ("MVP框架搭建"), then automatically generate Item CRUD code and tests, run formatting/static checks/tests/reviewer, archive on success and return to `IDLE`, or stop at `H1_PENDING` with a report on failure. Missing question channels fail closed — no auto-confirmation. Idempotent — re-running reports an "idempotent skip" and never overwrites an existing baseline.
 - **Legacy onboarding**: running `/sg-init` in a repository that already has code scans the project, reverse-engineers a requirements draft, and writes `docs/requirements-scan.md` — with **no scaffold at all**. It only runs `git init` when the repository is missing, leaves an existing repository untouched, and commits only assets SpecGate generated itself.
@@ -558,13 +558,13 @@ openspec/
 └── specs/<capability>/spec.md   # written only on archive
 ```
 
-`/sg-init` also appends these to `.gitignore`: `.specgate/state.json`, `.specgate/run.lock`, `.specgate/init-result.json`, `.specgate/worktrees/`, `.specgate/evidence/`, `.specgate/backups/`, `.specgate/gates/`, `.specgate/runs/`.
+The legacy v3 initialization path also appends `.specgate/state.json` and the other runtime-only entries to `.gitignore`. The Java/Vue v4.3 path keeps `.specgate/state.json` and `.specgate/init-report.json` tracked so a real clone remains usable.
 
 For a brand-new project, confirming the page immediately writes `docs/requirements/REQ.md`, `openspec/REQ.md`, `openspec/history/v1.0/REQ.md`, `project-context.md`, `AGENTS.md`, `docs/glossary.md`, `docs/adr/0001-initial.md`, `.github/workflows/ci.yml`, and the first change: `mvp-scaffold` for java/node/python (proposal "MVP框架搭建"), then the Item CRUD code/tests are generated, formatted, statically checked, tested, and reviewed; success archives it and returns to `IDLE`, failure keeps `H1_PENDING` with `docs/mvp-scaffold-report.md`. Other stacks keep `add-version`. A new backend project starts its baseline with `REQ-001 MVP framework and Item CRUD example (framework baseline)`; business requirements begin at `REQ-002`. A legacy repo writes only the requirements document, baseline, and read-only snapshot — no scaffold.
 
 ## Verification
 
-- **301 tests, 297 pass / 0 fail / 4 skipped** (`node --test`; the skips are environment-only Node 18 cases). `s36` covers derivation and M1, `s38` covers the three entries and fail-closed behavior, `s39` covers `mvp-scaffold` and the three-stack templates, and `s40` covers auto-generation, quality failure, and archiving.
+- **The full `npm test` suite currently passes**; use the command output as the source of truth for the exact test, skip, and failure counts.
 - `M1` rejects a proposal missing any of 问题 / 目标 / 非目标 / 影响面, and a delta with unresolved acceptance-criteria references.
 - `M2` rejects a design missing any of its four sections, a task graph with cycles, an AC with no covering case, and undiscoverable suites.
 - Approval hashes: editing `proposal.md`/`specs/**` after `H1`, or the plan after `H2`, invalidates the approval and forces re-approval.

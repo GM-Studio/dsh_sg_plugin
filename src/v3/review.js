@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { git } from './util/git.js';
+import { loadTemplateStyle, projectSourceHash } from './template-style.js';
 
 export const MAX_DIFF_BYTES = 200 * 1024;
 
@@ -63,10 +64,36 @@ function normalized(text) {
     .trim();
 }
 
-export function validateReview(output, diff, testOutput = '') {
+export function validateReview(output, diff, testOutput = '', worktree = null) {
   const errors = [];
   const warnings = [];
   if (!output || typeof output !== 'object') return { ok: false, errors: ['reviewer 未返回对象'] };
+  if (worktree) {
+    const style = loadTemplateStyle(worktree);
+    if (!style.ok) errors.push(style.message);
+    if (!style.skipped && style.ok) {
+      if (
+        output.sourceHash !== projectSourceHash(worktree) ||
+        output.templateManifestHash !== style.manifestHash
+      )
+        errors.push('走查结果未绑定当前源码与固定模板摘要');
+      for (const name of [
+        'layering',
+        'transactions',
+        'errors',
+        'authentication',
+        'files',
+        'templateStyle',
+        'tests',
+      ]) {
+        const item = output.checklist?.[name];
+        if (!item || !['pass', 'fail'].includes(item.status) || !String(item.reason || '').trim())
+          errors.push('缺少有效走查项：' + name);
+        else if (output.verdict === 'pass' && item.status !== 'pass')
+          errors.push('走查未通过：' + name);
+      }
+    }
+  }
   if (!['pass', 'fail'].includes(output.verdict)) errors.push('verdict 必须是 pass 或 fail');
   const blocking = Array.isArray(output.blocking) ? output.blocking : [];
   const files = new Set((diff.files || []).map((item) => item.file));

@@ -34,7 +34,7 @@ test('preset transforms select the requested Java, Boot, and jakarta stack', () 
     );
     assert.match(pom, new RegExp('<version>' + normalized.preset.bootVersion + '</version>'));
     assert.match(
-      files['backend/src/main/java/com/example/tasks/Task.java'],
+      files['backend/src/main/java/com/example/tasks/entity/Task.java'],
       /import jakarta\.persistence\.Entity;/,
     );
   }

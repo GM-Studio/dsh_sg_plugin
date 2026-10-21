@@ -1,0 +1,10 @@
+{
+  ".specgate/verify-runs/2026-10-21T04-16-10-933Z-613bddb0/backend-verify.log": "backend-verify.txt",
+  ".specgate/verify-runs/2026-10-21T04-16-10-933Z-613bddb0/frontend-install.log": "frontend-install.txt",
+  ".specgate/verify-runs/2026-10-21T04-16-10-933Z-613bddb0/frontend-build.log": "frontend-build.txt",
+  ".specgate/verify-runs/2026-10-21T04-16-10-933Z-613bddb0/frontend-test.log": "frontend-test.txt",
+  ".specgate/verify-runs/2026-10-21T04-16-10-933Z-613bddb0/frontend-lint.log": "frontend-lint.txt",
+  ".specgate/verify-runs/2026-10-21T04-16-10-933Z-613bddb0/frontend-format.log": "frontend-format.txt",
+  ".specgate/verify-runs/2026-10-21T04-16-10-933Z-613bddb0/coverage.log": "coverage.txt",
+  ".specgate/verify-runs/2026-10-21T04-16-10-933Z-613bddb0/runtime.log": "runtime.txt"
+}

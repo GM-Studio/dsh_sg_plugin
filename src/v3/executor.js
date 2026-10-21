@@ -28,6 +28,7 @@ import { ensureToolchain } from './toolchain.js';
 import { readConfig } from './change.js';
 import { evaluateCoverage, mergeCoverage } from './coverage/jacoco.js';
 import { appendRun } from './runs.js';
+import { verifyTemplateProject } from './template-quality.js';
 
 function failure(code, message, extra = {}) {
   return { ok: false, code, message, ...extra };
@@ -60,6 +61,23 @@ export function checkCoverage({ root, suiteResult, plan }) {
   const thresholds = config.coverage || {};
   if (thresholds.blocking === false) return null;
   const reports = (suiteResult.results || []).map((item) => item.coverage).filter(Boolean);
+  if (config.templateStyle?.required) {
+    for (const item of suiteResult.results || []) {
+      const evaluated = evaluateCoverage({
+        coverage: item.coverage,
+        thresholds: { ...thresholds, blocking: true },
+        baseline: null,
+      });
+      if (!evaluated.ok)
+        return {
+          code: 'COVERAGE_BELOW_THRESHOLD',
+          message: `suite ${item.suite || item.id}: ${evaluated.errors.join('; ')}`,
+          coverage: evaluated,
+        };
+      if (item.report?.cases?.some((test) => test.status !== 'pass'))
+        return { code: 'CRITICAL_TEST_SKIPPED', message: '模板质量门禁禁止失败或跳过的关键用例' };
+    }
+  }
   const coverage = reports.length > 0 ? mergeCoverage(reports) : null;
   if (!coverage && thresholds.blocking !== true) return null;
   const evaluated = evaluateCoverage({
@@ -164,6 +182,11 @@ async function verifyAndFinish({
   const change = state.change;
   const plan = loadPlan(root, change);
   const { knownAcs } = collectKnownAcs({ root, state, change });
+  if (fs.existsSync(path.join(worktree.path, '.specgate/template-style.json'))) {
+    const finalFormat = runFormatter({ root, worktree: worktree.path, change, task });
+    if (!finalFormat.ok)
+      return failure('FORMAT_FAILED', finalFormat.message, { formatted: finalFormat });
+  }
   const head = headOf(worktree.path, 'HEAD');
   const suiteResult = runTaskSuites({
     root,
@@ -190,6 +213,14 @@ async function verifyAndFinish({
     return failure(coverageCheck.code, coverageCheck.message, { coverage: coverageCheck.coverage });
   }
   const validation = { ok: true, stats: suiteResult.stats };
+  const templateQuality = await verifyTemplateProject({
+    root,
+    worktree: worktree.path,
+    change,
+    task,
+  });
+  if (!templateQuality.ok)
+    return failure(templateQuality.code, templateQuality.message, { templateQuality });
 
   const reviewerSkills = loadSkillPayload({ role: 'reviewer' });
   const diff = collectDiff({ cwd: worktree.path, base, head });
@@ -270,7 +301,7 @@ async function verifyAndFinish({
 
   const verdict = extractJson(review.text);
   if (!verdict || !verdict.verdict) return failure('REVIEW_INVALID', 'reviewer 未返回合法 JSON');
-  const checked = validateReview(verdict, diff, suiteResult.message || '');
+  const checked = validateReview(verdict, diff, suiteResult.message || '', worktree.path);
   if (!checked.ok) {
     return failure('REVIEW_INVALID', `reviewer 证据不合法：${checked.errors.join('; ')}`, {
       errors: checked.errors,
