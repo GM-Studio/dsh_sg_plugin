@@ -39,6 +39,7 @@
             <button class="nav-button active" data-view="attention" type="button">
               待我处理 <span id="attention-count" class="pill">0</span>
             </button>
+            <button class="nav-button" data-view="portfolio" type="button">组合总览</button>
             <button class="nav-button" data-view="projects" type="button">项目</button>
             <button class="nav-button" data-view="work-items" type="button">WorkItems</button>
             <button class="nav-button" data-view="monitoring" type="button">执行监控</button>
@@ -59,6 +60,17 @@
               </div>
             </div>
             <div id="attention-list" class="card-grid"></div>
+          </section>
+
+          <section id="view-portfolio" class="view hidden">
+            <div class="view-heading">
+              <div>
+                <p class="eyebrow">Portfolio aggregate</p>
+                <h2>跨项目组合总览</h2>
+              </div>
+            </div>
+            <div id="portfolio-summary" class="panel portfolio-summary"></div>
+            <div id="portfolio-list" class="portfolio-list"></div>
           </section>
 
           <section id="view-projects" class="view hidden">

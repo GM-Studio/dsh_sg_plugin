@@ -51,6 +51,34 @@ supervisor and `SPECGATE_WORK_ITEM_ID` identifies the durable WorkItem.
 
 The supervisor, not this Skill, owns heartbeat, lease and process recovery.
 
+### Control modes
+
+The control plane runs in one of two modes, chosen per project and defaulting to
+`aggregate`:
+
+- `aggregate` (default): one shared control home and management port serve every
+  registered project, and the console shows the cross-project attention queue.
+- `isolated`: the project gets its own control home under
+  `<controlRoot>/projects/<projectId>` and a deterministic per-project
+  management port, so its daemon, queue and state stay separate.
+
+### Host capability probe and degradation
+
+`doctor` (`node scripts/specgate-control.mjs doctor`) probes the host Codex
+read-only and reports each capability state as `available`, `missing` or
+`not-probed`, together with the resulting mode, the degradations, the blocked
+features and a version-gate hint. Never assume a capability is usable:
+
+- `exec --json` is required; when it is missing or unconfirmed, delivery cannot
+  start.
+- A missing native plugin routes work through the project-level MCP + skill path
+  (`project-mcp-skill`).
+- Missing native subagents block subagent dispatch; do not simulate the roles in
+  the main thread.
+- Missing MCP elicitation leaves interactive gates pending rather than
+  fabricating an answer.
+- A `not-probed` capability is treated as unavailable until it is confirmed.
+
 ## 1. Establish project readiness
 
 Read `sg_project_status` first.
@@ -93,6 +121,24 @@ For every generated or changed source file:
 - Use frontend i18n keys for display text. `zh-CN` is the default and `en-US`
   must remain supported.
 
+### Generated stack and admin scaffold
+
+`sg_init` generates a Java/Vue management scaffold, not a bare skeleton. Treat
+the generated code as the reference implementation for the stack:
+
+- Backend admin modules live under `com.<company>.<business>.sys` for `users`,
+  `roles`, `departments`, `menus`, `audits` (read-only) and `dashboard`, routed
+  under `/api/sys/**`.
+- The `users` and `roles` modules provide CSV import/export (`/import`,
+  `/import/validate`, `/import/template`, `/export`) with bounded row and byte
+  limits.
+- The frontend ships matching `views/sys/*` pages, an `api/sys.ts` client,
+  router and sidebar entries and `zh-CN`/`en-US` i18n keys.
+- `docs/style.md` in the generated project is the enforceable style baseline:
+  follow it, and expect Review to report any unjustified deviation from it.
+- `README.md` requires reading `docs/style.md` before changing the project;
+  compliance is judged against the generated scaffold, not a prose summary.
+
 ## 2. Confirm the change contract
 
 Use `sg_change` with:
@@ -100,7 +146,8 @@ Use `sg_change` with:
 - `request`
 - `type`: `feature`, `modify` or `fix`
 - type-specific `details`
-- optional `parentDeliveryId` for customer feedback on an accepted delivery
+- optional `parentDeliveryId` (with a required `impact` object) for customer
+  feedback on an accepted delivery
 
 `sg_change_add` remains a feature-compatible alias.
 
@@ -207,10 +254,16 @@ as the same state.
 When a customer responds to an accepted delivery:
 
 1. Read the parent DeliveryRecord.
-2. Create a new `sg_change` with `parentDeliveryId`.
-3. Record affected, reused and invalidated acceptance criteria and tests.
-4. Run targeted regression plus required historical regression.
-5. Generate a new DeliveryRecord without overwriting the parent.
+2. Create a new `sg_change` with `parentDeliveryId` naming that accepted
+   delivery, plus an `impact` object.
+3. Set `impact.affectedAcIds` to the accepted parent criteria this change
+   affects (required and non-empty), and `impact.reusedAcIds` to the affected
+   criteria whose historical verification you reuse; reused IDs must be affected
+   and accepted by the parent.
+4. Unknown or inconsistent acceptance-criterion references are rejected at
+   intake, and an `impact` is required whenever a `parentDeliveryId` is given.
+5. Run targeted regression plus required historical regression.
+6. Generate a new DeliveryRecord without overwriting the parent.
 
 ## Evidence rules
 

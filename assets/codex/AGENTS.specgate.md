@@ -30,7 +30,12 @@ Use the ProjectProfile conventions as hard requirements:
 - New backend files belong under the configured
   `com.<company>.<business>` package and matching source directory.
 - Do not put new code under `com.example.*`.
-- Follow `.specgate/template-style.json` and its frozen examples.
+- Follow `.specgate/template-style.json` and its frozen examples; the generated
+  project's `docs/style.md` is the enforceable review baseline.
+- The generated `sys` admin scaffold (users, roles, departments, menus, audits,
+  dashboard) lives under `com.<company>.<business>.sys`, is routed under
+  `/api/sys/**` and includes CSV import/export; extend it rather than starting a
+  parallel admin stack.
 - Add Chinese comments to generated Java, TypeScript and Vue source.
 - Frontend display text MUST use i18n keys. `zh-CN` is the default locale and
   `en-US` must remain available.

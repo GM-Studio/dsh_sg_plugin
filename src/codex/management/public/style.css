@@ -458,6 +458,80 @@ pre {
   justify-content: end;
 }
 
+.portfolio-summary {
+  display: grid;
+  gap: 0.7rem;
+  margin-bottom: 1rem;
+}
+
+.portfolio-list {
+  display: grid;
+  gap: 0.6rem;
+}
+
+.portfolio-row {
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 0.85rem 1rem;
+  background: var(--surface);
+}
+
+.portfolio-row.expanded {
+  border-color: color-mix(in srgb, var(--accent) 45%, var(--line));
+}
+
+.portfolio-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.project-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: var(--text);
+  text-align: left;
+  cursor: pointer;
+}
+
+.project-toggle::before {
+  content: '▸';
+  color: var(--muted);
+}
+
+.portfolio-row.expanded .project-toggle::before {
+  content: '▾';
+}
+
+.project-toggle:hover,
+.project-toggle:focus-visible {
+  outline: none;
+  color: var(--accent);
+}
+
+.portfolio-name {
+  font-size: 1.05rem;
+  font-weight: 750;
+}
+
+.portfolio-row .metrics {
+  margin: 0.7rem 0 0;
+}
+
+.portfolio-items {
+  display: grid;
+  gap: 0.5rem;
+  margin-top: 0.8rem;
+  padding-top: 0.8rem;
+  border-top: 1px dashed var(--line);
+}
+
 @media (max-width: 820px) {
   .topbar {
     position: static;

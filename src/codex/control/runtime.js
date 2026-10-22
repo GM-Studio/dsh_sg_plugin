@@ -3,7 +3,7 @@ import path from 'node:path';
 import { randomBytes } from 'node:crypto';
 import { createControlStore } from './store.js';
 import { createControlService } from './service.js';
-import { localControlEnvironment } from './config.js';
+import { localControlEnvironment, resolveControlEnvironment } from './config.js';
 import { loadProjectReadiness } from '../project-state.js';
 import { createControlManagementServices } from './management-services.js';
 import { createStepUpAuthority } from './step-up.js';
@@ -65,8 +65,22 @@ export function createFileSessionStore({ root, fileName = 'web-sessions.json' } 
   };
 }
 
-export function createLocalControlRuntime({ env = process.env, clock = Date.now } = {}) {
-  const config = localControlEnvironment(env);
+/**
+ * Builds the local control runtime. When `mode`/`projectRoot` are supplied the
+ * control home and management port are derived with `resolveControlEnvironment`:
+ * aggregate keeps the shared home/port, isolated gets a per-project home under
+ * `<controlRoot>/projects/<projectId>` and a deterministic port. An invalid
+ * mode/root returns an ok:false failure (never throws and never silently writes
+ * to the wrong home); callers that omit `mode` keep the shared aggregate home.
+ */
+export function createLocalControlRuntime({
+  env = process.env,
+  clock = Date.now,
+  mode = null,
+  projectRoot = null,
+} = {}) {
+  const config = resolveControlEnvironment({ env, mode, projectRoot });
+  if (!config.ok) return config;
   const store = createControlStore({
     root: config.controlRoot,
     clock,

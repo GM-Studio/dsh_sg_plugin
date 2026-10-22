@@ -7,7 +7,11 @@ import { startControlDaemon } from '../src/codex/control/daemon.js';
 import { runControlCli } from '../scripts/specgate-control.mjs';
 import { createControlStore } from '../src/codex/control/store.js';
 import { createControlService } from '../src/codex/control/service.js';
-import { localControlEnvironment } from '../src/codex/control/config.js';
+import {
+  CONTROL_MODE_ENV,
+  localControlEnvironment,
+  resolveControlEnvironment,
+} from '../src/codex/control/config.js';
 
 test('control daemon starts management independently and stops without deleting state', async (t) => {
   const controlRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'sg-control-daemon-'));
@@ -329,4 +333,256 @@ test('file-based stop request shuts down without relying on Unix signals', async
   }
   assert.equal(daemon.management.server.listening, false);
   assert.equal(fs.existsSync(daemon.stopRequestPath), false);
+});
+
+test('a second project registers without clobbering the first and re-registration is idempotent', async () => {
+  const controlRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'sg-registry-'));
+  const projectA = fs.mkdtempSync(path.join(os.tmpdir(), 'sg-registry-a-'));
+  const projectB = fs.mkdtempSync(path.join(os.tmpdir(), 'sg-registry-b-'));
+  const store = createControlStore({ root: controlRoot });
+  const service = createControlService({ store });
+
+  const first = await service.registerProject({ projectRoot: projectA, mode: 'aggregate' });
+  assert.equal(first.ok, true);
+  const second = await service.registerProject({ projectRoot: projectB, mode: 'isolated' });
+  assert.equal(second.ok, true);
+  assert.notEqual(first.projectId, second.projectId);
+
+  const registry = await service.projection.listRegistry();
+  assert.equal(registry.ok, true);
+  assert.equal(registry.projects.length, 2);
+  const roots = registry.projects.map((row) => row.projectRoot);
+  assert.ok(roots.includes(fs.realpathSync(projectA)));
+  assert.ok(roots.includes(fs.realpathSync(projectB)));
+  assert.equal(
+    registry.projects.find((row) => row.projectId === first.projectId).mode,
+    'aggregate',
+  );
+  assert.equal(
+    registry.projects.find((row) => row.projectId === second.projectId).mode,
+    'isolated',
+  );
+
+  // Re-registering the same project is idempotent and appends nothing.
+  const again = await service.registerProject({ projectRoot: projectA, mode: 'aggregate' });
+  assert.equal(again.ok, true);
+  assert.equal(again.registered, false);
+  assert.equal(again.project.projectRoot, fs.realpathSync(projectA));
+  const after = await service.projection.listRegistry();
+  assert.equal(after.projects.length, 2);
+
+  // An invalid mode fails closed and leaves the registry unchanged.
+  const invalid = await service.registerProject({ projectRoot: projectA, mode: 'nope' });
+  assert.equal(invalid.ok, false);
+  assert.equal(invalid.code, 'MODE_INVALID');
+  assert.equal((await service.projection.listRegistry()).projects.length, 2);
+});
+
+test('aggregate mode serves several registered projects under one global concurrency limit', async (t) => {
+  const controlRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'sg-agg-'));
+  const projectA = fs.mkdtempSync(path.join(os.tmpdir(), 'sg-agg-a-'));
+  const projectB = fs.mkdtempSync(path.join(os.tmpdir(), 'sg-agg-b-'));
+  const env = {
+    ...process.env,
+    SPECGATE_CONTROL_HOME: controlRoot,
+    SPECGATE_PROJECT_ROOT: projectA,
+  };
+  const store = createControlStore({ root: controlRoot });
+  let next = 0;
+  const service = createControlService({ store, randomId: () => `agg-${++next}` });
+  const created = await Promise.all([
+    service.createWorkItem({ title: 'A', request: 'a', projectRoot: projectA }),
+    service.createWorkItem({ title: 'B', request: 'b', projectRoot: projectB }),
+  ]);
+  assert.equal(created[0].ok, true);
+  assert.equal(created[1].ok, true);
+
+  const gates = [];
+  const started = [];
+  const adapter = {
+    async run({ projectRoot }) {
+      started.push(projectRoot);
+      await new Promise((resolve) => gates.push(resolve));
+      return { ok: true, exitCode: 0, sessionId: 'agg-session' };
+    },
+  };
+  const daemon = await startControlDaemon({
+    env,
+    runtime: { config: localControlEnvironment(env), store, service },
+    projectRoot: projectA,
+    mode: 'aggregate',
+    maxConcurrent: 1,
+    pollMs: 60000,
+    adapter,
+  });
+  t.after(async () => {
+    for (const release of gates.splice(0)) release();
+    await new Promise((resolve) => setTimeout(resolve, 50));
+    await daemon.stop();
+  });
+  assert.equal(daemon.ok, true);
+  assert.equal(daemon.mode, 'aggregate');
+  assert.equal(daemon.concurrencyLimit, 1);
+  assert.equal(daemon.registration.ok, true);
+
+  for (let attempt = 0; attempt < 100 && started.length < 1; attempt += 1)
+    await new Promise((resolve) => setTimeout(resolve, 20));
+  assert.equal(started.length, 1, 'the global limit starts only one project');
+  const inspected = await service.inspect();
+  const states = Object.values(inspected.state.workItems).map((item) => item.executionState);
+  assert.equal(states.filter((state) => state === 'RUNNING').length, 1);
+  assert.equal(states.filter((state) => state === 'QUEUED').length, 1);
+
+  // The running daemon reports both registered projects from one control home.
+  const status = await runControlCli({ args: ['status'], env });
+  assert.equal(status.ok, true);
+  assert.equal(status.running, true);
+  assert.equal(status.mode, 'aggregate');
+  assert.equal(status.projects.length, 2);
+
+  const list = await runControlCli({ args: ['list'], env });
+  assert.equal(list.ok, true);
+  assert.equal(list.mode, 'aggregate');
+  assert.equal(new Set(list.projects.map((row) => row.projectRoot)).size, 2);
+
+  const registered = await runControlCli({ args: ['register', '--project', projectB], env });
+  assert.equal(registered.ok, true);
+  assert.equal(registered.registered, false);
+  assert.equal(registered.project.projectRoot, fs.realpathSync(projectB));
+  assert.equal(registered.mode, 'aggregate');
+});
+
+test('isolated mode derives its own control home and port without moving aggregate state', async () => {
+  const baseRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'sg-iso-'));
+  const projectRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'sg-iso-project-'));
+  const env = { ...process.env, SPECGATE_CONTROL_HOME: baseRoot };
+
+  const store = createControlStore({ root: baseRoot });
+  const service = createControlService({ store });
+  const created = await service.createWorkItem({
+    title: 'Kept',
+    request: 'stay',
+    projectRoot,
+  });
+  assert.equal(created.ok, true);
+  const before = await store.inspect();
+  assert.equal(Object.keys(before.state.workItems).length, 1);
+
+  const isolated = resolveControlEnvironment({ env, mode: 'isolated', projectRoot });
+  assert.equal(isolated.ok, true);
+  assert.equal(isolated.mode, 'isolated');
+  assert.notEqual(isolated.controlRoot, path.resolve(baseRoot));
+  assert.equal(
+    isolated.controlRoot,
+    path.join(path.resolve(baseRoot), 'projects', isolated.projectId),
+  );
+  assert.notEqual(isolated.managementPort, 43120);
+
+  // The isolated home is a fresh store: no durable WorkItem/Decision state moved.
+  const isolatedStore = createControlStore({ root: isolated.controlRoot });
+  const isolatedState = await isolatedStore.inspect();
+  assert.equal(Object.keys(isolatedState.state.workItems).length, 0);
+  const after = await store.inspect();
+  assert.equal(after.state.version, before.state.version);
+  assert.deepEqual(Object.keys(after.state.workItems), Object.keys(before.state.workItems));
+});
+
+test('an invalid control mode or project root fails closed', async () => {
+  const controlRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'sg-invalid-'));
+  const projectRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'sg-invalid-project-'));
+  const env = { ...process.env, SPECGATE_CONTROL_HOME: controlRoot };
+
+  const cli = await runControlCli({
+    args: ['start', '--mode', 'bogus', '--project', projectRoot],
+    env,
+  });
+  assert.equal(cli.ok, false);
+  assert.equal(cli.code, 'MODE_INVALID');
+
+  const daemon = await startControlDaemon({ env, projectRoot, mode: 'bogus', managementPort: 0 });
+  assert.equal(daemon.ok, false);
+  assert.equal(daemon.code, 'MODE_INVALID');
+
+  const envMode = await startControlDaemon({
+    env: { ...env, [CONTROL_MODE_ENV]: 'nope' },
+    projectRoot,
+    managementPort: 0,
+  });
+  assert.equal(envMode.ok, false);
+  assert.equal(envMode.code, 'MODE_INVALID');
+
+  const missing = await startControlDaemon({
+    env,
+    projectRoot: path.join(controlRoot, 'missing-project'),
+    managementPort: 0,
+  });
+  assert.equal(missing.ok, false);
+  assert.equal(missing.code, 'PROJECT_ROOT_MISSING');
+});
+
+test('control CLI --mode isolated selects the per-project control home', async () => {
+  const baseRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'sg-cli-iso-'));
+  const projectRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'sg-cli-iso-project-'));
+  const env = { ...process.env, SPECGATE_CONTROL_HOME: baseRoot };
+  fs.writeFileSync(
+    path.join(baseRoot, 'daemon.json'),
+    JSON.stringify({
+      pid: process.pid,
+      controlRoot: baseRoot,
+      projectRoot,
+      mode: 'aggregate',
+      managementBaseUrl: 'http://127.0.0.1:43120',
+    }),
+  );
+
+  const aggregate = await runControlCli({ args: ['status', '--project', projectRoot], env });
+  assert.equal(aggregate.ok, true);
+  assert.equal(aggregate.running, true);
+  assert.equal(aggregate.mode, 'aggregate');
+
+  const resolved = resolveControlEnvironment({ env, mode: 'isolated', projectRoot });
+  assert.equal(resolved.ok, true);
+  const isolated = await runControlCli({
+    args: ['status', '--mode', 'isolated', '--project', projectRoot],
+    env,
+  });
+  assert.equal(isolated.ok, false);
+  assert.equal(isolated.code, 'DAEMON_NOT_RUNNING');
+  assert.equal(fs.existsSync(path.join(resolved.controlRoot, 'daemon.json')), false);
+  assert.equal(fs.existsSync(path.join(baseRoot, 'daemon.json')), true);
+});
+
+test('an isolated daemon registers and writes into its per-project control home', async (t) => {
+  const baseRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'sg-iso-daemon-'));
+  const projectRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'sg-iso-daemon-project-'));
+  const env = { ...process.env, SPECGATE_CONTROL_HOME: baseRoot };
+  const resolved = resolveControlEnvironment({ env, mode: 'isolated', projectRoot });
+  assert.equal(resolved.ok, true);
+
+  const daemon = await startControlDaemon({
+    env,
+    projectRoot,
+    mode: 'isolated',
+    managementPort: 0,
+    pollMs: 60000,
+    adapter: {
+      async run() {
+        return { ok: true, exitCode: 0, sessionId: 'iso-session' };
+      },
+    },
+  });
+  t.after(() => daemon.stop());
+  assert.equal(daemon.ok, true);
+  assert.equal(daemon.mode, 'isolated');
+  assert.equal(daemon.runtime.store.root, fs.realpathSync(resolved.controlRoot));
+  assert.equal(daemon.registration.project.mode, 'isolated');
+  const status = JSON.parse(
+    fs.readFileSync(path.join(resolved.controlRoot, 'daemon.json'), 'utf8'),
+  );
+  assert.equal(status.mode, 'isolated');
+  assert.equal(status.projectRoot, fs.realpathSync(projectRoot));
+  assert.equal(status.registeredProjects.length, 1);
+  assert.equal(status.registeredProjects[0].mode, 'isolated');
+  // The shared aggregate home is untouched.
+  assert.equal(fs.existsSync(path.join(baseRoot, 'daemon.json')), false);
 });

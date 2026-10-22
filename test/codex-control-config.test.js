@@ -1,9 +1,14 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import path from 'node:path';
 import {
+  CONTROL_MODE_ENV,
   controlExecutionEnvironment,
   localControlEnvironment,
+  resolveControlEnvironment,
+  resolveControlMode,
 } from '../src/codex/control/config.js';
+import { hashValue } from '../src/codex/events.js';
 
 test('control execution receives only portable runtime variables and no control secrets', () => {
   const child = controlExecutionEnvironment({
@@ -44,4 +49,48 @@ test('control configuration exposes portable Codex command and home overrides', 
   assert.equal(config.codexCommand, '/opt/codex/bin/codex');
   assert.equal(config.codexHome, '/var/lib/specgate-codex');
   assert.equal(config.managementPort, 43121);
+});
+
+test('control mode defaults to aggregate and fails closed on an invalid value', () => {
+  assert.deepEqual(resolveControlMode({ env: {} }), { ok: true, mode: 'aggregate' });
+  assert.deepEqual(resolveControlMode({ env: {}, mode: null }), { ok: true, mode: 'aggregate' });
+  assert.deepEqual(resolveControlMode({ env: {}, mode: '' }), { ok: true, mode: 'aggregate' });
+  assert.equal(resolveControlMode({ env: { [CONTROL_MODE_ENV]: 'isolated' } }).mode, 'isolated');
+  assert.equal(resolveControlMode({ env: {}, mode: 'Aggregate' }).mode, 'aggregate');
+  assert.equal(resolveControlMode({ env: {}, mode: 'isolated' }).mode, 'isolated');
+
+  const invalidEnv = resolveControlMode({ env: { [CONTROL_MODE_ENV]: 'nope' } });
+  assert.equal(invalidEnv.ok, false);
+  assert.equal(invalidEnv.code, 'MODE_INVALID');
+  assert.equal(resolveControlMode({ env: {}, mode: 'bogus' }).code, 'MODE_INVALID');
+});
+
+test('resolveControlEnvironment shares one home in aggregate and isolates per project', () => {
+  const controlRoot = path.resolve('C:\\control');
+  const projectRoot = path.resolve('C:\\work\\crm');
+  const env = { SPECGATE_CONTROL_HOME: controlRoot };
+
+  const aggregate = resolveControlEnvironment({ env, mode: 'aggregate', projectRoot });
+  assert.equal(aggregate.ok, true);
+  assert.equal(aggregate.mode, 'aggregate');
+  assert.equal(aggregate.shared, true);
+  assert.equal(aggregate.controlRoot, controlRoot);
+  assert.equal(aggregate.managementPort, 43120);
+
+  const isolated = resolveControlEnvironment({ env, mode: 'isolated', projectRoot });
+  assert.equal(isolated.ok, true);
+  assert.equal(isolated.shared, false);
+  const projectId = `project-${hashValue({ root: projectRoot }).slice(0, 16)}`;
+  assert.equal(isolated.projectId, projectId);
+  assert.equal(isolated.controlRoot, path.join(controlRoot, 'projects', projectId));
+  assert.notEqual(isolated.controlRoot, aggregate.controlRoot);
+  assert.ok(isolated.managementPort > 43120 && isolated.managementPort <= 43120 + 999);
+  assert.match(isolated.managementPublicUrl, new RegExp(`:${isolated.managementPort}$`));
+
+  // Default mode is aggregate; isolated mode requires a project root; an invalid
+  // mode never silently falls back.
+  assert.equal(resolveControlEnvironment({ env, projectRoot }).mode, 'aggregate');
+  assert.equal(resolveControlEnvironment({ env, mode: 'isolated' }).code, 'PROJECT_ROOT_INVALID');
+  assert.equal(resolveControlEnvironment({ env, mode: 'bogus', projectRoot }).code, 'MODE_INVALID');
+  assert.equal(resolveControlEnvironment({ env: {}, mode: 'aggregate', projectRoot }).ok, true);
 });

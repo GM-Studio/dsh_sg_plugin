@@ -36,6 +36,48 @@ auditable MCP state.
 - Separate H3 release approval from customer acceptance in DeliveryRecords.
 - Do not deploy production or roll back production data automatically.
 
+## Generated admin scaffold
+
+What `sg_init` generates is not a bare skeleton but a **domain-neutral management
+system**, with runnable backend modules built in:
+
+- Backend management APIs for users, roles, departments and menus, fixed under
+  `/api/sys/**`.
+- A read-only paged audit log and a dashboard summary endpoint.
+- CSV import and export for users and roles (validate, template, import, export),
+  alongside batch actions, pagination and filtering.
+- A Vue 3 admin UI: login, the `AppLayout` shell, a sidebar menu, the dashboard and
+  the sys views, defaulting to Chinese (`zh-CN`) with an `en-US` runtime switch.
+
+Generation follows the `com.<company>.<business>` package, Chinese source comments
+and the shared response envelope. Generation only writes source, tests and docs: it
+does **not** install dependencies, build or start services. Generation is not
+verification: a real build, test and run must be performed by a later `sg_verify` in
+an environment you authorize, and an unrun or failed command must never be described
+as passed.
+
+The scaffold ships an enforceable review baseline, `docs/style.md`. Read it before a
+change; the Reviewer treats an unjustified deviation as a finding, and as a blocking
+finding when it affects layering, contracts, transactions, security or frontend /
+backend consistency.
+
+## Stack
+
+Initialization lets you choose the JDK and frontend framework; the choice is frozen
+into `ProjectProfile` (`frontendFramework`, `javaPreset`), later changes work only
+within that fact, and a stack mismatch fails closed.
+
+- Backend JDK: JDK 8, 17 or 21 (the default is JDK 8 + Spring Boot 2.7).
+- Spring Boot: 2.7.x and 3.5.x; plus a JDK 21 + Spring Boot 4.0 preview preset.
+- Frontend: Vue 3 (default); React 18 is planned, and selecting React fails closed
+  until its template lands.
+
+The frontend scaffold uses Vue 3.5 + Element Plus + vue-router + vue-i18n +
+TypeScript. These are the versions the scaffold selects; they do **not** mean any
+preset is verified on both Windows and Linux: every preset in `GOLDEN_MANIFEST` is
+currently `pending` and is marked `verified` only once the real matrix is re-run on
+both platforms.
+
 ## Load from source
 
 First confirm that the selected Codex binary supports `codex plugin`. The local
@@ -66,10 +108,29 @@ The start result contains a one-time Web pairing URL. Closing Codex does not sto
 the supervisor. Use `npm run codex:control -- stop` to stop it while preserving
 WorkItem state.
 
+The control plane runs in one of two modes, and the console exposes a
+cross-project portfolio view:
+
+- `aggregate` (default): one shared control home and management port register and
+  summarize every project, and the console shows the cross-project attention queue.
+- `isolated`: the project gets its own control home under
+  `<controlRoot>/projects/<projectId>` and a deterministic per-project port, so it
+  never shares MCP configuration, credentials or state with another project.
+
+Control-plane Web sessions and pairing tokens persist to disk
+(`web-sessions.json`), so a session stays usable across a restarted control plane
+within its TTL, without re-pairing.
+
 Use `npm run codex:control -- doctor --project <absolute-project-path>` before
-starting on a new host. The supervisor clears unrelated user MCP servers,
-injects only the project-bound SpecGate MCP, excludes control-plane credentials
-from the child environment, and uses a cross-platform stop request.
+starting on a new host. Besides the Codex `--version` check, `doctor` runs a
+read-only, non-interactive, bounded capability probe of the host Codex (`plugin`,
+`exec --json`, native subagents, elicitation), reporting each as `available`,
+`missing` or `not-probed` together with the effective mode, the degradations and an
+upgrade hint. A missing capability is never silent: no `plugin` degrades to the
+project-level MCP + skill path, missing elicitation keeps interactive gates pending,
+and `not-probed` is treated as unavailable. The supervisor also clears unrelated
+user MCP servers, injects only the project-bound SpecGate MCP, excludes control-plane
+credentials from the child environment, and uses a cross-platform stop request.
 
 ## Layout
 

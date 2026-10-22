@@ -77,8 +77,14 @@ test('registry and aggregate projections tolerate an empty or partial state', ()
   assert.deepEqual(projectRegistry(null), []);
   assert.deepEqual(projectRegistry(undefined), []);
   assert.deepEqual(projectRegistry({ projects: {}, workItems: {} }), []);
-  assert.deepEqual(aggregatePortfolio({}), { projects: [], attention: [], queue: [] });
-  assert.deepEqual(aggregatePortfolio(null), { projects: [], attention: [], queue: [] });
+  const empty = aggregatePortfolio({});
+  assert.deepEqual(empty.projects, []);
+  assert.deepEqual(empty.attention, []);
+  assert.deepEqual(empty.queue, []);
+  assert.equal(empty.concurrency.effective, 2);
+  assert.equal(empty.concurrency.ok, true);
+  assert.deepEqual(aggregatePortfolio(null).projects, []);
+  assert.deepEqual(aggregatePortfolio(undefined).attention, []);
 });
 
 test('projectRegistry summarizes a single project from mixed WorkItem states', () => {
@@ -98,6 +104,7 @@ test('projectRegistry summarizes a single project from mixed WorkItem states', (
     {
       projectId: 'project-a',
       projectRoot: 'C:\\work\\project-a',
+      mode: 'aggregate',
       workItemCount: 7,
       running: 1,
       waitingForUser: 1,
@@ -114,6 +121,7 @@ test('projectRegistry reports an idle project from its own updatedAt', () => {
     {
       projectId: 'project-a',
       projectRoot: 'C:\\work\\project-a',
+      mode: 'aggregate',
       workItemCount: 0,
       running: 0,
       waitingForUser: 0,
@@ -370,4 +378,28 @@ test('aggregate projections never throw on malformed entries and do not mutate s
   assert.equal(result.projects[0].running, 1);
   assert.equal(result.attention.length, 1);
   assert.equal(result.queue.length, 2);
+});
+
+test('registry rows report the effective mode from the project row or the control home', () => {
+  const mixed = makeState({
+    projects: [project('project-a', { mode: 'isolated' }), project('project-b')],
+  });
+  const rows = projectRegistry(mixed);
+  assert.equal(rows.find((row) => row.projectId === 'project-a').mode, 'isolated');
+  assert.equal(rows.find((row) => row.projectId === 'project-b').mode, 'aggregate');
+
+  const homeIsolated = makeState({ projects: [project('project-b')] });
+  homeIsolated.controlMode = 'isolated';
+  assert.equal(projectRegistry(homeIsolated)[0].mode, 'isolated');
+
+  const invalid = makeState({ projects: [project('project-a', { mode: 'bogus' })] });
+  assert.equal(projectRegistry(invalid)[0].mode, 'aggregate');
+});
+
+test('aggregatePortfolio reports the global concurrency clamp it enforces', () => {
+  assert.equal(aggregatePortfolio({}, { limit: 100 }).concurrency.effective, 8);
+  assert.equal(aggregatePortfolio({}, { limit: 100 }).concurrency.clamped, true);
+  const configured = { concurrency: { min: 2, max: 4, default: 3 } };
+  assert.equal(aggregatePortfolio(configured, { limit: 1 }).concurrency.effective, 2);
+  assert.equal(aggregatePortfolio(configured, {}).concurrency.effective, 3);
 });

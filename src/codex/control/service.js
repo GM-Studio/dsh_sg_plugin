@@ -12,6 +12,12 @@ import {
   validateDecisionInput,
   validateWorkItemInput,
 } from '../core/control/domain.js';
+import {
+  CONTROL_MODES,
+  aggregatePortfolio,
+  projectRegistry,
+  resolveGlobalConcurrency,
+} from './projects.js';
 
 const failure = (code, message, extra = {}) => ({ ok: false, code, message, ...extra });
 const clone = (value) => JSON.parse(JSON.stringify(value));
@@ -51,6 +57,7 @@ function prepareProject(state, root, name, now) {
       projectId,
       name: name || path.basename(root),
       projectRoot: root,
+      mode: CONTROL_MODES.includes(state.controlMode) ? state.controlMode : 'aggregate',
       status: 'READY',
       createdAt: now,
       updatedAt: now,
@@ -221,6 +228,66 @@ export function createControlService({
         result: { workItem: clone(item) },
       };
     });
+  }
+
+  /**
+   * Registers (or re-registers) a project in the durable control state so a
+   * single control home can see several projects. The registry row keeps the
+   * project id, absolute root and effective control `mode`; existing project
+   * rows are never replaced by a different project, and re-registering the same
+   * (root, mode) is idempotent and appends nothing. The home-wide `controlMode`
+   * is recorded so `selectControlMode`/`projectRegistry` agree on the default.
+   */
+  async function registerProject({ projectRoot, mode = 'aggregate', name = null } = {}) {
+    if (!CONTROL_MODES.includes(mode))
+      return failure('MODE_INVALID', `Control mode must be one of: ${CONTROL_MODES.join(', ')}`);
+    const project = checkedProjectRoot(projectRoot);
+    if (!project.ok) return project;
+    const projectId = projectIdForRoot(project.root);
+    const inspected = await store.inspect();
+    if (!inspected.ok) return inspected;
+    const existing = inspected.state.projects?.[projectId];
+    if (
+      existing &&
+      existing.projectRoot === project.root &&
+      (existing.mode || 'aggregate') === mode
+    )
+      return { ok: true, projectId, project: clone(existing), registered: false, changed: false };
+    const result = await store.mutate((state) => {
+      const now = nowIso();
+      state.controlMode = mode;
+      const current = state.projects[projectId];
+      if (current) {
+        current.mode = mode;
+        current.updatedAt = now;
+        if (name) current.name = name;
+      } else {
+        state.projects[projectId] = {
+          schemaVersion: 1,
+          projectId,
+          name: name || path.basename(project.root),
+          projectRoot: project.root,
+          mode,
+          status: 'READY',
+          createdAt: now,
+          updatedAt: now,
+        };
+      }
+      return {
+        ok: true,
+        type: 'project.registered',
+        payload: { projectId, projectRoot: project.root, mode },
+        result: { projectId },
+      };
+    });
+    if (!result.ok) return result;
+    return {
+      ok: true,
+      projectId,
+      project: clone(result.state.projects[projectId]),
+      registered: true,
+      changed: true,
+    };
   }
 
   async function requestAttention(input) {
@@ -1464,9 +1531,40 @@ export function createControlService({
       : inspected;
   }
 
+  async function listRegistry() {
+    const inspected = await store.inspect();
+    if (!inspected.ok) return inspected;
+    return {
+      ok: true,
+      controlMode: CONTROL_MODES.includes(inspected.state.controlMode)
+        ? inspected.state.controlMode
+        : 'aggregate',
+      projects: projectRegistry(inspected.state),
+    };
+  }
+
+  async function aggregate(options = {}) {
+    const inspected = await store.inspect();
+    if (!inspected.ok) return inspected;
+    return {
+      ok: true,
+      controlMode: CONTROL_MODES.includes(inspected.state.controlMode)
+        ? inspected.state.controlMode
+        : 'aggregate',
+      ...aggregatePortfolio(inspected.state, options),
+    };
+  }
+
+  async function concurrency(limit) {
+    const inspected = await store.inspect();
+    if (!inspected.ok) return inspected;
+    return resolveGlobalConcurrency(inspected.state, limit);
+  }
+
   return Object.freeze({
     createWorkItem,
     updateWorkItem,
+    registerProject,
     requestAttention,
     decide,
     expireAttention,
@@ -1497,6 +1595,9 @@ export function createControlService({
       getRun,
       listAttention,
       listNotifications,
+      listRegistry,
+      aggregate,
+      concurrency,
       health,
     }),
     decisions: Object.freeze({

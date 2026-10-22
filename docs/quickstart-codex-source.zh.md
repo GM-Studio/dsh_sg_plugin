@@ -144,8 +144,25 @@ npm run codex:control -- stop
 `backend/src/main/java/com/acme/orders/`。禁止新代码写入
 `com.example.*`。
 
+同一对工具还可选择技术栈，并把结果固化进 `ProjectProfile`：
+
+- `frontend`：`vue`（默认）或 `react`。React 18 模板尚未落地，选择 `react` 会以
+  `FRONTEND_UNAVAILABLE` fail-closed，当前仅支持 Vue 3。
+- `preset`：`jdk8-boot2.7`（默认，JDK 8 + Spring Boot 2.7）、`jdk17-boot3.5`、
+  `jdk21-boot3.5`，或 `jdk21-boot4.0`（预览）。
+
+后端 JDK 取值为 8、17、21，Spring Boot 为 2.7.x 或 3.5.x（另有 4.0 预览档）。
+后续变更只能在该栈内工作，栈不匹配时 fail-closed。
+
 生成源码使用中文文件说明和业务注释。前端展示文本必须通过 i18n key 提供，
 默认 `zh-CN`，并保留 `en-US` 运行时切换。
+
+生成的脚手架是领域中立的通用管理后台，一次变更大概率会触及 `/api/sys/**` 下的
+模块——用户 `/api/sys/users`、角色 `/api/sys/roles`、部门
+`/api/sys/departments`、菜单 `/api/sys/menus`、只读审计 `/api/sys/audits`、
+仪表盘 `/api/sys/dashboard`——以及对应的前端 sys 视图和用户/角色的 CSV 导入导出。
+变更前先读生成项目的 `docs/style.md` 风格基线；不要改写 `.specgate/` 快照来掩盖
+漂移。
 
 `sg_adopt_apply` 只启动 detached baseline，立即返回 `baselineRun`。继续轮询
 `sg_project_status`，直到 `projectReady: true` 或

@@ -75,9 +75,19 @@ is computed and persisted at the `sg_change` intake
 reported by `doctor` with an explicit degradation policy and version gate hint;
 Web sessions and pairing persist across a control-plane restart through an
 injected file session store; a multi-project registry and aggregate projection
-module is in place (data layer only, wiring still pending); `HOST_HEALTH` now
-includes `SUSPECT` and the dead `pushApproved` profile field is removed. Repo
-suite 395/395, lint, format:check and pack pass.
+module is in place (wired in the step below); `HOST_HEALTH` now includes
+`SUSPECT` and the dead `pushApproved` profile field is removed. Repo suite
+395/395, lint, format:check and pack pass.
+
+Landed (control-plane step 6, five parallel agents): the control plane registers
+and serves several projects in aggregate mode, supports an explicit isolated
+mode through `--mode` plus a `register` command, and the console gained a
+cross-project portfolio view and a severity-ordered attention home; the
+dual-platform golden mechanism (`--platform`, platform-scoped records, a
+no-fabricated-pass helper) is in place while every preset stays `pending`; the
+Skill, agent templates, README/CHANGELOG and the two zh guides now describe the
+admin scaffold, the control modes and capability degradation. Repo suite
+415/415, lint, format:check and pack pass.
 
 - [x] 1. P0: approve the requirements document; keep this proposal/design/spec
       aligned with it.
@@ -94,10 +104,10 @@ suite 395/395, lint, format:check and pack pass.
 - [ ] 7. P3: implement the React 18 scaffold and align it with the Vue scaffold.
 - [ ] 8. P4: author the style guide and add Reviewer blocking-on-deviation
       findings with tests.
-- [ ] 9. P5: add failing tests for the multi-project registry, aggregate console
+- [x] 9. P5: add failing tests for the multi-project registry, aggregate console
       (cross-project attention/queue, global concurrency), isolated mode, and
       switching command.
-- [ ] 10. P5: implement the registry, aggregate and isolated control modes.
+- [x] 10. P5: implement the registry, aggregate and isolated control modes.
 - [x] 11. P5: add failing tests for durable Web sessions and pairing across
       control-plane restart; implement durable storage.
 - [x] 12. P6: add failing tests for host capability probing (`plugin`,
@@ -105,14 +115,14 @@ suite 395/395, lint, format:check and pack pass.
       version gate hint.
 - [x] 13. P6: implement the capability probe, `doctor` reporting and the
       project-level MCP + skill degradation path.
-- [ ] 14. P7: add failing tests for dual-platform golden verification
+- [x] 14. P7: add failing tests for dual-platform golden verification
       (`win32` + `linux`, WSL not accepted) and extend the verification matrix.
-- [ ] 15. P7: implement dual-platform acceptance and update the golden manifest
+- [x] 15. P7: implement dual-platform acceptance and update the golden manifest
       to require both platforms.
 - [x] 16. P8: wire incremental delivery impact analysis into the `sg_change`
       intake with tests.
 - [x] 17. P8: small cleanups (`HOST_HEALTH` `SUSPECT`, unused `pushApproved`).
-- [ ] 18. P9: update the Codex Skill, project agents, installers, manifests,
+- [x] 18. P9: update the Codex Skill, project agents, installers, manifests,
       README and changelogs.
 - [ ] 19. P9: run focused suites, `npm test`, `npm run lint`,
       `npm run format:check`, `npm run pack:check`,

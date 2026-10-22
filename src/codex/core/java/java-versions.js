@@ -299,6 +299,61 @@ export function templateHash(files) {
   return digest.digest('hex');
 }
 
+export const PLATFORM_RESULTS = ['passed', 'failed', 'not-run'];
+
+/**
+ * True only when a run carries evidence produced by a real verification:
+ * a parseable `verifiedAt` timestamp plus the `validateVerificationEvidence`
+ * result (ok + real runId + 64-hex sourceHash). Anything weaker is a fabrication.
+ */
+function hasRealPlatformEvidence(verifiedAt, evidence) {
+  if (typeof verifiedAt !== 'string' || !Number.isFinite(Date.parse(verifiedAt))) return false;
+  if (!evidence || typeof evidence !== 'object' || evidence.ok !== true) return false;
+  if (typeof evidence.runId !== 'string' || !/^[\w-]+$/.test(evidence.runId)) return false;
+  if (typeof evidence.sourceHash !== 'string' || !/^[a-f\d]{64}$/.test(evidence.sourceHash))
+    return false;
+  return true;
+}
+
+/**
+ * Pure helper shared by the matrix runner and tests: turn one real verification
+ * run into the platform-scoped manifest update for a preset.
+ *
+ * Returns `{ platform, record }` where `record` is the next value for
+ * `GOLDEN_MANIFEST.presets[<id>].platforms[<platform>]`. It never mutates the
+ * manifest, and it refuses to record a `passed` platform unless the run carries
+ * real evidence, so a pass can never be fabricated.
+ *
+ * `run` = { platform?, result, verifiedAt?, evidence?, toolchain?, commands?, reason? }
+ * `result` must be one of `PLATFORM_RESULTS`; only `passed` requires evidence.
+ */
+export function platformVerificationRecord(preset, run = {}) {
+  const id = typeof preset === 'string' ? preset : preset?.id;
+  if (!JAVA_PRESETS.some((item) => item.id === id))
+    throw new Error('Unknown Java preset for golden record: ' + id);
+  const required = GOLDEN_MANIFEST.requiredPlatforms || [];
+  const platform = run.platform || process.platform;
+  if (!required.includes(platform))
+    throw new Error(
+      'Platform ' + platform + ' is not a required golden platform: ' + required.join(', '),
+    );
+  const result = run.result;
+  if (!PLATFORM_RESULTS.includes(result))
+    throw new Error('Unknown platform verification result: ' + result);
+  if (result === 'passed' && !hasRealPlatformEvidence(run.verifiedAt, run.evidence))
+    throw new Error(
+      'Refusing to record a passed platform without real verification evidence (verifiedAt + validated runId/sourceHash)',
+    );
+  return {
+    platform,
+    record: {
+      result,
+      verifiedAt: run.verifiedAt || null,
+      evidence: run.evidence || null,
+    },
+  };
+}
+
 export function goldenStatus(preset, hash) {
   const record = GOLDEN_MANIFEST.presets[preset.id];
   if (!record) {
@@ -315,17 +370,34 @@ export function goldenStatus(preset, hash) {
       record,
     };
   }
-  if (record.result !== 'passed') return { verified: false, reason: '模板验收记录未通过', record };
-  const pendingPlatforms = (GOLDEN_MANIFEST.requiredPlatforms || []).filter(
+  const requiredPlatforms = GOLDEN_MANIFEST.requiredPlatforms || [];
+  const pendingPlatforms = requiredPlatforms.filter(
     (platform) => record.platforms?.[platform]?.result !== 'passed',
   );
-  return {
-    verified: true,
-    reason: null,
-    record,
-    matrixComplete: pendingPlatforms.length === 0,
-    pendingPlatforms,
-  };
+  const matrixComplete = pendingPlatforms.length === 0;
+  if (record.result !== 'passed')
+    return {
+      verified: false,
+      reason: '模板验收记录未通过',
+      record,
+      matrixComplete,
+      pendingPlatforms,
+    };
+  if (!matrixComplete) {
+    const passedPlatforms = requiredPlatforms.filter(
+      (platform) => !pendingPlatforms.includes(platform),
+    );
+    const reason =
+      passedPlatforms.length === 1
+        ? '仅 ' +
+          passedPlatforms[0] +
+          ' 平台通过验收，仍待 ' +
+          pendingPlatforms.join('、') +
+          ' 平台验收；双平台全部通过前不能标记为已验证'
+        : '双平台验收未完成，仍待 ' + pendingPlatforms.join('、') + ' 平台验收';
+    return { verified: false, reason, record, matrixComplete, pendingPlatforms };
+  }
+  return { verified: true, reason: null, record, matrixComplete, pendingPlatforms };
 }
 
 export function listJavaPresets() {

@@ -11,7 +11,10 @@ import { hashValue } from '../events.js';
  * state already carries, so callers inject time through the state itself.
  *
  * This module is deliberately self-contained groundwork. The daemon, service,
- * store, config and management server are wired to it by a later slice.
+ * runtime and CLI are wired to it: `service.registerProject` writes the durable
+ * registry rows, `config.resolveControlEnvironment` derives the aggregate or
+ * isolated control home/port, and `daemon.js` registers its project and clamps
+ * the aggregate global concurrency here.
  */
 
 /** Control-plane operating modes: one shared daemon, or one control home per project. */
@@ -189,12 +192,25 @@ export function projectRegistry(state) {
       return {
         projectId,
         projectRoot: typeof project.projectRoot === 'string' ? project.projectRoot : null,
+        mode: registeredMode(project, state),
         workItemCount: items.length,
         ...counters,
         lastActivityAt: lastActivity > 0 ? new Date(lastActivity).toISOString() : null,
       };
     })
     .sort((left, right) => String(left.projectId).localeCompare(String(right.projectId)));
+}
+
+/**
+ * Effective control mode for a registry row. A valid per-project `mode` wins,
+ * then the home-wide `state.controlMode`, then the 'aggregate' default. This
+ * mirrors `selectControlMode` so a projection row never reports a mode the
+ * daemon would not honour.
+ */
+export function registeredMode(project, state) {
+  if (isObject(project) && CONTROL_MODES.includes(project.mode)) return project.mode;
+  if (CONTROL_MODES.includes(state?.controlMode)) return state.controlMode;
+  return 'aggregate';
 }
 
 /**
@@ -205,7 +221,9 @@ export function projectRegistry(state) {
  * severity then oldest. `queue` is the queued/running WorkItem order, sorted by
  * the same keys `claimNext` uses: priority rank, then queue sequence, then
  * createdAt. The queued subset therefore matches exactly what the supervisor
- * would claim next.
+ * would claim next. `concurrency` is the effective aggregate global concurrency
+ * limit (`resolveGlobalConcurrency`) that a single aggregate daemon enforces
+ * across every registered project.
  */
 export function aggregatePortfolio(state, options = {}) {
   const rankAttention = options && options.rankAttention;
@@ -217,6 +235,7 @@ export function aggregatePortfolio(state, options = {}) {
   );
   return {
     projects: projectRegistry(state),
+    concurrency: resolveGlobalConcurrency(state, options && options.limit),
     attention: ordered(openAttention, attentionComparator(rankAttention), defaultAttentionRank).map(
       clone,
     ),

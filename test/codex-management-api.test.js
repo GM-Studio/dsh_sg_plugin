@@ -76,8 +76,7 @@ function services() {
   };
 }
 
-async function setup(t) {
-  const injected = services();
+async function setup(t, injected = services()) {
   const management = createManagementServer({
     services: injected,
     pairingToken: 'pairing-token-with-enough-entropy',
@@ -245,4 +244,105 @@ test('query and mutation routes keep working after a restart with a durable stor
   });
   assert.equal(mutation.status, 200);
   assert.ok(secondServices.calls.some(([name]) => name === 'pause'));
+});
+
+test('existing query routes serve the cross-project portfolio and attention data', async (t) => {
+  const injected = {
+    projection: {
+      health: async () => ({ ok: true, status: 'healthy' }),
+      overview: async () => ({
+        ok: true,
+        projects: [
+          { projectId: 'project-1', name: 'CRM', status: 'READY', projectRoot: 'C:/work/crm' },
+          {
+            projectId: 'project-2',
+            name: 'Billing',
+            status: 'READY',
+            projectRoot: '/home/me/billing',
+          },
+        ],
+      }),
+      listWorkItems: async () => ({
+        ok: true,
+        workItems: [
+          {
+            workItemId: 'work-1',
+            projectId: 'project-1',
+            executionState: 'RUNNING',
+            hostHealth: 'ONLINE',
+            title: 'A',
+          },
+          {
+            workItemId: 'work-2',
+            projectId: 'project-1',
+            executionState: 'FAILED',
+            hostHealth: 'OFFLINE',
+            title: 'B',
+          },
+          {
+            workItemId: 'work-3',
+            projectId: 'project-2',
+            executionState: 'WAITING_FOR_USER',
+            hostHealth: 'ONLINE',
+            title: 'C',
+          },
+        ],
+      }),
+      listAttention: async () => ({
+        ok: true,
+        attention: [
+          {
+            requestId: 'attention-1',
+            workItemId: 'work-1',
+            projectId: 'project-1',
+            type: 'H1_APPROVAL',
+            status: 'OPEN',
+            revision: 1,
+            createdAt: '2025-01-01T00:00:00.000Z',
+            expiresAt: '2025-01-02T00:00:00.000Z',
+          },
+          {
+            requestId: 'attention-2',
+            workItemId: 'work-3',
+            projectId: 'project-2',
+            type: 'CLARIFICATION',
+            status: 'REMINDED',
+            revision: 1,
+            createdAt: '2025-01-02T00:00:00.000Z',
+            expiresAt: '2025-01-03T00:00:00.000Z',
+          },
+        ],
+      }),
+    },
+    decisions: { create: async () => ({ ok: true }) },
+  };
+  const server = await setup(t, injected);
+
+  const projectsResponse = await fetch(`${server.baseUrl}/api/projects`, {
+    headers: { cookie: server.cookie },
+  });
+  const projects = (await projectsResponse.json()).projects;
+  assert.equal(projects.length, 2);
+  assert.ok(projects.every((project) => typeof project.projectId === 'string' && project.name));
+  // Host health is derived client-side from WorkItems, so no project root leaks.
+  assert.ok(projects.every((project) => project.projectRoot === undefined));
+
+  const workItemsResponse = await fetch(`${server.baseUrl}/api/work-items`, {
+    headers: { cookie: server.cookie },
+  });
+  const workItems = (await workItemsResponse.json()).workItems;
+  assert.equal(workItems.length, 3);
+  assert.ok(
+    workItems.every(
+      (item) => typeof item.projectId === 'string' && typeof item.executionState === 'string',
+    ),
+  );
+  assert.ok(workItems.some((item) => item.hostHealth === 'OFFLINE'));
+
+  const attentionResponse = await fetch(`${server.baseUrl}/api/attention`, {
+    headers: { cookie: server.cookie },
+  });
+  const attention = (await attentionResponse.json()).attention;
+  assert.equal(attention.length, 2);
+  assert.ok(attention.every((entry) => entry.projectId && entry.type && entry.status));
 });

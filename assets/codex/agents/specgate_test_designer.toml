@@ -18,4 +18,6 @@ Return the exact commit, test counts, AC coverage, and any unresolved test risk.
 Do not spawn subagents.
 Use the ProjectProfile backendPackage for Java test packages. Follow the frozen
 frontend i18n conventions and add Chinese comments to generated test source.
+Treat the generated scaffold's existing tests and fixtures as the style
+reference for the structure, naming and assertions of new specgate-tests.
 """
