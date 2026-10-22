@@ -100,8 +100,9 @@ async function mountDashboard() {
   vi.mocked(sysDashboardApi.summary).mockResolvedValue({
     userCount: 3,
     roleCount: 2,
-    taskCount: 7,
-    completedTaskCount: 4,
+    departmentCount: 7,
+    menuCount: 4,
+    auditCount: 9,
   });
   wrapper = mount(DashboardView, {
     props: { user: { username: 'admin', role: 'ADMIN' } as const },

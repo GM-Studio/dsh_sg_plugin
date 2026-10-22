@@ -4,15 +4,18 @@ package com.example.tasks.sys.vo;
 public final class SysDashboardVO {
     private final long userCount;
     private final long roleCount;
-    private final long taskCount;
-    private final long completedTaskCount;
+    private final long departmentCount;
+    private final long menuCount;
+    private final long auditCount;
 
     /** 汇总统计构造方法：入参均为统计完成的非负数量。 */
-    public SysDashboardVO(long userCount, long roleCount, long taskCount, long completedTaskCount) {
+    public SysDashboardVO(
+            long userCount, long roleCount, long departmentCount, long menuCount, long auditCount) {
         this.userCount = userCount;
         this.roleCount = roleCount;
-        this.taskCount = taskCount;
-        this.completedTaskCount = completedTaskCount;
+        this.departmentCount = departmentCount;
+        this.menuCount = menuCount;
+        this.auditCount = auditCount;
     }
 
     public long getUserCount() {
@@ -23,11 +26,15 @@ public final class SysDashboardVO {
         return roleCount;
     }
 
-    public long getTaskCount() {
-        return taskCount;
+    public long getDepartmentCount() {
+        return departmentCount;
     }
 
-    public long getCompletedTaskCount() {
-        return completedTaskCount;
+    public long getMenuCount() {
+        return menuCount;
+    }
+
+    public long getAuditCount() {
+        return auditCount;
     }
 }

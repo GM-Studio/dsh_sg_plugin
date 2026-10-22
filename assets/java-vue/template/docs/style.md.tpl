@@ -17,8 +17,8 @@ controller -> service -> repository -> entity
 - `service`：承载业务规则与事务边界；返回 `vo`，入参用 `dto`。
 - `repository`：仅持久化，继承 `JpaRepository`（+ 需要过滤时 `JpaSpecificationExecutor`）。
 - `entity`：内部存储模型，不对外暴露。
-- `dto`：请求类型，命名 `<Domain>Request`、`<Domain>UpdateRequest`（更新类型可继承 `Request` 并加 `id`）；通用 `IdRequest`、`BatchRequest`。连接类如 `UpdateTaskRequest extends TaskRequest`。
-- `vo`：响应类型，命名 `<Domain>VO`；由 entity 构造（`new TaskVO(entity)`）。
+- `dto`：请求类型，命名 `<Domain>Request`、`<Domain>UpdateRequest`（更新类型可继承 `Request` 并加 `id`）；通用 `IdRequest`、`BatchRequest`。连接类如 `SysRoleUpdateRequest extends SysRoleRequest`。
+- `vo`：响应类型，命名 `<Domain>VO`；由 entity 构造（`new SysRoleVO(entity)`）。
 - 一律**构造器注入**（`private final` 依赖），不用字段注入。
 
 ## 2. common 共享组件 (Shared helpers)
@@ -46,7 +46,7 @@ controller -> service -> repository -> entity
   ```
   排序字段/方向用白名单校验，禁止把用户值拼进 SQL。
 - 事务边界：`service` 类级 `@Transactional(readOnly = true)`，每个写方法单独 `@Transactional`；批量操作与 CSV 导入**要么全成要么全滚**，不留部分写入。
-- 上限用 `@Value` 配置并在构造器**范围校验**，越界则抛 `IllegalArgumentException` 让启动失败。示例键：`app.tasks.max-page-size`、`app.tasks.max-batch-size`、`app.sys.max-page-size`、`app.sys.max-batch-size`、`app.files.max-bytes`、`app.csv.max-rows`、`app.csv.max-bytes`。
+- 上限用 `@Value` 配置并在构造器**范围校验**，越界则抛 `IllegalArgumentException` 让启动失败。示例键：`app.sys.max-page-size`、`app.sys.max-batch-size`、`app.csv.max-rows`、`app.csv.max-bytes`。
 
 ## 4. sys 管理模块
 
@@ -68,9 +68,9 @@ controller -> service -> repository -> entity
 
 - **查询用 GET**（无请求体，参数走 query/path）；**所有变更用 POST**（`application/json`），不用 PUT/PATCH/DELETE。
 - 更新与删除的 id 放在 JSON 体内：`POST .../update`（体含 `id`）、`POST .../delete`（体 `{id}`）。
-- 批量接口命名 `POST .../batch-*`（如 `/api/tasks/batch-delete`、`/api/tasks/batch-update-status`），ids 为 1–`maxBatchSize` 个**互不相同**的正整数。
+- 批量接口命名 `POST .../batch-*`（如 `/api/sys/users/batch-delete`），ids 为 1–`maxBatchSize` 个**互不相同**的正整数。
 - 业务响应统一为 JSON 信封；创建成功返回 **201 + `Location`**（`/api/<resource>/<id>`）。
-- **受控例外**：CSV/文件传输允许 multipart 上传与二进制下载响应（`/api/files/upload`、`/api/tasks/import[/validate]`、`/api/files/{id}/download`、`/api/tasks/export`）；但这些端点**出错时仍是 JSON 信封**，HTTP 状态保持语义（400/401/403/404/405/413/415/500）。
+- **受控例外**：CSV 传输允许 multipart 上传与二进制下载响应（`/api/sys/users/import[/validate]`、`/api/sys/roles/import[/validate]`、`/api/sys/users/export`、`/api/sys/roles/export`）；但这些端点**出错时仍是 JSON 信封**，HTTP 状态保持语义（400/401/403/404/405/413/415/500）。
 - 导出/导入有界（默认 ≤1000 行 / 2 MiB），超限报错而非截断；CSV 公式注入需中和。
 
 ## 6. 前端约定 (Frontend)
@@ -80,7 +80,7 @@ controller -> service -> repository -> entity
 - 每个组件用 **`<script setup lang="ts">`** 组合式 API；props 用 `defineProps<{...}>()`，事件用 `defineEmits`。
 - UI 组件来自 **Element Plus**，按需具名导入（`ElButton, ElCard, ElInput, ElPagination, ElTag, ElCheckbox` 等）。
 - 路由用 `createWebHashHistory()`（hash 路由）；受保护页面挂载在 `AppLayout` 外壳（侧边栏导航 + 顶栏 + `RouterView`）内，路由集中在 `src/router/index.ts`。
-- 网络访问集中到 `src/api/*.ts`（`tasks.ts`、`sys.ts`、`auth.ts`、`files.ts`），复用共享助手：`request<T>()`（GET/读）、`mutate<T>()`（POST/写，**每次写请求重新取 CSRF token**，支持 JSON 与 `FormData`）、`download()`（附件下载）。
+- 网络访问集中到 `src/api/*.ts`（`sys.ts`、`auth.ts`），复用共享助手：`request<T>()`（GET/读）、`mutate<T>()`（POST/写，**每次写请求重新取 CSRF token**，支持 JSON 与 `FormData`）、`download()`（附件下载）。
 - 页面用 **`run(action)` 包裹器**统一处理忙/错状态：置 `busy`、清空 `error`、`catch` 后显示消息（`ApiError` 追加 traceId）、`finally` 复位。横幅用语义角色：错误 `role="alert"`，提示/进行中 `role="status"`。
 - 确认/详情用内联 `[role="dialog"]` 块（带 `:aria-label`），不弹系统 `confirm`。
 - 列表分页用 **`ElPagination`**（`:current-page` / `:page-size` / `:total` / `@current-change`）。

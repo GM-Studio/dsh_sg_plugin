@@ -52,58 +52,62 @@ export async function exerciseAdminApi({ base, env, restart, log }) {
   const expect = (condition, message) => {
     if (!condition) throw new Error(message);
   };
-  await admin.json('/api/tasks', {}, 401);
+  await admin.json('/api/sys/roles', {}, 401);
   await admin.write('/api/auth/login', { username: 'admin', password: env.APP_ADMIN_PASSWORD });
   await viewer.write('/api/auth/login', { username: 'viewer', password: env.APP_VIEWER_PASSWORD });
   expect((await admin.json('/api/auth/me')).role === 'ADMIN', 'Administrator role mismatch');
-  await viewer.write('/api/tasks', { title: 'forbidden', completed: false }, 403);
-  const csrfDenied = await admin.send('/api/tasks', {
+  await viewer.write(
+    '/api/sys/roles',
+    { code: 'forbidden', name: 'Forbidden', description: 'denied', enabled: true },
+    403,
+  );
+  const csrfDenied = await admin.send('/api/sys/roles', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: '{}',
   });
   expect(csrfDenied.status === 403, 'Missing CSRF token was accepted');
-  const task = await admin.write('/api/tasks', { title: 'sg-verify', completed: false }, 201);
-  expect((await viewer.json('/api/tasks/' + task.id)).title === 'sg-verify', 'Task read mismatch');
-  await admin.write('/api/tasks/update', {
-    id: task.id,
-    title: 'sg-verify-updated',
-    completed: true,
-  });
-  await admin.write('/api/tasks/batch-update-status', { ids: [task.id], completed: false });
-  await admin.write('/api/tasks/batch-delete', { ids: [task.id, 9007199254740991] }, 404);
-  const page = await admin.json(
-    '/api/tasks?title=sg-verify&completed=false&pageSize=1&sortBy=title&sortOrder=desc',
+  const role = await admin.write(
+    '/api/sys/roles',
+    { code: 'sg-verify', name: 'Verify Role', description: 'runtime check', enabled: true },
+    201,
   );
   expect(
-    page.total === 1 && page.records[0].id === task.id,
-    'Pagination/filter/atomic rollback mismatch',
+    (await viewer.json('/api/sys/roles/' + role.id)).code === 'sg-verify',
+    'Role read mismatch',
   );
-  await admin.json('/api/tasks?page=0', {}, 400);
-  const upload = new FormData();
-  upload.append('file', new Blob(['persistent-content'], { type: 'text/plain' }), 'note.txt');
-  const file = await admin.write('/api/files/upload', upload);
-  expect((await viewer.json('/api/files/' + file.fileId)).size === 18, 'File metadata mismatch');
+  await admin.write('/api/sys/roles/update', {
+    id: role.id,
+    code: 'sg-verify',
+    name: 'Verify Role Updated',
+    description: 'runtime check updated',
+    enabled: false,
+  });
+  const page = await admin.json('/api/sys/roles?code=sg-verify&pageSize=1');
+  expect(page.total === 1 && page.records[0].id === role.id, 'Pagination/filter mismatch');
+  await admin.json('/api/sys/roles?page=0', {}, 400);
   const csv = new FormData();
   csv.append(
     'file',
-    new Blob(['title,completed\r\nImported,true\r\n'], { type: 'text/csv' }),
-    'tasks.csv',
+    new Blob(['code,name,description,enabled\r\nimported,Imported,from csv,true\r\n'], {
+      type: 'text/csv',
+    }),
+    'roles.csv',
   );
-  expect((await admin.write('/api/tasks/import/validate', csv)).valid, 'CSV validation failed');
-  expect((await admin.write('/api/tasks/import', csv)).count === 1, 'CSV import failed');
-  const exported = await viewer.send('/api/tasks/export?title=Imported');
+  expect((await admin.write('/api/sys/roles/import/validate', csv)).valid, 'CSV validation failed');
+  expect((await admin.write('/api/sys/roles/import', csv)).count === 1, 'CSV import failed');
+  const exported = await viewer.send('/api/sys/roles/export?code=imported');
   expect(
-    exported.status === 200 && (await exported.text()).includes('Imported'),
+    exported.status === 200 && (await exported.text()).includes('imported'),
     'CSV export mismatch',
   );
   const bad = new FormData();
   bad.append(
     'file',
-    new Blob(['title,completed\nValid,true\n,invalid'], { type: 'text/csv' }),
+    new Blob(['code,name,description,enabled\n,invalid\n'], { type: 'text/csv' }),
     'bad.csv',
   );
-  await admin.write('/api/tasks/import', bad, 400);
+  await admin.write('/api/sys/roles/import', bad, 400);
   await restart(async () => {
     const csrf = await admin.json('/api/auth/csrf');
     return admin.send('/actuator/shutdown', {
@@ -116,20 +120,15 @@ export async function exerciseAdminApi({ base, env, restart, log }) {
   await admin.write('/api/auth/login', { username: 'admin', password: env.APP_ADMIN_PASSWORD });
   await viewer.write('/api/auth/login', { username: 'viewer', password: env.APP_VIEWER_PASSWORD });
   expect(
-    (await admin.json('/api/tasks/' + task.id)).title === 'sg-verify-updated',
-    'Task did not survive restart',
+    (await admin.json('/api/sys/roles/' + role.id)).name === 'Verify Role Updated',
+    'Role did not survive restart',
   );
-  expect(
-    (await (await viewer.send('/api/files/' + file.fileId + '/download')).text()) ===
-      'persistent-content',
-    'File did not survive restart',
-  );
-  const receipt = await admin.write('/api/tasks/delete', { id: task.id });
-  expect(receipt.deleted && receipt.id === task.id, 'Deletion receipt mismatch');
-  await admin.json('/api/tasks/' + task.id, {}, 404);
-  const imported = await admin.json('/api/tasks?title=Imported');
-  await admin.write('/api/tasks/batch-delete', { ids: imported.records.map((item) => item.id) });
+  const receipt = await admin.write('/api/sys/roles/delete', { id: role.id });
+  expect(receipt.deleted && receipt.id === role.id, 'Deletion receipt mismatch');
+  await admin.json('/api/sys/roles/' + role.id, {}, 404);
+  const imported = await admin.json('/api/sys/roles?code=imported');
+  await admin.write('/api/sys/roles/delete', { id: imported.records[0].id });
   await viewer.write('/api/auth/logout', {});
   await viewer.json('/api/auth/me', {}, 401);
-  log('HTTP login/CSRF/roles/CRUD/pagination/batch/CSV/files/restart/logout passed');
+  log('HTTP login/CSRF/roles/CRUD/pagination/CSV/restart/logout passed');
 }

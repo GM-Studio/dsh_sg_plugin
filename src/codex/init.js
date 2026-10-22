@@ -273,8 +273,6 @@ export function previewInit({
     const frontendChoice = String(frontend || 'vue').trim();
     if (!['vue', 'react'].includes(frontendChoice))
       return failure('INVALID_FRONTEND', 'frontend 必须是 vue 或 react');
-    if (frontendChoice !== 'vue')
-      return failure('FRONTEND_UNAVAILABLE', 'React 前端模板尚未提供；当前仅支持 Vue 3');
     const namespace = normalizeProjectNamespace({ company, business });
     if (!namespace.ok) return namespace;
     const preset = normalized.preset;
@@ -285,6 +283,7 @@ export function previewInit({
       preset,
       company: namespace.company,
       business: namespace.business,
+      frontend: frontendChoice,
     });
     const generated = [...new Set([...Object.keys(templates), ...EXTRA_FILES])].sort();
     const existing = new Map(snapshot.entries.map((entry) => [entryKey(entry.path), entry]));
@@ -620,6 +619,7 @@ export async function executeInit(input = {}, { approvalProvider, signal } = {})
             preset: normalizeJavaPreset(preview.preset).preset,
             company: preview.projectNamespace.company,
             business: preview.projectNamespace.business,
+            frontend: preview.frontend,
           }),
         ),
         ...EXTRA_FILES,

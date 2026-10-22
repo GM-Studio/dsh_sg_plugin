@@ -89,6 +89,19 @@ Skill, agent templates, README/CHANGELOG and the two zh guides now describe the
 admin scaffold, the control modes and capability degradation. Repo suite
 415/415, lint, format:check and pack pass.
 
+Landed (template step 7, React 18 + tasks-free scaffold): the React 18 frontend
+(React Router, Zustand, Ant Design, react-i18next, Vitest/RTL) is generated from
+`assets/java-vue/template-react/`, spliced by `javaFullstackFiles({ frontend })`
+with its own lockfile and a fail-closed guard when the tree is missing. The
+`tasks`/`files` demo is removed from the Vue template, the dashboard now reports
+sys-domain counts, the runtime smoke drives `/api/sys/roles`, and the delivery
+pilot exercises three sys scenarios. Verified by real runs on generated
+`jdk17-boot3.5` projects: Vue backend 25/25 + frontend 23/23; React backend
+25/25 + frontend 31/31 with coverage 82% lines / 71% branches, plus build, lint
+and format:check. Repo suite 419 pass / 1 skipped. `GOLDEN_MANIFEST` refreshed
+for the Vue hashes and still `pending`; the React dimension is not yet recorded
+in the manifest.
+
 - [x] 1. P0: approve the requirements document; keep this proposal/design/spec
       aligned with it.
 - [x] 2. P1: add failing tests for JDK+frontend selection, `ProjectProfile`
@@ -99,9 +112,9 @@ admin scaffold, the control modes and capability degradation. Repo suite
       (users, roles, departments, menus, permissions, audit, pagination,
       import/export, dashboard) on both backend and frontend.
 - [x] 5. P2: build the Vue 3 scaffold and its real build/test/run verification.
-- [ ] 6. P3: add failing tests for the React 18 scaffold and its parity with Vue
+- [x] 6. P3: add failing tests for the React 18 scaffold and its parity with Vue
       (shared backend contract, menu, i18n keys).
-- [ ] 7. P3: implement the React 18 scaffold and align it with the Vue scaffold.
+- [x] 7. P3: implement the React 18 scaffold and align it with the Vue scaffold.
 - [x] 8. P4: author the style guide and add Reviewer blocking-on-deviation
       findings with tests.
 - [x] 9. P5: add failing tests for the multi-project registry, aggregate console

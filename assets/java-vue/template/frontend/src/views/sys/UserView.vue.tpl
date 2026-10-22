@@ -348,7 +348,7 @@ onMounted(() => run(refresh));
           :disabled="busy"
           @click="run(async () => sysUserApi.export(query))"
         >
-          {{ t('task.export') }}
+          {{ t('csv.export') }}
         </el-button>
         <input
           id="csv-file"

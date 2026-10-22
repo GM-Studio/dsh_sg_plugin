@@ -8,13 +8,11 @@ import AuditView from '../views/sys/AuditView.vue';
 import DepartmentView from '../views/sys/DepartmentView.vue';
 import MenuView from '../views/sys/MenuView.vue';
 import RoleView from '../views/sys/RoleView.vue';
-import TasksView from '../views/TasksView.vue';
 import UserView from '../views/sys/UserView.vue';
 
 export const routes: RouteRecordRaw[] = [
   { path: '/', redirect: '/dashboard' },
   { path: '/dashboard', name: 'dashboard', component: DashboardView },
-  { path: '/tasks', name: 'tasks', component: TasksView },
   { path: '/sys/roles', name: 'sys-roles', component: RoleView },
   { path: '/sys/users', name: 'sys-users', component: UserView },
   {

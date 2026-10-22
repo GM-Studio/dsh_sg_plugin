@@ -58,7 +58,7 @@ class SysDashboardApiTest {
         return mapper.readTree(body).path("data").path(field).asLong();
     }
 
-    /** 未登录访问返回 401；登录后返回四个均为非负数的统计字段。 */
+    /** 未登录访问返回 401；登录后返回五个均为非负数的统计字段。 */
     @Test
     void dashboardRequiresLoginAndReturnsNonNegativeCounts() throws Exception {
         mvc.perform(get("/api/sys/dashboard"))
@@ -68,12 +68,14 @@ class SysDashboardApiTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.userCount").isNumber())
                 .andExpect(jsonPath("$.data.roleCount").isNumber())
-                .andExpect(jsonPath("$.data.taskCount").isNumber())
-                .andExpect(jsonPath("$.data.completedTaskCount").isNumber());
+                .andExpect(jsonPath("$.data.departmentCount").isNumber())
+                .andExpect(jsonPath("$.data.menuCount").isNumber())
+                .andExpect(jsonPath("$.data.auditCount").isNumber());
         assertTrue(count("userCount") >= 0);
         assertTrue(count("roleCount") >= 0);
-        assertTrue(count("taskCount") >= 0);
-        assertTrue(count("completedTaskCount") >= 0);
+        assertTrue(count("departmentCount") >= 0);
+        assertTrue(count("menuCount") >= 0);
+        assertTrue(count("auditCount") >= 0);
     }
 
     /** 通过角色接口新增角色后，仪表盘的角色总数随之增加。 */

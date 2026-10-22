@@ -18,7 +18,5 @@ server.servlet.session.cookie.same-site=lax
 server.servlet.session.cookie.secure=${SESSION_COOKIE_SECURE:false}
 spring.servlet.multipart.max-file-size=10MB
 spring.servlet.multipart.max-request-size=11MB
-app.files.directory=${FILE_DIRECTORY:./data/uploads}
-app.files.max-bytes=${FILE_MAX_BYTES:10485760}
 app.csv.max-rows=${CSV_MAX_ROWS:1000}
 app.csv.max-bytes=${CSV_MAX_BYTES:2097152}

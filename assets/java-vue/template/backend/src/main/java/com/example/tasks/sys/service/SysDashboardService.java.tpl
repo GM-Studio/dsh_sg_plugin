@@ -1,41 +1,44 @@
 package com.example.tasks.sys.service;
 
-import com.example.tasks.entity.Task;
-import com.example.tasks.repository.TaskRepository;
+import com.example.tasks.sys.repository.SysAuditLogRepository;
+import com.example.tasks.sys.repository.SysDepartmentRepository;
+import com.example.tasks.sys.repository.SysMenuRepository;
 import com.example.tasks.sys.repository.SysRoleRepository;
 import com.example.tasks.sys.repository.SysUserRepository;
 import com.example.tasks.sys.vo.SysDashboardVO;
-import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-/** 仪表盘统计服务：只读汇总用户、角色与任务数量。 */
+/** 仪表盘统计服务：只读汇总系统各领域的记录数量。 */
 @Service
 @Transactional(readOnly = true)
 public class SysDashboardService {
     private final SysUserRepository userRepository;
     private final SysRoleRepository roleRepository;
-    private final TaskRepository taskRepository;
+    private final SysDepartmentRepository departmentRepository;
+    private final SysMenuRepository menuRepository;
+    private final SysAuditLogRepository auditLogRepository;
 
     public SysDashboardService(
             SysUserRepository userRepository,
             SysRoleRepository roleRepository,
-            TaskRepository taskRepository) {
+            SysDepartmentRepository departmentRepository,
+            SysMenuRepository menuRepository,
+            SysAuditLogRepository auditLogRepository) {
         this.userRepository = userRepository;
         this.roleRepository = roleRepository;
-        this.taskRepository = taskRepository;
+        this.departmentRepository = departmentRepository;
+        this.menuRepository = menuRepository;
+        this.auditLogRepository = auditLogRepository;
     }
 
-    /** 汇总仪表盘统计：用户/角色总数，以及任务总数与已完成任务数。 */
+    /** 汇总仪表盘统计：用户、角色、部门、菜单与审计记录总数。 */
     public SysDashboardVO summary() {
-        long taskCount = taskRepository.count();
-        long completedTaskCount = taskRepository.findAll(completed()).size();
         return new SysDashboardVO(
-                userRepository.count(), roleRepository.count(), taskCount, completedTaskCount);
-    }
-
-    /** 已完成任务的过滤条件：把筛选下推到数据库，避免逐条在内存中判断。 */
-    private static Specification<Task> completed() {
-        return (root, query, builder) -> builder.isTrue(root.get("completed"));
+                userRepository.count(),
+                roleRepository.count(),
+                departmentRepository.count(),
+                menuRepository.count(),
+                auditLogRepository.count());
     }
 }

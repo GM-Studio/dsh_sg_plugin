@@ -176,12 +176,6 @@ form {
   flex: 1;
   min-width: 220px;
 }
-label[for='title'] {
-  display: block;
-  font-size: 12px;
-  color: #68778e;
-  margin-bottom: 8px;
-}
 form .el-checkbox {
   height: 32px;
 }
@@ -191,40 +185,6 @@ form .el-checkbox {
   justify-content: space-between;
   padding-bottom: 20px;
   border-bottom: 1px solid #edf0f6;
-}
-.task-list {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-}
-.task-list li {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  padding: 20px 0;
-  border-bottom: 1px solid #edf0f6;
-}
-.task-list li:last-child {
-  border-bottom: 0;
-  padding-bottom: 0;
-}
-.task-title {
-  flex: 1;
-  overflow-wrap: anywhere;
-  min-width: 0;
-  font-size: 14px;
-}
-.done {
-  text-decoration: line-through;
-  color: #98a3b4;
-}
-.task-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-.task-actions .el-button + .el-button {
-  margin-left: 0;
 }
 .empty-state {
   text-align: center;
@@ -296,22 +256,6 @@ select {
   background: #f2f5ff;
   border-radius: 8px;
 }
-.file-list {
-  padding: 0;
-  list-style: none;
-}
-.file-list li {
-  display: flex;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 12px 0;
-  border-bottom: 1px solid #edf0f6;
-  overflow-wrap: anywhere;
-}
-.file-list small {
-  color: #64748b;
-  margin-left: 8px;
-}
 input[type='file'] {
   max-width: 100%;
 }
@@ -332,12 +276,6 @@ footer {
   }
   .topbar {
     padding: 0 24px;
-  }
-  .task-list li {
-    flex-wrap: wrap;
-  }
-  .task-title {
-    flex-basis: 60%;
   }
 }
 @media (max-width: 700px) {
@@ -365,8 +303,5 @@ footer {
   }
   .page-heading {
     align-items: flex-start;
-  }
-  .task-actions {
-    width: 100%;
   }
 }

@@ -49,12 +49,12 @@ onMounted(load);
         <strong>{{ summary?.roleCount ?? 0 }}</strong>
       </el-card>
       <el-card shadow="never">
-        <span>{{ t('dashboard.taskTotal') }}</span>
-        <strong>{{ summary?.taskCount ?? 0 }}</strong>
+        <span>{{ t('dashboard.departments') }}</span>
+        <strong>{{ summary?.departmentCount ?? 0 }}</strong>
       </el-card>
       <el-card shadow="never">
-        <span>{{ t('dashboard.completedTasks') }}</span>
-        <strong class="success">{{ summary?.completedTaskCount ?? 0 }}</strong>
+        <span>{{ t('dashboard.menus') }}</span>
+        <strong>{{ summary?.menuCount ?? 0 }}</strong>
       </el-card>
     </div>
   </div>

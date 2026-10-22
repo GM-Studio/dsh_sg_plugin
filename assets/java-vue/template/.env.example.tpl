@@ -9,5 +9,4 @@ DB_PASSWORD=
 # Required: provide private passwords (12+ characters, <=72 UTF-8 bytes). No defaults.
 APP_ADMIN_PASSWORD=
 APP_VIEWER_PASSWORD=
-FILE_DIRECTORY=./data/uploads
 SESSION_COOKIE_SECURE=false

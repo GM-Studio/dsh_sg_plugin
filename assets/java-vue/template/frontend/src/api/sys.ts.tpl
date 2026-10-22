@@ -46,8 +46,9 @@ export type SysUserUpdate = SysUserInput & { id: number };
 export interface SysDashboard {
   userCount: number;
   roleCount: number;
-  taskCount: number;
-  completedTaskCount: number;
+  departmentCount: number;
+  menuCount: number;
+  auditCount: number;
 }
 
 function queryString(query: object): string {

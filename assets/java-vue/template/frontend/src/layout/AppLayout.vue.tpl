@@ -20,9 +20,6 @@ const { t } = useI18n();
       <RouterLink class="nav-link" to="/dashboard">
         ◱ {{ t('navigation.dashboard') }}
       </RouterLink>
-      <RouterLink class="nav-link" to="/tasks">
-        ▦ {{ t('navigation.tasks') }}
-      </RouterLink>
       <p class="nav-label">{{ t('sys.navigation.section') }}</p>
       <RouterLink class="nav-link" to="/sys/roles">
         ◇ {{ t('sys.navigation.roles') }}
