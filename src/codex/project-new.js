@@ -125,6 +125,8 @@ export function recordNewProjectBaseline({
             backendPackage: monorepo.backendPackage,
             frontendDefaultLocale: monorepo.frontendDefaultLocale || 'zh-CN',
             frontendLocales: monorepo.frontendLocales || ['zh-CN', 'en-US'],
+            frontendFramework: monorepo.frontendFramework || 'vue',
+            ...(monorepo.preset ? { javaPreset: monorepo.preset } : {}),
           }
         : {}),
       commands: detected.commands,

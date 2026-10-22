@@ -9,6 +9,7 @@ import {
 } from '../src/codex/core/java/java-fullstack-template.js';
 import { JAVA_PRESETS, templateHash } from '../src/codex/core/java/java-versions.js';
 import { executeInit, previewInit } from '../src/codex/init.js';
+import { readProjectConventions } from '../src/codex/project-conventions.js';
 
 const preset = JAVA_PRESETS.find((entry) => entry.id === 'jdk21-boot3.5');
 
@@ -32,6 +33,19 @@ test('custom company and business names produce the required Java namespace', ()
     files['backend/src/main/java/com/acme/orders/TaskApplication.java'],
     /package com\.acme\.orders;/,
   );
+});
+
+test('project conventions expose the selected frontend framework and Java preset', (t) => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'sg-conventions-'));
+  t.after(() => fs.rmSync(root, { recursive: true, force: true }));
+  fs.mkdirSync(path.join(root, '.specgate'), { recursive: true });
+  fs.writeFileSync(
+    path.join(root, '.specgate', 'monorepo.json'),
+    JSON.stringify({ stack: 'java-vue', preset: 'jdk21-boot3.5', frontendFramework: 'react' }),
+  );
+  const conventions = readProjectConventions({ projectRoot: root });
+  assert.equal(conventions.frontendFramework, 'react');
+  assert.equal(conventions.javaPreset, 'jdk21-boot3.5');
 });
 
 test('all generated source files contain Chinese comments and i18n defaults to Chinese', () => {

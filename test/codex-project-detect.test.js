@@ -103,7 +103,22 @@ test('detects a Java/Vue monorepo and derives argv-only commands without writes'
   assert.ok(result.protectedPaths.includes('.env'));
   assert.equal(result.conventions.backendPackage, 'com.acme.orders');
   assert.equal(result.conventions.frontendDefaultLocale, 'zh-CN');
+  assert.equal(result.conventions.frontendFramework, 'vue');
   assert.equal(git(root, ['status', '--porcelain=v1', '--untracked-files=all']), before);
+});
+
+test('detects the frontend framework from package dependencies', (t) => {
+  const root = fullstack(t);
+  fs.writeFileSync(
+    path.join(root, 'frontend', 'package.json'),
+    JSON.stringify({
+      scripts: { build: 'vite build', test: 'vitest run' },
+      dependencies: { react: '^18.3.1' },
+    }),
+  );
+  const result = detectProject({ root });
+  assert.equal(result.ok, true, JSON.stringify(result));
+  assert.equal(result.conventions.frontendFramework, 'react');
 });
 
 test('reports dirty files and package-manager choice without committing or staging', (t) => {

@@ -178,6 +178,24 @@ test('ProjectProfile accepts new and adopted Java/Vue modes and rejects unsafe c
   assert.equal(validateProjectProfile(profile({ token: 'secret' })).ok, false);
 });
 
+test('ProjectProfile accepts an optional frontend framework and Java preset and rejects invalid ones', () => {
+  assert.deepEqual(validateProjectProfile(profile({ frontendFramework: 'vue' })), { ok: true });
+  assert.deepEqual(validateProjectProfile(profile({ frontendFramework: 'react' })), { ok: true });
+  assert.deepEqual(validateProjectProfile(profile({ javaPreset: 'jdk21-boot3.5' })), { ok: true });
+  assert.equal(
+    validateProjectProfile(profile({ frontendFramework: 'svelte' })).code,
+    'PROJECT_CONVENTIONS_INVALID',
+  );
+  assert.equal(
+    validateProjectProfile(profile({ frontendFramework: 'React' })).code,
+    'PROJECT_CONVENTIONS_INVALID',
+  );
+  assert.equal(
+    validateProjectProfile(profile({ javaPreset: 'not a preset' })).code,
+    'PROJECT_CONVENTIONS_INVALID',
+  );
+});
+
 test('ProjectBaseline permits adopted known failures but never allows an unknown start', () => {
   assert.deepEqual(validateProjectBaseline(baseline()), { ok: true });
   assert.deepEqual(
