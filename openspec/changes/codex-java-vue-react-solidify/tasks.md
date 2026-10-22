@@ -3,11 +3,12 @@
 Status: approved (2026-10-22); work proceeds on branch `sg-codex-stack-solidify`.
 Check tasks off as each slice lands and is verified.
 
-Progress (commit `be6ebfb`): `ProjectProfile` records optional `frontendFramework`
-(`vue`|`react`) and `javaPreset`, exposed via `readProjectConventions`,
-populated for new projects and detected on adoption. 345 tests green. Interactive
-selection plumbing (`sg_init`/`sg_init_preview` frontend choice) and stack
-enforcement are still pending.
+Progress: `ProjectProfile` records optional `frontendFramework` (`vue`|`react`)
+and `javaPreset`, exposed via `readProjectConventions`, populated for new
+projects and detected on adoption (`be6ebfb`). The change workflow now rejects
+Vue single-file components in a React project through the frontend role policy
+(346 tests green). Interactive `frontend` selection in `sg_init`/`sg_init_preview`
+and the React template are still pending.
 
 - [x] 1. P0: approve the requirements document; keep this proposal/design/spec
       aligned with it.

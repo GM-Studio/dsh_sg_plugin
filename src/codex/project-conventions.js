@@ -34,3 +34,14 @@ export function readProjectConventions({ projectRoot } = {}) {
     templateStyle: '.specgate/template-style.json',
   };
 }
+
+/**
+ * Returns a violation reason when a file contradicts the project's recorded
+ * frontend framework, otherwise null. Only unambiguous cases are rejected: a
+ * React project must not add Vue single-file components.
+ */
+export function frontendFrameworkViolation(frontendFramework, filePath) {
+  if (frontendFramework === 'react' && /\.vue$/i.test(String(filePath || '')))
+    return 'A React project must not add Vue single-file components';
+  return null;
+}

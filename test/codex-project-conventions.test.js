@@ -9,7 +9,10 @@ import {
 } from '../src/codex/core/java/java-fullstack-template.js';
 import { JAVA_PRESETS, templateHash } from '../src/codex/core/java/java-versions.js';
 import { executeInit, previewInit } from '../src/codex/init.js';
-import { readProjectConventions } from '../src/codex/project-conventions.js';
+import {
+  frontendFrameworkViolation,
+  readProjectConventions,
+} from '../src/codex/project-conventions.js';
 
 const preset = JAVA_PRESETS.find((entry) => entry.id === 'jdk21-boot3.5');
 
@@ -46,6 +49,16 @@ test('project conventions expose the selected frontend framework and Java preset
   const conventions = readProjectConventions({ projectRoot: root });
   assert.equal(conventions.frontendFramework, 'react');
   assert.equal(conventions.javaPreset, 'jdk21-boot3.5');
+});
+
+test('a React project rejects Vue single-file components but a Vue project accepts them', () => {
+  assert.match(
+    frontendFrameworkViolation('react', 'frontend/src/views/Dashboard.vue'),
+    /React project/,
+  );
+  assert.equal(frontendFrameworkViolation('react', 'frontend/src/views/Dashboard.tsx'), null);
+  assert.equal(frontendFrameworkViolation('vue', 'frontend/src/App.vue'), null);
+  assert.equal(frontendFrameworkViolation('vue', 'frontend/src/util.ts'), null);
 });
 
 test('all generated source files contain Chinese comments and i18n defaults to Chinese', () => {
