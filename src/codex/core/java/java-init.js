@@ -225,11 +225,19 @@ export async function startJavaInit({
   if (existing) return existing;
   const empty = inspectEmptyTarget(root);
   if (!empty.ok) return empty;
-  if (
-    (backend && backend !== 'java') ||
-    (frontend && frontend !== 'vue') ||
-    (stackPreset && stackPreset !== 'java-vue')
-  )
+  if (backend && backend !== 'java')
+    return {
+      ok: false,
+      code: 'E_STACK_CONFLICT',
+      message: '默认初始化固定 Java 后端；请使用 java 后端',
+    };
+  if (frontend && frontend !== 'vue')
+    return {
+      ok: false,
+      code: 'E_FRONTEND_UNAVAILABLE',
+      message: '当前仅支持 Vue 3 前端；React 模板尚未提供',
+    };
+  if (stackPreset && stackPreset !== 'java-vue')
     return {
       ok: false,
       code: 'E_STACK_CONFLICT',
@@ -409,6 +417,7 @@ export async function startJavaInit({
           backend: 'backend',
           frontend: 'frontend',
           stack: 'java-vue',
+          frontendFramework: 'vue',
           preset: preset.id,
           company: namespace.company,
           business: namespace.business,

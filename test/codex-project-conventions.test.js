@@ -61,6 +61,22 @@ test('a React project rejects Vue single-file components but a Vue project accep
   assert.equal(frontendFrameworkViolation('vue', 'frontend/src/util.ts'), null);
 });
 
+test('initialization preview records a Vue frontend and refuses an unavailable one', (t) => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'sg-init-frontend-'));
+  t.after(() => fs.rmSync(root, { recursive: true, force: true }));
+  const vue = previewInit({ root, company: 'acme', business: 'orders', frontend: 'vue' });
+  assert.equal(vue.ok, true, JSON.stringify(vue));
+  assert.equal(vue.frontend, 'vue');
+  assert.equal(
+    previewInit({ root, company: 'acme', business: 'orders', frontend: 'react' }).code,
+    'FRONTEND_UNAVAILABLE',
+  );
+  assert.equal(
+    previewInit({ root, company: 'acme', business: 'orders', frontend: 'svelte' }).code,
+    'INVALID_FRONTEND',
+  );
+});
+
 test('all generated source files contain Chinese comments and i18n defaults to Chinese', () => {
   const files = javaFullstackFiles({
     preset,

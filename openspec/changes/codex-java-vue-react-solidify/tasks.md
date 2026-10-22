@@ -7,8 +7,15 @@ Progress: `ProjectProfile` records optional `frontendFramework` (`vue`|`react`)
 and `javaPreset`, exposed via `readProjectConventions`, populated for new
 projects and detected on adoption (`be6ebfb`). The change workflow now rejects
 Vue single-file components in a React project through the frontend role policy
-(346 tests green). Interactive `frontend` selection in `sg_init`/`sg_init_preview`
-and the React template are still pending.
+(`440946a`). `sg_init` / `sg_init_preview` accept a `frontend` choice and fail
+closed with `FRONTEND_UNAVAILABLE` for React until its template lands
+(347 tests green).
+
+Open constraint: the React template must ship a real `package-lock.json`
+(the Vue template does; `npm ci` in verification requires it) and must pass the
+Windows + Linux golden matrix. Authoring React sources without a real lockfile
+would generate a template that cannot be verified, so the slice stops at a
+fail-closed boundary until that is settled.
 
 - [x] 1. P0: approve the requirements document; keep this proposal/design/spec
       aligned with it.
