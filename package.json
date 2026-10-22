@@ -3,7 +3,7 @@
   "version": "0.3.0",
   "private": false,
   "type": "module",
-  "description": "SpecGate for Codex: spec-first delivery with native subagents, isolated worktrees and auditable evidence.",
+  "description": "SpecGate for Codex: project adoption, accepted-change evidence, DeliveryRecords and incremental redelivery.",
   "keywords": [
     "codex",
     "spec-driven",
@@ -31,6 +31,7 @@
     "skills",
     "scripts/codex-plugin-smoke.mjs",
     "scripts/codex-source-setup.mjs",
+    "scripts/codex-delivery-pilot.mjs",
     "scripts/verify-codex-matrix.mjs",
     "src/codex",
     "assets/codex",

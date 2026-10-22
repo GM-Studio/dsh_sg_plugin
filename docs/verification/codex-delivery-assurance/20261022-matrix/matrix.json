@@ -1,0 +1,216 @@
+{
+  "scope": "codex-java-vue-windows-matrix",
+  "startedAt": "2026-10-22T00:25:27.166Z",
+  "platform": "win32",
+  "arch": "x64",
+  "node": "v24.14.0",
+  "workspace": "C:\\Users\\Administrator\\AppData\\Local\\Temp\\sg-codex-acceptance-UKhzEh",
+  "concurrency": 2,
+  "sdkDownloads": false,
+  "goldenUpdated": false,
+  "linux": "not-run",
+  "presets": [
+    {
+      "preset": "jdk8-boot2.7",
+      "status": "failed",
+      "root": "C:\\Users\\Administrator\\AppData\\Local\\Temp\\sg-codex-acceptance-UKhzEh\\jdk8-boot2.7",
+      "startedAt": "2026-10-22T00:25:27.170Z",
+      "code": "VERIFY_FAILED",
+      "failedStage": "backend-verify",
+      "checks": [
+        {
+          "name": "backend-verify",
+          "status": "failed",
+          "log": ".specgate/verify-runs/2026-10-22T00-25-29-736Z-aef8b107/backend-verify.log",
+          "exitCode": 1
+        },
+        {
+          "name": "frontend-install",
+          "status": "not-run"
+        },
+        {
+          "name": "frontend-build",
+          "status": "not-run"
+        },
+        {
+          "name": "frontend-test",
+          "status": "not-run"
+        },
+        {
+          "name": "frontend-lint",
+          "status": "not-run"
+        },
+        {
+          "name": "frontend-format",
+          "status": "not-run"
+        },
+        {
+          "name": "coverage",
+          "status": "not-run"
+        },
+        {
+          "name": "runtime",
+          "status": "not-run"
+        },
+        {
+          "name": "frontend-runtime",
+          "status": "not-run"
+        }
+      ],
+      "reason": "本地验证失败于 backend-verify；代码已保留，可修复后重试。\n  [ERROR] To see the full stack trace of the errors, re-run Maven with the -e switch.\n  [ERROR] Re-run Maven using the -X switch to enable full debug logging.\n  [ERROR] \n  [ERROR] For more information about the errors and possible solutions, please read the following articles:\n  [ERROR] [Help 1] http://cwiki.apache.org/confluence/display/MAVEN/ProjectBuildingException\n  [ERROR] [Help 2] http://cwiki.apache.org/confluence/display/MAVEN/UnresolvableModelException\n报告：.specgate/verify-report.json",
+      "endedAt": "2026-10-22T00:25:38.705Z"
+    },
+    {
+      "preset": "jdk17-boot3.5",
+      "status": "failed",
+      "root": "C:\\Users\\Administrator\\AppData\\Local\\Temp\\sg-codex-acceptance-UKhzEh\\jdk17-boot3.5",
+      "startedAt": "2026-10-22T00:25:27.283Z",
+      "code": "VERIFY_FAILED",
+      "failedStage": "backend-verify",
+      "checks": [
+        {
+          "name": "backend-verify",
+          "status": "failed",
+          "log": ".specgate/verify-runs/2026-10-22T00-25-33-578Z-a0b5a3f4/backend-verify.log",
+          "exitCode": 1
+        },
+        {
+          "name": "frontend-install",
+          "status": "not-run"
+        },
+        {
+          "name": "frontend-build",
+          "status": "not-run"
+        },
+        {
+          "name": "frontend-test",
+          "status": "not-run"
+        },
+        {
+          "name": "frontend-lint",
+          "status": "not-run"
+        },
+        {
+          "name": "frontend-format",
+          "status": "not-run"
+        },
+        {
+          "name": "coverage",
+          "status": "not-run"
+        },
+        {
+          "name": "runtime",
+          "status": "not-run"
+        },
+        {
+          "name": "frontend-runtime",
+          "status": "not-run"
+        }
+      ],
+      "reason": "本地验证失败于 backend-verify；代码已保留，可修复后重试。\n  [ERROR] To see the full stack trace of the errors, re-run Maven with the -e switch.\n  [ERROR] Re-run Maven using the -X switch to enable full debug logging.\n  [ERROR] \n  [ERROR] For more information about the errors and possible solutions, please read the following articles:\n  [ERROR] [Help 1] http://cwiki.apache.org/confluence/display/MAVEN/ProjectBuildingException\n  [ERROR] [Help 2] http://cwiki.apache.org/confluence/display/MAVEN/UnresolvableModelException\n报告：.specgate/verify-report.json",
+      "endedAt": "2026-10-22T00:25:44.426Z"
+    },
+    {
+      "preset": "jdk21-boot3.5",
+      "status": "failed",
+      "root": "C:\\Users\\Administrator\\AppData\\Local\\Temp\\sg-codex-acceptance-UKhzEh\\jdk21-boot3.5",
+      "startedAt": "2026-10-22T00:25:38.705Z",
+      "code": "VERIFY_FAILED",
+      "failedStage": "backend-verify",
+      "checks": [
+        {
+          "name": "backend-verify",
+          "status": "failed",
+          "log": ".specgate/verify-runs/2026-10-22T00-25-40-712Z-af1939bc/backend-verify.log",
+          "exitCode": 1
+        },
+        {
+          "name": "frontend-install",
+          "status": "not-run"
+        },
+        {
+          "name": "frontend-build",
+          "status": "not-run"
+        },
+        {
+          "name": "frontend-test",
+          "status": "not-run"
+        },
+        {
+          "name": "frontend-lint",
+          "status": "not-run"
+        },
+        {
+          "name": "frontend-format",
+          "status": "not-run"
+        },
+        {
+          "name": "coverage",
+          "status": "not-run"
+        },
+        {
+          "name": "runtime",
+          "status": "not-run"
+        },
+        {
+          "name": "frontend-runtime",
+          "status": "not-run"
+        }
+      ],
+      "reason": "本地验证失败于 backend-verify；代码已保留，可修复后重试。\n  [ERROR] To see the full stack trace of the errors, re-run Maven with the -e switch.\n  [ERROR] Re-run Maven using the -X switch to enable full debug logging.\n  [ERROR] \n  [ERROR] For more information about the errors and possible solutions, please read the following articles:\n  [ERROR] [Help 1] http://cwiki.apache.org/confluence/display/MAVEN/ProjectBuildingException\n  [ERROR] [Help 2] http://cwiki.apache.org/confluence/display/MAVEN/UnresolvableModelException\n报告：.specgate/verify-report.json",
+      "endedAt": "2026-10-22T00:25:51.543Z"
+    },
+    {
+      "preset": "jdk21-boot4.0",
+      "status": "failed",
+      "root": "C:\\Users\\Administrator\\AppData\\Local\\Temp\\sg-codex-acceptance-UKhzEh\\jdk21-boot4.0",
+      "startedAt": "2026-10-22T00:25:44.426Z",
+      "code": "VERIFY_FAILED",
+      "failedStage": "backend-verify",
+      "checks": [
+        {
+          "name": "backend-verify",
+          "status": "failed",
+          "log": ".specgate/verify-runs/2026-10-22T00-25-46-544Z-15e10916/backend-verify.log",
+          "exitCode": 1
+        },
+        {
+          "name": "frontend-install",
+          "status": "not-run"
+        },
+        {
+          "name": "frontend-build",
+          "status": "not-run"
+        },
+        {
+          "name": "frontend-test",
+          "status": "not-run"
+        },
+        {
+          "name": "frontend-lint",
+          "status": "not-run"
+        },
+        {
+          "name": "frontend-format",
+          "status": "not-run"
+        },
+        {
+          "name": "coverage",
+          "status": "not-run"
+        },
+        {
+          "name": "runtime",
+          "status": "not-run"
+        },
+        {
+          "name": "frontend-runtime",
+          "status": "not-run"
+        }
+      ],
+      "reason": "本地验证失败于 backend-verify；代码已保留，可修复后重试。\n  [ERROR] To see the full stack trace of the errors, re-run Maven with the -e switch.\n  [ERROR] Re-run Maven using the -X switch to enable full debug logging.\n  [ERROR] \n  [ERROR] For more information about the errors and possible solutions, please read the following articles:\n  [ERROR] [Help 1] http://cwiki.apache.org/confluence/display/MAVEN/ProjectBuildingException\n  [ERROR] [Help 2] http://cwiki.apache.org/confluence/display/MAVEN/UnresolvableModelException\n报告：.specgate/verify-report.json",
+      "endedAt": "2026-10-22T00:25:57.349Z"
+    }
+  ],
+  "endedAt": "2026-10-22T00:25:57.349Z",
+  "status": "incomplete"
+}

@@ -2,7 +2,7 @@ import { randomBytes } from 'node:crypto';
 
 export const APPROVAL_TTL_MS = 10 * 60 * 1000;
 const REQUEST_TIMEOUT_MS = 5 * 60 * 1000;
-const gates = new Set(['H1', 'H3']);
+const gates = new Set(['H1', 'H3', 'BASELINE']);
 const decisions = new Set(['approve', 'modify', 'cancel']);
 const isObject = (value) => value !== null && typeof value === 'object' && !Array.isArray(value);
 const clone = (value) => structuredClone(value);

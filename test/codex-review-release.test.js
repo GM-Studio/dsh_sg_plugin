@@ -7,6 +7,8 @@ import { execFileSync } from 'node:child_process';
 import { createApprovalAuthority } from '../src/codex/approvals.js';
 import { canonicalJson, hashValue } from '../src/codex/events.js';
 import { createReleaseService } from '../src/codex/release.js';
+import { readDeliveryRecord } from '../src/codex/delivery.js';
+import { persistProjectReadiness } from '../src/codex/project-state.js';
 import {
   createReviewService,
   selectReviewMode,
@@ -459,7 +461,10 @@ test('push failure records PUSH_FAILED without retry while a configured remote a
     store: failed.store,
     planService: failed.planService,
   });
-  const pushFailed = await failedRelease.run({ expectedVersion: failedH3.state.version });
+  const pushFailed = await failedRelease.run({
+    expectedVersion: failedH3.state.version,
+    push: true,
+  });
   assert.equal(pushFailed.ok, true, JSON.stringify(pushFailed));
   assert.equal(pushFailed.state.phase, 'PUSH_FAILED');
   assert.equal(pushFailed.pushed, false);
@@ -485,9 +490,120 @@ test('push failure records PUSH_FAILED without retry while a configured remote a
     store: passed.store,
     planService: passed.planService,
   });
-  const archived = await passedRelease.run({ expectedVersion: passedH3.state.version });
+  const archived = await passedRelease.run({
+    expectedVersion: passedH3.state.version,
+    push: true,
+  });
   assert.equal(archived.ok, true, JSON.stringify(archived));
   assert.equal(archived.state.phase, 'ARCHIVED');
   assert.equal(archived.pushed, true);
   assert.equal(git(bare, ['rev-parse', 'main']), archived.state.context.archive.merge.commit);
+});
+
+test('a configured remote is not pushed unless push=true is explicit', async () => {
+  const context = await fixture();
+  const bare = fs.mkdtempSync(path.join(os.tmpdir(), 'sg-codex-local-only-'));
+  git(bare, ['init', '--bare', '-q']);
+  git(context.root, ['remote', 'add', 'origin', bare]);
+  const review = createReviewService({
+    projectRoot: context.root,
+    store: context.store,
+    planService: context.planService,
+    roleProvider: passingProvider(context),
+    approvalAuthority: context.authority,
+  });
+  await review.run({ expectedVersion: await context.version() });
+  const approved = await review.requestH3({ expectedVersion: await context.version() });
+  assert.equal(approved.ok, true, JSON.stringify(approved));
+  const release = createReleaseService({
+    projectRoot: context.root,
+    store: context.store,
+    planService: context.planService,
+  });
+  const archived = await release.run({
+    expectedVersion: approved.state.version,
+    push: false,
+  });
+  assert.equal(archived.ok, true, JSON.stringify(archived));
+  assert.equal(archived.state.phase, 'ARCHIVED_NOT_PUSHED');
+  assert.equal(archived.pushed, false);
+  assert.equal(archived.report.push, undefined);
+});
+
+test('project-backed archive creates a DeliveryRecord, local tag and separate packs', async () => {
+  const context = await fixture();
+  const now = '2026-10-22T10:00:00.000Z';
+  const projectProfile = {
+    schemaVersion: 2,
+    projectId: 'project-release',
+    mode: 'new',
+    stack: 'java-vue',
+    root: context.root,
+    targetBranch: git(context.root, ['rev-parse', '--abbrev-ref', 'HEAD']),
+    remoteUrl: null,
+    pushApproved: false,
+    commands: { install: [], build: [], test: [], lint: [], format: [], runtime: [] },
+    protectedPaths: [],
+    createdAt: now,
+    updatedAt: now,
+  };
+  const baseline = {
+    schemaVersion: 2,
+    baselineId: 'baseline-release',
+    projectId: 'project-release',
+    commit: git(context.root, ['rev-parse', 'HEAD']),
+    status: 'green',
+    knownFailures: [],
+    unverifiedAreas: [],
+    commands: [],
+    evidence: [],
+    environmentFingerprint: 'e'.repeat(64),
+    createdAt: now,
+  };
+  const readiness = persistProjectReadiness({
+    root: context.root,
+    profile: projectProfile,
+    baseline,
+  });
+  assert.equal(readiness.ok, true, JSON.stringify(readiness));
+  const review = createReviewService({
+    projectRoot: context.root,
+    store: context.store,
+    planService: context.planService,
+    roleProvider: passingProvider(context),
+    approvalAuthority: context.authority,
+  });
+  await review.run({ expectedVersion: await context.version() });
+  const approved = await review.requestH3({ expectedVersion: await context.version() });
+  assert.equal(approved.ok, true, JSON.stringify(approved));
+  const release = createReleaseService({
+    projectRoot: context.root,
+    store: context.store,
+    planService: context.planService,
+  });
+  const archived = await release.run({
+    expectedVersion: approved.state.version,
+    push: false,
+  });
+  assert.equal(archived.ok, true, JSON.stringify(archived));
+  const delivery = archived.report.delivery;
+  assert.equal(delivery.projectId, 'project-release');
+  assert.equal(delivery.state, 'delivery-accepted');
+  assert.equal(delivery.push.requested, false);
+  assert.equal(git(context.root, ['tag', '--list', delivery.tag]), delivery.tag);
+  assert.equal(archived.report.cleanup.ok, true, JSON.stringify(archived.report.cleanup));
+  assert.equal(fs.existsSync(context.integrationPath), false);
+  assert.equal(fs.existsSync(context.reviewPath), false);
+  assert.equal(git(context.root, ['branch', '--list', 'sg/codex/change/*']), '');
+  const read = readDeliveryRecord({
+    projectRoot: context.root,
+    deliveryId: delivery.deliveryId,
+  });
+  assert.equal(read.ok, true, JSON.stringify(read));
+  assert.equal(
+    fs.existsSync(
+      path.join(context.root, `.specgate/codex/deliveries/${delivery.deliveryId}/customer.md`),
+    ),
+    true,
+  );
 });

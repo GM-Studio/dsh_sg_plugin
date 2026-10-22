@@ -41,7 +41,10 @@ codex mcp list
 
 - `codex plugin list` 显示 `specgate-codex@specgate-source` 为 `installed, enabled`。
 - `codex mcp list` 显示 `specgate` 为 enabled。
-- 新启动的 Codex 会话能看到 `sg_init`、`sg_verify`、`sg_change_add`、`sg_test_design_prepare`、`sg_development_run`、`sg_quality_run`、`sg_format_run`、`sg_review_prepare` 等工具。
+- 新启动的 Codex 会话能看到 `sg_project_status`、`sg_adopt_preview`、
+  `sg_adopt_apply`、`sg_project_finalize_new`、`sg_change`、
+  `sg_test_design_prepare`、`sg_development_run`、`sg_quality_run`、
+  `sg_format_run`、`sg_review_prepare` 和 `sg_release_archive` 等工具。
 
 安装或更新插件后必须启动新的 Codex 会话。修改源码后重新执行：
 
@@ -51,7 +54,18 @@ codex plugin add specgate-codex@specgate-source
 
 ## 3. 安装项目级 Agent
 
-项目执行 `sg_init` 并完成 baseline 提交后：
+新项目完成 `sg_init`、`sg_verify` 和 `sg_project_finalize_new`，或存量项目
+完成 `sg_adopt_preview` 和 `sg_adopt_apply` 后：
+
+`sg_adopt_apply` 只启动 detached baseline，立即返回 `baselineRun`。继续轮询
+`sg_project_status`，直到 `projectReady: true` 或
+`baselineRun.status: failed`。Codex 会话结束不会终止基线 worker。基线在
+临时 Git worktree 中执行；成功或失败后都会移除该 worktree，成功时还会清理
+`.git/specgate` 运行状态。
+
+存量项目不需要执行 `sg_init`。基线的 `install` 命令由 npm/yarn/pnpm
+lockfile 推导；`build`、`test`、`lint`、`format` 和 `runtime` 复用项目已有
+工具。
 
 ```bash
 node <absolute-specgate-source-path>/scripts/codex-source-setup.mjs \
@@ -101,25 +115,30 @@ codex -C <absolute-project-path>
 
 ```text
 $sg-codex 按原生 Agent 编排执行当前 change。
-测试用例必须先写并冻结；随后同时派发 specgate_frontend 和
-specgate_backend；等待二者提交；再派发 specgate_tester；
+先确认项目已有 ProjectProfile 和 ProjectBaseline。
+测试用例必须先写并冻结；随后按计划串行派发 specgate_frontend 和
+specgate_backend；等待每一步提交；再派发 specgate_tester；
 测试全通过后派发 specgate_formatter；最后派发 specgate_reviewer。
 Blocking Review 必须进入新 round 并重新走完整闭环。
+H3 后生成 DeliveryRecord 和客户交付包；未明确 push=true 时不得推送。
 ```
 
 也可直接说“按 AGENTS.md 和 sg-codex Skill 的强制顺序执行”。Codex 会根据项目或 Skill 指令派发 subagents。
 
 ## 5. 阶段与工具
 
-| 阶段       | Codex 主 Agent           | 子 Agent / MCP                                              |
-| ---------- | ------------------------ | ----------------------------------------------------------- |
-| 测试设计   | `sg_test_design_prepare` | `specgate_test_designer` → `sg_test_design_freeze`          |
-| 前后端开发 | `sg_development_prepare` | 同时派发 `specgate_frontend`、`specgate_backend`            |
-| 集成       | `sg_development_run`     | MCP 校验 commit、路径、freeze 后代并合并                    |
-| 测试       | 等待 Tester              | `specgate_tester` → `sg_quality_run`                        |
-| 格式化     | 等待 Formatter           | `specgate_formatter` → `sg_format_run`                      |
-| Review     | 等待 Reviewer            | `specgate_reviewer` → `sg_review_prepare` / `sg_review_run` |
-| 高风险回修 | `sg_development_rework`  | 新一轮 frontend/backend/format worktree，重跑完整闭环       |
+| 阶段       | Codex 主 Agent            | 子 Agent / MCP                                              |
+| ---------- | ------------------------- | ----------------------------------------------------------- |
+| 项目就绪   | 新建或 `sg_adopt_preview` | `sg_adopt_apply` / `sg_project_finalize_new`                |
+| 需求确认   | `sg_change`               | H1、ChangeContract                                          |
+| 测试设计   | `sg_test_design_prepare`  | `specgate_test_designer` → `sg_test_design_freeze`          |
+| 前后端开发 | `sg_development_prepare`  | 串行派发 `specgate_frontend`、`specgate_backend`            |
+| 集成       | `sg_development_run`      | MCP 校验 commit、路径、freeze 后代并合并                    |
+| 测试       | 等待 Tester               | `specgate_tester` → `sg_quality_run`                        |
+| 格式化     | 等待 Formatter            | `specgate_formatter` → `sg_format_run`                      |
+| Review     | 等待 Reviewer             | `specgate_reviewer` → `sg_review_prepare` / `sg_review_run` |
+| 交付       | H3                        | `sg_release_preview` / `sg_release_archive`                 |
+| 高风险回修 | `sg_development_rework`   | 新一轮 frontend/backend/format worktree，重跑完整闭环       |
 
 原生 Test runner 的 canonical 契约是：`--tests` 指向直接包含 `runner.mjs`
 的绝对 `specgate-tests/` 根目录；所有测试资产相对该目录解析，不能再追加

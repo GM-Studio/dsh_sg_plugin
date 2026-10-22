@@ -1,21 +1,29 @@
 # SpecGate for Codex
 
-SpecGate is a native Codex plugin for gated, evidence-backed delivery with real
+SpecGate is a native Codex plugin for project readiness, accepted changes,
+independent verification, delivery records and incremental redelivery with real
 subagents, isolated worktrees, executable tests and auditable MCP state.
 
 [中文](README.md) · [Source-loading Quickstart (Chinese)](docs/quickstart-codex-source.zh.md)
 
 ## Capabilities
 
-- Initialize a Java 21 / Spring Boot / Vue 3 baseline with `sg_init`.
-- Freeze requirements, contracts, models and tests through `sg_change_add` and H1.
+- Initialize a new Java/Vue project or adopt an existing repository without
+  recreating it.
+- Commit a dirty existing worktree only through an explicit approved file set.
+- Use `sg_change` for feature, modify and fix while retaining `sg_change_add`.
+- Freeze requirements, ChangeContract and acceptance criteria through H1.
 - Run the Test Designer before implementation.
-- Dispatch Frontend and Backend subagents concurrently in isolated worktrees.
+- Run Frontend and Backend implementation serially in isolated worktrees.
 - Run frozen tests and real Maven, Vitest, HTTP and runtime verification.
 - Format in a dedicated worktree and perform read-only Review on a fixed commit.
-- Send blocking Review or quality failures into new development rounds and repeat
-  the full quality, formatting and Review loop.
-- Keep H3 interactive and artifact-bound; never report unexecuted checks as passed.
+- Record commit, AC, environment fingerprint, flaky outcomes and unexecuted
+  checks as evidence.
+- Create immutable DeliveryRecords, local tags, internal evidence packs and
+  customer delivery packs after H3.
+- Reuse or invalidate prior acceptance evidence for incremental redelivery.
+- Require explicit `push: true`; force push is forbidden.
+- Do not deploy production or roll back production data automatically.
 
 ## Load from source
 

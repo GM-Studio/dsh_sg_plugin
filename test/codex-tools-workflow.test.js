@@ -104,6 +104,12 @@ test('the public tool set cannot import approvals or arbitrarily change phases',
   assert.equal(status.review.status, 'unavailable');
   assert.equal(status.release.status, 'available');
   for (const name of [
+    'sg_project_status',
+    'sg_adopt_preview',
+    'sg_adopt_commit_dirty',
+    'sg_adopt_apply',
+    'sg_project_finalize_new',
+    'sg_change',
     'sg_plan_inspect',
     'sg_plan_generate',
     'sg_plan_freeze_contracts',

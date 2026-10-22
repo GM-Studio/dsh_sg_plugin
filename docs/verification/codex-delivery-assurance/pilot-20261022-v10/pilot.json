@@ -1,0 +1,1092 @@
+{
+  "schemaVersion": 1,
+  "scope": "codex-delivery-assurance-real-project-pilot",
+  "startedAt": "2026-10-22T00:54:59.642Z",
+  "workspace": "C:\\Users\\Administrator\\AppData\\Local\\Temp\\sg-delivery-pilot-Wnboa1",
+  "presets": [
+    {
+      "preset": "jdk17-boot3.5",
+      "status": "ready",
+      "root": "C:\\Users\\Administrator\\AppData\\Local\\Temp\\sg-delivery-pilot-Wnboa1\\jdk17-boot3.5",
+      "projectId": "project-bdb893f0e0efd274",
+      "baselineId": "baseline-7568eca915d6c1d6",
+      "baselineCommit": "a191afbfb88c2144e11e3729e66bbe3914840469",
+      "metadataCommit": "4934a68925afaa5b772d64c52ca1265f96357693",
+      "setupDurationMs": 57467,
+      "verificationRunId": "2026-10-22T00-55-01-678Z-e28da656",
+      "finalVerification": {
+        "status": "verified",
+        "runId": "2026-10-22T00-57-20-509Z-dff785fd",
+        "sourceHash": "49113af11b8c12383bd52697acb8356b4765cb0a79e60b036fe2605dc2ff27d8"
+      }
+    },
+    {
+      "preset": "jdk21-boot3.5",
+      "status": "ready",
+      "root": "C:\\Users\\Administrator\\AppData\\Local\\Temp\\sg-delivery-pilot-Wnboa1\\jdk21-boot3.5",
+      "projectId": "project-9beea636439e8e3d",
+      "baselineId": "baseline-f0dab1307e73741a",
+      "baselineCommit": "6446f458408b5edf944c7763dc538197b66b9bcc",
+      "metadataCommit": "07e2d104af70f871a18417d9ba32c5c197f2963b",
+      "setupDurationMs": 52071,
+      "verificationRunId": "2026-10-22T00-58-17-539Z-760dd277",
+      "finalVerification": {
+        "status": "verified",
+        "runId": "2026-10-22T01-00-24-831Z-07f698bb",
+        "sourceHash": "9b0807c74aa52ced89348125c703d4d8c5fbaa80746ce518b7aef999f889e244"
+      }
+    },
+    {
+      "preset": "jdk21-boot4.0",
+      "status": "ready",
+      "root": "C:\\Users\\Administrator\\AppData\\Local\\Temp\\sg-delivery-pilot-Wnboa1\\jdk21-boot4.0",
+      "projectId": "project-8237cb1f4c4af4b8",
+      "baselineId": "baseline-bca28d47d9ba4c36",
+      "baselineCommit": "f9984d32ef529b67a0a36cb0500ac29dd7661c3e",
+      "metadataCommit": "7bf591398cbf5d3978e5d1d4d301d4fa49a43195",
+      "setupDurationMs": 49656,
+      "verificationRunId": "2026-10-22T01-01-14-458Z-2bd05fe9",
+      "finalVerification": {
+        "status": "verified",
+        "runId": "2026-10-22T01-03-21-265Z-d662329e",
+        "sourceHash": "447be4ca0f4c0f4f4250593ae4f53e9e422c6ccccec6b9843ed240ee0e515e1f"
+      }
+    }
+  ],
+  "changes": [
+    {
+      "scenario": "feature-stats",
+      "type": "feature",
+      "status": "passed",
+      "durationMs": 27747,
+      "baselineCommit": "4934a68925afaa5b772d64c52ca1265f96357693",
+      "deliveryCommit": "d78d39c303a0fc143f75397863453342f88f76bc",
+      "redFailureObserved": true,
+      "redExitCode": 1,
+      "commands": [
+        {
+          "command": [
+            "C:\\Users\\Administrator\\.m2\\wrapper\\dists\\apache-maven-3.9.11\\03d7e36a140982eea48e22c1dcac01d8862b2550b2939e09a0809bbc5182a5bc\\bin\\mvn.cmd",
+            "-B",
+            "-ntp",
+            "spotless:apply"
+          ],
+          "exitCode": 0,
+          "durationMs": 1458
+        },
+        {
+          "command": [
+            "C:\\Users\\Administrator\\.m2\\wrapper\\dists\\apache-maven-3.9.11\\03d7e36a140982eea48e22c1dcac01d8862b2550b2939e09a0809bbc5182a5bc\\bin\\mvn.cmd",
+            "-B",
+            "-ntp",
+            "-Dtest=TaskStatsApiTest",
+            "test"
+          ],
+          "exitCode": 0,
+          "durationMs": 10116
+        },
+        {
+          "command": [
+            "D:\\Program Files\\nodejs\\npm.cmd",
+            "run",
+            "test"
+          ],
+          "exitCode": 0,
+          "durationMs": 2310
+        },
+        {
+          "command": [
+            "D:\\Program Files\\nodejs\\npm.cmd",
+            "run",
+            "build"
+          ],
+          "exitCode": 0,
+          "durationMs": 4161
+        }
+      ],
+      "delivery": {
+        "schemaVersion": 2,
+        "deliveryId": "delivery-0c875adc021a0664",
+        "projectId": "project-bdb893f0e0efd274",
+        "changeId": "jdk17-boot3.5-feature-stats",
+        "parentDeliveryId": null,
+        "baselineCommit": "4934a68925afaa5b772d64c52ca1265f96357693",
+        "deliveryCommit": "d78d39c303a0fc143f75397863453342f88f76bc",
+        "tag": "specgate-delivery-delivery-0c875adc021a0664",
+        "state": "delivery-accepted",
+        "environmentFingerprint": "4fabc5b38c39436974beb71d0bb5502b8e6bd4a1f67baaa7711fe0995b2cb65a",
+        "reviewMode": "evidence-and-diff",
+        "acceptedAt": "2026-10-22T00:56:24.800Z",
+        "acceptance": [
+          "AC-STATS"
+        ],
+        "evidence": [
+          "pilot-ce0e704ab8a06465",
+          "pilot-114b8584b686a80a",
+          "pilot-8cd333beb284f92c",
+          "pilot-78182ea80726838e"
+        ],
+        "knownIssues": [],
+        "rollback": {
+          "code": "git revert d78d39c303a0fc143f75397863453342f88f76bc",
+          "data": "No data migration.",
+          "forwardFix": "Deliver a follow-up change from this accepted commit."
+        },
+        "push": {
+          "requested": false,
+          "remoteUrl": null,
+          "status": "not-requested"
+        }
+      },
+      "verification": {
+        "schemaVersion": 2,
+        "verificationId": "verify-d80cd6a6ea3a2ea6",
+        "risk": "yellow",
+        "independenceLevel": "fresh-context",
+        "acCoverage": [
+          {
+            "acId": "AC-STATS",
+            "evidenceIds": [
+              "pilot-ce0e704ab8a06465",
+              "pilot-114b8584b686a80a",
+              "pilot-8cd333beb284f92c",
+              "pilot-78182ea80726838e"
+            ],
+            "sufficiency": "sufficient",
+            "summary": "Passing evidence covers AC-STATS."
+          }
+        ],
+        "evidence": [
+          "pilot-ce0e704ab8a06465",
+          "pilot-114b8584b686a80a",
+          "pilot-8cd333beb284f92c",
+          "pilot-78182ea80726838e"
+        ],
+        "reviewMode": "evidence-and-diff",
+        "environmentFingerprint": "4fabc5b38c39436974beb71d0bb5502b8e6bd4a1f67baaa7711fe0995b2cb65a",
+        "openRisks": [],
+        "decision": "requires-h3"
+      }
+    },
+    {
+      "scenario": "modify-completion-percent",
+      "type": "modify",
+      "status": "passed",
+      "durationMs": 27932,
+      "baselineCommit": "d78d39c303a0fc143f75397863453342f88f76bc",
+      "deliveryCommit": "6fc37086705375a5ef44f2d25fea3a63f20d44e7",
+      "redFailureObserved": true,
+      "redExitCode": 1,
+      "commands": [
+        {
+          "command": [
+            "C:\\Users\\Administrator\\.m2\\wrapper\\dists\\apache-maven-3.9.11\\03d7e36a140982eea48e22c1dcac01d8862b2550b2939e09a0809bbc5182a5bc\\bin\\mvn.cmd",
+            "-B",
+            "-ntp",
+            "spotless:apply"
+          ],
+          "exitCode": 0,
+          "durationMs": 1472
+        },
+        {
+          "command": [
+            "C:\\Users\\Administrator\\.m2\\wrapper\\dists\\apache-maven-3.9.11\\03d7e36a140982eea48e22c1dcac01d8862b2550b2939e09a0809bbc5182a5bc\\bin\\mvn.cmd",
+            "-B",
+            "-ntp",
+            "-Dtest=TaskStatsApiTest",
+            "test"
+          ],
+          "exitCode": 0,
+          "durationMs": 10059
+        },
+        {
+          "command": [
+            "D:\\Program Files\\nodejs\\npm.cmd",
+            "run",
+            "test"
+          ],
+          "exitCode": 0,
+          "durationMs": 2382
+        },
+        {
+          "command": [
+            "D:\\Program Files\\nodejs\\npm.cmd",
+            "run",
+            "build"
+          ],
+          "exitCode": 0,
+          "durationMs": 4191
+        }
+      ],
+      "delivery": {
+        "schemaVersion": 2,
+        "deliveryId": "delivery-59e80563337f2ce5",
+        "projectId": "project-bdb893f0e0efd274",
+        "changeId": "jdk17-boot3.5-modify-completion-percent",
+        "parentDeliveryId": "delivery-0c875adc021a0664",
+        "baselineCommit": "d78d39c303a0fc143f75397863453342f88f76bc",
+        "deliveryCommit": "6fc37086705375a5ef44f2d25fea3a63f20d44e7",
+        "tag": "specgate-delivery-delivery-59e80563337f2ce5",
+        "state": "delivery-accepted",
+        "environmentFingerprint": "4fabc5b38c39436974beb71d0bb5502b8e6bd4a1f67baaa7711fe0995b2cb65a",
+        "reviewMode": "evidence-and-diff",
+        "acceptedAt": "2026-10-22T00:56:52.733Z",
+        "acceptance": [
+          "AC-RATE"
+        ],
+        "evidence": [
+          "pilot-8b46fd718e8d3432",
+          "pilot-985f1f7ec5eda9a0",
+          "pilot-ce0366eeec82fb7a",
+          "pilot-cb6ecc3514a560f5"
+        ],
+        "knownIssues": [],
+        "rollback": {
+          "code": "git revert 6fc37086705375a5ef44f2d25fea3a63f20d44e7",
+          "data": "No data migration.",
+          "forwardFix": "Deliver a follow-up change from this accepted commit."
+        },
+        "push": {
+          "requested": false,
+          "remoteUrl": null,
+          "status": "not-requested"
+        }
+      },
+      "verification": {
+        "schemaVersion": 2,
+        "verificationId": "verify-6b97fd268d99fd38",
+        "risk": "yellow",
+        "independenceLevel": "fresh-context",
+        "acCoverage": [
+          {
+            "acId": "AC-RATE",
+            "evidenceIds": [
+              "pilot-8b46fd718e8d3432",
+              "pilot-985f1f7ec5eda9a0",
+              "pilot-ce0366eeec82fb7a",
+              "pilot-cb6ecc3514a560f5"
+            ],
+            "sufficiency": "sufficient",
+            "summary": "Passing evidence covers AC-RATE."
+          }
+        ],
+        "evidence": [
+          "pilot-8b46fd718e8d3432",
+          "pilot-985f1f7ec5eda9a0",
+          "pilot-ce0366eeec82fb7a",
+          "pilot-cb6ecc3514a560f5"
+        ],
+        "reviewMode": "evidence-and-diff",
+        "environmentFingerprint": "4fabc5b38c39436974beb71d0bb5502b8e6bd4a1f67baaa7711fe0995b2cb65a",
+        "openRisks": [],
+        "decision": "requires-h3"
+      }
+    },
+    {
+      "scenario": "fix-zero-rate",
+      "type": "fix",
+      "status": "passed",
+      "durationMs": 27701,
+      "baselineCommit": "6fc37086705375a5ef44f2d25fea3a63f20d44e7",
+      "deliveryCommit": "d9863e18ac04e90f388b5e85875c0c53fa62bc0c",
+      "redFailureObserved": true,
+      "redExitCode": 1,
+      "commands": [
+        {
+          "command": [
+            "C:\\Users\\Administrator\\.m2\\wrapper\\dists\\apache-maven-3.9.11\\03d7e36a140982eea48e22c1dcac01d8862b2550b2939e09a0809bbc5182a5bc\\bin\\mvn.cmd",
+            "-B",
+            "-ntp",
+            "spotless:apply"
+          ],
+          "exitCode": 0,
+          "durationMs": 1483
+        },
+        {
+          "command": [
+            "C:\\Users\\Administrator\\.m2\\wrapper\\dists\\apache-maven-3.9.11\\03d7e36a140982eea48e22c1dcac01d8862b2550b2939e09a0809bbc5182a5bc\\bin\\mvn.cmd",
+            "-B",
+            "-ntp",
+            "-Dtest=TaskStatsApiTest",
+            "test"
+          ],
+          "exitCode": 0,
+          "durationMs": 9627
+        },
+        {
+          "command": [
+            "D:\\Program Files\\nodejs\\npm.cmd",
+            "run",
+            "test"
+          ],
+          "exitCode": 0,
+          "durationMs": 2288
+        },
+        {
+          "command": [
+            "D:\\Program Files\\nodejs\\npm.cmd",
+            "run",
+            "build"
+          ],
+          "exitCode": 0,
+          "durationMs": 4075
+        }
+      ],
+      "delivery": {
+        "schemaVersion": 2,
+        "deliveryId": "delivery-e58bf872e3a82029",
+        "projectId": "project-bdb893f0e0efd274",
+        "changeId": "jdk17-boot3.5-fix-zero-rate",
+        "parentDeliveryId": "delivery-59e80563337f2ce5",
+        "baselineCommit": "6fc37086705375a5ef44f2d25fea3a63f20d44e7",
+        "deliveryCommit": "d9863e18ac04e90f388b5e85875c0c53fa62bc0c",
+        "tag": "specgate-delivery-delivery-e58bf872e3a82029",
+        "state": "delivery-accepted",
+        "environmentFingerprint": "4fabc5b38c39436974beb71d0bb5502b8e6bd4a1f67baaa7711fe0995b2cb65a",
+        "reviewMode": "evidence-and-diff",
+        "acceptedAt": "2026-10-22T00:57:20.437Z",
+        "acceptance": [
+          "AC-ZERO"
+        ],
+        "evidence": [
+          "pilot-20ac36bad0805c0d",
+          "pilot-abe151681da8e5e8",
+          "pilot-52c0703716b9883f",
+          "pilot-84973b701f1c13d5"
+        ],
+        "knownIssues": [],
+        "rollback": {
+          "code": "git revert d9863e18ac04e90f388b5e85875c0c53fa62bc0c",
+          "data": "No data migration.",
+          "forwardFix": "Deliver a follow-up change from this accepted commit."
+        },
+        "push": {
+          "requested": false,
+          "remoteUrl": null,
+          "status": "not-requested"
+        }
+      },
+      "verification": {
+        "schemaVersion": 2,
+        "verificationId": "verify-47ee138866c184a1",
+        "risk": "yellow",
+        "independenceLevel": "fresh-context",
+        "acCoverage": [
+          {
+            "acId": "AC-ZERO",
+            "evidenceIds": [
+              "pilot-20ac36bad0805c0d",
+              "pilot-abe151681da8e5e8",
+              "pilot-52c0703716b9883f",
+              "pilot-84973b701f1c13d5"
+            ],
+            "sufficiency": "sufficient",
+            "summary": "Passing evidence covers AC-ZERO."
+          }
+        ],
+        "evidence": [
+          "pilot-20ac36bad0805c0d",
+          "pilot-abe151681da8e5e8",
+          "pilot-52c0703716b9883f",
+          "pilot-84973b701f1c13d5"
+        ],
+        "reviewMode": "evidence-and-diff",
+        "environmentFingerprint": "4fabc5b38c39436974beb71d0bb5502b8e6bd4a1f67baaa7711fe0995b2cb65a",
+        "openRisks": [],
+        "decision": "requires-h3"
+      }
+    },
+    {
+      "scenario": "feature-stats",
+      "type": "feature",
+      "status": "passed",
+      "durationMs": 25714,
+      "baselineCommit": "07e2d104af70f871a18417d9ba32c5c197f2963b",
+      "deliveryCommit": "99db4db00c5ec0b56af06934f27d9716baca7a74",
+      "redFailureObserved": true,
+      "redExitCode": 1,
+      "commands": [
+        {
+          "command": [
+            "C:\\Users\\Administrator\\.m2\\wrapper\\dists\\apache-maven-3.9.11\\03d7e36a140982eea48e22c1dcac01d8862b2550b2939e09a0809bbc5182a5bc\\bin\\mvn.cmd",
+            "-B",
+            "-ntp",
+            "spotless:apply"
+          ],
+          "exitCode": 0,
+          "durationMs": 1504
+        },
+        {
+          "command": [
+            "C:\\Users\\Administrator\\.m2\\wrapper\\dists\\apache-maven-3.9.11\\03d7e36a140982eea48e22c1dcac01d8862b2550b2939e09a0809bbc5182a5bc\\bin\\mvn.cmd",
+            "-B",
+            "-ntp",
+            "-Dtest=TaskStatsApiTest",
+            "test"
+          ],
+          "exitCode": 0,
+          "durationMs": 8950
+        },
+        {
+          "command": [
+            "D:\\Program Files\\nodejs\\npm.cmd",
+            "run",
+            "test"
+          ],
+          "exitCode": 0,
+          "durationMs": 2339
+        },
+        {
+          "command": [
+            "D:\\Program Files\\nodejs\\npm.cmd",
+            "run",
+            "build"
+          ],
+          "exitCode": 0,
+          "durationMs": 4215
+        }
+      ],
+      "delivery": {
+        "schemaVersion": 2,
+        "deliveryId": "delivery-a2c63368dc103a44",
+        "projectId": "project-9beea636439e8e3d",
+        "changeId": "jdk21-boot3.5-feature-stats",
+        "parentDeliveryId": null,
+        "baselineCommit": "07e2d104af70f871a18417d9ba32c5c197f2963b",
+        "deliveryCommit": "99db4db00c5ec0b56af06934f27d9716baca7a74",
+        "tag": "specgate-delivery-delivery-a2c63368dc103a44",
+        "state": "delivery-accepted",
+        "environmentFingerprint": "6370daaaee5ec50d091077a985a3d82067f986c296f5e7ac984841a5cd378a87",
+        "reviewMode": "evidence-and-diff",
+        "acceptedAt": "2026-10-22T00:59:33.232Z",
+        "acceptance": [
+          "AC-STATS"
+        ],
+        "evidence": [
+          "pilot-39d0d16f2aa5ed24",
+          "pilot-2ae6c2e7a5482275",
+          "pilot-2dfa377ca72eed5b",
+          "pilot-f8c7df56bf60981e"
+        ],
+        "knownIssues": [],
+        "rollback": {
+          "code": "git revert 99db4db00c5ec0b56af06934f27d9716baca7a74",
+          "data": "No data migration.",
+          "forwardFix": "Deliver a follow-up change from this accepted commit."
+        },
+        "push": {
+          "requested": false,
+          "remoteUrl": null,
+          "status": "not-requested"
+        }
+      },
+      "verification": {
+        "schemaVersion": 2,
+        "verificationId": "verify-4239ad5ad8821821",
+        "risk": "yellow",
+        "independenceLevel": "fresh-context",
+        "acCoverage": [
+          {
+            "acId": "AC-STATS",
+            "evidenceIds": [
+              "pilot-39d0d16f2aa5ed24",
+              "pilot-2ae6c2e7a5482275",
+              "pilot-2dfa377ca72eed5b",
+              "pilot-f8c7df56bf60981e"
+            ],
+            "sufficiency": "sufficient",
+            "summary": "Passing evidence covers AC-STATS."
+          }
+        ],
+        "evidence": [
+          "pilot-39d0d16f2aa5ed24",
+          "pilot-2ae6c2e7a5482275",
+          "pilot-2dfa377ca72eed5b",
+          "pilot-f8c7df56bf60981e"
+        ],
+        "reviewMode": "evidence-and-diff",
+        "environmentFingerprint": "6370daaaee5ec50d091077a985a3d82067f986c296f5e7ac984841a5cd378a87",
+        "openRisks": [],
+        "decision": "requires-h3"
+      }
+    },
+    {
+      "scenario": "modify-completion-percent",
+      "type": "modify",
+      "status": "passed",
+      "durationMs": 25819,
+      "baselineCommit": "99db4db00c5ec0b56af06934f27d9716baca7a74",
+      "deliveryCommit": "75f662daca9f480c157d42e08ed06d82266a85b0",
+      "redFailureObserved": true,
+      "redExitCode": 1,
+      "commands": [
+        {
+          "command": [
+            "C:\\Users\\Administrator\\.m2\\wrapper\\dists\\apache-maven-3.9.11\\03d7e36a140982eea48e22c1dcac01d8862b2550b2939e09a0809bbc5182a5bc\\bin\\mvn.cmd",
+            "-B",
+            "-ntp",
+            "spotless:apply"
+          ],
+          "exitCode": 0,
+          "durationMs": 1515
+        },
+        {
+          "command": [
+            "C:\\Users\\Administrator\\.m2\\wrapper\\dists\\apache-maven-3.9.11\\03d7e36a140982eea48e22c1dcac01d8862b2550b2939e09a0809bbc5182a5bc\\bin\\mvn.cmd",
+            "-B",
+            "-ntp",
+            "-Dtest=TaskStatsApiTest",
+            "test"
+          ],
+          "exitCode": 0,
+          "durationMs": 8861
+        },
+        {
+          "command": [
+            "D:\\Program Files\\nodejs\\npm.cmd",
+            "run",
+            "test"
+          ],
+          "exitCode": 0,
+          "durationMs": 2346
+        },
+        {
+          "command": [
+            "D:\\Program Files\\nodejs\\npm.cmd",
+            "run",
+            "build"
+          ],
+          "exitCode": 0,
+          "durationMs": 4344
+        }
+      ],
+      "delivery": {
+        "schemaVersion": 2,
+        "deliveryId": "delivery-17d110eb34d42726",
+        "projectId": "project-9beea636439e8e3d",
+        "changeId": "jdk21-boot3.5-modify-completion-percent",
+        "parentDeliveryId": "delivery-a2c63368dc103a44",
+        "baselineCommit": "99db4db00c5ec0b56af06934f27d9716baca7a74",
+        "deliveryCommit": "75f662daca9f480c157d42e08ed06d82266a85b0",
+        "tag": "specgate-delivery-delivery-17d110eb34d42726",
+        "state": "delivery-accepted",
+        "environmentFingerprint": "6370daaaee5ec50d091077a985a3d82067f986c296f5e7ac984841a5cd378a87",
+        "reviewMode": "evidence-and-diff",
+        "acceptedAt": "2026-10-22T00:59:59.047Z",
+        "acceptance": [
+          "AC-RATE"
+        ],
+        "evidence": [
+          "pilot-5509597dd7fd4e74",
+          "pilot-831cdc211b2e0f42",
+          "pilot-ad72228bef80ed1c",
+          "pilot-7000f5580ac86741"
+        ],
+        "knownIssues": [],
+        "rollback": {
+          "code": "git revert 75f662daca9f480c157d42e08ed06d82266a85b0",
+          "data": "No data migration.",
+          "forwardFix": "Deliver a follow-up change from this accepted commit."
+        },
+        "push": {
+          "requested": false,
+          "remoteUrl": null,
+          "status": "not-requested"
+        }
+      },
+      "verification": {
+        "schemaVersion": 2,
+        "verificationId": "verify-06a66bc3f08fe46e",
+        "risk": "yellow",
+        "independenceLevel": "fresh-context",
+        "acCoverage": [
+          {
+            "acId": "AC-RATE",
+            "evidenceIds": [
+              "pilot-5509597dd7fd4e74",
+              "pilot-831cdc211b2e0f42",
+              "pilot-ad72228bef80ed1c",
+              "pilot-7000f5580ac86741"
+            ],
+            "sufficiency": "sufficient",
+            "summary": "Passing evidence covers AC-RATE."
+          }
+        ],
+        "evidence": [
+          "pilot-5509597dd7fd4e74",
+          "pilot-831cdc211b2e0f42",
+          "pilot-ad72228bef80ed1c",
+          "pilot-7000f5580ac86741"
+        ],
+        "reviewMode": "evidence-and-diff",
+        "environmentFingerprint": "6370daaaee5ec50d091077a985a3d82067f986c296f5e7ac984841a5cd378a87",
+        "openRisks": [],
+        "decision": "requires-h3"
+      }
+    },
+    {
+      "scenario": "fix-zero-rate",
+      "type": "fix",
+      "status": "passed",
+      "durationMs": 25707,
+      "baselineCommit": "75f662daca9f480c157d42e08ed06d82266a85b0",
+      "deliveryCommit": "038c8490c5c305aaffb944854709f21e9c98c561",
+      "redFailureObserved": true,
+      "redExitCode": 1,
+      "commands": [
+        {
+          "command": [
+            "C:\\Users\\Administrator\\.m2\\wrapper\\dists\\apache-maven-3.9.11\\03d7e36a140982eea48e22c1dcac01d8862b2550b2939e09a0809bbc5182a5bc\\bin\\mvn.cmd",
+            "-B",
+            "-ntp",
+            "spotless:apply"
+          ],
+          "exitCode": 0,
+          "durationMs": 1516
+        },
+        {
+          "command": [
+            "C:\\Users\\Administrator\\.m2\\wrapper\\dists\\apache-maven-3.9.11\\03d7e36a140982eea48e22c1dcac01d8862b2550b2939e09a0809bbc5182a5bc\\bin\\mvn.cmd",
+            "-B",
+            "-ntp",
+            "-Dtest=TaskStatsApiTest",
+            "test"
+          ],
+          "exitCode": 0,
+          "durationMs": 8723
+        },
+        {
+          "command": [
+            "D:\\Program Files\\nodejs\\npm.cmd",
+            "run",
+            "test"
+          ],
+          "exitCode": 0,
+          "durationMs": 2333
+        },
+        {
+          "command": [
+            "D:\\Program Files\\nodejs\\npm.cmd",
+            "run",
+            "build"
+          ],
+          "exitCode": 0,
+          "durationMs": 4167
+        }
+      ],
+      "delivery": {
+        "schemaVersion": 2,
+        "deliveryId": "delivery-8ce86f62176d61f0",
+        "projectId": "project-9beea636439e8e3d",
+        "changeId": "jdk21-boot3.5-fix-zero-rate",
+        "parentDeliveryId": "delivery-17d110eb34d42726",
+        "baselineCommit": "75f662daca9f480c157d42e08ed06d82266a85b0",
+        "deliveryCommit": "038c8490c5c305aaffb944854709f21e9c98c561",
+        "tag": "specgate-delivery-delivery-8ce86f62176d61f0",
+        "state": "delivery-accepted",
+        "environmentFingerprint": "6370daaaee5ec50d091077a985a3d82067f986c296f5e7ac984841a5cd378a87",
+        "reviewMode": "evidence-and-diff",
+        "acceptedAt": "2026-10-22T01:00:24.760Z",
+        "acceptance": [
+          "AC-ZERO"
+        ],
+        "evidence": [
+          "pilot-4c2c26a14e77002b",
+          "pilot-254a3fdd8fd15383",
+          "pilot-f55638306b7457df",
+          "pilot-66f9b98d33cff2de"
+        ],
+        "knownIssues": [],
+        "rollback": {
+          "code": "git revert 038c8490c5c305aaffb944854709f21e9c98c561",
+          "data": "No data migration.",
+          "forwardFix": "Deliver a follow-up change from this accepted commit."
+        },
+        "push": {
+          "requested": false,
+          "remoteUrl": null,
+          "status": "not-requested"
+        }
+      },
+      "verification": {
+        "schemaVersion": 2,
+        "verificationId": "verify-188febf0dc7db28e",
+        "risk": "yellow",
+        "independenceLevel": "fresh-context",
+        "acCoverage": [
+          {
+            "acId": "AC-ZERO",
+            "evidenceIds": [
+              "pilot-4c2c26a14e77002b",
+              "pilot-254a3fdd8fd15383",
+              "pilot-f55638306b7457df",
+              "pilot-66f9b98d33cff2de"
+            ],
+            "sufficiency": "sufficient",
+            "summary": "Passing evidence covers AC-ZERO."
+          }
+        ],
+        "evidence": [
+          "pilot-4c2c26a14e77002b",
+          "pilot-254a3fdd8fd15383",
+          "pilot-f55638306b7457df",
+          "pilot-66f9b98d33cff2de"
+        ],
+        "reviewMode": "evidence-and-diff",
+        "environmentFingerprint": "6370daaaee5ec50d091077a985a3d82067f986c296f5e7ac984841a5cd378a87",
+        "openRisks": [],
+        "decision": "requires-h3"
+      }
+    },
+    {
+      "scenario": "feature-stats",
+      "type": "feature",
+      "status": "passed",
+      "durationMs": 26004,
+      "baselineCommit": "7bf591398cbf5d3978e5d1d4d301d4fa49a43195",
+      "deliveryCommit": "f48764f3a8414d8e90830c59e28d0f3fb9b62a04",
+      "redFailureObserved": true,
+      "redExitCode": 1,
+      "commands": [
+        {
+          "command": [
+            "C:\\Users\\Administrator\\.m2\\wrapper\\dists\\apache-maven-3.9.11\\03d7e36a140982eea48e22c1dcac01d8862b2550b2939e09a0809bbc5182a5bc\\bin\\mvn.cmd",
+            "-B",
+            "-ntp",
+            "spotless:apply"
+          ],
+          "exitCode": 0,
+          "durationMs": 1530
+        },
+        {
+          "command": [
+            "C:\\Users\\Administrator\\.m2\\wrapper\\dists\\apache-maven-3.9.11\\03d7e36a140982eea48e22c1dcac01d8862b2550b2939e09a0809bbc5182a5bc\\bin\\mvn.cmd",
+            "-B",
+            "-ntp",
+            "-Dtest=TaskStatsApiTest",
+            "test"
+          ],
+          "exitCode": 0,
+          "durationMs": 9182
+        },
+        {
+          "command": [
+            "D:\\Program Files\\nodejs\\npm.cmd",
+            "run",
+            "test"
+          ],
+          "exitCode": 0,
+          "durationMs": 2371
+        },
+        {
+          "command": [
+            "D:\\Program Files\\nodejs\\npm.cmd",
+            "run",
+            "build"
+          ],
+          "exitCode": 0,
+          "durationMs": 4156
+        }
+      ],
+      "delivery": {
+        "schemaVersion": 2,
+        "deliveryId": "delivery-779d2e64b34f50b6",
+        "projectId": "project-8237cb1f4c4af4b8",
+        "changeId": "jdk21-boot4.0-feature-stats",
+        "parentDeliveryId": null,
+        "baselineCommit": "7bf591398cbf5d3978e5d1d4d301d4fa49a43195",
+        "deliveryCommit": "f48764f3a8414d8e90830c59e28d0f3fb9b62a04",
+        "tag": "specgate-delivery-delivery-779d2e64b34f50b6",
+        "state": "delivery-accepted",
+        "environmentFingerprint": "34aa444a23c0b9116960d0a1c14a51079ac0180b7eb000434d86aaa3a643c9c0",
+        "reviewMode": "evidence-and-diff",
+        "acceptedAt": "2026-10-22T01:02:27.928Z",
+        "acceptance": [
+          "AC-STATS"
+        ],
+        "evidence": [
+          "pilot-08d85b4c52c0b025",
+          "pilot-83bb7b5c57f53ee3",
+          "pilot-b6e0951c737758fa",
+          "pilot-0c3c89d5dc64a0b8"
+        ],
+        "knownIssues": [],
+        "rollback": {
+          "code": "git revert f48764f3a8414d8e90830c59e28d0f3fb9b62a04",
+          "data": "No data migration.",
+          "forwardFix": "Deliver a follow-up change from this accepted commit."
+        },
+        "push": {
+          "requested": false,
+          "remoteUrl": null,
+          "status": "not-requested"
+        }
+      },
+      "verification": {
+        "schemaVersion": 2,
+        "verificationId": "verify-21f0e499f16c53f5",
+        "risk": "yellow",
+        "independenceLevel": "fresh-context",
+        "acCoverage": [
+          {
+            "acId": "AC-STATS",
+            "evidenceIds": [
+              "pilot-08d85b4c52c0b025",
+              "pilot-83bb7b5c57f53ee3",
+              "pilot-b6e0951c737758fa",
+              "pilot-0c3c89d5dc64a0b8"
+            ],
+            "sufficiency": "sufficient",
+            "summary": "Passing evidence covers AC-STATS."
+          }
+        ],
+        "evidence": [
+          "pilot-08d85b4c52c0b025",
+          "pilot-83bb7b5c57f53ee3",
+          "pilot-b6e0951c737758fa",
+          "pilot-0c3c89d5dc64a0b8"
+        ],
+        "reviewMode": "evidence-and-diff",
+        "environmentFingerprint": "34aa444a23c0b9116960d0a1c14a51079ac0180b7eb000434d86aaa3a643c9c0",
+        "openRisks": [],
+        "decision": "requires-h3"
+      }
+    },
+    {
+      "scenario": "modify-completion-percent",
+      "type": "modify",
+      "status": "passed",
+      "durationMs": 26563,
+      "baselineCommit": "f48764f3a8414d8e90830c59e28d0f3fb9b62a04",
+      "deliveryCommit": "8f3b47f943c3ba52da9509e112ed8e31fd9e6ffa",
+      "redFailureObserved": true,
+      "redExitCode": 1,
+      "commands": [
+        {
+          "command": [
+            "C:\\Users\\Administrator\\.m2\\wrapper\\dists\\apache-maven-3.9.11\\03d7e36a140982eea48e22c1dcac01d8862b2550b2939e09a0809bbc5182a5bc\\bin\\mvn.cmd",
+            "-B",
+            "-ntp",
+            "spotless:apply"
+          ],
+          "exitCode": 0,
+          "durationMs": 1490
+        },
+        {
+          "command": [
+            "C:\\Users\\Administrator\\.m2\\wrapper\\dists\\apache-maven-3.9.11\\03d7e36a140982eea48e22c1dcac01d8862b2550b2939e09a0809bbc5182a5bc\\bin\\mvn.cmd",
+            "-B",
+            "-ntp",
+            "-Dtest=TaskStatsApiTest",
+            "test"
+          ],
+          "exitCode": 0,
+          "durationMs": 9174
+        },
+        {
+          "command": [
+            "D:\\Program Files\\nodejs\\npm.cmd",
+            "run",
+            "test"
+          ],
+          "exitCode": 0,
+          "durationMs": 2348
+        },
+        {
+          "command": [
+            "D:\\Program Files\\nodejs\\npm.cmd",
+            "run",
+            "build"
+          ],
+          "exitCode": 0,
+          "durationMs": 4169
+        }
+      ],
+      "delivery": {
+        "schemaVersion": 2,
+        "deliveryId": "delivery-5b21133d920ee4b0",
+        "projectId": "project-8237cb1f4c4af4b8",
+        "changeId": "jdk21-boot4.0-modify-completion-percent",
+        "parentDeliveryId": "delivery-779d2e64b34f50b6",
+        "baselineCommit": "f48764f3a8414d8e90830c59e28d0f3fb9b62a04",
+        "deliveryCommit": "8f3b47f943c3ba52da9509e112ed8e31fd9e6ffa",
+        "tag": "specgate-delivery-delivery-5b21133d920ee4b0",
+        "state": "delivery-accepted",
+        "environmentFingerprint": "34aa444a23c0b9116960d0a1c14a51079ac0180b7eb000434d86aaa3a643c9c0",
+        "reviewMode": "evidence-and-diff",
+        "acceptedAt": "2026-10-22T01:02:54.459Z",
+        "acceptance": [
+          "AC-RATE"
+        ],
+        "evidence": [
+          "pilot-cbbbe6371379d31f",
+          "pilot-eeccbd0e8e88f954",
+          "pilot-e1df0d0ae44c41ea",
+          "pilot-e9a470ca56fea650"
+        ],
+        "knownIssues": [],
+        "rollback": {
+          "code": "git revert 8f3b47f943c3ba52da9509e112ed8e31fd9e6ffa",
+          "data": "No data migration.",
+          "forwardFix": "Deliver a follow-up change from this accepted commit."
+        },
+        "push": {
+          "requested": false,
+          "remoteUrl": null,
+          "status": "not-requested"
+        }
+      },
+      "verification": {
+        "schemaVersion": 2,
+        "verificationId": "verify-8d7032c9dfa95be1",
+        "risk": "yellow",
+        "independenceLevel": "fresh-context",
+        "acCoverage": [
+          {
+            "acId": "AC-RATE",
+            "evidenceIds": [
+              "pilot-cbbbe6371379d31f",
+              "pilot-eeccbd0e8e88f954",
+              "pilot-e1df0d0ae44c41ea",
+              "pilot-e9a470ca56fea650"
+            ],
+            "sufficiency": "sufficient",
+            "summary": "Passing evidence covers AC-RATE."
+          }
+        ],
+        "evidence": [
+          "pilot-cbbbe6371379d31f",
+          "pilot-eeccbd0e8e88f954",
+          "pilot-e1df0d0ae44c41ea",
+          "pilot-e9a470ca56fea650"
+        ],
+        "reviewMode": "evidence-and-diff",
+        "environmentFingerprint": "34aa444a23c0b9116960d0a1c14a51079ac0180b7eb000434d86aaa3a643c9c0",
+        "openRisks": [],
+        "decision": "requires-h3"
+      }
+    },
+    {
+      "scenario": "fix-zero-rate",
+      "type": "fix",
+      "status": "passed",
+      "durationMs": 26683,
+      "baselineCommit": "8f3b47f943c3ba52da9509e112ed8e31fd9e6ffa",
+      "deliveryCommit": "9c73be215faa8449235e52426219be76459acb7e",
+      "redFailureObserved": true,
+      "redExitCode": 1,
+      "commands": [
+        {
+          "command": [
+            "C:\\Users\\Administrator\\.m2\\wrapper\\dists\\apache-maven-3.9.11\\03d7e36a140982eea48e22c1dcac01d8862b2550b2939e09a0809bbc5182a5bc\\bin\\mvn.cmd",
+            "-B",
+            "-ntp",
+            "spotless:apply"
+          ],
+          "exitCode": 0,
+          "durationMs": 1524
+        },
+        {
+          "command": [
+            "C:\\Users\\Administrator\\.m2\\wrapper\\dists\\apache-maven-3.9.11\\03d7e36a140982eea48e22c1dcac01d8862b2550b2939e09a0809bbc5182a5bc\\bin\\mvn.cmd",
+            "-B",
+            "-ntp",
+            "-Dtest=TaskStatsApiTest",
+            "test"
+          ],
+          "exitCode": 0,
+          "durationMs": 9140
+        },
+        {
+          "command": [
+            "D:\\Program Files\\nodejs\\npm.cmd",
+            "run",
+            "test"
+          ],
+          "exitCode": 0,
+          "durationMs": 2361
+        },
+        {
+          "command": [
+            "D:\\Program Files\\nodejs\\npm.cmd",
+            "run",
+            "build"
+          ],
+          "exitCode": 0,
+          "durationMs": 4178
+        }
+      ],
+      "delivery": {
+        "schemaVersion": 2,
+        "deliveryId": "delivery-faad758a7e34574f",
+        "projectId": "project-8237cb1f4c4af4b8",
+        "changeId": "jdk21-boot4.0-fix-zero-rate",
+        "parentDeliveryId": "delivery-5b21133d920ee4b0",
+        "baselineCommit": "8f3b47f943c3ba52da9509e112ed8e31fd9e6ffa",
+        "deliveryCommit": "9c73be215faa8449235e52426219be76459acb7e",
+        "tag": "specgate-delivery-delivery-faad758a7e34574f",
+        "state": "delivery-accepted",
+        "environmentFingerprint": "34aa444a23c0b9116960d0a1c14a51079ac0180b7eb000434d86aaa3a643c9c0",
+        "reviewMode": "evidence-and-diff",
+        "acceptedAt": "2026-10-22T01:03:21.193Z",
+        "acceptance": [
+          "AC-ZERO"
+        ],
+        "evidence": [
+          "pilot-700aaa26d06bad29",
+          "pilot-d1fd6a9431681285",
+          "pilot-2a18c0a3178e323b",
+          "pilot-dedecdf1a1c0af8c"
+        ],
+        "knownIssues": [],
+        "rollback": {
+          "code": "git revert 9c73be215faa8449235e52426219be76459acb7e",
+          "data": "No data migration.",
+          "forwardFix": "Deliver a follow-up change from this accepted commit."
+        },
+        "push": {
+          "requested": false,
+          "remoteUrl": null,
+          "status": "not-requested"
+        }
+      },
+      "verification": {
+        "schemaVersion": 2,
+        "verificationId": "verify-93901c943c192401",
+        "risk": "yellow",
+        "independenceLevel": "fresh-context",
+        "acCoverage": [
+          {
+            "acId": "AC-ZERO",
+            "evidenceIds": [
+              "pilot-700aaa26d06bad29",
+              "pilot-d1fd6a9431681285",
+              "pilot-2a18c0a3178e323b",
+              "pilot-dedecdf1a1c0af8c"
+            ],
+            "sufficiency": "sufficient",
+            "summary": "Passing evidence covers AC-ZERO."
+          }
+        ],
+        "evidence": [
+          "pilot-700aaa26d06bad29",
+          "pilot-d1fd6a9431681285",
+          "pilot-2a18c0a3178e323b",
+          "pilot-dedecdf1a1c0af8c"
+        ],
+        "reviewMode": "evidence-and-diff",
+        "environmentFingerprint": "34aa444a23c0b9116960d0a1c14a51079ac0180b7eb000434d86aaa3a643c9c0",
+        "openRisks": [],
+        "decision": "requires-h3"
+      }
+    }
+  ],
+  "unexecuted": [
+    "No production deployment.",
+    "No production database rollback.",
+    "No push to a remote repository.",
+    "Native user H1/H3 elicitation is covered by integration tests, not this autonomous pilot harness."
+  ],
+  "status": "passed",
+  "endedAt": "2026-10-22T01:04:09.368Z"
+}

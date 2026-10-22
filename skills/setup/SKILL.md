@@ -14,6 +14,8 @@ description: Install SpecGate source checkout and project-scoped Codex agents fo
 5. Run `codex plugin list` and `codex mcp list`; both the plugin and MCP server
    must be enabled.
 6. Confirm `.codex/agents/` contains all six `specgate_*.toml` agents.
+7. Confirm Codex can call `sg_project_status`; do not begin a change until the
+   project has a valid ProjectProfile and ProjectBaseline.
 
 Do not modify unrelated project Agent files. The installer only updates its
 marked `AGENTS.md` block and refuses to overwrite conflicting Agent files.

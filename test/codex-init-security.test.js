@@ -203,3 +203,34 @@ test('generated baseline tracks stable configuration while runtime state stays i
     /\?\? business-untracked\.txt/,
   );
 });
+
+test('delivery configuration and accepted records stay visible while runtime evidence remains ignored', async () => {
+  const root = path.join(temporary(), 'app');
+  const preview = previewInit({ root });
+  const generated = await executeInit({ root, previewHash: preview.previewHash });
+  assert.equal(generated.ok, true, JSON.stringify(generated));
+  const files = {
+    '.specgate/codex/project.json': '{"projectId":"project-1"}\n',
+    '.specgate/codex/baselines/baseline-1.json': '{"baselineId":"baseline-1"}\n',
+    '.specgate/codex/changes/change-1/contract/contract.json': '{"changeId":"change-1"}\n',
+    '.specgate/codex/deliveries/delivery-1/record.json': '{"deliveryId":"delivery-1"}\n',
+    '.specgate/codex/evidence/test.log': 'raw runtime evidence\n',
+    '.specgate/codex/worktrees/change-1/frontend/README.md': 'worktree\n',
+  };
+  for (const [relative, content] of Object.entries(files)) {
+    fs.mkdirSync(path.dirname(path.join(root, relative)), { recursive: true });
+    fs.writeFileSync(path.join(root, relative), content);
+  }
+  const git = (args) => {
+    const result = spawnSync('git', args, { cwd: root, encoding: 'utf8', env: cleanEnv() });
+    assert.equal(result.status, 0, result.stderr);
+    return result.stdout.trim();
+  };
+  const status = git(['status', '--porcelain=v1', '--untracked-files=all']);
+  assert.match(status, /\?\? \.specgate\/codex\/project\.json/);
+  assert.match(status, /\?\? \.specgate\/codex\/baselines\/baseline-1\.json/);
+  assert.match(status, /\?\? \.specgate\/codex\/changes\/change-1\/contract\/contract\.json/);
+  assert.match(status, /\?\? \.specgate\/codex\/deliveries\/delivery-1\/record\.json/);
+  assert.doesNotMatch(status, /evidence\/test\.log/);
+  assert.doesNotMatch(status, /worktrees\/change-1/);
+});

@@ -259,7 +259,7 @@ test('red baseline requires a real failing command mapped to every frozen case b
   }
 });
 
-test('frontend and backend run concurrently in isolated worktrees and merge only through integration', async () => {
+test('frontend and backend run serially in isolated worktrees and merge only through integration', async () => {
   const context = await fixture();
   let active = 0;
   let maximum = 0;
@@ -285,7 +285,7 @@ test('frontend and backend run concurrently in isolated worktrees and merge only
   assert.equal(prepared.ok, true, JSON.stringify(prepared));
   const completed = await service.run({ expectedVersion: prepared.state.version });
   assert.equal(completed.ok, true, JSON.stringify(completed));
-  assert.equal(maximum, 2);
+  assert.equal(maximum, 1);
   assert.equal(completed.state.phase, 'TESTING');
   assert.equal(completed.development.merged.length, 2);
   const integration = completed.development.worktrees.integration.path;

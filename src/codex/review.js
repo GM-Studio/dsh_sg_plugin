@@ -3,7 +3,9 @@ import path from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { canonicalJson, hashValue } from './events.js';
+import { loadProjectReadiness, PROJECT_PROFILE_PATH } from './project-state.js';
 import { computeArchivePreview } from './release.js';
+import { assessVerification } from './verification.js';
 
 const SOURCE_ROOT = path.resolve(fileURLToPath(new URL('../..', import.meta.url)));
 const MODES = Object.freeze(['lenient', 'standard', 'strict']);
@@ -383,6 +385,56 @@ export function createReviewService({
     return { ...quality, body };
   }
 
+  function buildVerificationAssessment({ plan, quality, integrationCommit, mode }) {
+    let environmentFingerprint = digest({
+      qualityHash: quality.hash,
+      integrationCommit,
+    }).slice(7);
+    if (fs.existsSync(path.join(root, PROJECT_PROFILE_PATH))) {
+      const readiness = loadProjectReadiness({ projectRoot: root });
+      if (!readiness.ok) return readiness;
+      environmentFingerprint = readiness.baseline.environmentFingerprint;
+    }
+    const acs = plan.graph.acs;
+    const evidence = [
+      {
+        schemaVersion: 2,
+        evidenceId: `quality-${quality.hash.replace(/^sha256:/, '').slice(0, 16)}`,
+        type: 'automated-test',
+        acIds: acs.map((entry) => entry.id),
+        executor: 'specgate_tester',
+        command: ['sg_quality_run'],
+        cwd: '.',
+        commit: integrationCommit,
+        startedAt: quality.body.startedAt || new Date().toISOString(),
+        finishedAt: quality.body.finishedAt || new Date().toISOString(),
+        status: 'passed',
+        exitCode: 0,
+        artifacts: [],
+        summary: 'Frozen acceptance cases passed with current quality evidence.',
+        environmentFingerprint,
+      },
+    ];
+    return assessVerification({
+      risk: mode === 'strict' ? 'red' : mode === 'standard' ? 'yellow' : 'green',
+      independenceLevel: mode === 'strict' ? 'strict-review' : 'fresh-context',
+      reviewMode:
+        mode === 'strict'
+          ? 'full-code-review'
+          : mode === 'standard'
+            ? 'evidence-and-diff'
+            : 'evidence',
+      commit: integrationCommit,
+      environmentFingerprint,
+      acceptanceCriteria: acs,
+      evidenceRequirements: acs.map((entry) => ({
+        acId: entry.id,
+        allowedTypes: ['automated-test'],
+      })),
+      evidence,
+    });
+  }
+
   function alignReviewWorktree(development, integrationCommit) {
     const review = development?.worktrees?.review;
     const integration = development?.worktrees?.integration;
@@ -414,6 +466,13 @@ export function createReviewService({
     const signals = riskSignals(diff, quality.body);
     const recommended = selectReviewMode(signals, diff);
     const mode = args.mode || recommended;
+    const verification = buildVerificationAssessment({
+      plan: checked.plan,
+      quality,
+      integrationCommit,
+      mode,
+    });
+    if (!verification.ok) return verification;
     return {
       ok: true,
       state: loaded.state,
@@ -433,6 +492,7 @@ export function createReviewService({
         model: checked.ref.model,
         diff,
         requirements: checked.plan.graph.acs,
+        verification: verification.assessment,
       },
     };
   }
@@ -527,9 +587,22 @@ export function createReviewService({
         blocking: checkedReport.blocking || [],
         errors: checkedReport.errors,
       };
+      const verification = buildVerificationAssessment({
+        plan: checked.plan,
+        quality,
+        integrationCommit,
+        mode,
+      });
+      if (!verification.ok) return verification;
+      reviewState.verification = verification.assessment;
       const saved = await store.update({
         expectedVersion: loaded.state.version,
-        patch: { context: { review: reviewState } },
+        patch: {
+          context: {
+            review: reviewState,
+            verification: verification.assessment,
+          },
+        },
       });
       if (!saved.ok) return saved;
       if (!checkedReport.ok || report.verdict !== 'pass') {

@@ -122,6 +122,22 @@ const report = objectSchema({
   testBlindSpots: array(finding),
   suggestedQuestions: array(finding),
 });
+const changeDetails = objectSchema(
+  {
+    scope: array(string('Confirmed scope item.', 4000)),
+    nonGoals: array(string('Confirmed non-goal.', 4000)),
+    existingBehavior: string('Current behavior for a modify change.'),
+    desiredBehavior: string('Target behavior for a modify change.'),
+    compatibility: string('Compatibility statement for a modify change.'),
+    expectedBehavior: string('Expected behavior for a fix.'),
+    actualBehavior: string('Observed behavior for a fix.'),
+    reproduction: string('Optional bounded reproduction steps for a fix.'),
+    logs: string('Optional redacted failure log for a fix.'),
+    environment: string('Optional affected environment for a fix.'),
+    severity: string('Optional bug severity for a fix.', 256),
+  },
+  [],
+);
 
 const definition = (name, description, inputSchema, readOnly = false) => ({
   name,
@@ -156,6 +172,31 @@ export const CHANGE_TOOLS = [
         ),
       },
       ['expectedVersion', 'request'],
+    ),
+  ),
+  definition(
+    'sg_change',
+    'Start a unified feature, modify or fix intake after an active ProjectBaseline and a clean Git worktree. Type-specific details are validated before requirements proceed.',
+    objectSchema(
+      {
+        expectedVersion: version,
+        name: identifier(
+          'Optional unique change name; omitted names are derived from the request deterministically.',
+        ),
+        request: string(
+          'Change request relayed by the command. Do not include credentials or claim this text is a native approval.',
+        ),
+        type: {
+          type: 'string',
+          enum: ['feature', 'modify', 'fix'],
+          description: 'Confirmed change type for the unified entry.',
+        },
+        parentDeliveryId: identifier(
+          'Optional accepted parent delivery for incremental redelivery.',
+        ),
+        details: changeDetails,
+      },
+      ['expectedVersion', 'request', 'type'],
     ),
   ),
   definition(
@@ -204,6 +245,7 @@ export const CHANGE_TOOLS = [
 export const CHANGE_METHODS = Object.freeze({
   sg_change_preflight: 'inspectPrerequisites',
   sg_change_add: 'start',
+  sg_change: 'startTyped',
   sg_change_propose: 'propose',
   sg_change_questions: 'askQuestions',
   sg_change_critique: 'critique',

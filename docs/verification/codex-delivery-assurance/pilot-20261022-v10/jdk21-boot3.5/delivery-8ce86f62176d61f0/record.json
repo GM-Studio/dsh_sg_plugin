@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 2,
+  "deliveryId": "delivery-8ce86f62176d61f0",
+  "projectId": "project-9beea636439e8e3d",
+  "changeId": "jdk21-boot3.5-fix-zero-rate",
+  "parentDeliveryId": "delivery-17d110eb34d42726",
+  "baselineCommit": "75f662daca9f480c157d42e08ed06d82266a85b0",
+  "deliveryCommit": "038c8490c5c305aaffb944854709f21e9c98c561",
+  "tag": "specgate-delivery-delivery-8ce86f62176d61f0",
+  "state": "delivery-accepted",
+  "environmentFingerprint": "6370daaaee5ec50d091077a985a3d82067f986c296f5e7ac984841a5cd378a87",
+  "reviewMode": "evidence-and-diff",
+  "acceptedAt": "2026-10-22T01:00:24.760Z",
+  "acceptance": [
+    "AC-ZERO"
+  ],
+  "evidence": [
+    "pilot-4c2c26a14e77002b",
+    "pilot-254a3fdd8fd15383",
+    "pilot-f55638306b7457df",
+    "pilot-66f9b98d33cff2de"
+  ],
+  "knownIssues": [],
+  "rollback": {
+    "code": "git revert 038c8490c5c305aaffb944854709f21e9c98c561",
+    "data": "No data migration.",
+    "forwardFix": "Deliver a follow-up change from this accepted commit."
+  },
+  "push": {
+    "requested": false,
+    "remoteUrl": null,
+    "status": "not-requested"
+  }
+}

@@ -1,9 +1,12 @@
 import path from 'node:path';
 import fs from 'node:fs';
+import { randomUUID } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { TOOLS as DIAGNOSTICS, callDiagnostic } from './tools.js';
 import { createStateStore } from './state-machine.js';
 import { createApprovalAuthority } from './approvals.js';
+import { createArtifactStore } from './core/artifact-store.js';
+import { canonicalJson, hashValue } from './events.js';
 import { previewInit, executeInit } from './init.js';
 import { JAVA_PRESETS } from './core/java/java-versions.js';
 import { CHANGE_TOOLS, CHANGE_METHODS, callChangeTool } from './change-tools.js';
@@ -17,6 +20,7 @@ import { createReviewService } from './review.js';
 import { REVIEW_TOOLS, callReviewTool } from './review-tools.js';
 import { createReleaseService } from './release.js';
 import { RELEASE_TOOLS, callReleaseTool } from './release-tools.js';
+import { PROJECT_TOOLS, callProjectTool } from './project-tools.js';
 import { createPeerUserInputProvider } from './host-input.js';
 import { createFormatService, createNativeFormatter } from './format.js';
 import { FORMAT_TOOLS, callFormatTool } from './format-tools.js';
@@ -235,6 +239,9 @@ export function createToolRegistry({
   trustedUserIdentity,
   nativeAgents = false,
   formatter,
+  baselineRunner,
+  newProjectVerifier,
+  dirtyApprovalProvider,
 } = {}) {
   const root = path.resolve(projectRoot);
   const effectiveDevelopmentRoleProvider =
@@ -308,6 +315,71 @@ export function createToolRegistry({
       if (!appended.ok) throw new Error('Cannot persist approval audit');
     },
   });
+  let projectApprovalAuthority;
+  const projectAuthority = () =>
+    (projectApprovalAuthority ||= createApprovalAuthority({
+      request: requestPeer,
+      trustedPeerIdentity: trustedUserIdentity,
+      audit: async (event) => {
+        const store = createArtifactStore({ projectRoot: root });
+        const written = store.writeJson(
+          `.specgate/codex/project-approvals/${randomUUID()}-${hashValue(event).slice(0, 12)}.json`,
+          event,
+        );
+        if (!written.ok) throw new Error('Cannot persist project approval audit');
+      },
+    }));
+  const effectiveDirtyApprovalProvider =
+    dirtyApprovalProvider ||
+    (trustedUserIdentity
+      ? {
+          async requestApproval(challenge) {
+            const binding = {
+              schemaVersion: 1,
+              kind: challenge.kind,
+              previewHash: challenge.artifactHash,
+              projectRoot: challenge.projectRoot,
+              paths: challenge.paths,
+              message: challenge.message,
+            };
+            const relative = `.specgate/codex/adoption/${challenge.artifactHash}-${hashValue(binding).slice(0, 12)}.json`;
+            const store = createArtifactStore({ projectRoot: root });
+            const written = store.writeJson(relative, binding);
+            if (!written.ok) return written;
+            const artifactHash = `sha256:${written.hash}`;
+            const scope = path.resolve(root);
+            const approved = await projectAuthority().requestApproval({
+              gate: 'BASELINE',
+              scope,
+              artifactHash,
+              readArtifactHash: async () => {
+                const current = store.readJson(relative);
+                if (!current.ok) throw new Error(current.message);
+                return `sha256:${current.hash}`;
+              },
+              summary: canonicalJson(binding),
+              signal: challenge.signal,
+            });
+            if (!approved.ok) return approved;
+            const consumed = await projectAuthority().consumeApproval({
+              approval: approved.approval,
+              gate: 'BASELINE',
+              scope,
+              artifactHash,
+            });
+            if (!consumed.ok) return consumed;
+            return {
+              ok: true,
+              record: {
+                decision: 'approve',
+                artifactHash: challenge.artifactHash,
+                paths: [...challenge.paths],
+                approval: consumed.record,
+              },
+            };
+          },
+        }
+      : undefined);
   const effectiveInitializationApproval =
     initializationApprovalProvider || (trustedUserIdentity ? authority : undefined);
   let changeService;
@@ -375,6 +447,7 @@ export function createToolRegistry({
   const definitions = [
     ...DIAGNOSTICS,
     ...WORKFLOW_TOOLS,
+    ...PROJECT_TOOLS,
     ...CHANGE_TOOLS,
     ...PLAN_TOOLS,
     ...QUALITY_TOOLS,
@@ -491,6 +564,25 @@ export function createToolRegistry({
           }
           return result(data);
         }
+        if (PROJECT_TOOLS.some((entry) => entry.name === name))
+          return result(
+            await callProjectTool(
+              {
+                projectRoot: root,
+                ...(baselineRunner ? { baselineRunner } : {}),
+                dirtyApprovalProvider: effectiveDirtyApprovalProvider,
+                newProjectVerifier:
+                  newProjectVerifier ||
+                  (async ({ root: projectRoot }) => {
+                    const { validateVerificationEvidence } = await import('./verify.js');
+                    return validateVerificationEvidence({ root: projectRoot });
+                  }),
+              },
+              name,
+              args,
+              { signal },
+            ),
+          );
         if (Object.hasOwn(CHANGE_METHODS, name))
           return result(await callChangeTool(changes(), name, args, { signal }));
         if (PLAN_TOOLS.some((entry) => entry.name === name))

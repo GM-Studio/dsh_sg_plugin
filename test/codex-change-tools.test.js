@@ -99,7 +99,7 @@ test('tool schemas declare strict nested structures and guarded versioned mutati
     CHANGE_TOOLS.map((tool) => tool.name).sort(),
     Object.keys(CHANGE_METHODS).sort(),
   );
-  assert.equal(new Set(CHANGE_TOOLS.map((tool) => tool.name)).size, 6);
+  assert.equal(new Set(CHANGE_TOOLS.map((tool) => tool.name)).size, 7);
   for (const tool of CHANGE_TOOLS) {
     assert.equal(tool.inputSchema.type, 'object');
     assert.equal(tool.inputSchema.additionalProperties, false);
@@ -240,4 +240,44 @@ test('server cancellation context is forwarded separately and cannot be submitte
     (await callChangeTool({}, 'sg_request_h1', { ...args, signal: controller.signal })).code,
     'INVALID_ARGUMENT',
   );
+});
+
+test('unified sg_change accepts feature, modify and fix while rejecting invalid details', async () => {
+  const { service } = fixture();
+  const invalid = await callChangeTool(service, 'sg_change', {
+    expectedVersion: 0,
+    name: 'invalid-fix',
+    type: 'fix',
+    request: 'Fix the filter.',
+    details: { actualBehavior: 'Open tasks are returned.' },
+  });
+  assert.equal(invalid.code, 'CHANGE_DETAILS_INVALID');
+  const started = await callChangeTool(service, 'sg_change', {
+    expectedVersion: 0,
+    name: 'fix-filter',
+    type: 'fix',
+    request: 'Fix the completed filter.',
+    details: {
+      expectedBehavior: 'Only completed tasks are returned.',
+      actualBehavior: 'Open tasks are returned.',
+      reproduction: 'Select completed in the filter.',
+    },
+  });
+  assert.equal(started.ok, true, JSON.stringify(started));
+  assert.equal(started.state.context.changeAdd.change.type, 'fix');
+  const proposed = await callChangeTool(service, 'sg_change_propose', {
+    expectedVersion: started.state.version,
+    requirements: [requirement],
+    assumptions: [],
+    openIssues: [],
+  });
+  assert.equal(proposed.ok, true, JSON.stringify(proposed));
+  const critiqued = await callChangeTool(service, 'sg_change_critique', {
+    expectedVersion: proposed.state.version,
+    report,
+  });
+  assert.equal(critiqued.ok, true, JSON.stringify(critiqued));
+  const snapshot = critiqued.state.context.changeAdd.candidate.snapshot;
+  assert.equal(snapshot.changeContract.type, 'fix');
+  assert.deepEqual(snapshot.changeContract.acceptance, ['AC-1']);
 });

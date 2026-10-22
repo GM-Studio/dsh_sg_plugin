@@ -1,7 +1,7 @@
 {
   "name": "specgate-codex",
   "version": "0.3.0",
-  "description": "SpecGate Codex adapter: native subagents, state, audit, recovery and Java/Vue delivery.",
+  "description": "SpecGate Codex adapter: project adoption, accepted-change evidence, DeliveryRecords and incremental redelivery.",
   "author": { "name": "andy.zx" },
   "license": "MIT",
   "skills": "./skills/",
@@ -9,8 +9,8 @@
   "requires_local_executor": true,
   "interface": {
     "displayName": "SpecGate for Codex",
-    "shortDescription": "Spec-first delivery with real subagents and isolated worktrees",
-    "longDescription": "Local stdio MCP with initialization, verification, requirements, native Agent handoff, quality, formatting, Review, recovery and audit controls.",
+    "shortDescription": "Delivery assurance and acceptance records for solo builders",
+    "longDescription": "Local stdio MCP with new/existing project readiness, serial verification, DeliveryRecords, customer packs and incremental redelivery.",
     "developerName": "andy.zx",
     "category": "Developer Tools",
     "capabilities": ["Read", "Write"],

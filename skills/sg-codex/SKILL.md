@@ -1,21 +1,19 @@
 ---
 name: sg-codex
-description: Use for SpecGate initialization, change delivery, native Codex subagents, isolated worktrees, quality gates, formatting, Review, recovery and archive.
+description: Use for SpecGate project readiness, existing-project adoption, change delivery, independent verification, DeliveryRecord, incremental redelivery, recovery and explicit archive.
 ---
 
 # SpecGate Codex workflow
 
-Use the packaged `specgate` MCP tools as the authoritative state and evidence
-layer. Do not write `.specgate/codex/state.json`, event logs or frozen hashes
-manually.
+Use the packaged `specgate` MCP tools as the authoritative project, change,
+evidence and delivery state layer. Do not write `.specgate/codex/state.json`,
+event logs, frozen hashes or delivery records manually.
 
 ## Host boundary
 
-Codex owns subagent creation. MCP cannot spawn a Codex subagent by itself. The
-main Codex agent MUST call the phase-specific MCP prepare tool, spawn the
-specific project agents requested below, wait for their results, and then call
-the MCP validation/advance tool. Never perform a role in the main thread and
-label it as a subagent result.
+Codex owns code understanding, file edits, command execution and project
+subagents. SpecGate owns project readiness, acceptance contracts, evidence
+sufficiency, DeliveryRecords and incremental lineage.
 
 Project setup installs these agents under `.codex/agents/`:
 
@@ -26,72 +24,159 @@ Project setup installs these agents under `.codex/agents/`:
 - `specgate_formatter`
 - `specgate_reviewer`
 
-If the agents are missing, stop and ask the user to run the plugin's
-`scripts/codex-source-setup.mjs --project <project>` command. Do not silently
-fall back to serial main-thread simulation.
+If required agents are missing, stop and ask the user to run:
 
-## Required order
+```text
+node scripts/codex-source-setup.mjs --project <absolute-project-path>
+```
 
-1. Initialize and verify:
-   - `sg_init_preview`
-   - `sg_init`
-   - `sg_verify`
-   - Do not start a change until verification is current.
-2. Requirements:
-   - `sg_change_add`
-   - `sg_change_propose`
-   - `sg_change_critique`
-   - `sg_request_h1`
-   - A missing trusted approval leaves `H1_PENDING`. Never fabricate approval.
-3. Freeze plan:
-   - `sg_plan_generate`
-   - `sg_plan_freeze_contracts`
-4. Test-first handoff:
-   - `sg_test_design_prepare`
-   - Spawn `specgate_test_designer` with the returned worktree, branch, plan,
-     contract, model and exact manifest rules. `--tests` is the absolute test
-     root that directly contains `runner.mjs`.
-   - Wait for its commit.
-   - `sg_test_design_freeze`; do not accept model-supplied test success.
-5. Development:
-   - `sg_development_prepare`
-   - Spawn `specgate_frontend` and `specgate_backend` at the SAME TIME, in the
-     returned independent worktrees. They must not touch tests or each other's
-     tree.
-   - Wait for both. Then call `sg_development_run`, which validates commits,
-     paths and ancestry before sequential integration merges.
-6. Test Agent:
-   - Spawn `specgate_tester` with the current state version and integration/test
-     worktrees.
-   - The Tester calls `sg_quality_run`; frozen cases must all pass with real
-     command logs and Java/Vue verification.
-   - If the failure is confined to frozen test formatting or the runner
-     contract, return it to `specgate_test_designer`; use
-     `sg_test_replace_assets` to preserve v1 and record a versioned v2. Do not
-     send test-only defects to product developers.
-   - If quality fails, call `sg_development_repair`, spawn the owning
-     frontend/backend agents in the returned round worktrees with the exact
-     defects, then repeat development, testing, formatting and Review.
-7. Formatter Agent:
-   - Only after quality passes, spawn `specgate_formatter`.
-   - The Formatter calls `sg_format_run`. It runs in the dedicated format
-     worktree and may change only files changed by the change. Test files are
-     immutable.
-8. Reviewer Agent:
-   - Only after formatting merges, spawn `specgate_reviewer`.
-   - It calls `sg_review_prepare`, inspects the fixed integration commit
-     read-only, then submits `sg_review_run` with a structured report.
-9. Rework:
-   - If Review returns a blocking result, immediately call
-     `sg_development_rework`.
-   - Spawn `specgate_frontend` and `specgate_backend` concurrently with the
-     returned round-specific worktrees and the exact Review findings.
-   - Repeat `sg_development_run -> sg_quality_run -> sg_format_run ->
-sg_review_prepare/run` until the Review passes or the retry ceiling blocks.
-10. H3 and archive:
-    - Request H3 through the native user-visible approval channel.
-    - Run archive only after a consumed H3 approval. Never force push or retry a
-      failed push automatically.
+Do not perform a requested subagent role in the main thread and label it as a
+subagent result.
+
+## 1. Establish project readiness
+
+Read `sg_project_status` first.
+
+### Existing project
+
+1. Run `sg_adopt_preview`.
+2. If the preview is dirty, show the exact file list and proposed commit.
+3. Run `sg_adopt_commit_dirty` only after the native user approves the bound
+   preview and exact paths.
+4. Run `sg_adopt_apply` with the preview hash.
+5. Treat `sg_adopt_apply` as the start of a detached baseline job. Poll
+   `sg_project_status` until `projectReady` is true or `baselineRun.status` is
+   `failed`. The worker survives a Codex turn ending.
+6. Do not run `sg_init` on an existing project.
+
+The baseline runs in a temporary Git worktree. Build commands may create or
+delete files there without changing the main worktree. The worker removes the
+temporary worktree after success or failure and clears successful job state.
+
+### New project
+
+1. Run `sg_init_preview`.
+2. Run `sg_init` with the current preview hash.
+3. Run `sg_verify`.
+4. Run `sg_project_finalize_new` only after verification succeeds.
+5. `sg_project_finalize_new` commits only stable ProjectProfile and Baseline
+   metadata with explicit paths. Runtime evidence remains ignored.
+
+Generation alone is not verification. Do not start a change until
+`sg_project_status` reports a ready ProjectProfile and Baseline.
+
+## 2. Confirm the change contract
+
+Use `sg_change` with:
+
+- `request`
+- `type`: `feature`, `modify` or `fix`
+- type-specific `details`
+- optional `parentDeliveryId` for customer feedback on an accepted delivery
+
+`sg_change_add` remains a feature-compatible alias.
+
+Then:
+
+1. `sg_change_propose`
+2. `sg_change_questions` only for unresolved blocking questions
+3. `sg_change_critique`
+4. `sg_request_h1`
+
+A missing trusted approval leaves `H1_PENDING`. Never fabricate approval.
+
+## 3. Freeze plan and tests
+
+1. `sg_plan_generate`
+2. `sg_plan_freeze_contracts`
+3. `sg_test_design_prepare`
+4. Spawn `specgate_test_designer` in the returned worktree with the frozen
+   contract, model and exact manifest instructions.
+5. Wait for its commit, then call `sg_test_design_freeze`.
+
+Do not accept model-supplied test success as frozen evidence.
+
+## 4. Implement serially
+
+1. Run `sg_development_prepare`.
+2. Spawn only the frontend implementation agent if the plan requires frontend.
+3. Wait for it to commit.
+4. Spawn only the backend implementation agent if the plan requires backend.
+5. Wait for it to commit.
+6. Call `sg_development_run` to validate commits, paths, ancestry and sequential
+   integration.
+
+Never spawn frontend and backend implementation at the same time in the MVP.
+Never let an implementation agent edit frozen tests or another role's tree.
+
+## 5. Verify independently
+
+Spawn `specgate_tester` only after integration. Give it a clean verification
+context with:
+
+- the current expected version;
+- the fixed integration and test worktrees;
+- the frozen AC and test manifest;
+- no implementation-agent self-assessment as proof.
+
+The Tester calls `sg_quality_run`.
+
+Requirements:
+
+- every frozen case executes and passes;
+- command logs and runtime evidence bind to the current commit;
+- skips, timeouts, cancellations and not-run checks remain explicit;
+- flaky retries remain visible;
+- Red-risk changes still require fixed-commit Review.
+
+If quality fails, call `sg_development_repair`, spawn only the owning
+implementation agent in its new round worktree, then repeat testing,
+formatting and Review.
+
+## 6. Format and Review
+
+1. After quality passes, spawn `specgate_formatter`.
+2. The Formatter calls `sg_format_run`.
+3. After formatting merges, spawn `specgate_reviewer`.
+4. The Reviewer calls `sg_review_prepare`, inspects the fixed integration commit
+   read-only and submits `sg_review_run`.
+
+Blocking Review findings return to the owning implementation agent through
+`sg_development_rework`. Do not let the Reviewer edit code.
+
+## 7. Accept and deliver
+
+Request H3 through the native user approval channel.
+
+After a consumed H3 approval:
+
+- `sg_release_preview` shows the exact commit, files, evidence and delivery
+  preview.
+- `sg_release_archive` performs the local merge and archive.
+- Push remains disabled unless the user explicitly calls the tool with
+  `push: true`.
+- A remote URL alone never authorizes a push.
+- Force push is forbidden.
+
+For projects with a ProjectProfile, archive produces:
+
+- an immutable DeliveryRecord;
+- a local delivery tag;
+- an internal engineering pack;
+- a customer-readable delivery pack.
+
+Do not treat technical verification, customer acceptance, push and deployment
+as the same state.
+
+## 8. Incremental redelivery
+
+When a customer responds to an accepted delivery:
+
+1. Read the parent DeliveryRecord.
+2. Create a new `sg_change` with `parentDeliveryId`.
+3. Record affected, reused and invalidated acceptance criteria and tests.
+4. Run targeted regression plus required historical regression.
+5. Generate a new DeliveryRecord without overwriting the parent.
 
 ## Evidence rules
 
@@ -99,8 +184,8 @@ sg_review_prepare/run` until the Review passes or the retry ceiling blocks.
 - Treat missing commands, skips, generated-only reports, timeouts and cancelled
   runs as not passed.
 - Preserve worktrees, branches, logs and failed Review reports.
-- A subagent's prose is only a summary. MCP-owned Git and command evidence decide
-  whether the phase advances.
-- Test replacements always preserve the previous immutable manifest and require
-  a bounded reason; never edit a frozen test path in place.
-- Keep main, review and test worktrees clean. Never bypass a rejected role path.
+- A subagent's prose is only a summary.
+- MCP-owned Git and command evidence decide whether a phase advances.
+- Test replacements preserve the previous immutable manifest and require a
+  bounded reason.
+- Keep the main, review and test worktrees clean.

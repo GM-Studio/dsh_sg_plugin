@@ -2,7 +2,7 @@
   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "name": "specgate-codex",
   "version": "0.3.0",
-  "description": "Spec-first, gated delivery with real Codex subagents, isolated worktrees and auditable evidence.",
+  "description": "Project adoption, accepted changes, independent verification and incremental delivery records for Codex.",
   "author": {
     "name": "andy.zx"
   },
@@ -14,8 +14,8 @@
       "onboardingSkill": "./skills/setup/SKILL.md",
       "interface": {
         "displayName": "SpecGate for Codex",
-        "shortDescription": "Spec-first delivery with real subagents and isolated worktrees",
-        "longDescription": "Initialize projects, coordinate test-first frontend/backend agents, run real tests and formatting, review fixed commits, and preserve auditable evidence.",
+        "shortDescription": "Delivery assurance and acceptance records for solo builders",
+        "longDescription": "Adopt existing Java/Vue projects or create a verified baseline, run serial test-first delivery with independent verification, issue DeliveryRecords and customer packs, and support incremental redelivery.",
         "developerName": "andy.zx",
         "category": "Developer Tools",
         "capabilities": ["Read", "Write"]

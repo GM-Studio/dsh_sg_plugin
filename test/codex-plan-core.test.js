@@ -145,7 +145,7 @@ test('dynamic AC task graph includes every required role, mapping and ordering w
   assert.equal(small.ok, true);
   assert.equal(large.ok, true);
   assert.ok(large.graph.tasks.length > small.graph.tasks.length);
-  assert.equal(large.graph.maxParallelDevelopment, 2);
+  assert.equal(large.graph.maxParallelDevelopment, 1);
   for (const task of large.graph.tasks) {
     assert.ok(task.acIds.length && task.caseIds.length && task.role && task.acceptance.length);
     if (['frontend', 'backend'].includes(task.kind)) {

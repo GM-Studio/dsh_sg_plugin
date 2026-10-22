@@ -1,20 +1,25 @@
 # SpecGate for Codex
 
 SpecGate 是一个 Codex 原生插件，用受控 MCP 状态、真实 subagents、独立
-worktrees 和机器可审计证据完成需求、测试、开发、格式化、代码走查和发布门禁。
+worktrees 和机器可审计证据完成项目接入、变更交付、独立验证、验收记录和增量再交付。
 
 [English](README.en.md) · [源码加载 Quickstart](docs/quickstart-codex-source.zh.md)
 
 ## 能力
 
-- `sg_init` 生成并建立 Java 21 / Spring Boot / Vue 3 项目基线。
-- `sg_change_add` 和 H1 需求门禁冻结需求、契约、模型和测试。
+- 新建 Java/Vue 项目可生成并建立可靠 Baseline。
+- 存量 Java/Vue 项目通过只读预览接入；脏工作区按显式批准文件提交。
+- `sg_change` 统一支持 feature、modify 和 fix；`sg_change_add` 保留兼容。
+- H1 冻结需求、ChangeContract 和验收标准。
 - Test Designer 先于实现提交可执行测试。
-- Frontend 与 Backend subagents 在独立 worktree 并行开发。
+- Frontend 与 Backend implementation 在独立 worktree 中串行执行。
 - Tester 执行冻结用例和真实 Maven、Vitest、HTTP、运行时验证。
 - Formatter 在独立 worktree 格式化，Reviewer 对固定提交做只读走查。
-- Blocking Review 或质量失败自动进入新的开发 round，并重跑完整闭环。
-- H3 通过交互式 elicitation 绑定最终 artifact；失败和未执行检查不会伪装成通过。
+- 证据记录 commit、AC、环境指纹、Flaky 状态和未执行项。
+- H3 后生成不可变 DeliveryRecord、本地 tag、内部证据包和客户交付包。
+- 客户反馈引用上一 Delivery 进行影响分析和增量再交付。
+- 远程推送必须显式 `push=true`，且不支持 force push。
+- 默认不部署生产环境，不自动执行生产数据库回滚。
 
 ## 从源码加载
 

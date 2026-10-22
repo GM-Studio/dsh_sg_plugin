@@ -1,0 +1,26 @@
+{
+  "schemaVersion": 1,
+  "scope": "codex-delivery-assurance-real-project-pilot",
+  "startedAt": "2026-10-22T00:34:34.878Z",
+  "workspace": "C:\\Users\\Administrator\\AppData\\Local\\Temp\\sg-delivery-pilot-AyB3uu",
+  "presets": [
+    {
+      "preset": "jdk17-boot3.5",
+      "status": "ready",
+      "root": "C:\\Users\\Administrator\\AppData\\Local\\Temp\\sg-delivery-pilot-AyB3uu\\jdk17-boot3.5",
+      "projectId": "project-5b91d11f574ce666",
+      "baselineId": "baseline-d9085f929647f8b2",
+      "baselineCommit": "01d70e9896d08dff4ca08501ba9e1bcf12da9fc1",
+      "metadataCommit": "eb195a2a171816110483025b6b007411949fbefa",
+      "setupDurationMs": 56406,
+      "verificationRunId": "2026-10-22T00-34-36-981Z-81901880"
+    }
+  ],
+  "changes": [],
+  "unexecuted": [
+    "No production deployment.",
+    "No production database rollback.",
+    "No push to a remote repository.",
+    "Native user H1/H3 elicitation is covered by integration tests, not this autonomous pilot harness."
+  ]
+}

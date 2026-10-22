@@ -946,12 +946,13 @@ export function createDevelopmentService({
       const lastErrors = {};
       while (pending.length) {
         if (signal?.aborted) return failure('CANCELLED', 'Development was cancelled');
-        const settled = await Promise.all(
-          pending.map(async (role) => ({
+        const settled = [];
+        for (const role of pending) {
+          settled.push({
             role,
             result: await runRole(role, development, challenge, { signal }),
-          })),
-        );
+          });
+        }
         const current = await store.inspect();
         if (!current.ok) return current;
         if (current.state.phase !== 'DEVELOPING')

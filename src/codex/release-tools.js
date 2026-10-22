@@ -25,8 +25,14 @@ export const RELEASE_TOOLS = Object.freeze([
   ),
   definition(
     'sg_release_archive',
-    'After a consumed H3 approval, merge the exact integration commit, archive evidence without deleting it, and push without force; report local-only and push-failure states explicitly.',
-    { expectedVersion },
+    'After a consumed H3 approval, merge the exact integration commit and archive evidence. Push without force only when push=true and a remote URL is configured.',
+    {
+      expectedVersion,
+      push: {
+        type: 'boolean',
+        description: 'Explicitly request a non-force push after H3 and archive; defaults to false.',
+      },
+    },
     ['expectedVersion'],
   ),
 ]);

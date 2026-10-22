@@ -80,7 +80,7 @@ export const PLAN_TOOLS = Object.freeze([
   ),
   definition(
     'sg_plan_freeze_contracts',
-    'Freeze the versioned API contract and data model before test design or parallel development.',
+    'Freeze the versioned API contract and data model before test design or serial development.',
     { expectedVersion, contract: artifact, model: artifact },
     ['expectedVersion', 'contract', 'model'],
   ),
@@ -123,7 +123,7 @@ export const PLAN_TOOLS = Object.freeze([
   ),
   definition(
     'sg_development_run',
-    'Run frontend and backend role providers concurrently, enforce their boundaries, merge their exact commits through integration, and return conflicts to the owning role.',
+    'Run frontend and backend role providers serially, enforce their boundaries, merge their exact commits through integration, and return conflicts to the owning role.',
     { expectedVersion },
     ['expectedVersion'],
   ),

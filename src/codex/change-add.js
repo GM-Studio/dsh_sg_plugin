@@ -3,7 +3,10 @@ import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
+import { buildChangeContract, normalizeChangeInput, validateChangeInput } from './change-policy.js';
 import { canonicalJson, hashValue } from './events.js';
+import { readDeliveryRecord } from './delivery.js';
+import { loadProjectReadiness, PROJECT_PROFILE_PATH } from './project-state.js';
 
 const SOURCE_ROOT = fileURLToPath(new URL('../..', import.meta.url));
 const TERMINAL = new Set(['ARCHIVED', 'ARCHIVED_NOT_PUSHED', 'CANCELLED']);
@@ -258,6 +261,8 @@ function snapshot(state, data) {
     openIssues: revision.openIssues,
     clarifications: data.rounds,
     critique: data.critique,
+    change: data.change,
+    changeContract: data.changeContract,
   };
 }
 
@@ -313,36 +318,49 @@ export function createChangeAddService({
         'SOURCE_REPOSITORY_FORBIDDEN',
         'The plugin source repository cannot host an active product change',
       );
-    let init;
-    try {
-      init = readJson(root, '.specgate/init-report.json');
-      checkedFile(root, '.specgate/config.yaml');
-      readJson(root, '.specgate/monorepo.json');
-    } catch {
-      return failure(
-        'PROJECT_NOT_INITIALIZED',
-        'Initialize and verify the project before adding a change',
-      );
+    let project = null;
+    let verification = null;
+    if (fs.existsSync(path.join(root, PROJECT_PROFILE_PATH))) {
+      const readiness = loadProjectReadiness({ projectRoot: root });
+      if (!readiness.ok) return readiness;
+      project = {
+        mode: readiness.profile.mode,
+        projectId: readiness.profile.projectId,
+        baselineId: readiness.baseline.baselineId,
+        baselineStatus: readiness.baseline.status,
+        environmentFingerprint: readiness.baseline.environmentFingerprint,
+      };
+    } else {
+      let init;
+      try {
+        init = readJson(root, '.specgate/init-report.json');
+        checkedFile(root, '.specgate/config.yaml');
+        readJson(root, '.specgate/monorepo.json');
+      } catch {
+        return failure(
+          'PROJECT_NOT_READY',
+          'Adopt or initialize and verify the project before adding a change',
+        );
+      }
+      if (init.initializationComplete !== true || init.phase === 'GENERATED_ONLY')
+        return failure(
+          'INITIALIZATION_NOT_VERIFIED',
+          'Generation alone is insufficient; real verification must pass',
+        );
+      try {
+        verification = await verifyPrerequisites({ root });
+      } catch {
+        return failure(
+          'VERIFICATION_EVIDENCE_INVALID',
+          'Real verification evidence could not be validated',
+        );
+      }
+      if (verification?.ok !== true)
+        return failure(
+          verification?.code || 'VERIFICATION_EVIDENCE_INVALID',
+          verification?.message || 'Real verification evidence is required',
+        );
     }
-    if (init.initializationComplete !== true || init.phase === 'GENERATED_ONLY')
-      return failure(
-        'INITIALIZATION_NOT_VERIFIED',
-        'Generation alone is insufficient; real verification must pass',
-      );
-    let verification;
-    try {
-      verification = await verifyPrerequisites({ root });
-    } catch {
-      return failure(
-        'VERIFICATION_EVIDENCE_INVALID',
-        'Real verification evidence could not be validated',
-      );
-    }
-    if (verification?.ok !== true)
-      return failure(
-        verification?.code || 'VERIFICATION_EVIDENCE_INVALID',
-        verification?.message || 'Real verification evidence is required',
-      );
     const repository = git(['rev-parse', '--show-toplevel']);
     if (repository.status !== 0 || path.resolve(repository.stdout.trim()) !== root)
       return failure(
@@ -364,7 +382,10 @@ export function createChangeAddService({
     return {
       ok: true,
       state: loaded.state,
-      verification: { sourceHash: verification.sourceHash, runId: verification.runId ?? null },
+      project,
+      verification: verification
+        ? { sourceHash: verification.sourceHash, runId: verification.runId ?? null }
+        : null,
     };
   }
 
@@ -401,6 +422,55 @@ export function createChangeAddService({
       },
     });
 
+  async function startCommon(args, type, details, parentDeliveryId = null) {
+    const validation = validateChangeInput({ type, request: args.request, details });
+    if (!validation.ok) return validation;
+    const ready = await inspectPrerequisites();
+    if (!ready.ok) return ready;
+    if (parentDeliveryId) {
+      if (!ready.project)
+        return failure(
+          'PARENT_DELIVERY_PROJECT_REQUIRED',
+          'Incremental delivery requires a ProjectProfile-backed project',
+        );
+      const parent = readDeliveryRecord({
+        projectRoot: root,
+        deliveryId: parentDeliveryId,
+      });
+      if (!parent.ok) return parent;
+      if (parent.delivery.projectId !== ready.project.projectId)
+        return failure(
+          'PARENT_DELIVERY_PROJECT_MISMATCH',
+          'Parent delivery belongs to another project',
+        );
+      if (parent.delivery.state !== 'delivery-accepted')
+        return failure('PARENT_DELIVERY_NOT_ACCEPTED', 'Parent delivery is not accepted');
+    }
+    return store.create({
+      expectedVersion: args.expectedVersion,
+      changeId: args.name ?? stableChangeName(args.request),
+      context: {
+        changeAdd: {
+          request: { text: args.request, source: 'command-input', at: now() },
+          change: {
+            type,
+            details: clone(details),
+            parentDeliveryId,
+            baselineId: ready.project?.baselineId ?? 'baseline-legacy',
+          },
+          revisions: [],
+          rounds: [],
+          critique: null,
+          candidate: null,
+          frozen: null,
+          changeContract: null,
+        },
+        project: ready.project,
+        prerequisiteVerification: ready.verification,
+      },
+    });
+  }
+
   async function start(args = {}) {
     if (
       !keys(args, ['name', 'request', 'expectedVersion']) ||
@@ -413,23 +483,26 @@ export function createChangeAddService({
       );
     if (secret(args.request))
       return failure('SENSITIVE_INPUT', 'Remove credentials from the change request');
-    const ready = await inspectPrerequisites();
-    if (!ready.ok) return ready;
-    return store.create({
-      expectedVersion: args.expectedVersion,
-      changeId: args.name ?? stableChangeName(args.request),
-      context: {
-        changeAdd: {
-          request: { text: args.request, source: 'command-input', at: now() },
-          revisions: [],
-          rounds: [],
-          critique: null,
-          candidate: null,
-          frozen: null,
-        },
-        prerequisiteVerification: ready.verification,
-      },
+    return startCommon(args, 'feature', {}, null);
+  }
+
+  async function startTyped(args = {}) {
+    if (
+      !keys(args, ['name', 'request', 'expectedVersion', 'type', 'details', 'parentDeliveryId']) ||
+      !text(args.request) ||
+      (args.name !== undefined && !id(args.name))
+    )
+      return failure(
+        'INVALID_ARGUMENT',
+        'A bounded request, type and optional valid change name are required',
+      );
+    const normalized = normalizeChangeInput({
+      request: args.request,
+      type: args.type,
+      details: args.details ?? {},
     });
+    if (!normalized.ok) return normalized;
+    return startCommon(args, normalized.type, normalized.details, args.parentDeliveryId ?? null);
   }
 
   async function cancelled() {
@@ -474,6 +547,7 @@ export function createChangeAddService({
     data.critique = null;
     data.candidate = null;
     data.frozen = null;
+    data.changeContract = null;
     return update(state, data);
   }
 
@@ -632,6 +706,18 @@ export function createChangeAddService({
     }
     const data = clone(state.context.changeAdd);
     data.critique = { source: 'model-proposal', at: now(), report: clone(args.report) };
+    const contract = buildChangeContract({
+      changeId: state.changeId,
+      parentDeliveryId: data.change?.parentDeliveryId ?? null,
+      type: data.change?.type,
+      request: data.request.text,
+      details: data.change?.details ?? {},
+      requirements: revision.requirements,
+      baselineId: data.change?.baselineId,
+      status: 'H1_PENDING',
+    });
+    if (!contract.ok) return contract;
+    data.changeContract = contract.contract;
     const artifact = snapshot(state, data);
     const artifactHash = 'sha256:' + hashValue(artifact);
     data.candidate = { hash: artifactHash, snapshot: artifact };
@@ -755,5 +841,13 @@ export function createChangeAddService({
     });
   }
 
-  return Object.freeze({ inspectPrerequisites, start, propose, askQuestions, critique, requestH1 });
+  return Object.freeze({
+    inspectPrerequisites,
+    start,
+    startTyped,
+    propose,
+    askQuestions,
+    critique,
+    requestH1,
+  });
 }

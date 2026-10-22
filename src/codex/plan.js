@@ -147,7 +147,7 @@ function validateGraph(graph) {
     );
   if (
     !object(graph) ||
-    graph.maxParallelDevelopment !== 2 ||
+    graph.maxParallelDevelopment !== 1 ||
     !Array.isArray(graph.acs) ||
     !graph.acs.length ||
     !Array.isArray(graph.tasks) ||
@@ -344,7 +344,7 @@ export function buildTaskGraph(snapshot) {
         'Reconcile frozen assets, quality commands and acceptance evidence before Review.',
       ]),
     );
-    const graph = { schemaVersion: 1, maxParallelDevelopment: 2, acs, tasks };
+    const graph = { schemaVersion: 1, maxParallelDevelopment: 1, acs, tasks };
     const checked = validateTaskGraph(graph);
     return checked.ok ? { ok: true, graph } : checked;
   } catch (error) {

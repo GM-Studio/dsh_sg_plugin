@@ -7,5 +7,6 @@ docs/verification/**/*.json
 docs/verification/**/*.txt
 docs/verification/**/*.log
 docs/verification/**/*.xml
+docs/verification/**/pilot-*/**/*.md
 *.tgz
 package-lock.json

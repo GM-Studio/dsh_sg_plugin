@@ -3,6 +3,9 @@ import path from 'node:path';
 import { spawnSync, execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { canonicalJson, hashValue, verifyEventChain } from './events.js';
+import { cleanupArchivedWorkspaces } from './cleanup.js';
+import { createDeliveryRecord, persistDelivery } from './delivery.js';
+import { loadProjectReadiness, PROJECT_PROFILE_PATH } from './project-state.js';
 
 const SOURCE_ROOT = path.resolve(fileURLToPath(new URL('../..', import.meta.url)));
 const object = (value) => value !== null && typeof value === 'object' && !Array.isArray(value);
@@ -152,8 +155,28 @@ function previewBody(root, state) {
   if (!object(review) || !object(quality))
     return failure('ARCHIVE_PREREQUISITE_MISSING', 'Review and quality evidence are required');
   const targetBranch = currentBranch(root);
-  if (!['main', 'master'].includes(targetBranch))
-    return failure('TARGET_BRANCH_INVALID', 'Archive must run on the main or master worktree');
+  let project = null;
+  let remoteUrl = null;
+  if (fs.existsSync(path.join(root, PROJECT_PROFILE_PATH))) {
+    const readiness = loadProjectReadiness({ projectRoot: root });
+    if (!readiness.ok) return readiness;
+    project = {
+      projectId: readiness.profile.projectId,
+      mode: readiness.profile.mode,
+      targetBranch: readiness.profile.targetBranch,
+    };
+    remoteUrl = readiness.profile.remoteUrl;
+    if (targetBranch !== project.targetBranch)
+      return failure(
+        'TARGET_BRANCH_INVALID',
+        'Archive must run on the ProjectProfile target branch',
+      );
+  } else if (!['main', 'master'].includes(targetBranch)) {
+    return failure(
+      'TARGET_BRANCH_INVALID',
+      'Legacy archive must run on the main or master worktree',
+    );
+  }
   const remotes = remoteNames(root);
   const remote = remotes.includes('origin') ? 'origin' : remotes[0] || null;
   const tracking = upstream(root);
@@ -165,8 +188,10 @@ function previewBody(root, state) {
   const preview = {
     schemaVersion: 1,
     changeId: state.changeId,
+    project,
     targetBranch,
     remote,
+    remoteUrl,
     tracking,
     integrationBranch: integration.branch,
     integrationCommit,
@@ -335,11 +360,15 @@ export function createReleaseService({ projectRoot, store, planService } = {}) {
         );
       if (
         !object(args) ||
-        Object.keys(args).some((key) => key !== 'expectedVersion') ||
+        Object.keys(args).some((key) => !['expectedVersion', 'push'].includes(key)) ||
         !Number.isSafeInteger(args.expectedVersion) ||
-        args.expectedVersion < 0
+        args.expectedVersion < 0 ||
+        (args.push !== undefined && typeof args.push !== 'boolean')
       )
-        return failure('INVALID_ARGUMENT', 'Only a nonnegative expectedVersion is accepted');
+        return failure(
+          'INVALID_ARGUMENT',
+          'Only expectedVersion and an optional push boolean are accepted',
+        );
       const loaded = await store.inspect();
       if (!loaded.ok) return loaded;
       if (loaded.state.version !== args.expectedVersion)
@@ -369,6 +398,66 @@ export function createReleaseService({ projectRoot, store, planService } = {}) {
         commit: computed.preview.integrationCommit,
       });
       if (!merge.ok) return merge;
+      const recordDelivery = (pushState) => {
+        if (!computed.preview.project) return { ok: true, delivery: null };
+        const readiness = loadProjectReadiness({ projectRoot: root });
+        if (!readiness.ok) return readiness;
+        const contract = loaded.state.context.changeAdd?.changeContract;
+        const acceptance =
+          contract?.acceptance || (checked.plan?.graph?.acs || []).map((entry) => entry.id);
+        const evidence = [
+          loaded.state.context.quality?.runId,
+          loaded.state.context.quality?.hash,
+          loaded.state.context.artifacts?.review?.hash,
+        ].filter((entry) => typeof entry === 'string' && entry.length > 0);
+        const selectedReviewMode =
+          loaded.state.context.review?.report?.mode ||
+          loaded.state.context.review?.mode ||
+          'evidence';
+        const reviewMode =
+          selectedReviewMode === 'strict'
+            ? 'full-code-review'
+            : selectedReviewMode === 'standard'
+              ? 'evidence-and-diff'
+              : 'evidence';
+        const created = createDeliveryRecord({
+          projectId: readiness.profile.projectId,
+          changeId: loaded.state.changeId,
+          parentDeliveryId: contract?.parentDeliveryId ?? null,
+          baselineCommit: development.freezeCommit,
+          deliveryCommit: merge.commit,
+          environmentFingerprint: readiness.baseline.environmentFingerprint,
+          reviewMode,
+          acceptance,
+          evidence,
+          knownIssues: [],
+          rollback: {
+            code: `git revert ${merge.commit}`,
+            data: 'No automatic production data rollback was performed.',
+            forwardFix: 'Apply a new delivery from the accepted base.',
+          },
+          push: pushState,
+          state: pushState.status === 'passed' ? 'pushed' : 'delivery-accepted',
+        });
+        if (!created.ok) return created;
+        return persistDelivery({
+          projectRoot: root,
+          delivery: created.delivery,
+          internal: {
+            archive: computed.preview,
+            quality: loaded.state.context.quality,
+            review: loaded.state.context.artifacts?.review,
+          },
+          customer: {
+            title: contract?.request || loaded.state.changeId,
+            summary: `Accepted delivery ${created.delivery.deliveryId}.`,
+            verification: evidence,
+            knownIssues: [],
+            upgrade: `Deploy commit ${merge.commit}.`,
+            rollback: created.delivery.rollback,
+          },
+        });
+      };
       const archiveRelative = `.specgate/codex/archive/${computed.preview.changeId}`;
       const source = path.resolve(root, `.specgate/codex/changes/${computed.preview.changeId}`);
       const destination = path.resolve(root, archiveRelative);
@@ -391,8 +480,20 @@ export function createReleaseService({ projectRoot, store, planService } = {}) {
         archivePath: archiveRelative,
         createdAt: new Date().toISOString(),
       };
-      const remote = computed.preview.remote;
-      if (!remote) {
+      const pushRequested = args.push === true;
+      const remote = computed.preview.remoteUrl || computed.preview.remote;
+      if (!pushRequested) {
+        const delivery = recordDelivery({
+          requested: false,
+          remoteUrl: null,
+          status: 'not-requested',
+        });
+        if (!delivery.ok) return delivery;
+        if (delivery.delivery) report.delivery = delivery.delivery;
+        report.cleanup = cleanupArchivedWorkspaces({
+          projectRoot: root,
+          changeId: computed.preview.changeId,
+        });
         report.status = 'archived-not-pushed';
         report.message = '本地归档完成；目标分支未推送';
         const reportPath = `${archiveRelative}/archive-report.json`;
@@ -408,9 +509,40 @@ export function createReleaseService({ projectRoot, store, planService } = {}) {
         });
         return moved.ok ? { ...moved, pushed: false, message: '未推送', report } : moved;
       }
+      if (!remote) {
+        report.status = 'push-remote-required';
+        report.message = '显式 push 请求缺少远程仓库 URL';
+        const reportPath = `${archiveRelative}/archive-report.json`;
+        writeEvidence(root, reportPath, canonicalJson(report) + '\n');
+        const saved = await store.update({
+          expectedVersion: loaded.state.version,
+          patch: { context: { archive: { ...report, reportPath } } },
+        });
+        if (!saved.ok) return saved;
+        const failed = await store.transition({
+          expectedVersion: saved.state.version,
+          to: 'PUSH_FAILED',
+        });
+        return failed.ok
+          ? {
+              ...failed,
+              pushed: false,
+              code: 'PUSH_REMOTE_REQUIRED',
+              message: report.message,
+              report,
+            }
+          : failed;
+      }
       const pushed = pushTarget(root, remote, computed.preview.targetBranch);
       report.push = pushed;
       if (pushed.status !== 0) {
+        const delivery = recordDelivery({
+          requested: true,
+          remoteUrl: remote,
+          status: 'failed',
+        });
+        if (!delivery.ok) return delivery;
+        if (delivery.delivery) report.delivery = delivery.delivery;
         report.status = 'push_failed';
         report.message = '推送失败；未自动重试或回滚';
         const reportPath = `${archiveRelative}/archive-report.json`;
@@ -426,6 +558,17 @@ export function createReleaseService({ projectRoot, store, planService } = {}) {
         });
         return failed.ok ? { ...failed, pushed: false, report } : failed;
       }
+      const delivery = recordDelivery({
+        requested: true,
+        remoteUrl: remote,
+        status: 'passed',
+      });
+      if (!delivery.ok) return delivery;
+      if (delivery.delivery) report.delivery = delivery.delivery;
+      report.cleanup = cleanupArchivedWorkspaces({
+        projectRoot: root,
+        changeId: computed.preview.changeId,
+      });
       report.status = 'archived';
       const reportPath = `${archiveRelative}/archive-report.json`;
       writeEvidence(root, reportPath, canonicalJson(report) + '\n');
