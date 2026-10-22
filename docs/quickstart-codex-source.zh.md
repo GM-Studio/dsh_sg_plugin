@@ -1,6 +1,8 @@
 # Codex 源码加载与原生 Agent Quickstart
 
-本 Quickstart 让 Codex 从当前 SpecGate 源码目录加载插件，并在目标项目中安装真实 subagent 配置。适用于 Codex CLI 0.117.0 及后续支持 portable plugin、`mcp.json`、subagents、`exec --json` 和 session resume 的版本。
+本 Quickstart 让 Codex 从当前 SpecGate 源码目录加载插件，并在目标项目中安装真实 subagent 配置。Windows / Linux 的完整安装方式、配置和排障见 [安装配置指南](install-config-codex.zh.md)。
+
+所用 Codex 必须实际支持 `plugin`、portable plugin、`mcp.json`、subagents、`exec --json` 和 session resume。本机 npm CLI 0.117.0 实测不支持 `codex plugin`；桌面端自带 0.163.0-alpha.11 提供该命令。请先检查实际二进制的 `--version` / `plugin --help`，不要把 0.117.0 当作插件最低兼容版本。
 
 ## 1. 准备源码
 

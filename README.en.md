@@ -5,7 +5,7 @@ accepted changes, independent verification, delivery records and incremental
 redelivery with real subagents, isolated worktrees, executable tests and
 auditable MCP state.
 
-[中文](README.md) · [Source-loading Quickstart (Chinese)](docs/quickstart-codex-source.zh.md)
+[中文](README.md) · [Windows / Linux installation guide (Chinese)](docs/install-config-codex.zh.md) · [Source-loading Quickstart (Chinese)](docs/quickstart-codex-source.zh.md)
 
 ## Capabilities
 
@@ -37,6 +37,11 @@ auditable MCP state.
 - Do not deploy production or roll back production data automatically.
 
 ## Load from source
+
+First confirm that the selected Codex binary supports `codex plugin`. The local
+npm CLI 0.117.0 does not support it; the desktop-bundled CLI can differ from the
+terminal default. See the [installation guide](docs/install-config-codex.zh.md)
+for platform-specific setup and installation checks.
 
 ```powershell
 cd E:\ai_workflow\specgate

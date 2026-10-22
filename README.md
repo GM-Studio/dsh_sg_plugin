@@ -3,7 +3,7 @@
 SpecGate 是一个 Codex 原生插件，用受控 MCP 状态、真实 subagents、独立
 worktrees 和机器可审计证据完成项目接入、异步交付、独立验证、验收记录和增量再交付。
 
-[English](README.en.md) · [源码加载 Quickstart](docs/quickstart-codex-source.zh.md)
+[English](README.en.md) · [Windows / Linux 安装配置指南](docs/install-config-codex.zh.md) · [源码加载 Quickstart](docs/quickstart-codex-source.zh.md)
 
 ## 能力
 
@@ -28,6 +28,10 @@ worktrees 和机器可审计证据完成项目接入、异步交付、独立验�
 - 默认不部署生产环境，不自动执行生产数据库回滚。
 
 ## 从源码加载
+
+先确认所用 Codex 支持 `codex plugin`。本机旧版 npm CLI 0.117.0 不支持该命令；
+桌面端自带 CLI 可能与终端默认版本不同。版本选择、安装状态检查和各平台步骤见
+[安装配置指南](docs/install-config-codex.zh.md)。
 
 ```powershell
 cd E:\ai_workflow\specgate
