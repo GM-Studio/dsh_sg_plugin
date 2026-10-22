@@ -27,6 +27,7 @@ public class SysMenuService {
     private final int maxPageSize;
     private final int maxBatchSize;
     private final SysMenuRepository repository;
+    private final SysAuditLogService audit;
 
     /** 读取分页/批量上限配置并做范围校验，越界配置让应用启动即失败。 */
     public SysMenuService(
@@ -34,7 +35,8 @@ public class SysMenuService {
             @org.springframework.beans.factory.annotation.Value("${app.sys.max-page-size:100}")
                     int maxPageSize,
             @org.springframework.beans.factory.annotation.Value("${app.sys.max-batch-size:100}")
-                    int maxBatchSize) {
+                    int maxBatchSize,
+            SysAuditLogService audit) {
         this.repository = repository;
         if (maxPageSize < 20 || maxPageSize > 100 || maxBatchSize < 1 || maxBatchSize > 100) {
             throw new IllegalArgumentException(
@@ -42,6 +44,7 @@ public class SysMenuService {
         }
         this.maxPageSize = maxPageSize;
         this.maxBatchSize = maxBatchSize;
+        this.audit = audit;
     }
 
     /** 分页查询菜单，支持编码/名称忽略大小写的模糊过滤，默认按 sortOrder 升序再按 id 升序。 */
@@ -119,12 +122,12 @@ public class SysMenuService {
                         () -> new BusinessException(404, "SYS_MENU_NOT_FOUND", "Menu not found"));
     }
 
-    /** 新建菜单：先做编码唯一性校验，重复时返回 409。 */
+    /** 新建菜单：先做编码唯一性校验，重复时返回 409，成功后写入审计日志。 */
     @Transactional
     public SysMenuVO create(SysMenuRequest request) {
         String code = request.getCode().trim();
         requireCodeAvailable(code, null);
-        return new SysMenuVO(
+        SysMenu menu =
                 repository.save(
                         new SysMenu(
                                 code,
@@ -132,10 +135,17 @@ public class SysMenuService {
                                 trimmed(request.getPath()),
                                 trimmed(request.getIcon()),
                                 request.getSortOrder(),
-                                request.getEnabled())));
+                                request.getEnabled()));
+        // 变更成功后写入审计日志：actor 固定为 system，target 为菜单编码，与业务共享同一事务
+        audit.record(
+                "system",
+                "SYS_MENU_CREATE",
+                menu.getCode(),
+                "新建菜单：" + menu.getCode() + "（id=" + menu.getId() + "）");
+        return new SysMenuVO(menu);
     }
 
-    /** 更新菜单：编码被其它菜单占用时返回 409，否则就地更新并落库。 */
+    /** 更新菜单：编码被其它菜单占用时返回 409，否则就地更新、落库并写入审计日志。 */
     @Transactional
     public SysMenuVO update(Long id, SysMenuRequest request) {
         SysMenu menu = find(id);
@@ -148,13 +158,27 @@ public class SysMenuService {
                 trimmed(request.getIcon()),
                 request.getSortOrder(),
                 request.getEnabled());
-        return new SysMenuVO(repository.save(menu));
+        SysMenu saved = repository.save(menu);
+        // 变更成功后写入审计日志：actor 固定为 system，target 为菜单编码，与业务共享同一事务
+        audit.record(
+                "system",
+                "SYS_MENU_UPDATE",
+                saved.getCode(),
+                "更新菜单：" + saved.getCode() + "（id=" + saved.getId() + "）");
+        return new SysMenuVO(saved);
     }
 
-    /** 删除菜单，返回统一的删除结果。 */
+    /** 删除菜单，返回统一的删除结果，成功后写入审计日志。 */
     @Transactional
     public OperationResult delete(Long id) {
-        repository.delete(find(id));
+        SysMenu menu = find(id);
+        repository.delete(menu);
+        // 变更成功后写入审计日志：actor 固定为 system，target 为菜单编码，与业务共享同一事务
+        audit.record(
+                "system",
+                "SYS_MENU_DELETE",
+                menu.getCode(),
+                "删除菜单：" + menu.getCode() + "（id=" + menu.getId() + "）");
         return new OperationResult(id, true, 1);
     }
 

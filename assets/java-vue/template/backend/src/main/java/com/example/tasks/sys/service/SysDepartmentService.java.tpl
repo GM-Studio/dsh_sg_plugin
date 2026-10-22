@@ -27,6 +27,7 @@ public class SysDepartmentService {
     private final int maxPageSize;
     private final int maxBatchSize;
     private final SysDepartmentRepository repository;
+    private final SysAuditLogService audit;
 
     /** 读取分页/批量上限配置并做范围校验，越界配置让应用启动即失败。 */
     public SysDepartmentService(
@@ -34,7 +35,8 @@ public class SysDepartmentService {
             @org.springframework.beans.factory.annotation.Value("${app.sys.max-page-size:100}")
                     int maxPageSize,
             @org.springframework.beans.factory.annotation.Value("${app.sys.max-batch-size:100}")
-                    int maxBatchSize) {
+                    int maxBatchSize,
+            SysAuditLogService audit) {
         this.repository = repository;
         if (maxPageSize < 20 || maxPageSize > 100 || maxBatchSize < 1 || maxBatchSize > 100) {
             throw new IllegalArgumentException(
@@ -42,6 +44,7 @@ public class SysDepartmentService {
         }
         this.maxPageSize = maxPageSize;
         this.maxBatchSize = maxBatchSize;
+        this.audit = audit;
     }
 
     /** 分页查询部门，支持编码/名称忽略大小写的模糊过滤，默认按 id 升序。 */
@@ -113,21 +116,28 @@ public class SysDepartmentService {
                                         404, "SYS_DEPARTMENT_NOT_FOUND", "Department not found"));
     }
 
-    /** 新建部门：先做编码唯一性校验，重复时返回 409。 */
+    /** 新建部门：先做编码唯一性校验，重复时返回 409，成功后写入审计日志。 */
     @Transactional
     public SysDepartmentVO create(SysDepartmentRequest request) {
         String code = request.getCode().trim();
         requireCodeAvailable(code, null);
-        return new SysDepartmentVO(
+        SysDepartment department =
                 repository.save(
                         new SysDepartment(
                                 code,
                                 request.getName().trim(),
                                 trimmedParentCode(request),
-                                request.getEnabled())));
+                                request.getEnabled()));
+        // 变更成功后写入审计日志：actor 固定为 system，target 为部门编码，与业务共享同一事务
+        audit.record(
+                "system",
+                "SYS_DEPARTMENT_CREATE",
+                department.getCode(),
+                "新建部门：" + department.getCode() + "（id=" + department.getId() + "）");
+        return new SysDepartmentVO(department);
     }
 
-    /** 更新部门：编码被其它部门占用时返回 409，否则就地更新并落库。 */
+    /** 更新部门：编码被其它部门占用时返回 409，否则就地更新、落库并写入审计日志。 */
     @Transactional
     public SysDepartmentVO update(Long id, SysDepartmentRequest request) {
         SysDepartment department = find(id);
@@ -135,13 +145,27 @@ public class SysDepartmentService {
         requireCodeAvailable(code, id);
         department.update(
                 code, request.getName().trim(), trimmedParentCode(request), request.getEnabled());
-        return new SysDepartmentVO(repository.save(department));
+        SysDepartment saved = repository.save(department);
+        // 变更成功后写入审计日志：actor 固定为 system，target 为部门编码，与业务共享同一事务
+        audit.record(
+                "system",
+                "SYS_DEPARTMENT_UPDATE",
+                saved.getCode(),
+                "更新部门：" + saved.getCode() + "（id=" + saved.getId() + "）");
+        return new SysDepartmentVO(saved);
     }
 
-    /** 删除部门，返回统一的删除结果。 */
+    /** 删除部门，返回统一的删除结果，成功后写入审计日志。 */
     @Transactional
     public OperationResult delete(Long id) {
-        repository.delete(find(id));
+        SysDepartment department = find(id);
+        repository.delete(department);
+        // 变更成功后写入审计日志：actor 固定为 system，target 为部门编码，与业务共享同一事务
+        audit.record(
+                "system",
+                "SYS_DEPARTMENT_DELETE",
+                department.getCode(),
+                "删除部门：" + department.getCode() + "（id=" + department.getId() + "）");
         return new OperationResult(id, true, 1);
     }
 

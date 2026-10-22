@@ -33,6 +33,9 @@ export default {
     eyebrow: 'OPERATIONS OVERVIEW',
     title: 'Dashboard',
     description: 'A quick read on the current workspace.',
+    users: 'Users',
+    roles: 'Roles',
+    taskTotal: 'Total tasks',
     totalTasks: 'Total tasks',
     completedTasks: 'Completed',
     pendingTasks: 'In progress',
@@ -213,7 +216,7 @@ export default {
     validation: 'Enter 1–200 characters.',
   },
   csv: {
-    title: 'Import tasks',
+    title: 'Data import',
     description:
       'UTF-8 CSV · up to 1000 rows / 2 MiB · all rows validated before saving',
     template: 'CSV template',
@@ -221,8 +224,9 @@ export default {
     validate: 'Validate CSV',
     confirm: 'Confirm import',
     chooseFirst: 'Choose a CSV file first.',
-    imported: 'Imported {count} tasks',
+    imported: 'Imported {count} records',
     validRows: '{count} valid rows',
+    export: 'Export CSV',
   },
   file: {
     title: 'Workspace files',

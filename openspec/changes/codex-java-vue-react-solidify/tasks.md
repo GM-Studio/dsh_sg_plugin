@@ -54,6 +54,20 @@ package names into the role/user sys templates (17 files restored to
 `com.example.tasks` + `javax.*` so the generator can rewrite them per project),
 and two audit test assertions were corrected.
 
+Landed (template step 4, CSV + dashboard + style baseline + audit writes):
+- `SysUserCsvService` / `SysRoleCsvService` with `/import/validate`, `/import`,
+  `/import/template` and `/export` endpoints on the users and roles controllers,
+  plus two CSV MockMvc suites (5 cases each).
+- Frontend `csv.import/template/export` clients, CSV panels in RoleView and
+  UserView, and `DashboardView` now reads the real `/api/sys/dashboard` summary.
+- `docs/style.md` rewritten as the enforceable style baseline and the reviewer
+  agent template extended so unjustified deviation is a finding (blocking when
+  substantive).
+- The four `sys` services now record audit entries on create/update/delete.
+Verified on a generated `jdk17-boot3.5` project: backend `clean verify` 35/35,
+frontend build, 34/34 Vitest, lint and format:check pass; repo suite 347/347.
+`GOLDEN_MANIFEST` refreshed, still `pending`.
+
 - [x] 1. P0: approve the requirements document; keep this proposal/design/spec
       aligned with it.
 - [ ] 2. P1: add failing tests for JDK+frontend selection, `ProjectProfile`

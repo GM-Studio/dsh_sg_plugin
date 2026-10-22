@@ -7,6 +7,10 @@ sg_review_prepare with the expectedVersion supplied by the parent, inspect the
 fixed integration/review commit and supplied risk signals, then call
 sg_review_run with a structured report bound to reviewedCommit, qualityHash and
 changed-hunk evidence. Prioritize correctness, security, data loss, contract
-breakage and missing tests. Return the exact Review result and every blocking
-finding. Do not spawn subagents.
+breakage and missing tests. The generated project's style baseline (docs/style.md
+in the generated project, demonstrated by the generated scaffold) is an
+enforceable baseline: you MUST report a finding whenever a change deviates from
+it without an explicit, recorded justification, and you MAY raise the deviation
+as blocking when it is substantive. Return the exact Review result and every
+blocking finding. Do not spawn subagents.
 """

@@ -1,5 +1,5 @@
-import { mutate, request } from './request';
-import type { PageResult } from './types';
+import { download, mutate, request } from './request';
+import type { ImportResult, PageResult } from './types';
 
 export interface SysRole {
   id: number;
@@ -43,12 +43,23 @@ export type SysUserInput = Pick<
 >;
 export type SysUserUpdate = SysUserInput & { id: number };
 
+export interface SysDashboard {
+  userCount: number;
+  roleCount: number;
+  taskCount: number;
+  completedTaskCount: number;
+}
+
 function queryString(query: object): string {
   const params = new URLSearchParams();
   for (const [key, value] of Object.entries(query))
     if (value !== undefined && value !== '') params.set(key, String(value));
   return params.toString();
 }
+
+export const sysDashboardApi = {
+  summary: () => request<SysDashboard>('/api/sys/dashboard'),
+};
 
 export const sysRoleApi = {
   list: (query: SysRoleQuery) =>
@@ -59,6 +70,22 @@ export const sysRoleApi = {
     mutate<SysRole>('/api/sys/roles/update', body),
   remove: (id: number) =>
     mutate<{ id: number; deleted: boolean }>('/api/sys/roles/delete', { id }),
+  import: (file: File, validate: boolean) => {
+    const body = new FormData();
+    body.append('file', file);
+    return mutate<ImportResult>(
+      '/api/sys/roles/import' + (validate ? '/validate' : ''),
+      body,
+    );
+  },
+  template: () =>
+    download('/api/sys/roles/import/template', 'role-template.csv'),
+  export: (query: SysRoleQuery) =>
+    download(
+      '/api/sys/roles/export?' +
+        queryString({ code: query.code || '', name: query.name || '' }),
+      'roles.csv',
+    ),
 };
 
 export const sysUserApi = {
@@ -71,6 +98,26 @@ export const sysUserApi = {
     mutate<{ id: number; deleted: boolean }>('/api/sys/users/delete', { id }),
   batchDelete: (ids: number[]) =>
     mutate<{ count: number }>('/api/sys/users/batch-delete', { ids }),
+  import: (file: File, validate: boolean) => {
+    const body = new FormData();
+    body.append('file', file);
+    return mutate<ImportResult>(
+      '/api/sys/users/import' + (validate ? '/validate' : ''),
+      body,
+    );
+  },
+  template: () =>
+    download('/api/sys/users/import/template', 'user-template.csv'),
+  export: (query: SysUserQuery) =>
+    download(
+      '/api/sys/users/export?' +
+        queryString({
+          username: query.username || '',
+          roleCode: query.roleCode || '',
+          enabled: query.enabled || '',
+        }),
+      'users.csv',
+    ),
 };
 
 export interface SysDepartment {

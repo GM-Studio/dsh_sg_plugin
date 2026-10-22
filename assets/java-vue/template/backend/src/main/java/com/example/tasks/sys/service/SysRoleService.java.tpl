@@ -27,6 +27,7 @@ public class SysRoleService {
     private final int maxPageSize;
     private final int maxBatchSize;
     private final SysRoleRepository repository;
+    private final SysAuditLogService audit;
 
     /** 读取分页/批量上限配置并做范围校验，越界配置让应用启动即失败。 */
     public SysRoleService(
@@ -34,7 +35,8 @@ public class SysRoleService {
             @org.springframework.beans.factory.annotation.Value("${app.sys.max-page-size:100}")
                     int maxPageSize,
             @org.springframework.beans.factory.annotation.Value("${app.sys.max-batch-size:100}")
-                    int maxBatchSize) {
+                    int maxBatchSize,
+            SysAuditLogService audit) {
         this.repository = repository;
         if (maxPageSize < 20 || maxPageSize > 100 || maxBatchSize < 1 || maxBatchSize > 100) {
             throw new IllegalArgumentException(
@@ -42,6 +44,7 @@ public class SysRoleService {
         }
         this.maxPageSize = maxPageSize;
         this.maxBatchSize = maxBatchSize;
+        this.audit = audit;
     }
 
     /** 分页查询角色，支持编码/名称忽略大小写的模糊过滤，默认按 id 升序。 */
@@ -111,21 +114,28 @@ public class SysRoleService {
                         () -> new BusinessException(404, "SYS_ROLE_NOT_FOUND", "Role not found"));
     }
 
-    /** 新建角色：先做编码唯一性校验，重复时返回 409。 */
+    /** 新建角色：先做编码唯一性校验，重复时返回 409，成功后写入审计日志。 */
     @Transactional
     public SysRoleVO create(SysRoleRequest request) {
         String code = request.getCode().trim();
         requireCodeAvailable(code, null);
-        return new SysRoleVO(
+        SysRole role =
                 repository.save(
                         new SysRole(
                                 code,
                                 request.getName().trim(),
                                 trimmedDescription(request),
-                                request.getEnabled())));
+                                request.getEnabled()));
+        // 变更成功后写入审计日志：actor 固定为 system，target 为角色编码，与业务共享同一事务
+        audit.record(
+                "system",
+                "SYS_ROLE_CREATE",
+                role.getCode(),
+                "新建角色：" + role.getCode() + "（id=" + role.getId() + "）");
+        return new SysRoleVO(role);
     }
 
-    /** 更新角色：编码被其它角色占用时返回 409，否则就地更新并落库。 */
+    /** 更新角色：编码被其它角色占用时返回 409，否则就地更新、落库并写入审计日志。 */
     @Transactional
     public SysRoleVO update(Long id, SysRoleRequest request) {
         SysRole role = find(id);
@@ -133,13 +143,27 @@ public class SysRoleService {
         requireCodeAvailable(code, id);
         role.update(
                 code, request.getName().trim(), trimmedDescription(request), request.getEnabled());
-        return new SysRoleVO(repository.save(role));
+        SysRole saved = repository.save(role);
+        // 变更成功后写入审计日志：actor 固定为 system，target 为角色编码，与业务共享同一事务
+        audit.record(
+                "system",
+                "SYS_ROLE_UPDATE",
+                saved.getCode(),
+                "更新角色：" + saved.getCode() + "（id=" + saved.getId() + "）");
+        return new SysRoleVO(saved);
     }
 
-    /** 删除角色，返回统一的删除结果。 */
+    /** 删除角色，返回统一的删除结果，成功后写入审计日志。 */
     @Transactional
     public OperationResult delete(Long id) {
-        repository.delete(find(id));
+        SysRole role = find(id);
+        repository.delete(role);
+        // 变更成功后写入审计日志：actor 固定为 system，target 为角色编码，与业务共享同一事务
+        audit.record(
+                "system",
+                "SYS_ROLE_DELETE",
+                role.getCode(),
+                "删除角色：" + role.getCode() + "（id=" + role.getId() + "）");
         return new OperationResult(id, true, 1);
     }
 

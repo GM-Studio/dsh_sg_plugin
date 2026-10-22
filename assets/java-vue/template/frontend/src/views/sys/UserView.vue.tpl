@@ -12,6 +12,7 @@ import {
 import { sysRoleApi, sysUserApi } from '../../api/sys';
 import { ApiError } from '../../api/request';
 import type { SysOption, SysUser, SysUserQuery } from '../../api/sys';
+import type { ImportResult } from '../../api/types';
 
 const props = defineProps<{ user?: { username: string; role: string } }>();
 const { t } = useI18n();
@@ -36,6 +37,8 @@ const displayName = ref('');
 const roleCode = ref('');
 const enabled = ref(true);
 const pendingDelete = ref<number[] | null>(null);
+const csvFile = ref<File | null>(null);
+const importResult = ref<ImportResult | null>(null);
 
 async function run(action: () => Promise<void>) {
   if (busy.value) return;
@@ -113,6 +116,24 @@ async function pageChanged(page: number) {
 async function search() {
   query.value.page = 1;
   await run(refresh);
+}
+function chooseCsv(event: Event) {
+  csvFile.value = (event.target as HTMLInputElement).files?.[0] || null;
+  importResult.value = null;
+}
+async function importCsv(validate: boolean) {
+  if (!csvFile.value) {
+    error.value = t('csv.chooseFirst');
+    return;
+  }
+  await run(async () => {
+    importResult.value = await sysUserApi.import(csvFile.value!, validate);
+    if (!validate) {
+      notice.value = t('csv.imported', { count: importResult.value.count });
+      csvFile.value = null;
+      await refresh();
+    }
+  });
 }
 onMounted(() => run(refresh));
 </script>
@@ -314,6 +335,47 @@ onMounted(() => run(refresh));
         <el-button :disabled="busy" @click="pendingDelete = null">
           {{ t('sys.users.cancelDelete') }}
         </el-button>
+      </div>
+    </el-card>
+    <el-card v-if="admin" shadow="never" class="transfer-panel">
+      <h2>{{ t('csv.title') }}</h2>
+      <p>{{ t('csv.description') }}</p>
+      <div class="toolbar">
+        <el-button :disabled="busy" @click="run(sysUserApi.template)">
+          {{ t('csv.template') }}
+        </el-button>
+        <el-button
+          :disabled="busy"
+          @click="run(async () => sysUserApi.export(query))"
+        >
+          {{ t('task.export') }}
+        </el-button>
+        <input
+          id="csv-file"
+          type="file"
+          accept=".csv,text/csv"
+          :disabled="busy"
+          :aria-label="t('csv.choose')"
+          @change="chooseCsv"
+        />
+        <el-button :disabled="busy" @click="importCsv(true)">
+          {{ t('csv.validate') }}
+        </el-button>
+        <el-button
+          type="primary"
+          :disabled="busy || !importResult?.valid || !csvFile"
+          @click="importCsv(false)"
+        >
+          {{ t('csv.confirm') }}
+        </el-button>
+      </div>
+      <div v-if="importResult">
+        <p>{{ t('csv.validRows', { count: importResult.count }) }}</p>
+        <ul>
+          <li v-for="message in importResult.errors" :key="message">
+            {{ message }}
+          </li>
+        </ul>
       </div>
     </el-card>
   </div>

@@ -28,6 +28,7 @@ public class SysUserService {
     private final int maxPageSize;
     private final int maxBatchSize;
     private final SysUserRepository repository;
+    private final SysAuditLogService audit;
 
     /** 读取分页/批量上限配置并做范围校验，越界配置让应用启动即失败。 */
     public SysUserService(
@@ -35,7 +36,8 @@ public class SysUserService {
             @org.springframework.beans.factory.annotation.Value("${app.sys.max-page-size:100}")
                     int maxPageSize,
             @org.springframework.beans.factory.annotation.Value("${app.sys.max-batch-size:100}")
-                    int maxBatchSize) {
+                    int maxBatchSize,
+            SysAuditLogService audit) {
         this.repository = repository;
         if (maxPageSize < 20 || maxPageSize > 100 || maxBatchSize < 1 || maxBatchSize > 100) {
             throw new IllegalArgumentException(
@@ -43,6 +45,7 @@ public class SysUserService {
         }
         this.maxPageSize = maxPageSize;
         this.maxBatchSize = maxBatchSize;
+        this.audit = audit;
     }
 
     /** 分页查询用户，支持用户名模糊（忽略大小写）、角色编码与启用状态过滤，默认按 id 升序。 */
@@ -103,21 +106,28 @@ public class SysUserService {
                         () -> new BusinessException(404, "SYS_USER_NOT_FOUND", "User not found"));
     }
 
-    /** 新建用户：先做用户名唯一性校验，重复时返回 409。 */
+    /** 新建用户：先做用户名唯一性校验，重复时返回 409，成功后写入审计日志。 */
     @Transactional
     public SysUserVO create(SysUserRequest request) {
         String username = request.getUsername().trim();
         requireUsernameAvailable(username, null);
-        return new SysUserVO(
+        SysUser user =
                 repository.save(
                         new SysUser(
                                 username,
                                 trimmedDisplayName(request),
                                 request.getRoleCode().trim(),
-                                request.getEnabled())));
+                                request.getEnabled()));
+        // 变更成功后写入审计日志：actor 固定为 system，target 为用户名，与业务共享同一事务
+        audit.record(
+                "system",
+                "SYS_USER_CREATE",
+                user.getUsername(),
+                "新建用户：" + user.getUsername() + "（id=" + user.getId() + "）");
+        return new SysUserVO(user);
     }
 
-    /** 更新用户：用户名被其它用户占用时返回 409，否则就地更新并落库。 */
+    /** 更新用户：用户名被其它用户占用时返回 409，否则就地更新、落库并写入审计日志。 */
     @Transactional
     public SysUserVO update(Long id, SysUserRequest request) {
         SysUser user = find(id);
@@ -128,13 +138,27 @@ public class SysUserService {
                 trimmedDisplayName(request),
                 request.getRoleCode().trim(),
                 request.getEnabled());
-        return new SysUserVO(repository.save(user));
+        SysUser saved = repository.save(user);
+        // 变更成功后写入审计日志：actor 固定为 system，target 为用户名，与业务共享同一事务
+        audit.record(
+                "system",
+                "SYS_USER_UPDATE",
+                saved.getUsername(),
+                "更新用户：" + saved.getUsername() + "（id=" + saved.getId() + "）");
+        return new SysUserVO(saved);
     }
 
-    /** 删除用户，返回统一的删除结果。 */
+    /** 删除用户，返回统一的删除结果，成功后写入审计日志。 */
     @Transactional
     public OperationResult delete(Long id) {
-        repository.delete(find(id));
+        SysUser user = find(id);
+        repository.delete(user);
+        // 变更成功后写入审计日志：actor 固定为 system，target 为用户名，与业务共享同一事务
+        audit.record(
+                "system",
+                "SYS_USER_DELETE",
+                user.getUsername(),
+                "删除用户：" + user.getUsername() + "（id=" + user.getId() + "）");
         return new OperationResult(id, true, 1);
     }
 

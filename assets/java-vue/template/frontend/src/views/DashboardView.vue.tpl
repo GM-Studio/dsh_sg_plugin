@@ -1,27 +1,22 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { ElCard } from 'element-plus';
-import { taskApi } from '../api/tasks';
+import { ElButton, ElCard } from 'element-plus';
+import { sysDashboardApi } from '../api/sys';
 import { ApiError } from '../api/request';
+import type { SysDashboard } from '../api/sys';
 import type { User } from '../api/types';
 
 defineProps<{ user?: User }>();
 
 const { t } = useI18n();
-const total = ref(0);
-const completed = ref(0);
-const pending = ref(0);
+const summary = ref<SysDashboard | null>(null);
 const error = ref('');
 
 async function load() {
   error.value = '';
   try {
-    const first = await taskApi.list({ page: 1, pageSize: 1 });
-    total.value = first.total;
-    const sample = await taskApi.list({ page: 1, pageSize: 100 });
-    completed.value = sample.records.filter((item) => item.completed).length;
-    pending.value = sample.records.length - completed.value;
+    summary.value = await sysDashboardApi.summary();
   } catch (cause) {
     error.value =
       cause instanceof ApiError ? cause.message : t('error.unexpected');
@@ -46,16 +41,20 @@ onMounted(load);
     <p v-if="error" role="alert" class="error-banner">{{ error }}</p>
     <div class="stats">
       <el-card shadow="never">
-        <span>{{ t('dashboard.totalTasks') }}</span>
-        <strong>{{ total }}</strong>
+        <span>{{ t('dashboard.users') }}</span>
+        <strong>{{ summary?.userCount ?? 0 }}</strong>
+      </el-card>
+      <el-card shadow="never">
+        <span>{{ t('dashboard.roles') }}</span>
+        <strong>{{ summary?.roleCount ?? 0 }}</strong>
+      </el-card>
+      <el-card shadow="never">
+        <span>{{ t('dashboard.taskTotal') }}</span>
+        <strong>{{ summary?.taskCount ?? 0 }}</strong>
       </el-card>
       <el-card shadow="never">
         <span>{{ t('dashboard.completedTasks') }}</span>
-        <strong class="success">{{ completed }}</strong>
-      </el-card>
-      <el-card shadow="never">
-        <span>{{ t('dashboard.pendingTasks') }}</span>
-        <strong>{{ pending }}</strong>
+        <strong class="success">{{ summary?.completedTaskCount ?? 0 }}</strong>
       </el-card>
     </div>
   </div>
