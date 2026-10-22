@@ -30,6 +30,15 @@ frontend `vue-tsc` build, and 12/12 Vitest cases pass. `GOLDEN_MANIFEST` now
 records the new hashes as `pending` with no platform evidence; Windows and Linux
 re-verification is still required before any preset is `verified` again.
 
+Landed (template step 2, users and roles): backend `com.<pkg>.sys` module
+(SysRole/SysUser entities, repositories, services, controllers, dto/vo, two
+MockMvc suites) and frontend `api/sys.ts`, `views/sys/RoleView.vue`,
+`views/sys/UserView.vue` and `test/sys.test.ts`, wired into the router, sidebar
+and zh/en i18n. Verified on a generated `jdk17-boot3.5` project: backend
+`clean verify` 16/16 (2 new sys suites), frontend build, 23/23 Vitest, lint and
+format:check all pass; repo suite 347/347. `GOLDEN_MANIFEST` hashes refreshed and
+still `pending`.
+
 - [x] 1. P0: approve the requirements document; keep this proposal/design/spec
       aligned with it.
 - [ ] 2. P1: add failing tests for JDK+frontend selection, `ProjectProfile`
