@@ -13,7 +13,7 @@ import { buildChangeContract } from '../src/codex/change-policy.js';
 import { hashValue } from '../src/codex/events.js';
 import { commandSpec } from '../src/codex/core/java/verify-evidence.js';
 
-const PRESETS = ['jdk17-boot3.5', 'jdk21-boot3.5', 'jdk21-boot4.0'];
+const PRESETS = ['jdk17-boot3.5', 'jdk21-boot3.5'];
 const SCENARIOS = ['feature-audit-filter', 'modify-role-description', 'fix-user-status'];
 
 // The pilot now exercises the domain-neutral `sys` admin scaffold (`com.specgate.tasks.sys`)

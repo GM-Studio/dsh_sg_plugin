@@ -146,12 +146,11 @@ npm run codex:control -- stop
 
 同一对工具还可选择技术栈，并把结果固化进 `ProjectProfile`：
 
-- `frontend`：`vue`（默认）或 `react`。React 18 模板尚未落地，选择 `react` 会以
-  `FRONTEND_UNAVAILABLE` fail-closed，当前仅支持 Vue 3。
+- `frontend`：`vue`（默认）或 `react`（React 18 + Vite + Ant Design 模板）。
 - `preset`：`jdk8-boot2.7`（默认，JDK 8 + Spring Boot 2.7）、`jdk17-boot3.5`、
-  `jdk21-boot3.5`，或 `jdk21-boot4.0`（预览）。
+  `jdk21-boot3.5`。
 
-后端 JDK 取值为 8、17、21，Spring Boot 为 2.7.x 或 3.5.x（另有 4.0 预览档）。
+后端 JDK 取值为 8、17、21，Spring Boot 为 2.7.x 或 3.5.x。
 后续变更只能在该栈内工作，栈不匹配时 fail-closed。
 
 生成源码使用中文文件说明和业务注释。前端展示文本必须通过 i18n key 提供，

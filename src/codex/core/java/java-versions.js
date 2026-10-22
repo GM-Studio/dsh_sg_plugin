@@ -45,20 +45,6 @@ export const JAVA_PRESETS = [
     checkstyle: '10.20.1',
     h2: '2.3.232',
   },
-  {
-    id: 'jdk21-boot4.0',
-    label: 'Java 21 + Spring Boot 4.0.0 + Maven (preview)',
-    jdk: '21',
-    javaVersion: '21',
-    bootVersion: '4.0.0',
-    bootLine: '4.0.x',
-    legacy: false,
-    preview: true,
-    spotless: '2.44.0',
-    gjf: '1.24.0',
-    checkstyle: '10.20.1',
-    h2: '2.3.232',
-  },
 ];
 
 /** Verification records are filled only after a real local build/test/start run. */
