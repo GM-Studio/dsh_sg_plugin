@@ -91,7 +91,6 @@ export function previewAdoption({
       root,
       targetBranch: detected.git.branch,
       remoteUrl: detected.git.remoteUrl,
-      pushApproved: false,
       ...detected.conventions,
       commands: detected.commands,
       protectedPaths: detected.protectedPaths,

@@ -25,7 +25,9 @@ const RUNTIME_NAMES = [
   'codex/archive/',
   'codex/*-report.json',
   'codex/changes/*/evidence/',
+  'codex/changes/*/red/',
   'codex/changes/*/quality/',
+  'codex/changes/*/format/',
   'codex/changes/*/review/',
   'codex/changes/*/tests/',
   'codex-verify*',
@@ -260,6 +262,7 @@ export function previewInit({
   strategy = 'keep-missing',
   company = 'company',
   business = 'tasks',
+  frontend = 'vue',
 } = {}) {
   try {
     const root = checkedRoot(inputRoot);
@@ -267,6 +270,9 @@ export function previewInit({
       return failure('INIT_OVERWRITE_UNSUPPORTED', '当前仅支持逐项保留冲突文件并补齐缺失文件');
     const normalized = normalizeJavaPreset(inputPreset);
     if (!normalized.ok) return normalized;
+    const frontendChoice = String(frontend || 'vue').trim();
+    if (!['vue', 'react'].includes(frontendChoice))
+      return failure('INVALID_FRONTEND', 'frontend 必须是 vue 或 react');
     const namespace = normalizeProjectNamespace({ company, business });
     if (!namespace.ok) return namespace;
     const preset = normalized.preset;
@@ -277,6 +283,7 @@ export function previewInit({
       preset,
       company: namespace.company,
       business: namespace.business,
+      frontend: frontendChoice,
     });
     const generated = [...new Set([...Object.keys(templates), ...EXTRA_FILES])].sort();
     const existing = new Map(snapshot.entries.map((entry) => [entryKey(entry.path), entry]));
@@ -308,6 +315,7 @@ export function previewInit({
     const body = {
       root,
       preset: preset.id,
+      frontend: frontendChoice,
       projectNamespace: {
         company: namespace.company,
         business: namespace.business,
@@ -326,6 +334,7 @@ export function previewInit({
       ok: true,
       root,
       preset: preset.id,
+      frontend: frontendChoice,
       projectNamespace: {
         company: namespace.company,
         business: namespace.business,
@@ -339,7 +348,7 @@ export function previewInit({
       snapshotHash: snapshotHash(snapshot),
       previewHash: createHash('sha256').update(JSON.stringify(body)).digest('hex'),
       templateHash: hash,
-      golden: goldenStatus(preset, hash),
+      golden: goldenStatus(preset, hash, frontendChoice),
       risks: [
         preset.legacy ? 'legacy：Java 8 / Spring Boot 2.7 维护风险' : null,
         preset.preview ? 'preview：Spring Boot 4.0 预览版本风险' : null,
@@ -371,6 +380,7 @@ function generateStaging({
   preset,
   company,
   business,
+  frontend,
   stageRoot,
   templateDirectory,
   signal,
@@ -380,7 +390,7 @@ function generateStaging({
   return new Promise((resolve) => {
     const child = spawn(
       process.execPath,
-      [WORKER_PATH, root, preset, JSON.stringify({ company, business })],
+      [WORKER_PATH, root, preset, JSON.stringify({ company, business, frontend })],
       {
         cwd: stageRoot,
         env: gitEnvironment({ emptyDirectory: templateDirectory }),
@@ -583,6 +593,7 @@ export async function executeInit(input = {}, { approvalProvider, signal } = {})
       preset: preview.preset,
       company: preview.projectNamespace.company,
       business: preview.projectNamespace.business,
+      frontend: preview.frontend,
       stageRoot,
       templateDirectory,
       signal,
@@ -608,6 +619,7 @@ export async function executeInit(input = {}, { approvalProvider, signal } = {})
             preset: normalizeJavaPreset(preview.preset).preset,
             company: preview.projectNamespace.company,
             business: preview.projectNamespace.business,
+            frontend: preview.frontend,
           }),
         ),
         ...EXTRA_FILES,

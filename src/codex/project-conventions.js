@@ -3,6 +3,7 @@ import path from 'node:path';
 import { loadProjectReadiness } from './project-state.js';
 
 const DEFAULT_LOCALES = ['zh-CN', 'en-US'];
+const DEFAULT_FRONTEND_FRAMEWORK = 'vue';
 
 function readJson(target) {
   try {
@@ -21,10 +22,26 @@ export function readProjectConventions({ projectRoot } = {}) {
   const frontendDefaultLocale =
     profile?.frontendDefaultLocale || monorepo?.frontendDefaultLocale || 'zh-CN';
   const frontendLocales = profile?.frontendLocales || monorepo?.frontendLocales || DEFAULT_LOCALES;
+  const frontendFramework =
+    profile?.frontendFramework || monorepo?.frontendFramework || DEFAULT_FRONTEND_FRAMEWORK;
+  const javaPreset = profile?.javaPreset || monorepo?.preset || null;
   return {
     backendPackage,
     frontendDefaultLocale,
     frontendLocales: [...frontendLocales],
+    frontendFramework,
+    javaPreset,
     templateStyle: '.specgate/template-style.json',
   };
+}
+
+/**
+ * Returns a violation reason when a file contradicts the project's recorded
+ * frontend framework, otherwise null. Only unambiguous cases are rejected: a
+ * React project must not add Vue single-file components.
+ */
+export function frontendFrameworkViolation(frontendFramework, filePath) {
+  if (frontendFramework === 'react' && /\.vue$/i.test(String(filePath || '')))
+    return 'A React project must not add Vue single-file components';
+  return null;
 }

@@ -4,13 +4,21 @@ import path from 'node:path';
 import { spawn, spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import {
+  CONTROL_MODE_ENV,
   controlExecutionEnvironment,
   localControlEnvironment,
+  resolveControlEnvironment,
   resolveControlRoot,
 } from '../src/codex/control/config.js';
 import { createLocalControlRuntime } from '../src/codex/control/runtime.js';
 import { readDaemonStatus } from '../src/codex/control/daemon.js';
 import { generateTotpSecret } from '../src/codex/control/step-up.js';
+import {
+  DEFAULT_PROBE_TIMEOUT_MS,
+  createSyncProbeRunner,
+  describeDegradation,
+  detectCapabilities,
+} from '../src/codex/control/capabilities.js';
 
 const SOURCE_ROOT = path.resolve(fileURLToPath(new URL('..', import.meta.url)));
 const WORKER = path.join(SOURCE_ROOT, 'src/codex/control/daemon-worker.mjs');
@@ -102,24 +110,41 @@ export async function runControlCli({
   const requestedProjectRoot = option(args, '--project');
   const configuredProjectRoot = requestedProjectRoot || env.SPECGATE_PROJECT_ROOT || null;
   const projectRoot = path.resolve(configuredProjectRoot || cwd);
+  const modeArg = option(args, '--mode');
   const controlRoot = resolveControlRoot({ env });
+  // The mode-aware commands (start/stop/status/list/register/create/attention)
+  // resolve their effective control home and port from the mode. Aggregate keeps
+  // the shared home; isolated derives a per-project home/port. Invalid
+  // mode/root/port fails closed instead of writing to the wrong home.
+  const resolveMode = () => resolveControlEnvironment({ env, mode: modeArg, projectRoot });
+  // The effective control home is already mode-resolved, so runtime reads pin the
+  // aggregate mode and must not re-derive (and re-nest) an isolated home.
+  const runtimeFor = (effectiveRoot) =>
+    runtimeFactory({
+      env: { ...env, SPECGATE_CONTROL_HOME: effectiveRoot, [CONTROL_MODE_ENV]: 'aggregate' },
+    });
   if (command === 'help') {
     return {
       ok: true,
       usage: [
-        'specgate-control start [--project <path>]',
-        'specgate-control stop',
-        'specgate-control status',
+        'specgate-control start [--project <path>] [--mode aggregate|isolated]',
+        'specgate-control stop [--project <path>] [--mode aggregate|isolated]',
+        'specgate-control status [--project <path>] [--mode aggregate|isolated]',
+        'specgate-control register --project <path> [--mode aggregate|isolated]',
         'specgate-control create --title <text> --request <text> [--project <path>]',
-        'specgate-control list',
+        'specgate-control list [--mode aggregate|isolated]',
         'specgate-control attention',
         'specgate-control mfa',
         'specgate-control doctor [--project <path>]',
+        `Control mode defaults to aggregate; set --mode or ${CONTROL_MODE_ENV}=aggregate|isolated.`,
       ],
     };
   }
   if (command === 'start') {
-    const existing = readDaemonStatus({ controlRoot });
+    const resolved = resolveMode();
+    if (!resolved.ok) return resolved;
+    const effectiveControlRoot = resolved.controlRoot;
+    const existing = readDaemonStatus({ controlRoot: effectiveControlRoot });
     if (existing.ok && pidAlive(existing.status.pid)) {
       if (
         configuredProjectRoot &&
@@ -132,10 +157,15 @@ export async function runControlCli({
           message: 'The running daemon is bound to another project; stop it before rebinding',
           projectRoot: existing.status.projectRoot,
         };
-      return { ok: true, alreadyRunning: true, ...existing.status };
+      return {
+        ok: true,
+        alreadyRunning: true,
+        mode: existing.status.mode || resolved.mode,
+        ...existing.status,
+      };
     }
-    fs.mkdirSync(controlRoot, { recursive: true, mode: 0o700 });
-    const logPath = path.join(controlRoot, 'daemon.log');
+    fs.mkdirSync(effectiveControlRoot, { recursive: true, mode: 0o700 });
+    const logPath = path.join(effectiveControlRoot, 'daemon.log');
     const logFd = fs.openSync(logPath, 'a', 0o600);
     let child;
     try {
@@ -144,7 +174,10 @@ export async function runControlCli({
         env: {
           ...env,
           SPECGATE_PROJECT_ROOT: projectRoot,
+          // The worker derives the isolated home itself from the base control
+          // home + mode, so both sides compute the same root exactly once.
           SPECGATE_CONTROL_HOME: controlRoot,
+          [CONTROL_MODE_ENV]: resolved.mode,
         },
         detached: true,
         stdio: ['ignore', logFd, logFd],
@@ -154,24 +187,51 @@ export async function runControlCli({
       fs.closeSync(logFd);
     }
     child.unref();
-    const status = await waitForStatus(controlRoot);
-    return status.ok ? { ok: true, ...status.status, logPath } : status;
+    const status = await waitForStatus(effectiveControlRoot);
+    return status.ok
+      ? {
+          ok: true,
+          mode: resolved.mode,
+          controlRoot: effectiveControlRoot,
+          ...status.status,
+          logPath,
+        }
+      : status;
   }
   if (command === 'status') {
-    const status = readDaemonStatus({ controlRoot });
+    const resolved = resolveMode();
+    if (!resolved.ok) return resolved;
+    const status = readDaemonStatus({ controlRoot: resolved.controlRoot });
     if (!status.ok) return status;
+    let controlMode = status.status.mode || resolved.mode;
+    let projects = Array.isArray(status.status.registeredProjects)
+      ? status.status.registeredProjects
+      : [];
+    const runtime = runtimeFor(resolved.controlRoot);
+    if (typeof runtime?.service?.projection?.listRegistry === 'function') {
+      const registry = await runtime.service.projection.listRegistry();
+      if (registry.ok) {
+        projects = registry.projects;
+        controlMode = registry.controlMode || controlMode;
+      }
+    }
     return {
       ok: true,
       running: pidAlive(status.status.pid),
+      mode: controlMode,
+      projects,
       ...status.status,
     };
   }
   if (command === 'stop') {
-    const status = readDaemonStatus({ controlRoot });
+    const resolved = resolveMode();
+    if (!resolved.ok) return resolved;
+    const stopRoot = resolved.controlRoot;
+    const status = readDaemonStatus({ controlRoot: stopRoot });
     if (!status.ok) return { ok: true, alreadyStopped: true };
     if (pidAlive(status.status.pid)) {
       const stopped = await requestGracefulStop({
-        controlRoot,
+        controlRoot: stopRoot,
         status: status.status,
         spawnImpl,
         platform,
@@ -179,8 +239,8 @@ export async function runControlCli({
       if (!stopped)
         return { ok: false, code: 'DAEMON_STOP_FAILED', message: 'Daemon could not be stopped' };
     }
-    fs.rmSync(path.join(controlRoot, 'daemon.json'), { force: true });
-    fs.rmSync(path.join(controlRoot, 'stop.request'), { force: true });
+    fs.rmSync(path.join(stopRoot, 'daemon.json'), { force: true });
+    fs.rmSync(path.join(stopRoot, 'stop.request'), { force: true });
     return { ok: true, stopped: true };
   }
   if (command === 'mfa') {
@@ -196,19 +256,32 @@ export async function runControlCli({
   }
   if (command === 'doctor') {
     const config = localControlEnvironment(env);
+    const codexEnv = controlExecutionEnvironment({
+      env: config.codexHome ? { ...env, CODEX_HOME: config.codexHome } : env,
+      projectRoot,
+      controlRoot,
+    });
     const codex = spawnSyncImpl(config.codexCommand, ['--version'], {
       cwd: projectRoot,
       encoding: 'utf8',
       windowsHide: true,
       timeout: 10000,
-      env: controlExecutionEnvironment({
-        env: config.codexHome ? { ...env, CODEX_HOME: config.codexHome } : env,
-        projectRoot,
-        controlRoot,
-      }),
+      env: codexEnv,
       maxBuffer: 1024 * 1024,
     });
     const codexAvailable = codex?.status === 0;
+    // Bounded, non-interactive, read-only host capability probe. A `not-probed`
+    // capability is reported honestly and never fails the command.
+    const capabilityStates = await detectCapabilities({
+      exec: createSyncProbeRunner({
+        command: config.codexCommand,
+        spawnSyncImpl,
+        cwd: projectRoot,
+        env: codexEnv,
+        timeoutMs: DEFAULT_PROBE_TIMEOUT_MS,
+      }),
+    });
+    const degradation = describeDegradation(capabilityStates);
     return {
       ok: codexAvailable,
       platform,
@@ -235,6 +308,13 @@ export async function runControlCli({
               message: 'The configured Codex command could not run --version',
             }),
       },
+      capabilities: {
+        states: capabilityStates,
+        mode: degradation.mode,
+        degradations: degradation.degradations,
+        blocked: degradation.blocked,
+        versionGateHint: degradation.versionGateHint,
+      },
       isolation: {
         explicitProjectBinding: true,
         unrelatedMcpDisabled: true,
@@ -242,9 +322,23 @@ export async function runControlCli({
       },
     };
   }
-  const runtime = runtimeFactory({ env });
+  if (command === 'register') {
+    const resolved = resolveMode();
+    if (!resolved.ok) return resolved;
+    const runtime = runtimeFor(resolved.controlRoot);
+    if (typeof runtime?.service?.registerProject !== 'function')
+      return {
+        ok: false,
+        code: 'NOT_AVAILABLE',
+        message: 'The control service cannot register projects',
+      };
+    const registered = await runtime.service.registerProject({ projectRoot, mode: resolved.mode });
+    return { ...registered, mode: resolved.mode, controlRoot: resolved.controlRoot };
+  }
   if (command === 'create') {
-    const bound = readDaemonStatus({ controlRoot });
+    const resolved = resolveMode();
+    if (!resolved.ok) return resolved;
+    const bound = readDaemonStatus({ controlRoot: resolved.controlRoot });
     const boundProjectRoot =
       !requestedProjectRoot && bound.ok && pidAlive(bound.status.pid) && bound.status.projectRoot
         ? path.resolve(bound.status.projectRoot)
@@ -257,6 +351,7 @@ export async function runControlCli({
         code: 'INVALID_ARGUMENT',
         message: '--title and --request are required',
       };
+    const runtime = runtimeFor(resolved.controlRoot);
     return runtime.service.createWorkItem({
       title,
       request,
@@ -264,8 +359,33 @@ export async function runControlCli({
       priority: option(args, '--priority', 'normal'),
     });
   }
-  if (command === 'list') return runtime.service.projection.listWorkItems();
-  if (command === 'attention') return runtime.service.projection.listAttention();
+  if (command === 'list') {
+    const resolved = resolveMode();
+    if (!resolved.ok) return resolved;
+    const runtime = runtimeFor(resolved.controlRoot);
+    const registry =
+      typeof runtime?.service?.projection?.listRegistry === 'function'
+        ? await runtime.service.projection.listRegistry()
+        : { ok: true, projects: [] };
+    if (!registry.ok) return registry;
+    const workItems =
+      typeof runtime?.service?.projection?.listWorkItems === 'function'
+        ? await runtime.service.projection.listWorkItems()
+        : { ok: true, workItems: [] };
+    if (!workItems.ok) return workItems;
+    return {
+      ok: true,
+      mode: resolved.mode,
+      projects: registry.projects,
+      workItems: workItems.workItems,
+    };
+  }
+  if (command === 'attention') {
+    const resolved = resolveMode();
+    if (!resolved.ok) return resolved;
+    const runtime = runtimeFor(resolved.controlRoot);
+    return runtime.service.projection.listAttention();
+  }
   return { ok: false, code: 'UNKNOWN_COMMAND', message: `Unknown command: ${command}` };
 }
 

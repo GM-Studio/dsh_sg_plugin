@@ -412,7 +412,6 @@ test('adopted quality verification uses ProjectProfile commands and Baseline Del
     root: context.root,
     targetBranch: git(context.root, ['rev-parse', '--abbrev-ref', 'HEAD']),
     remoteUrl: null,
-    pushApproved: false,
     backendPackage: 'com.acme.orders',
     frontendDefaultLocale: 'zh-CN',
     frontendLocales: ['zh-CN', 'en-US'],

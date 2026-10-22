@@ -107,7 +107,6 @@ test('records a green new-project baseline only after complete verification', (t
   assert.equal(result.ok, true, JSON.stringify(result));
   assert.equal(result.profile.mode, 'new');
   assert.equal(result.profile.stack, 'java-vue');
-  assert.equal(result.profile.pushApproved, false);
   assert.equal(result.profile.backendPackage, 'com.acme.orders');
   assert.equal(result.profile.frontendDefaultLocale, 'zh-CN');
   assert.deepEqual(result.profile.frontendLocales, ['zh-CN', 'en-US']);

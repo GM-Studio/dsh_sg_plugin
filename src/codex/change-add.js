@@ -4,6 +4,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
 import { buildChangeContract, normalizeChangeInput, validateChangeInput } from './change-policy.js';
+import { createIncrementalPlan } from './incremental.js';
 import { canonicalJson, hashValue } from './events.js';
 import { gitSafeDirectory } from './git-path.js';
 import { readDeliveryRecord } from './delivery.js';
@@ -39,6 +40,15 @@ const text = (value, max = 16000) =>
 const id = (value) => typeof value === 'string' && /^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$/.test(value);
 const keys = (value, allowed) =>
   object(value) && Object.keys(value).every((key) => allowed.includes(key));
+const IMPACT_KEYS = ['affectedAcIds', 'reusedAcIds'];
+const idList = (value) => Array.isArray(value) && value.every((entry) => id(entry));
+// Only the shape is enforced here; the incremental algebra (unknown ACs,
+// inconsistent reuse) stays in incremental.js and is surfaced verbatim.
+const validImpact = (value) =>
+  value === undefined ||
+  (keys(value, IMPACT_KEYS) &&
+    (value.affectedAcIds === undefined || idList(value.affectedAcIds)) &&
+    (value.reusedAcIds === undefined || idList(value.reusedAcIds)));
 const failure = (code, message, extra = {}) => ({ ok: false, code, message, ...extra });
 const secret = (value) =>
   /(?:\bBearer\s+[A-Za-z0-9._~+/-]{12,}|\b(?:password|passwd|api[_-]?key|access[_-]?token|client[_-]?secret)\s*[=:]\s*[^\s,;]{6,}|-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----)/i.test(
@@ -425,11 +435,13 @@ export function createChangeAddService({
       },
     });
 
-  async function startCommon(args, type, details, parentDeliveryId = null) {
+  async function startCommon(args, type, details, parentDeliveryId = null, impact = null) {
     const validation = validateChangeInput({ type, request: args.request, details });
     if (!validation.ok) return validation;
     const ready = await inspectPrerequisites();
     if (!ready.ok) return ready;
+    const changeId = args.name ?? stableChangeName(args.request);
+    let incremental = null;
     if (parentDeliveryId) {
       if (!ready.project)
         return failure(
@@ -451,10 +463,39 @@ export function createChangeAddService({
         parent.delivery.releaseState !== 'customer-accepted'
       )
         return failure('PARENT_DELIVERY_NOT_ACCEPTED', 'Parent delivery is not accepted');
+      // The contract only supplies identity here; requirements (and their ACs)
+      // arrive later, so allowed ACs come from the accepted parent delivery.
+      const plan = createIncrementalPlan({
+        projectId: ready.project.projectId,
+        parent: parent.delivery,
+        contract: {
+          changeId,
+          parentDeliveryId: parent.delivery.deliveryId,
+          acceptance: [],
+        },
+        impact: {
+          affectedAcIds: impact?.affectedAcIds,
+          reusedAcIds: impact?.reusedAcIds ?? [],
+        },
+      });
+      if (!plan.ok) return plan;
+      const hash = 'sha256:' + hashValue(plan.plan);
+      const artifactPath =
+        `.specgate/codex/changes/${changeId}/incremental/plan-` +
+        `${hash.replace(/^sha256:/, '')}.json`;
+      try {
+        writeImmutable(root, artifactPath, plan.plan);
+      } catch {
+        return failure(
+          'SNAPSHOT_CONFLICT',
+          'The incremental delivery plan could not be safely written',
+        );
+      }
+      incremental = { hash, path: artifactPath, plan: clone(plan.plan) };
     }
     return store.create({
       expectedVersion: args.expectedVersion,
-      changeId: args.name ?? stableChangeName(args.request),
+      changeId,
       context: {
         changeAdd: {
           request: { text: args.request, source: 'command-input', at: now() },
@@ -464,6 +505,7 @@ export function createChangeAddService({
             parentDeliveryId,
             baselineId: ready.project?.baselineId ?? 'baseline-legacy',
           },
+          incremental,
           revisions: [],
           rounds: [],
           critique: null,
@@ -494,7 +536,15 @@ export function createChangeAddService({
 
   async function startTyped(args = {}) {
     if (
-      !keys(args, ['name', 'request', 'expectedVersion', 'type', 'details', 'parentDeliveryId']) ||
+      !keys(args, [
+        'name',
+        'request',
+        'expectedVersion',
+        'type',
+        'details',
+        'parentDeliveryId',
+        'impact',
+      ]) ||
       !text(args.request) ||
       (args.name !== undefined && !id(args.name))
     )
@@ -508,7 +558,18 @@ export function createChangeAddService({
       details: args.details ?? {},
     });
     if (!normalized.ok) return normalized;
-    return startCommon(args, normalized.type, normalized.details, args.parentDeliveryId ?? null);
+    if (!validImpact(args.impact))
+      return failure(
+        'INVALID_ARGUMENT',
+        'Impact may only contain affectedAcIds and reusedAcIds identifier lists',
+      );
+    return startCommon(
+      args,
+      normalized.type,
+      normalized.details,
+      args.parentDeliveryId ?? null,
+      args.impact,
+    );
   }
 
   async function cancelled() {

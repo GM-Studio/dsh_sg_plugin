@@ -3,6 +3,7 @@ const COMMIT = /^[a-f0-9]{40,64}$/i;
 const HASH = /^[a-f0-9]{64}$/i;
 const JAVA_PACKAGE = /^[a-z][a-z0-9_]*(?:\.[a-z][a-z0-9_]*){2,127}$/;
 const LOCALE = /^[a-z]{2,3}(?:-[A-Z]{2})?$/;
+const FRONTEND_FRAMEWORKS = ['vue', 'react'];
 const DELIVERY_STATES = [
   'change-verified',
   'delivery-accepted',
@@ -105,13 +106,18 @@ export function validateProjectProfile(value) {
     'root',
     'targetBranch',
     'remoteUrl',
-    'pushApproved',
     'commands',
     'protectedPaths',
     'createdAt',
     'updatedAt',
   ];
-  const conventionKeys = ['backendPackage', 'frontendDefaultLocale', 'frontendLocales'];
+  const conventionKeys = [
+    'backendPackage',
+    'frontendDefaultLocale',
+    'frontendLocales',
+    'frontendFramework',
+    'javaPreset',
+  ];
   const keys = [...baseKeys, ...conventionKeys.filter((key) => Object.hasOwn(value || {}, key))];
   if (!exactKeys(value, keys))
     return failure('PROJECT_PROFILE_INVALID', 'ProjectProfile fields are invalid');
@@ -123,7 +129,6 @@ export function validateProjectProfile(value) {
     !nonEmpty(value.root) ||
     !nonEmpty(value.targetBranch, 255) ||
     !optionalRemote(value.remoteUrl) ||
-    typeof value.pushApproved !== 'boolean' ||
     !date(value.createdAt) ||
     !date(value.updatedAt)
   )
@@ -160,11 +165,15 @@ export function validateProjectProfile(value) {
         new Set(value.frontendLocales).size !== value.frontendLocales.length)) ||
     (value.frontendDefaultLocale !== undefined &&
       value.frontendLocales !== undefined &&
-      !value.frontendLocales.includes(value.frontendDefaultLocale))
+      !value.frontendLocales.includes(value.frontendDefaultLocale)) ||
+    (value.frontendFramework !== undefined &&
+      !FRONTEND_FRAMEWORKS.includes(value.frontendFramework)) ||
+    (value.javaPreset !== undefined &&
+      (typeof value.javaPreset !== 'string' || !id(value.javaPreset)))
   )
     return failure(
       'PROJECT_CONVENTIONS_INVALID',
-      'Project package and locale conventions are invalid',
+      'Project package, locale, framework and preset conventions are invalid',
     );
   return ok();
 }

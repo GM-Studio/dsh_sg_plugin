@@ -1,8 +1,8 @@
 # Starter security scope
 
-Supplied controls: Spring Security authorization, Session Cookie login/logout, explicit session rotation, CSRF, BCrypt hashes of environment-supplied passwords, two fixed roles, bounded login failures, loopback binding, safe generic JSON errors, trace ids, bounded CSV/file processing, path/type checks and authorized attachment downloads.
+Supplied controls: Spring Security authorization, Session Cookie login/logout, explicit session rotation, CSRF, BCrypt hashes of environment-supplied passwords, two fixed roles, bounded login failures, loopback binding, safe generic JSON errors, trace ids and bounded CSV import/export processing.
 
-This remains a local reference application. It does not provide registration, password recovery, SSO, tenant/owner isolation, antivirus scanning, shared/distributed sessions or production database migrations. File content is not rendered inline. Protect the database and uploaded files with operating-system permissions.
+This remains a local reference application. It does not provide registration, password recovery, SSO, tenant/owner isolation, antivirus scanning, shared/distributed sessions or production database migrations. Protect the database with operating-system permissions.
 
 ## Legacy stack
 

@@ -12,6 +12,7 @@ try {
     version,
     company: namespace.company,
     business: namespace.business,
+    frontend: namespace.frontend,
     userQuestions: { ask: async () => ({ answers: [{ selected: ['确认'] }] }) },
   });
 } catch (error) {

@@ -4,7 +4,7 @@ import { spawn, execFileSync } from 'node:child_process';
 import { randomUUID } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { canonicalJson, hashValue } from './events.js';
-import { readProjectConventions } from './project-conventions.js';
+import { frontendFrameworkViolation, readProjectConventions } from './project-conventions.js';
 
 const SOURCE_ROOT = path.resolve(fileURLToPath(new URL('../..', import.meta.url)));
 const ROLES = Object.freeze(['frontend', 'backend', 'integration', 'test', 'review', 'format']);
@@ -779,6 +779,13 @@ export function createDevelopmentService({
           path: entry.path,
           reason: 'New Java source cannot be added under com.example.*',
         });
+      if (role === 'frontend') {
+        const frameworkViolation = frontendFrameworkViolation(
+          conventions.frontendFramework,
+          entry.path,
+        );
+        if (frameworkViolation) violations.push({ path: entry.path, reason: frameworkViolation });
+      }
     }
     if (violations.length)
       return failure(

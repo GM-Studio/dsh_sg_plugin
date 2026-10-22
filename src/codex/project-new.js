@@ -118,13 +118,14 @@ export function recordNewProjectBaseline({
       root,
       targetBranch: detected.git.branch || 'main',
       remoteUrl: detected.git.remoteUrl,
-      pushApproved: false,
       ...detected.conventions,
       ...(monorepo?.backendPackage
         ? {
             backendPackage: monorepo.backendPackage,
             frontendDefaultLocale: monorepo.frontendDefaultLocale || 'zh-CN',
             frontendLocales: monorepo.frontendLocales || ['zh-CN', 'en-US'],
+            frontendFramework: monorepo.frontendFramework || 'vue',
+            ...(monorepo.preset ? { javaPreset: monorepo.preset } : {}),
           }
         : {}),
       commands: detected.commands,

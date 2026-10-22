@@ -58,7 +58,7 @@
     "codex:matrix": "node scripts/verify-codex-matrix.mjs",
     "codex:source:setup": "node scripts/codex-source-setup.mjs",
     "codex:control": "node scripts/specgate-control.mjs",
-    "test": "node --import ./test/setup-temp.mjs --test",
+    "test": "node --import ./test/setup-temp.mjs --test --test-concurrency=2",
     "lint": "eslint .",
     "format": "prettier --write .",
     "format:check": "prettier --check .",

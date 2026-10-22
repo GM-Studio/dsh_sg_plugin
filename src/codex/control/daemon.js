@@ -2,10 +2,15 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { randomBytes } from 'node:crypto';
 import { createManagementServer } from '../management/server.js';
-import { createLocalControlRuntime, createLocalManagementServices } from './runtime.js';
+import {
+  createFileSessionStore,
+  createLocalControlRuntime,
+  createLocalManagementServices,
+} from './runtime.js';
 import { createCodexExecutionAdapter } from './codex-execution-adapter.js';
 import { createControlSupervisor } from './supervisor.js';
-import { controlExecutionEnvironment } from './config.js';
+import { controlExecutionEnvironment, resolveControlMode } from './config.js';
+import { resolveGlobalConcurrency } from './projects.js';
 import { createFeishuNotifier } from '../channels/feishu.js';
 import { createAttentionNotifier, createNotificationOutbox } from '../channels/outbox.js';
 
@@ -31,7 +36,8 @@ export async function startControlDaemon({
   env = process.env,
   clock = Date.now,
   projectRoot = env.SPECGATE_PROJECT_ROOT || process.cwd(),
-  maxConcurrent = 2,
+  mode = null,
+  maxConcurrent = undefined,
   pollMs = 2000,
   shutdownTimeoutMs = 5000,
   managementPort = undefined,
@@ -41,15 +47,50 @@ export async function startControlDaemon({
   runtime: providedRuntime = null,
   logger = () => {},
 } = {}) {
-  const runtime = providedRuntime || createLocalControlRuntime({ env, clock });
+  const selectedMode = resolveControlMode({ env, mode });
+  if (!selectedMode.ok) return selectedMode;
+  const controlMode = selectedMode.mode;
+  const resolvedProjectRoot = path.resolve(projectRoot);
+  const runtime =
+    providedRuntime ||
+    createLocalControlRuntime({ env, clock, mode: controlMode, projectRoot: resolvedProjectRoot });
+  if (runtime && runtime.ok === false && runtime.code) return runtime;
   const config = runtime.config;
+
+  // Register this project in the durable control home so a single aggregate
+  // console can see several projects. Re-registering the same project is
+  // idempotent and never overwrites another project's row.
+  let registration = null;
+  if (typeof runtime.service.registerProject === 'function') {
+    registration = await runtime.service.registerProject({
+      projectRoot: resolvedProjectRoot,
+      mode: controlMode,
+    });
+    if (!registration.ok) return registration;
+  }
+
+  // The aggregate global concurrency limit is enforced across every project the
+  // shared daemon serves; an absent request falls back to the configured
+  // default (2) and a request is clamped to the configured bounds.
+  let concurrency = null;
+  let concurrencyLimit =
+    Number.isSafeInteger(maxConcurrent) && maxConcurrent > 0 ? maxConcurrent : 2;
+  if (typeof runtime.service.inspect === 'function') {
+    const inspected = await runtime.service.inspect();
+    if (inspected.ok) {
+      concurrency = resolveGlobalConcurrency(inspected.state, maxConcurrent);
+      if (concurrency.ok) concurrencyLimit = concurrency.effective;
+    }
+  }
+
   const managed = createLocalManagementServices({
     env,
     clock,
     service: runtime.service,
-    defaultProjectRoot: path.resolve(projectRoot),
+    defaultProjectRoot: resolvedProjectRoot,
   });
   const pairing = { token: randomBytes(24).toString('base64url') };
+  const sessionStore = createFileSessionStore({ root: runtime.store.root });
   const management = createManagementServer({
     services: managed.services,
     clock,
@@ -57,6 +98,7 @@ export async function startControlDaemon({
     port: managementPort ?? config.managementPort,
     host: managementHost,
     secureCookie: config.managementPublicUrl.startsWith('https:'),
+    sessionStore,
   });
   const started = await management.start();
   const executionAdapter =
@@ -67,7 +109,7 @@ export async function startControlDaemon({
       sandbox: config.codexSandbox,
       env: controlExecutionEnvironment({
         env: config.codexHome ? { ...env, CODEX_HOME: config.codexHome } : env,
-        projectRoot,
+        projectRoot: resolvedProjectRoot,
         controlRoot: runtime.store.root,
       }),
     });
@@ -175,7 +217,7 @@ export async function startControlDaemon({
       await stop();
       return;
     }
-    for (let launch = active.size; launch < maxConcurrent; launch += 1) {
+    for (let launch = active.size; launch < concurrencyLimit; launch += 1) {
       const execution = supervisor
         .runOnce()
         .then((result) => {
@@ -214,12 +256,21 @@ export async function startControlDaemon({
   const statusPath = path.join(runtime.store.root, 'daemon.json');
   const baseUrl = started.baseUrl;
   const pairingUrl = management.pairingUrl(baseUrl);
+  let registeredProjects = [];
+  if (typeof runtime.service.projection.listRegistry === 'function') {
+    const registry = await runtime.service.projection.listRegistry();
+    if (registry.ok) registeredProjects = registry.projects;
+  }
   writeJsonAtomic(statusPath, {
     schemaVersion: 1,
     pid: process.pid,
     startedAt: new Date(clock()).toISOString(),
     controlRoot: runtime.store.root,
-    projectRoot: path.resolve(projectRoot),
+    projectRoot: resolvedProjectRoot,
+    projectId: registration?.projectId || null,
+    mode: controlMode,
+    maxConcurrent: concurrencyLimit,
+    registeredProjects,
     managementBaseUrl: baseUrl,
     managementPublicUrl: config.managementPublicUrl,
     pairingUrl,
@@ -254,6 +305,11 @@ export async function startControlDaemon({
     management,
     supervisor,
     outbox,
+    mode: controlMode,
+    projectRoot: resolvedProjectRoot,
+    registration,
+    concurrency,
+    concurrencyLimit,
     baseUrl,
     pairingUrl,
     statusPath,

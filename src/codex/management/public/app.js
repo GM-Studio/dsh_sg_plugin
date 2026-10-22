@@ -7,6 +7,7 @@ const state = {
   workItems: [],
   attention: [],
   notifications: [],
+  expandedProjects: new Set(),
   selectedWorkItemId: null,
   refreshTimer: null,
   abortController: null,
@@ -25,6 +26,8 @@ const elements = {
   attentionCount: document.querySelector('#attention-count'),
   attentionList: document.querySelector('#attention-list'),
   projectList: document.querySelector('#project-list'),
+  portfolioList: document.querySelector('#portfolio-list'),
+  portfolioSummary: document.querySelector('#portfolio-summary'),
   workItemList: document.querySelector('#work-item-list'),
   monitoringList: document.querySelector('#monitoring-list'),
   notificationList: document.querySelector('#notification-list'),
@@ -76,6 +79,40 @@ function statusLabel(status) {
     }[status] ||
     status ||
     '未知'
+  );
+}
+
+// Cross-project attention severity, lowest rank first. Mirrors the control
+// plane's ATTENTION_SEVERITY ordering so the console home matches the queue:
+// high-risk human gates precede blocking/failure escalations, which precede
+// routine clarifications and the terminal completion notice.
+const ATTENTION_SEVERITY = {
+  H1_APPROVAL: 0,
+  H3_APPROVAL: 1,
+  BLOCKED: 2,
+  FAILED: 3,
+  BUDGET: 4,
+  CUSTOMER_ACCEPTANCE: 5,
+  CLARIFICATION: 6,
+  OFFLINE: 7,
+  COMPLETION: 8,
+};
+
+function attentionSeverity(type) {
+  const rank = ATTENTION_SEVERITY[type];
+  return Number.isFinite(rank) ? rank : 99;
+}
+
+function timeValue(value) {
+  const parsed = Date.parse(value);
+  return Number.isFinite(parsed) ? parsed : 0;
+}
+
+function compareAttention(left, right) {
+  return (
+    attentionSeverity(left?.type) - attentionSeverity(right?.type) ||
+    timeValue(left?.createdAt) - timeValue(right?.createdAt) ||
+    String(left?.requestId || '').localeCompare(String(right?.requestId || ''))
   );
 }
 
@@ -157,6 +194,8 @@ function renderAttention() {
         <h3>${escapeHtml(entry.question || entry.reason || '需要你的决定')}</h3>
         <p>${escapeHtml(entry.summary || entry.reason || '')}</p>
         <dl class="compact">
+          <div><dt>项目</dt><dd>${escapeHtml(projectLabel(entry.projectId))}</dd></div>
+          <div><dt>类型</dt><dd>${escapeHtml(entry.type || '决策')}</dd></div>
           <div><dt>失效时间</dt><dd>${escapeHtml(entry.expiresAt || '未设置')}</dd></div>
           <div><dt>版本</dt><dd>${escapeHtml(entry.revision || 1)}</dd></div>
         </dl>
@@ -217,6 +256,116 @@ function renderProjects() {
           <div><dt>执行中</dt><dd>${running}</dd></div>
           <div><dt>待决策</dt><dd>${waiting}</dd></div>
         </dl>
+      </article>`;
+    })
+    .join('');
+}
+
+function projectLabel(projectId) {
+  const project = (state.overview?.projects || []).find((entry) => entry.projectId === projectId);
+  return (project && project.name) || projectId || '未登记项目';
+}
+
+function hostHealthLabel(health) {
+  return (
+    {
+      ONLINE: '宿主在线',
+      OFFLINE: '宿主离线',
+      INTERRUPTED: '宿主中断',
+      SUSPECT: '宿主可疑',
+    }[health] || '宿主未知'
+  );
+}
+
+// Roll one project up from the WorkItems the projection already exposes:
+// counts per executionState and the worst host health seen across its items.
+function projectRollup(items) {
+  const counts = { total: items.length, running: 0, waiting: 0, blocked: 0, failed: 0 };
+  for (const item of items) {
+    if (item.executionState === 'RUNNING') counts.running += 1;
+    else if (item.executionState === 'WAITING_FOR_USER') counts.waiting += 1;
+    else if (item.executionState === 'BLOCKED') counts.blocked += 1;
+    else if (item.executionState === 'FAILED') counts.failed += 1;
+  }
+  const healths = items.map((item) => item.hostHealth).filter(Boolean);
+  const hostHealth = healths.some((health) => ['OFFLINE', 'INTERRUPTED'].includes(health))
+    ? 'OFFLINE'
+    : healths.includes('SUSPECT')
+      ? 'SUSPECT'
+      : 'ONLINE';
+  return { counts, hostHealth };
+}
+
+function portfolioItemRow(item) {
+  return `<article class="work-item-row" data-open-work-item="${escapeHtml(item.workItemId)}" tabindex="0">
+    <div>
+      <div class="card-topline">
+        <span class="status ${item.summary?.needsUser ? 'status-warning' : ''}">${escapeHtml(statusLabel(item.summary?.status || item.executionState))}</span>
+        <span class="muted">${escapeHtml(item.priority || 'normal')}</span>
+      </div>
+      <h3>${escapeHtml(item.title)}</h3>
+      <p class="muted">${escapeHtml(item.nextAction || '')}</p>
+    </div>
+    <div class="row-meta">
+      <span>${escapeHtml(item.humanDecisionCount || 0)} 次决策</span>
+      <span>${escapeHtml(item.updatedAt || '')}</span>
+    </div>
+  </article>`;
+}
+
+// Aggregate portfolio view: one row per registered project with its WorkItem
+// counts, running/waiting/blocked/failed rollups and host health, expanding to
+// that project's WorkItems. Built purely from /api/projects + /api/work-items.
+function renderPortfolio() {
+  const projects = state.overview?.projects || [];
+  const totals = projectRollup(state.workItems);
+  elements.portfolioSummary.innerHTML = `
+    <div class="card-topline">
+      <span class="status">组合 ${projects.length} 个项目</span>
+      <span class="status ${totals.hostHealth === 'ONLINE' ? '' : 'status-error'}">${escapeHtml(hostHealthLabel(totals.hostHealth))}</span>
+    </div>
+    <dl class="metrics">
+      <div><dt>WorkItems</dt><dd>${totals.counts.total}</dd></div>
+      <div><dt>执行中</dt><dd>${totals.counts.running}</dd></div>
+      <div><dt>待决策</dt><dd>${totals.counts.waiting}</dd></div>
+      <div><dt>阻塞</dt><dd>${totals.counts.blocked}</dd></div>
+      <div><dt>失败</dt><dd>${totals.counts.failed}</dd></div>
+    </dl>`;
+  if (!projects.length) {
+    elements.portfolioList.innerHTML = empty('还没有已登记项目');
+    return;
+  }
+  elements.portfolioList.innerHTML = projects
+    .map((project) => {
+      const items = state.workItems.filter((item) => item.projectId === project.projectId);
+      const { counts, hostHealth } = projectRollup(items);
+      const expanded = state.expandedProjects.has(project.projectId);
+      return `<article class="portfolio-row${expanded ? ' expanded' : ''}">
+        <div class="portfolio-head">
+          <button class="project-toggle" data-project-toggle="${escapeHtml(project.projectId)}"
+            aria-expanded="${expanded ? 'true' : 'false'}" type="button">
+            <span class="portfolio-name">${escapeHtml(project.name || project.projectId)}</span>
+            <span class="muted">${escapeHtml(project.projectId)}</span>
+            <span class="status">${escapeHtml(project.status || 'READY')}</span>
+          </button>
+          <span class="status ${hostHealth === 'ONLINE' ? '' : 'status-error'}">${escapeHtml(hostHealthLabel(hostHealth))}</span>
+        </div>
+        <dl class="metrics">
+          <div><dt>WorkItems</dt><dd>${counts.total}</dd></div>
+          <div><dt>执行中</dt><dd>${counts.running}</dd></div>
+          <div><dt>待决策</dt><dd>${counts.waiting}</dd></div>
+          <div><dt>阻塞</dt><dd>${counts.blocked}</dd></div>
+          <div><dt>失败</dt><dd>${counts.failed}</dd></div>
+        </dl>
+        ${
+          expanded
+            ? `<div class="portfolio-items">${
+                items.length
+                  ? items.map(portfolioItemRow).join('')
+                  : '<p class="muted">该项目暂无 WorkItem</p>'
+              }</div>`
+            : ''
+        }
       </article>`;
     })
     .join('');
@@ -303,6 +452,7 @@ function renderNotifications() {
 
 function renderAll() {
   renderAttention();
+  renderPortfolio();
   renderProjects();
   renderWorkItems();
   renderMonitoring();
@@ -326,9 +476,9 @@ async function refresh() {
       throw new Error('部分管理数据不可用');
     state.overview = { projects: overview.body.projects || [] };
     state.workItems = workItems.body.workItems || [];
-    state.attention = (attention.body.attention || []).filter((entry) =>
-      ['OPEN', 'DELIVERED', 'REMINDED'].includes(entry.status),
-    );
+    state.attention = (attention.body.attention || [])
+      .filter((entry) => ['OPEN', 'DELIVERED', 'REMINDED'].includes(entry.status))
+      .sort(compareAttention);
     state.notifications = notifications.body.notifications || [];
     renderAll();
     setConnection('已同步', 'online');
@@ -612,6 +762,13 @@ elements.actionForm.addEventListener('submit', submitAction);
 document.addEventListener('click', async (event) => {
   const view = event.target.closest('[data-view]');
   if (view) chooseView(view.dataset.view);
+  const toggle = event.target.closest('[data-project-toggle]');
+  if (toggle) {
+    const projectId = toggle.dataset.projectToggle;
+    if (state.expandedProjects.has(projectId)) state.expandedProjects.delete(projectId);
+    else state.expandedProjects.add(projectId);
+    renderPortfolio();
+  }
   const open = event.target.closest('[data-open-work-item]');
   if (open) await openDetail(open.dataset.openWorkItem);
   const workAction = event.target.closest('[data-work-action]');

@@ -13,18 +13,27 @@ import { buildChangeContract } from '../src/codex/change-policy.js';
 import { hashValue } from '../src/codex/events.js';
 import { commandSpec } from '../src/codex/core/java/verify-evidence.js';
 
-const PRESETS = ['jdk17-boot3.5', 'jdk21-boot3.5', 'jdk21-boot4.0'];
-const SCENARIOS = ['feature-stats', 'modify-completion-percent', 'fix-zero-rate'];
+const PRESETS = ['jdk17-boot3.5', 'jdk21-boot3.5'];
+const SCENARIOS = ['feature-audit-filter', 'modify-role-description', 'fix-user-status'];
 
-const JAVA_TEST = `package com.specgate.tasks;
+// The pilot now exercises the domain-neutral `sys` admin scaffold (`com.specgate.tasks.sys`)
+// instead of the task scenarios that are being removed from the generated template.
+const SYS_JAVA = 'backend/src/main/java/com/specgate/tasks/sys';
+const TEST_ROOT = 'backend/src/test/java/com/specgate/tasks/sys';
+const AUDIT_CONTROLLER = `${SYS_JAVA}/controller/SysAuditLogController.java`;
+const AUDIT_SERVICE = `${SYS_JAVA}/service/SysAuditLogService.java`;
+const ROLE_SERVICE = `${SYS_JAVA}/service/SysRoleService.java`;
+const USER_ENTITY = `${SYS_JAVA}/entity/SysUser.java`;
+
+const AUDIT_FILTER_TEST = String.raw`package com.specgate.tasks.sys;
 
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import com.specgate.tasks.entity.Task;
-import com.specgate.tasks.repository.TaskRepository;
+import com.specgate.tasks.sys.repository.SysAuditLogRepository;
+import com.specgate.tasks.sys.service.SysAuditLogService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,185 +42,321 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.web.servlet.MockMvc;
 
 @SpringBootTest(
-        properties = {
-            "spring.datasource.url=jdbc:h2:mem:stats;DB_CLOSE_DELAY=-1"
-        })
+        properties = {"spring.datasource.url=jdbc:h2:mem:pilot-audit-target;DB_CLOSE_DELAY=-1"})
 @AutoConfigureMockMvc
-class TaskStatsApiTest {
+class SysAuditTargetFilterApiTest {
     @Autowired private MockMvc mvc;
-    @Autowired private TaskRepository repository;
+    @Autowired private SysAuditLogRepository auditLogs;
+    @Autowired private SysAuditLogService audits;
 
     @BeforeEach
-    void cleanTasks() {
-        repository.deleteAll();
+    void reset() {
+        auditLogs.deleteAll();
     }
 
     @Test
-    void statsCountsTasksByCompletion() throws Exception {
-        repository.save(new Task("One", false));
-        repository.save(new Task("Two", true));
-        repository.save(new Task("Three", true));
+    void filtersAuditLogsByTargetAndKeepsActorAndActionFilters() throws Exception {
+        audits.record("alice", "SYS_USER_UPDATE", "user:1", "disabled user");
+        audits.record("bob", "SYS_ROLE_UPDATE", "role:admin", "renamed role");
+        audits.record("alice", "SYS_USER_UPDATE", "user:2", "enabled user");
 
-        mvc.perform(get("/api/tasks/stats").with(user("viewer")))
+        mvc.perform(get("/api/sys/audits?target=user:1").with(user("viewer")))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.total").value(3))
-                .andExpect(jsonPath("$.data.completed").value(2))
-                .andExpect(jsonPath("$.data.inProgress").value(1));
+                .andExpect(jsonPath("$.data.total").value(1))
+                .andExpect(jsonPath("$.data.records[0].target").value("user:1"));
+        mvc.perform(get("/api/sys/audits?target=ROLE:ADMIN").with(user("viewer")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.total").value(1));
+        mvc.perform(get("/api/sys/audits?actor=alice&target=user").with(user("viewer")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.total").value(2));
+        mvc.perform(get("/api/sys/audits?action=ROLE_UPDATE&target=admin").with(user("viewer")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.total").value(1));
+        mvc.perform(get("/api/sys/audits?target=%25").with(user("viewer")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.total").value(0));
     }
 }
 `;
 
-const JAVA_TEST_WITH_RATE = JAVA_TEST.replace(
-  '.andExpect(jsonPath("$.data.inProgress").value(1));',
-  `.andExpect(jsonPath("$.data.inProgress").value(1))
-                .andExpect(jsonPath("$.data.completionPercent").value(66));`,
-);
+const ROLE_DESCRIPTION_TEST = String.raw`package com.specgate.tasks.sys;
 
-const JAVA_TEST_WITH_ZERO = JAVA_TEST_WITH_RATE.replace(
-  `    }
-}
-`,
-  `    }
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+import com.specgate.tasks.sys.repository.SysRoleRepository;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.http.MediaType;
+import org.springframework.test.web.servlet.MockMvc;
+
+@SpringBootTest(
+        properties = {
+            "spring.datasource.url=jdbc:h2:mem:pilot-role-description;DB_CLOSE_DELAY=-1"
+        })
+@AutoConfigureMockMvc
+class SysRoleDescriptionApiTest {
+    @Autowired private MockMvc mvc;
+    @Autowired private SysRoleRepository roles;
+
+    @BeforeEach
+    void reset() {
+        roles.deleteAll();
+    }
 
     @Test
-    void emptyRepositoryReturnsZeroCompletionRate() throws Exception {
-        mvc.perform(get("/api/tasks/stats").with(user("viewer")))
+    void normalizesBlankDescriptionToNullAndPreservesNonBlankDescriptions() throws Exception {
+        mvc.perform(
+                        post("/api/sys/roles")
+                                .with(user("admin").roles("ADMIN"))
+                                .with(csrf())
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(
+                                        "{\"code\":\"blank\",\"name\":\"Blank\","
+                                                + "\"description\":\"   \",\"enabled\":true}"))
+                .andExpect(status().isCreated());
+        assertNull(roles.findByCode("blank").orElseThrow().getDescription());
+
+        mvc.perform(
+                        post("/api/sys/roles")
+                                .with(user("admin").roles("ADMIN"))
+                                .with(csrf())
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(
+                                        "{\"code\":\"managed\",\"name\":\"Managed\","
+                                                + "\"description\":\"  Managed role  \","
+                                                + "\"enabled\":true}"))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.data.description").value("Managed role"));
+        assertEquals("Managed role", roles.findByCode("managed").orElseThrow().getDescription());
+    }
+}
+`;
+
+const USER_STATUS_TEST = String.raw`package com.specgate.tasks.sys;
+
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+import com.specgate.tasks.sys.entity.SysUser;
+import com.specgate.tasks.sys.repository.SysUserRepository;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.http.MediaType;
+import org.springframework.test.web.servlet.MockMvc;
+
+@SpringBootTest(
+        properties = {"spring.datasource.url=jdbc:h2:mem:pilot-user-status;DB_CLOSE_DELAY=-1"})
+@AutoConfigureMockMvc
+class SysUserStatusRegressionApiTest {
+    @Autowired private MockMvc mvc;
+    @Autowired private SysUserRepository users;
+
+    @BeforeEach
+    void reset() {
+        users.deleteAll();
+    }
+
+    @Test
+    void disablingAndReEnablingAUserPersistsTheRequestedStatus() throws Exception {
+        SysUser carol = users.saveAndFlush(new SysUser("carol", "Carol", "viewer", true));
+        long id = carol.getId();
+
+        mvc.perform(
+                        post("/api/sys/users/update")
+                                .with(user("admin").roles("ADMIN"))
+                                .with(csrf())
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(
+                                        "{\"id\":"
+                                                + id
+                                                + ",\"username\":\"carol\",\"displayName\":\"Carol\","
+                                                + "\"roleCode\":\"viewer\",\"enabled\":false}"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.total").value(0))
-                .andExpect(jsonPath("$.data.completed").value(0))
-                .andExpect(jsonPath("$.data.inProgress").value(0))
-                .andExpect(jsonPath("$.data.completionPercent").value(0));
-    }
-}
-`,
-);
+                .andExpect(jsonPath("$.data.enabled").value(false));
+        assertFalse(users.findById(id).orElseThrow().isEnabled());
 
-const STATS_VO = `package com.specgate.tasks.vo;
-
-public class TaskStatsVO {
-    private final long total;
-    private final long completed;
-    private final long inProgress;
-
-    public TaskStatsVO(long total, long completed, long inProgress) {
-        this.total = total;
-        this.completed = completed;
-        this.inProgress = inProgress;
-    }
-
-    public long getTotal() {
-        return total;
-    }
-
-    public long getCompleted() {
-        return completed;
-    }
-
-    public long getInProgress() {
-        return inProgress;
+        mvc.perform(
+                        post("/api/sys/users/update")
+                                .with(user("admin").roles("ADMIN"))
+                                .with(csrf())
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(
+                                        "{\"id\":"
+                                                + id
+                                                + ",\"username\":\"carol\",\"displayName\":\"Carol\","
+                                                + "\"roleCode\":\"viewer\",\"enabled\":true}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.enabled").value(true));
+        assertTrue(users.findById(id).orElseThrow().isEnabled());
     }
 }
 `;
 
-const STATS_VO_WITH_RATE = `package com.specgate.tasks.vo;
-
-public class TaskStatsVO {
-    private final long total;
-    private final long completed;
-    private final long inProgress;
-    private final int completionPercent;
-
-    public TaskStatsVO(long total, long completed, long inProgress) {
-        this.total = total;
-        this.completed = completed;
-        this.inProgress = inProgress;
-        this.completionPercent =
-                total == 0 ? 0 : (int) Math.floor((completed * 100.0) / total);
+// The `sys` audit log list already filters by `actor` and `action`; the feature
+// adds an equivalent `target` filter to the controller and the specification.
+const AUDIT_CONTROLLER_LIST_BEFORE = String.raw`    @GetMapping
+    public ApiResponse<PageResult<SysAuditLogVO>> list(
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "20") int pageSize,
+            @RequestParam(required = false) String actor,
+            @RequestParam(required = false) String action) {
+        return ApiResponse.success(service.list(page, pageSize, actor, action));
     }
-
-    public long getTotal() {
-        return total;
-    }
-
-    public long getCompleted() {
-        return completed;
-    }
-
-    public long getInProgress() {
-        return inProgress;
-    }
-
-    public int getCompletionPercent() {
-        return completionPercent;
-    }
-}
 `;
 
-const STATS_VO_BROKEN_ZERO = STATS_VO_WITH_RATE.replace(
-  'total == 0 ? 0 : (int) Math.floor((completed * 100.0) / total);',
-  'total == 0 ? 100 : (int) Math.floor((completed * 100.0) / total);',
-);
-
-const STATS_SERVICE = `package com.specgate.tasks.service;
-
-import com.specgate.tasks.repository.TaskRepository;
-import com.specgate.tasks.vo.TaskStatsVO;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
-@Service
-@Transactional(readOnly = true)
-public class TaskStatsService {
-    private final TaskRepository repository;
-
-    public TaskStatsService(TaskRepository repository) {
-        this.repository = repository;
+const AUDIT_CONTROLLER_LIST_AFTER = String.raw`    @GetMapping
+    public ApiResponse<PageResult<SysAuditLogVO>> list(
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "20") int pageSize,
+            @RequestParam(required = false) String actor,
+            @RequestParam(required = false) String action,
+            @RequestParam(required = false) String target) {
+        return ApiResponse.success(service.list(page, pageSize, actor, action, target));
     }
-
-    public TaskStatsVO stats() {
-        long total = repository.count();
-        long completed = repository.countByCompleted(true);
-        return new TaskStatsVO(total, completed, total - completed);
-    }
-}
 `;
 
-const STATS_CONTROLLER = `package com.specgate.tasks.controller;
+const AUDIT_SERVICE_LIST_SIGNATURE_BEFORE =
+  'public PageResult<SysAuditLogVO> list(int page, int pageSize, String actor, String action) {';
+const AUDIT_SERVICE_LIST_SIGNATURE_AFTER =
+  'public PageResult<SysAuditLogVO> list(int page, int pageSize, String actor, String action, String target) {';
+const AUDIT_SERVICE_FILTER_CALL_BEFORE = 'filter(actor, action),';
+const AUDIT_SERVICE_FILTER_CALL_AFTER = 'filter(actor, action, target),';
+const AUDIT_SERVICE_FILTER_SIGNATURE_BEFORE =
+  'public Specification<SysAuditLog> filter(String actor, String action) {';
+const AUDIT_SERVICE_FILTER_SIGNATURE_AFTER =
+  'public Specification<SysAuditLog> filter(String actor, String action, String target) {';
+const AUDIT_SERVICE_RETURN_BEFORE = 'return builder.and(predicates.toArray(new Predicate[0]));';
+const AUDIT_SERVICE_RETURN_AFTER = String.raw`            if (target != null && !target.trim().isEmpty()) {
+                String escaped =
+                        target.trim()
+                                .replace("\\", "\\\\")
+                                .replace("%", "\\%")
+                                .replace("_", "\\_")
+                                .toLowerCase(Locale.ROOT);
+                predicates.add(
+                        builder.like(builder.lower(root.get("target")), "%" + escaped + "%", '\\'));
+            }
+            return builder.and(predicates.toArray(new Predicate[0]));`;
 
-import com.specgate.tasks.common.ApiResponse;
-import com.specgate.tasks.service.TaskStatsService;
-import com.specgate.tasks.vo.TaskStatsVO;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
-
-@RestController
-@RequestMapping("/api/tasks/stats")
-public class TaskStatsController {
-    private final TaskStatsService service;
-
-    public TaskStatsController(TaskStatsService service) {
-        this.service = service;
+// Role descriptions currently keep a whitespace-only value as an empty string;
+// the modify stores blank descriptions as null while keeping non-blank values.
+const ROLE_DESCRIPTION_BEFORE = String.raw`    private static String trimmedDescription(SysRoleRequest request) {
+        return request.getDescription() == null ? null : request.getDescription().trim();
     }
-
-    @GetMapping
-    public ApiResponse<TaskStatsVO> stats() {
-        return ApiResponse.success(service.stats());
-    }
-}
 `;
 
-const REPOSITORY = `package com.specgate.tasks.repository;
-
-import com.specgate.tasks.entity.Task;
-import org.springframework.data.jpa.repository.JpaRepository;
-
-public interface TaskRepository
-        extends JpaRepository<Task, Long>,
-                org.springframework.data.jpa.repository.JpaSpecificationExecutor<Task> {
-    long countByCompleted(boolean completed);
-}
+const ROLE_DESCRIPTION_AFTER = String.raw`    private static String trimmedDescription(SysRoleRequest request) {
+        String trimmed =
+                request.getDescription() == null ? null : request.getDescription().trim();
+        if (trimmed == null || trimmed.isEmpty()) {
+            return null;
+        }
+        if (trimmed.length() > 255) {
+            throw new BusinessException(
+                    400,
+                    "SYS_ROLE_DESCRIPTION_INVALID",
+                    "description must be at most 255 characters");
+        }
+        return trimmed;
+    }
 `;
+
+// The injected defect drops the requested enabled flag, so `SysUserService.update`
+// silently keeps the old status; the fix restores the assignment.
+const USER_UPDATE_BEFORE = String.raw`    public void update(String username, String displayName, String roleCode, boolean enabled) {
+        this.username = username;
+        this.displayName = displayName;
+        this.roleCode = roleCode;
+        this.enabled = enabled;
+    }
+`;
+
+const USER_UPDATE_DEFECT = String.raw`    public void update(String username, String displayName, String roleCode, boolean enabled) {
+        this.username = username;
+        this.displayName = displayName;
+        this.roleCode = roleCode;
+    }
+`;
+
+const SCENARIO_SPECS = {
+  'feature-audit-filter': {
+    testClass: 'SysAuditTargetFilterApiTest',
+    testSource: AUDIT_FILTER_TEST,
+    type: 'feature',
+    request: 'Add a target filter to the audit log list.',
+    acceptance: [
+      {
+        id: 'AC-AUDIT-FILTER',
+        text: 'GET /api/sys/audits filters audit logs by target in addition to actor and action.',
+      },
+    ],
+    details: {
+      scope: ['Audit log list endpoint /api/sys/audits'],
+      nonGoals: ['Do not change audit log writes, ordering or the existing actor/action filters.'],
+    },
+  },
+  'modify-role-description': {
+    testClass: 'SysRoleDescriptionApiTest',
+    testSource: ROLE_DESCRIPTION_TEST,
+    type: 'modify',
+    request: 'Normalize role descriptions and keep blank input out of the database.',
+    acceptance: [
+      {
+        id: 'AC-ROLE-DESCRIPTION',
+        text: 'Role create and update store blank descriptions as null and preserve non-blank descriptions.',
+      },
+    ],
+    details: {
+      existingBehavior:
+        'Role create and update trim the description and store a whitespace-only value as an empty string.',
+      desiredBehavior:
+        'Role create and update trim the description, store blank input as null and reject trimmed descriptions longer than 255 characters.',
+      compatibility:
+        'Existing non-blank descriptions, role codes, names and enabled flags are unchanged.',
+      scope: ['Role create and update description handling'],
+      nonGoals: ['Do not change role code uniqueness, pagination or CSV import.'],
+    },
+  },
+  'fix-user-status': {
+    testClass: 'SysUserStatusRegressionApiTest',
+    testSource: USER_STATUS_TEST,
+    type: 'fix',
+    request: 'Persist the requested enabled status when updating a user.',
+    acceptance: [
+      {
+        id: 'AC-USER-STATUS',
+        text: 'Updating a user persists the requested enabled or disabled status.',
+      },
+    ],
+    details: {
+      expectedBehavior:
+        'Updating a user persists the requested enabled or disabled status in the database.',
+      actualBehavior:
+        'Updating a user ignored the requested enabled flag and kept the previous status.',
+      reproduction: 'Create an enabled user and update it with enabled=false.',
+      scope: ['User update enabled flag /api/sys/users/update'],
+      nonGoals: ['Do not change user creation, deletion, filtering or audit logging.'],
+    },
+  },
+};
 
 function now() {
   return new Date().toISOString();
@@ -220,6 +365,28 @@ function now() {
 function write(root, relative, content) {
   const target = path.join(root, relative);
   fs.mkdirSync(path.dirname(target), { recursive: true });
+  fs.writeFileSync(target, content);
+}
+
+// Apply one or more targeted edits to a generated file. Each `from` block is
+// matched on its token sequence (whitespace-insensitive) so the patch survives
+// any formatting a previous scenario already applied to the file.
+function tokenPattern(from) {
+  const tokens = from.trim().split(/\s+/);
+  const escaped = tokens.map((token) => token.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+  return new RegExp(escaped.join('\\s+'), 'g');
+}
+
+function patch(root, relative, edits) {
+  const target = path.join(root, relative);
+  let content = fs.readFileSync(target, 'utf8');
+  for (const { from, to } of edits) {
+    const pattern = tokenPattern(from);
+    const matches = content.match(pattern);
+    if (!matches || matches.length !== 1)
+      throw new Error(`Patch anchor for ${relative} matched ${matches?.length ?? 0} times`);
+    content = content.replace(pattern, () => to);
+  }
   fs.writeFileSync(target, content);
 }
 
@@ -363,77 +530,51 @@ async function runScenario({
   const baselineCommit = parentDelivery?.deliveryCommit || gitHead(projectRoot);
   const receipts = [];
   let redReceipt = null;
+  const spec = SCENARIO_SPECS[scenario];
+  const testClass = spec.testClass;
+  const testPath = `${TEST_ROOT}/${testClass}.java`;
 
-  if (scenario === 'feature-stats') {
-    write(
-      projectRoot,
-      'backend/src/test/java/com/specgate/tasks/TaskStatsApiTest.java',
-      javaTestForPreset(preset, JAVA_TEST),
-    );
-    redReceipt = run(backend, maven, ['-B', '-ntp', '-Dtest=TaskStatsApiTest', 'test'], {
+  if (scenario === 'feature-audit-filter') {
+    write(projectRoot, testPath, javaTestForPreset(preset, spec.testSource));
+    redReceipt = run(backend, maven, ['-B', '-ntp', `-Dtest=${testClass}`, 'test'], {
       expectedSuccess: false,
     });
     if (redReceipt.exitCode === 0)
       throw new Error('Feature test unexpectedly passed before implementation');
-    write(
-      projectRoot,
-      'backend/src/main/java/com/specgate/tasks/repository/TaskRepository.java',
-      REPOSITORY,
-    );
-    write(projectRoot, 'backend/src/main/java/com/specgate/tasks/vo/TaskStatsVO.java', STATS_VO);
-    write(
-      projectRoot,
-      'backend/src/main/java/com/specgate/tasks/service/TaskStatsService.java',
-      STATS_SERVICE,
-    );
-    write(
-      projectRoot,
-      'backend/src/main/java/com/specgate/tasks/controller/TaskStatsController.java',
-      STATS_CONTROLLER,
-    );
+    patch(projectRoot, AUDIT_CONTROLLER, [
+      { from: AUDIT_CONTROLLER_LIST_BEFORE, to: AUDIT_CONTROLLER_LIST_AFTER },
+    ]);
+    patch(projectRoot, AUDIT_SERVICE, [
+      { from: AUDIT_SERVICE_LIST_SIGNATURE_BEFORE, to: AUDIT_SERVICE_LIST_SIGNATURE_AFTER },
+      { from: AUDIT_SERVICE_FILTER_CALL_BEFORE, to: AUDIT_SERVICE_FILTER_CALL_AFTER },
+      { from: AUDIT_SERVICE_FILTER_SIGNATURE_BEFORE, to: AUDIT_SERVICE_FILTER_SIGNATURE_AFTER },
+      { from: AUDIT_SERVICE_RETURN_BEFORE, to: AUDIT_SERVICE_RETURN_AFTER },
+    ]);
   }
-  if (scenario === 'modify-completion-percent') {
-    write(
-      projectRoot,
-      'backend/src/test/java/com/specgate/tasks/TaskStatsApiTest.java',
-      javaTestForPreset(preset, JAVA_TEST_WITH_RATE),
-    );
-    redReceipt = run(backend, maven, ['-B', '-ntp', '-Dtest=TaskStatsApiTest', 'test'], {
+  if (scenario === 'modify-role-description') {
+    write(projectRoot, testPath, javaTestForPreset(preset, spec.testSource));
+    redReceipt = run(backend, maven, ['-B', '-ntp', `-Dtest=${testClass}`, 'test'], {
       expectedSuccess: false,
     });
     if (redReceipt.exitCode === 0)
       throw new Error('Modify test unexpectedly passed before implementation');
-    write(
-      projectRoot,
-      'backend/src/main/java/com/specgate/tasks/vo/TaskStatsVO.java',
-      STATS_VO_WITH_RATE,
-    );
+    patch(projectRoot, ROLE_SERVICE, [
+      { from: ROLE_DESCRIPTION_BEFORE, to: ROLE_DESCRIPTION_AFTER },
+    ]);
   }
-  if (scenario === 'fix-zero-rate') {
-    write(
-      projectRoot,
-      'backend/src/main/java/com/specgate/tasks/vo/TaskStatsVO.java',
-      STATS_VO_BROKEN_ZERO,
-    );
-    write(
-      projectRoot,
-      'backend/src/test/java/com/specgate/tasks/TaskStatsApiTest.java',
-      javaTestForPreset(preset, JAVA_TEST_WITH_ZERO),
-    );
-    redReceipt = run(backend, maven, ['-B', '-ntp', '-Dtest=TaskStatsApiTest', 'test'], {
+  if (scenario === 'fix-user-status') {
+    patch(projectRoot, USER_ENTITY, [{ from: USER_UPDATE_BEFORE, to: USER_UPDATE_DEFECT }]);
+    write(projectRoot, testPath, javaTestForPreset(preset, spec.testSource));
+    redReceipt = run(backend, maven, ['-B', '-ntp', `-Dtest=${testClass}`, 'test'], {
       expectedSuccess: false,
     });
     if (redReceipt.exitCode === 0)
       throw new Error('Regression test unexpectedly passed before fix');
-    write(
-      projectRoot,
-      'backend/src/main/java/com/specgate/tasks/vo/TaskStatsVO.java',
-      STATS_VO_WITH_RATE,
-    );
+    patch(projectRoot, USER_ENTITY, [{ from: USER_UPDATE_DEFECT, to: USER_UPDATE_BEFORE }]);
   }
 
   receipts.push(run(backend, maven, ['-B', '-ntp', 'spotless:apply']));
-  receipts.push(run(backend, maven, ['-B', '-ntp', '-Dtest=TaskStatsApiTest', 'test']));
+  receipts.push(run(backend, maven, ['-B', '-ntp', `-Dtest=${testClass}`, 'test']));
   receipts.push(run(frontend, npm, ['run', 'test']));
   receipts.push(run(frontend, npm, ['run', 'build']));
   const deliveryCommit = commit(projectRoot, `pilot: ${scenario}`);
@@ -465,33 +606,8 @@ async function runScenario({
     changeId,
     parentDeliveryId,
     type,
-    request:
-      scenario === 'feature-stats'
-        ? 'Add task completion statistics.'
-        : scenario === 'modify-completion-percent'
-          ? 'Add completion percentage to task statistics.'
-          : 'Fix zero-task completion percentage regression.',
-    details:
-      type === 'fix'
-        ? {
-            expectedBehavior: 'An empty task set reports zero completion percent.',
-            actualBehavior: 'An empty task set previously divided by zero.',
-            reproduction: 'Delete all tasks and request task statistics.',
-            scope: ['Task statistics'],
-            nonGoals: ['Do not change non-empty task statistics.'],
-          }
-        : type === 'modify'
-          ? {
-              existingBehavior: 'Task statistics expose total, completed and in-progress counts.',
-              desiredBehavior: 'Task statistics also expose an integer completion percentage.',
-              compatibility: 'The existing count fields remain unchanged.',
-              scope: ['Task statistics response'],
-              nonGoals: ['Do not change task filtering.'],
-            }
-          : {
-              scope: ['Task statistics endpoint'],
-              nonGoals: ['Do not change task editing or filtering.'],
-            },
+    request: spec.request,
+    details: spec.details,
     requirements: [
       {
         id: 'REQ-PILOT',
@@ -588,6 +704,7 @@ export async function runPilot({
     scope: 'codex-delivery-assurance-real-project-pilot',
     startedAt: now(),
     workspace,
+    sdkDownloads: false,
     presets: [],
     changes: [],
     unexecuted: [
@@ -657,39 +774,13 @@ export async function runPilot({
     let parentDelivery = null;
     for (const [index, scenario] of SCENARIOS.entries()) {
       process.stdout.write(JSON.stringify({ preset, scenario, phase: 'change' }) + '\n');
-      const type =
-        scenario === 'feature-stats'
-          ? 'feature'
-          : scenario === 'modify-completion-percent'
-            ? 'modify'
-            : 'fix';
-      const acceptance =
-        scenario === 'feature-stats'
-          ? [
-              {
-                id: 'AC-STATS',
-                text: 'GET /api/tasks/stats returns total, completed and in-progress counts.',
-              },
-            ]
-          : scenario === 'modify-completion-percent'
-            ? [
-                {
-                  id: 'AC-RATE',
-                  text: 'Task statistics add completionPercent while preserving existing count fields.',
-                },
-              ]
-            : [
-                {
-                  id: 'AC-ZERO',
-                  text: 'An empty task project returns zero completionPercent instead of failing.',
-                },
-              ];
+      const spec = SCENARIO_SPECS[scenario];
       const result = await runScenario({
         projectRoot,
         preset,
         scenario,
-        type,
-        acceptance,
+        type: spec.type,
+        acceptance: spec.acceptance,
         parentDelivery,
         baselineId: readiness.baseline.baselineId,
         environmentFingerprint,
@@ -725,8 +816,9 @@ export async function runPilot({
       '- Date: 2026-10-22',
       `- Projects: ${report.presets.length}`,
       `- Changes: ${report.changes.length}`,
+      '- Scenarios exercise the domain-neutral sys admin scaffold: audit log filtering, role description handling and user enable/disable status.',
       '- All changes executed real Java Maven tests, frontend Vitest tests, frontend builds and final runtime verification.',
-      '- Feature and modify scenarios include an observed red test before implementation.',
+      '- The feature and modify scenarios include an observed red test before implementation.',
       '- The fix scenario includes an observed failing regression before repair.',
       '',
       'See `pilot.json` for exact commands, commits, DeliveryRecords and timings.',

@@ -42,6 +42,28 @@
 - Move every shared runtime dependency under `src/codex/core/`.
 - Remove legacy entry points, tests, assets and historical verification data
   unrelated to the Codex plugin.
+- Select the stack at initialization and record it on `ProjectProfile` as the
+  optional `frontendFramework` (`vue` | `react`) and `javaPreset`; later changes
+  fail closed on a stack mismatch. React 18 stays fail-closed until its template
+  lands.
+- Generate a domain-neutral admin scaffold: users, roles, departments, menus, a
+  read-only audit log and a dashboard under `/api/sys/**`, with pagination,
+  filtering and batch actions.
+- Add CSV import (validate, template, import) and export for users and roles.
+- Ship the generated `docs/style.md` style baseline and make the Reviewer treat an
+  unjustified deviation as a finding, blocking when it is substantive.
+- Persist control-plane Web sessions and pairing tokens across a restart within
+  their TTLs.
+- Add a read-only, bounded host capability probe to `doctor` (`plugin`,
+  `exec --json`, native subagents, elicitation) with an explicit degradation path
+  and version-gate hint.
+- Compute and persist incremental delivery impact (affected and reused acceptance
+  criteria, invalidated tests) at the `sg_change` intake.
+- Add `SUSPECT` to `HOST_HEALTH` for a host whose heartbeat has gone stale.
+- Remove the dead `pushApproved` field from `ProjectProfile`.
+- Add a multi-project registry, aggregate vs isolated control modes (with a
+  `--mode` switch and a `register` command) and a cross-project portfolio view
+  in the console.
 
 ## 0.3.0
 

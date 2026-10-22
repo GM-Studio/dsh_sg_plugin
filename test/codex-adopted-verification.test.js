@@ -24,7 +24,6 @@ function profile(commands) {
     root: '/project',
     targetBranch: 'main',
     remoteUrl: null,
-    pushApproved: false,
     backendPackage: 'com.acme.orders',
     frontendDefaultLocale: 'zh-CN',
     frontendLocales: ['zh-CN', 'en-US'],

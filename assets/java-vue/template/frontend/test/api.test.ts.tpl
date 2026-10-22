@@ -1,7 +1,11 @@
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
-import { taskApi, queryString } from '../src/api/tasks';
 import { authApi } from '../src/api/auth';
-import { fileApi } from '../src/api/files';
+import {
+  sysDepartmentApi,
+  sysMenuApi,
+  sysRoleApi,
+  sysUserApi,
+} from '../src/api/sys';
 import { request, ApiError } from '../src/api/request';
 
 const fetcher = vi.fn();
@@ -23,71 +27,85 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-it('[AC-001] serializes GET queries and POST JSON with fresh CSRF tokens and same-origin credentials', async () => {
-  await taskApi.list({ page: 2, pageSize: 20, title: 'A & B', completed: '' });
+it('[AC-001] serializes GET queries and POST JSON mutations with fresh CSRF tokens and same-origin credentials', async () => {
+  await sysRoleApi.list({ page: 2, pageSize: 20, code: 'A & B', name: '' });
   expect(fetcher.mock.calls[0][0]).toBe(
-    '/api/tasks?page=2&pageSize=20&title=A+%26+B',
+    '/api/sys/roles?page=2&pageSize=20&code=A+%26+B',
   );
-  await taskApi.get(1);
-  await taskApi.create({ title: 'one', completed: false });
-  await taskApi.update(1, { title: 'two', completed: true });
-  await taskApi.remove(1);
-  await taskApi.batchDelete([1, 2]);
-  await taskApi.batchStatus([1], true);
+  await sysRoleApi.create({
+    code: 'EDITOR',
+    name: 'Editor',
+    description: '',
+    enabled: true,
+  });
+  await sysRoleApi.update({
+    code: 'EDITOR',
+    name: 'Editor',
+    description: '',
+    enabled: false,
+    id: 1,
+  });
+  await sysRoleApi.remove(1);
+  await sysUserApi.create({
+    username: 'bob',
+    displayName: 'Bob',
+    roleCode: 'ADMIN',
+    enabled: true,
+  });
+  await sysUserApi.batchDelete([1, 2]);
+  await sysDepartmentApi.update({
+    code: 'ENG',
+    name: 'Engineering',
+    parentCode: null,
+    enabled: true,
+    id: 1,
+  });
+  await sysMenuApi.remove(1);
   const writes = fetcher.mock.calls.filter(
     ([, options]) => options.method === 'POST',
   );
   expect(writes.map(([path]) => path)).toEqual([
-    '/api/tasks',
-    '/api/tasks/update',
-    '/api/tasks/delete',
-    '/api/tasks/batch-delete',
-    '/api/tasks/batch-update-status',
+    '/api/sys/roles',
+    '/api/sys/roles/update',
+    '/api/sys/roles/delete',
+    '/api/sys/users',
+    '/api/sys/users/batch-delete',
+    '/api/sys/departments/update',
+    '/api/sys/menus/delete',
   ]);
   for (const [, options] of writes) {
     expect(options.credentials).toBe('same-origin');
     expect(options.headers['Content-Type']).toBe('application/json');
     expect(options.headers['X-CSRF-TOKEN']).toBe('csrf-token');
   }
-  expect(JSON.parse(writes[1][1].body)).toEqual({
-    id: 1,
-    title: 'two',
-    completed: true,
-  });
   expect(JSON.parse(writes[2][1].body)).toEqual({ id: 1 });
-  expect(queryString({})).toBe('');
 });
 
-it('[AC-004] uses JSON authentication and multipart uploads without overriding the browser boundary', async () => {
+it('[AC-004] uses JSON authentication and multipart imports without overriding the browser boundary', async () => {
   await authApi.me();
   await authApi.login('admin', 'test-only');
   await authApi.logout();
-  const file = new File(['title,completed\nTask,false'], 'test.csv', {
+  const file = new File(['code,name\nEDITOR,Editor'], 'roles.csv', {
     type: 'text/csv',
   });
-  await taskApi.import(file, true);
-  await taskApi.import(file, false);
-  await fileApi.list();
-  await fileApi.metadata('a/b');
-  await fileApi.upload(file);
+  await sysRoleApi.import(file, true);
+  await sysRoleApi.import(file, false);
+  await sysUserApi.import(file, true);
   const multipart = fetcher.mock.calls.filter(
     ([, options]) => options.body instanceof FormData,
   );
   expect(multipart.map(([path]) => path)).toEqual([
-    '/api/tasks/import/validate',
-    '/api/tasks/import',
-    '/api/files/upload',
+    '/api/sys/roles/import/validate',
+    '/api/sys/roles/import',
+    '/api/sys/users/import/validate',
   ]);
   for (const [, options] of multipart) {
     expect(options.body.get('file')).toBe(file);
     expect(options.headers['Content-Type']).toBeUndefined();
   }
-  expect(fetcher.mock.calls.some(([path]) => path === '/api/files/a%2Fb')).toBe(
-    true,
-  );
 });
 
-it('[AC-003] preserves safe server errors and trace ids, signals expiration, and reports network/proxy failures', async () => {
+it('[AC-006] preserves safe server errors and trace ids, signals expiration, and reports network/proxy failures', async () => {
   const expired = vi.fn();
   window.addEventListener('session-expired', expired);
   fetcher.mockResolvedValueOnce(
@@ -114,7 +132,7 @@ it('[AC-003] preserves safe server errors and trace ids, signals expiration, and
   await expect(request('/business')).rejects.toBeInstanceOf(ApiError);
 });
 
-it('[AC-006] downloads through authenticated fetch and releases temporary object URLs', async () => {
+it('[AC-005] downloads CSV through authenticated fetch and releases temporary object URLs', async () => {
   const create = vi.fn(() => 'blob:test');
   const revoke = vi.fn();
   vi.stubGlobal(
@@ -128,20 +146,11 @@ it('[AC-006] downloads through authenticated fetch and releases temporary object
     .spyOn(HTMLAnchorElement.prototype, 'click')
     .mockImplementation(() => {});
   fetcher.mockImplementation(async () => new Response('file'));
-  await taskApi.template();
-  await taskApi.export({ title: 'A', completed: 'true' });
-  await taskApi.export({});
-  await fileApi.download({
-    fileId: 'id',
-    name: 'note.txt',
-    size: 4,
-    mediaType: 'text/plain',
-    downloadUrl: '/ignored',
-  });
-  expect(click).toHaveBeenCalledTimes(4);
-  expect(revoke).toHaveBeenCalledTimes(4);
+  await sysRoleApi.template();
+  await sysRoleApi.export({ page: 1, pageSize: 20, code: 'EDITOR', name: '' });
+  await sysUserApi.template();
+  expect(click).toHaveBeenCalledTimes(3);
+  expect(revoke).toHaveBeenCalledTimes(3);
   expect(document.querySelector('a[download]')).toBeNull();
-  expect(fetcher.mock.calls[1][0]).toBe(
-    '/api/tasks/export?title=A&completed=true',
-  );
+  expect(fetcher.mock.calls[1][0]).toBe('/api/sys/roles/export?code=EDITOR');
 });

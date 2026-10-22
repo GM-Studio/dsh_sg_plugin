@@ -74,6 +74,26 @@ function packageManager(directory) {
   return 'npm';
 }
 
+function frontendFramework(root, frontends) {
+  let vue = false;
+  let react = false;
+  for (const directory of frontends) {
+    let manifest;
+    try {
+      manifest = JSON.parse(fs.readFileSync(path.join(root, directory, 'package.json'), 'utf8'));
+    } catch {
+      continue;
+    }
+    const dependencies = {
+      ...(manifest?.dependencies || {}),
+      ...(manifest?.devDependencies || {}),
+    };
+    if (Object.hasOwn(dependencies, 'vue')) vue = true;
+    if (Object.hasOwn(dependencies, 'react')) react = true;
+  }
+  return react && !vue ? 'react' : 'vue';
+}
+
 function frontendRoots(root) {
   const roots = new Set();
   const addChildren = (directory) => {
@@ -281,6 +301,7 @@ export function detectProject({ root: inputRoot } = {}) {
         ...(detectedPackage ? { backendPackage: detectedPackage } : {}),
         frontendDefaultLocale: 'zh-CN',
         frontendLocales: ['zh-CN'],
+        frontendFramework: frontendFramework(root, frontends),
       },
       commands,
       protectedPaths: fs.existsSync(path.join(root, '.env')) ? ['.env'] : [],

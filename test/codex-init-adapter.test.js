@@ -81,6 +81,26 @@ test('four presets generate unchanged templates, complete metadata and real isol
     assert.match(git(root, ['rev-parse', 'init-baseline']), /^[a-f\d]{40}$/);
     assert.equal(fs.existsSync(path.join(root, 'frontend/node_modules')), false);
     assert.equal(fs.existsSync(path.join(root, 'backend/target')), false);
+    for (const relative of [
+      'codex/changes/example/red/run-1/report.json',
+      'codex/changes/example/red/run-1/evidence.json',
+      'codex/changes/example/format/format-1.json',
+    ]) {
+      const target = path.join(root, '.specgate', relative);
+      fs.mkdirSync(path.dirname(target), { recursive: true });
+      fs.writeFileSync(target, '{}\n');
+    }
+    assert.equal(
+      git(root, ['status', '--porcelain', '--untracked-files=all']),
+      '',
+      'MCP red and format evidence must not dirty an initialized project',
+    );
+    fs.writeFileSync(path.join(root, '.specgate', 'codex', 'project.json'), '{}\n');
+    assert.match(
+      git(root, ['status', '--porcelain', '--untracked-files=all']),
+      /\?\? \.specgate\/codex\/project\.json/,
+      'stable project metadata must remain visible to Git',
+    );
   }
 });
 

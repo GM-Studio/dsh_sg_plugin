@@ -19,9 +19,10 @@ export function loadTemplateStyle(root, { required = false } = {}) {
   try {
     const raw = fs.readFileSync(file, 'utf8').replace(/\r\n/g, '\n');
     const manifest = JSON.parse(raw);
+    const versions = ['java-vue-admin-1', 'java-react-admin-1'];
     if (
       manifest.schemaVersion !== 1 ||
-      manifest.version !== 'java-vue-admin-1' ||
+      !versions.includes(manifest.version) ||
       !manifest.samples ||
       typeof manifest.samples !== 'object' ||
       Array.isArray(manifest.samples)

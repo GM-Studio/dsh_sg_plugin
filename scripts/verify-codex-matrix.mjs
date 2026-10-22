@@ -4,30 +4,60 @@ import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { previewInit, executeInit } from '../src/codex/init.js';
 import { verifyProject, validateVerificationEvidence } from '../src/codex/verify.js';
-import { JAVA_PRESETS } from '../src/codex/core/java/java-versions.js';
+import {
+  GOLDEN_MANIFEST,
+  JAVA_PRESETS,
+  platformVerificationRecord,
+} from '../src/codex/core/java/java-versions.js';
 
 // Generates only isolated acceptance fixtures. It never initializes the plugin
 // repository, modifies a user project, downloads SDKs or updates Golden hashes.
-export async function verifyMatrix({ output, concurrency = 2 } = {}) {
+// Unexecuted checks are recorded, never claimed: one invocation records exactly
+// one platform (`--platform`, defaulting to `process.platform`) under
+// `platforms[<platform>]` and leaves every other required platform as `not-run`,
+// and unexecuted verification stages stay `not-run`.
+export async function verifyMatrix({
+  output,
+  concurrency = 2,
+  platform = process.platform,
+  frontend = 'vue',
+} = {}) {
+  if (!['vue', 'react'].includes(frontend))
+    throw new Error('Unsupported matrix frontend: ' + frontend + '; expected vue|react');
+  const requiredPlatforms = GOLDEN_MANIFEST.requiredPlatforms || [];
+  if (!requiredPlatforms.includes(platform))
+    throw new Error(
+      'Unsupported matrix platform: ' +
+        platform +
+        '; expected one of ' +
+        requiredPlatforms.join('|'),
+    );
   const directory = path.resolve(output);
-  if (fs.existsSync(path.join(directory, 'matrix.json')))
+  if (fs.existsSync(directory) && fs.readdirSync(directory).length > 0)
     throw new Error(
       'Evidence already exists; choose a new output directory to retain previous runs',
     );
   fs.mkdirSync(directory, { recursive: true });
   const workspace = fs.mkdtempSync(path.join(os.tmpdir(), 'sg-codex-acceptance-'));
   const report = {
-    scope: 'codex-java-vue-windows-matrix',
+    scope: 'codex-java-vue-dual-platform-matrix',
     startedAt: new Date().toISOString(),
-    platform: process.platform,
+    platform,
+    frontend,
     arch: process.arch,
     node: process.version,
     workspace,
     concurrency,
     sdkDownloads: false,
     goldenUpdated: false,
+    // Honesty marker: this invocation vouches only for its own platform. The
+    // Linux platform stays `not-run` unless `--platform linux` actually runs it.
     linux: 'not-run',
-    presets: JAVA_PRESETS.map((preset) => ({ preset: preset.id, status: 'not-run' })),
+    presets: JAVA_PRESETS.map((preset) => ({
+      preset: preset.id,
+      frontend,
+      status: 'not-run',
+    })),
   };
   const save = () =>
     fs.writeFileSync(path.join(directory, 'matrix.json'), JSON.stringify(report, null, 2) + '\n');
@@ -40,14 +70,20 @@ export async function verifyMatrix({ output, concurrency = 2 } = {}) {
       entry.startedAt = new Date().toISOString();
       entry.status = 'generating';
       save();
-      const evidenceDirectory = path.join(directory, entry.preset);
+      const evidenceDirectory = path.join(
+        directory,
+        frontend === 'vue' ? entry.preset : entry.preset + '-' + frontend,
+      );
       fs.mkdirSync(evidenceDirectory);
+      let validation = null;
+      let result = null;
       try {
         const preview = previewInit({
           root: entry.root,
           preset: entry.preset,
           company: 'specgate',
           business: 'tasks',
+          frontend,
         });
         fs.writeFileSync(
           path.join(evidenceDirectory, 'preview.json'),
@@ -59,6 +95,7 @@ export async function verifyMatrix({ output, concurrency = 2 } = {}) {
           preset: entry.preset,
           company: 'specgate',
           business: 'tasks',
+          frontend,
           previewHash: preview.previewHash,
         });
         fs.writeFileSync(
@@ -69,7 +106,7 @@ export async function verifyMatrix({ output, concurrency = 2 } = {}) {
         entry.status = 'verifying';
         save();
         const progressFile = path.join(evidenceDirectory, 'progress.txt');
-        const result = await verifyProject(
+        result = await verifyProject(
           { root: entry.root, timeoutMs: 300000 },
           {
             onProgress: (event) => {
@@ -85,7 +122,7 @@ export async function verifyMatrix({ output, concurrency = 2 } = {}) {
           path.join(evidenceDirectory, 'verification.json'),
           JSON.stringify(result, null, 2) + '\n',
         );
-        const validation = validateVerificationEvidence({ root: entry.root });
+        validation = validateVerificationEvidence({ root: entry.root });
         fs.writeFileSync(
           path.join(evidenceDirectory, 'evidence-validation.json'),
           JSON.stringify(validation, null, 2) + '\n',
@@ -115,10 +152,39 @@ export async function verifyMatrix({ output, concurrency = 2 } = {}) {
         entry.reason = error.message;
       }
       entry.endedAt = new Date().toISOString();
+      // Persist the platform-scoped record through the shared helper so the
+      // matrix JSON and any later manifest update use one shape. A `passed`
+      // entry carries the real validation evidence (runId + sourceHash); the
+      // helper refuses to fabricate it.
+      try {
+        const update = platformVerificationRecord(entry.preset, {
+          platform,
+          frontend,
+          result: entry.status,
+          verifiedAt: entry.endedAt,
+          evidence:
+            entry.status === 'passed'
+              ? validation
+              : result?.report
+                ? {
+                    ok: false,
+                    code: result.code,
+                    status: result.report.status,
+                    failedStage: result.report.failedStage || null,
+                  }
+                : null,
+        });
+        entry.platforms = { [update.platform]: update.record };
+      } catch (error) {
+        entry.status = 'failed';
+        entry.reason = 'golden record refused: ' + error.message;
+        entry.platforms = { [platform]: { result: 'failed', verifiedAt: null, evidence: null } };
+      }
       save();
       process.stdout.write(
         JSON.stringify({
           preset: entry.preset,
+          platform,
           status: entry.status,
           code: entry.code,
           reason: entry.reason,
@@ -128,23 +194,50 @@ export async function verifyMatrix({ output, concurrency = 2 } = {}) {
   }
   await Promise.all(Array.from({ length: Math.min(2, Math.max(1, concurrency)) }, run));
   report.endedAt = new Date().toISOString();
-  report.status =
-    process.platform === 'win32' && report.presets.every((entry) => entry.status === 'passed')
-      ? 'passed'
-      : 'incomplete';
+  const allPassed = report.presets.every((entry) => entry.status === 'passed');
+  report.status = platform === 'win32' && allPassed ? 'passed' : 'incomplete';
+  // `linux` stays `not-run` unconditionally: a single invocation only ever
+  // vouches for its own `platform`, so this run never claims Linux acceptance.
+  // Per-platform truth lives in `platform` and `presets[].platforms[<platform>]`.
   save();
   return report;
 }
 
+function parseArgs(args) {
+  let output = null;
+  let platform = process.platform;
+  let frontend = 'vue';
+  for (let index = 0; index < args.length; index += 1) {
+    const arg = args[index];
+    if (arg === '--output') {
+      output = args[index + 1];
+      index += 1;
+    } else if (arg === '--platform') {
+      platform = args[index + 1];
+      index += 1;
+    } else if (arg === '--frontend') {
+      frontend = args[index + 1];
+      index += 1;
+    } else {
+      throw new Error('Unknown argument: ' + arg);
+    }
+  }
+  if (!output)
+    throw new Error(
+      'Usage: node scripts/verify-codex-matrix.mjs --output <evidence-directory> [--platform win32|linux] [--frontend vue|react]',
+    );
+  return { output, platform, frontend };
+}
+
 async function main() {
-  const args = process.argv.slice(2);
-  if (args.length !== 2 || args[0] !== '--output')
-    throw new Error('Usage: node scripts/verify-codex-matrix.mjs --output <evidence-directory>');
-  const result = await verifyMatrix({ output: args[1] });
+  const { output, platform, frontend } = parseArgs(process.argv.slice(2));
+  const result = await verifyMatrix({ output, platform, frontend });
   process.stdout.write(
     JSON.stringify({
       status: result.status,
-      evidence: path.resolve(args[1]),
+      platform: result.platform,
+      frontend: result.frontend,
+      evidence: path.resolve(output),
       workspace: result.workspace,
     }) + '\n',
   );

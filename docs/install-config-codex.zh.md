@@ -326,8 +326,20 @@ npm run codex:control -- status
 返回一次性 `pairingUrl`，用其建立浏览器会话。远程访问应使用受认证的 HTTPS
 代理或隧道，不能把本机回环 URL 填进异地飞书卡片。高风险操作还需 TOTP step-up。
 
-`doctor` 当前主要验证 Codex `--version` 能运行，并报告配置；`ok: true` 不证明
-插件、模型认证、原生 Agent、H1/H3 或完整交付已经通过。supervisor 会隔离宿主
+`doctor` 的 `ok` 仍只反映 Codex `--version` 能否运行，并报告配置；`ok: true` 不
+证明插件、模型认证、原生 Agent、H1/H3 或完整交付已经通过。除此之外，`doctor`
+会对宿主 Codex 做只读、非交互、限时的能力探测，并在结果的 `capabilities` 中报告：
+
+- `states`：`plugin`、`execJson`（`exec --json`）、`nativeAgents`（原生 subagents）
+  和 `elicitation` 每项为 `available`、`missing` 或 `not-probed`。
+- `mode`：有效运行模式，`native` 或降级后的 `project-mcp-skill`。
+- `degradations`：触发的显式降级项（如 `plugin-unavailable`）。
+- `blocked`：被阻塞的能力（如 `subagents`、`interactive-gates`）。
+- `versionGateHint`：升级或降级提示。
+
+探测只运行只读 `--help`、不挂 stdin 且有超时；`missing` 和 `not-probed` 都按不可用
+保守降级，不会静默失败：缺少 `plugin` 走项目级 MCP + Skill 路径，缺少 elicitation
+时人工门禁保持 pending。supervisor 会隔离宿主
 MCP，仅注入项目绑定的 `specgate_control`，并过滤子进程环境。工具链依赖额外
 变量时用 `SPECGATE_CODEX_ENV_ALLOWLIST` 显式放行，例如 `JAVA_HOME,MAVEN_HOME`。
 飞书 webhook 和 MFA secret 不传给工作子进程。
@@ -336,6 +348,19 @@ MCP，仅注入项目绑定的 `specgate_control`，并过滤子进程环境。�
 `SPECGATE_CONTROL_HOME` 决定 daemon 状态位置，两者作用不同。修改环境后需要
 停止并重新启动 daemon。默认同一 control home 绑定一个项目，换项目应停止重绑，
 或设置另一个 control home 和管理端口 `SPECGATE_MANAGEMENT_PORT`。
+
+控制面支持两种模式（多项目注册表与聚合投影已落地，聚合控制台的完整接线仍在本分支
+推进）：
+
+- 聚合（aggregate，默认）：一个控制 home、一个管理端口登记并汇总多个项目，
+  聚合视图按项目汇总注意力首页与队列。
+- 隔离（isolated）：每个项目使用独立控制 home
+  （`<controlRoot>/projects/<projectId>`）和确定性端口，互不共享 MCP 配置、凭据与状态。
+
+在聚合控制台接线完成前，也可用 `SPECGATE_CONTROL_HOME` 与
+`SPECGATE_MANAGEMENT_PORT` 为不同项目指定不同控制 home 和端口来实现隔离。控制面的
+Web 会话与配对 token 会持久化到控制 home 下的 `web-sessions.json`，daemon 重启后
+在其 TTL 内仍然有效，无需重新配对。
 
 ```text
 npm run codex:control -- list

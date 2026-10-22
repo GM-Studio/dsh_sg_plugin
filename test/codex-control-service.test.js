@@ -175,6 +175,35 @@ test('heartbeat and offline reconciliation are explicit', async () => {
   assert.equal(state.attention[attentionId].type, 'OFFLINE');
 });
 
+test('a stale heartbeat marks the host SUSPECT before it goes OFFLINE', async () => {
+  const { service, projectRoot } = fixture();
+  const created = await service.createWorkItem({
+    title: 'Exporter',
+    request: 'Implement CSV export',
+    projectRoot,
+  });
+  const claimed = await service.claimNext({ ownerId: 'supervisor', leaseMs: 30000 });
+  const runId = claimed.run.runId;
+  await service.heartbeat({
+    runId,
+    leaseToken: claimed.lease.token,
+    expectedRunVersion: 1,
+  });
+
+  const suspected = await service.reconcile({ now: Date.parse('2026-10-22T10:00:50.000Z') });
+  assert.equal(suspected.ok, true);
+  assert.equal(suspected.changed, 1);
+  const state = (await service.inspect()).state;
+  assert.equal(state.workItems[created.workItem.workItemId].hostHealth, 'SUSPECT');
+  assert.equal(state.runs[runId].executionState, 'RUNNING');
+  const projected = await service.getWorkItem(created.workItem.workItemId);
+  assert.equal(projected.workItem.summary.status, 'SUSPECT');
+
+  const repeated = await service.reconcile({ now: Date.parse('2026-10-22T10:00:55.000Z') });
+  assert.equal(repeated.ok, true);
+  assert.equal(repeated.changed, 0);
+});
+
 test('management actions are idempotent for retried client requests', async () => {
   const { service, projectRoot } = fixture();
   const created = await service.createWorkItem({

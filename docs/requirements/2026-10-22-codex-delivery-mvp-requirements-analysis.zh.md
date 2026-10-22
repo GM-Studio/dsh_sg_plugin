@@ -200,7 +200,6 @@ ProjectProfile 是项目的受控配置，不包含临时执行状态。
   "root": "<project-root>",
   "targetBranch": "main",
   "remoteUrl": null,
-  "pushApproved": false,
   "backendPackage": "com.acme.orders",
   "frontendDefaultLocale": "zh-CN",
   "frontendLocales": ["zh-CN", "en-US"],
@@ -221,7 +220,6 @@ ProjectProfile 是项目的受控配置，不包含临时执行状态。
 约束：
 
 - `mode` 只能是 `new` 或 `adopted`。
-- `pushApproved` 默认 `false`。
 - `remoteUrl` 不得包含用户名、密码、token 或其他明文凭据。
 - 未识别或未确认的命令不能被标记为有效。
 - 用户提供的命令覆盖必须记录来源。

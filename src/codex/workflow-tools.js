@@ -46,6 +46,11 @@ const preset = {
   enum: JAVA_PRESETS.map((entry) => entry.id),
   description: 'Java/Vue preset; defaults to jdk8-boot2.7 (legacy).',
 };
+const frontend = {
+  type: 'string',
+  enum: ['vue', 'react'],
+  description: 'Frontend framework; defaults to vue. React is not yet available.',
+};
 const javaPackageSegment = {
   type: 'string',
   minLength: 2,
@@ -127,7 +132,7 @@ const WORKFLOW_TOOLS = [
   definition(
     'sg_init_preview',
     'Scan a Java/Vue initialization target without writing. Return conflicts, retained files, namespace, Git status and the preview hash.',
-    { path: target, preset, company: javaPackageSegment, business: javaPackageSegment },
+    { path: target, preset, frontend, company: javaPackageSegment, business: javaPackageSegment },
     ['company', 'business'],
     true,
   ),
@@ -137,6 +142,7 @@ const WORKFLOW_TOOLS = [
     {
       path: target,
       preset,
+      frontend,
       company: javaPackageSegment,
       business: javaPackageSegment,
       previewHash: {
@@ -646,6 +652,7 @@ export function createToolRegistry({
         const input = {
           root: path.resolve(root, args.path || '.'),
           preset: args.preset,
+          frontend: args.frontend,
           company: args.company,
           business: args.business,
         };

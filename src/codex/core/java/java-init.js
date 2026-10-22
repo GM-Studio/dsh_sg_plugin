@@ -225,11 +225,19 @@ export async function startJavaInit({
   if (existing) return existing;
   const empty = inspectEmptyTarget(root);
   if (!empty.ok) return empty;
-  if (
-    (backend && backend !== 'java') ||
-    (frontend && frontend !== 'vue') ||
-    (stackPreset && stackPreset !== 'java-vue')
-  )
+  if (backend && backend !== 'java')
+    return {
+      ok: false,
+      code: 'E_STACK_CONFLICT',
+      message: '默认初始化固定 Java 后端；请使用 java 后端',
+    };
+  if (frontend && !['vue', 'react'].includes(frontend))
+    return {
+      ok: false,
+      code: 'E_FRONTEND_UNAVAILABLE',
+      message: '仅支持 Vue 3 或 React 18 前端',
+    };
+  if (stackPreset && stackPreset !== 'java-vue')
     return {
       ok: false,
       code: 'E_STACK_CONFLICT',
@@ -290,6 +298,7 @@ export async function startJavaInit({
         preset,
         company: namespace.company,
         business: namespace.business,
+        frontend,
       });
       for (const [relative, content] of Object.entries(files)) {
         const target = path.resolve(root, relative);
@@ -409,6 +418,7 @@ export async function startJavaInit({
           backend: 'backend',
           frontend: 'frontend',
           stack: 'java-vue',
+          frontendFramework: frontend === 'react' ? 'react' : 'vue',
           preset: preset.id,
           company: namespace.company,
           business: namespace.business,
