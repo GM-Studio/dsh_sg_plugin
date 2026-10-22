@@ -6,6 +6,7 @@ import { taskApi } from '../src/api/tasks';
 import { fileApi } from '../src/api/files';
 import { ApiError } from '../src/api/request';
 import { i18n, setLocale } from '../src/i18n';
+import { createAppRouter } from '../src/router';
 
 vi.mock('../src/api/auth', () => ({
   authApi: { me: vi.fn(), login: vi.fn(), logout: vi.fn() },
@@ -54,7 +55,10 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 async function open() {
-  wrapper = mount(App, { global: { plugins: [i18n] } });
+  window.location.hash = '#/tasks';
+  const router = createAppRouter();
+  wrapper = mount(App, { global: { plugins: [i18n, router] } });
+  await router.isReady();
   await flushPromises();
 }
 async function click(label: string) {

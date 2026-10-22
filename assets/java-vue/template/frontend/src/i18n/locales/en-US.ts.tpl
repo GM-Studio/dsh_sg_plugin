@@ -21,12 +21,21 @@ export default {
   },
   navigation: {
     workspace: 'Workspace',
+    dashboard: 'Dashboard',
     tasks: 'Task manager',
     files: 'Files',
     note: 'A little structure. A lot more clarity.',
     breadcrumb: 'Workspace / Tasks',
     logout: 'Sign out',
     ariaLabel: 'Workspace navigation',
+  },
+  dashboard: {
+    eyebrow: 'OPERATIONS OVERVIEW',
+    title: 'Dashboard',
+    description: 'A quick read on the current workspace.',
+    totalTasks: 'Total tasks',
+    completedTasks: 'Completed',
+    pendingTasks: 'In progress',
   },
   task: {
     eyebrow: 'YOUR DAILY OVERVIEW',

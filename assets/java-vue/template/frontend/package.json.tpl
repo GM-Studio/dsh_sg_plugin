@@ -17,6 +17,7 @@
   },
   "dependencies": {
     "vue": "3.5.30",
+    "vue-router": "4.5.1",
     "element-plus": "2.11.8",
     "vue-i18n": "11.1.12"
   },

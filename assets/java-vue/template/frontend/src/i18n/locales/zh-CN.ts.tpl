@@ -21,12 +21,21 @@ export default {
   },
   navigation: {
     workspace: '工作空间',
+    dashboard: '仪表盘',
     tasks: '任务管理',
     files: '文件管理',
     note: '更清晰的结构，带来更高效的协作。',
     breadcrumb: '工作空间 / 任务',
     logout: '退出登录',
     ariaLabel: '工作空间导航',
+  },
+  dashboard: {
+    eyebrow: '运营概览',
+    title: '仪表盘',
+    description: '快速了解当前工作空间的运行情况。',
+    totalTasks: '任务总数',
+    completedTasks: '已完成',
+    pendingTasks: '进行中',
   },
   task: {
     eyebrow: '今日工作概览',

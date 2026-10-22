@@ -22,6 +22,14 @@ Vue admin scaffold: the module inventory and landing order are recorded in
 scaffold and running its real verification must be paired; a changed template
 moves `GOLDEN_MANIFEST` to pending re-verification.
 
+Landed (template step 1, layout + router + dashboard shell): the Vue frontend
+gains `vue-router`, an `AppLayout` shell, `DashboardView` and `TasksView`; the
+generated lockfile is regenerated with the new dependency. Verified by real runs
+on a generated `jdk17-boot3.5` project: backend `clean verify` (jar + surefire),
+frontend `vue-tsc` build, and 12/12 Vitest cases pass. `GOLDEN_MANIFEST` now
+records the new hashes as `pending` with no platform evidence; Windows and Linux
+re-verification is still required before any preset is `verified` again.
+
 - [x] 1. P0: approve the requirements document; keep this proposal/design/spec
       aligned with it.
 - [ ] 2. P1: add failing tests for JDK+frontend selection, `ProjectProfile`

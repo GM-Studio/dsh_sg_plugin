@@ -784,8 +784,7 @@ export function createDevelopmentService({
           conventions.frontendFramework,
           entry.path,
         );
-        if (frameworkViolation)
-          violations.push({ path: entry.path, reason: frameworkViolation });
+        if (frameworkViolation) violations.push({ path: entry.path, reason: frameworkViolation });
       }
     }
     if (violations.length)
