@@ -17,6 +17,11 @@ Windows + Linux golden matrix. Authoring React sources without a real lockfile
 would generate a template that cannot be verified, so the slice stops at a
 fail-closed boundary until that is settled.
 
+Vue admin scaffold: the module inventory and landing order are recorded in
+`design.md`. This environment has no `java`/`mvn` on PATH, so authoring the
+scaffold and running its real verification must be paired; a changed template
+moves `GOLDEN_MANIFEST` to pending re-verification.
+
 - [x] 1. P0: approve the requirements document; keep this proposal/design/spec
       aligned with it.
 - [ ] 2. P1: add failing tests for JDK+frontend selection, `ProjectProfile`
