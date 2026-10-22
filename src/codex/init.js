@@ -348,7 +348,7 @@ export function previewInit({
       snapshotHash: snapshotHash(snapshot),
       previewHash: createHash('sha256').update(JSON.stringify(body)).digest('hex'),
       templateHash: hash,
-      golden: goldenStatus(preset, hash),
+      golden: goldenStatus(preset, hash, frontendChoice),
       risks: [
         preset.legacy ? 'legacy：Java 8 / Spring Boot 2.7 维护风险' : null,
         preset.preview ? 'preview：Spring Boot 4.0 预览版本风险' : null,

@@ -69,6 +69,19 @@ export const GOLDEN_MANIFEST = {
   presets: {
     'jdk8-boot2.7': {
       templateHash: '081ba677483c32ce990594c3a478df265b6c8d289835adfea24d65a16b4aa07b',
+      frontends: {
+        react: {
+          templateHash: '89f1861a7df7b34b74478abea39ea540cea667267fff5f9ee4a16abb16020d0d',
+          verifiedAt: null,
+          verifiedBy: null,
+          toolchain: null,
+          commands: [],
+          result: 'pending',
+          platforms: { win32: { result: 'not-run' }, linux: { result: 'not-run' } },
+          evidence: null,
+          matrixComplete: false,
+        },
+      },
       verifiedAt: null,
       verifiedBy: null,
       toolchain: null,
@@ -83,6 +96,19 @@ export const GOLDEN_MANIFEST = {
     },
     'jdk17-boot3.5': {
       templateHash: 'bfe28bba5ea68b9727e19a0326aa263c31170c83ebe60802c997f2365df6e100',
+      frontends: {
+        react: {
+          templateHash: 'c852c49eae343ecac5f1dcba97380edf13dadd7a8a0ee694f66fc355a07fae4b',
+          verifiedAt: null,
+          verifiedBy: null,
+          toolchain: null,
+          commands: [],
+          result: 'pending',
+          platforms: { win32: { result: 'not-run' }, linux: { result: 'not-run' } },
+          evidence: null,
+          matrixComplete: false,
+        },
+      },
       verifiedAt: null,
       verifiedBy: null,
       toolchain: null,
@@ -97,6 +123,19 @@ export const GOLDEN_MANIFEST = {
     },
     'jdk21-boot3.5': {
       templateHash: '381f47454a3d700b7c6b87519aa0a1d2c63c4aa294f36e1988d40efa0a817820',
+      frontends: {
+        react: {
+          templateHash: 'f5278c11e5715c16a406d6eb02649efd1af276d0a4b28b40ab49c1022c308958',
+          verifiedAt: null,
+          verifiedBy: null,
+          toolchain: null,
+          commands: [],
+          result: 'pending',
+          platforms: { win32: { result: 'not-run' }, linux: { result: 'not-run' } },
+          evidence: null,
+          matrixComplete: false,
+        },
+      },
       verifiedAt: null,
       verifiedBy: null,
       toolchain: null,
@@ -111,6 +150,19 @@ export const GOLDEN_MANIFEST = {
     },
     'jdk21-boot4.0': {
       templateHash: '0bb61affb4a9b7ac94283baf1aafc6a3022bc5c735666553501ffaacddf92406',
+      frontends: {
+        react: {
+          templateHash: '99fbb95c608008d0fabae416a87fa2ad841789bc3227aad13d93975be34a7999',
+          verifiedAt: null,
+          verifiedBy: null,
+          toolchain: null,
+          commands: [],
+          result: 'pending',
+          platforms: { win32: { result: 'not-run' }, linux: { result: 'not-run' } },
+          evidence: null,
+          matrixComplete: false,
+        },
+      },
       verifiedAt: null,
       verifiedBy: null,
       toolchain: null,
@@ -354,12 +406,17 @@ export function platformVerificationRecord(preset, run = {}) {
   };
 }
 
-export function goldenStatus(preset, hash) {
-  const record = GOLDEN_MANIFEST.presets[preset.id];
-  if (!record) {
+export function goldenStatus(preset, hash, frontend = 'vue') {
+  const entry = GOLDEN_MANIFEST.presets[preset.id];
+  const record = frontend === 'vue' ? entry : (entry?.frontends?.[frontend] ?? null);
+  if (!entry || !record) {
     return {
       verified: false,
-      reason: '该版本档尚未登记发版验收记录；先执行 /sg-verify 或完成发版前本地验收',
+      frontend,
+      reason:
+        frontend === 'vue'
+          ? '该版本档尚未登记发版验收记录；先执行 /sg-verify 或完成发版前本地验收'
+          : '前端 ' + frontend + ' 尚未登记验收记录；先完成真实构建与双平台验收',
       record: null,
     };
   }

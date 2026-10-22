@@ -102,6 +102,16 @@ and format:check. Repo suite 419 pass / 1 skipped. `GOLDEN_MANIFEST` refreshed
 for the Vue hashes and still `pending`; the React dimension is not yet recorded
 in the manifest.
 
+Landed (stability pass): `goldenStatus` is now frontend-aware and every preset
+carries a `frontends.react` record, so Vue and React hashes are tracked
+separately (both remain `pending`). Verified generation for all eight
+preset x frontend combinations (distinct hashes, Vue emits only `.vue`, React
+only `.tsx`, `frontendFramework` recorded). Verified a real JDK 8 build:
+backend `clean verify` 25/25, frontend 31/31, build/lint/format. The repo suite
+was run repeatedly (419 pass, 0 fail, 1 skipped); two earlier runs showed a
+transient failure under load that has not reproduced, so the suite should be
+pinned to a lower test concurrency before merge if it recurs.
+
 - [x] 1. P0: approve the requirements document; keep this proposal/design/spec
       aligned with it.
 - [x] 2. P1: add failing tests for JDK+frontend selection, `ProjectProfile`
