@@ -110,8 +110,9 @@ only `.tsx`, `frontendFramework` recorded). Verified real full builds on three
 JDKs: JDK 8 and JDK 21 (Vue) and JDK 17 (Vue and React) each pass backend
 `clean verify` 25/25, frontend 31/31, build/lint/format. The repo suite
 was run repeatedly (419 pass, 0 fail, 1 skipped); two earlier runs showed a
-transient failure under load that has not reproduced, so the suite should be
-pinned to a lower test concurrency before merge if it recurs.
+transient failure under load that has not reproduced in six further runs, so
+`npm test` now pins `--test-concurrency=2` to keep the real subprocess/HTTP
+suites deterministic on machines with many cores.
 
 - [x] 1. P0: approve the requirements document; keep this proposal/design/spec
       aligned with it.
