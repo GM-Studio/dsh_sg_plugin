@@ -3,6 +3,7 @@ import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { createArtifactStore } from './core/artifact-store.js';
 import { hashValue } from './events.js';
+import { gitSafeDirectory } from './git-path.js';
 import { detectProject } from './project-detect.js';
 import { validateProjectBaseline, validateProjectProfile } from './project-model.js';
 import {
@@ -30,7 +31,7 @@ function git(root, args) {
     'git',
     [
       '-c',
-      `safe.directory=${root}`,
+      `safe.directory=${gitSafeDirectory(root)}`,
       '-c',
       'core.filemode=false',
       '-c',

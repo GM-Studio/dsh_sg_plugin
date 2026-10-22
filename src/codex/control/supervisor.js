@@ -96,6 +96,7 @@ function sessionIdFrom(item) {
 export function createControlSupervisor({
   service,
   adapter,
+  controlRoot = null,
   ownerId = 'local-supervisor',
   leaseMs = 60000,
   heartbeatMs = 15000,
@@ -235,6 +236,7 @@ export function createControlSupervisor({
         signal: controller.signal,
         environment: {
           SPECGATE_WORK_ITEM_ID: item.workItemId,
+          ...(controlRoot ? { SPECGATE_CONTROL_HOME: controlRoot } : {}),
         },
         onSession: (value) => {
           sessionId = value;
@@ -289,6 +291,9 @@ export function createControlSupervisor({
           budgetLimit,
           usage: budgetSnapshot(),
           sessionId,
+          summary: `Execution reached ${budgetLimit}. Usage: ${JSON.stringify(budgetSnapshot())}.`,
+          risks: ['Further execution may consume more model, time or tool budget.'],
+          evidence: [`budget:${budgetLimit}`],
         },
       });
       return attention.ok

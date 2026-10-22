@@ -129,7 +129,7 @@ test('a state WAL failure after approval consumption keeps the phase pending and
   const write = fs.writeFileSync;
   fs.writeFileSync = (target, data, ...rest) => {
     if (typeof target === 'number' && String(data).includes('"type":"state.transitioned"'))
-      throw new Error('Simulated transition write failure');
+      throw Object.assign(new Error('Simulated transition write failure'), { code: 'EPERM' });
     return write(target, data, ...rest);
   };
   let failed;
@@ -143,6 +143,7 @@ test('a state WAL failure after approval consumption keeps the phase pending and
     fs.writeFileSync = write;
   }
   assert.equal(failed.code, 'STORAGE_ERROR');
+  assert.equal(failed.storageCode, 'EPERM');
   const recovered = await store.load();
   assert.equal(recovered.ok, true);
   assert.equal(recovered.state.phase, 'H1_PENDING');

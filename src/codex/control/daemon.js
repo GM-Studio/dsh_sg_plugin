@@ -64,6 +64,7 @@ export async function startControlDaemon({
     createCodexExecutionAdapter({
       clock,
       command: config.codexCommand,
+      sandbox: config.codexSandbox,
       env: controlExecutionEnvironment({
         env: config.codexHome ? { ...env, CODEX_HOME: config.codexHome } : env,
         projectRoot,
@@ -73,6 +74,7 @@ export async function startControlDaemon({
   const supervisor = createControlSupervisor({
     service: runtime.service,
     adapter: executionAdapter,
+    controlRoot: runtime.store.root,
     ownerId: `supervisor-${process.pid}`,
     clock,
     logger,
@@ -217,12 +219,14 @@ export async function startControlDaemon({
     pid: process.pid,
     startedAt: new Date(clock()).toISOString(),
     controlRoot: runtime.store.root,
+    projectRoot: path.resolve(projectRoot),
     managementBaseUrl: baseUrl,
     managementPublicUrl: config.managementPublicUrl,
     pairingUrl,
     feishuConfigured: Boolean(feishu),
     mfaConfigured: Boolean(config.mfaSecret),
     codexCommand: config.codexCommand,
+    codexSandbox: config.codexSandbox,
     codexHomeConfigured: Boolean(config.codexHome),
     isolatedMcp: true,
   });

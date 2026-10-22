@@ -7,6 +7,7 @@ import { javaFullstackFiles, normalizeProjectNamespace } from './java-fullstack-
 import { VERIFY_STAGES } from './verify-evidence.js';
 import { JAVA_PRESETS, goldenStatus, normalizeJavaPreset, templateHash } from './java-versions.js';
 import { initProject, patchConfigRequirements } from '../change.js';
+import { gitSafeDirectory } from '../../git-path.js';
 import { writeRequirementsBaseline, answerOf } from '../requirements.js';
 import { patchState } from '../state.js';
 
@@ -467,11 +468,23 @@ export async function startJavaInit({
       JSON.stringify(report, null, 2) + NL,
     );
     const git = (args) =>
-      spawnSync('git', ['-c', 'user.name=SpecGate', '-c', 'user.email=specgate@local', ...args], {
-        cwd: workRoot,
-        encoding: 'utf8',
-        timeout: 120000,
-      });
+      spawnSync(
+        'git',
+        [
+          '-c',
+          `safe.directory=${gitSafeDirectory(workRoot)}`,
+          '-c',
+          'user.name=SpecGate',
+          '-c',
+          'user.email=specgate@local',
+          ...args,
+        ],
+        {
+          cwd: workRoot,
+          encoding: 'utf8',
+          timeout: 120000,
+        },
+      );
     for (const args of [
       ['init', '-q'],
       ['add', '-A'],

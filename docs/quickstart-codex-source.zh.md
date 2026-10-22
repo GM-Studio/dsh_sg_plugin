@@ -75,6 +75,7 @@ $env:SPECGATE_MANAGEMENT_PUBLIC_URL = "https://your-secure-management-endpoint/"
 ```powershell
 $env:SPECGATE_CODEX_COMMAND = "codex"
 $env:SPECGATE_CODEX_HOME = "<machine-local-codex-home>"
+$env:SPECGATE_CODEX_SANDBOX = "workspace-write"
 ```
 
 控制 supervisor 会用一次性的 `mcp_servers={}` 清除宿主额外 MCP，只注入
@@ -82,6 +83,11 @@ $env:SPECGATE_CODEX_HOME = "<machine-local-codex-home>"
 认证等白名单变量传给子进程。额外变量通过逗号分隔的
 `SPECGATE_CODEX_ENV_ALLOWLIST` 显式放行。飞书 webhook、MFA secret 和管理
 pairing token 不会进入子 Codex 环境。
+
+`SPECGATE_CODEX_SANDBOX` 默认是 `workspace-write`，可选 `read-only` 和
+`danger-full-access`。后两者只应在明确理解隔离边界时使用；当控制面本身已运行
+在宿主沙箱中时，嵌套 Codex 仍可能无法创建统一执行进程，此时应把控制面移到
+正常用户终端或独立 Linux VM，而不是默认关闭安全边界。
 
 远程 URL 必须通过 HTTPS 或受认证 Relay/隧道暴露；默认管理服务器只绑定
 `127.0.0.1`。飞书 webhook 只负责通知，卡片按钮打开认证管理页，不把 webhook

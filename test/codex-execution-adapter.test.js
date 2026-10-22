@@ -49,6 +49,26 @@ test('Codex adapter starts exec with JSON events and extracts session id', async
   assert.equal(fake.calls[0].options.cwd, projectRoot);
 });
 
+test('Codex adapter uses only an explicitly configured sandbox mode', async () => {
+  const fake = fakeSpawn([{ type: 'thread.started', thread_id: 'session-123' }]);
+  const adapter = createCodexExecutionAdapter({
+    command: 'codex-test',
+    spawnImpl: fake.spawnImpl,
+    sandbox: 'danger-full-access',
+  });
+  await adapter.start({
+    projectRoot: path.resolve('work-product'),
+    prompt: 'Implement the feature',
+  });
+  const sandboxIndex = fake.calls[0].args.indexOf('--sandbox');
+  assert.notEqual(sandboxIndex, -1);
+  assert.equal(fake.calls[0].args[sandboxIndex + 1], 'danger-full-access');
+  assert.throws(
+    () => createCodexExecutionAdapter({ command: 'codex-test', sandbox: 'unsafe-mode' }),
+    /sandbox/i,
+  );
+});
+
 test('Codex adapter isolates host MCP and injects the bound SpecGate server', async () => {
   const fake = fakeSpawn([{ type: 'thread.started', thread_id: 'session-123' }]);
   const adapter = createCodexExecutionAdapter({

@@ -1,5 +1,6 @@
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
+import { gitSafeDirectory } from '../git-path.js';
 import { ensureDir, exists, readText, writeText } from './util/fsx.js';
 import { init as initState, load as loadState, patchState } from './state.js';
 import { REQ_VERSION, isRequirementsFrozen } from './requirements.js';
@@ -461,7 +462,12 @@ export function createChange(
             (() => {
               const committed = spawnSync(
                 'git',
-                ['show', initReport.archiveCommit + ':' + initReport.archive],
+                [
+                  '-c',
+                  `safe.directory=${gitSafeDirectory(root)}`,
+                  'show',
+                  initReport.archiveCommit + ':' + initReport.archive,
+                ],
                 { cwd: root, encoding: 'utf8', timeout: 10000 },
               );
               if (committed.status !== 0 || !exists(path.join(root, initReport.archive)))

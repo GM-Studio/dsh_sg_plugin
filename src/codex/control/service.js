@@ -56,6 +56,45 @@ function prepareProject(state, root, name, now) {
   return projectId;
 }
 
+function budgetIncrease(item, attention, command) {
+  if (attention.type !== 'BUDGET' || command.action !== 'resume') return { ok: true };
+  const requested = command.payload?.budget;
+  const allowed = new Set([
+    'wallClockMs',
+    'maxModelTokens',
+    'maxToolCalls',
+    'maxRepairRounds',
+    'maxNotificationAttempts',
+    'maxEvidenceBytes',
+  ]);
+  if (!requested || typeof requested !== 'object' || Array.isArray(requested))
+    return failure('BUDGET_INCREASE_REQUIRED', 'A budget increase is required to resume');
+  if (
+    Object.keys(requested).length === 0 ||
+    Object.keys(requested).some((key) => !allowed.has(key))
+  )
+    return failure('BUDGET_INCREASE_INVALID', 'Only supported budget limits may be increased');
+  const next = clone(item.budget);
+  let changed = false;
+  for (const [key, value] of Object.entries(requested)) {
+    if (
+      !Number.isSafeInteger(value) ||
+      value <= 0 ||
+      value > 2_000_000_000 ||
+      value <= item.budget[key]
+    )
+      return failure(
+        'BUDGET_INCREASE_INVALID',
+        'Each requested budget limit must be a bounded increase',
+      );
+    next[key] = value;
+    changed = true;
+  }
+  return changed
+    ? { ok: true, budget: next }
+    : failure('BUDGET_INCREASE_INVALID', 'At least one budget limit must increase');
+}
+
 export function createControlService({
   store,
   clock = Date.now,
@@ -378,6 +417,8 @@ export function createControlService({
           },
         };
       const { item, attention, run } = inspected;
+      const increased = budgetIncrease(item, attention, command);
+      if (!increased.ok) return increased;
       const now = nowIso();
       const decisionId = id('decision', randomId, command.idempotencyKey);
       const decision = {
@@ -431,6 +472,7 @@ export function createControlService({
         item.nextAction = 'Delivery accepted';
         item.completedAt = now;
       } else {
+        if (increased.budget) item.budget = clone(increased.budget);
         item.executionState = 'QUEUED';
         item.hostHealth = 'ONLINE';
         item.nextOwner = 'system';
@@ -1032,6 +1074,21 @@ export function createControlService({
         consumedAt: now,
       };
       state.decisions[decisionId] = decision;
+      const currentAttention = item.currentAttentionId
+        ? state.attention[item.currentAttentionId]
+        : null;
+      if (
+        currentAttention &&
+        currentAttention.workItemId === workItemId &&
+        ['OPEN', 'DELIVERED', 'REMINDED'].includes(currentAttention.status)
+      ) {
+        currentAttention.status = 'DECIDED';
+        currentAttention.decidedAt = now;
+        currentAttention.decisionId = decisionId;
+        currentAttention.decisionAction = action;
+        currentAttention.updatedAt = now;
+        item.currentAttentionId = null;
+      }
       const run = item.currentRunId ? state.runs[item.currentRunId] : null;
       if (action === 'pause') {
         item.executionState = 'PAUSED';

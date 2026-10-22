@@ -73,7 +73,7 @@ function controlConfigArgs(projectRoot, serverPath, childEnvironment = {}) {
   ];
 }
 
-function commandArgs({ mode, projectRoot, sessionId, serverPath, childEnvironment }) {
+function commandArgs({ mode, projectRoot, sessionId, serverPath, childEnvironment, sandbox }) {
   if (mode === 'resume')
     return [
       'exec',
@@ -89,7 +89,7 @@ function commandArgs({ mode, projectRoot, sessionId, serverPath, childEnvironmen
     'never',
     ...controlConfigArgs(projectRoot, serverPath, childEnvironment),
     '--sandbox',
-    'workspace-write',
+    sandbox,
     '--cd',
     projectRoot,
   ];
@@ -127,11 +127,14 @@ export function createCodexExecutionAdapter({
   serverPath = DEFAULT_SERVER_PATH,
   terminate = terminateProcessTree,
   platform = process.platform,
+  sandbox = 'workspace-write',
 } = {}) {
   if (typeof command !== 'string' || !command) throw new TypeError('Codex command is required');
   if (typeof spawnImpl !== 'function') throw new TypeError('spawnImpl must be a function');
   if (!Number.isSafeInteger(timeoutMs) || timeoutMs <= 0)
     throw new TypeError('timeoutMs must be a positive integer');
+  if (!['workspace-write', 'read-only', 'danger-full-access'].includes(sandbox))
+    throw new TypeError('sandbox must be workspace-write, read-only or danger-full-access');
 
   async function run({
     mode = 'start',
@@ -160,6 +163,7 @@ export function createCodexExecutionAdapter({
         sessionId,
         serverPath: path.resolve(serverPath),
         childEnvironment: environment,
+        sandbox,
       }),
       prompt,
     ];

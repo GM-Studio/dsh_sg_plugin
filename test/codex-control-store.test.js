@@ -1,4 +1,4 @@
-import test from 'node:test';
+import test, { mock } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import os from 'node:os';
@@ -84,6 +84,44 @@ test('a lagging snapshot is recoverable from the complete event chain', async ()
   const inspected = await store.inspect();
   assert.equal(inspected.ok, true);
   assert.equal(Object.keys(inspected.state.workItems).length, 2);
+});
+
+test('a concurrent snapshot advance cannot make a consistent read look corrupt', async () => {
+  const { service, store, projectRoot } = fixture();
+  await service.createWorkItem({
+    title: 'One',
+    request: 'First work',
+    projectRoot,
+  });
+  const eventsPath = path.join(store.root, 'events.jsonl');
+  const snapshotPath = path.join(store.root, 'state.json');
+  const eventsBefore = fs.readFileSync(eventsPath, 'utf8');
+  const snapshotBefore = fs.readFileSync(snapshotPath, 'utf8');
+  await service.createWorkItem({
+    title: 'Two',
+    request: 'Second work',
+    projectRoot,
+  });
+  const eventsAfter = fs.readFileSync(eventsPath, 'utf8');
+  const snapshotAfter = fs.readFileSync(snapshotPath, 'utf8');
+  fs.writeFileSync(eventsPath, eventsBefore);
+  fs.writeFileSync(snapshotPath, snapshotBefore);
+
+  const readFileSync = fs.readFileSync;
+  mock.method(fs, 'readFileSync', function (target, ...args) {
+    if (target === eventsPath) {
+      fs.writeFileSync(eventsPath, eventsAfter);
+      fs.writeFileSync(snapshotPath, snapshotAfter);
+      return eventsBefore;
+    }
+    return readFileSync.call(this, target, ...args);
+  });
+  try {
+    const inspected = await store.inspect();
+    assert.equal(inspected.ok, true, JSON.stringify(inspected));
+  } finally {
+    mock.restoreAll();
+  }
 });
 
 test('Attention revisions are unique and stale revisions cannot remain open', async () => {

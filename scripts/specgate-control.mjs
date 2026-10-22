@@ -95,10 +95,13 @@ export async function runControlCli({
   cwd = process.cwd(),
   spawnImpl = spawn,
   spawnSyncImpl = spawnSync,
+  runtimeFactory = createLocalControlRuntime,
   platform = process.platform,
 } = {}) {
   const command = args[0] || 'help';
-  const projectRoot = path.resolve(option(args, '--project', cwd));
+  const requestedProjectRoot = option(args, '--project');
+  const configuredProjectRoot = requestedProjectRoot || env.SPECGATE_PROJECT_ROOT || null;
+  const projectRoot = path.resolve(configuredProjectRoot || cwd);
   const controlRoot = resolveControlRoot({ env });
   if (command === 'help') {
     return {
@@ -117,8 +120,20 @@ export async function runControlCli({
   }
   if (command === 'start') {
     const existing = readDaemonStatus({ controlRoot });
-    if (existing.ok && pidAlive(existing.status.pid))
+    if (existing.ok && pidAlive(existing.status.pid)) {
+      if (
+        configuredProjectRoot &&
+        existing.status.projectRoot &&
+        path.resolve(existing.status.projectRoot) !== path.resolve(configuredProjectRoot)
+      )
+        return {
+          ok: false,
+          code: 'PROJECT_BINDING_CONFLICT',
+          message: 'The running daemon is bound to another project; stop it before rebinding',
+          projectRoot: existing.status.projectRoot,
+        };
       return { ok: true, alreadyRunning: true, ...existing.status };
+    }
     fs.mkdirSync(controlRoot, { recursive: true, mode: 0o700 });
     const logPath = path.join(controlRoot, 'daemon.log');
     const logFd = fs.openSync(logPath, 'a', 0o600);
@@ -206,6 +221,7 @@ export async function runControlCli({
       codex: {
         command: config.codexCommand,
         homeConfigured: Boolean(config.codexHome),
+        sandbox: config.codexSandbox,
         available: codexAvailable,
         version: codexAvailable
           ? String(codex.stdout || '')
@@ -226,8 +242,13 @@ export async function runControlCli({
       },
     };
   }
-  const runtime = createLocalControlRuntime({ env });
+  const runtime = runtimeFactory({ env });
   if (command === 'create') {
+    const bound = readDaemonStatus({ controlRoot });
+    const boundProjectRoot =
+      !requestedProjectRoot && bound.ok && pidAlive(bound.status.pid) && bound.status.projectRoot
+        ? path.resolve(bound.status.projectRoot)
+        : projectRoot;
     const title = option(args, '--title');
     const request = option(args, '--request');
     if (!title || !request)
@@ -239,7 +260,7 @@ export async function runControlCli({
     return runtime.service.createWorkItem({
       title,
       request,
-      projectRoot,
+      projectRoot: boundProjectRoot,
       priority: option(args, '--priority', 'normal'),
     });
   }

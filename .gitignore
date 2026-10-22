@@ -8,4 +8,5 @@ Thumbs.db
 coverage/
 .sg-fixed-live-*/
 .specgate/
+.runtime/
 .npmrc

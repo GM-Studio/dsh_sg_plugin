@@ -5,6 +5,7 @@ import { randomUUID } from 'node:crypto';
 import { spawn, spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { hashValue } from './events.js';
+import { gitSafeDirectory } from './git-path.js';
 
 const WORKER = fileURLToPath(new URL('./baseline-worker.mjs', import.meta.url));
 const RUN_ID = /^baseline-run-[a-f0-9]{16}$/;
@@ -27,7 +28,7 @@ function git(root, args) {
     'git',
     [
       '-c',
-      `safe.directory=${root}`,
+      `safe.directory=${gitSafeDirectory(root)}`,
       '-c',
       'core.filemode=false',
       '-c',

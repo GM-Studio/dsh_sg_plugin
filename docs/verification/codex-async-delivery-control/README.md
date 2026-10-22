@@ -9,7 +9,7 @@
 
 ## Automated Verification
 
-- `npm test`: 330 tests passed, 0 failed.
+- `npm test`: 342 tests passed, 0 failed.
 - `npm run lint`: passed.
 - `npm run format:check`: passed.
 - `npm pack --dry-run --cache <temporary-cache>`: passed.
@@ -261,5 +261,58 @@ session ID.
 
 ## Delivery Boundary
 
-Only a local commit for the async-control change set is included. No push,
-archive, merge, deployment or customer delivery has been performed.
+The original async-control checkpoint created only a local commit. It was later
+merged into and pushed from `sg-codex`. The field-revalidation fixes below are a
+follow-up source commit; no customer archive, deployment or customer delivery
+was performed.
+
+## Post-Merge Field Revalidation
+
+Executed on 2026-10-22 after `sg-codex` was pushed and a real GitHub Java/Vue
+project was adopted:
+
+- Project: `gheinze/springboot-vuejs`, project
+  `project-cf7d3e1b46a3815e`, baseline `baseline-352b83f2613553ce`.
+- A real Codex child reached `RUNNING`, persisted a session, produced
+  heartbeat/tool-call telemetry and reached explicit AttentionRequest
+  boundaries. A temporary writable Codex Home was required because the host
+  sandbox maps `HOME` to an unauthenticated profile; the temporary home and MFA
+  secret were removed after verification.
+- Web pairing, attention inbox, WorkItems, execution monitoring and notification
+  health views were exercised in the in-app browser.
+- TOTP-protected cancel changed the WorkItem to `CANCELLED` and reduced the
+  active attention count to zero.
+- A blocked WorkItem accepted a Web `request_changes` Decision, cleared the old
+  attention and automatically resumed the persisted Codex session.
+- A real BUDGET AttentionRequest was increased through the Web/TOTP form from
+  500,000 to 2,000,000 model tokens and automatically resumed.
+
+Field defects found and fixed:
+
+- the supervisor did not pass `SPECGATE_CONTROL_HOME` to the project-bound MCP
+  process;
+- CLI WorkItem creation did not retain the project bound by `start --project`;
+- direct cancel/request-changes left the previous AttentionRequest active;
+- Windows Git safe-directory paths used backslashes in multiple workflow
+  modules;
+- a concurrent control snapshot advance could be misclassified as audit
+  corruption;
+- BUDGET resume had no audited budget-increase path;
+- `sg_work_item_wait` did not retry heartbeat-induced version conflicts;
+- child Codex sandbox selection was not configurable;
+- unknown project-state storage errors omitted the safe OS error code.
+
+Remaining environment blockers:
+
+- The current Codex desktop execution sandbox cannot create the nested Codex
+  unified-exec process (`open sandbox provisioning pipe`), even with
+  `danger-full-access`; the project-bound MCP also receives `EPERM` on
+  `.specgate/codex` writes. This host run therefore did not create a
+  ChangeContract or reach H1 and must not be reported as a full coding
+  delivery.
+- VMware Ubuntu 26.04 was started and VMware Tools reported
+  `192.168.137.128`, but TCP/22 is closed. The preseed did not install
+  OpenSSH. Guest login/authentication was not automated; SSH must be enabled
+  through the VM console or a user-provided secure guest-access path.
+- The control daemon reported `feishuConfigured: false`. No test message,
+  Feishu card Decision or mobile HTTPS approval can be claimed in this run.

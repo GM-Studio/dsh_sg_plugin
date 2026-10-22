@@ -172,26 +172,31 @@ export async function callControlTool(
         code: 'CONTROL_GATE_TOOL_REQUIRED',
         message: 'H1/H3 and customer acceptance must use their bound gate workflows',
       };
-    const current = await control.projection.getWorkItem(args.workItemId);
-    if (!current.ok) return current;
-    return control.requestAttention({
-      workItemId: args.workItemId,
-      scope: args.scope,
-      expectedVersion: current.workItem.revision,
-      type: args.type,
-      reason: args.reason,
-      question: args.question,
-      actions: args.actions,
-      artifactHash: hashValue({
+    let result = null;
+    for (let attempt = 0; attempt < 3; attempt += 1) {
+      const current = await control.projection.getWorkItem(args.workItemId);
+      if (!current.ok) return current;
+      result = await control.requestAttention({
         workItemId: args.workItemId,
+        scope: args.scope,
+        expectedVersion: current.workItem.revision,
         type: args.type,
-        revision: current.workItem.revision,
-      }),
-      summary: args.summary,
-      risks: args.risks,
-      evidence: args.evidence,
-      expiresAt: args.expiresAt,
-    });
+        reason: args.reason,
+        question: args.question,
+        actions: args.actions,
+        artifactHash: hashValue({
+          workItemId: args.workItemId,
+          type: args.type,
+          revision: current.workItem.revision,
+        }),
+        summary: args.summary,
+        risks: args.risks,
+        evidence: args.evidence,
+        expiresAt: args.expiresAt,
+      });
+      if (result.code !== 'VERSION_CONFLICT') return result;
+    }
+    return result;
   }
   return { ok: false, code: 'UNKNOWN_TOOL', message: 'Control tool is unavailable' };
 }

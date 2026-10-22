@@ -3,6 +3,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
+import { gitSafeDirectory } from './git-path.js';
 
 const SOURCE_ROOT = path.resolve(fileURLToPath(new URL('../..', import.meta.url)));
 const SKIP = new Set(['.git', 'node_modules', 'dist', 'target', 'coverage', '.specgate']);
@@ -23,7 +24,7 @@ function git(root, args, environment) {
     'git',
     [
       '-c',
-      `safe.directory=${root}`,
+      `safe.directory=${gitSafeDirectory(root)}`,
       '-c',
       'core.filemode=false',
       '-c',

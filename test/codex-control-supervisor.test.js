@@ -98,6 +98,36 @@ test('supervisor claims, heartbeats and finishes a completed execution', async (
   assert.ok(attention[1].actions.includes('accept_delivery'));
 });
 
+test('supervisor passes the daemon control root to the project-bound execution', async () => {
+  const calls = [];
+  const service = serviceFor(
+    {
+      workItemId: 'work-1',
+      title: 'Export',
+      request: 'Implement export',
+      projectId: 'project-1',
+      projectRoot: '/work/product',
+      revision: 2,
+      executionState: 'RUNNING',
+      resume: null,
+      budget: {},
+    },
+    calls,
+  );
+  const supervisor = createControlSupervisor({
+    service,
+    adapter: adapter({ ok: true, exitCode: 0, sessionId: 'session-1' }, calls),
+    controlRoot: '/srv/specgate-control',
+    deliveryResolver: async () => ({ ok: false, code: 'DELIVERY_NOT_FOUND' }),
+  });
+
+  await supervisor.runOnce();
+
+  const runCall = calls.find(([name]) => name === 'run');
+  assert.equal(runCall[1].environment.SPECGATE_WORK_ITEM_ID, 'work-1');
+  assert.equal(runCall[1].environment.SPECGATE_CONTROL_HOME, '/srv/specgate-control');
+});
+
 test('supervisor does not offer customer acceptance without a DeliveryRecord', async () => {
   const calls = [];
   const service = serviceFor(
@@ -292,4 +322,7 @@ test('supervisor stops at a hard tool-call budget and creates a budget decision'
   assert.equal(result.status, 'waiting');
   const attention = calls.find(([name]) => name === 'requestAttention');
   assert.equal(attention[1].type, 'BUDGET');
+  assert.match(attention[1].summary, /TOOL_CALL_BUDGET/);
+  assert.match(attention[1].summary, /toolCalls/);
+  assert.ok(attention[1].evidence.includes('budget:TOOL_CALL_BUDGET'));
 });

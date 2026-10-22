@@ -74,6 +74,11 @@ export function createStateStore({ projectRoot, authorizeGate, lockTimeoutMs } =
       return errorResult(
         known.has(error.code) ? error.code : 'STORAGE_ERROR',
         known.has(error.code) ? error.message : 'Cannot safely access state storage',
+        known.has(error.code) || typeof error.code !== 'string'
+          ? {}
+          : {
+              storageCode: /^[A-Z][A-Z0-9_]{1,63}$/.test(error.code) ? error.code : 'UNKNOWN',
+            },
       );
     }
   };

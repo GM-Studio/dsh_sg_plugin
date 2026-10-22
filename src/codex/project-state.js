@@ -5,6 +5,7 @@ import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { createArtifactStore } from './core/artifact-store.js';
 import { hashValue } from './events.js';
+import { gitSafeDirectory } from './git-path.js';
 import { SPECGATE_GITIGNORE } from './init.js';
 import {
   canStartChange,
@@ -23,7 +24,7 @@ function git(root, args) {
     'git',
     [
       '-c',
-      `safe.directory=${root}`,
+      `safe.directory=${gitSafeDirectory(root)}`,
       '-c',
       'core.filemode=false',
       '-c',

@@ -74,6 +74,62 @@ test('wait tool creates one durable AttentionRequest and never approves it', asy
   assert.equal(forgedGate.code, 'CONTROL_GATE_TOOL_REQUIRED');
 });
 
+test('wait tool retries bounded WorkItem heartbeat version conflicts', async () => {
+  const calls = [];
+  let version = 10;
+  const service = {
+    projection: {
+      async getWorkItem(workItemId) {
+        calls.push(['get', version]);
+        return {
+          ok: true,
+          workItem: {
+            workItemId,
+            revision: version,
+          },
+        };
+      },
+    },
+    async requestAttention(input) {
+      calls.push(['wait', input.expectedVersion]);
+      if (input.expectedVersion === 10) {
+        version = 11;
+        return {
+          ok: false,
+          code: 'VERSION_CONFLICT',
+          message: 'WorkItem revision changed',
+          actualVersion: 11,
+        };
+      }
+      return {
+        ok: true,
+        attention: { requestId: 'attention-retried', status: 'OPEN' },
+        workItem: { workItemId: input.workItemId, revision: 12 },
+      };
+    },
+  };
+
+  const result = await callControlTool(
+    { projectRoot: path.resolve('.'), service, env: {} },
+    'sg_work_item_wait',
+    {
+      workItemId: 'work-retry',
+      type: 'BLOCKED',
+      reason: 'Blocked',
+      question: 'Retry?',
+      actions: ['retry'],
+    },
+  );
+
+  assert.equal(result.ok, true, JSON.stringify(result));
+  assert.deepEqual(calls, [
+    ['get', 10],
+    ['wait', 10],
+    ['get', 11],
+    ['wait', 11],
+  ]);
+});
+
 test('control tool definitions expose no arbitrary shell or approval injection', () => {
   for (const tool of CONTROL_TOOLS) {
     assert.equal(tool.inputSchema.additionalProperties, false);

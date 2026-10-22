@@ -4,6 +4,7 @@ import path from 'node:path';
 import { randomUUID } from 'node:crypto';
 import { spawnSync } from 'node:child_process';
 import { runAdoptionBaseline } from './baseline.js';
+import { gitSafeDirectory } from './git-path.js';
 import { applyAdoption } from './project-adopt.js';
 import { createArtifactStore } from './core/artifact-store.js';
 
@@ -30,7 +31,7 @@ function git(projectRoot, args) {
     'git',
     [
       '-c',
-      `safe.directory=${projectRoot}`,
+      `safe.directory=${gitSafeDirectory(projectRoot)}`,
       '-c',
       'core.filemode=false',
       '-c',

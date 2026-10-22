@@ -5,6 +5,7 @@ import { fileURLToPath } from 'node:url';
 import { canonicalJson, hashValue, verifyEventChain } from './events.js';
 import { cleanupArchivedWorkspaces } from './cleanup.js';
 import { persistDelivery } from './delivery.js';
+import { gitSafeDirectory } from './git-path.js';
 import { loadProjectReadiness, PROJECT_PROFILE_PATH } from './project-state.js';
 import { createDeliveryRecordV3 } from './control/delivery-controlled.js';
 
@@ -46,7 +47,7 @@ function safeRelative(relative) {
 }
 
 function git(root, args, environment) {
-  return execFileSync('git', args, {
+  return execFileSync('git', ['-c', `safe.directory=${gitSafeDirectory(root)}`, ...args], {
     cwd: root,
     encoding: 'utf8',
     env: { ...process.env, ...(environment || {}) },
@@ -299,13 +300,24 @@ function mergeIntegration(root, integration) {
 
 function pushTarget(root, remote, branch) {
   const startedAt = new Date().toISOString();
-  const result = spawnSync('git', ['push', '--porcelain', remote, `HEAD:${branch}`], {
-    cwd: root,
-    encoding: 'utf8',
-    stdio: ['ignore', 'pipe', 'pipe'],
-    windowsHide: true,
-    timeout: 120000,
-  });
+  const result = spawnSync(
+    'git',
+    [
+      '-c',
+      `safe.directory=${gitSafeDirectory(root)}`,
+      'push',
+      '--porcelain',
+      remote,
+      `HEAD:${branch}`,
+    ],
+    {
+      cwd: root,
+      encoding: 'utf8',
+      stdio: ['ignore', 'pipe', 'pipe'],
+      windowsHide: true,
+      timeout: 120000,
+    },
+  );
   return {
     remote,
     branch,

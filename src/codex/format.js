@@ -3,6 +3,7 @@ import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { canonicalJson, hashValue } from './events.js';
+import { gitSafeDirectory } from './git-path.js';
 import { commandSpec } from './core/java/verify-evidence.js';
 
 const SOURCE_ROOT = path.resolve(fileURLToPath(new URL('../..', import.meta.url)));
@@ -37,7 +38,7 @@ function safeRelative(relative) {
 }
 
 function git(root, args, env = process.env) {
-  const result = spawnSync('git', args, {
+  const result = spawnSync('git', ['-c', `safe.directory=${gitSafeDirectory(root)}`, ...args], {
     cwd: root,
     encoding: 'utf8',
     stdio: ['ignore', 'pipe', 'pipe'],
@@ -54,13 +55,23 @@ function git(root, args, env = process.env) {
 }
 
 function status(root) {
-  const result = spawnSync('git', ['status', '--porcelain=v1', '--untracked-files=all'], {
-    cwd: root,
-    encoding: 'utf8',
-    stdio: ['ignore', 'pipe', 'pipe'],
-    windowsHide: true,
-    timeout: 60000,
-  });
+  const result = spawnSync(
+    'git',
+    [
+      '-c',
+      `safe.directory=${gitSafeDirectory(root)}`,
+      'status',
+      '--porcelain=v1',
+      '--untracked-files=all',
+    ],
+    {
+      cwd: root,
+      encoding: 'utf8',
+      stdio: ['ignore', 'pipe', 'pipe'],
+      windowsHide: true,
+      timeout: 60000,
+    },
+  );
   if (result.status !== 0)
     fail('FORMAT_GIT_FAILED', String(result.stderr || result.stdout || 'Git failed').trim());
   return String(result.stdout || '').trimEnd();

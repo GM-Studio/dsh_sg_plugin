@@ -3,6 +3,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
+import { gitSafeDirectory } from './git-path.js';
 
 const SOURCE_ROOT = path.resolve(fileURLToPath(new URL('../..', import.meta.url)));
 const CHANGE_ID = /^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$/;
@@ -22,7 +23,7 @@ function git(root, args) {
     'git',
     [
       '-c',
-      `safe.directory=${root}`,
+      `safe.directory=${gitSafeDirectory(root)}`,
       '-c',
       'core.filemode=false',
       '-c',

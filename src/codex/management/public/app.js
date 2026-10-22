@@ -43,6 +43,8 @@ const elements = {
   actionDescription: document.querySelector('#action-description'),
   actionComment: document.querySelector('#action-comment'),
   commentField: document.querySelector('#comment-field'),
+  budgetField: document.querySelector('#budget-field'),
+  budgetModels: document.querySelector('#action-budget-models'),
   stepUpField: document.querySelector('#step-up-field'),
   stepUpCode: document.querySelector('#step-up-code'),
   actionError: document.querySelector('#action-error'),
@@ -403,6 +405,7 @@ function openActionDialog({
   title,
   description,
   needsComment = false,
+  budgetCurrent = null,
   needsStepUp = false,
   action,
 }) {
@@ -410,16 +413,21 @@ function openActionDialog({
   elements.actionTitle.textContent = title;
   elements.actionDescription.textContent = description;
   elements.actionComment.value = '';
+  elements.budgetModels.value =
+    budgetCurrent === null ? '' : String(Math.min(2000000000, budgetCurrent * 2));
   elements.stepUpCode.value = '';
   elements.actionError.textContent = '';
   elements.commentField.classList.toggle('hidden', !needsComment);
+  elements.budgetField.classList.toggle('hidden', budgetCurrent === null);
   elements.stepUpField.classList.toggle('hidden', !needsStepUp);
   elements.actionDialog.classList.remove('hidden');
   (needsComment
     ? elements.actionComment
-    : needsStepUp
-      ? elements.stepUpCode
-      : elements.actionForm
+    : budgetCurrent !== null
+      ? elements.budgetModels
+      : needsStepUp
+        ? elements.stepUpCode
+        : elements.actionForm
   ).focus?.();
 }
 
@@ -431,15 +439,18 @@ function closeActionDialog() {
 async function submitAction(event) {
   event.preventDefault();
   if (!state.action) return;
-  const payload = {
-    ...state.action.body,
+  const payload = { ...state.action.body };
+  const decisionPayload = {
     ...(elements.commentField.classList.contains('hidden')
       ? {}
-      : { payload: { comment: elements.actionComment.value } }),
-    ...(elements.stepUpField.classList.contains('hidden')
+      : { comment: elements.actionComment.value }),
+    ...(elements.budgetField.classList.contains('hidden')
       ? {}
-      : { stepUpCode: elements.stepUpCode.value }),
+      : { budget: { maxModelTokens: Number(elements.budgetModels.value) } }),
   };
+  if (Object.keys(decisionPayload).length) payload.payload = decisionPayload;
+  if (!elements.stepUpField.classList.contains('hidden'))
+    payload.stepUpCode = elements.stepUpCode.value;
   const { response, body } = await api(state.action.path, {
     method: 'POST',
     body: payload,
@@ -517,6 +528,17 @@ function runDecision(button) {
       description: '将先校验不可变 DeliveryRecord，再写入客户接受回执。请输入升级认证码。',
       needsStepUp: true,
       action: { path: '/api/deliveries/accept', body },
+    });
+    return;
+  }
+  if (action === 'resume' && button.dataset.attentionType === 'BUDGET') {
+    const item = state.workItems.find((entry) => entry.workItemId === button.dataset.workItemId);
+    openActionDialog({
+      title: '增加预算并恢复',
+      description: '输入高于当前上限的模型 Token 预算；该变更会进入受审计 Decision。',
+      budgetCurrent: item?.budget?.maxModelTokens || 500000,
+      needsStepUp: true,
+      action: { path: '/api/decisions', body },
     });
     return;
   }

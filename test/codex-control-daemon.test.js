@@ -31,6 +31,10 @@ test('control daemon starts management independently and stops without deleting 
   assert.equal(daemon.ok, true);
   assert.match(daemon.baseUrl, /^http:\/\/127\.0\.0\.1:\d+$/);
   assert.equal(fs.existsSync(daemon.statusPath), true);
+  assert.equal(
+    JSON.parse(fs.readFileSync(daemon.statusPath, 'utf8')).projectRoot,
+    path.resolve(projectRoot),
+  );
   const paired = await fetch(`${daemon.baseUrl}/api/session`, {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
@@ -85,6 +89,84 @@ test('control CLI doctor reports portable launch readiness without leaking secre
   assert.equal(Object.hasOwn(calls[0].options.env, 'SPECGATE_FEISHU_WEBHOOK_URL'), false);
   assert.equal(Object.hasOwn(calls[0].options.env, 'SPECGATE_MFA_SECRET'), false);
   assert.doesNotMatch(JSON.stringify(result), /hook\/secret|ABCDEFGHIJKLMNOP/);
+});
+
+test('control CLI create uses the project bound by the running daemon', async () => {
+  const controlRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'sg-control-bound-'));
+  const projectRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'sg-control-bound-project-'));
+  fs.writeFileSync(
+    path.join(controlRoot, 'daemon.json'),
+    JSON.stringify({
+      pid: process.pid,
+      controlRoot,
+      projectRoot,
+      managementBaseUrl: 'http://127.0.0.1:43120',
+    }),
+  );
+
+  const result = await runControlCli({
+    args: ['create', '--title', 'Bound project', '--request', 'Use the daemon binding'],
+    env: { ...process.env, SPECGATE_CONTROL_HOME: controlRoot },
+    cwd: path.resolve('.'),
+    runtimeFactory: () => ({
+      service: {
+        async createWorkItem(input) {
+          return { ok: true, workItem: { projectRoot: input.projectRoot } };
+        },
+      },
+    }),
+  });
+
+  assert.equal(result.ok, true, JSON.stringify(result));
+  assert.equal(result.workItem.projectRoot, projectRoot);
+});
+
+test('control CLI uses SPECGATE_PROJECT_ROOT when no daemon binding is active', async () => {
+  const controlRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'sg-control-env-bound-'));
+  const projectRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'sg-control-env-project-'));
+
+  const result = await runControlCli({
+    args: ['create', '--title', 'Environment project', '--request', 'Use the process binding'],
+    env: {
+      ...process.env,
+      SPECGATE_CONTROL_HOME: controlRoot,
+      SPECGATE_PROJECT_ROOT: projectRoot,
+    },
+    cwd: path.resolve('.'),
+    runtimeFactory: () => ({
+      service: {
+        async createWorkItem(input) {
+          return { ok: true, workItem: { projectRoot: input.projectRoot } };
+        },
+      },
+    }),
+  });
+
+  assert.equal(result.ok, true, JSON.stringify(result));
+  assert.equal(result.workItem.projectRoot, projectRoot);
+});
+
+test('control CLI refuses to silently rebind an already running daemon project', async () => {
+  const controlRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'sg-control-rebind-'));
+  const firstProject = fs.mkdtempSync(path.join(os.tmpdir(), 'sg-control-rebind-first-'));
+  const secondProject = fs.mkdtempSync(path.join(os.tmpdir(), 'sg-control-rebind-second-'));
+  fs.writeFileSync(
+    path.join(controlRoot, 'daemon.json'),
+    JSON.stringify({
+      pid: process.pid,
+      controlRoot,
+      projectRoot: firstProject,
+      managementBaseUrl: 'http://127.0.0.1:43120',
+    }),
+  );
+
+  const result = await runControlCli({
+    args: ['start', '--project', secondProject],
+    env: { ...process.env, SPECGATE_CONTROL_HOME: controlRoot },
+  });
+
+  assert.equal(result.ok, false);
+  assert.equal(result.code, 'PROJECT_BINDING_CONFLICT');
 });
 
 test('daemon dispatches open AttentionRequest through Feishu Outbox without blocking state', async (t) => {

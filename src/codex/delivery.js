@@ -4,6 +4,7 @@ import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { createArtifactStore } from './core/artifact-store.js';
 import { hashValue } from './events.js';
+import { gitSafeDirectory } from './git-path.js';
 import { validateDeliveryRecord } from './project-model.js';
 import { checkedProjectRoot } from './project-state.js';
 import { validateDeliveryRecordV3 } from './control/delivery-controlled.js';
@@ -136,7 +137,7 @@ function git(root, args) {
     'git',
     [
       '-c',
-      `safe.directory=${root}`,
+      `safe.directory=${gitSafeDirectory(root)}`,
       '-c',
       'core.filemode=false',
       '-c',

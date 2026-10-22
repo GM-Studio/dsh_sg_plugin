@@ -94,12 +94,13 @@ export function createControlStore({
   function read() {
     safeDirectory(resolved);
     ensureFilesSafe();
+    const snapshotContent = exists(snapshotPath) ? fs.readFileSync(snapshotPath, 'utf8') : null;
     const content = exists(eventsPath) ? fs.readFileSync(eventsPath, 'utf8') : '';
     const verified = verifyEventChain(content);
     if (!verified.ok) return verified;
-    if (exists(snapshotPath)) {
+    if (snapshotContent !== null) {
       try {
-        const snapshot = JSON.parse(fs.readFileSync(snapshotPath, 'utf8'));
+        const snapshot = JSON.parse(snapshotContent);
         const version = snapshot?.state?.version;
         const matching =
           Number.isSafeInteger(version) && version > 0 ? verified.events[version - 1] : null;

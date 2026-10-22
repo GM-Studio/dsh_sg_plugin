@@ -5,6 +5,7 @@ import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
 import { buildChangeContract, normalizeChangeInput, validateChangeInput } from './change-policy.js';
 import { canonicalJson, hashValue } from './events.js';
+import { gitSafeDirectory } from './git-path.js';
 import { readDeliveryRecord } from './delivery.js';
 import { loadProjectReadiness, PROJECT_PROFILE_PATH } from './project-state.js';
 
@@ -296,6 +297,8 @@ export function createChangeAddService({
     spawnSync(
       'git',
       [
+        '-c',
+        `safe.directory=${gitSafeDirectory(root)}`,
         '-c',
         'core.fsmonitor=false',
         '-c',

@@ -98,5 +98,6 @@ export function localControlEnvironment(env = process.env) {
       }`,
     codexCommand: env.SPECGATE_CODEX_COMMAND || 'codex',
     codexHome: env.SPECGATE_CODEX_HOME || null,
+    codexSandbox: env.SPECGATE_CODEX_SANDBOX || 'workspace-write',
   };
 }

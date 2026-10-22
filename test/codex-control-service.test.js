@@ -204,6 +204,99 @@ test('management actions are idempotent for retried client requests', async () =
   );
 });
 
+test('direct cancel closes the open AttentionRequest', async () => {
+  const { service, projectRoot } = fixture();
+  const { created, attention } = await waitingItem(service, projectRoot);
+  const cancelled = await service.cancel({
+    workItemId: created.workItem.workItemId,
+    expectedVersion: attention.workItem.revision,
+    actorId: 'owner',
+    source: 'web',
+    authLevel: 'step-up',
+    idempotencyKey: 'direct-cancel',
+  });
+
+  assert.equal(cancelled.ok, true, JSON.stringify(cancelled));
+  assert.equal(cancelled.workItem.executionState, 'CANCELLED');
+  assert.equal(cancelled.workItem.currentAttentionId, null);
+  const stored = (await service.inspect()).state;
+  assert.equal(stored.attention[attention.attention.requestId].status, 'DECIDED');
+  assert.equal(stored.attention[attention.attention.requestId].decisionAction, 'cancel');
+  assert.equal(
+    stored.attention[attention.attention.requestId].decisionId,
+    cancelled.decision.decisionId,
+  );
+});
+
+test('direct request changes closes the open AttentionRequest and queues work', async () => {
+  const { service, projectRoot } = fixture();
+  const { created, attention } = await waitingItem(service, projectRoot);
+  const changed = await service.requestChanges({
+    workItemId: created.workItem.workItemId,
+    expectedVersion: attention.workItem.revision,
+    actorId: 'owner',
+    source: 'web',
+    payload: { comment: 'Add a regression test for the empty export case.' },
+    idempotencyKey: 'direct-request-changes',
+  });
+
+  assert.equal(changed.ok, true, JSON.stringify(changed));
+  assert.equal(changed.workItem.executionState, 'QUEUED');
+  assert.equal(changed.workItem.currentAttentionId, null);
+  assert.equal(changed.workItem.resume.action, 'request_changes');
+  const stored = (await service.inspect()).state;
+  assert.equal(stored.attention[attention.attention.requestId].status, 'DECIDED');
+  assert.equal(stored.attention[attention.attention.requestId].decisionAction, 'request_changes');
+});
+
+test('a BUDGET resume Decision must increase the budget before work is queued', async () => {
+  const { service, projectRoot } = fixture();
+  const created = await service.createWorkItem({
+    title: 'Budgeted',
+    request: 'Finish a bounded task',
+    projectRoot,
+  });
+  const attention = await service.requestAttention({
+    workItemId: created.workItem.workItemId,
+    expectedVersion: created.workItem.revision,
+    type: 'BUDGET',
+    reason: 'Execution reached MODEL_TOKEN_BUDGET.',
+    question: 'Increase the budget and resume, or cancel?',
+    actions: ['resume', 'cancel'],
+    artifactHash: 'c'.repeat(64),
+  });
+  const base = {
+    workItemId: created.workItem.workItemId,
+    attentionId: attention.attention.requestId,
+    attentionRevision: attention.attention.revision,
+    expectedWorkItemVersion: attention.workItem.revision,
+    artifactHash: 'c'.repeat(64),
+    action: 'resume',
+    idempotencyKey: 'budget-resume',
+    actorId: 'owner',
+    source: 'web',
+    authLevel: 'step-up',
+  };
+
+  const missing = await service.decide(base);
+  assert.equal(missing.code, 'BUDGET_INCREASE_REQUIRED');
+  const unchanged = await service.decide({
+    ...base,
+    idempotencyKey: 'budget-unchanged',
+    payload: { budget: { maxModelTokens: created.workItem.budget.maxModelTokens } },
+  });
+  assert.equal(unchanged.code, 'BUDGET_INCREASE_INVALID');
+
+  const increased = await service.decide({
+    ...base,
+    idempotencyKey: 'budget-increased',
+    payload: { budget: { maxModelTokens: 1500000 } },
+  });
+  assert.equal(increased.ok, true, JSON.stringify(increased));
+  assert.equal(increased.workItem.budget.maxModelTokens, 1500000);
+  assert.equal(increased.workItem.executionState, 'QUEUED');
+});
+
 test('Decision preview validates the same revision and artifact binding without writing', async () => {
   const { service, projectRoot } = fixture();
   const { created, attention } = await waitingItem(service, projectRoot);
