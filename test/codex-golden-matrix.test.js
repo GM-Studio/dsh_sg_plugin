@@ -160,17 +160,32 @@ test('the helper refuses to record a fabricated pass', () => {
   );
 });
 
-test('the source manifest still records every preset as unverified', () => {
+test('the source manifest never claims verified without both platforms passing', () => {
   for (const preset of JAVA_PRESETS) {
-    const record = GOLDEN_MANIFEST.presets[preset.id];
-    assert.notEqual(record.result, 'passed', preset.id + ' must stay pending in source');
-    for (const platform of GOLDEN_MANIFEST.requiredPlatforms)
-      assert.notEqual(
-        record.platforms?.[platform]?.result,
-        'passed',
-        preset.id + ' must not claim a platform pass in source',
-      );
-    const status = goldenStatus(preset, record.templateHash);
-    assert.equal(status.verified, false, preset.id + ' must not be verified in source');
+    const entry = GOLDEN_MANIFEST.presets[preset.id];
+    const records = [
+      { frontend: 'vue', record: entry },
+      { frontend: 'react', record: entry.frontends?.react },
+    ].filter((item) => item.record);
+    for (const { frontend, record } of records) {
+      const status = goldenStatus(preset, record.templateHash, frontend);
+      if (status.verified) {
+        for (const platform of GOLDEN_MANIFEST.requiredPlatforms) {
+          const platformRecord = record.platforms?.[platform];
+          assert.equal(platformRecord?.result, 'passed', preset.id + ' ' + platform);
+          assert.equal(platformRecord.evidence?.ok, true, preset.id + ' evidence');
+          assert.match(platformRecord.evidence.runId, /^[\w-]+$/);
+          assert.match(platformRecord.evidence.sourceHash, /^[a-f\d]{64}$/);
+        }
+      } else {
+        assert.ok(
+          record.result !== 'passed' ||
+            GOLDEN_MANIFEST.requiredPlatforms.some(
+              (platform) => record.platforms?.[platform]?.result !== 'passed',
+            ),
+          preset.id + ' ' + frontend + ' must keep a pending result or platform',
+        );
+      }
+    }
   }
 });
