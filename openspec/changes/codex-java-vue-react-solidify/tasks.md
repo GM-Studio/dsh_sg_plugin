@@ -91,18 +91,18 @@ admin scaffold, the control modes and capability degradation. Repo suite
 
 - [x] 1. P0: approve the requirements document; keep this proposal/design/spec
       aligned with it.
-- [ ] 2. P1: add failing tests for JDK+frontend selection, `ProjectProfile`
+- [x] 2. P1: add failing tests for JDK+frontend selection, `ProjectProfile`
       recording, and stack enforcement in the change workflow.
-- [ ] 3. P1: implement interactive stack selection and stack-match fail-closed
+- [x] 3. P1: implement interactive stack selection and stack-match fail-closed
       behavior.
-- [ ] 4. P2: add failing tests for the domain-neutral management-system scaffold
+- [x] 4. P2: add failing tests for the domain-neutral management-system scaffold
       (users, roles, departments, menus, permissions, audit, pagination,
       import/export, dashboard) on both backend and frontend.
-- [ ] 5. P2: build the Vue 3 scaffold and its real build/test/run verification.
+- [x] 5. P2: build the Vue 3 scaffold and its real build/test/run verification.
 - [ ] 6. P3: add failing tests for the React 18 scaffold and its parity with Vue
       (shared backend contract, menu, i18n keys).
 - [ ] 7. P3: implement the React 18 scaffold and align it with the Vue scaffold.
-- [ ] 8. P4: author the style guide and add Reviewer blocking-on-deviation
+- [x] 8. P4: author the style guide and add Reviewer blocking-on-deviation
       findings with tests.
 - [x] 9. P5: add failing tests for the multi-project registry, aggregate console
       (cross-project attention/queue, global concurrency), isolated mode, and
