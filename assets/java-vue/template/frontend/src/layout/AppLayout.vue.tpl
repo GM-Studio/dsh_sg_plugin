@@ -23,6 +23,13 @@ const { t } = useI18n();
       <RouterLink class="nav-link" to="/tasks">
         ▦ {{ t('navigation.tasks') }}
       </RouterLink>
+      <p class="nav-label">{{ t('sys.navigation.section') }}</p>
+      <RouterLink class="nav-link" to="/sys/roles">
+        ◇ {{ t('sys.navigation.roles') }}
+      </RouterLink>
+      <RouterLink class="nav-link" to="/sys/users">
+        ◈ {{ t('sys.navigation.users') }}
+      </RouterLink>
       <div class="sidebar-note">
         {{ t('navigation.note') }}
       </div>
