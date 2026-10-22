@@ -1,6 +1,6 @@
-package com.acme.orders.sys.repository;
+package com.example.tasks.sys.repository;
 
-import com.acme.orders.sys.entity.SysRole;
+import com.example.tasks.sys.entity.SysRole;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 

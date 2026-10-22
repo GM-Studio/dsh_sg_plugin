@@ -1,15 +1,15 @@
-package com.acme.orders.sys.controller;
+package com.example.tasks.sys.controller;
 
-import com.acme.orders.common.ApiResponse;
-import com.acme.orders.dto.BatchRequest;
-import com.acme.orders.dto.IdRequest;
-import com.acme.orders.sys.dto.SysUserRequest;
-import com.acme.orders.sys.dto.SysUserUpdateRequest;
-import com.acme.orders.sys.service.SysUserService;
-import com.acme.orders.sys.vo.SysUserVO;
-import com.acme.orders.vo.OperationResult;
-import com.acme.orders.vo.PageResult;
-import jakarta.validation.Valid;
+import com.example.tasks.common.ApiResponse;
+import com.example.tasks.dto.BatchRequest;
+import com.example.tasks.dto.IdRequest;
+import com.example.tasks.sys.dto.SysUserRequest;
+import com.example.tasks.sys.dto.SysUserUpdateRequest;
+import com.example.tasks.sys.service.SysUserService;
+import com.example.tasks.sys.vo.SysUserVO;
+import com.example.tasks.vo.OperationResult;
+import com.example.tasks.vo.PageResult;
+import javax.validation.Valid;
 import java.net.URI;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;

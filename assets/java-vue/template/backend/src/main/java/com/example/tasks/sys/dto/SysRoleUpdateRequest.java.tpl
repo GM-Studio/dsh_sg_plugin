@@ -1,7 +1,7 @@
-package com.acme.orders.sys.dto;
+package com.example.tasks.sys.dto;
 
-import jakarta.validation.constraints.Min;
-import jakarta.validation.constraints.NotNull;
+import javax.validation.constraints.Min;
+import javax.validation.constraints.NotNull;
 
 /** 角色更新请求：沿用新建请求的字段校验，额外要求正整数主键 id。 */
 public class SysRoleUpdateRequest extends SysRoleRequest {

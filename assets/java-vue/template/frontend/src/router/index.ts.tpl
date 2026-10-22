@@ -4,6 +4,9 @@ import {
   type RouteRecordRaw,
 } from 'vue-router';
 import DashboardView from '../views/DashboardView.vue';
+import AuditView from '../views/sys/AuditView.vue';
+import DepartmentView from '../views/sys/DepartmentView.vue';
+import MenuView from '../views/sys/MenuView.vue';
 import RoleView from '../views/sys/RoleView.vue';
 import TasksView from '../views/TasksView.vue';
 import UserView from '../views/sys/UserView.vue';
@@ -14,6 +17,13 @@ export const routes: RouteRecordRaw[] = [
   { path: '/tasks', name: 'tasks', component: TasksView },
   { path: '/sys/roles', name: 'sys-roles', component: RoleView },
   { path: '/sys/users', name: 'sys-users', component: UserView },
+  {
+    path: '/sys/departments',
+    name: 'sys-departments',
+    component: DepartmentView,
+  },
+  { path: '/sys/menus', name: 'sys-menus', component: MenuView },
+  { path: '/sys/audits', name: 'sys-audits', component: AuditView },
 ];
 
 export function createAppRouter() {

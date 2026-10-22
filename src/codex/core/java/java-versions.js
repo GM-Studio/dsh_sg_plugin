@@ -68,7 +68,7 @@ export const GOLDEN_MANIFEST = {
   requiredPlatforms: ['win32', 'linux'],
   presets: {
     'jdk8-boot2.7': {
-      templateHash: '3c911b7f9227d1f159d03e63e768e1f8145ad5d9dfdb397a769949ad668113e0',
+      templateHash: '16256fea3a270ca7fa50531095996cd73346956c9f265e1e0274f15fbc4de196',
       verifiedAt: null,
       verifiedBy: null,
       toolchain: null,
@@ -82,7 +82,7 @@ export const GOLDEN_MANIFEST = {
       matrixComplete: false,
     },
     'jdk17-boot3.5': {
-      templateHash: '2a04c6bf1a31bd4c4d7d6bf34897282b65d6943251ef227b0f91385a1e83a8c1',
+      templateHash: '90bcad9f358d7b023197149f743eb280c13039ff07e66d75132a6f9bcd1e7fcb',
       verifiedAt: null,
       verifiedBy: null,
       toolchain: null,
@@ -96,7 +96,7 @@ export const GOLDEN_MANIFEST = {
       matrixComplete: false,
     },
     'jdk21-boot3.5': {
-      templateHash: 'e43e55f0b9465950be0803751615b5118618a8884e50546a45beb21dc563b390',
+      templateHash: '813a9a85edbabeb6f7548f582299ce1fbfc99f6c907fde5b27e63c9bb65154b4',
       verifiedAt: null,
       verifiedBy: null,
       toolchain: null,
@@ -110,7 +110,7 @@ export const GOLDEN_MANIFEST = {
       matrixComplete: false,
     },
     'jdk21-boot4.0': {
-      templateHash: '458b40cd3b5536a703dc6a02cbb12a4b8f4200c2b203e9dc3c3b12fcea46d0a1',
+      templateHash: 'bcbb1c3ffc4d382e59fe243428d2d95d6aede7e2dd36e7ee783fa249ab7e1b82',
       verifiedAt: null,
       verifiedBy: null,
       toolchain: null,

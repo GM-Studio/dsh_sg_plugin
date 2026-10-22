@@ -1,6 +1,6 @@
-package com.acme.orders.sys.vo;
+package com.example.tasks.sys.vo;
 
-import com.acme.orders.sys.entity.SysUser;
+import com.example.tasks.sys.entity.SysUser;
 
 /** 用户视图对象：对外暴露的稳定只读结构。 */
 public final class SysUserVO {

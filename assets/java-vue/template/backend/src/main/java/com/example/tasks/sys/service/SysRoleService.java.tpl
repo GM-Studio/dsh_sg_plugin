@@ -1,14 +1,14 @@
-package com.acme.orders.sys.service;
+package com.example.tasks.sys.service;
 
-import com.acme.orders.common.BusinessException;
-import com.acme.orders.sys.dto.SysRoleRequest;
-import com.acme.orders.sys.entity.SysRole;
-import com.acme.orders.sys.repository.SysRoleRepository;
-import com.acme.orders.sys.vo.SysOptionVO;
-import com.acme.orders.sys.vo.SysRoleVO;
-import com.acme.orders.vo.OperationResult;
-import com.acme.orders.vo.PageResult;
-import jakarta.persistence.criteria.Predicate;
+import com.example.tasks.common.BusinessException;
+import com.example.tasks.sys.dto.SysRoleRequest;
+import com.example.tasks.sys.entity.SysRole;
+import com.example.tasks.sys.repository.SysRoleRepository;
+import com.example.tasks.sys.vo.SysOptionVO;
+import com.example.tasks.sys.vo.SysRoleVO;
+import com.example.tasks.vo.OperationResult;
+import com.example.tasks.vo.PageResult;
+import javax.persistence.criteria.Predicate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;

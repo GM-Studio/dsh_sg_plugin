@@ -1,4 +1,4 @@
-package com.acme.orders.sys;
+package com.example.tasks.sys;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -12,8 +12,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import com.acme.orders.sys.entity.SysUser;
-import com.acme.orders.sys.repository.SysUserRepository;
+import com.example.tasks.sys.entity.SysUser;
+import com.example.tasks.sys.repository.SysUserRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.LinkedHashMap;
 import java.util.Map;

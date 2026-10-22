@@ -1,15 +1,15 @@
-package com.acme.orders.sys.controller;
+package com.example.tasks.sys.controller;
 
-import com.acme.orders.common.ApiResponse;
-import com.acme.orders.dto.IdRequest;
-import com.acme.orders.sys.dto.SysRoleRequest;
-import com.acme.orders.sys.dto.SysRoleUpdateRequest;
-import com.acme.orders.sys.service.SysRoleService;
-import com.acme.orders.sys.vo.SysOptionVO;
-import com.acme.orders.sys.vo.SysRoleVO;
-import com.acme.orders.vo.OperationResult;
-import com.acme.orders.vo.PageResult;
-import jakarta.validation.Valid;
+import com.example.tasks.common.ApiResponse;
+import com.example.tasks.dto.IdRequest;
+import com.example.tasks.sys.dto.SysRoleRequest;
+import com.example.tasks.sys.dto.SysRoleUpdateRequest;
+import com.example.tasks.sys.service.SysRoleService;
+import com.example.tasks.sys.vo.SysOptionVO;
+import com.example.tasks.sys.vo.SysRoleVO;
+import com.example.tasks.vo.OperationResult;
+import com.example.tasks.vo.PageResult;
+import javax.validation.Valid;
 import java.net.URI;
 import java.util.List;
 import org.springframework.http.ResponseEntity;

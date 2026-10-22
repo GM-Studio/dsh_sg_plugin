@@ -39,6 +39,21 @@ and zh/en i18n. Verified on a generated `jdk17-boot3.5` project: backend
 format:check all pass; repo suite 347/347. `GOLDEN_MANIFEST` hashes refreshed and
 still `pending`.
 
+Landed (template step 3, departments + menus + audit + dashboard): backend
+`sys` modules SysDepartment, SysMenu, SysAuditLog (read-only) and
+SysDashboard, each with service/controller/dto/vo and a MockMvc suite; frontend
+`views/sys/{DepartmentView,MenuView,AuditView}.vue`, extended `api/sys.ts` and
+`test/sys-admin.test.ts`; router, sidebar and zh/en i18n wired. Authored by five
+parallel agents against a fixed contract. Verified on a generated
+`jdk17-boot3.5` project: backend `clean verify` 25/25, frontend build, 31/31
+Vitest, lint and format:check pass; repo suite 347/347. `GOLDEN_MANIFEST`
+refreshed, still `pending`.
+
+Fixed during integration: the earlier template copy-back had baked generated
+package names into the role/user sys templates (17 files restored to
+`com.example.tasks` + `javax.*` so the generator can rewrite them per project),
+and two audit test assertions were corrected.
+
 - [x] 1. P0: approve the requirements document; keep this proposal/design/spec
       aligned with it.
 - [ ] 2. P1: add failing tests for JDK+frontend selection, `ProjectProfile`

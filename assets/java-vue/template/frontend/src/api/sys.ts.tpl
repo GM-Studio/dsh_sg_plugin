@@ -72,3 +72,88 @@ export const sysUserApi = {
   batchDelete: (ids: number[]) =>
     mutate<{ count: number }>('/api/sys/users/batch-delete', { ids }),
 };
+
+export interface SysDepartment {
+  id: number;
+  code: string;
+  name: string;
+  parentCode: string | null;
+  enabled: boolean;
+}
+export interface SysMenu {
+  id: number;
+  code: string;
+  name: string;
+  path: string;
+  icon: string;
+  sortOrder: number;
+  enabled: boolean;
+}
+export interface SysAuditLog {
+  id: number;
+  actor: string;
+  action: string;
+  target: string;
+  detail: string;
+  createdAt: string;
+}
+export interface SysDepartmentQuery {
+  page: number;
+  pageSize: number;
+  code?: string;
+  name?: string;
+}
+export interface SysMenuQuery {
+  page: number;
+  pageSize: number;
+  code?: string;
+  name?: string;
+}
+export interface SysAuditQuery {
+  page: number;
+  pageSize: number;
+  actor?: string;
+  action?: string;
+}
+export type SysDepartmentInput = Pick<
+  SysDepartment,
+  'code' | 'name' | 'parentCode' | 'enabled'
+>;
+export type SysDepartmentUpdate = SysDepartmentInput & { id: number };
+export type SysMenuInput = Pick<
+  SysMenu,
+  'code' | 'name' | 'path' | 'icon' | 'sortOrder' | 'enabled'
+>;
+export type SysMenuUpdate = SysMenuInput & { id: number };
+
+export const sysDepartmentApi = {
+  list: (query: SysDepartmentQuery) =>
+    request<PageResult<SysDepartment>>(
+      '/api/sys/departments?' + queryString(query),
+    ),
+  options: () => request<SysOption[]>('/api/sys/departments/options'),
+  create: (body: SysDepartmentInput) =>
+    mutate<SysDepartment>('/api/sys/departments', body),
+  update: (body: SysDepartmentUpdate) =>
+    mutate<SysDepartment>('/api/sys/departments/update', body),
+  remove: (id: number) =>
+    mutate<{ id: number; deleted: boolean }>('/api/sys/departments/delete', {
+      id,
+    }),
+};
+
+export const sysMenuApi = {
+  list: (query: SysMenuQuery) =>
+    request<PageResult<SysMenu>>('/api/sys/menus?' + queryString(query)),
+  options: () => request<SysOption[]>('/api/sys/menus/options'),
+  create: (body: SysMenuInput) => mutate<SysMenu>('/api/sys/menus', body),
+  update: (body: SysMenuUpdate) =>
+    mutate<SysMenu>('/api/sys/menus/update', body),
+  remove: (id: number) =>
+    mutate<{ id: number; deleted: boolean }>('/api/sys/menus/delete', { id }),
+};
+
+export const sysAuditApi = {
+  list: (query: SysAuditQuery) =>
+    request<PageResult<SysAuditLog>>('/api/sys/audits?' + queryString(query)),
+};

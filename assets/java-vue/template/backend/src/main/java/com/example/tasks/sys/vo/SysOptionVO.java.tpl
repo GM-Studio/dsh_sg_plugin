@@ -1,4 +1,4 @@
-package com.acme.orders.sys.vo;
+package com.example.tasks.sys.vo;
 
 /** 下拉选项视图对象：value 为提交值（如角色编码），label 为展示名称。 */
 public final class SysOptionVO {

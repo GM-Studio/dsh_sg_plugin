@@ -1,4 +1,4 @@
-package com.acme.orders.sys;
+package com.example.tasks.sys;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
@@ -11,8 +11,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import com.acme.orders.sys.entity.SysRole;
-import com.acme.orders.sys.repository.SysRoleRepository;
+import com.example.tasks.sys.entity.SysRole;
+import com.example.tasks.sys.repository.SysRoleRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.LinkedHashMap;
 import java.util.Map;

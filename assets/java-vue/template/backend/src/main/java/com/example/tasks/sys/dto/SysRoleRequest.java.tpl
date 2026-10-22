@@ -1,8 +1,8 @@
-package com.acme.orders.sys.dto;
+package com.example.tasks.sys.dto;
 
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Size;
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Size;
 
 /** 角色新建请求：编码与名称必填，描述可选。 */
 public class SysRoleRequest {

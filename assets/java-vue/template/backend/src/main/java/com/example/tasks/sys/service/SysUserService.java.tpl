@@ -1,14 +1,14 @@
-package com.acme.orders.sys.service;
+package com.example.tasks.sys.service;
 
-import com.acme.orders.common.BusinessException;
-import com.acme.orders.dto.BatchRequest;
-import com.acme.orders.sys.dto.SysUserRequest;
-import com.acme.orders.sys.entity.SysUser;
-import com.acme.orders.sys.repository.SysUserRepository;
-import com.acme.orders.sys.vo.SysUserVO;
-import com.acme.orders.vo.OperationResult;
-import com.acme.orders.vo.PageResult;
-import jakarta.persistence.criteria.Predicate;
+import com.example.tasks.common.BusinessException;
+import com.example.tasks.dto.BatchRequest;
+import com.example.tasks.sys.dto.SysUserRequest;
+import com.example.tasks.sys.entity.SysUser;
+import com.example.tasks.sys.repository.SysUserRepository;
+import com.example.tasks.sys.vo.SysUserVO;
+import com.example.tasks.vo.OperationResult;
+import com.example.tasks.vo.PageResult;
+import javax.persistence.criteria.Predicate;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
