@@ -17,15 +17,28 @@ process.on('SIGINT', () => void stop('SIGINT'));
 process.on('SIGTERM', () => void stop('SIGTERM'));
 
 try {
-  daemon = await startControlDaemon();
-  process.stdout.write(
-    JSON.stringify({
-      ok: true,
-      pid: process.pid,
-      baseUrl: daemon.baseUrl,
-      pairingUrl: daemon.pairingUrl,
-    }) + '\n',
-  );
+  daemon = await startControlDaemon({ requireExecJson: true });
+  if (!daemon || daemon.ok === false) {
+    process.stderr.write(
+      JSON.stringify({
+        ok: false,
+        code: daemon?.code || 'CONTROL_DAEMON_START_FAILED',
+        message: daemon?.message || 'Control daemon failed to start',
+        capabilities: daemon?.capabilities || null,
+        degradation: daemon?.degradation || null,
+      }) + '\n',
+    );
+    process.exitCode = 1;
+  } else {
+    process.stdout.write(
+      JSON.stringify({
+        ok: true,
+        pid: process.pid,
+        baseUrl: daemon.baseUrl,
+        pairingUrl: daemon.pairingUrl,
+      }) + '\n',
+    );
+  }
 } catch (error) {
   process.stderr.write(
     JSON.stringify({

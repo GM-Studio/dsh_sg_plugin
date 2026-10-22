@@ -195,7 +195,10 @@ export async function verifyMatrix({
   await Promise.all(Array.from({ length: Math.min(2, Math.max(1, concurrency)) }, run));
   report.endedAt = new Date().toISOString();
   const allPassed = report.presets.every((entry) => entry.status === 'passed');
-  report.status = platform === 'win32' && allPassed ? 'passed' : 'incomplete';
+  report.status =
+    requiredPlatforms.includes(platform) && platform !== 'darwin' && allPassed
+      ? 'passed'
+      : 'incomplete';
   // `linux` stays `not-run` unconditionally: a single invocation only ever
   // vouches for its own `platform`, so this run never claims Linux acceptance.
   // Per-platform truth lives in `platform` and `presets[].platforms[<platform>]`.

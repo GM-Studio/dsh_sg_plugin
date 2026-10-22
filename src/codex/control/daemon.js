@@ -10,6 +10,7 @@ import {
 import { createCodexExecutionAdapter } from './codex-execution-adapter.js';
 import { createControlSupervisor } from './supervisor.js';
 import { controlExecutionEnvironment, resolveControlMode } from './config.js';
+import { createSyncProbeRunner, describeDegradation, detectCapabilities } from './capabilities.js';
 import { resolveGlobalConcurrency } from './projects.js';
 import { createFeishuNotifier } from '../channels/feishu.js';
 import { createAttentionNotifier, createNotificationOutbox } from '../channels/outbox.js';
@@ -45,6 +46,10 @@ export async function startControlDaemon({
   adapter = null,
   feishuNotifier = null,
   runtime: providedRuntime = null,
+  requireExecJson = false,
+  probeCapabilities = false,
+  detectCapabilitiesFn = detectCapabilities,
+  probeRunnerFactory = createSyncProbeRunner,
   logger = () => {},
 } = {}) {
   const selectedMode = resolveControlMode({ env, mode });
@@ -56,6 +61,36 @@ export async function startControlDaemon({
     createLocalControlRuntime({ env, clock, mode: controlMode, projectRoot: resolvedProjectRoot });
   if (runtime && runtime.ok === false && runtime.code) return runtime;
   const config = runtime.config;
+
+  // Host capability gate. A Codex build is never accepted or rejected by its
+  // version string: the actual executable is probed once and only a missing
+  // required capability stops the daemon. Desktop and terminal CLIs differ in
+  // how they expose plugins/roots, so the probe drives the decision instead.
+  let capabilities = null;
+  let degradation = null;
+  if ((requireExecJson || probeCapabilities) && typeof detectCapabilitiesFn === 'function') {
+    try {
+      const probe = probeRunnerFactory({
+        command: config.codexCommand,
+        env: controlExecutionEnvironment({ env }),
+      });
+      capabilities = await detectCapabilitiesFn({ exec: probe });
+      degradation = describeDegradation(capabilities);
+    } catch {
+      capabilities = null;
+      degradation = null;
+    }
+  }
+  if (requireExecJson && capabilities && capabilities.execJson === 'missing')
+    return {
+      ok: false,
+      code: 'CODEX_EXEC_JSON_UNAVAILABLE',
+      message:
+        'Codex 可执行文件缺少必需能力 exec --json，无法运行异步交付。' +
+        (degradation?.versionGateHint || ''),
+      capabilities,
+      degradation,
+    };
 
   // Register this project in the durable control home so a single aggregate
   // console can see several projects. Re-registering the same project is
@@ -280,6 +315,8 @@ export async function startControlDaemon({
     codexSandbox: config.codexSandbox,
     codexHomeConfigured: Boolean(config.codexHome),
     isolatedMcp: true,
+    capabilities: capabilities || null,
+    degradation: degradation || null,
   });
 
   async function stop() {
