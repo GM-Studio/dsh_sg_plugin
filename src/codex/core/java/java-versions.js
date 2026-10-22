@@ -383,6 +383,9 @@ export function platformVerificationRecord(preset, run = {}) {
   const id = typeof preset === 'string' ? preset : preset?.id;
   if (!JAVA_PRESETS.some((item) => item.id === id))
     throw new Error('Unknown Java preset for golden record: ' + id);
+  const frontend = run.frontend || 'vue';
+  if (!['vue', 'react'].includes(frontend))
+    throw new Error('Unknown frontend for golden record: ' + frontend);
   const required = GOLDEN_MANIFEST.requiredPlatforms || [];
   const platform = run.platform || process.platform;
   if (!required.includes(platform))
@@ -398,6 +401,7 @@ export function platformVerificationRecord(preset, run = {}) {
     );
   return {
     platform,
+    frontend,
     record: {
       result,
       verifiedAt: run.verifiedAt || null,

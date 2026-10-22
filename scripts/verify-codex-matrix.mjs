@@ -16,7 +16,14 @@ import {
 // one platform (`--platform`, defaulting to `process.platform`) under
 // `platforms[<platform>]` and leaves every other required platform as `not-run`,
 // and unexecuted verification stages stay `not-run`.
-export async function verifyMatrix({ output, concurrency = 2, platform = process.platform } = {}) {
+export async function verifyMatrix({
+  output,
+  concurrency = 2,
+  platform = process.platform,
+  frontend = 'vue',
+} = {}) {
+  if (!['vue', 'react'].includes(frontend))
+    throw new Error('Unsupported matrix frontend: ' + frontend + '; expected vue|react');
   const requiredPlatforms = GOLDEN_MANIFEST.requiredPlatforms || [];
   if (!requiredPlatforms.includes(platform))
     throw new Error(
@@ -36,6 +43,7 @@ export async function verifyMatrix({ output, concurrency = 2, platform = process
     scope: 'codex-java-vue-dual-platform-matrix',
     startedAt: new Date().toISOString(),
     platform,
+    frontend,
     arch: process.arch,
     node: process.version,
     workspace,
@@ -45,7 +53,11 @@ export async function verifyMatrix({ output, concurrency = 2, platform = process
     // Honesty marker: this invocation vouches only for its own platform. The
     // Linux platform stays `not-run` unless `--platform linux` actually runs it.
     linux: 'not-run',
-    presets: JAVA_PRESETS.map((preset) => ({ preset: preset.id, status: 'not-run' })),
+    presets: JAVA_PRESETS.map((preset) => ({
+      preset: preset.id,
+      frontend,
+      status: 'not-run',
+    })),
   };
   const save = () =>
     fs.writeFileSync(path.join(directory, 'matrix.json'), JSON.stringify(report, null, 2) + '\n');
@@ -58,7 +70,10 @@ export async function verifyMatrix({ output, concurrency = 2, platform = process
       entry.startedAt = new Date().toISOString();
       entry.status = 'generating';
       save();
-      const evidenceDirectory = path.join(directory, entry.preset);
+      const evidenceDirectory = path.join(
+        directory,
+        frontend === 'vue' ? entry.preset : entry.preset + '-' + frontend,
+      );
       fs.mkdirSync(evidenceDirectory);
       let validation = null;
       let result = null;
@@ -68,6 +83,7 @@ export async function verifyMatrix({ output, concurrency = 2, platform = process
           preset: entry.preset,
           company: 'specgate',
           business: 'tasks',
+          frontend,
         });
         fs.writeFileSync(
           path.join(evidenceDirectory, 'preview.json'),
@@ -79,6 +95,7 @@ export async function verifyMatrix({ output, concurrency = 2, platform = process
           preset: entry.preset,
           company: 'specgate',
           business: 'tasks',
+          frontend,
           previewHash: preview.previewHash,
         });
         fs.writeFileSync(
@@ -142,6 +159,7 @@ export async function verifyMatrix({ output, concurrency = 2, platform = process
       try {
         const update = platformVerificationRecord(entry.preset, {
           platform,
+          frontend,
           result: entry.status,
           verifiedAt: entry.endedAt,
           evidence:
@@ -188,6 +206,7 @@ export async function verifyMatrix({ output, concurrency = 2, platform = process
 function parseArgs(args) {
   let output = null;
   let platform = process.platform;
+  let frontend = 'vue';
   for (let index = 0; index < args.length; index += 1) {
     const arg = args[index];
     if (arg === '--output') {
@@ -196,24 +215,28 @@ function parseArgs(args) {
     } else if (arg === '--platform') {
       platform = args[index + 1];
       index += 1;
+    } else if (arg === '--frontend') {
+      frontend = args[index + 1];
+      index += 1;
     } else {
       throw new Error('Unknown argument: ' + arg);
     }
   }
   if (!output)
     throw new Error(
-      'Usage: node scripts/verify-codex-matrix.mjs --output <evidence-directory> [--platform win32|linux]',
+      'Usage: node scripts/verify-codex-matrix.mjs --output <evidence-directory> [--platform win32|linux] [--frontend vue|react]',
     );
-  return { output, platform };
+  return { output, platform, frontend };
 }
 
 async function main() {
-  const { output, platform } = parseArgs(process.argv.slice(2));
-  const result = await verifyMatrix({ output, platform });
+  const { output, platform, frontend } = parseArgs(process.argv.slice(2));
+  const result = await verifyMatrix({ output, platform, frontend });
   process.stdout.write(
     JSON.stringify({
       status: result.status,
       platform: result.platform,
+      frontend: result.frontend,
       evidence: path.resolve(output),
       workspace: result.workspace,
     }) + '\n',

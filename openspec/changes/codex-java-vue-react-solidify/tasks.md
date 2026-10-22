@@ -114,6 +114,15 @@ transient failure under load that has not reproduced in six further runs, so
 `npm test` now pins `--test-concurrency=2` to keep the real subprocess/HTTP
 suites deterministic on machines with many cores.
 
+Matrix runner: `scripts/verify-codex-matrix.mjs` now accepts
+`--frontend vue|react`, passes it to generation and records a frontend-scoped
+platform result; `platformVerificationRecord` takes the same `frontend` and
+`goldenStatus` is frontend-aware. A real Windows/Vue run passed for
+`jdk8-boot2.7`, `jdk17-boot3.5` and `jdk21-boot3.5`; `jdk21-boot4.0` (preview,
+outside this phase's scope) failed `backend-verify` on a Spotless import
+rewrite in a generated CSV test. Linux and the React platform records are still
+`not-run`, so every preset remains `pending`.
+
 - [x] 1. P0: approve the requirements document; keep this proposal/design/spec
       aligned with it.
 - [x] 2. P1: add failing tests for JDK+frontend selection, `ProjectProfile`
