@@ -2,6 +2,22 @@
 
 ## Unreleased
 
+- Add a detached async supervisor with durable WorkItems, ExecutionRuns, leases,
+  heartbeat and crash recovery.
+- Add asynchronous H1/H3 AttentionRequests that resume the persisted Codex
+  session after a trusted Decision.
+- Add a local Web management UI with one-time pairing, CSRF and session security.
+- Add Feishu interactive-card notifications with a durable Outbox, deduplication
+  and exponential retry.
+- Add TOTP step-up, Decision CAS, artifact binding and idempotency.
+- Add DeliveryRecord schema 3 to separate H3 release approval from customer
+  acceptance.
+- Launch supervised Codex runs with only a project-bound SpecGate MCP and a
+  bounded credential-safe environment.
+- Link customer acceptance to the immutable DeliveryRecord receipt before
+  consuming the Control Decision.
+- Send idempotent Feishu handled/superseded follow-ups and provide a portable
+  graceful daemon stop request.
 - Add new-project and existing-project readiness with ProjectProfile and
   ProjectBaseline.
 - Add explicit dirty-worktree baseline commits and known-failure baselines.

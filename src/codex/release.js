@@ -4,8 +4,9 @@ import { spawnSync, execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { canonicalJson, hashValue, verifyEventChain } from './events.js';
 import { cleanupArchivedWorkspaces } from './cleanup.js';
-import { createDeliveryRecord, persistDelivery } from './delivery.js';
+import { persistDelivery } from './delivery.js';
 import { loadProjectReadiness, PROJECT_PROFILE_PATH } from './project-state.js';
+import { createDeliveryRecordV3 } from './control/delivery-controlled.js';
 
 const SOURCE_ROOT = path.resolve(fileURLToPath(new URL('../..', import.meta.url)));
 const object = (value) => value !== null && typeof value === 'object' && !Array.isArray(value);
@@ -402,6 +403,13 @@ export function createReleaseService({ projectRoot, store, planService } = {}) {
         if (!computed.preview.project) return { ok: true, delivery: null };
         const readiness = loadProjectReadiness({ projectRoot: root });
         if (!readiness.ok) return readiness;
+        const assessment =
+          loaded.state.context?.verification || loaded.state.context?.review?.verification;
+        if (!object(assessment))
+          return failure(
+            'VERIFICATION_ASSESSMENT_MISSING',
+            'A current VerificationAssessment is required for DeliveryRecord',
+          );
         const contract = loaded.state.context.changeAdd?.changeContract;
         const acceptance =
           contract?.acceptance || (checked.plan?.graph?.acs || []).map((entry) => entry.id);
@@ -415,29 +423,62 @@ export function createReleaseService({ projectRoot, store, planService } = {}) {
           loaded.state.context.review?.mode ||
           'evidence';
         const reviewMode =
-          selectedReviewMode === 'strict'
+          assessment.reviewMode ||
+          (selectedReviewMode === 'strict'
             ? 'full-code-review'
             : selectedReviewMode === 'standard'
               ? 'evidence-and-diff'
-              : 'evidence';
-        const created = createDeliveryRecord({
+              : 'evidence');
+        const knownIssues = [
+          ...(assessment.openRisks || []).map((entry) => entry.text),
+          ...(readiness.baseline.knownFailures || []).map(
+            (entry) => `${entry.commandId}: ${entry.signature}`,
+          ),
+        ].filter((entry, index, values) => values.indexOf(entry) === index);
+        const assessmentHash = hashValue(assessment);
+        const contractHash = String(checked.ref.contract.hash || '').replace(/^sha256:/, '');
+        const h3ArtifactHash = String(loaded.state.context.artifacts.h3.hash || '').replace(
+          /^sha256:/,
+          '',
+        );
+        const approvalHash = hashValue(h3.approval);
+        const created = createDeliveryRecordV3({
           projectId: readiness.profile.projectId,
           changeId: loaded.state.changeId,
           parentDeliveryId: contract?.parentDeliveryId ?? null,
           baselineCommit: development.freezeCommit,
           deliveryCommit: merge.commit,
-          environmentFingerprint: readiness.baseline.environmentFingerprint,
+          environmentFingerprint:
+            assessment.environmentFingerprint || readiness.baseline.environmentFingerprint,
           reviewMode,
           acceptance,
           evidence,
-          knownIssues: [],
+          knownIssues,
+          risks: (assessment.openRisks || []).map((entry) => entry.id),
           rollback: {
             code: `git revert ${merge.commit}`,
             data: 'No automatic production data rollback was performed.',
             forwardFix: 'Apply a new delivery from the accepted base.',
           },
           push: pushState,
-          state: pushState.status === 'passed' ? 'pushed' : 'delivery-accepted',
+          contract: {
+            artifactId: `${loaded.state.changeId}-contract`,
+            hash: contractHash,
+          },
+          verification: {
+            verificationId: assessment.verificationId,
+            assessmentHash,
+            decision: assessment.decision,
+          },
+          h3: {
+            artifactHash: h3ArtifactHash,
+            approvalHash,
+            approvedAt: h3.approval.consumedAt || h3.approval.issuedAt,
+          },
+          customerAcceptance: null,
+          releaseState: pushState.status === 'passed' ? 'pushed' : 'release-approved',
+          approvedAt: h3.approval.consumedAt || h3.approval.issuedAt,
+          packs: null,
         });
         if (!created.ok) return created;
         return persistDelivery({

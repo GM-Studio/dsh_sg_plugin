@@ -29,7 +29,7 @@ export function createIncrementalPlan({ projectId, parent, contract, impact } = 
       'PARENT_DELIVERY_PROJECT_MISMATCH',
       'Parent delivery belongs to another project',
     );
-  if (parent.state !== 'delivery-accepted')
+  if (parent.state !== 'delivery-accepted' && parent.releaseState !== 'customer-accepted')
     return failure('PARENT_DELIVERY_NOT_ACCEPTED', 'Parent delivery is not accepted');
   if (!contract || contract.parentDeliveryId !== parent.deliveryId)
     return failure('PARENT_DELIVERY_MISMATCH', 'ChangeContract does not reference the parent');

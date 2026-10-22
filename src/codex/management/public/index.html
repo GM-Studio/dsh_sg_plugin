@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="light dark" />
+    <title>SpecGate Control</title>
+    <link rel="stylesheet" href="/style.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">SpecGate</p>
+        <h1>异步交付控制台</h1>
+      </div>
+      <div class="topbar-actions">
+        <span id="connection" class="connection" data-state="idle">等待连接</span>
+        <button id="refresh" class="button secondary" type="button">刷新</button>
+      </div>
+    </header>
+
+    <main id="app" aria-live="polite">
+      <section id="pairing" class="panel pairing hidden">
+        <h2>连接本地控制面</h2>
+        <p>输入控制服务启动时给出的一次性配对令牌。</p>
+        <form id="pairing-form" class="inline-form">
+          <label>
+            配对令牌
+            <input id="pairing-token" name="token" autocomplete="off" required />
+          </label>
+          <button class="button" type="submit">连接</button>
+        </form>
+        <p id="pairing-error" class="error" role="alert"></p>
+      </section>
+
+      <section id="workspace" class="workspace hidden">
+        <aside class="sidebar panel">
+          <nav aria-label="管理端页面">
+            <button class="nav-button active" data-view="attention" type="button">
+              待我处理 <span id="attention-count" class="pill">0</span>
+            </button>
+            <button class="nav-button" data-view="projects" type="button">项目</button>
+            <button class="nav-button" data-view="work-items" type="button">WorkItems</button>
+            <button class="nav-button" data-view="monitoring" type="button">执行监控</button>
+            <button class="nav-button" data-view="notifications" type="button">通知健康</button>
+          </nav>
+          <div class="sidebar-footer">
+            <p class="muted">只在关键门禁请求判断。</p>
+            <a href="/api/health" id="health-link">Health JSON</a>
+          </div>
+        </aside>
+
+        <section class="content">
+          <section id="view-attention" class="view">
+            <div class="view-heading">
+              <div>
+                <p class="eyebrow">Attention</p>
+                <h2>等待你的决定</h2>
+              </div>
+            </div>
+            <div id="attention-list" class="card-grid"></div>
+          </section>
+
+          <section id="view-projects" class="view hidden">
+            <div class="view-heading">
+              <div>
+                <p class="eyebrow">Portfolio</p>
+                <h2>项目与队列</h2>
+              </div>
+            </div>
+            <div id="project-list" class="card-grid"></div>
+          </section>
+
+          <section id="view-work-items" class="view hidden">
+            <div class="view-heading">
+              <div>
+                <p class="eyebrow">WorkItems</p>
+                <h2>异步工作队列</h2>
+              </div>
+              <label class="filter">
+                状态
+                <select id="work-item-filter">
+                  <option value="">全部</option>
+                  <option value="WAITING_FOR_USER">等待用户</option>
+                  <option value="RUNNING">执行中</option>
+                  <option value="QUEUED">排队中</option>
+                  <option value="FAILED">失败</option>
+                  <option value="COMPLETED">完成</option>
+                </select>
+              </label>
+            </div>
+            <form id="new-work-item-form" class="panel inline-form new-work-item">
+              <label>
+                标题
+                <input id="new-work-item-title" maxlength="256" required />
+              </label>
+              <label>
+                业务目标
+                <textarea id="new-work-item-request" rows="3" maxlength="16000" required></textarea>
+              </label>
+              <button class="button" type="submit">提交给 AI</button>
+              <p id="new-work-item-error" class="error" role="alert"></p>
+            </form>
+            <div id="work-item-list" class="work-item-list"></div>
+          </section>
+
+          <section id="view-monitoring" class="view hidden">
+            <div class="view-heading">
+              <div>
+                <p class="eyebrow">Execution</p>
+                <h2>执行与证据监控</h2>
+              </div>
+            </div>
+            <div id="monitoring-list" class="card-grid"></div>
+          </section>
+
+          <section id="view-notifications" class="view hidden">
+            <div class="view-heading">
+              <div>
+                <p class="eyebrow">Channel health</p>
+                <h2>通知与 Decision 审计</h2>
+              </div>
+            </div>
+            <div id="notification-list" class="card-grid"></div>
+          </section>
+
+          <section id="detail" class="panel detail hidden" aria-labelledby="detail-title">
+            <div class="detail-heading">
+              <div>
+                <p class="eyebrow">WorkItem detail</p>
+                <h2 id="detail-title">详情</h2>
+              </div>
+              <button id="close-detail" class="button ghost" type="button">关闭</button>
+            </div>
+            <div id="detail-content"></div>
+          </section>
+        </section>
+      </section>
+    </main>
+
+    <div id="action-dialog" class="dialog-backdrop hidden" role="dialog" aria-modal="true">
+      <form id="action-form" class="dialog panel">
+        <h2 id="action-title">确认动作</h2>
+        <p id="action-description" class="muted"></p>
+        <label id="comment-field" class="hidden">
+          业务说明
+          <textarea id="action-comment" rows="4" maxlength="16000"></textarea>
+        </label>
+        <label id="step-up-field" class="hidden">
+          升级认证码
+          <input id="step-up-code" inputmode="numeric" autocomplete="one-time-code" />
+        </label>
+        <p id="action-error" class="error" role="alert"></p>
+        <div class="dialog-actions">
+          <button class="button secondary" id="cancel-action" type="button">取消</button>
+          <button class="button" type="submit">确认</button>
+        </div>
+      </form>
+    </div>
+
+    <template id="empty-template">
+      <div class="empty-state">
+        <strong>当前没有需要展示的内容</strong>
+        <p class="muted">系统会在这里显示新状态。</p>
+      </div>
+    </template>
+
+    <script type="module" src="/app.js"></script>
+  </body>
+</html>

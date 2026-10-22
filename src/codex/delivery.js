@@ -1,11 +1,18 @@
 import os from 'node:os';
+import fs from 'node:fs';
+import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { createArtifactStore } from './core/artifact-store.js';
 import { hashValue } from './events.js';
 import { validateDeliveryRecord } from './project-model.js';
 import { checkedProjectRoot } from './project-state.js';
+import { validateDeliveryRecordV3 } from './control/delivery-controlled.js';
 
 const failure = (code, message) => ({ ok: false, code, message });
+const object = (value) => value !== null && typeof value === 'object' && !Array.isArray(value);
+const text = (value, maximum = 4000) =>
+  typeof value === 'string' && value.trim().length > 0 && value.length <= maximum;
+const DATE = (value) => typeof value === 'string' && Number.isFinite(Date.parse(value));
 
 function redact(value) {
   return String(value || '')
@@ -185,6 +192,8 @@ export function persistDelivery({
   write = true,
   createTag = true,
 } = {}) {
+  if (delivery?.schemaVersion === 3)
+    return persistDeliveryV3({ projectRoot, delivery, internal, customer, write, createTag });
   const checked = validateDeliveryRecord(delivery);
   if (!checked.ok) return checked;
   const internalPack = renderInternalPack({ delivery, internal });
@@ -218,18 +227,248 @@ export function persistDelivery({
   };
 }
 
+export function persistDeliveryV3({
+  projectRoot,
+  delivery,
+  internal = {},
+  customer = {},
+  write = true,
+  createTag = true,
+} = {}) {
+  const internalPack = renderInternalPack({ delivery, internal });
+  const customerPack = renderCustomerPack({ delivery, customer });
+  const finalRecord =
+    delivery?.packs === null
+      ? {
+          ...delivery,
+          packs: {
+            internalHash: hashValue(internalPack),
+            customerHash: hashValue(customerPack),
+          },
+        }
+      : delivery;
+  const checked = validateDeliveryRecordV3(finalRecord);
+  if (!checked.ok) return checked;
+  if (!write)
+    return {
+      ok: true,
+      delivery: finalRecord,
+      internal: internalPack,
+      customer: customerPack,
+    };
+  let root;
+  try {
+    root = checkedProjectRoot(projectRoot);
+  } catch (error) {
+    return failure(error.code || 'DELIVERY_WRITE_FAILED', error.message);
+  }
+  const directory = `.specgate/codex/deliveries/${finalRecord.deliveryId}`;
+  const store = createArtifactStore({ projectRoot: root });
+  const recordWrite = store.writeJson(`${directory}/record.json`, finalRecord);
+  if (!recordWrite.ok) return recordWrite;
+  const internalWrite = store.writeText(`${directory}/internal.md`, internalPack);
+  if (!internalWrite.ok) return internalWrite;
+  const customerWrite = store.writeText(`${directory}/customer.md`, customerPack);
+  if (!customerWrite.ok) return customerWrite;
+  if (createTag) {
+    const tagged = ensureTag(root, finalRecord);
+    if (!tagged.ok) return tagged;
+  }
+  return {
+    ok: true,
+    delivery: finalRecord,
+    directory,
+    recordHash: recordWrite.hash,
+    internalHash: internalWrite.hash,
+    customerHash: customerWrite.hash,
+  };
+}
+
 export function readDeliveryRecord({ projectRoot, deliveryId } = {}) {
   try {
     if (typeof deliveryId !== 'string' || !/^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$/.test(deliveryId))
       return failure('INVALID_ARGUMENT', 'A valid deliveryId is required');
     const root = checkedProjectRoot(projectRoot);
-    const read = createArtifactStore({ projectRoot: root }).readJson(
-      `.specgate/codex/deliveries/${deliveryId}/record.json`,
-    );
+    const store = createArtifactStore({ projectRoot: root });
+    const read = store.readJson(`.specgate/codex/deliveries/${deliveryId}/record.json`);
     if (!read.ok) return read;
-    const checked = validateDeliveryRecord(read.value);
-    return checked.ok ? { ...read, delivery: read.value } : checked;
+    const checked =
+      read.value?.schemaVersion === 3
+        ? validateDeliveryRecordV3(read.value)
+        : validateDeliveryRecord(read.value);
+    if (!checked.ok) return checked;
+    if (read.value.schemaVersion !== 3) return { ...read, delivery: read.value };
+    const acceptancePath = `.specgate/codex/deliveries/${deliveryId}/customer-acceptance.json`;
+    if (!fs.existsSync(path.join(root, acceptancePath))) return { ...read, delivery: read.value };
+    const acceptanceRead = store.readJson(acceptancePath);
+    if (!acceptanceRead.ok) return acceptanceRead;
+    const acceptance = acceptanceRead.value;
+    if (
+      !object(acceptance) ||
+      acceptance.schemaVersion !== 1 ||
+      acceptance.deliveryId !== deliveryId ||
+      acceptance.status !== 'accepted' ||
+      acceptance.baseRecordHash !== read.hash ||
+      !text(acceptance.actorId, 256) ||
+      !text(acceptance.source, 64) ||
+      acceptance.authLevel !== 'step-up' ||
+      !DATE(acceptance.at) ||
+      !text(acceptance.evidence, 1024)
+    )
+      return failure('CUSTOMER_ACCEPTANCE_INVALID', 'Customer acceptance evidence is invalid');
+    const delivery = {
+      ...read.value,
+      releaseState: 'customer-accepted',
+      customerAcceptance: {
+        status: 'accepted',
+        actorId: acceptance.actorId,
+        source: acceptance.source,
+        at: acceptance.at,
+        evidence: acceptance.evidence,
+      },
+    };
+    const finalCheck = validateDeliveryRecordV3(delivery);
+    return finalCheck.ok
+      ? { ...read, delivery, acceptancePath, acceptanceHash: acceptanceRead.hash }
+      : finalCheck;
   } catch (error) {
     return failure(error.code || 'DELIVERY_READ_FAILED', error.message);
+  }
+}
+
+export function findLatestDeliveryRecord({ projectRoot } = {}) {
+  try {
+    const root = checkedProjectRoot(projectRoot);
+    const deliveriesRoot = path.join(root, '.specgate', 'codex', 'deliveries');
+    if (!fs.existsSync(deliveriesRoot))
+      return failure('DELIVERY_NOT_FOUND', 'No DeliveryRecord exists');
+    const candidates = [];
+    for (const entry of fs.readdirSync(deliveriesRoot, { withFileTypes: true })) {
+      if (!entry.isDirectory() || !/^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$/.test(entry.name)) continue;
+      const read = readDeliveryRecord({ projectRoot: root, deliveryId: entry.name });
+      if (!read.ok) continue;
+      candidates.push({
+        ok: true,
+        deliveryId: read.delivery.deliveryId,
+        delivery: read.delivery,
+        recordHash: read.hash,
+        acceptanceHash: read.acceptanceHash || null,
+      });
+    }
+    candidates.sort(
+      (left, right) =>
+        Date.parse(right.delivery.approvedAt) - Date.parse(left.delivery.approvedAt) ||
+        right.delivery.deliveryId.localeCompare(left.delivery.deliveryId),
+    );
+    return (
+      candidates[0] ||
+      failure('DELIVERY_NOT_FOUND', 'No readable DeliveryRecord exists for the project')
+    );
+  } catch (error) {
+    return failure(error.code || 'DELIVERY_READ_FAILED', error.message);
+  }
+}
+
+export function recordCustomerAcceptance({
+  projectRoot,
+  deliveryId,
+  expectedRecordHash = null,
+  actorId,
+  source,
+  authLevel,
+  evidence,
+  at = new Date().toISOString(),
+} = {}) {
+  try {
+    const root = checkedProjectRoot(projectRoot);
+    if (
+      typeof deliveryId !== 'string' ||
+      !/^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$/.test(deliveryId) ||
+      !text(actorId, 256) ||
+      !['web', 'feishu', 'cli', 'api'].includes(source) ||
+      authLevel !== 'step-up' ||
+      !text(evidence, 1024) ||
+      !DATE(at)
+    )
+      return failure('CUSTOMER_ACCEPTANCE_INVALID', 'A trusted acceptance Decision is required');
+    const store = createArtifactStore({ projectRoot: root });
+    const basePath = `.specgate/codex/deliveries/${deliveryId}/record.json`;
+    const base = store.readJson(basePath);
+    if (!base.ok) return base;
+    if (expectedRecordHash && base.hash !== expectedRecordHash)
+      return failure(
+        'DELIVERY_ARTIFACT_CHANGED',
+        'DeliveryRecord changed after it was linked to the WorkItem',
+      );
+    const checked = validateDeliveryRecordV3(base.value);
+    if (!checked.ok) return checked;
+    const existingPath = `.specgate/codex/deliveries/${deliveryId}/customer-acceptance.json`;
+    if (fs.existsSync(path.join(root, existingPath))) {
+      const existing = store.readJson(existingPath);
+      if (
+        existing.ok &&
+        existing.value?.deliveryId === deliveryId &&
+        existing.value?.status === 'accepted' &&
+        existing.value?.actorId === actorId &&
+        existing.value?.source === source &&
+        existing.value?.authLevel === 'step-up' &&
+        existing.value?.evidence === evidence &&
+        existing.value?.baseRecordHash === base.hash
+      ) {
+        return {
+          ok: true,
+          duplicate: true,
+          acceptance: existing.value,
+          acceptanceHash: existing.hash,
+          delivery: {
+            ...base.value,
+            releaseState: 'customer-accepted',
+            customerAcceptance: {
+              status: 'accepted',
+              actorId: existing.value.actorId,
+              source: existing.value.source,
+              at: existing.value.at,
+              evidence: existing.value.evidence,
+            },
+          },
+        };
+      }
+      return failure('CUSTOMER_ALREADY_ACCEPTED', 'Delivery already has customer acceptance');
+    }
+    const acceptance = {
+      schemaVersion: 1,
+      deliveryId,
+      status: 'accepted',
+      actorId,
+      source,
+      authLevel,
+      at,
+      evidence,
+      baseRecordHash: base.hash,
+    };
+    const written = store.writeJson(
+      `.specgate/codex/deliveries/${deliveryId}/customer-acceptance.json`,
+      acceptance,
+    );
+    if (!written.ok) return written;
+    return {
+      ok: true,
+      duplicate: false,
+      acceptance,
+      acceptanceHash: written.hash,
+      delivery: {
+        ...base.value,
+        releaseState: 'customer-accepted',
+        customerAcceptance: {
+          status: 'accepted',
+          actorId,
+          source,
+          at,
+          evidence,
+        },
+      },
+    };
+  } catch (error) {
+    return failure(error.code || 'CUSTOMER_ACCEPTANCE_FAILED', error.message);
   }
 }
