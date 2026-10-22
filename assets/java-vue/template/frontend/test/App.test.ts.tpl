@@ -5,6 +5,7 @@ import { authApi } from '../src/api/auth';
 import { taskApi } from '../src/api/tasks';
 import { fileApi } from '../src/api/files';
 import { ApiError } from '../src/api/request';
+import { i18n, setLocale } from '../src/i18n';
 
 vi.mock('../src/api/auth', () => ({
   authApi: { me: vi.fn(), login: vi.fn(), logout: vi.fn() },
@@ -36,6 +37,7 @@ const file = {
   downloadUrl: '/api/files/file/download',
 };
 beforeEach(() => {
+  setLocale('zh-CN');
   vi.resetAllMocks();
   vi.mocked(authApi.me).mockResolvedValue({ username: 'admin', role: 'ADMIN' });
   vi.mocked(taskApi.list).mockResolvedValue({
@@ -52,7 +54,7 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 async function open() {
-  wrapper = mount(App);
+  wrapper = mount(App, { global: { plugins: [i18n] } });
   await flushPromises();
 }
 async function click(label: string) {
@@ -90,24 +92,22 @@ it('[AC-001] safely renders tasks and performs create, update, cancel, detail an
     title: 'New',
     completed: false,
   });
-  await click('Edit');
+  await click('编辑');
   await save('Edited');
   expect(taskApi.update).toHaveBeenCalledWith(1, {
     title: 'Edited',
     completed: false,
   });
-  await click('Edit');
-  await click('Cancel');
-  await click('Details');
-  expect(wrapper.get('[aria-label="Task details"]').text()).toContain(
-    task.title,
-  );
-  await click('Close details');
-  await click('Delete');
-  await click('Cancel deletion');
+  await click('编辑');
+  await click('取消');
+  await click('详情');
+  expect(wrapper.get('[aria-label="任务详情"]').text()).toContain(task.title);
+  await click('关闭详情');
+  await click('删除');
+  await click('取消删除');
   expect(taskApi.remove).not.toHaveBeenCalled();
-  await click('Delete');
-  await click('Confirm delete');
+  await click('删除');
+  await click('确认删除');
   expect(taskApi.remove).toHaveBeenCalledWith(1);
   await save('   ');
   expect(wrapper.get('[role="alert"]').text()).toContain('1–200');
@@ -122,21 +122,21 @@ it('[AC-001] performs filtering, pagination and both batch actions', async () =>
   });
   await open();
   await wrapper.get('#filter-title').setValue('Second');
-  await click('Search');
+  await click('查询');
   expect(taskApi.list).toHaveBeenLastCalledWith(
     expect.objectContaining({ title: 'Second', page: 1 }),
   );
   const boxes = wrapper.findAll('.task-list input[type="checkbox"]');
   await boxes[0].setValue(true);
-  await click('Complete selected');
+  await click('批量完成');
   expect(taskApi.batchStatus).toHaveBeenCalledWith([1], true);
   await wrapper.findAll('.task-list input[type="checkbox"]')[0].setValue(true);
-  await click('Reopen selected');
+  await click('批量恢复');
   expect(taskApi.batchStatus).toHaveBeenCalledWith([1], false);
   for (const box of wrapper.findAll('.task-list input[type="checkbox"]'))
     await box.setValue(true);
-  await click('Delete selected');
-  await click('Confirm delete');
+  await click('批量删除');
+  await click('确认删除');
   expect(taskApi.batchDelete).toHaveBeenCalledWith([1, 2]);
   await wrapper
     .findComponent({ name: 'ElPagination' })
@@ -156,7 +156,7 @@ it('[AC-004] handles login, session recovery, read-only permissions and logout',
     role: 'VIEWER',
   });
   await open();
-  expect(wrapper.text()).toContain('Welcome back');
+  expect(wrapper.text()).toContain('欢迎回来');
   await wrapper.get('#username').setValue('viewer');
   await wrapper.get('#password').setValue('test-only');
   await wrapper.get('form').trigger('submit');
@@ -164,7 +164,7 @@ it('[AC-004] handles login, session recovery, read-only permissions and logout',
   expect(authApi.login).toHaveBeenCalledWith('viewer', 'test-only');
   expect(wrapper.find('#title').exists()).toBe(false);
   expect(wrapper.find('#upload-file').exists()).toBe(false);
-  await click('Sign out');
+  await click('退出登录');
   expect(authApi.logout).toHaveBeenCalled();
   expect(wrapper.find('#password').exists()).toBe(true);
 });
@@ -175,7 +175,7 @@ it('[AC-003] displays recoverable errors, preserves input, and clears expired se
   );
   await open();
   expect(wrapper.get('[role="alert"]').text()).toContain('trace-1');
-  await click('Refresh');
+  await click('刷新');
   vi.mocked(taskApi.create).mockRejectedValueOnce(new Error('Please retry'));
   await save('Keep input');
   expect((wrapper.get('#title').element as HTMLInputElement).value).toBe(
@@ -189,8 +189,8 @@ it('[AC-003] displays recoverable errors, preserves input, and clears expired se
 
 it('[AC-005] prevalidates CSV, confirms import and resets validation when file changes', async () => {
   await open();
-  await click('Validate CSV');
-  expect(wrapper.get('[role="alert"]').text()).toContain('Choose');
+  await click('校验 CSV');
+  expect(wrapper.get('[role="alert"]').text()).toContain('选择');
   const csv = new File(['title,completed\nOne,true'], 'tasks.csv', {
     type: 'text/csv',
   });
@@ -200,21 +200,21 @@ it('[AC-005] prevalidates CSV, confirms import and resets validation when file c
     valid: false,
     errors: ['Row 2 invalid'],
   });
-  await click('Validate CSV');
+  await click('校验 CSV');
   expect(wrapper.text()).toContain('Row 2 invalid');
   vi.mocked(taskApi.import).mockResolvedValue({
     count: 1,
     valid: true,
     errors: [],
   });
-  await click('Validate CSV');
-  await click('Confirm import');
+  await click('校验 CSV');
+  await click('确认导入');
   expect(taskApi.import).toHaveBeenLastCalledWith(csv, false);
-  expect(wrapper.text()).toContain('Imported 1');
+  expect(wrapper.text()).toContain('已导入 1');
   await choose('#csv-file');
-  await click('CSV template');
+  await click('下载模板');
   expect(taskApi.template).toHaveBeenCalled();
-  await click('Export CSV');
+  await click('导出 CSV');
   expect(taskApi.export).toHaveBeenCalled();
 });
 
@@ -225,7 +225,7 @@ it('[AC-006] uploads and downloads files, and handles empty lists and no selecti
   const upload = new File(['hello'], 'note.txt', { type: 'text/plain' });
   await choose('#upload-file', upload);
   expect(fileApi.upload).toHaveBeenCalledWith(upload);
-  await click('Download');
+  await click('下载');
   expect(fileApi.download).toHaveBeenCalledWith(file);
   vi.mocked(taskApi.list).mockResolvedValue({
     records: [],
@@ -234,9 +234,9 @@ it('[AC-006] uploads and downloads files, and handles empty lists and no selecti
     pageSize: 20,
   });
   vi.mocked(fileApi.list).mockResolvedValue([]);
-  await click('Refresh');
-  expect(wrapper.text()).toContain('No tasks');
-  expect(wrapper.text()).toContain('No files');
+  await click('刷新');
+  expect(wrapper.text()).toContain('没有任务');
+  expect(wrapper.text()).toContain('暂无文件');
 });
 
 it('[AC-003] reports startup failures and prevents duplicate writes while a request is pending', async () => {
@@ -264,4 +264,14 @@ it('[AC-003] reports startup failures and prevents duplicate writes while a requ
   expect(taskApi.create).toHaveBeenCalledTimes(1);
   finish();
   await flushPromises();
+});
+
+it('[AC-001] defaults to Chinese and switches to English at runtime', async () => {
+  await open();
+  expect(wrapper.text()).toContain('任务管理');
+  await click('切换到英文');
+  expect(wrapper.text()).toContain('Task manager');
+  expect(wrapper.text()).toContain('Switch to Chinese');
+  await click('Switch to Chinese');
+  expect(wrapper.text()).toContain('任务管理');
 });

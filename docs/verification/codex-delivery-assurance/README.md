@@ -7,11 +7,65 @@
 
 ## Automated Evidence
 
-- `npm test`: 229 tests passed.
-- `npm run lint`: passed.
-- `npm run format:check`: passed.
+- The delivery-assurance test snapshot before parallel async-control work reached
+  237/237 passing.
+- Focused project-convention and adopted-delivery tests: 70/70 passed.
+  The separate protocol snapshot remains blocked because it does not yet include
+  the concurrently added `sg_work_item_*` tools.
+- `npm run lint`: passed with both change sets present.
+- Scoped Prettier check for this change set: passed. The repository-wide
+  `npm run format:check` is blocked by unrelated unformatted async-control
+  files.
 - `npm run pack:check`: passed using a workspace-local npm cache.
 - `node scripts/codex-plugin-smoke.mjs`: passed stdio diagnostics.
+
+## Adopted Closure and Project Conventions
+
+The adopted quality path now executes ProjectProfile commands at the fixed
+integration commit and compares stable failure signatures with the accepted
+Baseline. Unchanged known failures remain explicit; new failures and
+environment drift block the change.
+
+Generated projects now support validated company/business namespaces:
+
+```text
+company acme + business orders -> com.acme.orders
+```
+
+The generator writes the matching Java source tree, Maven coordinates and
+frontend package name, rejects invalid namespace segments, adds Chinese source
+comments, and never creates a new `com.example.*` source tree. Frontend text is
+provided through Vue I18n with `zh-CN` as the default and `en-US` as a runtime
+alternative.
+
+Real template matrix:
+
+`docs/verification/codex-delivery-assurance/20261022-conventions-matrix-v4/matrix.json`
+
+All four presets passed:
+
+- backend Maven verification and tests;
+- frontend lockfile install, build, test, lint and format;
+- backend HTTP CRUD and restart persistence;
+- generated frontend tests, including Chinese default locale and runtime
+  English switching.
+
+### Real adopted-project verification
+
+The isolated adopted pilot ran against the real
+`gheinze/springboot-vuejs` clone. The verifier:
+
+- created a temporary Git worktree at the recorded commit;
+- executed the ProjectProfile install/build/test/lint commands;
+- matched two unchanged baseline known failures;
+- blocked three new failures caused by the current lockfile/JDK environment;
+- preserved the main worktree and removed the temporary worktree afterwards.
+
+This is a correct fail-closed result, not an adopted-path bypass. The command
+outputs and new signatures remain in the execution report.
+
+Summary evidence:
+`docs/verification/codex-delivery-assurance/adopted-real-pilot-20261022.json`.
 
 ## Third-Party GitHub Adoption Pilot
 

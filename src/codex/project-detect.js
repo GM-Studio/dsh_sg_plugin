@@ -157,6 +157,32 @@ function backendCommands(root) {
   };
 }
 
+function backendPackage(root, java) {
+  const sourceRoot =
+    java === 'backend'
+      ? path.join(root, 'backend', 'src', 'main', 'java')
+      : path.join(root, 'src', 'main', 'java');
+  if (!fs.existsSync(sourceRoot)) return null;
+  let inspected = 0;
+  const pending = [sourceRoot];
+  while (pending.length && inspected < 500) {
+    const directory = pending.shift();
+    for (const entry of fs.readdirSync(directory, { withFileTypes: true }).slice(0, 200)) {
+      if (entry.name.startsWith('.')) continue;
+      const target = path.join(directory, entry.name);
+      if (entry.isDirectory()) pending.push(target);
+      else if (entry.isFile() && entry.name.endsWith('.java')) {
+        inspected += 1;
+        const head = fs.readFileSync(target, 'utf8').slice(0, 65536);
+        const match = /^\s*package\s+([a-z][a-z0-9_.]*)\s*;/m.exec(head);
+        if (match) return match[1];
+      }
+      if (inspected >= 500) break;
+    }
+  }
+  return null;
+}
+
 function dirtyFiles(output) {
   const records = output.split('\0').filter(Boolean);
   const files = [];
@@ -230,6 +256,7 @@ export function detectProject({ root: inputRoot } = {}) {
       for (const key of Object.keys(frontendFound)) frontendFound[key].push(...found[key]);
     }
     const backendFound = backendCommands(root);
+    const detectedPackage = backendPackage(root, java);
     const commands = {
       install: [...frontendFound.install],
       build: [...backendFound.build, ...frontendFound.build],
@@ -249,6 +276,11 @@ export function detectProject({ root: inputRoot } = {}) {
       modules: { backend: java, frontends },
       packageManager:
         frontends.length === 1 ? packageManager(path.join(root, frontends[0])) : 'mixed',
+      conventions: {
+        ...(detectedPackage ? { backendPackage: detectedPackage } : {}),
+        frontendDefaultLocale: 'zh-CN',
+        frontendLocales: ['zh-CN'],
+      },
       commands,
       protectedPaths: fs.existsSync(path.join(root, '.env')) ? ['.env'] : [],
       risks,

@@ -261,10 +261,21 @@ test('red baseline requires a real failing command mapped to every frozen case b
 
 test('frontend and backend run serially in isolated worktrees and merge only through integration', async () => {
   const context = await fixture();
+  fs.writeFileSync(
+    path.join(context.root, '.specgate', 'monorepo.json'),
+    JSON.stringify({
+      stack: 'java-vue',
+      backendPackage: 'com.acme.orders',
+      frontendDefaultLocale: 'zh-CN',
+      frontendLocales: ['zh-CN', 'en-US'],
+    }),
+  );
   let active = 0;
   let maximum = 0;
   const baseProvider = roleProvider();
   const provider = async (role, challenge) => {
+    assert.equal(challenge.conventions.backendPackage, 'com.acme.orders');
+    assert.equal(challenge.conventions.frontendDefaultLocale, 'zh-CN');
     active += 1;
     maximum = Math.max(maximum, active);
     await new Promise((resolve) => setTimeout(resolve, 80));

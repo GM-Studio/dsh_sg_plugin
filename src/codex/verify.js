@@ -137,7 +137,13 @@ function inspectProject(input) {
   const normalized = normalizeJavaPreset(metadata.preset);
   if (!normalized.ok) return normalized;
   const required = [
-    ...Object.keys(javaFullstackFiles({ preset: normalized.preset })),
+    ...Object.keys(
+      javaFullstackFiles({
+        preset: normalized.preset,
+        company: metadata.company,
+        business: metadata.business,
+      }),
+    ),
     '.specgate/config.yaml',
     '.specgate/state.json',
     '.specgate/init-report.json',

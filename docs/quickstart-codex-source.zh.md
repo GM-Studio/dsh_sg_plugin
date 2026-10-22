@@ -57,6 +57,15 @@ codex plugin add specgate-codex@specgate-source
 新项目完成 `sg_init`、`sg_verify` 和 `sg_project_finalize_new`，或存量项目
 完成 `sg_adopt_preview` 和 `sg_adopt_apply` 后：
 
+新项目调用 `sg_init_preview` 和 `sg_init` 时必须提供小写 `company` 和
+`business`。例如 `company: acme`、`business: orders` 会生成
+`com.acme.orders`，源码目录为
+`backend/src/main/java/com/acme/orders/`。禁止新代码写入
+`com.example.*`。
+
+生成源码使用中文文件说明和业务注释。前端展示文本必须通过 i18n key 提供，
+默认 `zh-CN`，并保留 `en-US` 运行时切换。
+
 `sg_adopt_apply` 只启动 detached baseline，立即返回 `baselineRun`。继续轮询
 `sg_project_status`，直到 `projectReady: true` 或
 `baselineRun.status: failed`。Codex 会话结束不会终止基线 worker。基线在

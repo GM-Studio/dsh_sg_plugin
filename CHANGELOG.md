@@ -9,6 +9,10 @@
   progress, persist bounded command evidence, and clean successful run state.
 - Discover lockfile-driven install commands before build and commit only stable
   SpecGate metadata with explicit paths.
+- Verify adopted projects through ProjectProfile commands and compare stable
+  failure signatures with the accepted Baseline.
+- Generate `com.<company>.<business>` Java packages with Chinese source
+  comments and a Chinese-first Vue I18n interface.
 - Add unified `sg_change` for feature, modify and fix.
 - Execute implementation serially and verify with environment fingerprints,
   evidence sufficiency and explicit flaky-test records.

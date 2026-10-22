@@ -35,6 +35,23 @@ function fullstack(t) {
     path.join(root, 'backend', 'pom.xml'),
     '<project><modelVersion>4.0.0</modelVersion></project>\n',
   );
+  fs.mkdirSync(path.join(root, 'backend', 'src', 'main', 'java', 'com', 'acme', 'orders'), {
+    recursive: true,
+  });
+  fs.writeFileSync(
+    path.join(
+      root,
+      'backend',
+      'src',
+      'main',
+      'java',
+      'com',
+      'acme',
+      'orders',
+      'TaskApplication.java',
+    ),
+    'package com.acme.orders;\npublic class TaskApplication {}\n',
+  );
   fs.writeFileSync(
     path.join(root, 'frontend', 'package.json'),
     JSON.stringify({
@@ -84,6 +101,8 @@ test('detects a Java/Vue monorepo and derives argv-only commands without writes'
     true,
   );
   assert.ok(result.protectedPaths.includes('.env'));
+  assert.equal(result.conventions.backendPackage, 'com.acme.orders');
+  assert.equal(result.conventions.frontendDefaultLocale, 'zh-CN');
   assert.equal(git(root, ['status', '--porcelain=v1', '--untracked-files=all']), before);
 });
 

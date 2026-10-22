@@ -43,7 +43,12 @@ export async function verifyMatrix({ output, concurrency = 2 } = {}) {
       const evidenceDirectory = path.join(directory, entry.preset);
       fs.mkdirSync(evidenceDirectory);
       try {
-        const preview = previewInit({ root: entry.root, preset: entry.preset });
+        const preview = previewInit({
+          root: entry.root,
+          preset: entry.preset,
+          company: 'specgate',
+          business: 'tasks',
+        });
         fs.writeFileSync(
           path.join(evidenceDirectory, 'preview.json'),
           JSON.stringify(preview, null, 2) + '\n',
@@ -52,6 +57,8 @@ export async function verifyMatrix({ output, concurrency = 2 } = {}) {
         const generated = await executeInit({
           root: entry.root,
           preset: entry.preset,
+          company: 'specgate',
+          business: 'tasks',
           previewHash: preview.previewHash,
         });
         fs.writeFileSync(

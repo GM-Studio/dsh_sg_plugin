@@ -5,6 +5,8 @@ import { randomUUID } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { canonicalJson, hashValue } from './events.js';
 import { verifyProject } from './verify.js';
+import { validateAdoptedVerification, verifyAdoptedProject } from './adopted-verification.js';
+import { loadProjectReadiness } from './project-state.js';
 import { VERIFY_STAGES } from './core/java/verify-evidence.js';
 import { commandSpec } from './core/java/verify-evidence.js';
 import { reconcileCoverage } from './core/java/coverage-evidence.js';
@@ -557,7 +559,8 @@ export function createQualityService({
   store,
   planService,
   testRunner,
-  verifier = verifyProject,
+  verifier,
+  adoptedVerifier = verifyAdoptedProject,
   timeoutMs = DEFAULT_TIMEOUT_MS,
 } = {}) {
   if (typeof projectRoot !== 'string' || !projectRoot)
@@ -566,7 +569,10 @@ export function createQualityService({
     throw new TypeError('A server state store is required');
   if (!planService || typeof planService.inspect !== 'function')
     throw new TypeError('A server plan service is required');
-  if (typeof verifier !== 'function') throw new TypeError('verifier must be a function');
+  if (verifier !== undefined && typeof verifier !== 'function')
+    throw new TypeError('verifier must be a function when provided');
+  if (typeof adoptedVerifier !== 'function')
+    throw new TypeError('adoptedVerifier must be a function');
   const root = fs.realpathSync(projectRoot);
   const safeRoot = !inside(SOURCE_ROOT, root) && !inside(root, SOURCE_ROOT);
   const protect = async (operation) => {
@@ -950,10 +956,42 @@ export function createQualityService({
             },
           ],
         });
-      prepareVerificationMetadata(test.path);
-      const verified = validateVerification(
-        await verifier({ root: test.path }, { signal, timeoutMs }),
-      );
+      let verified;
+      if (typeof verifier === 'function') {
+        prepareVerificationMetadata(test.path);
+        verified = validateVerification(await verifier({ root: test.path }, { signal, timeoutMs }));
+      } else {
+        const readiness = loadProjectReadiness({ projectRoot: root });
+        if (!readiness.ok)
+          return finishFailure({
+            development,
+            run: runEvidence,
+            code: readiness.code || 'PROJECT_NOT_READY',
+            message: readiness.message || 'Project readiness is unavailable',
+            defects: [],
+          });
+        if (readiness.profile.mode === 'adopted') {
+          const adopted = await adoptedVerifier({
+            profile: readiness.profile,
+            baseline: readiness.baseline,
+            worktree: test.path,
+            commit: integrationCommit,
+            signal,
+          });
+          verified =
+            adopted.ok === true
+              ? validateAdoptedVerification(adopted)
+              : {
+                  ...adopted,
+                  report: adopted.report || null,
+                };
+        } else {
+          prepareVerificationMetadata(test.path);
+          verified = validateVerification(
+            await verifyProject({ root: test.path }, { signal, timeoutMs }),
+          );
+        }
+      }
       if (!verified.ok)
         return finishFailure({
           development,
@@ -967,6 +1005,27 @@ export function createQualityService({
               stage: 'verification',
               code: verified.code,
               message: verified.message,
+              owners: [],
+            },
+          ],
+        });
+      const productionAfterVerification = changedTestWorktreePaths(
+        test.path,
+        integrationCommit,
+      ).filter((file) => !isTestPath(file));
+      if (productionAfterVerification.length)
+        return finishFailure({
+          development,
+          run: runEvidence,
+          code: 'VERIFICATION_MODIFIED_PRODUCTION',
+          message: `Project verification changed production files: ${productionAfterVerification.join(', ')}`,
+          defects: [
+            {
+              id: `QUALITY-${runEvidence.runId}`,
+              severity: 'P1',
+              stage: 'verification-policy',
+              code: 'VERIFICATION_MODIFIED_PRODUCTION',
+              message: 'Verification commands must not modify tracked production files.',
               owners: [],
             },
           ],
@@ -1026,6 +1085,16 @@ export function createQualityService({
         schemaVersion: 1,
         status: 'passed',
         ...runEvidence,
+        projectMode: verified.report.kind === 'adopted-project-verification' ? 'adopted' : 'new',
+        baselineDelta:
+          verified.report.kind === 'adopted-project-verification'
+            ? {
+                baselineId: verified.report.baselineId,
+                knownFailures: verified.report.knownFailures,
+                newFailures: verified.report.newFailures,
+                environmentFingerprint: verified.report.environmentFingerprint,
+              }
+            : null,
         coverage: { aggregate: aggregateCoverage, changed: changedCoverage },
         p0: 0,
         p1: 0,

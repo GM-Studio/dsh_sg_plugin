@@ -16,15 +16,15 @@ import { commandSpec } from '../src/codex/core/java/verify-evidence.js';
 const PRESETS = ['jdk17-boot3.5', 'jdk21-boot3.5', 'jdk21-boot4.0'];
 const SCENARIOS = ['feature-stats', 'modify-completion-percent', 'fix-zero-rate'];
 
-const JAVA_TEST = `package com.example.tasks;
+const JAVA_TEST = `package com.specgate.tasks;
 
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import com.example.tasks.entity.Task;
-import com.example.tasks.repository.TaskRepository;
+import com.specgate.tasks.entity.Task;
+import com.specgate.tasks.repository.TaskRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -86,7 +86,7 @@ const JAVA_TEST_WITH_ZERO = JAVA_TEST_WITH_RATE.replace(
 `,
 );
 
-const STATS_VO = `package com.example.tasks.vo;
+const STATS_VO = `package com.specgate.tasks.vo;
 
 public class TaskStatsVO {
     private final long total;
@@ -113,7 +113,7 @@ public class TaskStatsVO {
 }
 `;
 
-const STATS_VO_WITH_RATE = `package com.example.tasks.vo;
+const STATS_VO_WITH_RATE = `package com.specgate.tasks.vo;
 
 public class TaskStatsVO {
     private final long total;
@@ -152,10 +152,10 @@ const STATS_VO_BROKEN_ZERO = STATS_VO_WITH_RATE.replace(
   'total == 0 ? 100 : (int) Math.floor((completed * 100.0) / total);',
 );
 
-const STATS_SERVICE = `package com.example.tasks.service;
+const STATS_SERVICE = `package com.specgate.tasks.service;
 
-import com.example.tasks.repository.TaskRepository;
-import com.example.tasks.vo.TaskStatsVO;
+import com.specgate.tasks.repository.TaskRepository;
+import com.specgate.tasks.vo.TaskStatsVO;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -176,11 +176,11 @@ public class TaskStatsService {
 }
 `;
 
-const STATS_CONTROLLER = `package com.example.tasks.controller;
+const STATS_CONTROLLER = `package com.specgate.tasks.controller;
 
-import com.example.tasks.common.ApiResponse;
-import com.example.tasks.service.TaskStatsService;
-import com.example.tasks.vo.TaskStatsVO;
+import com.specgate.tasks.common.ApiResponse;
+import com.specgate.tasks.service.TaskStatsService;
+import com.specgate.tasks.vo.TaskStatsVO;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -201,9 +201,9 @@ public class TaskStatsController {
 }
 `;
 
-const REPOSITORY = `package com.example.tasks.repository;
+const REPOSITORY = `package com.specgate.tasks.repository;
 
-import com.example.tasks.entity.Task;
+import com.specgate.tasks.entity.Task;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface TaskRepository
@@ -367,7 +367,7 @@ async function runScenario({
   if (scenario === 'feature-stats') {
     write(
       projectRoot,
-      'backend/src/test/java/com/example/tasks/TaskStatsApiTest.java',
+      'backend/src/test/java/com/specgate/tasks/TaskStatsApiTest.java',
       javaTestForPreset(preset, JAVA_TEST),
     );
     redReceipt = run(backend, maven, ['-B', '-ntp', '-Dtest=TaskStatsApiTest', 'test'], {
@@ -377,25 +377,25 @@ async function runScenario({
       throw new Error('Feature test unexpectedly passed before implementation');
     write(
       projectRoot,
-      'backend/src/main/java/com/example/tasks/repository/TaskRepository.java',
+      'backend/src/main/java/com/specgate/tasks/repository/TaskRepository.java',
       REPOSITORY,
     );
-    write(projectRoot, 'backend/src/main/java/com/example/tasks/vo/TaskStatsVO.java', STATS_VO);
+    write(projectRoot, 'backend/src/main/java/com/specgate/tasks/vo/TaskStatsVO.java', STATS_VO);
     write(
       projectRoot,
-      'backend/src/main/java/com/example/tasks/service/TaskStatsService.java',
+      'backend/src/main/java/com/specgate/tasks/service/TaskStatsService.java',
       STATS_SERVICE,
     );
     write(
       projectRoot,
-      'backend/src/main/java/com/example/tasks/controller/TaskStatsController.java',
+      'backend/src/main/java/com/specgate/tasks/controller/TaskStatsController.java',
       STATS_CONTROLLER,
     );
   }
   if (scenario === 'modify-completion-percent') {
     write(
       projectRoot,
-      'backend/src/test/java/com/example/tasks/TaskStatsApiTest.java',
+      'backend/src/test/java/com/specgate/tasks/TaskStatsApiTest.java',
       javaTestForPreset(preset, JAVA_TEST_WITH_RATE),
     );
     redReceipt = run(backend, maven, ['-B', '-ntp', '-Dtest=TaskStatsApiTest', 'test'], {
@@ -405,19 +405,19 @@ async function runScenario({
       throw new Error('Modify test unexpectedly passed before implementation');
     write(
       projectRoot,
-      'backend/src/main/java/com/example/tasks/vo/TaskStatsVO.java',
+      'backend/src/main/java/com/specgate/tasks/vo/TaskStatsVO.java',
       STATS_VO_WITH_RATE,
     );
   }
   if (scenario === 'fix-zero-rate') {
     write(
       projectRoot,
-      'backend/src/main/java/com/example/tasks/vo/TaskStatsVO.java',
+      'backend/src/main/java/com/specgate/tasks/vo/TaskStatsVO.java',
       STATS_VO_BROKEN_ZERO,
     );
     write(
       projectRoot,
-      'backend/src/test/java/com/example/tasks/TaskStatsApiTest.java',
+      'backend/src/test/java/com/specgate/tasks/TaskStatsApiTest.java',
       javaTestForPreset(preset, JAVA_TEST_WITH_ZERO),
     );
     redReceipt = run(backend, maven, ['-B', '-ntp', '-Dtest=TaskStatsApiTest', 'test'], {
@@ -427,7 +427,7 @@ async function runScenario({
       throw new Error('Regression test unexpectedly passed before fix');
     write(
       projectRoot,
-      'backend/src/main/java/com/example/tasks/vo/TaskStatsVO.java',
+      'backend/src/main/java/com/specgate/tasks/vo/TaskStatsVO.java',
       STATS_VO_WITH_RATE,
     );
   }
@@ -604,11 +604,18 @@ export async function runPilot({
     const projectRoot = path.join(workspace, preset);
     const projectStarted = Date.now();
     process.stdout.write(JSON.stringify({ preset, phase: 'initialize' }) + '\n');
-    const preview = previewInit({ root: projectRoot, preset });
+    const preview = previewInit({
+      root: projectRoot,
+      preset,
+      company: 'specgate',
+      business: 'tasks',
+    });
     if (!preview.ok) throw new Error(JSON.stringify(preview));
     const generated = await executeInit({
       root: projectRoot,
       preset,
+      company: 'specgate',
+      business: 'tasks',
       previewHash: preview.previewHash,
     });
     if (!generated.ok) throw new Error(JSON.stringify(generated));

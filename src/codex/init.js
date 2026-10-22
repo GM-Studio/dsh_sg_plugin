@@ -4,7 +4,10 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createHash } from 'node:crypto';
 import { spawn, spawnSync } from 'node:child_process';
-import { javaFullstackFiles } from './core/java/java-fullstack-template.js';
+import {
+  javaFullstackFiles,
+  normalizeProjectNamespace,
+} from './core/java/java-fullstack-template.js';
 import { goldenStatus, normalizeJavaPreset, templateHash } from './core/java/java-versions.js';
 
 const SOURCE_ROOT = path.resolve(fileURLToPath(new URL('../..', import.meta.url)));
@@ -255,6 +258,8 @@ export function previewInit({
   root: inputRoot,
   preset: inputPreset,
   strategy = 'keep-missing',
+  company = 'company',
+  business = 'tasks',
 } = {}) {
   try {
     const root = checkedRoot(inputRoot);
@@ -262,11 +267,17 @@ export function previewInit({
       return failure('INIT_OVERWRITE_UNSUPPORTED', '当前仅支持逐项保留冲突文件并补齐缺失文件');
     const normalized = normalizeJavaPreset(inputPreset);
     if (!normalized.ok) return normalized;
+    const namespace = normalizeProjectNamespace({ company, business });
+    if (!namespace.ok) return namespace;
     const preset = normalized.preset;
     const snapshot = scan(root);
     if (snapshot.entries.some((entry) => entryKey(entry.path) === '.specgate'))
       return failure('ALREADY_INITIALIZED', '已有 .specgate，拒绝重新初始化');
-    const templates = javaFullstackFiles({ preset });
+    const templates = javaFullstackFiles({
+      preset,
+      company: namespace.company,
+      business: namespace.business,
+    });
     const generated = [...new Set([...Object.keys(templates), ...EXTRA_FILES])].sort();
     const existing = new Map(snapshot.entries.map((entry) => [entryKey(entry.path), entry]));
     const conflicts = [];
@@ -297,6 +308,11 @@ export function previewInit({
     const body = {
       root,
       preset: preset.id,
+      projectNamespace: {
+        company: namespace.company,
+        business: namespace.business,
+        basePackage: namespace.basePackage,
+      },
       strategy,
       templateHash: hash,
       snapshot,
@@ -310,6 +326,13 @@ export function previewInit({
       ok: true,
       root,
       preset: preset.id,
+      projectNamespace: {
+        company: namespace.company,
+        business: namespace.business,
+        basePackage: namespace.basePackage,
+        groupId: namespace.groupId,
+        packagePath: namespace.packagePath,
+      },
       strategy,
       nonEmpty: snapshot.entries.length > 0,
       targetExists: snapshot.exists,
@@ -343,16 +366,28 @@ function unchanged(input, expected) {
     : failure('INIT_PREVIEW_STALE', '初始化预览已漂移，请重新预览和审批');
 }
 
-function generateStaging({ root, preset, stageRoot, templateDirectory, signal }) {
+function generateStaging({
+  root,
+  preset,
+  company,
+  business,
+  stageRoot,
+  templateDirectory,
+  signal,
+}) {
   if (signal?.aborted)
     return Promise.resolve(failure('INIT_CANCELLED', '初始化已取消；未修改目标目录'));
   return new Promise((resolve) => {
-    const child = spawn(process.execPath, [WORKER_PATH, root, preset], {
-      cwd: stageRoot,
-      env: gitEnvironment({ emptyDirectory: templateDirectory }),
-      windowsHide: true,
-      stdio: ['ignore', 'pipe', 'pipe'],
-    });
+    const child = spawn(
+      process.execPath,
+      [WORKER_PATH, root, preset, JSON.stringify({ company, business })],
+      {
+        cwd: stageRoot,
+        env: gitEnvironment({ emptyDirectory: templateDirectory }),
+        windowsHide: true,
+        stdio: ['ignore', 'pipe', 'pipe'],
+      },
+    );
     let output = '';
     let diagnostic = '';
     let problem;
@@ -546,6 +581,8 @@ export async function executeInit(input = {}, { approvalProvider, signal } = {})
     const generated = await generateStaging({
       root: generatedRoot,
       preset: preview.preset,
+      company: preview.projectNamespace.company,
+      business: preview.projectNamespace.business,
       stageRoot,
       templateDirectory,
       signal,
@@ -566,7 +603,13 @@ export async function executeInit(input = {}, { approvalProvider, signal } = {})
       .sort();
     const expectedFiles = [
       ...new Set([
-        ...Object.keys(javaFullstackFiles({ preset: normalizeJavaPreset(preview.preset).preset })),
+        ...Object.keys(
+          javaFullstackFiles({
+            preset: normalizeJavaPreset(preview.preset).preset,
+            company: preview.projectNamespace.company,
+            business: preview.projectNamespace.business,
+          }),
+        ),
         ...EXTRA_FILES,
       ]),
     ].sort();

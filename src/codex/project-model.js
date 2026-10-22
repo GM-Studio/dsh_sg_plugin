@@ -1,6 +1,8 @@
 const ID = /^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$/;
 const COMMIT = /^[a-f0-9]{40,64}$/i;
 const HASH = /^[a-f0-9]{64}$/i;
+const JAVA_PACKAGE = /^[a-z][a-z0-9_]*(?:\.[a-z][a-z0-9_]*){2,127}$/;
+const LOCALE = /^[a-z]{2,3}(?:-[A-Z]{2})?$/;
 const DELIVERY_STATES = [
   'change-verified',
   'delivery-accepted',
@@ -95,22 +97,23 @@ function optionalRemote(value) {
 }
 
 export function validateProjectProfile(value) {
-  if (
-    !exactKeys(value, [
-      'schemaVersion',
-      'projectId',
-      'mode',
-      'stack',
-      'root',
-      'targetBranch',
-      'remoteUrl',
-      'pushApproved',
-      'commands',
-      'protectedPaths',
-      'createdAt',
-      'updatedAt',
-    ])
-  )
+  const baseKeys = [
+    'schemaVersion',
+    'projectId',
+    'mode',
+    'stack',
+    'root',
+    'targetBranch',
+    'remoteUrl',
+    'pushApproved',
+    'commands',
+    'protectedPaths',
+    'createdAt',
+    'updatedAt',
+  ];
+  const conventionKeys = ['backendPackage', 'frontendDefaultLocale', 'frontendLocales'];
+  const keys = [...baseKeys, ...conventionKeys.filter((key) => Object.hasOwn(value || {}, key))];
+  if (!exactKeys(value, keys))
     return failure('PROJECT_PROFILE_INVALID', 'ProjectProfile fields are invalid');
   if (
     value.schemaVersion !== 2 ||
@@ -141,6 +144,28 @@ export function validateProjectProfile(value) {
     !value.protectedPaths.every(safeRelative)
   )
     return failure('PROJECT_PROFILE_INVALID', 'Protected paths must be project-relative');
+  if (
+    (value.backendPackage !== undefined &&
+      (typeof value.backendPackage !== 'string' || !JAVA_PACKAGE.test(value.backendPackage))) ||
+    (value.frontendDefaultLocale !== undefined &&
+      (typeof value.frontendDefaultLocale !== 'string' ||
+        !LOCALE.test(value.frontendDefaultLocale))) ||
+    (value.frontendLocales !== undefined &&
+      (!Array.isArray(value.frontendLocales) ||
+        value.frontendLocales.length === 0 ||
+        value.frontendLocales.length > 20 ||
+        !value.frontendLocales.every(
+          (locale) => typeof locale === 'string' && LOCALE.test(locale),
+        ) ||
+        new Set(value.frontendLocales).size !== value.frontendLocales.length)) ||
+    (value.frontendDefaultLocale !== undefined &&
+      value.frontendLocales !== undefined &&
+      !value.frontendLocales.includes(value.frontendDefaultLocale))
+  )
+    return failure(
+      'PROJECT_CONVENTIONS_INVALID',
+      'Project package and locale conventions are invalid',
+    );
   return ok();
 }
 

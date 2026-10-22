@@ -74,14 +74,27 @@ test('init preview is read-only; nonempty initialization cannot manufacture appr
   const projectRoot = temp();
   fs.writeFileSync(path.join(projectRoot, 'README.md'), 'user content');
   const registry = createToolRegistry({ projectRoot });
-  const preview = data(await registry.call('sg_init_preview', {}));
+  const preview = data(
+    await registry.call('sg_init_preview', { company: 'acme', business: 'orders' }),
+  );
   assert.equal(preview.ok, true);
   assert.equal(preview.nonEmpty, true);
-  const denied = data(await registry.call('sg_init', { previewHash: preview.previewHash }));
+  const denied = data(
+    await registry.call('sg_init', {
+      previewHash: preview.previewHash,
+      company: 'acme',
+      business: 'orders',
+    }),
+  );
   assert.equal(denied.ok, false);
   assert.match(denied.code, /APPROVAL/);
   const forged = data(
-    await registry.call('sg_init', { previewHash: preview.previewHash, approved: true }),
+    await registry.call('sg_init', {
+      previewHash: preview.previewHash,
+      company: 'acme',
+      business: 'orders',
+      approved: true,
+    }),
   );
   assert.equal(forged.code, 'INVALID_ARGUMENT');
   assert.deepEqual(fs.readdirSync(projectRoot), ['README.md']);

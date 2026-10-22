@@ -5,6 +5,9 @@ Java follows the Alibaba Java Coding Guidelines (Huangshan edition, 2022-02-03) 
 - Controller: HTTP binding, validation and response only. Service: business rules and transactions. Repository: persistence. Entity: internal storage. DTO: input. VO: output. Constructor injection; no entity returned from controllers.
 - GET queries have no body; writes use POST JSON with ids in the body. Upload/import use multipart; successful download/export streams files. Errors always use ApiResponse, including security filters. HTTP status retains its meaning.
 - TaskController, TaskService, TaskRequest, TaskVO and TaskApiTest are the backend examples. frontend/src/api/{request,tasks,auth,files,types}.ts and App.vue demonstrate the frontend and its tests. Frontend uses TypeScript, Vue composition API, ESLint and Prettier, not Java formatting rules.
+- 新后端代码必须放在 ProjectProfile 的 `com.<company>.<business>` 包和对应源码目录中，禁止新增 `com.example.*` 代码。
+- 新前端展示文本必须通过 i18n key 提供；默认 `zh-CN`，并保留 `en-US`。
+- Java、TypeScript 和 Vue 源码使用中文文件说明与必要的中文业务注释。
 - A new resource should provide its own DTO/VO/service/controller/repository, typed API module, UI and meaningful tests. Update docs/api.md and test normal/boundary/error/auth paths. Do not copy Task domain names into unrelated features.
 - Use safe business exceptions; unexpected exceptions are logged internally with a traceId. Never log passwords, session ids, cookies or file content. Never concatenate user values into SQL or disk paths.
 - Shared task data is intentional. ADMIN writes; VIEWER reads/exports/downloads. This is not a tenant/ownership model.

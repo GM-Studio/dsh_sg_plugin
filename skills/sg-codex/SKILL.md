@@ -55,8 +55,9 @@ temporary worktree after success or failure and clears successful job state.
 
 ### New project
 
-1. Run `sg_init_preview`.
-2. Run `sg_init` with the current preview hash.
+1. Run `sg_init_preview` with explicit lowercase `company` and `business`
+   values. The generated Java base package is `com.<company>.<business>`.
+2. Run `sg_init` with the current preview hash and the same values.
 3. Run `sg_verify`.
 4. Run `sg_project_finalize_new` only after verification succeeds.
 5. `sg_project_finalize_new` commits only stable ProjectProfile and Baseline
@@ -64,6 +65,15 @@ temporary worktree after success or failure and clears successful job state.
 
 Generation alone is not verification. Do not start a change until
 `sg_project_status` reports a ready ProjectProfile and Baseline.
+
+For every generated or changed source file:
+
+- Place backend code under the configured package and source directory.
+- Never add new code under `com.example.*`.
+- Follow the frozen style examples in `.specgate/examples/`.
+- Add Chinese comments to Java, TypeScript and Vue source.
+- Use frontend i18n keys for display text. `zh-CN` is the default and `en-US`
+  must remain supported.
 
 ## 2. Confirm the change contract
 
@@ -124,6 +134,8 @@ The Tester calls `sg_quality_run`.
 Requirements:
 
 - every frozen case executes and passes;
+- adopted projects verify through their ProjectProfile commands;
+- unchanged baseline known failures remain explicit and new failures block;
 - command logs and runtime evidence bind to the current commit;
 - skips, timeouts, cancellations and not-run checks remain explicit;
 - flaky retries remain visible;

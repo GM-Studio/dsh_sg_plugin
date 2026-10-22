@@ -105,6 +105,7 @@ export function recordNewProjectBaseline({
       );
     const detected = detectProject({ root });
     if (!detected.ok) return detected;
+    const monorepo = readJson(root, '.specgate/monorepo.json');
     const commit = gitHead(root);
     if (!commit) return failure('GIT_COMMIT_REQUIRED', 'A fixed project commit is required');
     const projectId = projectIdForRoot(root);
@@ -117,6 +118,14 @@ export function recordNewProjectBaseline({
       targetBranch: detected.git.branch || 'main',
       remoteUrl: detected.git.remoteUrl,
       pushApproved: false,
+      ...detected.conventions,
+      ...(monorepo?.backendPackage
+        ? {
+            backendPackage: monorepo.backendPackage,
+            frontendDefaultLocale: monorepo.frontendDefaultLocale || 'zh-CN',
+            frontendLocales: monorepo.frontendLocales || ['zh-CN', 'en-US'],
+          }
+        : {}),
       commands: detected.commands,
       protectedPaths: detected.protectedPaths,
       createdAt,

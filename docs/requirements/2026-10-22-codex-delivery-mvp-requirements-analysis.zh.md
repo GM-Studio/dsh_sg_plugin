@@ -1,8 +1,8 @@
 # Codex 双入口商业交付工作流需求
 
-- 状态：用户已确认，2.1 需求冻结
+- 状态：用户已确认，2.2 需求冻结
 - 日期：2026-10-22
-- 版本：2.1
+- 版本：2.2
 - 适用宿主：Codex
 - 首版技术范围：Java/Vue
 - 产品定位：面向一人团队和独立开发者的交付保证与验收账本
@@ -201,6 +201,9 @@ ProjectProfile 是项目的受控配置，不包含临时执行状态。
   "targetBranch": "main",
   "remoteUrl": null,
   "pushApproved": false,
+  "backendPackage": "com.acme.orders",
+  "frontendDefaultLocale": "zh-CN",
+  "frontendLocales": ["zh-CN", "en-US"],
   "commands": {
     "install": [],
     "build": [],
@@ -1098,6 +1101,38 @@ AC 与测试，并生成新 DeliveryRecord。
 
 项目基线和交付记录 MUST 使用可独立读取的结构化格式，使产品未来能够更换
 执行宿主而不丢失交付历史。
+
+### FR-026 存量项目质量验证
+
+质量门 MUST 对 adopted 项目执行 ProjectProfile 中记录的
+install/build/test/lint/format/runtime 命令，不得依赖仅由初始化模板提供的
+`monorepo.json`、`golden.json` 或 `init-report.json`。
+
+### FR-027 Baseline Delta
+
+质量门 MUST 使用稳定失败签名比较当前结果与 ProjectBaseline：
+
+- 未变化的已知失败保留为 known failure，不转化为 passed Evidence。
+- 新失败、新增超时和新增未执行检查必须阻断。
+- 环境指纹变化必须要求重新建立 Baseline。
+- 时间戳、PID 和临时 worktree 路径不得导致同一失败被误判为新失败。
+
+### FR-028 项目包名与生成风格
+
+新项目 MUST 使用小写 `company` 和 `business` 生成
+`com.<company>.<business>` 包。Java 源文件路径、Maven groupId、artifactId
+和前端包名 MUST 使用同一项目身份。
+
+- 禁止在新生成项目中产生 `com.example.*` 源码路径。
+- Change 阶段新增 Java 文件 MUST 位于 ProjectProfile 的 `backendPackage`。
+- Agent 上下文 MUST 包含冻结模板风格引用。
+
+### FR-029 中文注释与前端国际化
+
+- 生成 Java、TypeScript 和 Vue 源码 MUST 包含中文文件说明。
+- 前端 MUST 使用 i18n key，不得硬编码用户可见展示文本。
+- 默认 locale MUST 为 `zh-CN`。
+- MUST 提供 `en-US` 和运行时语言切换。
 
 ## 15. 非功能需求
 

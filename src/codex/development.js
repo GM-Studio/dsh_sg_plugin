@@ -4,6 +4,7 @@ import { spawn, execFileSync } from 'node:child_process';
 import { randomUUID } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { canonicalJson, hashValue } from './events.js';
+import { readProjectConventions } from './project-conventions.js';
 
 const SOURCE_ROOT = path.resolve(fileURLToPath(new URL('../..', import.meta.url)));
 const ROLES = Object.freeze(['frontend', 'backend', 'integration', 'test', 'review', 'format']);
@@ -696,6 +697,7 @@ export function createDevelopmentService({
         graph: challenge.graph,
         contract: challenge.contract,
         model: challenge.model,
+        conventions: challenge.conventions,
         tests: {
           hash: development.testsHash,
           cases: challenge.tests.cases,
@@ -737,6 +739,11 @@ export function createDevelopmentService({
     if (!entries.length)
       return failure('NO_CHANGES', 'The role branch has no change against the freeze commit');
     const violations = [];
+    const conventions = readProjectConventions({ projectRoot: root });
+    const backendSourcePrefix =
+      conventions.backendPackage && role === 'backend'
+        ? `backend/src/main/java/${conventions.backendPackage.replace(/\./g, '/')}/`
+        : null;
     for (const entry of entries) {
       if (isTestPath(entry.path)) {
         violations.push({ path: entry.path, reason: `${role} cannot change test assets` });
@@ -755,6 +762,22 @@ export function createDevelopmentService({
         violations.push({
           path: entry.path,
           reason: bounded(allowed?.reason || 'Change is outside the role boundary', 1024),
+        });
+      if (
+        backendSourcePrefix &&
+        entry.status === 'A' &&
+        /\.java$/i.test(entry.path) &&
+        entry.path.startsWith('backend/src/main/java/') &&
+        !entry.path.startsWith(backendSourcePrefix)
+      )
+        violations.push({
+          path: entry.path,
+          reason: `New Java source must use ${conventions.backendPackage}`,
+        });
+      if (entry.status === 'A' && entry.path.startsWith('backend/src/main/java/com/example/'))
+        violations.push({
+          path: entry.path,
+          reason: 'New Java source cannot be added under com.example.*',
         });
     }
     if (violations.length)
@@ -939,6 +962,7 @@ export function createDevelopmentService({
         contract: details.contract,
         model: details.model,
         tests: details.tests,
+        conventions: readProjectConventions({ projectRoot: root }),
       };
       let pending = DEVELOPMENT_ROLES.filter(
         (role) => development.roles?.[role]?.status !== 'skipped',

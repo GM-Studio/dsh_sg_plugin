@@ -1,0 +1,430 @@
+{
+  "schemaVersion": 2,
+  "runId": "2026-10-22T02-41-33-056Z-79bd5996",
+  "preset": "jdk8-boot2.7",
+  "label": "Java 8 + Spring Boot 2.7.18 + Maven",
+  "status": "smoke-passed",
+  "ok": true,
+  "startedAt": "2026-10-22T02:41:33.057Z",
+  "stages": [
+    {
+      "name": "backend-verify",
+      "command": "C:\\Users\\Administrator\\.m2\\wrapper\\dists\\apache-maven-3.9.11\\03d7e36a140982eea48e22c1dcac01d8862b2550b2939e09a0809bbc5182a5bc\\bin\\mvn.cmd",
+      "args": [
+        "-B",
+        "-ntp",
+        "clean",
+        "verify"
+      ],
+      "cwd": "C:\\Users\\Administrator\\AppData\\Local\\Temp\\sg-codex-acceptance-D1wEFD\\jdk8-boot2.7\\backend",
+      "startedAt": "2026-10-22T02:41:34.720Z",
+      "finishedAt": "2026-10-22T02:41:49.622Z",
+      "durationMs": 14902,
+      "status": 0,
+      "reason": null,
+      "error": null,
+      "log": ".specgate/verify-runs/2026-10-22T02-41-33-056Z-79bd5996/backend-verify.log",
+      "tail": [
+        "[INFO] --- spotless:2.30.0:check (default) @ tasks-api ---",
+        "[INFO] ",
+        "[INFO] --- checkstyle:3.3.1:check (default) @ tasks-api ---",
+        "[INFO] �?始检查�?��??",
+        "�?查完成�??",
+        "[INFO] You have 0 Checkstyle violations.",
+        "[INFO] ------------------------------------------------------------------------",
+        "[INFO] BUILD SUCCESS",
+        "[INFO] ------------------------------------------------------------------------",
+        "[INFO] Total time:  14.122 s",
+        "[INFO] Finished at: 2026-10-22T10:41:49+08:00",
+        "[INFO] ------------------------------------------------------------------------"
+      ],
+      "tests": {
+        "total": 12,
+        "passed": 12,
+        "skipped": 0
+      }
+    },
+    {
+      "name": "frontend-install",
+      "command": "D:\\Program Files\\nodejs\\npm.cmd",
+      "args": [
+        "ci",
+        "--no-audit",
+        "--no-fund"
+      ],
+      "cwd": "C:\\Users\\Administrator\\AppData\\Local\\Temp\\sg-codex-acceptance-D1wEFD\\jdk8-boot2.7\\frontend",
+      "startedAt": "2026-10-22T02:41:49.646Z",
+      "finishedAt": "2026-10-22T02:42:01.575Z",
+      "durationMs": 11929,
+      "status": 0,
+      "reason": null,
+      "error": null,
+      "log": ".specgate/verify-runs/2026-10-22T02-41-33-056Z-79bd5996/frontend-install.log",
+      "tail": [
+        "npm warn deprecated whatwg-encoding@3.1.1: Use @exodus/bytes instead for a more spec-conformant and faster implementation",
+        "added 306 packages in 12s"
+      ]
+    },
+    {
+      "name": "frontend-build",
+      "command": "D:\\Program Files\\nodejs\\npm.cmd",
+      "args": [
+        "run",
+        "build"
+      ],
+      "cwd": "C:\\Users\\Administrator\\AppData\\Local\\Temp\\sg-codex-acceptance-D1wEFD\\jdk8-boot2.7\\frontend",
+      "startedAt": "2026-10-22T02:42:01.588Z",
+      "finishedAt": "2026-10-22T02:42:06.148Z",
+      "durationMs": 4560,
+      "status": 0,
+      "reason": null,
+      "error": null,
+      "log": ".specgate/verify-runs/2026-10-22T02-41-33-056Z-79bd5996/frontend-build.log",
+      "tail": [
+        "> tasks-web@1.0.0 build",
+        "> vue-tsc --noEmit && vite build",
+        "vite v7.3.1 building client environment for production...",
+        "transforming...",
+        "✓ 1443 modules transformed.",
+        "rendering chunks...",
+        "computing gzip size...",
+        "dist/index.html                   0.39 kB │ gzip:   0.26 kB",
+        "dist/assets/index-BBrXui40.css  345.66 kB │ gzip:  47.84 kB",
+        "dist/assets/index-Bf4J_hTA.js   333.88 kB │ gzip: 115.61 kB",
+        "✓ built in 2.13s"
+      ]
+    },
+    {
+      "name": "frontend-test",
+      "command": "D:\\Program Files\\nodejs\\npm.cmd",
+      "args": [
+        "run",
+        "test",
+        "--",
+        "--reporter=json",
+        "--outputFile=C:\\Users\\Administrator\\AppData\\Local\\Temp\\sg-codex-acceptance-D1wEFD\\jdk8-boot2.7\\.specgate\\verify-runs\\2026-10-22T02-41-33-056Z-79bd5996\\frontend-tests.json"
+      ],
+      "cwd": "C:\\Users\\Administrator\\AppData\\Local\\Temp\\sg-codex-acceptance-D1wEFD\\jdk8-boot2.7\\frontend",
+      "startedAt": "2026-10-22T02:42:06.152Z",
+      "finishedAt": "2026-10-22T02:42:08.884Z",
+      "durationMs": 2732,
+      "status": 0,
+      "reason": null,
+      "error": null,
+      "log": ".specgate/verify-runs/2026-10-22T02-41-33-056Z-79bd5996/frontend-test.log",
+      "tail": [
+        " src/api          |     100 |      100 |     100 |     100 |                    ",
+        "  auth.ts         |     100 |      100 |     100 |     100 |                    ",
+        "  files.ts        |     100 |      100 |     100 |     100 |                    ",
+        "  request.ts      |     100 |      100 |     100 |     100 |                    ",
+        "  tasks.ts        |     100 |      100 |     100 |     100 |                    ",
+        "  types.ts        |       0 |        0 |       0 |       0 |                    ",
+        " src/i18n         |     100 |       50 |     100 |     100 |                    ",
+        "  index.ts        |     100 |       50 |     100 |     100 | 11-30              ",
+        " src/i18n/locales |       0 |        0 |       0 |       0 |                    ",
+        "  en-US.ts        |       0 |        0 |       0 |       0 |                    ",
+        "  zh-CN.ts        |       0 |        0 |       0 |       0 |                    ",
+        "------------------|---------|----------|---------|---------|--------------------"
+      ],
+      "tests": {
+        "total": 12,
+        "passed": 12,
+        "failed": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "name": "frontend-lint",
+      "command": "D:\\Program Files\\nodejs\\npm.cmd",
+      "args": [
+        "run",
+        "lint"
+      ],
+      "cwd": "C:\\Users\\Administrator\\AppData\\Local\\Temp\\sg-codex-acceptance-D1wEFD\\jdk8-boot2.7\\frontend",
+      "startedAt": "2026-10-22T02:42:08.889Z",
+      "finishedAt": "2026-10-22T02:42:10.779Z",
+      "durationMs": 1890,
+      "status": 0,
+      "reason": null,
+      "error": null,
+      "log": ".specgate/verify-runs/2026-10-22T02-41-33-056Z-79bd5996/frontend-lint.log",
+      "tail": [
+        "> tasks-web@1.0.0 lint",
+        "> eslint . --max-warnings=0"
+      ]
+    },
+    {
+      "name": "frontend-format",
+      "command": "D:\\Program Files\\nodejs\\npm.cmd",
+      "args": [
+        "run",
+        "format:check"
+      ],
+      "cwd": "C:\\Users\\Administrator\\AppData\\Local\\Temp\\sg-codex-acceptance-D1wEFD\\jdk8-boot2.7\\frontend",
+      "startedAt": "2026-10-22T02:42:10.790Z",
+      "finishedAt": "2026-10-22T02:42:11.386Z",
+      "durationMs": 596,
+      "status": 0,
+      "reason": null,
+      "error": null,
+      "log": ".specgate/verify-runs/2026-10-22T02-41-33-056Z-79bd5996/frontend-format.log",
+      "tail": [
+        "> tasks-web@1.0.0 format:check",
+        "> prettier --check .",
+        "Checking formatting...",
+        "All matched files use Prettier code style!"
+      ]
+    },
+    {
+      "name": "coverage",
+      "status": 0,
+      "startedAt": "2026-10-22T02:42:11.392Z",
+      "finishedAt": "2026-10-22T02:42:11.395Z",
+      "durationMs": 3,
+      "command": "internal:coverage-reconciliation",
+      "log": ".specgate/verify-runs/2026-10-22T02-41-33-056Z-79bd5996/coverage.log",
+      "coverage": {
+        "ok": true,
+        "backend": {
+          "ok": true,
+          "lines": {
+            "covered": 498,
+            "missed": 13,
+            "rate": 0.974559686888454
+          },
+          "branches": {
+            "covered": 180,
+            "missed": 32,
+            "rate": 0.8490566037735849
+          }
+        },
+        "frontend": {
+          "lines": {
+            "covered": 250,
+            "missed": 7,
+            "rate": 0.9727626459143969
+          },
+          "branches": {
+            "covered": 140,
+            "missed": 8,
+            "rate": 0.9459459459459459
+          }
+        }
+      },
+      "tail": [
+        "Backend/frontend coverage thresholds passed"
+      ]
+    },
+    {
+      "name": "runtime",
+      "status": 0,
+      "durationMs": 10050,
+      "log": ".specgate/verify-runs/2026-10-22T02-41-33-056Z-79bd5996/runtime.log",
+      "tail": [
+        "2026-10-22 10:42:19.226  INFO 25376 --- [           main] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'",
+        "2026-10-22 10:42:20.037  INFO 25376 --- [           main] o.s.s.web.DefaultSecurityFilterChain     : Will secure any request with [org.springframework.security.web.session.DisableEncodeUrlFilter@53f6fd09, org.springframework.security.web.context.request.async.WebAsyncManagerIntegrationFilter@6bffbc6d, org.springframework.security.web.context.SecurityContextPersistenceFilter@42b02722, org.springframework.security.web.header.HeaderWriterFilter@2bd08376, org.springframework.security.web.csrf.CsrfFilter@49ff7d8c, org.springframework.security.web.savedrequest.RequestCacheAwareFilter@49964d75, org.springframework.security.web.servletapi.SecurityContextHolderAwareRequestFilter@5ce8d869, org.springframework.security.web.authentication.AnonymousAuthenticationFilter@1b84f475, org.springframework.security.web.session.SessionManagementFilter@64a40280, org.springframework.security.web.access.ExceptionTranslationFilter@ab7395e, org.springframework.security.web.access.intercept.AuthorizationFilter@24ba9639]",
+        "2026-10-22 10:42:20.624  INFO 25376 --- [           main] o.s.b.a.e.web.EndpointLinksResolver      : Exposing 2 endpoint(s) beneath base path '/actuator'",
+        "2026-10-22 10:42:20.683  INFO 25376 --- [           main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat started on port(s): 5690 (http) with context path ''",
+        "2026-10-22 10:42:20.699  INFO 25376 --- [           main] com.specgate.tasks.TaskApplication       : Started TaskApplication in 3.812 seconds (JVM running for 4.067)",
+        "2026-10-22 10:42:21.013  INFO 25376 --- [0.1-5690-exec-1] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring DispatcherServlet 'dispatcherServlet'",
+        "2026-10-22 10:42:21.013  INFO 25376 --- [0.1-5690-exec-1] o.s.web.servlet.DispatcherServlet        : Initializing Servlet 'dispatcherServlet'",
+        "2026-10-22 10:42:21.013  INFO 25376 --- [0.1-5690-exec-1] o.s.web.servlet.DispatcherServlet        : Completed initialization in 0 ms"
+      ],
+      "browser": null
+    }
+  ],
+  "expectedStages": [
+    "backend-verify",
+    "frontend-install",
+    "frontend-build",
+    "frontend-test",
+    "frontend-lint",
+    "frontend-format",
+    "coverage",
+    "runtime"
+  ],
+  "checkedAt": "2026-10-22T02:42:22.109Z",
+  "reconciliation": {
+    "expected": 8,
+    "executed": 8,
+    "passed": 8,
+    "failed": 0,
+    "notRun": 0
+  },
+  "checks": [
+    {
+      "name": "backend-verify",
+      "status": "passed",
+      "log": ".specgate/verify-runs/2026-10-22T02-41-33-056Z-79bd5996/backend-verify.log",
+      "exitCode": 0
+    },
+    {
+      "name": "frontend-install",
+      "status": "passed",
+      "log": ".specgate/verify-runs/2026-10-22T02-41-33-056Z-79bd5996/frontend-install.log",
+      "exitCode": 0
+    },
+    {
+      "name": "frontend-build",
+      "status": "passed",
+      "log": ".specgate/verify-runs/2026-10-22T02-41-33-056Z-79bd5996/frontend-build.log",
+      "exitCode": 0
+    },
+    {
+      "name": "frontend-test",
+      "status": "passed",
+      "log": ".specgate/verify-runs/2026-10-22T02-41-33-056Z-79bd5996/frontend-test.log",
+      "exitCode": 0
+    },
+    {
+      "name": "frontend-lint",
+      "status": "passed",
+      "log": ".specgate/verify-runs/2026-10-22T02-41-33-056Z-79bd5996/frontend-lint.log",
+      "exitCode": 0
+    },
+    {
+      "name": "frontend-format",
+      "status": "passed",
+      "log": ".specgate/verify-runs/2026-10-22T02-41-33-056Z-79bd5996/frontend-format.log",
+      "exitCode": 0
+    },
+    {
+      "name": "coverage",
+      "status": "passed",
+      "log": ".specgate/verify-runs/2026-10-22T02-41-33-056Z-79bd5996/coverage.log",
+      "exitCode": 0
+    },
+    {
+      "name": "runtime",
+      "status": "passed",
+      "log": ".specgate/verify-runs/2026-10-22T02-41-33-056Z-79bd5996/runtime.log",
+      "exitCode": 0
+    }
+  ],
+  "environment": {
+    "platform": "win32",
+    "arch": "x64",
+    "java": [
+      {
+        "home": "D:\\Program Files\\JetBrains\\IntelliJ IDEA 2025.3.1\\jbr",
+        "version": "21.0.9",
+        "major": 21,
+        "source": "dir"
+      },
+      {
+        "home": "D:\\Program Files\\JetBrains\\PyCharm 2025.3.1\\jbr",
+        "version": "21.0.9",
+        "major": 21,
+        "source": "dir"
+      },
+      {
+        "home": "D:\\Program Files\\JetBrains\\WebStorm 2025.3.1.1\\jbr",
+        "version": "21.0.9",
+        "major": 21,
+        "source": "dir"
+      },
+      {
+        "home": "C:\\Users\\Administrator\\.jdks\\jbr-21.0.11",
+        "version": "21.0.11",
+        "major": 21,
+        "source": "dir"
+      },
+      {
+        "home": "D:\\Program Files\\Java\\Jdk17",
+        "version": "17.0.18",
+        "major": 17,
+        "source": "dir"
+      },
+      {
+        "home": "D:\\Program Files\\Java\\Jdk8",
+        "version": "1.8.0_472",
+        "major": 8,
+        "source": "dir"
+      }
+    ],
+    "maven": {
+      "path": "C:\\Users\\Administrator\\.m2\\wrapper\\dists\\apache-maven-3.9.11\\03d7e36a140982eea48e22c1dcac01d8862b2550b2939e09a0809bbc5182a5bc\\bin\\mvn.cmd",
+      "version": "3.9.11"
+    },
+    "node": {
+      "path": "D:\\Program Files\\nodejs\\node.exe",
+      "version": "24.14.0"
+    },
+    "npm": "D:\\Program Files\\nodejs\\npm.cmd",
+    "provisioned": [],
+    "provisionError": null,
+    "scannedAt": "2026-10-22T02:41:34.690Z",
+    "archives": []
+  },
+  "codeSourceHash": "c008d02abe1712d5cbfd0937573a5f1f2961a4672590ffda5d01be532953c3cb",
+  "plan": [
+    {
+      "name": "backend-verify",
+      "command": "C:\\Users\\Administrator\\.m2\\wrapper\\dists\\apache-maven-3.9.11\\03d7e36a140982eea48e22c1dcac01d8862b2550b2939e09a0809bbc5182a5bc\\bin\\mvn.cmd",
+      "args": [
+        "-B",
+        "-ntp",
+        "clean",
+        "verify"
+      ],
+      "cwd": "C:\\Users\\Administrator\\AppData\\Local\\Temp\\sg-codex-acceptance-D1wEFD\\jdk8-boot2.7\\backend"
+    },
+    {
+      "name": "frontend-install",
+      "command": "D:\\Program Files\\nodejs\\npm.cmd",
+      "args": [
+        "ci",
+        "--no-audit",
+        "--no-fund"
+      ],
+      "cwd": "C:\\Users\\Administrator\\AppData\\Local\\Temp\\sg-codex-acceptance-D1wEFD\\jdk8-boot2.7\\frontend"
+    },
+    {
+      "name": "frontend-build",
+      "command": "D:\\Program Files\\nodejs\\npm.cmd",
+      "args": [
+        "run",
+        "build"
+      ],
+      "cwd": "C:\\Users\\Administrator\\AppData\\Local\\Temp\\sg-codex-acceptance-D1wEFD\\jdk8-boot2.7\\frontend"
+    },
+    {
+      "name": "frontend-test",
+      "command": "D:\\Program Files\\nodejs\\npm.cmd",
+      "args": [
+        "run",
+        "test",
+        "--",
+        "--reporter=json",
+        "--outputFile=C:\\Users\\Administrator\\AppData\\Local\\Temp\\sg-codex-acceptance-D1wEFD\\jdk8-boot2.7\\.specgate\\verify-runs\\2026-10-22T02-41-33-056Z-79bd5996\\frontend-tests.json"
+      ],
+      "cwd": "C:\\Users\\Administrator\\AppData\\Local\\Temp\\sg-codex-acceptance-D1wEFD\\jdk8-boot2.7\\frontend"
+    },
+    {
+      "name": "frontend-lint",
+      "command": "D:\\Program Files\\nodejs\\npm.cmd",
+      "args": [
+        "run",
+        "lint"
+      ],
+      "cwd": "C:\\Users\\Administrator\\AppData\\Local\\Temp\\sg-codex-acceptance-D1wEFD\\jdk8-boot2.7\\frontend"
+    },
+    {
+      "name": "frontend-format",
+      "command": "D:\\Program Files\\nodejs\\npm.cmd",
+      "args": [
+        "run",
+        "format:check"
+      ],
+      "cwd": "C:\\Users\\Administrator\\AppData\\Local\\Temp\\sg-codex-acceptance-D1wEFD\\jdk8-boot2.7\\frontend"
+    }
+  ],
+  "toolchain": {
+    "javaHome": "D:\\Program Files\\Java\\Jdk8",
+    "maven": "C:\\Users\\Administrator\\.m2\\wrapper\\dists\\apache-maven-3.9.11\\03d7e36a140982eea48e22c1dcac01d8862b2550b2939e09a0809bbc5182a5bc\\bin\\mvn.cmd"
+  },
+  "sourceHash": "5317dc63a5a4a1826cf5be611aeaf42e231300919129dc65f4ae625024dd35cf",
+  "failedStage": null,
+  "phase": "SMOKE_PASSED",
+  "finishedAt": "2026-10-22T02:42:22.109Z"
+}

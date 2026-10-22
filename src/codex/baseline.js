@@ -16,20 +16,46 @@ const COMMAND_ORDER = new Map([
 ]);
 const activeRuns = new Map();
 
-function commandsFor(profile) {
+export function commandsFor(profile) {
   return Object.entries(profile.commands)
     .sort(([left], [right]) => COMMAND_ORDER.get(left) - COMMAND_ORDER.get(right))
     .flatMap(([kind, commands]) => commands.map((command) => ({ ...command, kind })));
 }
 
-function fingerprint(preview) {
+export function projectEnvironmentFingerprint(profile) {
   return hashValue({
     platform: process.platform,
     arch: process.arch,
     node: process.version,
-    targetBranch: preview.profile.targetBranch,
-    commands: preview.profile.commands,
+    targetBranch: profile.targetBranch,
+    commands: profile.commands,
   });
+}
+
+function fingerprint(preview) {
+  return projectEnvironmentFingerprint(preview.profile);
+}
+
+export function commandFailureSignature(command, result) {
+  const detail = stableFailureDetail(result);
+  return `${command.id}:${result.status}:exit=${result.exitCode ?? 'none'}:${hashValue(detail).slice(0, 12)}`;
+}
+
+export function legacyCommandFailureSignature(command, result) {
+  const detail = String(result.stderr || result.stdout || result.status).trim();
+  return `${command.id}:${result.status}:exit=${result.exitCode ?? 'none'}:${hashValue(detail).slice(0, 12)}`;
+}
+
+export function stableFailureDetail(result) {
+  return String(result.stderr || result.stdout || result.status)
+    .replace(/\r\n/g, '\n')
+    .replace(/\b\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?Z\b/g, '<timestamp>')
+    .replace(/\b(?:PID|pid)\s*[:=]?\s*\d+/g, 'PID=<pid>')
+    .replace(/\b\d+\s+---\s+/g, '<pid> --- ')
+    .replace(/[A-Za-z]:\\[^\r\n\t ]+/g, '<path>')
+    .replace(/\/(?:mnt|home|tmp|Users|var)\/[^\r\n\t ]+/g, '<path>')
+    .replace(/\b\d+(?:\.\d+)?\s*(?:ms|s|sec|seconds)\b/g, '<duration>')
+    .trim();
 }
 
 function stopProcess(child) {
@@ -226,10 +252,12 @@ export async function runAdoptionBaseline({
   const unverifiedAreas = [];
   results.forEach(({ command, result }, index) => {
     if (result.status === 'failed' || result.status === 'timeout') {
-      const detail = String(result.stderr || result.stdout || result.status).trim();
       knownFailures.push({
-        id: `known-${hashValue({ commandId: command.id, detail }).slice(0, 16)}`,
-        signature: `${command.id}:${result.status}:exit=${result.exitCode ?? 'none'}:${hashValue(detail).slice(0, 12)}`,
+        id: `known-${hashValue({
+          commandId: command.id,
+          signature: commandFailureSignature(command, result),
+        }).slice(0, 16)}`,
+        signature: commandFailureSignature(command, result),
         commandId: command.id,
         scope: command.kind,
         evidence: evidence[index],

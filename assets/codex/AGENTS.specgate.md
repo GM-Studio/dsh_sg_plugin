@@ -6,7 +6,8 @@ Codex MUST establish a ProjectProfile and ProjectBaseline before a change:
 
 1. Existing project: `sg_adopt_preview`, explicit dirty-file approval when
    needed, then `sg_adopt_apply`.
-2. New project: `sg_init_preview`, `sg_init`, `sg_verify`, then
+2. New project: `sg_init_preview` with explicit lowercase `company` and
+   `business`, `sg_init`, `sg_verify`, then
    `sg_project_finalize_new`.
 3. Do not require `sg_init` for an existing project.
 
@@ -23,3 +24,13 @@ Codex MUST use real subagents for requested role work:
 Never substitute main-thread edits for a requested subagent result. Never claim
 an unexecuted command, approval or delivery passed. Push only with explicit
 `push: true` after H3.
+
+Use the ProjectProfile conventions as hard requirements:
+
+- New backend files belong under the configured
+  `com.<company>.<business>` package and matching source directory.
+- Do not put new code under `com.example.*`.
+- Follow `.specgate/template-style.json` and its frozen examples.
+- Add Chinese comments to generated Java, TypeScript and Vue source.
+- Frontend display text MUST use i18n keys. `zh-CN` is the default locale and
+  `en-US` must remain available.

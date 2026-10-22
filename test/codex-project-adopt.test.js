@@ -34,6 +34,12 @@ function project(t, { commit = true } = {}) {
   fs.mkdirSync(path.join(root, 'frontend', 'src'), { recursive: true });
   fs.writeFileSync(path.join(root, 'backend', 'pom.xml'), '<project/>\n');
   fs.writeFileSync(path.join(root, 'backend', 'legacy.java'), 'class Legacy {}\n');
+  const packageRoot = path.join(root, 'backend', 'src', 'main', 'java', 'com', 'acme', 'orders');
+  fs.mkdirSync(packageRoot, { recursive: true });
+  fs.writeFileSync(
+    path.join(packageRoot, 'OrdersApplication.java'),
+    'package com.acme.orders;\nclass OrdersApplication {}\n',
+  );
   fs.writeFileSync(
     path.join(root, 'frontend', 'package.json'),
     JSON.stringify({ scripts: { build: 'vite build', test: 'vitest run' } }),
@@ -71,6 +77,7 @@ test('adoption preview is read-only for clean and dirty Java/Vue projects', (t) 
     assert.equal(result.profile.mode, 'adopted');
     assert.equal(result.needsBaselineCommit, dirty);
     assert.equal(result.profile.pushApproved, false);
+    assert.equal(result.profile.backendPackage, 'com.acme.orders');
     assert.equal(fs.existsSync(path.join(root, '.specgate/codex')), false);
     assert.equal(git(root, ['status', '--porcelain=v1', '--untracked-files=all']), before);
     if (dirty) {

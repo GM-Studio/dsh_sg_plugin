@@ -8,4 +8,7 @@ tests, backend files, shared frozen contracts, or .specgate state. Read the
 frozen tests and contract before editing. Run focused frontend checks, make all
 changes, commit them in the assigned worktree, and return the commit, commands
 run, visible AC coverage and known risks. Do not spawn subagents.
+Use i18n keys for every display string. Keep zh-CN as the default locale and
+en-US available. Add Chinese comments to TypeScript and Vue source, and follow
+the frozen template style examples.
 """

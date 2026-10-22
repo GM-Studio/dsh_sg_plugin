@@ -43,6 +43,14 @@ const preset = {
   enum: JAVA_PRESETS.map((entry) => entry.id),
   description: 'Java/Vue preset; defaults to jdk8-boot2.7 (legacy).',
 };
+const javaPackageSegment = {
+  type: 'string',
+  minLength: 2,
+  maxLength: 63,
+  pattern: '^[a-z][a-z0-9]{1,62}$',
+  description:
+    'Lowercase company or business package segment used to build com.<company>.<business>.',
+};
 const reason = {
   type: 'string',
   maxLength: 2048,
@@ -115,9 +123,9 @@ const WORKFLOW_TOOLS = [
   ),
   definition(
     'sg_init_preview',
-    'Scan a Java/Vue initialization target without writing. Return conflicts, retained files, Git status and the preview hash.',
-    { path: target, preset },
-    [],
+    'Scan a Java/Vue initialization target without writing. Return conflicts, retained files, namespace, Git status and the preview hash.',
+    { path: target, preset, company: javaPackageSegment, business: javaPackageSegment },
+    ['company', 'business'],
     true,
   ),
   definition(
@@ -126,13 +134,15 @@ const WORKFLOW_TOOLS = [
     {
       path: target,
       preset,
+      company: javaPackageSegment,
+      business: javaPackageSegment,
       previewHash: {
         type: 'string',
         pattern: '^[a-f0-9]{64}$',
         description: 'Unchanged previewHash returned by sg_init_preview.',
       },
     },
-    ['previewHash'],
+    ['previewHash', 'company', 'business'],
   ),
   {
     ...definition(
@@ -526,7 +536,8 @@ export function createToolRegistry({
                 typeof effectiveQualityTestRunner === 'function' ? 'available' : 'unavailable',
               testRunner:
                 typeof effectiveQualityTestRunner === 'function' ? 'available' : 'unavailable',
-              verifier: typeof qualityVerifier === 'function' ? 'custom' : 'verifyProject',
+              verifier:
+                typeof qualityVerifier === 'function' ? 'custom' : 'project-profile-or-template',
             };
             data.formatting = {
               status: typeof effectiveFormatter === 'function' ? 'available' : 'unavailable',
@@ -603,7 +614,12 @@ export function createToolRegistry({
           return result(await callReviewTool({ review: review() }, name, args, { signal }));
         if (RELEASE_TOOLS.some((entry) => entry.name === name))
           return result(await callReleaseTool(release(), name, args));
-        const input = { root: path.resolve(root, args.path || '.'), preset: args.preset };
+        const input = {
+          root: path.resolve(root, args.path || '.'),
+          preset: args.preset,
+          company: args.company,
+          business: args.business,
+        };
         if (name === 'sg_verify') {
           const { verifyProject } = await import('./verify.js');
           return result(

@@ -3,6 +3,7 @@ import path from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { canonicalJson, hashValue, verifyEventChain } from './events.js';
+import { readProjectConventions } from './project-conventions.js';
 
 const SOURCE_ROOT = path.resolve(fileURLToPath(new URL('../..', import.meta.url)));
 const object = (value) => value !== null && typeof value === 'object' && !Array.isArray(value);
@@ -846,6 +847,7 @@ export function createPlanService({ projectRoot, store, roleProvider } = {}) {
             plan: checked.plan,
             contract: verifyRef(checked.ref.contract),
             model: verifyRef(checked.ref.model),
+            conventions: readProjectConventions({ projectRoot: root }),
           });
         } catch {
           return failure('TEST_ROLE_UNAVAILABLE', 'The Test role provider did not produce assets');
@@ -894,6 +896,7 @@ export function createPlanService({ projectRoot, store, roleProvider } = {}) {
                 model: verifyRef(checked.ref.model),
                 manifest: 'specgate-tests.json',
                 testRoot: 'specgate-tests/',
+                conventions: readProjectConventions({ projectRoot: root }),
               },
             }
           : saved;

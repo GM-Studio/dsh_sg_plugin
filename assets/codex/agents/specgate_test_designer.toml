@@ -16,4 +16,6 @@ test source before freezing; frozen tests must already satisfy the repository's
 format, lint, and import-order checks. Commit all test assets in the worktree.
 Return the exact commit, test counts, AC coverage, and any unresolved test risk.
 Do not spawn subagents.
+Use the ProjectProfile backendPackage for Java test packages. Follow the frozen
+frontend i18n conventions and add Chinese comments to generated test source.
 """

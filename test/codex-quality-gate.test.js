@@ -9,6 +9,8 @@ import { createDevelopmentService } from '../src/codex/development.js';
 import { canonicalJson, hashValue } from '../src/codex/events.js';
 import { createPlanService } from '../src/codex/plan.js';
 import { computeChangedCoverage, createQualityService } from '../src/codex/quality.js';
+import { projectEnvironmentFingerprint } from '../src/codex/baseline.js';
+import { persistProjectReadiness } from '../src/codex/project-state.js';
 import { createStateStore } from '../src/codex/state-machine.js';
 import { VERIFY_STAGES } from '../src/codex/core/java/verify-evidence.js';
 
@@ -397,6 +399,111 @@ test('quality passes only with frozen green cases, real logs, both coverage side
   const inspected = await service.inspect();
   assert.equal(inspected.ok, true, JSON.stringify(inspected));
   assert.equal(inspected.quality.status, 'passed');
+});
+
+test('adopted quality verification uses ProjectProfile commands and Baseline Delta', async () => {
+  const context = await fixture();
+  const now = '2026-10-22T10:00:00.000Z';
+  const profile = {
+    schemaVersion: 2,
+    projectId: 'project-adopted-quality',
+    mode: 'adopted',
+    stack: 'java-vue',
+    root: context.root,
+    targetBranch: git(context.root, ['rev-parse', '--abbrev-ref', 'HEAD']),
+    remoteUrl: null,
+    pushApproved: false,
+    backendPackage: 'com.acme.orders',
+    frontendDefaultLocale: 'zh-CN',
+    frontendLocales: ['zh-CN', 'en-US'],
+    commands: {
+      install: [],
+      build: [{ id: 'build', cwd: '.', argv: [process.execPath, '-e', 'process.exit(0)'] }],
+      test: [],
+      lint: [],
+      format: [],
+      runtime: [],
+    },
+    protectedPaths: [],
+    createdAt: now,
+    updatedAt: now,
+  };
+  const baseline = {
+    schemaVersion: 2,
+    baselineId: 'baseline-adopted-quality',
+    projectId: profile.projectId,
+    commit: git(context.root, ['rev-parse', 'HEAD']),
+    status: 'green',
+    knownFailures: [],
+    unverifiedAreas: [],
+    commands: ['build'],
+    evidence: ['baseline-quality'],
+    environmentFingerprint: projectEnvironmentFingerprint(profile),
+    createdAt: now,
+  };
+  const persisted = persistProjectReadiness({
+    root: context.root,
+    profile,
+    baseline,
+  });
+  assert.equal(persisted.ok, true, JSON.stringify(persisted));
+  let selectedMode;
+  const fillCoverage = coverageVerifier();
+  const service = createQualityService({
+    projectRoot: context.root,
+    store: context.store,
+    planService: context.planService,
+    testRunner: runnerProvider(),
+    adoptedVerifier: async ({ profile: selected, worktree, commit, baseline: accepted }) => {
+      selectedMode = selected.mode;
+      fs.mkdirSync(path.join(worktree, '.specgate'), { recursive: true });
+      for (const relative of ['state.json', 'init-report.json']) {
+        fs.copyFileSync(
+          path.join(context.root, '.specgate', relative),
+          path.join(worktree, '.specgate', relative),
+        );
+      }
+      await fillCoverage({ root: worktree });
+      return {
+        ok: true,
+        report: {
+          schemaVersion: 1,
+          kind: 'adopted-project-verification',
+          projectId: selected.projectId,
+          baselineId: accepted.baselineId,
+          commit,
+          status: 'passed-with-known-failures',
+          commands: [
+            {
+              id: 'build',
+              kind: 'build',
+              status: 'passed',
+              exitCode: 0,
+              durationMs: 1,
+              evidence: 'adopted-build',
+            },
+          ],
+          knownFailures: [
+            {
+              commandId: 'build',
+              signature: 'legacy-known',
+              status: 'failed',
+              exitCode: 1,
+              evidence: 'baseline-known',
+            },
+          ],
+          newFailures: [],
+          environmentFingerprint: projectEnvironmentFingerprint(selected),
+        },
+      };
+    },
+  });
+  const result = await service.run({ expectedVersion: await context.version() });
+  assert.equal(result.ok, true, JSON.stringify(result));
+  assert.equal(selectedMode, 'adopted');
+  assert.equal(result.quality.projectMode, 'adopted');
+  assert.equal(result.quality.baselineDelta.knownFailures.length, 1);
+  assert.equal(result.quality.baselineDelta.newFailures.length, 0);
 });
 
 test('skipped frozen cases become P1 defects and the third failed attempt blocks without deleting evidence', async () => {

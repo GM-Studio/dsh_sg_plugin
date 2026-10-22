@@ -1,0 +1,55 @@
+{
+  "schemaVersion": 1,
+  "scope": "real-adopted-project-project-profile-verification",
+  "status": "blocked",
+  "repository": "https://github.com/gheinze/springboot-vuejs.git",
+  "projectRoot": "/home/sc/specgate-pilots/gheinze-springboot-vuejs",
+  "projectId": "project-14aff72cb52d1b76",
+  "baselineId": "baseline-88be0ad767d70dfc",
+  "commit": "87819826618e05926a56d8a91147da86eb399649",
+  "temporaryWorktreeRemoved": true,
+  "mainWorktreeModified": false,
+  "commands": [
+    {
+      "id": "frontend-install",
+      "status": "failed",
+      "exitCode": 1,
+      "reason": "package.json and legacy package-lock.json are not synchronized"
+    },
+    {
+      "id": "backend-build",
+      "status": "failed",
+      "exitCode": 1,
+      "reason": "JDK 21 rejects the repository's preview source release 15 configuration"
+    },
+    {
+      "id": "frontend-build",
+      "status": "failed",
+      "exitCode": 127,
+      "reason": "vue-cli-service is unavailable after the failed install"
+    },
+    {
+      "id": "backend-test",
+      "status": "failed",
+      "exitCode": 1,
+      "reason": "backend compilation failed before tests"
+    },
+    {
+      "id": "frontend-lint",
+      "status": "failed",
+      "exitCode": 127,
+      "reason": "vue-cli-service is unavailable after the failed install"
+    }
+  ],
+  "knownFailuresRecognized": [
+    "frontend-build",
+    "frontend-lint"
+  ],
+  "newFailuresBlocking": [
+    "frontend-install",
+    "backend-build",
+    "backend-test"
+  ],
+  "decision": "BASELINE_NEW_FAILURE",
+  "note": "The new failures were not treated as a pass. This run validates adopted command execution, baseline delta comparison, fail-closed behavior and temporary worktree cleanup."
+}

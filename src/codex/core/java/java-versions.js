@@ -64,12 +64,12 @@ export const JAVA_PRESETS = [
 /** Verification records are filled only after a real local build/test/start run. */
 export const GOLDEN_MANIFEST = {
   schemaVersion: 1,
-  updatedAt: '2026-10-21',
+  updatedAt: '2026-10-22',
   requiredPlatforms: ['win32', 'linux'],
   presets: {
     'jdk8-boot2.7': {
-      templateHash: 'eaa6e64e4092b72e97dca631bd4dbe2f5c28b6bf2d50891581415982f93b8ae1',
-      verifiedAt: '2026-10-21T05:56:17.467Z',
+      templateHash: '27d138bc76dbc723a0f2d0e2424c73a3fcfe5623fb25a00e5441d845d903d95d',
+      verifiedAt: '2026-10-22T02:42:22.679Z',
       verifiedBy: 'local:win32 x64',
       toolchain: 'JDK 1.8.0_472 + Maven 3.9.11 + Node 24.14.0',
       commands: [
@@ -85,19 +85,21 @@ export const GOLDEN_MANIFEST = {
       platforms: {
         win32: {
           result: 'passed',
-          verifiedAt: '2026-10-21T05:56:17.467Z',
-          evidence: 'docs/verification/2026-10-21-hooks-template/win32/jdk8-boot2.7/report.json',
+          verifiedAt: '2026-10-22T02:42:22.679Z',
+          evidence:
+            'docs/verification/codex-delivery-assurance/20261022-conventions-matrix-v4/jdk8-boot2.7/verification.json',
         },
         linux: {
           result: 'not-run',
         },
       },
-      evidence: 'docs/verification/2026-10-21-hooks-template/win32/jdk8-boot2.7/report.json',
+      evidence:
+        'docs/verification/codex-delivery-assurance/20261022-conventions-matrix-v4/jdk8-boot2.7/verification.json',
       matrixComplete: false,
     },
     'jdk17-boot3.5': {
-      templateHash: '01bb8f8e6ee7965632e6d9af519866b99b91f7c9d396c282b036e6c1116af73d',
-      verifiedAt: '2026-10-21T05:57:10.333Z',
+      templateHash: 'f5716c02c0c82b1d83d3d431616b4f051a5fa5a794a06b926c2bb585ae2b97a8',
+      verifiedAt: '2026-10-22T02:42:35.303Z',
       verifiedBy: 'local:win32 x64',
       toolchain: 'JDK 17.0.18 + Maven 3.9.11 + Node 24.14.0',
       commands: [
@@ -113,19 +115,21 @@ export const GOLDEN_MANIFEST = {
       platforms: {
         win32: {
           result: 'passed',
-          verifiedAt: '2026-10-21T05:57:10.333Z',
-          evidence: 'docs/verification/2026-10-21-hooks-template/win32/jdk17-boot3.5/report.json',
+          verifiedAt: '2026-10-22T02:42:35.303Z',
+          evidence:
+            'docs/verification/codex-delivery-assurance/20261022-conventions-matrix-v4/jdk17-boot3.5/verification.json',
         },
         linux: {
           result: 'not-run',
         },
       },
-      evidence: 'docs/verification/2026-10-21-hooks-template/win32/jdk17-boot3.5/report.json',
+      evidence:
+        'docs/verification/codex-delivery-assurance/20261022-conventions-matrix-v4/jdk17-boot3.5/verification.json',
       matrixComplete: false,
     },
     'jdk21-boot3.5': {
-      templateHash: '62e065e449b91c1b6aa895a483252ec2d89688855cd6e184ed0c8ee49f216aea',
-      verifiedAt: '2026-10-21T05:57:55.749Z',
+      templateHash: '0abe3f96389ed21e8d53a7025ff4f9961037c853a0cda9dc3f80f61d9c9000ed',
+      verifiedAt: '2026-10-22T02:43:15.293Z',
       verifiedBy: 'local:win32 x64',
       toolchain: 'JDK 21.0.9 + Maven 3.9.11 + Node 24.14.0',
       commands: [
@@ -141,19 +145,21 @@ export const GOLDEN_MANIFEST = {
       platforms: {
         win32: {
           result: 'passed',
-          verifiedAt: '2026-10-21T05:57:55.749Z',
-          evidence: 'docs/verification/2026-10-21-hooks-template/win32/jdk21-boot3.5/report.json',
+          verifiedAt: '2026-10-22T02:43:15.293Z',
+          evidence:
+            'docs/verification/codex-delivery-assurance/20261022-conventions-matrix-v4/jdk21-boot3.5/verification.json',
         },
         linux: {
           result: 'not-run',
         },
       },
-      evidence: 'docs/verification/2026-10-21-hooks-template/win32/jdk21-boot3.5/report.json',
+      evidence:
+        'docs/verification/codex-delivery-assurance/20261022-conventions-matrix-v4/jdk21-boot3.5/verification.json',
       matrixComplete: false,
     },
     'jdk21-boot4.0': {
-      templateHash: '8c5cd1904aa4d679e10a54cec884a36ca33e87f1fa231ffa5a2f5c830a7ec5b7',
-      verifiedAt: '2026-10-21T05:58:43.396Z',
+      templateHash: 'b6f8cb166becd4e2fa485d90bba28466980c29aa00044beed1fbec04b5e8d582',
+      verifiedAt: '2026-10-22T02:43:26.467Z',
       verifiedBy: 'local:win32 x64',
       toolchain: 'JDK 21.0.9 + Maven 3.9.11 + Node 24.14.0',
       commands: [
@@ -169,14 +175,16 @@ export const GOLDEN_MANIFEST = {
       platforms: {
         win32: {
           result: 'passed',
-          verifiedAt: '2026-10-21T05:58:43.396Z',
-          evidence: 'docs/verification/2026-10-21-hooks-template/win32/jdk21-boot4.0/report.json',
+          verifiedAt: '2026-10-22T02:43:26.467Z',
+          evidence:
+            'docs/verification/codex-delivery-assurance/20261022-conventions-matrix-v4/jdk21-boot4.0/verification.json',
         },
         linux: {
           result: 'not-run',
         },
       },
-      evidence: 'docs/verification/2026-10-21-hooks-template/win32/jdk21-boot4.0/report.json',
+      evidence:
+        'docs/verification/codex-delivery-assurance/20261022-conventions-matrix-v4/jdk21-boot4.0/verification.json',
       preview: true,
       matrixComplete: false,
     },
@@ -343,6 +351,8 @@ export function applyJavaPreset(files, preset) {
 }
 
 export function templateHash(files) {
+  if (typeof files?.__specgateCanonicalTemplateHash === 'string')
+    return files.__specgateCanonicalTemplateHash;
   const digest = createHash('sha256');
   for (const key of Object.keys(files).sort()) {
     digest.update(key);

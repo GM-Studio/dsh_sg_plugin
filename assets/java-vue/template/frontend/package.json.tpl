@@ -17,7 +17,8 @@
   },
   "dependencies": {
     "vue": "3.5.30",
-    "element-plus": "2.11.8"
+    "element-plus": "2.11.8",
+    "vue-i18n": "11.1.12"
   },
   "devDependencies": {
     "@vitejs/plugin-vue": "6.0.4",

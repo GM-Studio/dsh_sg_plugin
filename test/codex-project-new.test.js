@@ -53,6 +53,16 @@ function project(t, { verificationComplete = true } = {}) {
     path.join(root, '.specgate', 'codex-verify-report.json'),
     JSON.stringify({ ok: verificationComplete, runId: 'verify-1' }),
   );
+  fs.writeFileSync(
+    path.join(root, '.specgate', 'monorepo.json'),
+    JSON.stringify({
+      stack: 'java-vue',
+      preset: 'jdk21-boot3.5',
+      backendPackage: 'com.acme.orders',
+      frontendDefaultLocale: 'zh-CN',
+      frontendLocales: ['zh-CN', 'en-US'],
+    }),
+  );
   git(root, ['init', '-q']);
   git(root, ['add', '.']);
   git(root, [
@@ -98,6 +108,9 @@ test('records a green new-project baseline only after complete verification', (t
   assert.equal(result.profile.mode, 'new');
   assert.equal(result.profile.stack, 'java-vue');
   assert.equal(result.profile.pushApproved, false);
+  assert.equal(result.profile.backendPackage, 'com.acme.orders');
+  assert.equal(result.profile.frontendDefaultLocale, 'zh-CN');
+  assert.deepEqual(result.profile.frontendLocales, ['zh-CN', 'en-US']);
   assert.equal(result.baseline.status, 'green');
   assert.equal(result.baseline.commit, sourceCommit);
   assert.notEqual(git(root, ['rev-parse', 'HEAD']), sourceCommit);

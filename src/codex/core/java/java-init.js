@@ -3,7 +3,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
-import { javaFullstackFiles } from './java-fullstack-template.js';
+import { javaFullstackFiles, normalizeProjectNamespace } from './java-fullstack-template.js';
 import { VERIFY_STAGES } from './verify-evidence.js';
 import { JAVA_PRESETS, goldenStatus, normalizeJavaPreset, templateHash } from './java-versions.js';
 import { initProject, patchConfigRequirements } from '../change.js';
@@ -68,6 +68,8 @@ export const JAVA_INIT_REQUIREMENTS = {
     'CSV 支持预校验、原子导入和筛选导出；导入 multipart、下载导出文件流，错误为 JSON',
     '本地文件经类型大小和路径校验后上传，鉴权下载；内容及元数据重启后保留',
     '提供健康检查和可配置端口，前后端独立构建与启动',
+    '项目包名使用 com.<company>.<business>，生成源码包含中文注释',
+    '前端使用 i18n，默认显示中文，并支持切换英文',
   ],
   nonFunctional: [
     '校验输入并显示错误反馈，页面不直接渲染用户 HTML',
@@ -77,6 +79,7 @@ export const JAVA_INIT_REQUIREMENTS = {
   constraints: [
     'Java8 + Spring Boot2.7.18 + Maven；披露旧版本维护风险',
     'Vue3、TypeScript、Vite 锁定稳定兼容版本；Node 受支持 LTS；npm',
+    'company 和 business 必须是合法的小写 Java 包片段，禁止生成 com.example.* 新代码',
     '初始密码由环境变量提供，无默认运行密码；不含注册、SSO、多租户，不自动发起后续 change；保留 H1/H2/H3 审批',
   ],
   acceptance: [
@@ -87,6 +90,7 @@ export const JAVA_INIT_REQUIREMENTS = {
     '合法 CSV 预校验与导入导出正确，非法 CSV 无部分写入',
     '文件上传下载正确，非法路径/类型/大小与权限错误被拒绝',
     '健康检查、前后端独立构建及端口配置可用',
+    '生成后端使用指定包名并可通过构建，前端默认中文且可切换英文',
   ],
 };
 
@@ -142,7 +146,7 @@ function baselineConfig(preset) {
   ].join(NL);
 }
 
-function confirmationText(root, preset, { fileCount, golden }) {
+function confirmationText(root, preset, { fileCount, golden, namespace }) {
   const record = golden.record;
   const goldenLine = golden.verified
     ? 'Golden：' +
@@ -159,6 +163,8 @@ function confirmationText(root, preset, { fileCount, golden }) {
     preset.id + ' / ' + preset.label,
     '后端：' + preset.label + ' / Maven / H2',
     '前端：Vue 3 / TypeScript / Vite / npm',
+    '后端包名：' + namespace.basePackage,
+    '前端语言：zh-CN（默认）/ en-US',
     '文件数：' + fileCount,
     goldenLine,
     'IDEA：',
@@ -211,6 +217,8 @@ export async function startJavaInit({
   req,
   description,
   draft,
+  company = 'company',
+  business = 'tasks',
 }) {
   const existing = existingJavaWorkspace(root);
   if (existing) return existing;
@@ -240,6 +248,8 @@ export async function startJavaInit({
       message: '需求澄清（尚未写入任何文件）：必须通过宿主对话框确认初始化',
     };
   let chosenVersion = version;
+  const namespace = normalizeProjectNamespace({ company, business });
+  if (!namespace.ok) return namespace;
   let preset = null;
   let files = null;
   let hash = null;
@@ -275,7 +285,11 @@ export async function startJavaInit({
     if (!versionResult.ok) return versionResult;
     preset = versionResult.preset;
     try {
-      files = javaFullstackFiles({ preset });
+      files = javaFullstackFiles({
+        preset,
+        company: namespace.company,
+        business: namespace.business,
+      });
       for (const [relative, content] of Object.entries(files)) {
         const target = path.resolve(root, relative);
         if (
@@ -301,6 +315,7 @@ export async function startJavaInit({
             question: confirmationText(root, preset, {
               fileCount: Object.keys(files).length,
               golden,
+              namespace,
             }),
             options: [
               { label: '确认', description: '生成代码、req v1.0 与 Git 基线；不安装、不执行' },
@@ -347,6 +362,13 @@ export async function startJavaInit({
       bootVersion: preset.bootVersion,
       preview: preset.preview,
     },
+    projectNamespace: {
+      company: namespace.company,
+      business: namespace.business,
+      basePackage: namespace.basePackage,
+      groupId: namespace.groupId,
+      packagePath: namespace.packagePath,
+    },
     template: {
       hash,
       verified: golden.verified,
@@ -387,6 +409,12 @@ export async function startJavaInit({
           frontend: 'frontend',
           stack: 'java-vue',
           preset: preset.id,
+          company: namespace.company,
+          business: namespace.business,
+          backendPackage: namespace.basePackage,
+          groupId: namespace.groupId,
+          frontendDefaultLocale: 'zh-CN',
+          frontendLocales: ['zh-CN', 'en-US'],
           jdk: preset.jdk,
           bootVersion: preset.bootVersion,
           preview: preset.preview,

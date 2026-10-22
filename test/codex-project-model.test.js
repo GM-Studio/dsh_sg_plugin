@@ -25,6 +25,9 @@ function profile(patch = {}) {
     targetBranch: 'main',
     remoteUrl: null,
     pushApproved: false,
+    backendPackage: 'com.example.tasks',
+    frontendDefaultLocale: 'zh-CN',
+    frontendLocales: ['zh-CN', 'en-US'],
     commands: {
       install: [{ id: 'install', cwd: '.', argv: ['npm', 'ci'] }],
       build: [{ id: 'build', cwd: '.', argv: ['mvn', '-B', 'verify'] }],
@@ -161,6 +164,13 @@ test('ProjectProfile accepts new and adopted Java/Vue modes and rejects unsafe c
     false,
   );
   assert.equal(validateProjectProfile(profile({ pushApproved: 'yes' })).ok, false);
+  assert.equal(validateProjectProfile(profile({ backendPackage: 'Com.Example' })).ok, false);
+  assert.equal(
+    validateProjectProfile(
+      profile({ frontendDefaultLocale: 'fr-FR', frontendLocales: ['zh-CN', 'en-US'] }),
+    ).ok,
+    false,
+  );
   assert.equal(
     validateProjectProfile(profile({ commands: { build: [{ argv: 'mvn verify' }] } })).ok,
     false,

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref } from 'vue';
+import { useI18n } from 'vue-i18n';
 import {
   ElButton,
   ElCard,
@@ -19,7 +20,9 @@ import type {
   TaskQuery,
   User,
 } from './api/types';
+import { setLocale, type AppLocale } from './i18n';
 
+const { t, locale } = useI18n();
 const user = ref<User | null>(null);
 const admin = computed(() => user.value?.role === 'ADMIN');
 const username = ref('admin');
@@ -61,9 +64,10 @@ async function run(action: () => Promise<void>) {
   try {
     await action();
   } catch (cause) {
-    error.value = cause instanceof Error ? cause.message : 'Unexpected error';
+    error.value =
+      cause instanceof Error ? cause.message : t('error.unexpected');
     if (cause instanceof ApiError && cause.traceId)
-      error.value += ` (trace: ${cause.traceId})`;
+      error.value += ` (${t('error.trace')}: ${cause.traceId})`;
   } finally {
     busy.value = false;
   }
@@ -93,6 +97,10 @@ function reset() {
   title.value = '';
   completed.value = false;
 }
+function toggleLocale() {
+  const next: AppLocale = locale.value === 'zh-CN' ? 'en-US' : 'zh-CN';
+  setLocale(next);
+}
 function edit(task: Task) {
   editId.value = task.id;
   title.value = task.title;
@@ -100,7 +108,7 @@ function edit(task: Task) {
 }
 async function save() {
   if (!title.value.trim() || title.value.length > 200) {
-    error.value = 'Enter 1–200 characters.';
+    error.value = t('task.validation');
     return;
   }
   await run(async () => {
@@ -139,13 +147,13 @@ function chooseCsv(event: Event) {
 }
 async function importCsv(validate: boolean) {
   if (!csvFile.value) {
-    error.value = 'Choose a CSV file first.';
+    error.value = t('csv.chooseFirst');
     return;
   }
   await run(async () => {
     importResult.value = await taskApi.import(csvFile.value!, validate);
     if (!validate) {
-      notice.value = `Imported ${importResult.value.count} tasks`;
+      notice.value = t('csv.imported', { count: importResult.value.count });
       csvFile.value = null;
       await refresh();
     }
@@ -158,7 +166,7 @@ async function upload(event: Event) {
   await run(async () => {
     await fileApi.upload(file);
     files.value = await fileApi.list();
-    notice.value = 'File uploaded';
+    notice.value = t('file.uploaded');
   });
   input.value = '';
 }
@@ -188,18 +196,18 @@ onUnmounted(() => window.removeEventListener('session-expired', expired));
 <template>
   <div v-if="!user" class="login-shell">
     <el-card class="login-card" shadow="never">
-      <p class="eyebrow">SPECGATE WORKSPACE</p>
-      <h1>Welcome back</h1>
-      <p>Sign in to manage your tasks and files.</p>
+      <p class="eyebrow">{{ t('login.eyebrow') }}</p>
+      <h1>{{ t('login.title') }}</h1>
+      <p>{{ t('login.description') }}</p>
       <form @submit.prevent="login">
-        <label for="username">Username</label>
+        <label for="username">{{ t('login.username') }}</label>
         <el-input
           id="username"
           v-model="username"
           autocomplete="username"
           :disabled="busy"
         />
-        <label for="password">Password</label>
+        <label for="password">{{ t('login.password') }}</label>
         <el-input
           id="password"
           v-model="password"
@@ -208,86 +216,98 @@ onUnmounted(() => window.removeEventListener('session-expired', expired));
           :disabled="busy"
         />
         <el-button type="primary" native-type="submit" :disabled="busy">
-          Sign in
+          {{ t('login.submit') }}
         </el-button>
       </form>
       <p v-if="error" role="alert" class="error-banner">{{ error }}</p>
     </el-card>
   </div>
   <div v-else class="admin-shell">
-    <aside class="sidebar" aria-label="Workspace navigation">
+    <aside class="sidebar" :aria-label="t('navigation.ariaLabel')">
       <a class="brand" href="#tasks">
         <b class="brand-mark">S</b>
-        SpecGate
+        {{ t('common.appName') }}
       </a>
-      <p class="nav-label">WORKSPACE</p>
-      <a class="nav-link active" href="#tasks">▦ Task manager</a>
-      <a class="nav-link" href="#files">↥ Files</a>
+      <p class="nav-label">{{ t('navigation.workspace') }}</p>
+      <a class="nav-link active" href="#tasks">▦ {{ t('navigation.tasks') }}</a>
+      <a class="nav-link" href="#files">↥ {{ t('navigation.files') }}</a>
       <div class="sidebar-note">
-        A little structure.
-        <br />
-        A lot more clarity.
+        {{ t('navigation.note') }}
       </div>
     </aside>
     <div class="workspace">
       <header class="topbar">
         <span>
-          Workspace /
-          <strong>Tasks</strong>
+          {{ t('navigation.breadcrumb') }}
         </span>
         <div>
           <el-tag>{{ user.username }} · {{ user.role }}</el-tag>
-          <el-button :disabled="busy" @click="logout">Sign out</el-button>
+          <el-button :disabled="busy" @click="toggleLocale">
+            {{ t('language.switch') }}
+          </el-button>
+          <el-button :disabled="busy" @click="logout">
+            {{ t('navigation.logout') }}
+          </el-button>
         </div>
       </header>
       <main id="tasks">
         <div class="page-heading">
           <div>
-            <p class="eyebrow">YOUR DAILY OVERVIEW</p>
-            <h1>Task manager</h1>
-            <p>Organize work, share files and keep your next steps in sight.</p>
+            <p class="eyebrow">{{ t('task.eyebrow') }}</p>
+            <h1>{{ t('task.title') }}</h1>
+            <p>{{ t('task.description') }}</p>
           </div>
-          <el-button :disabled="busy" @click="run(refresh)">Refresh</el-button>
+          <el-button :disabled="busy" @click="run(refresh)">
+            {{ t('common.refresh') }}
+          </el-button>
         </div>
         <p v-if="error" role="alert" class="error-banner">{{ error }}</p>
         <p v-if="notice" role="status">{{ notice }}</p>
-        <p v-if="busy" role="status">Working…</p>
+        <p v-if="busy" role="status">{{ t('common.working') }}</p>
         <el-card shadow="never" class="filter-panel">
           <form class="toolbar" @submit.prevent="search">
             <el-input
               id="filter-title"
               v-model="query.title"
-              placeholder="Filter by title"
-              aria-label="Filter by title"
+              :placeholder="t('task.filterTitle')"
+              :aria-label="t('task.filterTitle')"
             />
-            <select v-model="query.completed" aria-label="Completion filter">
-              <option value="">All states</option>
-              <option value="true">Completed</option>
-              <option value="false">In progress</option>
+            <select
+              v-model="query.completed"
+              :aria-label="t('task.completionFilter')"
+            >
+              <option value="">{{ t('task.filterAll') }}</option>
+              <option value="true">{{ t('task.filterCompleted') }}</option>
+              <option value="false">{{ t('task.filterPending') }}</option>
             </select>
-            <select v-model="query.sortBy" aria-label="Sort field">
-              <option value="id">Created</option>
-              <option value="title">Title</option>
-              <option value="completed">Status</option>
+            <select v-model="query.sortBy" :aria-label="t('task.sortField')">
+              <option value="id">{{ t('task.createdAt') }}</option>
+              <option value="title">{{ t('task.titleField') }}</option>
+              <option value="completed">{{ t('task.status') }}</option>
             </select>
-            <select v-model="query.sortOrder" aria-label="Sort direction">
-              <option value="asc">Ascending</option>
-              <option value="desc">Descending</option>
+            <select
+              v-model="query.sortOrder"
+              :aria-label="t('task.sortDirection')"
+            >
+              <option value="asc">{{ t('task.ascending') }}</option>
+              <option value="desc">{{ t('task.descending') }}</option>
             </select>
-            <el-button native-type="submit" :disabled="busy">Search</el-button>
+            <el-button native-type="submit" :disabled="busy">
+              {{ t('common.search') }}
+            </el-button>
             <el-button
               :disabled="busy"
               @click="run(async () => taskApi.export(query))"
             >
-              Export CSV
+              {{ t('task.export') }}
             </el-button>
           </form>
         </el-card>
         <el-card v-if="admin" class="editor" shadow="never">
-          <h2>{{ editId === null ? 'Create a task' : 'Edit task' }}</h2>
+          <h2>{{ editId === null ? t('task.create') : t('task.edit') }}</h2>
           <form @submit.prevent="save">
             <div class="title-field">
-              <label for="title">Task title</label>
+              <label for="title">{{ t('task.taskTitle') }}</label>
               <el-input
                 id="title"
                 v-model="title"
@@ -296,46 +316,48 @@ onUnmounted(() => window.removeEventListener('session-expired', expired));
               />
             </div>
             <el-checkbox v-model="completed" :disabled="busy">
-              Completed
+              {{ t('task.completed') }}
             </el-checkbox>
             <el-button type="primary" native-type="submit" :disabled="busy">
-              {{ editId === null ? 'Add task' : 'Save changes' }}
+              {{ editId === null ? t('task.add') : t('task.save') }}
             </el-button>
             <el-button v-if="editId !== null" :disabled="busy" @click="reset">
-              Cancel
+              {{ t('common.cancel') }}
             </el-button>
           </form>
         </el-card>
         <el-card class="task-panel" shadow="never">
           <div class="panel-heading">
             <h2>
-              Your tasks
-              <el-tag effect="plain">{{ total }} total</el-tag>
+              {{ t('task.listTitle') }}
+              <el-tag effect="plain">
+                {{ t('task.total', { count: total }) }}
+              </el-tag>
             </h2>
             <div v-if="admin" class="toolbar">
               <el-button
                 :disabled="busy || !selected.length"
                 @click="batchStatus(true)"
               >
-                Complete selected
+                {{ t('task.completeSelected') }}
               </el-button>
               <el-button
                 :disabled="busy || !selected.length"
                 @click="batchStatus(false)"
               >
-                Reopen selected
+                {{ t('task.reopenSelected') }}
               </el-button>
               <el-button
                 type="danger"
                 :disabled="busy || !selected.length"
                 @click="pendingDelete = [...selected]"
               >
-                Delete selected
+                {{ t('task.deleteSelected') }}
               </el-button>
             </div>
           </div>
           <p v-if="!busy && !records.length" class="empty-state">
-            No tasks match your filters.
+            {{ t('task.empty') }}
           </p>
           <ul class="task-list" :aria-busy="busy">
             <li v-for="task in records" :key="task.id">
@@ -345,13 +367,17 @@ onUnmounted(() => window.removeEventListener('session-expired', expired));
                 type="checkbox"
                 :value="task.id"
                 :disabled="busy"
-                :aria-label="`Select ${task.title}`"
+                :aria-label="t('task.select', { title: task.title })"
               />
               <span class="task-title" :class="{ done: task.completed }">
                 {{ task.title }}
               </span>
               <el-tag :type="task.completed ? 'success' : 'warning'">
-                {{ task.completed ? 'Completed' : 'In progress' }}
+                {{
+                  task.completed
+                    ? t('task.completedStatus')
+                    : t('task.pendingStatus')
+                }}
               </el-tag>
               <div class="task-actions">
                 <el-button
@@ -359,7 +385,7 @@ onUnmounted(() => window.removeEventListener('session-expired', expired));
                   :disabled="busy"
                   @click="showDetail(task.id)"
                 >
-                  Details
+                  {{ t('task.details') }}
                 </el-button>
                 <el-button
                   v-if="admin"
@@ -367,7 +393,7 @@ onUnmounted(() => window.removeEventListener('session-expired', expired));
                   :disabled="busy"
                   @click="edit(task)"
                 >
-                  Edit
+                  {{ t('task.editAction') }}
                 </el-button>
                 <el-button
                   v-if="admin"
@@ -376,7 +402,7 @@ onUnmounted(() => window.removeEventListener('session-expired', expired));
                   :disabled="busy"
                   @click="pendingDelete = [task.id]"
                 >
-                  Delete
+                  {{ t('task.delete') }}
                 </el-button>
               </div>
             </li>
@@ -393,61 +419,66 @@ onUnmounted(() => window.removeEventListener('session-expired', expired));
             v-if="detail"
             class="inline-dialog"
             role="dialog"
-            aria-label="Task details"
+            :aria-label="t('task.detailsTitle')"
           >
             <h3>Task #{{ detail.id }}</h3>
             <p>
               {{ detail.title }} ·
-              {{ detail.completed ? 'Completed' : 'In progress' }}
+              {{
+                detail.completed
+                  ? t('task.completedStatus')
+                  : t('task.pendingStatus')
+              }}
             </p>
-            <el-button @click="detail = null">Close details</el-button>
+            <el-button @click="detail = null">
+              {{ t('task.closeDetails') }}
+            </el-button>
           </div>
           <div
             v-if="pendingDelete"
             class="inline-dialog"
             role="dialog"
-            aria-label="Confirm deletion"
+            :aria-label="t('task.deleteConfirmTitle')"
           >
-            <p>Delete {{ pendingDelete.length }} task(s)?</p>
+            <p>
+              {{ t('task.deleteConfirm', { count: pendingDelete.length }) }}
+            </p>
             <el-button type="danger" :disabled="busy" @click="remove">
-              Confirm delete
+              {{ t('task.confirmDelete') }}
             </el-button>
             <el-button :disabled="busy" @click="pendingDelete = null">
-              Cancel deletion
+              {{ t('task.cancelDelete') }}
             </el-button>
           </div>
         </el-card>
         <el-card v-if="admin" shadow="never" class="transfer-panel">
-          <h2>Import tasks</h2>
-          <p>
-            UTF-8 CSV · up to 1000 rows / 2 MiB · all rows validated before
-            saving
-          </p>
+          <h2>{{ t('csv.title') }}</h2>
+          <p>{{ t('csv.description') }}</p>
           <div class="toolbar">
             <el-button :disabled="busy" @click="run(taskApi.template)">
-              CSV template
+              {{ t('csv.template') }}
             </el-button>
             <input
               id="csv-file"
               type="file"
               accept=".csv,text/csv"
               :disabled="busy"
-              aria-label="Choose CSV"
+              :aria-label="t('csv.choose')"
               @change="chooseCsv"
             />
             <el-button :disabled="busy" @click="importCsv(true)">
-              Validate CSV
+              {{ t('csv.validate') }}
             </el-button>
             <el-button
               type="primary"
               :disabled="busy || !importResult?.valid || !csvFile"
               @click="importCsv(false)"
             >
-              Confirm import
+              {{ t('csv.confirm') }}
             </el-button>
           </div>
           <div v-if="importResult">
-            <p>{{ importResult.count }} valid rows</p>
+            <p>{{ t('csv.validRows', { count: importResult.count }) }}</p>
             <ul>
               <li v-for="message in importResult.errors" :key="message">
                 {{ message }}
@@ -456,18 +487,18 @@ onUnmounted(() => window.removeEventListener('session-expired', expired));
           </div>
         </el-card>
         <el-card id="files" shadow="never" class="transfer-panel">
-          <h2>Workspace files</h2>
-          <p>CSV, TXT, PNG, JPEG or PDF · up to 10 MiB per file</p>
+          <h2>{{ t('file.title') }}</h2>
+          <p>{{ t('file.description') }}</p>
           <input
             v-if="admin"
             id="upload-file"
             type="file"
             accept=".csv,.txt,.png,.jpg,.jpeg,.pdf"
             :disabled="busy"
-            aria-label="Upload file"
+            :aria-label="t('file.upload')"
             @change="upload"
           />
-          <p v-if="!files.length">No files yet.</p>
+          <p v-if="!files.length">{{ t('file.empty') }}</p>
           <ul class="file-list">
             <li v-for="file in files" :key="file.fileId">
               <span>
@@ -478,15 +509,15 @@ onUnmounted(() => window.removeEventListener('session-expired', expired));
                 :disabled="busy"
                 @click="run(async () => fileApi.download(file))"
               >
-                Download
+                {{ t('file.download') }}
               </el-button>
             </li>
           </ul>
-          <small>Showing at most 100 files.</small>
+          <small>{{ t('file.limit') }}</small>
         </el-card>
         <footer>
-          SpecGate Workspace
-          <span>Vue 3 · Element Plus</span>
+          {{ t('footer.product') }}
+          <span>{{ t('footer.stack') }}</span>
         </footer>
       </main>
     </div>

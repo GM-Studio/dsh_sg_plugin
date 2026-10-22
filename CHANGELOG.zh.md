@@ -8,6 +8,10 @@
   运行状态清理。
 - 增加 lockfile 驱动的 install 命令发现，并只通过显式路径提交稳定的
   SpecGate 元数据。
+- 增加 adopted 项目按 ProjectProfile 命令验证，以及基于稳定失败签名的
+  Baseline Delta 质量门。
+- 新项目使用 `com.<company>.<business>` 包、中文源码注释和默认中文的
+  Vue I18n 前端。
 - 增加统一 `sg_change`，支持 feature、modify 和 fix。
 - 实现串行执行、环境指纹、证据充分性和 Flaky Test 显式记录。
 - 增加不可变 DeliveryRecord、本地 tag、内部/客户交付包、增量再交付和显式

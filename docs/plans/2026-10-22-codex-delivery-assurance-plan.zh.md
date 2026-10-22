@@ -1,11 +1,12 @@
 # Codex 双入口交付保证工作流实施计划
 
-- 状态：实现与真实项目试点完成；待用户决定提交、发布和是否补充真实客户仓库试点
+- 状态：已完成增量修订，存量验证、Baseline Delta、项目命名空间和中文优先
+  前端约定已纳入
 - 日期：2026-10-22
 - 计划版本：1.0
 - 需求来源：
   `docs/requirements/2026-10-22-codex-delivery-mvp-requirements-analysis.zh.md`
-- 需求版本：2.1
+- 需求版本：2.2
 - 实现基线：`9ec23444ed230e7499ca444c5e06c5d8e0e8f7bb`
 - 当前分支：`sg-codex`
 - 首版技术范围：Java/Vue
@@ -14,8 +15,8 @@
 
 ## 冻结记录
 
-- 需求 2.1 SHA-256：
-  `81171E6A6B8A7E6CB0DA555CA409CEC87278E3A7AAF011DD5460F0916C4B79A8`
+- 需求 2.2 SHA-256：
+  `BA701315F315BAF80DA642FE250342BD78450175AAD7D6039B0D563F3111FA96`
 - 本计划审批快照 SHA-256：
   `CD8BFBAA25C44B1240716284AA5EF8C3C2EFB81C278ED60DFAD03DAAF4265248`
 - P0 基线：`npm test` 161/161 通过；`npm run lint` 通过；

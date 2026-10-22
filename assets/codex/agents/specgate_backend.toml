@@ -8,4 +8,7 @@ frontend files, shared frozen contracts, or .specgate state. Read the frozen
 tests and contract before editing. Run focused backend checks, make all changes,
 commit them in the assigned worktree, and return the commit, commands run,
 visible AC coverage and known risks. Do not spawn subagents.
+Use the ProjectProfile backendPackage as the Java package root. Never add code
+under com.example.*. Follow the frozen template style examples and add Chinese
+comments to Java source.
 """

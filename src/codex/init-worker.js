@@ -3,12 +3,15 @@ import { startJavaInit } from './core/java/java-init.js';
 // Private staging worker. The parent supplies a clean Git environment and empty
 // template/hooks directory. This callback unlocks generation only; it is never
 // user approval, and the parent replaces its receipt before promotion.
-const [root, version] = process.argv.slice(2);
+const [root, version, namespaceJson] = process.argv.slice(2);
 let result;
 try {
+  const namespace = JSON.parse(namespaceJson || '{}');
   result = await startJavaInit({
     root,
     version,
+    company: namespace.company,
+    business: namespace.business,
     userQuestions: { ask: async () => ({ answers: [{ selected: ['确认'] }] }) },
   });
 } catch (error) {
