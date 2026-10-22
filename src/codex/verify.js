@@ -142,6 +142,7 @@ function inspectProject(input) {
         preset: normalized.preset,
         company: metadata.company,
         business: metadata.business,
+        frontend: metadata.frontendFramework === 'react' ? 'react' : 'vue',
       }),
     ),
     '.specgate/config.yaml',
