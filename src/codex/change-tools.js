@@ -122,6 +122,25 @@ const report = objectSchema({
   testBlindSpots: array(finding),
   suggestedQuestions: array(finding),
 });
+const impact = objectSchema(
+  {
+    affectedAcIds: array(
+      identifier(
+        'Acceptance criterion ID from the accepted parent delivery that this change affects.',
+      ),
+      1,
+      200,
+    ),
+    reusedAcIds: array(
+      identifier(
+        'Affected acceptance criterion whose historical verification is reused; it must also be accepted by the parent.',
+      ),
+      0,
+      200,
+    ),
+  },
+  ['affectedAcIds'],
+);
 const changeDetails = objectSchema(
   {
     scope: array(string('Confirmed scope item.', 4000)),
@@ -176,7 +195,7 @@ export const CHANGE_TOOLS = [
   ),
   definition(
     'sg_change',
-    'Start a unified feature, modify or fix intake after an active ProjectBaseline and a clean Git worktree. Type-specific details are validated before requirements proceed.',
+    'Start a unified feature, modify or fix intake after an active ProjectBaseline and a clean Git worktree. Type-specific details are validated before requirements proceed. An optional parentDeliveryId plus impact records the incremental affected and reused acceptance criteria for a customer-feedback change.',
     objectSchema(
       {
         expectedVersion: version,
@@ -194,6 +213,11 @@ export const CHANGE_TOOLS = [
         parentDeliveryId: identifier(
           'Optional accepted parent delivery for incremental redelivery.',
         ),
+        impact: {
+          ...impact,
+          description:
+            'Required with a parentDeliveryId: affected acceptance criteria, and the historically accepted criteria whose verification is reused. Unknown or inconsistent AC references are rejected.',
+        },
         details: changeDetails,
       },
       ['expectedVersion', 'request', 'type'],

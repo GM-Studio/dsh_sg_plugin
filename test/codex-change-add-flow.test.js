@@ -7,6 +7,10 @@ import { spawnSync } from 'node:child_process';
 import { createChangeAddService, stableChangeName } from '../src/codex/change-add.js';
 import { createStateStore } from '../src/codex/state-machine.js';
 import { createApprovalAuthority } from '../src/codex/approvals.js';
+import { persistProjectReadiness } from '../src/codex/project-state.js';
+import { projectEnvironmentFingerprint } from '../src/codex/baseline.js';
+import { createDeliveryRecord, persistDelivery } from '../src/codex/delivery.js';
+import { hashValue } from '../src/codex/events.js';
 import { fileURLToPath } from 'node:url';
 
 const nativeUser = { id: 'fixture-user', kind: 'user', source: 'fixture-native-user-channel' };
@@ -59,6 +63,7 @@ function git(root, args) {
     },
   );
   assert.equal(result.status, 0, result.stderr);
+  return result.stdout.trim();
 }
 
 function fixture({
@@ -133,6 +138,90 @@ function fixture({
       : {}),
   };
   return { root, store, service: createChangeAddService(options), options };
+}
+
+// ProjectProfile-backed fixture with one accepted parent delivery, so the
+// incremental intake path can resolve a real parent and persist a plan.
+function incrementalFixture() {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'sg-codex-incremental-fixture-'));
+  fs.mkdirSync(path.join(root, '.specgate'));
+  fs.writeFileSync(
+    path.join(root, '.specgate/init-report.json'),
+    JSON.stringify({ initializationComplete: true, phase: 'SMOKE_PASSED', fixture: true }),
+  );
+  fs.writeFileSync(path.join(root, '.specgate/config.yaml'), 'fixture: true\n');
+  fs.writeFileSync(path.join(root, '.specgate/monorepo.json'), '{}\n');
+  fs.writeFileSync(path.join(root, '.gitignore'), '.specgate/codex/\n');
+  fs.writeFileSync(path.join(root, 'business.txt'), 'synthetic fixture, not a verified project\n');
+  git(root, ['init', '-q']);
+  git(root, ['add', '.']);
+  git(root, ['commit', '-q', '-m', 'fixture baseline']);
+  const now = '2026-01-01T00:00:00.000Z';
+  const head = git(root, ['rev-parse', 'HEAD']);
+  const profile = {
+    schemaVersion: 2,
+    projectId: 'project-incremental',
+    mode: 'adopted',
+    stack: 'java-vue',
+    root,
+    targetBranch: git(root, ['rev-parse', '--abbrev-ref', 'HEAD']),
+    remoteUrl: null,
+    commands: { install: [], build: [], test: [], lint: [], format: [], runtime: [] },
+    protectedPaths: [],
+    createdAt: now,
+    updatedAt: now,
+  };
+  const fingerprint = projectEnvironmentFingerprint(profile);
+  const baseline = {
+    schemaVersion: 2,
+    baselineId: 'baseline-incremental',
+    projectId: profile.projectId,
+    commit: head,
+    status: 'green',
+    knownFailures: [],
+    unverifiedAreas: [],
+    commands: [],
+    evidence: [],
+    environmentFingerprint: fingerprint,
+    createdAt: now,
+  };
+  const readiness = persistProjectReadiness({ root, profile, baseline });
+  assert.equal(readiness.ok, true, JSON.stringify(readiness));
+  const delivery = (deliveryId, projectId, changeId, acceptance) => {
+    const created = createDeliveryRecord({
+      deliveryId,
+      projectId,
+      changeId,
+      parentDeliveryId: null,
+      baselineCommit: head,
+      deliveryCommit: head,
+      environmentFingerprint: fingerprint,
+      reviewMode: 'evidence',
+      acceptedAt: now,
+      acceptance,
+      evidence: ['evidence-' + deliveryId],
+      knownIssues: [],
+      rollback: { code: 'git revert', data: deliveryId + ' data', forwardFix: 'apply fix' },
+      push: { requested: false, remoteUrl: null, status: 'not-requested' },
+      state: 'delivery-accepted',
+    });
+    assert.equal(created.ok, true, JSON.stringify(created));
+    const persisted = persistDelivery({
+      projectRoot: root,
+      delivery: created.delivery,
+      createTag: false,
+    });
+    assert.equal(persisted.ok, true, JSON.stringify(persisted));
+  };
+  delivery('delivery-feedback-1', profile.projectId, 'change-accepted-1', ['AC-1', 'AC-2']);
+  delivery('delivery-foreign-1', 'project-foreign', 'change-foreign-1', ['AC-1']);
+  const store = createStateStore({ projectRoot: root });
+  const service = createChangeAddService({
+    projectRoot: root,
+    store,
+    verifyPrerequisites: async () => ({ ok: true, sourceHash: 'synthetic-fixture' }),
+  });
+  return { root, store, service, deliveryId: 'delivery-feedback-1' };
 }
 
 async function start(f) {
@@ -736,4 +825,125 @@ test('an already aborted server context creates no clarification round or H1 art
   assert.equal(h1.code, 'CANCELLED');
   assert.equal((await f.store.load()).state.version, reviewedState.version);
   assert.equal(fs.existsSync(path.join(f.root, '.specgate/codex/changes')), false);
+});
+
+test('a parent change without impact still validates the parent before requiring impact', async () => {
+  const f = incrementalFixture();
+  // The library requires affected AC ids, so a parent change with no impact is refused.
+  const missingImpact = await f.service.startTyped({
+    expectedVersion: 0,
+    request: 'Customer feedback without an impact list.',
+    type: 'feature',
+    parentDeliveryId: f.deliveryId,
+  });
+  assert.equal(missingImpact.code, 'INCREMENT_AC_INVALID', JSON.stringify(missingImpact));
+  // Parent validation still runs first: a cross-project parent is rejected by the intake.
+  const foreignParent = await f.service.startTyped({
+    expectedVersion: 0,
+    request: 'Feedback against another project delivery.',
+    type: 'feature',
+    parentDeliveryId: 'delivery-foreign-1',
+  });
+  assert.equal(foreignParent.code, 'PARENT_DELIVERY_PROJECT_MISMATCH');
+  // Neither refusal wrote any state.
+  assert.equal((await f.store.load()).state.version, 0);
+  assert.equal((await f.store.load()).state.changeId, null);
+});
+
+test('a parent change with a valid impact persists an auditable incremental plan', async () => {
+  const f = incrementalFixture();
+  const result = await f.service.startTyped({
+    expectedVersion: 0,
+    request: 'Customer feedback on the accepted delivery.',
+    type: 'feature',
+    parentDeliveryId: f.deliveryId,
+    impact: { affectedAcIds: ['AC-2'], reusedAcIds: ['AC-2'] },
+  });
+  assert.equal(result.ok, true, JSON.stringify(result));
+  const incremental = result.state.context.changeAdd.incremental;
+  assert.ok(incremental, 'the change state exposes an incremental plan');
+  assert.match(incremental.hash, /^sha256:[a-f0-9]{64}$/);
+  assert.equal(incremental.hash, 'sha256:' + hashValue(incremental.plan));
+  assert.equal(incremental.plan.parentDeliveryId, f.deliveryId);
+  assert.equal(incremental.plan.changeId, result.state.changeId);
+  assert.deepEqual(incremental.plan.affectedAcIds, ['AC-2']);
+  assert.deepEqual(incremental.plan.reusedAcIds, ['AC-2']);
+  assert.match(incremental.plan.baselineCommit, /^[a-f0-9]{40,64}$/);
+  const stored = JSON.parse(fs.readFileSync(path.join(f.root, incremental.path), 'utf8'));
+  assert.deepEqual(stored, incremental.plan);
+  assert.equal(result.state.context.changeAdd.change.parentDeliveryId, f.deliveryId);
+});
+
+test('unknown acceptance criteria and inconsistent reuse are rejected with the library codes', async () => {
+  const f = incrementalFixture();
+  const unknown = await f.service.startTyped({
+    expectedVersion: 0,
+    request: 'Feedback referencing an unknown criterion.',
+    type: 'feature',
+    parentDeliveryId: f.deliveryId,
+    impact: { affectedAcIds: ['AC-404'], reusedAcIds: [] },
+  });
+  assert.equal(unknown.code, 'INCREMENT_AC_UNKNOWN', JSON.stringify(unknown));
+  const inconsistent = await f.service.startTyped({
+    expectedVersion: 0,
+    request: 'Feedback reusing an unaffected criterion.',
+    type: 'feature',
+    parentDeliveryId: f.deliveryId,
+    impact: { affectedAcIds: ['AC-2'], reusedAcIds: ['AC-1'] },
+  });
+  assert.equal(inconsistent.code, 'INCREMENT_AC_INCONSISTENT', JSON.stringify(inconsistent));
+  assert.equal((await f.store.load()).state.version, 0);
+});
+
+test('impact is strictly validated and cannot be smuggled to the sg_change_add alias', async () => {
+  const f = incrementalFixture();
+  const unknownField = await f.service.startTyped({
+    expectedVersion: 0,
+    request: 'Feedback with a stray impact field.',
+    type: 'feature',
+    parentDeliveryId: f.deliveryId,
+    impact: { affectedAcIds: ['AC-2'], reusedAcIds: [], invalidatedTestIds: ['CASE-1'] },
+  });
+  assert.equal(unknownField.code, 'INVALID_ARGUMENT');
+  const aliasImpact = await f.service.start({
+    expectedVersion: 0,
+    request: 'Feedback via the feature alias.',
+    impact: { affectedAcIds: ['AC-2'] },
+  });
+  assert.equal(aliasImpact.code, 'INVALID_ARGUMENT');
+  assert.equal((await f.store.load()).state.version, 0);
+  const accepted = await f.service.startTyped({
+    expectedVersion: 0,
+    request: 'Feedback with a well-formed impact.',
+    type: 'feature',
+    parentDeliveryId: f.deliveryId,
+    impact: { affectedAcIds: ['AC-2'] },
+  });
+  assert.equal(accepted.ok, true, JSON.stringify(accepted));
+  assert.ok(accepted.state.context.changeAdd.incremental);
+  // reusedAcIds is optional and defaults to an empty list.
+  assert.deepEqual(accepted.state.context.changeAdd.incremental.plan.reusedAcIds, []);
+});
+
+test('a change without a parent is unaffected and carries no incremental plan', async () => {
+  const f = incrementalFixture();
+  const result = await f.service.startTyped({
+    expectedVersion: 0,
+    request: 'A brand new feature with no parent delivery.',
+    type: 'feature',
+  });
+  assert.equal(result.ok, true, JSON.stringify(result));
+  assert.equal(result.state.context.changeAdd.incremental, null);
+  assert.equal(result.state.context.changeAdd.change.parentDeliveryId, null);
+
+  // A separate project shows a stray impact without a parent stays inert.
+  const g = incrementalFixture();
+  const stray = await g.service.startTyped({
+    expectedVersion: 0,
+    request: 'A brand new feature that passes a stray impact.',
+    type: 'feature',
+    impact: { affectedAcIds: ['AC-2'] },
+  });
+  assert.equal(stray.ok, true, JSON.stringify(stray));
+  assert.equal(stray.state.context.changeAdd.incremental, null);
 });

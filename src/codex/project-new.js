@@ -118,7 +118,6 @@ export function recordNewProjectBaseline({
       root,
       targetBranch: detected.git.branch || 'main',
       remoteUrl: detected.git.remoteUrl,
-      pushApproved: false,
       ...detected.conventions,
       ...(monorepo?.backendPackage
         ? {

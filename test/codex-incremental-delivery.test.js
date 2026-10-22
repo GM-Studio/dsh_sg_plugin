@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createIncrementalPlan, validateIncrementalPlan } from '../src/codex/incremental.js';
+import { CHANGE_TOOLS, callChangeTool } from '../src/codex/change-tools.js';
 
 const parent = {
   deliveryId: 'delivery-1',
@@ -106,4 +107,43 @@ test('reused and affected AC sets must remain consistent', () => {
     },
   });
   assert.equal(result.code, 'INCREMENT_AC_INCONSISTENT');
+});
+
+test('sg_change wires an optional impact object with strict nested fields', () => {
+  const tool = CHANGE_TOOLS.find((entry) => entry.name === 'sg_change');
+  assert.ok(tool, 'sg_change tool is registered');
+  const impact = tool.inputSchema.properties.impact;
+  assert.ok(impact, 'sg_change exposes an impact property');
+  assert.equal(impact.type, 'object');
+  assert.equal(impact.additionalProperties, false);
+  assert.deepEqual(impact.required, ['affectedAcIds']);
+  assert.equal(impact.properties.affectedAcIds.type, 'array');
+  assert.equal(impact.properties.affectedAcIds.minItems, 1);
+  assert.equal(impact.properties.reusedAcIds.type, 'array');
+  assert.equal(tool.inputSchema.required.includes('impact'), false);
+  const alias = CHANGE_TOOLS.find((entry) => entry.name === 'sg_change_add');
+  assert.equal(alias.inputSchema.properties.impact, undefined);
+});
+
+test('callChangeTool dispatches impact to sg_change and still refuses it for the sg_change_add alias', async () => {
+  let received = null;
+  const dispatched = await callChangeTool(
+    { startTyped: async (args) => ((received = args), { ok: true }) },
+    'sg_change',
+    {
+      expectedVersion: 0,
+      request: 'Customer feedback for an accepted delivery.',
+      type: 'feature',
+      impact: { affectedAcIds: ['AC-2'], reusedAcIds: [] },
+    },
+  );
+  assert.equal(dispatched.ok, true, JSON.stringify(dispatched));
+  assert.deepEqual(received.impact, { affectedAcIds: ['AC-2'], reusedAcIds: [] });
+
+  const aliased = await callChangeTool({ start: async () => ({ ok: true }) }, 'sg_change_add', {
+    expectedVersion: 0,
+    request: 'Customer feedback.',
+    impact: { affectedAcIds: ['AC-2'] },
+  });
+  assert.equal(aliased.code, 'INVALID_ARGUMENT');
 });

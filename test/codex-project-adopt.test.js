@@ -76,7 +76,6 @@ test('adoption preview is read-only for clean and dirty Java/Vue projects', (t) 
     assert.equal(result.ok, true, JSON.stringify(result));
     assert.equal(result.profile.mode, 'adopted');
     assert.equal(result.needsBaselineCommit, dirty);
-    assert.equal(result.profile.pushApproved, false);
     assert.equal(result.profile.backendPackage, 'com.acme.orders');
     assert.equal(fs.existsSync(path.join(root, '.specgate/codex')), false);
     assert.equal(git(root, ['status', '--porcelain=v1', '--untracked-files=all']), before);

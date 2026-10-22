@@ -194,6 +194,7 @@ export function createManagementServer({
   rateLimitPerMinute = 120,
   secureCookie = false,
   trustProxyHttps = false,
+  sessionStore = null,
 } = {}) {
   if (!services?.projection || !services?.decisions)
     throw new TypeError('Management server requires projection and decision services');
@@ -205,27 +206,120 @@ export function createManagementServer({
     throw new TypeError('pairingTtlMs must be a positive integer');
   if (!Number.isSafeInteger(rateLimitPerMinute) || rateLimitPerMinute <= 0)
     throw new TypeError('rateLimitPerMinute must be positive');
+  if (
+    sessionStore !== null &&
+    (typeof sessionStore?.load !== 'function' || typeof sessionStore?.save !== 'function')
+  )
+    throw new TypeError('sessionStore must provide load() and save()');
 
   const sessions = new Map();
   const rateBuckets = new Map();
   const pairingTokens = new Map();
+  const defaultActor = { kind: 'user', id: 'local-owner', source: 'web' };
   const pairKey = (value) =>
     typeof value === 'string' ? createHash('sha256').update(value).digest('hex') : null;
-  pairingTokens.set(pairKey(pairingToken), clock() + pairingTtlMs);
+  pairingTokens.set(pairKey(pairingToken), {
+    createdAt: clock(),
+    expiresAt: clock() + pairingTtlMs,
+  });
+
+  // Durable state shape persisted through the optional injected store:
+  //   sessions: { [sessionId]: { createdAt, expiresAt, csrf } }
+  //   pairing:  { [sha256(pairingToken)]: { createdAt, expiresAt } }
+  // Only the session id (the opaque cookie value), its CSRF token and TTLs plus
+  // the already-hashed pairing key are written; no raw pairing token, password,
+  // step-up code or other credential ever reaches the store.
+  function snapshotState() {
+    const durableSessions = {};
+    for (const [id, session] of sessions)
+      durableSessions[id] = {
+        createdAt: session.createdAt,
+        expiresAt: session.expiresAt,
+        csrf: session.csrfToken,
+      };
+    const durablePairing = {};
+    for (const [key, entry] of pairingTokens)
+      durablePairing[key] = { createdAt: entry.createdAt, expiresAt: entry.expiresAt };
+    return { sessions: durableSessions, pairing: durablePairing };
+  }
+
+  function persistNow() {
+    if (!sessionStore || !hydrated) return;
+    try {
+      const result = sessionStore.save(snapshotState());
+      if (result && typeof result.then === 'function') result.catch(() => {});
+    } catch {
+      // A persistence failure must never break an established live session.
+    }
+  }
+
+  async function persistState() {
+    if (!sessionStore) return;
+    await sessionStore.save(snapshotState());
+  }
+
+  async function removeSession(id) {
+    sessions.delete(id);
+    if (!sessionStore) return;
+    if (typeof sessionStore.remove === 'function') await sessionStore.remove(id);
+    else await persistState();
+  }
+
+  let hydrated = false;
+  async function hydrate() {
+    if (hydrated) return;
+    hydrated = true;
+    if (!sessionStore) return;
+    let loaded = null;
+    let loadedOk = false;
+    try {
+      loaded = await sessionStore.load();
+      loadedOk = true;
+    } catch {
+      loaded = null;
+      loadedOk = false;
+    }
+    const now = clock();
+    const storedSessions =
+      loaded && typeof loaded.sessions === 'object' && loaded.sessions ? loaded.sessions : {};
+    for (const [id, session] of Object.entries(storedSessions)) {
+      if (!id || !session || typeof session.csrf !== 'string') continue;
+      if (!Number.isFinite(session.expiresAt) || session.expiresAt <= now) continue;
+      sessions.set(id, {
+        csrfToken: session.csrf,
+        expiresAt: session.expiresAt,
+        createdAt: Number.isFinite(session.createdAt) ? session.createdAt : now,
+        actor: defaultActor,
+      });
+    }
+    const storedPairing =
+      loaded && typeof loaded.pairing === 'object' && loaded.pairing ? loaded.pairing : {};
+    for (const [key, entry] of Object.entries(storedPairing)) {
+      if (!/^[a-f0-9]{64}$/.test(key)) continue;
+      if (!entry || !Number.isFinite(entry.expiresAt) || entry.expiresAt <= now) continue;
+      pairingTokens.set(key, {
+        createdAt: Number.isFinite(entry.createdAt) ? entry.createdAt : now,
+        expiresAt: entry.expiresAt,
+      });
+    }
+    if (loadedOk) await persistState();
+  }
 
   function issuePairingToken({ ttlMs = 15 * 60 * 1000 } = {}) {
     if (!Number.isSafeInteger(ttlMs) || ttlMs <= 0)
       throw new TypeError('Pairing token TTL must be a positive integer');
-    for (const [key, expiry] of pairingTokens) {
-      if (expiry !== null && expiry <= clock()) pairingTokens.delete(key);
+    const now = clock();
+    for (const [key, entry] of pairingTokens) {
+      if (entry && entry.expiresAt <= now) pairingTokens.delete(key);
     }
     if (pairingTokens.size >= 256) {
       const oldest = pairingTokens.keys().next().value;
       if (oldest !== undefined) pairingTokens.delete(oldest);
     }
     const token = randomBytes(24).toString('base64url');
-    pairingTokens.set(pairKey(token), clock() + ttlMs);
-    return { token, expiresAt: new Date(clock() + ttlMs).toISOString() };
+    pairingTokens.set(pairKey(token), { createdAt: now, expiresAt: now + ttlMs });
+    persistNow();
+    return { token, expiresAt: new Date(now + ttlMs).toISOString() };
   }
 
   function withinRateLimit(request) {
@@ -244,19 +338,19 @@ export function createManagementServer({
     return bucket.count <= rateLimitPerMinute;
   }
 
-  function sessionFor(request) {
+  async function sessionFor(request) {
     const token = parseCookies(request.headers.cookie).specgate_session;
     const session = token ? sessions.get(token) : null;
     if (!session) return null;
     if (session.expiresAt <= clock()) {
-      sessions.delete(token);
+      await removeSession(token);
       return null;
     }
     return { id: token, ...session };
   }
 
-  function requireSession(request, response) {
-    const session = sessionFor(request);
+  async function requireSession(request, response) {
+    const session = await sessionFor(request);
     if (!session) {
       sendJson(response, 401, failure('UNAUTHORIZED', 'A valid management session is required'));
       return null;
@@ -275,7 +369,7 @@ export function createManagementServer({
 
   async function sessionRoute(request, response) {
     if (request.method === 'GET') {
-      const session = requireSession(request, response);
+      const session = await requireSession(request, response);
       if (!session) return;
       sendJson(response, 200, {
         ok: true,
@@ -294,22 +388,24 @@ export function createManagementServer({
       return;
     }
     const key = pairKey(body.token);
-    const expiresAtValue = key ? pairingTokens.get(key) : undefined;
-    const expired = expiresAtValue !== null && expiresAtValue <= clock();
-    if (expiresAtValue === undefined || expired) {
+    const entry = key ? pairingTokens.get(key) : undefined;
+    const expired = Boolean(entry) && entry.expiresAt <= clock();
+    if (!entry || expired) {
       sendJson(response, 401, failure('PAIRING_FAILED', 'Pairing token is invalid or consumed'));
       return;
     }
     pairingTokens.delete(key);
     const id = randomBytes(32).toString('hex');
     const csrfToken = randomBytes(32).toString('hex');
-    const expiresAt = clock() + sessionTtlMs;
-    const actor = { kind: 'user', id: 'local-owner', source: 'web' };
+    const createdAt = clock();
+    const expiresAt = createdAt + sessionTtlMs;
+    const actor = defaultActor;
     if (sessions.size >= 100) {
       const oldest = sessions.keys().next().value;
       if (oldest !== undefined) sessions.delete(oldest);
     }
-    sessions.set(id, { csrfToken, expiresAt, actor });
+    sessions.set(id, { csrfToken, expiresAt, createdAt, actor });
+    await persistState();
     const secure =
       secureCookie ||
       request.socket.encrypted ||
@@ -331,7 +427,7 @@ export function createManagementServer({
   }
 
   async function queryRoute(request, response, pathname) {
-    const session = requireSession(request, response);
+    const session = await requireSession(request, response);
     if (!session) return;
     if (request.method !== 'GET') return methodFailure(response, ['GET']);
     const projection = services.projection;
@@ -358,7 +454,7 @@ export function createManagementServer({
   }
 
   async function mutationRoute(request, response, pathname) {
-    const session = requireSession(request, response);
+    const session = await requireSession(request, response);
     if (!session) return;
     if (request.method !== 'POST') return methodFailure(response, ['POST']);
     if (!verifyCsrf(request, session, response)) return;
@@ -465,7 +561,8 @@ export function createManagementServer({
   server.headersTimeout = 10000;
   server.maxHeadersCount = 100;
 
-  function start({ port: requestedPort = port, host: requestedHost = host } = {}) {
+  async function start({ port: requestedPort = port, host: requestedHost = host } = {}) {
+    await hydrate();
     return new Promise((resolve, reject) => {
       const onError = (error) => {
         server.off('listening', onListening);

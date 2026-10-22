@@ -2,7 +2,11 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { randomBytes } from 'node:crypto';
 import { createManagementServer } from '../management/server.js';
-import { createLocalControlRuntime, createLocalManagementServices } from './runtime.js';
+import {
+  createFileSessionStore,
+  createLocalControlRuntime,
+  createLocalManagementServices,
+} from './runtime.js';
 import { createCodexExecutionAdapter } from './codex-execution-adapter.js';
 import { createControlSupervisor } from './supervisor.js';
 import { controlExecutionEnvironment } from './config.js';
@@ -50,6 +54,7 @@ export async function startControlDaemon({
     defaultProjectRoot: path.resolve(projectRoot),
   });
   const pairing = { token: randomBytes(24).toString('base64url') };
+  const sessionStore = createFileSessionStore({ root: runtime.store.root });
   const management = createManagementServer({
     services: managed.services,
     clock,
@@ -57,6 +62,7 @@ export async function startControlDaemon({
     port: managementPort ?? config.managementPort,
     host: managementHost,
     secureCookie: config.managementPublicUrl.startsWith('https:'),
+    sessionStore,
   });
   const started = await management.start();
   const executionAdapter =

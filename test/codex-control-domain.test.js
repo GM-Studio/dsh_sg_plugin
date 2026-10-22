@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
+  HOST_HEALTH,
   createInitialControlState,
   projectWorkItemSummary,
   validateAttentionInput,
@@ -102,6 +103,26 @@ test('user-visible projection never reports OFFLINE as running', () => {
   };
   assert.deepEqual(projectWorkItemSummary(workItem), {
     status: 'OFFLINE',
+    nextOwner: 'system',
+    needsUser: false,
+  });
+});
+
+test('HOST_HEALTH is the frozen host-health enum and includes SUSPECT', () => {
+  assert.deepEqual(HOST_HEALTH, ['ONLINE', 'OFFLINE', 'INTERRUPTED', 'SUSPECT']);
+  assert.equal(Object.isFrozen(HOST_HEALTH), true);
+  assert.equal(HOST_HEALTH.includes('SUSPECT'), true);
+});
+
+test('a suspect host is projected as SUSPECT and never as running', () => {
+  const workItem = {
+    title: 'Fix export',
+    executionState: 'RUNNING',
+    hostHealth: 'SUSPECT',
+    currentAttentionId: null,
+  };
+  assert.deepEqual(projectWorkItemSummary(workItem), {
+    status: 'SUSPECT',
     nextOwner: 'system',
     needsUser: false,
   });

@@ -11,6 +11,12 @@ import {
 import { createLocalControlRuntime } from '../src/codex/control/runtime.js';
 import { readDaemonStatus } from '../src/codex/control/daemon.js';
 import { generateTotpSecret } from '../src/codex/control/step-up.js';
+import {
+  DEFAULT_PROBE_TIMEOUT_MS,
+  createSyncProbeRunner,
+  describeDegradation,
+  detectCapabilities,
+} from '../src/codex/control/capabilities.js';
 
 const SOURCE_ROOT = path.resolve(fileURLToPath(new URL('..', import.meta.url)));
 const WORKER = path.join(SOURCE_ROOT, 'src/codex/control/daemon-worker.mjs');
@@ -196,19 +202,32 @@ export async function runControlCli({
   }
   if (command === 'doctor') {
     const config = localControlEnvironment(env);
+    const codexEnv = controlExecutionEnvironment({
+      env: config.codexHome ? { ...env, CODEX_HOME: config.codexHome } : env,
+      projectRoot,
+      controlRoot,
+    });
     const codex = spawnSyncImpl(config.codexCommand, ['--version'], {
       cwd: projectRoot,
       encoding: 'utf8',
       windowsHide: true,
       timeout: 10000,
-      env: controlExecutionEnvironment({
-        env: config.codexHome ? { ...env, CODEX_HOME: config.codexHome } : env,
-        projectRoot,
-        controlRoot,
-      }),
+      env: codexEnv,
       maxBuffer: 1024 * 1024,
     });
     const codexAvailable = codex?.status === 0;
+    // Bounded, non-interactive, read-only host capability probe. A `not-probed`
+    // capability is reported honestly and never fails the command.
+    const capabilityStates = await detectCapabilities({
+      exec: createSyncProbeRunner({
+        command: config.codexCommand,
+        spawnSyncImpl,
+        cwd: projectRoot,
+        env: codexEnv,
+        timeoutMs: DEFAULT_PROBE_TIMEOUT_MS,
+      }),
+    });
+    const degradation = describeDegradation(capabilityStates);
     return {
       ok: codexAvailable,
       platform,
@@ -234,6 +253,13 @@ export async function runControlCli({
               code: 'CODEX_UNAVAILABLE',
               message: 'The configured Codex command could not run --version',
             }),
+      },
+      capabilities: {
+        states: capabilityStates,
+        mode: degradation.mode,
+        degradations: degradation.degradations,
+        blocked: degradation.blocked,
+        versionGateHint: degradation.versionGateHint,
       },
       isolation: {
         explicitProjectBinding: true,

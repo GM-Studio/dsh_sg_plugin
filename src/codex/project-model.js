@@ -106,7 +106,6 @@ export function validateProjectProfile(value) {
     'root',
     'targetBranch',
     'remoteUrl',
-    'pushApproved',
     'commands',
     'protectedPaths',
     'createdAt',
@@ -130,7 +129,6 @@ export function validateProjectProfile(value) {
     !nonEmpty(value.root) ||
     !nonEmpty(value.targetBranch, 255) ||
     !optionalRemote(value.remoteUrl) ||
-    typeof value.pushApproved !== 'boolean' ||
     !date(value.createdAt) ||
     !date(value.updatedAt)
   )

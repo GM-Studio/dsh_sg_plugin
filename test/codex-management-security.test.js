@@ -194,3 +194,106 @@ test('HTTPS deployment mode marks the session cookie Secure', async (t) => {
   assert.equal(paired.status, 200);
   assert.match(paired.headers.get('set-cookie'), /; Secure/);
 });
+
+function memoryStore() {
+  let state = { sessions: {}, pairing: {} };
+  const clone = (value) => JSON.parse(JSON.stringify(value));
+  return {
+    load: () => clone(state),
+    save: (next) => {
+      state = clone(next);
+    },
+    remove: (id) => {
+      delete state.sessions[id];
+    },
+    raw: () => state,
+  };
+}
+
+test('a session survives a control-plane restart through the injected store', async (t) => {
+  const store = memoryStore();
+  const first = await start(t, { sessionStore: store });
+  const paired = await pair(first.baseUrl);
+  assert.equal(paired.status, 200);
+  const cookie = paired.headers.get('set-cookie').split(';')[0];
+  const { csrfToken } = await paired.json();
+  await first.management.close();
+
+  // A brand new server (fresh in-memory Maps) hydrates from the same store.
+  const second = await start(t, { sessionStore: store });
+  const health = await fetch(`${second.baseUrl}/api/health`, { headers: { cookie } });
+  assert.equal(health.status, 200);
+  const mutation = await fetch(`${second.baseUrl}/api/work-items/pause`, {
+    method: 'POST',
+    headers: {
+      cookie,
+      'content-type': 'application/json',
+      'x-specgate-csrf': csrfToken,
+    },
+    body: JSON.stringify({ workItemId: 'work-1', expectedVersion: 2 }),
+  });
+  assert.equal(mutation.status, 200);
+  assert.equal((await mutation.json()).ok, true);
+});
+
+test('an expired session is dropped on load and does not survive a restart', async (t) => {
+  let now = Date.parse('2026-10-22T10:00:00.000Z');
+  const store = memoryStore();
+  const first = await start(t, { sessionStore: store, clock: () => now, sessionTtlMs: 1000 });
+  const paired = await pair(first.baseUrl);
+  assert.equal(paired.status, 200);
+  const cookie = paired.headers.get('set-cookie').split(';')[0];
+  await first.management.close();
+
+  now += 2000;
+  const second = await start(t, { sessionStore: store, clock: () => now, sessionTtlMs: 1000 });
+  const expired = await fetch(`${second.baseUrl}/api/health`, { headers: { cookie } });
+  assert.equal(expired.status, 401);
+  // Hydration pruned the expired entry from the store too.
+  assert.deepEqual(store.raw().sessions, {});
+});
+
+test('a pairing token still works exactly once across a restart', async (t) => {
+  const store = memoryStore();
+  const first = await start(t, { sessionStore: store });
+  const issued = first.management.issuePairingToken({ ttlMs: 60000 });
+  await first.management.close();
+
+  const second = await start(t, { sessionStore: store });
+  const firstUse = await pair(second.baseUrl, issued.token);
+  assert.equal(firstUse.status, 200);
+  const secondUse = await pair(second.baseUrl, issued.token);
+  assert.equal(secondUse.status, 401);
+  // The consumed pairing key is gone from the durable state as well.
+  const persistedKeys = Object.keys(store.raw().pairing);
+  assert.equal(
+    persistedKeys.some((key) => key === issued.token),
+    false,
+  );
+});
+
+test('the durable store never persists raw tokens or credentials', async (t) => {
+  const store = memoryStore();
+  const server = await start(t, { sessionStore: store });
+  const issued = server.management.issuePairingToken({ ttlMs: 60000 });
+  const paired = await pair(server.baseUrl, issued.token);
+  assert.equal(paired.status, 200);
+  const persisted = JSON.stringify(store.raw());
+  assert.doesNotMatch(persisted, new RegExp(issued.token));
+  assert.doesNotMatch(persisted, /pairing-token-with-enough-entropy/);
+  assert.doesNotMatch(persisted, /password|authorization|stepUp/i);
+  // Pairing keys are stored only as sha256 hex digests.
+  for (const key of Object.keys(store.raw().pairing)) assert.match(key, /^[a-f0-9]{64}$/);
+});
+
+test('without a store a restart loses the session, preserving in-memory behaviour', async (t) => {
+  const first = await start(t);
+  const paired = await pair(first.baseUrl);
+  assert.equal(paired.status, 200);
+  const cookie = paired.headers.get('set-cookie').split(';')[0];
+  await first.management.close();
+
+  const second = await start(t);
+  const restored = await fetch(`${second.baseUrl}/api/health`, { headers: { cookie } });
+  assert.equal(restored.status, 401);
+});

@@ -541,7 +541,6 @@ test('project-backed archive creates a DeliveryRecord, local tag and separate pa
     root: context.root,
     targetBranch: git(context.root, ['rev-parse', '--abbrev-ref', 'HEAD']),
     remoteUrl: null,
-    pushApproved: false,
     commands: { install: [], build: [], test: [], lint: [], format: [], runtime: [] },
     protectedPaths: [],
     createdAt: now,

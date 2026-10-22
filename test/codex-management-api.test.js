@@ -179,3 +179,70 @@ test('wrong methods and malformed bodies return JSON', async (t) => {
   assert.equal(malformed.status, 400);
   assert.equal((await malformed.json()).ok, false);
 });
+
+function memoryStore() {
+  let state = { sessions: {}, pairing: {} };
+  const clone = (value) => JSON.parse(JSON.stringify(value));
+  return {
+    load: () => clone(state),
+    save: (next) => {
+      state = clone(next);
+    },
+    remove: (id) => {
+      delete state.sessions[id];
+    },
+    raw: () => state,
+  };
+}
+
+test('query and mutation routes keep working after a restart with a durable store', async (t) => {
+  const store = memoryStore();
+  const firstServices = services();
+  const firstServer = createManagementServer({
+    services: firstServices,
+    pairingToken: 'pairing-token-with-enough-entropy',
+    sessionStore: store,
+  });
+  const started = await firstServer.start();
+  const paired = await fetch(`${started.baseUrl}/api/session`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ token: 'pairing-token-with-enough-entropy' }),
+  });
+  assert.equal(paired.status, 200);
+  const cookie = paired.headers.get('set-cookie').split(';')[0];
+  const { csrfToken } = await paired.json();
+  await firstServer.close();
+
+  const secondServices = services();
+  const secondServer = createManagementServer({
+    services: secondServices,
+    pairingToken: 'pairing-token-with-enough-entropy',
+    sessionStore: store,
+  });
+  const restarted = await secondServer.start();
+  t.after(() => secondServer.close());
+
+  for (const [path, key] of [
+    ['/api/health', null],
+    ['/api/work-items/work-1', 'workItem'],
+  ]) {
+    const response = await fetch(`${restarted.baseUrl}${path}`, { headers: { cookie } });
+    assert.equal(response.status, 200, path);
+    const body = await response.json();
+    assert.equal(body.ok, true, path);
+    if (key) assert.ok(body[key], path);
+  }
+
+  const mutation = await fetch(`${restarted.baseUrl}/api/work-items/pause`, {
+    method: 'POST',
+    headers: {
+      cookie,
+      'content-type': 'application/json',
+      'x-specgate-csrf': csrfToken,
+    },
+    body: JSON.stringify({ workItemId: 'work-1', expectedVersion: 2 }),
+  });
+  assert.equal(mutation.status, 200);
+  assert.ok(secondServices.calls.some(([name]) => name === 'pause'));
+});

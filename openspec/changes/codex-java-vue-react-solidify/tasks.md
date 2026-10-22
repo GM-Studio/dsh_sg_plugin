@@ -55,6 +55,7 @@ package names into the role/user sys templates (17 files restored to
 and two audit test assertions were corrected.
 
 Landed (template step 4, CSV + dashboard + style baseline + audit writes):
+
 - `SysUserCsvService` / `SysRoleCsvService` with `/import/validate`, `/import`,
   `/import/template` and `/export` endpoints on the users and roles controllers,
   plus two CSV MockMvc suites (5 cases each).
@@ -64,9 +65,19 @@ Landed (template step 4, CSV + dashboard + style baseline + audit writes):
   agent template extended so unjustified deviation is a finding (blocking when
   substantive).
 - The four `sys` services now record audit entries on create/update/delete.
-Verified on a generated `jdk17-boot3.5` project: backend `clean verify` 35/35,
-frontend build, 34/34 Vitest, lint and format:check pass; repo suite 347/347.
-`GOLDEN_MANIFEST` refreshed, still `pending`.
+  Verified on a generated `jdk17-boot3.5` project: backend `clean verify` 35/35,
+  frontend build, 34/34 Vitest, lint and format:check pass; repo suite 347/347.
+  `GOLDEN_MANIFEST` refreshed, still `pending`.
+
+Landed (control-plane step 5, five parallel agents): incremental delivery impact
+is computed and persisted at the `sg_change` intake
+(`state.context.changeAdd.incremental`); host capabilities are probed and
+reported by `doctor` with an explicit degradation policy and version gate hint;
+Web sessions and pairing persist across a control-plane restart through an
+injected file session store; a multi-project registry and aggregate projection
+module is in place (data layer only, wiring still pending); `HOST_HEALTH` now
+includes `SUSPECT` and the dead `pushApproved` profile field is removed. Repo
+suite 395/395, lint, format:check and pack pass.
 
 - [x] 1. P0: approve the requirements document; keep this proposal/design/spec
       aligned with it.
@@ -87,20 +98,20 @@ frontend build, 34/34 Vitest, lint and format:check pass; repo suite 347/347.
       (cross-project attention/queue, global concurrency), isolated mode, and
       switching command.
 - [ ] 10. P5: implement the registry, aggregate and isolated control modes.
-- [ ] 11. P5: add failing tests for durable Web sessions and pairing across
+- [x] 11. P5: add failing tests for durable Web sessions and pairing across
       control-plane restart; implement durable storage.
-- [ ] 12. P6: add failing tests for host capability probing (`plugin`,
+- [x] 12. P6: add failing tests for host capability probing (`plugin`,
       `exec --json`, native subagents, elicitation), degradation path and
       version gate hint.
-- [ ] 13. P6: implement the capability probe, `doctor` reporting and the
+- [x] 13. P6: implement the capability probe, `doctor` reporting and the
       project-level MCP + skill degradation path.
 - [ ] 14. P7: add failing tests for dual-platform golden verification
       (`win32` + `linux`, WSL not accepted) and extend the verification matrix.
 - [ ] 15. P7: implement dual-platform acceptance and update the golden manifest
       to require both platforms.
-- [ ] 16. P8: wire incremental delivery impact analysis into the `sg_change`
+- [x] 16. P8: wire incremental delivery impact analysis into the `sg_change`
       intake with tests.
-- [ ] 17. P8: small cleanups (`HOST_HEALTH` `SUSPECT`, unused `pushApproved`).
+- [x] 17. P8: small cleanups (`HOST_HEALTH` `SUSPECT`, unused `pushApproved`).
 - [ ] 18. P9: update the Codex Skill, project agents, installers, manifests,
       README and changelogs.
 - [ ] 19. P9: run focused suites, `npm test`, `npm run lint`,

@@ -19,7 +19,17 @@ export const EXECUTION_STATES = Object.freeze([
   'CANCELLED',
 ]);
 
-export const HOST_HEALTH = Object.freeze(['ONLINE', 'OFFLINE', 'INTERRUPTED']);
+export const HOST_ONLINE = 'ONLINE';
+export const HOST_OFFLINE = 'OFFLINE';
+export const HOST_INTERRUPTED = 'INTERRUPTED';
+export const HOST_SUSPECT = 'SUSPECT';
+
+export const HOST_HEALTH = Object.freeze([
+  HOST_ONLINE,
+  HOST_OFFLINE,
+  HOST_INTERRUPTED,
+  HOST_SUSPECT,
+]);
 
 export const ATTENTION_STATUSES = Object.freeze([
   'OPEN',
@@ -255,7 +265,7 @@ export function attentionNeedsStepUp(type, action) {
 
 export function projectWorkItemSummary(workItem) {
   if (!object(workItem)) return { status: 'UNKNOWN', nextOwner: 'system', needsUser: false };
-  if (workItem.hostHealth === 'OFFLINE' || workItem.hostHealth === 'INTERRUPTED')
+  if ([HOST_OFFLINE, HOST_INTERRUPTED, HOST_SUSPECT].includes(workItem.hostHealth))
     return { status: workItem.hostHealth, nextOwner: 'system', needsUser: false };
   if (workItem.executionState === 'WAITING_FOR_USER')
     return { status: 'WAITING_FOR_USER', nextOwner: 'user', needsUser: true };
