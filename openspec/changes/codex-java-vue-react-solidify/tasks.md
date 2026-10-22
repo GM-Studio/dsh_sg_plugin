@@ -106,8 +106,9 @@ Landed (stability pass): `goldenStatus` is now frontend-aware and every preset
 carries a `frontends.react` record, so Vue and React hashes are tracked
 separately (both remain `pending`). Verified generation for all eight
 preset x frontend combinations (distinct hashes, Vue emits only `.vue`, React
-only `.tsx`, `frontendFramework` recorded). Verified a real JDK 8 build:
-backend `clean verify` 25/25, frontend 31/31, build/lint/format. The repo suite
+only `.tsx`, `frontendFramework` recorded). Verified real full builds on three
+JDKs: JDK 8 and JDK 21 (Vue) and JDK 17 (Vue and React) each pass backend
+`clean verify` 25/25, frontend 31/31, build/lint/format. The repo suite
 was run repeatedly (419 pass, 0 fail, 1 skipped); two earlier runs showed a
 transient failure under load that has not reproduced, so the suite should be
 pinned to a lower test concurrency before merge if it recurs.
