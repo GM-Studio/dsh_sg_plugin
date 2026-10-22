@@ -588,7 +588,9 @@ test('project-backed archive creates a DeliveryRecord, local tag and separate pa
   assert.equal(archived.ok, true, JSON.stringify(archived));
   const delivery = archived.report.delivery;
   assert.equal(delivery.projectId, 'project-release');
-  assert.equal(delivery.state, 'delivery-accepted');
+  assert.equal(delivery.schemaVersion, 3);
+  assert.equal(delivery.releaseState, 'release-approved');
+  assert.equal(delivery.customerAcceptance, null);
   assert.equal(delivery.push.requested, false);
   assert.equal(git(context.root, ['tag', '--list', delivery.tag]), delivery.tag);
   assert.equal(archived.report.cleanup.ok, true, JSON.stringify(archived.report.cleanup));

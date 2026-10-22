@@ -52,7 +52,7 @@ export function createProtocol({
           capabilities: { tools: { listChanged: false } },
           serverInfo: SERVER_INFO,
           instructions:
-            'SpecGate delivery assurance. Read sg_project_status and establish a ProjectProfile and ProjectBaseline before sg_change. Use the sg-codex Skill. Implement frontend and backend sequentially, then verify independently with specgate_tester, format, and Review the fixed commit. H3 creates a DeliveryRecord and packs; push only with explicit push=true. Never substitute main-thread role simulation or model-supplied approval for native subagents and user-visible elicitation.',
+            'SpecGate delivery assurance. Read sg_project_status and establish a ProjectProfile and ProjectBaseline before sg_change. In async control mode, read sg_work_item_status and stop immediately when a gate returns WAITING_FOR_USER. Use the sg-codex Skill. Implement frontend and backend sequentially, then verify independently with specgate_tester, format, and Review the fixed commit. H3 creates a DeliveryRecord and packs; push only with explicit push=true. Never substitute main-thread role simulation or model-supplied approval for subagents and trusted user decisions.',
         }),
       );
     }

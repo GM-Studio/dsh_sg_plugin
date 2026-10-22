@@ -2,7 +2,7 @@
   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "name": "specgate-codex",
   "version": "0.3.0",
-  "description": "Project adoption, accepted changes, independent verification and incremental delivery records for Codex.",
+  "description": "Asynchronous Codex delivery with Web monitoring, Feishu decisions, verification and delivery records.",
   "author": {
     "name": "andy.zx"
   },
@@ -14,8 +14,8 @@
       "onboardingSkill": "./skills/setup/SKILL.md",
       "interface": {
         "displayName": "SpecGate for Codex",
-        "shortDescription": "Delivery assurance and acceptance records for solo builders",
-        "longDescription": "Adopt existing Java/Vue projects or create a verified baseline, run serial test-first delivery with independent verification, issue DeliveryRecords and customer packs, and support incremental redelivery.",
+        "shortDescription": "Async delivery control and acceptance records for solo builders",
+        "longDescription": "Run durable Codex WorkItems, monitor execution and evidence in a local Web console, send actionable Feishu decisions, resume automatically, and issue verified DeliveryRecords and customer packs.",
         "developerName": "andy.zx",
         "category": "Developer Tools",
         "capabilities": ["Read", "Write"]

@@ -2,6 +2,15 @@
 
 ## 未发布
 
+- 增加独立异步 supervisor、持久 WorkItem/ExecutionRun/租约/心跳和进程恢复。
+- 增加 H1/H3 异步 AttentionRequest，Decision 后自动 resume Codex session。
+- 增加本地 Web 管理台、一次性配对、CSRF、会话和运行监控。
+- 增加飞书交互卡片通知、Notification Outbox、去重和指数退避。
+- 增加 TOTP step-up、版本 CAS、artifact hash 和 Decision 幂等校验。
+- 增加 DeliveryRecord schema 3，分离 H3 发布批准和客户接受。
+- supervisor 只向 Codex 注入项目绑定 SpecGate MCP 和凭据安全的白名单环境。
+- 客户接受先绑定不可变 DeliveryRecord 回执，再消费 Control Decision。
+- 飞书发送幂等的“已处理/已失效”回执，并提供跨平台优雅停止请求。
 - 增加新项目与存量项目接入，以及 ProjectProfile 和 ProjectBaseline。
 - 增加脏工作区显式文件批准提交和 known-failures 基线。
 - 增加 detached 临时 worktree 基线执行、可轮询进度、命令证据落盘和成功后

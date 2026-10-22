@@ -33,6 +33,24 @@ node scripts/codex-source-setup.mjs --project <absolute-project-path>
 Do not perform a requested subagent role in the main thread and label it as a
 subagent result.
 
+## Async control mode
+
+When `SPECGATE_CONTROL_MODE=1`, the session is managed by the detached SpecGate
+supervisor and `SPECGATE_WORK_ITEM_ID` identifies the durable WorkItem.
+
+1. Read `sg_work_item_status` for the current WorkItem.
+2. Use the same project, Change, evidence and delivery tools as interactive
+   mode.
+3. At H1 or H3, call the normal gate tool. A `WAITING_FOR_USER` result means the
+   approval was durably queued.
+4. Stop immediately after `WAITING_FOR_USER`. Do not retry the gate, invent
+   approval, ask for routine progress confirmation or keep a connection open.
+5. When the supervisor resumes the session after a Decision, re-read
+   `sg_work_item_status` and `sg_state`, verify the current artifact/version and
+   continue from the recorded gate.
+
+The supervisor, not this Skill, owns heartbeat, lease and process recovery.
+
 ## 1. Establish project readiness
 
 Read `sg_project_status` first.
@@ -84,6 +102,8 @@ Then:
 4. `sg_request_h1`
 
 A missing trusted approval leaves `H1_PENDING`. Never fabricate approval.
+In async control mode, a durable AttentionRequest may be created and the
+supervisor will release the execution lease.
 
 ## 3. Freeze plan and tests
 
@@ -147,6 +167,8 @@ Blocking Review findings return to the owning implementation agent through
 ## 7. Accept and deliver
 
 Request H3 through the native user approval channel.
+In async control mode, the same request creates a durable AttentionRequest and
+returns `WAITING_FOR_USER`; stop rather than bypassing it.
 
 After a consumed H3 approval:
 

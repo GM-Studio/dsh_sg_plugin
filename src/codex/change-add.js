@@ -443,7 +443,10 @@ export function createChangeAddService({
           'PARENT_DELIVERY_PROJECT_MISMATCH',
           'Parent delivery belongs to another project',
         );
-      if (parent.delivery.state !== 'delivery-accepted')
+      if (
+        parent.delivery.state !== 'delivery-accepted' &&
+        parent.delivery.releaseState !== 'customer-accepted'
+      )
         return failure('PARENT_DELIVERY_NOT_ACCEPTED', 'Parent delivery is not accepted');
     }
     return store.create({

@@ -1,6 +1,6 @@
 # Codex 源码加载与原生 Agent Quickstart
 
-本 Quickstart 让 Codex 从当前 SpecGate 源码目录加载插件，并在目标项目中安装真实 subagent 配置。适用于 Codex CLI 0.163.0 及后续支持 portable plugin、`mcp.json`、subagents 和 elicitation 的版本。
+本 Quickstart 让 Codex 从当前 SpecGate 源码目录加载插件，并在目标项目中安装真实 subagent 配置。适用于 Codex CLI 0.117.0 及后续支持 portable plugin、`mcp.json`、subagents、`exec --json` 和 session resume 的版本。
 
 ## 1. 准备源码
 
@@ -52,7 +52,80 @@ codex mcp list
 codex plugin add specgate-codex@specgate-source
 ```
 
-## 3. 安装项目级 Agent
+## 3. 启动异步控制面
+
+异步 supervisor、Web 管理台和飞书 Outbox 独立于 Codex MCP 会话运行。
+
+先生成本地 TOTP secret：
+
+```powershell
+npm run codex:control -- mfa
+```
+
+把命令返回的 secret 保存到操作系统环境或受控启动环境中的
+`SPECGATE_MFA_SECRET`，不要写入仓库。需要飞书通知时再设置：
+
+```powershell
+$env:SPECGATE_FEISHU_WEBHOOK_URL = "https://open.feishu.cn/open-apis/bot/v2/hook/..."
+$env:SPECGATE_MANAGEMENT_PUBLIC_URL = "https://your-secure-management-endpoint/"
+```
+
+跨机器部署可以显式指定 Codex CLI 和隔离的 Codex home：
+
+```powershell
+$env:SPECGATE_CODEX_COMMAND = "codex"
+$env:SPECGATE_CODEX_HOME = "<machine-local-codex-home>"
+```
+
+控制 supervisor 会用一次性的 `mcp_servers={}` 清除宿主额外 MCP，只注入
+项目绑定的 `specgate_control` server，并只把 PATH、代理、Codex/provider
+认证等白名单变量传给子进程。额外变量通过逗号分隔的
+`SPECGATE_CODEX_ENV_ALLOWLIST` 显式放行。飞书 webhook、MFA secret 和管理
+pairing token 不会进入子 Codex 环境。
+
+远程 URL 必须通过 HTTPS 或受认证 Relay/隧道暴露；默认管理服务器只绑定
+`127.0.0.1`。飞书 webhook 只负责通知，卡片按钮打开认证管理页，不把 webhook
+callback 当作审批。
+
+启动并检查：
+
+```powershell
+npm run codex:control -- start --project <absolute-project-path>
+npm run codex:control -- status
+npm run codex:control -- doctor --project <absolute-project-path>
+```
+
+`start` 返回一次性的 `pairingUrl`。在浏览器打开后，fragment 中的 pairing token
+会换取 HttpOnly 会话和 CSRF token。关闭 Codex 会话不会停止 supervisor。
+
+创建和查询 WorkItem：
+
+```powershell
+npm run codex:control -- create `
+  --project <absolute-project-path> `
+  --title "修复导出编码" `
+  --request "修复客户导出文件乱码，并完成真实运行验证"
+npm run codex:control -- list
+npm run codex:control -- attention
+```
+
+也可以在 Codex 中调用 `sg_work_item_create`、`sg_work_item_status`。控制模式
+worker 的 `SPECGATE_WORK_ITEM_ID` 和 `SPECGATE_CONTROL_MODE=1` 由 supervisor
+自动注入。
+
+停止控制面：
+
+```powershell
+npm run codex:control -- stop
+```
+
+停止只结束后台进程，不删除 WorkItem、事件和证据。重新启动时会重新核对租约、
+心跳、审批和固定 commit。
+
+`stop` 先写入受控的 `stop.request`，让 daemon 在 Windows/macOS/Linux 上执行
+相同的优雅关闭流程；超时后才按平台终止整个 Codex 子进程树。
+
+## 4. 安装项目级 Agent
 
 新项目完成 `sg_init`、`sg_verify` 和 `sg_project_finalize_new`，或存量项目
 完成 `sg_adopt_preview` 和 `sg_adopt_apply` 后：
@@ -105,7 +178,7 @@ args = ["<source>/src/codex/server.js", "--project-root", "<absolute-project>"]
 
 这样 MCP 状态始终绑定目标项目，而不是 `~/.codex/plugins/cache/...`。Codex 0.163 的 plugin server 默认从插件目录启动，`roots/list` 在部分 exec 会话中不可用，因此 Quickstart 使用项目级显式绑定作为可靠路径。
 
-## 4. 启动 Codex
+## 5. 启动 Codex
 
 ```bash
 codex -C <absolute-project-path>
@@ -125,7 +198,7 @@ H3 后生成 DeliveryRecord 和客户交付包；未明确 push=true 时不得�
 
 也可直接说“按 AGENTS.md 和 sg-codex Skill 的强制顺序执行”。Codex 会根据项目或 Skill 指令派发 subagents。
 
-## 5. 阶段与工具
+## 6. 阶段与工具
 
 | 阶段       | Codex 主 Agent            | 子 Agent / MCP                                              |
 | ---------- | ------------------------- | ----------------------------------------------------------- |
@@ -150,7 +223,7 @@ Test Designer 必须在冻结前运行项目格式化、lint 与 import-order �
 `sg_test_replace_assets` 由 Test Designer 提交受控修订；MCP 会保留旧 manifest
 并生成带 reason 的 v2，不应把这类缺陷派给前后端开发 Agent。
 
-## 6. 审批
+## 7. 审批
 
 portable `mcp.json` 显式设置：
 
@@ -165,7 +238,16 @@ portable `mcp.json` 显式设置：
 
 若 Codex 客户端不声明 elicitation，或用户拒绝/超时，门禁保持 pending/blocked。不得自动批准。
 
-## 7. 故障检查
+在异步 control mode 中，H1/H3 会由 supervisor 创建 AttentionRequest，并将
+ExecutionRun 转为 `WAITING_FOR_USER`。有效 Decision 后才恢复 Codex session。
+普通 Web session 不足以批准 H1/H3、取消或客户验收，必须提供 TOTP step-up code。
+
+`COMPLETION` 只有在 WorkItem 已绑定真实 schema 3 DeliveryRecord 时才提供
+`accept_delivery`。接受动作先校验不可变 record hash，写入 append-only
+`customer-acceptance.json`，再消费 Control Decision。没有 DeliveryRecord 的
+控制任务只能要求修改，不会伪造“客户已接受”。
+
+## 8. 故障检查
 
 ```bash
 codex plugin marketplace list

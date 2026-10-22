@@ -1,7 +1,7 @@
 {
   "name": "specgate-codex",
   "version": "0.3.0",
-  "description": "SpecGate Codex adapter: project adoption, accepted-change evidence, DeliveryRecords and incremental redelivery.",
+  "description": "SpecGate Codex adapter: asynchronous WorkItems, Web monitoring, Feishu decisions, verified DeliveryRecords and incremental redelivery.",
   "author": { "name": "andy.zx" },
   "license": "MIT",
   "skills": "./skills/",
@@ -9,8 +9,8 @@
   "requires_local_executor": true,
   "interface": {
     "displayName": "SpecGate for Codex",
-    "shortDescription": "Delivery assurance and acceptance records for solo builders",
-    "longDescription": "Local stdio MCP with new/existing project readiness, serial verification, DeliveryRecords, customer packs and incremental redelivery.",
+    "shortDescription": "Async delivery control and acceptance records for solo builders",
+    "longDescription": "Local control plane with durable WorkItems, a Web management console, actionable Feishu decisions, independent verification, DeliveryRecords and incremental redelivery.",
     "developerName": "andy.zx",
     "category": "Developer Tools",
     "capabilities": ["Read", "Write"],

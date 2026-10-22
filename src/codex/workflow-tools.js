@@ -24,6 +24,9 @@ import { PROJECT_TOOLS, callProjectTool } from './project-tools.js';
 import { createPeerUserInputProvider } from './host-input.js';
 import { createFormatService, createNativeFormatter } from './format.js';
 import { FORMAT_TOOLS, callFormatTool } from './format-tools.js';
+import { CONTROL_TOOLS, callControlTool } from './control/tools.js';
+import { createControlApprovalAuthority } from './control/approval-bridge.js';
+import { createLocalControlRuntime } from './control/runtime.js';
 
 const object = (value) => value !== null && typeof value === 'object' && !Array.isArray(value);
 const NATIVE_RUNNER_ADAPTER = fileURLToPath(new URL('./native-test-runner.mjs', import.meta.url));
@@ -242,6 +245,7 @@ export function createToolRegistry({
   baselineRunner,
   newProjectVerifier,
   dirtyApprovalProvider,
+  controlService,
 } = {}) {
   const root = path.resolve(projectRoot);
   const effectiveDevelopmentRoleProvider =
@@ -292,29 +296,41 @@ export function createToolRegistry({
   let store;
   const stateStore = () =>
     (store ||= createStateStore({ projectRoot: root, authorizeGate: authority.authorizeGate }));
-  // No clientInfo, environment variable, tool flag or elicitation capability can
-  // manufacture a trusted user identity. Gate integration stays unavailable.
-  const authority = createApprovalAuthority({
-    request: requestPeer,
-    trustedPeerIdentity: trustedUserIdentity,
-    resolveGateArtifact: ({ gate, state }) => ({
-      scope: state?.changeId,
-      artifactHash:
-        gate === 'H1'
-          ? state?.context?.artifacts?.requirements?.hash
-          : state?.context?.artifacts?.h3?.hash,
-    }),
-    audit: async (event) => {
-      const loaded = await stateStore().load();
-      if (!loaded.ok) throw new Error('Cannot load approval audit state');
-      const appended = await stateStore().recordEvent({
-        expectedVersion: loaded.state.version,
-        type: event.type,
-        payload: event,
+  const controlWorkItemId =
+    process.env.SPECGATE_CONTROL_MODE === '1' ? process.env.SPECGATE_WORK_ITEM_ID : null;
+  const controlRuntime = controlWorkItemId
+    ? controlService
+      ? { service: controlService }
+      : createLocalControlRuntime({ env: process.env })
+    : null;
+  // Native approvals remain the default. In control mode, H1/H3 can only be
+  // authorized by a previously consumed, step-up control Decision.
+  const authority = controlRuntime
+    ? createControlApprovalAuthority({
+        service: controlRuntime.service,
+        workItemId: controlWorkItemId,
+      })
+    : createApprovalAuthority({
+        request: requestPeer,
+        trustedPeerIdentity: trustedUserIdentity,
+        resolveGateArtifact: ({ gate, state }) => ({
+          scope: state?.changeId,
+          artifactHash:
+            gate === 'H1'
+              ? state?.context?.artifacts?.requirements?.hash
+              : state?.context?.artifacts?.h3?.hash,
+        }),
+        audit: async (event) => {
+          const loaded = await stateStore().load();
+          if (!loaded.ok) throw new Error('Cannot load approval audit state');
+          const appended = await stateStore().recordEvent({
+            expectedVersion: loaded.state.version,
+            type: event.type,
+            payload: event,
+          });
+          if (!appended.ok) throw new Error('Cannot persist approval audit');
+        },
       });
-      if (!appended.ok) throw new Error('Cannot persist approval audit');
-    },
-  });
   let projectApprovalAuthority;
   const projectAuthority = () =>
     (projectApprovalAuthority ||= createApprovalAuthority({
@@ -454,6 +470,7 @@ export function createToolRegistry({
     ...FORMAT_TOOLS,
     ...REVIEW_TOOLS,
     ...RELEASE_TOOLS,
+    ...CONTROL_TOOLS,
   ];
   return {
     definitions,
@@ -564,6 +581,18 @@ export function createToolRegistry({
           }
           return result(data);
         }
+        if (CONTROL_TOOLS.some((entry) => entry.name === name))
+          return result(
+            await callControlTool(
+              {
+                projectRoot: root,
+                clock: Date.now,
+                ...(controlService ? { service: controlService } : {}),
+              },
+              name,
+              args,
+            ),
+          );
         if (PROJECT_TOOLS.some((entry) => entry.name === name))
           return result(
             await callProjectTool(
