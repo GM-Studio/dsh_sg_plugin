@@ -7,6 +7,7 @@ import {
   localControlEnvironment,
   resolveControlEnvironment,
   resolveControlMode,
+  validateManagementDeployment,
 } from '../src/codex/control/config.js';
 import { hashValue } from '../src/codex/events.js';
 
@@ -49,6 +50,40 @@ test('control configuration exposes portable Codex command and home overrides', 
   assert.equal(config.codexCommand, '/opt/codex/bin/codex');
   assert.equal(config.codexHome, '/var/lib/specgate-codex');
   assert.equal(config.managementPort, 43121);
+});
+
+test('remote management deployment requires an explicit HTTPS proxy boundary', () => {
+  const config = localControlEnvironment({
+    SPECGATE_MANAGEMENT_DEPLOYMENT_MODE: 'remote',
+    SPECGATE_MANAGEMENT_PUBLIC_URL: 'https://control.example.test',
+    SPECGATE_MANAGEMENT_ALLOWED_HOSTS: 'control.example.test',
+    SPECGATE_MANAGEMENT_ALLOWED_ORIGINS: 'https://control.example.test',
+    SPECGATE_MANAGEMENT_TRUSTED_PROXIES: '127.0.0.1,::1',
+  });
+
+  assert.equal(config.managementDeploymentMode, 'remote');
+  assert.deepEqual(config.managementAllowedHosts, ['control.example.test']);
+  assert.deepEqual(config.managementAllowedOrigins, ['https://control.example.test']);
+  assert.deepEqual(config.managementTrustedProxies, ['127.0.0.1', '::1']);
+  assert.equal(validateManagementDeployment({ config, host: '127.0.0.1' }).ok, true);
+
+  const missingProxy = validateManagementDeployment({
+    config: { ...config, managementTrustedProxies: [] },
+    host: '127.0.0.1',
+  });
+  assert.equal(missingProxy.ok, false);
+  assert.equal(missingProxy.code, 'REMOTE_MODE_CONFIG_INVALID');
+
+  const publicBind = validateManagementDeployment({ config, host: '0.0.0.0' });
+  assert.equal(publicBind.ok, false);
+  assert.equal(publicBind.code, 'REMOTE_MODE_CONFIG_INVALID');
+});
+
+test('management deployment mode fails closed on an unknown value', () => {
+  assert.throws(
+    () => localControlEnvironment({ SPECGATE_MANAGEMENT_DEPLOYMENT_MODE: 'internet' }),
+    (error) => error?.code === 'MANAGEMENT_DEPLOYMENT_MODE_INVALID',
+  );
 });
 
 test('control mode defaults to aggregate and fails closed on an invalid value', () => {

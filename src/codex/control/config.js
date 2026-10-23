@@ -42,6 +42,28 @@ const PORTABLE_ENV_NAMES = new Set([
   'AWS_PROFILE',
 ]);
 const PORTABLE_ENV_PREFIXES = ['CODEX_', 'LC_', 'XDG_'];
+const MANAGEMENT_DEPLOYMENT_MODES = ['local', 'remote'];
+
+function listEnvironmentValue(value) {
+  return String(value || '')
+    .split(',')
+    .map((entry) => entry.trim())
+    .filter(Boolean);
+}
+
+function managementDeploymentMode(value) {
+  const mode = String(value || 'local')
+    .trim()
+    .toLowerCase();
+  if (!MANAGEMENT_DEPLOYMENT_MODES.includes(mode)) {
+    const error = new Error(
+      `Management deployment mode must be one of: ${MANAGEMENT_DEPLOYMENT_MODES.join(', ')}`,
+    );
+    error.code = 'MANAGEMENT_DEPLOYMENT_MODE_INVALID';
+    throw error;
+  }
+  return mode;
+}
 
 export function resolveControlRoot({ env = process.env, homeDirectory = os.homedir() } = {}) {
   const explicit = env.SPECGATE_CONTROL_HOME;
@@ -81,26 +103,81 @@ export function controlExecutionEnvironment({
 }
 
 export function localControlEnvironment(env = process.env) {
+  const managementPort =
+    env.SPECGATE_MANAGEMENT_PORT && Number.isSafeInteger(Number(env.SPECGATE_MANAGEMENT_PORT))
+      ? Number(env.SPECGATE_MANAGEMENT_PORT)
+      : 43120;
   return {
     controlRoot: resolveControlRoot({ env }),
     ownerId: env.SPECGATE_OWNER_ID || 'local-owner',
     mfaSecret: env.SPECGATE_MFA_SECRET || null,
     feishuWebhookUrl: env.SPECGATE_FEISHU_WEBHOOK_URL || null,
-    managementPort:
-      env.SPECGATE_MANAGEMENT_PORT && Number.isSafeInteger(Number(env.SPECGATE_MANAGEMENT_PORT))
-        ? Number(env.SPECGATE_MANAGEMENT_PORT)
-        : 43120,
-    managementPublicUrl:
-      env.SPECGATE_MANAGEMENT_PUBLIC_URL ||
-      `http://127.0.0.1:${
-        env.SPECGATE_MANAGEMENT_PORT && Number.isSafeInteger(Number(env.SPECGATE_MANAGEMENT_PORT))
-          ? Number(env.SPECGATE_MANAGEMENT_PORT)
-          : 43120
-      }`,
+    managementPort,
+    managementPublicUrl: env.SPECGATE_MANAGEMENT_PUBLIC_URL || `http://127.0.0.1:${managementPort}`,
+    managementDeploymentMode: managementDeploymentMode(env.SPECGATE_MANAGEMENT_DEPLOYMENT_MODE),
+    managementAllowedHosts: listEnvironmentValue(env.SPECGATE_MANAGEMENT_ALLOWED_HOSTS),
+    managementAllowedOrigins: listEnvironmentValue(env.SPECGATE_MANAGEMENT_ALLOWED_ORIGINS),
+    managementTrustedProxies: listEnvironmentValue(env.SPECGATE_MANAGEMENT_TRUSTED_PROXIES),
     codexCommand: env.SPECGATE_CODEX_COMMAND || 'codex',
     codexHome: env.SPECGATE_CODEX_HOME || null,
     codexSandbox: env.SPECGATE_CODEX_SANDBOX || 'workspace-write',
   };
+}
+
+export function validateManagementDeployment({ config = {}, host = '127.0.0.1' } = {}) {
+  const mode = config.managementDeploymentMode || 'local';
+  if (mode === 'local') return { ok: true, mode };
+  if (mode !== 'remote') {
+    return {
+      ok: false,
+      code: 'MANAGEMENT_DEPLOYMENT_MODE_INVALID',
+      message: 'Management deployment mode is invalid',
+    };
+  }
+
+  let publicUrl;
+  try {
+    publicUrl = new URL(config.managementPublicUrl);
+  } catch {
+    return {
+      ok: false,
+      code: 'REMOTE_MODE_CONFIG_INVALID',
+      message: 'Remote management requires a valid HTTPS public URL',
+    };
+  }
+  const allowedHosts = Array.isArray(config.managementAllowedHosts)
+    ? config.managementAllowedHosts
+    : [];
+  const allowedOrigins = Array.isArray(config.managementAllowedOrigins)
+    ? config.managementAllowedOrigins
+    : [];
+  const trustedProxies = Array.isArray(config.managementTrustedProxies)
+    ? config.managementTrustedProxies
+    : [];
+  const invalidOrigin = allowedOrigins.some((origin) => {
+    try {
+      return new URL(origin).protocol !== 'https:';
+    } catch {
+      return true;
+    }
+  });
+  if (
+    publicUrl.protocol !== 'https:' ||
+    allowedHosts.length === 0 ||
+    allowedOrigins.length === 0 ||
+    trustedProxies.length === 0 ||
+    invalidOrigin ||
+    host === '0.0.0.0' ||
+    host === '::'
+  ) {
+    return {
+      ok: false,
+      code: 'REMOTE_MODE_CONFIG_INVALID',
+      message:
+        'Remote management requires HTTPS, allowed Host/Origin values, trusted proxies and a non-public bind address',
+    };
+  }
+  return { ok: true, mode };
 }
 
 /**

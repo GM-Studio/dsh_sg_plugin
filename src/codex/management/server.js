@@ -28,6 +28,45 @@ function failure(code, message) {
   return { ok: false, code, message };
 }
 
+function remoteConfigurationError(message) {
+  const error = new TypeError(message);
+  error.code = 'REMOTE_MODE_CONFIG_INVALID';
+  return error;
+}
+
+function normalizeHost(value) {
+  if (typeof value !== 'string' || !value.trim()) return null;
+  return value.trim().toLowerCase().replace(/\.$/, '');
+}
+
+function normalizeAddress(value) {
+  if (typeof value !== 'string' || !value.trim()) return null;
+  return value
+    .trim()
+    .replace(/^\[|\]$/g, '')
+    .replace(/^::ffff:/, '');
+}
+
+function normalizeOrigin(value) {
+  if (typeof value !== 'string' || !value.trim()) return null;
+  try {
+    const parsed = new URL(value.trim());
+    return parsed.origin.toLowerCase();
+  } catch {
+    return null;
+  }
+}
+
+function isHttpsOrigin(value) {
+  const normalized = normalizeOrigin(value);
+  return normalized !== null && new URL(normalized).protocol === 'https:';
+}
+
+function isPublicBindAddress(value) {
+  const normalized = normalizeAddress(value);
+  return normalized === '0.0.0.0' || normalized === '::';
+}
+
 function equalSecret(left, right) {
   if (typeof left !== 'string' || typeof right !== 'string') return false;
   const leftHash = createHash('sha256').update(left).digest();
@@ -194,6 +233,10 @@ export function createManagementServer({
   rateLimitPerMinute = 120,
   secureCookie = false,
   trustProxyHttps = false,
+  deploymentMode = 'local',
+  allowedHosts = [],
+  allowedOrigins = [],
+  trustedProxies = [],
   sessionStore = null,
 } = {}) {
   if (!services?.projection || !services?.decisions)
@@ -211,10 +254,30 @@ export function createManagementServer({
     (typeof sessionStore?.load !== 'function' || typeof sessionStore?.save !== 'function')
   )
     throw new TypeError('sessionStore must provide load() and save()');
+  if (!['local', 'remote'].includes(deploymentMode))
+    throw remoteConfigurationError('Deployment mode must be local or remote');
+  if (deploymentMode === 'remote') {
+    if (!secureCookie || !trustProxyHttps) {
+      throw remoteConfigurationError('Remote mode requires Secure cookies and trusted HTTPS');
+    }
+    if (!Array.isArray(allowedHosts) || allowedHosts.length === 0)
+      throw remoteConfigurationError('Remote mode requires allowed Host values');
+    if (!Array.isArray(allowedOrigins) || allowedOrigins.length === 0)
+      throw remoteConfigurationError('Remote mode requires allowed Origin values');
+    if (!Array.isArray(trustedProxies) || trustedProxies.length === 0)
+      throw remoteConfigurationError('Remote mode requires trusted proxy values');
+    if (allowedOrigins.some((origin) => !isHttpsOrigin(origin)))
+      throw remoteConfigurationError('Remote mode Origins must use HTTPS');
+    if (isPublicBindAddress(host))
+      throw remoteConfigurationError('Remote mode must not bind an unprotected public address');
+  }
 
   const sessions = new Map();
   const rateBuckets = new Map();
   const pairingTokens = new Map();
+  const hostSet = new Set(allowedHosts.map(normalizeHost).filter(Boolean));
+  const originSet = new Set(allowedOrigins.map(normalizeOrigin).filter(Boolean));
+  const proxySet = new Set(trustedProxies.map(normalizeAddress).filter(Boolean));
   const defaultActor = { kind: 'user', id: 'local-owner', source: 'web' };
   const pairKey = (value) =>
     typeof value === 'string' ? createHash('sha256').update(value).digest('hex') : null;
@@ -336,6 +399,21 @@ export function createManagementServer({
       if (oldest !== undefined && oldest !== key) rateBuckets.delete(oldest);
     }
     return bucket.count <= rateLimitPerMinute;
+  }
+
+  function requestBoundary(request) {
+    if (deploymentMode !== 'remote') return null;
+    const remoteAddress = normalizeAddress(request.socket?.remoteAddress);
+    if (!proxySet.has(remoteAddress)) return 'UNTRUSTED_PROXY';
+    if (request.headers['x-forwarded-proto'] !== 'https') return 'HTTPS_REQUIRED';
+    const host = normalizeHost(request.headers.host);
+    if (!hostSet.has(host)) return 'HOST_NOT_ALLOWED';
+    if (request.method === 'POST') {
+      const origin = normalizeOrigin(request.headers.origin);
+      if (!origin) return 'ORIGIN_REQUIRED';
+      if (!originSet.has(origin)) return 'ORIGIN_NOT_ALLOWED';
+    }
+    return null;
   }
 
   async function sessionFor(request) {
@@ -534,6 +612,18 @@ export function createManagementServer({
 
   const server = http.createServer(async (request, response) => {
     securityHeaders(response);
+    const boundaryFailure = requestBoundary(request);
+    if (boundaryFailure) {
+      const status = ['UNTRUSTED_PROXY', 'HTTPS_REQUIRED', 'ORIGIN_REQUIRED'].includes(
+        boundaryFailure,
+      )
+        ? 403
+        : boundaryFailure === 'HOST_NOT_ALLOWED'
+          ? 400
+          : 403;
+      sendJson(response, status, failure(boundaryFailure, 'Management request boundary rejected'));
+      return;
+    }
     if (!withinRateLimit(request)) {
       sendJson(response, 429, failure('RATE_LIMITED', 'Too many management requests'));
       return;

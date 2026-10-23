@@ -9,7 +9,11 @@ import {
 } from './runtime.js';
 import { createCodexExecutionAdapter } from './codex-execution-adapter.js';
 import { createControlSupervisor } from './supervisor.js';
-import { controlExecutionEnvironment, resolveControlMode } from './config.js';
+import {
+  controlExecutionEnvironment,
+  resolveControlMode,
+  validateManagementDeployment,
+} from './config.js';
 import { createSyncProbeRunner, describeDegradation, detectCapabilities } from './capabilities.js';
 import { resolveGlobalConcurrency } from './projects.js';
 import { createFeishuNotifier } from '../channels/feishu.js';
@@ -74,6 +78,9 @@ export async function startControlDaemon({
     createLocalControlRuntime({ env, clock, mode: controlMode, projectRoot: resolvedProjectRoot });
   if (runtime && runtime.ok === false && runtime.code) return runtime;
   const config = runtime.config;
+
+  const deployment = validateManagementDeployment({ config, host: managementHost });
+  if (!deployment.ok) return deployment;
 
   // Host capability gate. A Codex build is never accepted or rejected by its
   // version string: the actual executable is probed once and only a missing
@@ -146,6 +153,11 @@ export async function startControlDaemon({
     port: managementPort ?? config.managementPort,
     host: managementHost,
     secureCookie: config.managementPublicUrl.startsWith('https:'),
+    trustProxyHttps: config.managementDeploymentMode === 'remote',
+    deploymentMode: config.managementDeploymentMode,
+    allowedHosts: config.managementAllowedHosts,
+    allowedOrigins: config.managementAllowedOrigins,
+    trustedProxies: config.managementTrustedProxies,
     sessionStore,
   });
   const started = await management.start();

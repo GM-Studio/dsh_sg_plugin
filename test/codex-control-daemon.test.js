@@ -54,6 +54,65 @@ test('control daemon starts management independently and stops without deleting 
   await daemon.stop();
 });
 
+test('remote management daemon refuses incomplete deployment configuration before startup', async () => {
+  const controlRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'sg-control-remote-invalid-'));
+  const projectRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'sg-control-remote-invalid-project-'));
+  const daemon = await startControlDaemon({
+    env: {
+      ...process.env,
+      SPECGATE_CONTROL_HOME: controlRoot,
+      SPECGATE_PROJECT_ROOT: projectRoot,
+      SPECGATE_MANAGEMENT_DEPLOYMENT_MODE: 'remote',
+      SPECGATE_MANAGEMENT_PUBLIC_URL: 'https://control.example.test',
+      SPECGATE_MANAGEMENT_ALLOWED_HOSTS: 'control.example.test',
+      SPECGATE_MANAGEMENT_ALLOWED_ORIGINS: 'https://control.example.test',
+    },
+    projectRoot,
+    managementPort: 0,
+    pollMs: 60000,
+    adapter: {
+      async run() {
+        return { ok: true, exitCode: 0, sessionId: 'remote-invalid-session' };
+      },
+    },
+  });
+  assert.equal(daemon.ok, false);
+  assert.equal(daemon.code, 'REMOTE_MODE_CONFIG_INVALID');
+  assert.equal(fs.existsSync(path.join(controlRoot, 'daemon.json')), false);
+});
+
+test('remote management daemon starts only behind a configured HTTPS proxy boundary', async (t) => {
+  const controlRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'sg-control-remote-valid-'));
+  const projectRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'sg-control-remote-valid-project-'));
+  const daemon = await startControlDaemon({
+    env: {
+      ...process.env,
+      SPECGATE_CONTROL_HOME: controlRoot,
+      SPECGATE_PROJECT_ROOT: projectRoot,
+      SPECGATE_MANAGEMENT_DEPLOYMENT_MODE: 'remote',
+      SPECGATE_MANAGEMENT_PUBLIC_URL: 'https://control.example.test',
+      SPECGATE_MANAGEMENT_ALLOWED_HOSTS: 'control.example.test',
+      SPECGATE_MANAGEMENT_ALLOWED_ORIGINS: 'https://control.example.test',
+      SPECGATE_MANAGEMENT_TRUSTED_PROXIES: '127.0.0.1',
+    },
+    projectRoot,
+    managementPort: 0,
+    pollMs: 60000,
+    adapter: {
+      async run() {
+        return { ok: true, exitCode: 0, sessionId: 'remote-valid-session' };
+      },
+    },
+  });
+  t.after(() => daemon.stop());
+  assert.equal(daemon.ok, true);
+  const forged = await fetch(`${daemon.baseUrl}/api/health`, {
+    headers: { 'x-forwarded-proto': 'https', origin: 'https://control.example.test' },
+  });
+  assert.equal(forged.status, 400);
+  assert.equal((await forged.json()).code, 'HOST_NOT_ALLOWED');
+});
+
 test('control CLI exposes help and generates MFA material without writing config', async () => {
   const help = await runControlCli({ args: ['help'], env: {} });
   assert.equal(help.ok, true);
