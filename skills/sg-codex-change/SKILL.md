@@ -14,11 +14,12 @@ description: 用户请求 SpecGate 新增功能、修改或修复已有功能，
 固定流程：
 
 1. `sg_change` / `sg_change_add` → 自动原生澄清第 1 轮。
-2. 仍有歧义时，用 `sg_change_questions` 发起第 2 / 3 轮；每轮最多 5 问。
+2. 仍有歧义时，用 `sg_change_questions` 发起第 2 / 3 轮；每轮最多 5 问。选择题必须设置 `input: "choice"`（单选）或 `input: "multi-choice"`（多选）并提供 `options`，让宿主显示选择控件；文本填空使用 `input: "text"`（省略时也默认为文本框）。不得把选项只写进问题文字后要求用户手输。
 3. 向用户展示真实回答，再 `sg_change_propose`，覆盖功能、非功能、边界、失败场景及验收标准。
 4. 反向复述需求并执行 `sg_change_critique`，覆盖歧义、矛盾、不可行、非功能、安全/性能/并发及测试盲区。
-5. 展示完整需求、验收标准、显式假设、未决问题、风险和反向复述。
-6. 最后调用 `sg_request_h1` 请求可信人工审批。
+5. `sg_change_critique` 写入包含完整需求、验收标准、假设、未决问题、风险和反向复述的 Markdown，返回 `H1_DOCUMENT_READY` 与 `document.absolutePath`。用绝对路径可点击链接交给用户查看、修改，不能只报告 H1_PENDING。该步骤不弹审批、不冻结需求。已有待审批需求尚无文档时，首次请求 H1 只生成文档。
+6. 用户修改文档或提出修改意见后，读取修改内容，通过 `sg_change_propose` 更新提案并重新 `sg_change_critique` 生成新文档；禁止手改状态、候选 JSON 或审批指纹。文档直接编辑后旧审批会失效。
+7. 用户查看文档后，调用 `sg_request_h1({ expectedVersion })` 打开可信审批表单。若当前宿主只暴露部分工具而没有该工具，直接用 `sg_change({ action: "request_h1", expectedVersion })` 请求同一审批，无需重复创建 Change。工具参数不接受审批决定；只有表单中的真实批准才能进入 `REQ_FROZEN` 并推进计划，要求修改回到 `REQ_CLARIFYING`，取消进入 `CANCELLED`。每次操作使用最新返回版本。
 
 收到 `WAITING_FOR_USER`、`CLARIFICATION_REQUIRED`、`CLARIFICATION_PENDING` 或 `USER_INPUT_UNAVAILABLE` 时立即停止，不得继续 propose / critique / H1，也不得代替用户作答。待答轮次已持久化时，只能用 `sg_change_questions({ expectedVersion, round })` 恢复同一轮，不得新建重复轮次或 Change。
 

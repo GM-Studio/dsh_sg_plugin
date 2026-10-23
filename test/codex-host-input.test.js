@@ -76,3 +76,45 @@ test('clarification fails closed when the real channel rejects or cancels', asyn
     (error) => error.code === 'USER_INPUT_REJECTED',
   );
 });
+
+test('clarification renders single choice, multiple choice and text as distinct native controls', async () => {
+  let schema;
+  const provider = createPeerUserInputProvider({
+    trustedUserIdentity: { id: 'alice', kind: 'user', source: 'codex-mcp-os-user' },
+    requestPeer: async (_method, params) => {
+      schema = params.requestedSchema;
+      return {
+        action: 'accept',
+        content: { single: 'Vue', multiple: ['查询', '导出'], text: '补充说明' },
+      };
+    },
+  });
+  const response = await provider.request({
+    changeId: 'controls',
+    round: 2,
+    questions: [
+      {
+        id: 'single',
+        category: 'constraint',
+        text: '框架',
+        input: 'choice',
+        options: ['Vue', 'React'],
+      },
+      {
+        id: 'multiple',
+        category: 'functional',
+        text: '功能',
+        input: 'multi-choice',
+        options: ['查询', '导出'],
+      },
+      { id: 'text', category: 'boundary', text: '说明', input: 'text' },
+    ],
+  });
+  assert.equal(schema.properties.single.type, 'string');
+  assert.deepEqual(schema.properties.single.enum, ['Vue', 'React']);
+  assert.equal(schema.properties.multiple.type, 'array');
+  assert.deepEqual(schema.properties.multiple.items.enum, ['查询', '导出']);
+  assert.equal(schema.properties.text.type, 'string');
+  assert.equal(schema.properties.text.enum, undefined);
+  assert.deepEqual(response.answers[1].answer, ['查询', '导出']);
+});

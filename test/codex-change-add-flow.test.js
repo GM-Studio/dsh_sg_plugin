@@ -420,6 +420,61 @@ test('without a trusted input source, the pending intake is preserved and tool a
   assert.equal(after.context.changeAdd.rounds[0].status, 'pending');
 });
 
+test('choice answers preserve arrays and reject unavailable options before recording user input', async () => {
+  const f = fixture({ input: true });
+  await start(f);
+  let state = await draft(f);
+  let invalid = true;
+  f.service = createChangeAddService({
+    ...f.options,
+    userInputProvider: {
+      trustedUserIdentity: nativeUser,
+      request: async () => ({
+        answers: [
+          { questionId: 'single', answer: invalid ? 'Unknown' : 'Vue' },
+          { questionId: 'multiple', answer: ['查询', '导出'] },
+        ],
+      }),
+    },
+  });
+  const questions = [
+    {
+      id: 'single',
+      category: 'constraint',
+      text: '框架',
+      input: 'choice',
+      options: ['Vue', 'React'],
+    },
+    {
+      id: 'multiple',
+      category: 'functional',
+      text: '功能',
+      input: 'multi-choice',
+      options: ['查询', '导出'],
+    },
+  ];
+  for (const malformed of [
+    { ...questions[0], options: undefined },
+    { ...questions[0], options: ['Vue', 'Vue'] },
+    { ...questions[0], input: 'text' },
+  ]) {
+    assert.equal(
+      (await f.service.askQuestions({ expectedVersion: state.version, questions: [malformed] }))
+        .code,
+      'INVALID_ARGUMENT',
+    );
+  }
+  const refused = await f.service.askQuestions({ expectedVersion: state.version, questions });
+  assert.equal(refused.code, 'USER_INPUT_INVALID');
+  state = (await f.store.load()).state;
+  assert.equal(state.context.changeAdd.rounds[1].status, 'pending');
+  assert.deepEqual(state.context.changeAdd.rounds[1].answers, []);
+  invalid = false;
+  const accepted = await f.service.askQuestions({ expectedVersion: state.version, round: 2 });
+  assert.equal(accepted.ok, true, JSON.stringify(accepted));
+  assert.deepEqual(accepted.state.context.changeAdd.rounds[1].answers[1].answer, ['查询', '导出']);
+});
+
 test('critique requires structured categories and valid requirement references', async () => {
   const f = fixture({ input: true });
   await start(f);
@@ -491,6 +546,73 @@ test('actual default approval remains unavailable and never freezes requirements
   assert.equal(result.ok, false);
   assert.equal(result.code, 'APPROVAL_CHANNEL_UNAVAILABLE');
   assert.equal((await f.store.load()).state.phase, 'H1_PENDING');
+});
+
+test('critique writes a reviewable requirements document before any approval and unified entry can request H1', async () => {
+  let approvals = 0;
+  const f = fixture({
+    input: true,
+    native: true,
+    nativeRequest: async () => {
+      approvals++;
+      return { action: 'accept', content: { decision: 'approve', comment: '已查看需求文档' } };
+    },
+  });
+  const state = await reviewed(f);
+  assert.equal(state.phase, 'H1_PENDING');
+  assert.equal(approvals, 0);
+  const document = state.context.changeAdd.document;
+  assert.ok(document?.path);
+  const markdown = fs.readFileSync(path.join(f.root, document.path), 'utf8');
+  assert.match(markdown, /REQ-1/);
+  assert.match(markdown, /AC-1/);
+  assert.match(markdown, /用户澄清记录/);
+  assert.match(markdown, /反向复述与批判分析/);
+  const approved = await f.service.startTyped({
+    expectedVersion: state.version,
+    action: 'request_h1',
+  });
+  assert.equal(approved.ok, true, JSON.stringify(approved));
+  assert.equal(approved.state.phase, 'REQ_FROZEN');
+  assert.equal(approvals, 1);
+});
+
+test('editing a review document prevents approval until a new proposal and critique are written', async () => {
+  let approvals = 0;
+  const f = fixture({
+    input: true,
+    native: true,
+    nativeRequest: async () => {
+      approvals++;
+      return { action: 'accept', content: { decision: 'approve', comment: '' } };
+    },
+  });
+  let state = await reviewed(f);
+  const oldDocument = state.context.changeAdd.document;
+  assert.ok(oldDocument?.path);
+  fs.appendFileSync(path.join(f.root, oldDocument.path), '\n用户修改：增加分页。\n');
+  assert.equal(
+    (await f.service.requestH1({ expectedVersion: state.version })).code,
+    'REQUIREMENTS_CHANGED',
+  );
+  assert.equal(approvals, 0);
+  state = await draft(f, {
+    requirements: [{ ...requirements[0], text: 'Return searchable tasks with pagination.' }],
+  });
+  assert.equal(state.context.changeAdd.document, null);
+  const reviewedAgain = await f.service.critique({
+    expectedVersion: state.version,
+    report: critique,
+  });
+  assert.equal(reviewedAgain.code, 'H1_DOCUMENT_READY');
+  assert.notEqual(reviewedAgain.document.path, oldDocument.path);
+  assert.match(
+    fs.readFileSync(path.join(f.root, reviewedAgain.document.path), 'utf8'),
+    /pagination/,
+  );
+  const approved = await f.service.requestH1({ expectedVersion: reviewedAgain.state.version });
+  assert.equal(approved.state.phase, 'REQ_FROZEN');
+  assert.equal(approvals, 1);
 });
 
 test('simulated native H1 approval creates a versioned immutable snapshot bound to the approval hash', async () => {
@@ -694,7 +816,7 @@ test('concurrent intake creates one active change without queueing another', asy
   );
 });
 
-test('preexisting immutable artifact conflicts fail closed instead of overwriting a revision', async () => {
+test('tampered immutable candidates fail closed instead of overwriting a revision', async () => {
   const f = fixture({ input: true, native: true });
   const state = await reviewed(f);
   const directory = path.join(f.root, '.specgate/codex/changes', state.changeId, 'requirements');
@@ -706,7 +828,7 @@ test('preexisting immutable artifact conflicts fail closed instead of overwritin
   fs.writeFileSync(target, '{"untrusted":"existing content"}\n');
   assert.equal(
     (await f.service.requestH1({ expectedVersion: state.version })).code,
-    'SNAPSHOT_CONFLICT',
+    'REQUIREMENTS_CHANGED',
   );
   assert.equal(fs.readFileSync(target, 'utf8'), '{"untrusted":"existing content"}\n');
   assert.equal((await f.store.load()).state.phase, 'H1_PENDING');
@@ -891,7 +1013,9 @@ test('an already aborted server context creates no clarification round or H1 art
   );
   assert.equal(h1.code, 'CANCELLED');
   assert.equal((await f.store.load()).state.version, reviewedState.version);
-  assert.equal(fs.existsSync(path.join(f.root, '.specgate/codex/changes')), false);
+  // Critique already prepared the review document; aborting H1 adds no files.
+  assert.equal(reviewedState.context.changeAdd.frozen, null);
+  assert.ok(fs.existsSync(path.join(f.root, reviewedState.context.changeAdd.document.path)));
 });
 
 test('a parent change without impact still validates the parent before requiring impact', async () => {

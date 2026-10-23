@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import { createHash } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
 import { buildChangeContract, normalizeChangeInput, validateChangeInput } from './change-policy.js';
@@ -34,13 +35,47 @@ const FINDINGS = [
   'testBlindSpots',
   'suggestedQuestions',
 ];
+const QUESTION_INPUTS = new Set(['text', 'choice', 'multi-choice']);
 const object = (value) => value !== null && typeof value === 'object' && !Array.isArray(value);
 const clone = (value) => structuredClone(value);
 const text = (value, max = 16000) =>
   typeof value === 'string' && value.trim().length > 0 && value.length <= max;
+const rawHash = (content) => 'sha256:' + createHash('sha256').update(content, 'utf8').digest('hex');
 const id = (value) => typeof value === 'string' && /^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$/.test(value);
 const keys = (value, allowed) =>
   object(value) && Object.keys(value).every((key) => allowed.includes(key));
+const questionInput = (question) => question?.input ?? 'text';
+const validOptions = (options) =>
+  Array.isArray(options) &&
+  options.length >= 2 &&
+  options.length <= 20 &&
+  options.every((option) => text(option, 200)) &&
+  new Set(options.map((option) => option.trim())).size === options.length;
+const validQuestion = (question, seen = new Set()) => {
+  const input = questionInput(question);
+  const valid =
+    keys(question, ['id', 'category', 'text', 'input', 'options']) &&
+    id(question.id) &&
+    !seen.has(question.id) &&
+    CATEGORIES.has(question.category) &&
+    text(question.text, 2000) &&
+    QUESTION_INPUTS.has(input) &&
+    (input === 'text' ? question.options === undefined : validOptions(question.options));
+  seen.add(question?.id);
+  return valid;
+};
+const validAnswer = (question, answer) => {
+  const input = questionInput(question);
+  if (input === 'text') return text(answer, 8000);
+  if (input === 'choice') return typeof answer === 'string' && question.options.includes(answer);
+  return (
+    Array.isArray(answer) &&
+    answer.length >= 1 &&
+    answer.length <= question.options.length &&
+    answer.every((value) => typeof value === 'string' && question.options.includes(value)) &&
+    new Set(answer).size === answer.length
+  );
+};
 const IMPACT_KEYS = ['affectedAcIds', 'reusedAcIds'];
 const idList = (value) => Array.isArray(value) && value.every((entry) => id(entry));
 // Only the shape is enforced here; the incremental algebra (unknown ACs,
@@ -213,9 +248,18 @@ function readJson(root, relative) {
   return JSON.parse(fs.readFileSync(checkedFile(root, relative), 'utf8'));
 }
 
-function writeImmutable(root, relative, value) {
+function readMarkdown(root, relative) {
+  const content = fs.readFileSync(checkedFile(root, relative));
+  const decoded = content.toString('utf8');
+  if (!Buffer.from(decoded, 'utf8').equals(content))
+    throw new Error('Workflow document is not valid UTF-8');
+  return decoded;
+}
+
+function writeImmutableText(root, relative, content) {
   const target = path.resolve(root, relative);
   if (!inside(root, target)) throw new Error('Unsafe snapshot path');
+  if (typeof content !== 'string') throw new Error('Snapshot content must be text');
   let current = root;
   for (const part of path.relative(root, path.dirname(target)).split(path.sep)) {
     current = path.join(current, part);
@@ -227,8 +271,8 @@ function writeImmutable(root, relative, value) {
     const stat = fs.lstatSync(current);
     if (stat.isSymbolicLink() || !stat.isDirectory()) throw new Error('Unsafe snapshot directory');
   }
-  const content = canonicalJson(value) + '\n';
-  if (Buffer.byteLength(content) > 4 * 1024 * 1024)
+  const bytes = Buffer.from(content, 'utf8');
+  if (bytes.byteLength > 4 * 1024 * 1024)
     throw new Error('Snapshot exceeds the artifact size limit');
   let descriptor;
   let created = false;
@@ -236,7 +280,7 @@ function writeImmutable(root, relative, value) {
   try {
     descriptor = fs.openSync(target, 'wx', 0o600);
     created = true;
-    fs.writeFileSync(descriptor, content);
+    fs.writeFileSync(descriptor, bytes);
     fs.fsyncSync(descriptor);
   } catch (error) {
     failure = error;
@@ -251,10 +295,7 @@ function writeImmutable(root, relative, value) {
         // preserve the original write failure; the partial snapshot is never treated as frozen
       }
     }
-    if (
-      failure.code !== 'EEXIST' ||
-      fs.readFileSync(checkedFile(root, relative), 'utf8') !== content
-    )
+    if (failure.code !== 'EEXIST' || !fs.readFileSync(checkedFile(root, relative)).equals(bytes))
       throw failure;
   }
   if (process.platform !== 'win32') {
@@ -266,6 +307,10 @@ function writeImmutable(root, relative, value) {
     }
   }
   return relative;
+}
+
+function writeImmutable(root, relative, value) {
+  return writeImmutableText(root, relative, canonicalJson(value) + '\n');
 }
 
 function validDraft(args) {
@@ -386,6 +431,9 @@ function snapshot(state, data) {
 }
 
 export function renderRequirementsForUser(candidate) {
+  // Storage canonicalizes object key order. Render the same bytes before and
+  // after a reload so document hashes remain stable across MCP calls.
+  candidate = JSON.parse(canonicalJson(candidate));
   const lines = [
     `# 需求文档：${candidate.changeId}（修订 ${candidate.revision}）`,
     '',
@@ -654,6 +702,7 @@ export function createChangeAddService({
           rounds: [],
           critique: null,
           candidate: null,
+          document: null,
           frozen: null,
           changeContract: null,
         },
@@ -709,6 +758,13 @@ export function createChangeAddService({
   }
 
   async function startTyped(args = {}, { signal } = {}) {
+    // Keep the human gate reachable through the unified entry when a host
+    // exposes only a subset of the server's tool catalogue.
+    if (args.action === 'request_h1') {
+      if (!keys(args, ['expectedVersion', 'action']))
+        return failure('INVALID_ARGUMENT', 'H1 only accepts an action and current version');
+      return requestH1({ expectedVersion: args.expectedVersion }, { signal });
+    }
     if (
       !keys(args, [
         'name',
@@ -780,6 +836,7 @@ export function createChangeAddService({
       state = moved.state;
     }
     const data = clone(state.context.changeAdd);
+    data.document = null;
     data.revisions.push({
       revision: data.revisions.length + 1,
       at: now(),
@@ -792,7 +849,7 @@ export function createChangeAddService({
     data.candidate = null;
     data.frozen = null;
     data.changeContract = null;
-    return update(state, data);
+    return update(state, data, null);
   }
 
   async function requestClarification({ state, questions, source, round, signal }) {
@@ -812,8 +869,9 @@ export function createChangeAddService({
       });
       data.critique = null;
       data.candidate = null;
+      data.document = null;
       if (signal?.aborted) return cancelled();
-      saved = await update(state, data);
+      saved = await update(state, data, null);
       if (!saved.ok) return saved;
     }
     const identity = userInputProvider?.trustedUserIdentity;
@@ -846,6 +904,7 @@ export function createChangeAddService({
       return inputFailure(error, saved.state.version);
     }
     if (signal?.aborted) return cancelled();
+    const questionsById = new Map(questions.map((question) => [question.id, question]));
     if (
       !keys(response, ['answers']) ||
       !Array.isArray(response.answers) ||
@@ -855,7 +914,7 @@ export function createChangeAddService({
         (a) =>
           keys(a, ['questionId', 'answer']) &&
           questionIds.has(a.questionId) &&
-          text(a.answer, 8000),
+          validAnswer(questionsById.get(a.questionId), a.answer),
       )
     )
       return inputFailure({ code: 'USER_INPUT_INVALID' }, saved.state.version);
@@ -918,19 +977,11 @@ export function createChangeAddService({
         'At most three rounds with at most five questions are permitted',
       );
     const seen = new Set();
-    if (
-      !questions.every((q) => {
-        const valid =
-          keys(q, ['id', 'category', 'text']) &&
-          id(q.id) &&
-          !seen.has(q.id) &&
-          CATEGORIES.has(q.category) &&
-          text(q.text, 2000);
-        seen.add(q?.id);
-        return valid;
-      })
-    )
-      return failure('INVALID_ARGUMENT', 'Questions require unique IDs, categories and text');
+    if (!questions.every((question) => validQuestion(question, seen)))
+      return failure(
+        'INVALID_ARGUMENT',
+        'Questions require unique IDs, categories, text and valid native input options',
+      );
     if (secret(questions))
       return failure('SENSITIVE_INPUT', 'Remove credentials from clarification questions');
     return requestClarification({
@@ -963,6 +1014,7 @@ export function createChangeAddService({
       state = moved.state;
     }
     const data = clone(state.context.changeAdd);
+    data.document = null;
     data.critique = { source: 'model-proposal', at: now(), report: clone(args.report) };
     const contract = buildChangeContract({
       changeId: state.changeId,
@@ -981,7 +1033,63 @@ export function createChangeAddService({
     data.candidate = { hash: artifactHash, snapshot: artifact };
     const saved = await update(state, data, { hash: artifactHash, revision: revision.revision });
     if (!saved.ok) return saved;
-    return store.transition({ expectedVersion: saved.state.version, to: 'H1_PENDING' });
+    const pending = await store.transition({
+      expectedVersion: saved.state.version,
+      to: 'H1_PENDING',
+    });
+    if (!pending.ok) return pending;
+    return prepareRequirementsDocument(pending.state, data);
+  }
+
+  async function prepareRequirementsDocument(state, data) {
+    const revision = data.revisions.at(-1);
+    const fingerprint = data.candidate.hash.replace(/^sha256:/, '');
+    const base = `.specgate/codex/changes/${state.changeId}/requirements/`;
+    const candidatePath = base + 'candidate-' + fingerprint + '.json';
+    const documentPath = base + 'revision-' + revision.revision + '-' + fingerprint + '.md';
+    const markdown = renderRequirementsForUser(data.candidate.snapshot) + '\n';
+    const documentHash = rawHash(markdown);
+    try {
+      writeImmutable(root, candidatePath, data.candidate.snapshot);
+      writeImmutableText(root, documentPath, markdown);
+    } catch {
+      return failure(
+        'SNAPSHOT_CONFLICT',
+        'An immutable requirements review document could not be safely written',
+        {
+          actualVersion: state.version,
+        },
+      );
+    }
+    data.document = {
+      path: documentPath,
+      hash: documentHash,
+      candidateHash: data.candidate.hash,
+      preparedAt: now(),
+    };
+    const saved = await update(state, data, {
+      hash: data.candidate.hash,
+      revision: revision.revision,
+      candidatePath,
+      documentPath,
+      documentHash,
+    });
+    if (!saved.ok) return saved;
+    return {
+      ok: true,
+      code: 'H1_DOCUMENT_READY',
+      message:
+        '需求审查文档已写入，请展示文档链接供用户查看和修改。修改后须重新执行 sg_change_propose 和 sg_change_critique。用户查看后调用 sg_request_h1；若该工具未暴露，使用 sg_change({ action: "request_h1", expectedVersion }) 打开同一可信审批表单。',
+      status: 'AWAITING_REQUIREMENTS_REVIEW',
+      nextAction: 'REVIEW_AND_REQUEST_H1_APPROVAL',
+      document: {
+        path: documentPath,
+        absolutePath: path.resolve(root, documentPath),
+        hash: documentHash,
+      },
+      state: saved.state,
+      actualVersion: saved.state.version,
+    };
   }
 
   async function requestH1(args = {}, { signal } = {}) {
@@ -1000,6 +1108,7 @@ export function createChangeAddService({
     if (
       !data.candidate ||
       !data.critique ||
+      !revision ||
       data.candidate.hash !== 'sha256:' + hashValue(snapshot(loaded.state, data))
     )
       return failure(
@@ -1016,50 +1125,95 @@ export function createChangeAddService({
         'REQUIREMENTS_BLOCKED',
         '存在阻塞性未决问题、阻塞性批判发现或未回答的澄清轮次；必须先解决，才能请求 H1 审批',
       );
+    const base = `.specgate/codex/changes/${loaded.state.changeId}/requirements/`;
+    const fingerprint = data.candidate.hash.replace(/^sha256:/, '');
+    const candidatePath = base + 'candidate-' + fingerprint + '.json';
+    const markdown = renderRequirementsForUser(data.candidate.snapshot) + '\n';
+    const documentHash = rawHash(markdown);
+    const documentPath =
+      data.document?.path ?? base + 'revision-' + revision.revision + '-' + fingerprint + '.md';
+
+    // Older pending changes may predate document generation. Prepare their
+    // review document first and require another call before requesting approval.
+    if (!data.document) return prepareRequirementsDocument(loaded.state, data);
+
+    if (
+      data.document.path !== documentPath ||
+      data.document.hash !== documentHash ||
+      data.document.candidateHash !== data.candidate.hash ||
+      loaded.state.context.artifacts.requirements?.hash !== data.candidate.hash ||
+      loaded.state.context.artifacts.requirements?.candidatePath !== candidatePath ||
+      loaded.state.context.artifacts.requirements?.documentPath !== documentPath ||
+      loaded.state.context.artifacts.requirements?.documentHash !== documentHash
+    )
+      return failure(
+        'REQUIREMENTS_CHANGED',
+        '需求审查文档或审批指纹已变化；请重新执行 sg_change_propose 和 sg_change_critique',
+      );
+    try {
+      if ('sha256:' + hashValue(readJson(root, candidatePath)) !== data.candidate.hash)
+        return failure('REQUIREMENTS_CHANGED', '需求候选文档已变化；请重新执行批判分析');
+      if (rawHash(readMarkdown(root, documentPath)) !== documentHash)
+        return failure(
+          'REQUIREMENTS_CHANGED',
+          '需求审查文档已被编辑；请重新执行 sg_change_propose 和 sg_change_critique',
+        );
+    } catch {
+      return failure(
+        'REQUIREMENTS_CHANGED',
+        '需求审查文档无法读取或已失效；请重新执行 sg_change_propose 和 sg_change_critique',
+      );
+    }
     if (typeof approvalAuthority?.requestApproval !== 'function')
       return failure(
         'TRUSTED_APPROVAL_UNAVAILABLE',
         '缺少原生人工审批通道：请重新加载包含 sg_request_h1 的 SpecGate 插件连接（或以 SPECGATE_INTERACTIVE_APPROVAL=1 启动）并新建会话后重试；普通聊天确认不能作为 H1 审批。',
       );
-    const base = `.specgate/codex/changes/${loaded.state.changeId}/requirements/`;
-    const fingerprint = data.candidate.hash.replace(/^sha256:/, '');
-    const candidatePath = base + 'candidate-' + fingerprint + '.json';
     if (signal?.aborted) return cancelled();
-    try {
-      writeImmutable(root, candidatePath, data.candidate.snapshot);
-    } catch {
-      return failure(
-        'SNAPSHOT_CONFLICT',
-        'An immutable requirements artifact could not be safely written',
-      );
-    }
+
     let artifactPath = candidatePath;
+    const readArtifactHash = async () => {
+      if (signal?.aborted) throw abortError();
+      const candidateHash = 'sha256:' + hashValue(readJson(root, artifactPath));
+      if (candidateHash !== data.candidate.hash) return candidateHash;
+      const currentDocumentHash = rawHash(readMarkdown(root, documentPath));
+      if (currentDocumentHash !== documentHash) return currentDocumentHash;
+      return data.candidate.hash;
+    };
     const approved = await approvalAuthority.requestApproval({
       gate: 'H1',
       scope: loaded.state.changeId,
       artifactHash: data.candidate.hash,
-      readArtifactHash: async () => {
-        if (signal?.aborted) throw abortError();
-        return 'sha256:' + hashValue(readJson(root, artifactPath));
-      },
-      summary: renderRequirementsForUser(data.candidate.snapshot),
+      readArtifactHash,
+      summary:
+        markdown +
+        '\n\n---\n审批前请确认以上内容。审查文档路径：' +
+        documentPath +
+        '\n文档指纹：' +
+        documentHash +
+        '\n如需修改，请拒绝批准并重新执行 sg_change_propose 与 sg_change_critique；任何编辑后都必须重新生成审批指纹。',
       signal,
     });
     const fresh = await store.load();
     if (!fresh.ok) return fresh;
     if (
       fresh.state.phase !== 'H1_PENDING' ||
-      fresh.state.context.changeAdd?.candidate?.hash !== data.candidate.hash
+      fresh.state.context.changeAdd?.candidate?.hash !== data.candidate.hash ||
+      fresh.state.context.changeAdd?.document?.hash !== documentHash
     )
       return failure('REQUIREMENTS_CHANGED', 'H1 审批期间需求文档发生变化；请重新请求审批');
     if (!approved.ok) {
       if (approved.record?.decision === 'cancel') {
-        const cancelled = await store.cancel({
+        const cancelledState = await store.cancel({
           expectedVersion: fresh.state.version,
           reason: 'Native user cancelled H1',
         });
-        if (!cancelled.ok) return cancelled;
-        return { ...approved, state: cancelled.state, actualVersion: cancelled.state?.version };
+        if (!cancelledState.ok) return cancelledState;
+        return {
+          ...approved,
+          state: cancelledState.state,
+          actualVersion: cancelledState.state?.version,
+        };
       }
       if (approved.record?.decision === 'modify') {
         const moved = await store.transition({
@@ -1072,7 +1226,7 @@ export function createChangeAddService({
       return { ...approved, actualVersion: fresh.state.version };
     }
     if (signal?.aborted) return cancelled();
-    const frozenPath = base + `revision-${revision.revision}-${fingerprint}.json`;
+    const frozenPath = base + 'revision-' + revision.revision + '-' + fingerprint + '.json';
     try {
       writeImmutable(root, frozenPath, data.candidate.snapshot);
     } catch {
@@ -1082,15 +1236,21 @@ export function createChangeAddService({
       );
     }
     artifactPath = frozenPath;
-    // The phase plus the gate transition's consumed approval is authoritative.
-    // A prepared file or this locator alone never claims requirements are frozen.
     data.frozen = {
       path: frozenPath,
       hash: data.candidate.hash,
       revision: revision.revision,
       authority: 'REQ_FROZEN-gate-transition',
     };
-    const saved = await update(fresh.state, data, fresh.state.context.artifacts.requirements);
+    const saved = await update(fresh.state, data, {
+      ...fresh.state.context.artifacts.requirements,
+      hash: data.candidate.hash,
+      revision: revision.revision,
+      candidatePath,
+      documentPath,
+      documentHash,
+      frozenPath,
+    });
     if (!saved.ok) return saved;
     if (signal?.aborted) return cancelled();
     return store.transition({
@@ -1099,7 +1259,6 @@ export function createChangeAddService({
       approval: approved.approval,
     });
   }
-
   return Object.freeze({
     inspectPrerequisites,
     start,

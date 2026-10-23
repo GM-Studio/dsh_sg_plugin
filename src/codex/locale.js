@@ -137,11 +137,14 @@ export const TOOL_DESCRIPTIONS = {
   sg_project_finalize_new:
     '仅在完整且当前有效的验证证据存在时建立新项目基线，然后等待用户业务需求。',
   sg_change_preflight: '只读检查项目基线、验证证据、工作区及活动变更，尚不创建需求。',
-  sg_change: '记录用户明确提出的新增、修改或修复需求；后续必须澄清、反述、分析并由人工审批。',
+  sg_change:
+    '创建新增/修改/修复需求；已有需求用 action=request_h1 和 expectedVersion 打开可信 H1 审批（sg_request_h1 未暴露时也可使用），先查看生成的需求文档。',
   sg_change_add: '记录用户提出的新增功能需求，不冻结需求或自动批准。',
   sg_change_propose: '记录需求提案、验收标准、假设、风险和未决问题，保留历次修订。',
-  sg_change_questions: '通过可信中文表单向用户澄清问题，禁止模型代填用户答案。',
-  sg_change_critique: '记录反向复述、歧义、冲突、可行性、风险与测试盲点，阻塞问题必须先解决。',
+  sg_change_questions:
+    '通过可信中文表单澄清：input=choice 单选、multi-choice 多选并提供 options；text 为文本框。禁止代填用户答案。',
+  sg_change_critique:
+    '记录反向复述、歧义、冲突、风险与测试盲点，写入需求 Markdown 并返回审阅链接；用户查看/修改后再请求 H1，阻塞问题必须先解决。',
   sg_request_h1: '展示完整需求文档并请求用户通过中文表单审批；未批准不能冻结或开发。',
   sg_plan_inspect: '只读查看已冻结的计划、契约与测试证据。',
   sg_plan_generate: '在需求批准后生成实现计划、验收映射和工作边界。',

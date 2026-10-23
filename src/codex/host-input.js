@@ -4,6 +4,36 @@ import { categoryLabel } from './locale.js';
 const object = (value) => value !== null && typeof value === 'object' && !Array.isArray(value);
 
 /**
+ * Native elicitation needs a JSON Schema that matches the intended control.
+ * Older callers omitted `input`; retain text as the compatible default.
+ */
+export function clarificationInputSchema(question) {
+  const input = question?.input ?? 'text';
+  const options = Array.isArray(question?.options) ? question.options : [];
+  if (input === 'choice')
+    return {
+      type: 'string',
+      title: `[${categoryLabel(question.category)}] ${question.text}`,
+      enum: options,
+    };
+  if (input === 'multi-choice')
+    return {
+      type: 'array',
+      title: `[${categoryLabel(question.category)}] ${question.text}`,
+      items: { type: 'string', enum: options },
+      minItems: 1,
+      maxItems: options.length,
+      uniqueItems: true,
+    };
+  return {
+    type: 'string',
+    title: `[${categoryLabel(question.category)}] ${question.text}`,
+    minLength: 1,
+    maxLength: 8000,
+  };
+}
+
+/**
  * Derives a local approval actor only when the host operator explicitly enabled
  * interactive approval. Tool arguments and MCP clientInfo cannot set this.
  */
@@ -47,15 +77,7 @@ export function createPeerUserInputProvider({ requestPeer, trustedUserIdentity }
           code: 'INVALID_ARGUMENT',
         });
       const properties = Object.fromEntries(
-        questions.map((question) => [
-          question.id,
-          {
-            type: 'string',
-            title: `[${categoryLabel(question.category)}] ${question.text}`,
-            minLength: 1,
-            maxLength: 8000,
-          },
-        ]),
+        questions.map((question) => [question.id, clarificationInputSchema(question)]),
       );
       const result = await requestPeer(
         'elicitation/create',

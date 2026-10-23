@@ -87,6 +87,13 @@ fail-closed。
 由用户通过 H1 表单审批。宿主必须支持 MCP elicitation 才能显示原生表单；缺少支持
 时工具会明确报告待输入或待审批，不会伪造确认。
 
+需求澄清的选择题使用 `input: "choice"`（单选）或 `"multi-choice"`（多选）及
+`options` 显示选择控件；填空使用 `input: "text"` 文本框。批判分析完成后，
+`sg_change_critique` 会先写入需求 Markdown 并返回可打开的绝对路径，供用户查看和修改。
+修改需重新提案、分析并生成新文档；查看后用 `sg_request_h1` 打开批准/要求修改/取消表单。
+宿主未暴露该工具时，可用 `sg_change({ action: "request_h1", expectedVersion })`
+打开同一可信审批；批准后才进入 `REQ_FROZEN`，随后推进计划。
+
 生成项目的 `npm run dev` 仅启动前端；`npm run backend` 独立启动后端，
 `npm run dev:all` 联合启动。本地演示默认账号为 `admin / admin`、`viewer / viewer`，配置保存在被 Git 忽略的 `.env`，
 启动脚本与 Spring 会自动读取；已有项目可运行 `npm run configure` 补齐。

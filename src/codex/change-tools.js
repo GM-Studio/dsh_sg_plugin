@@ -85,14 +85,31 @@ const openIssue = objectSchema(
   },
   ['id', 'text', 'blocking'],
 );
-const question = objectSchema({
-  id: identifier('Unique question ID within this round.'),
-  category,
-  text: string(
-    'Question for the native user interaction provider; answers cannot be supplied in tool arguments.',
-    2000,
-  ),
-});
+const question = objectSchema(
+  {
+    id: identifier('Unique question ID within this round.'),
+    category,
+    text: string(
+      'Question for the native user interaction provider; answers cannot be supplied in tool arguments.',
+      2000,
+    ),
+    input: {
+      type: 'string',
+      enum: ['text', 'choice', 'multi-choice'],
+      description:
+        'Native control type. Omit for text compatibility; choice renders a single select and multi-choice renders a multi-select.',
+    },
+    options: {
+      type: 'array',
+      items: string('A selectable answer option.', 200),
+      minItems: 2,
+      maxItems: 20,
+      uniqueItems: true,
+      description: 'Required for choice and multi-choice; omitted for text questions.',
+    },
+  },
+  ['id', 'category', 'text'],
+);
 const restatement = objectSchema({
   requirementId: identifier(
     'Existing requirement ID. Every requirement must have exactly one restatement.',
@@ -170,6 +187,33 @@ const definition = (name, description, inputSchema, readOnly = false) => ({
   },
 });
 
+const changeStart = objectSchema(
+  {
+    expectedVersion: version,
+    name: identifier(
+      'Optional unique change name; omitted names are derived from the request deterministically.',
+    ),
+    request: string('Change request relayed by the command; never a native approval.'),
+    type: { type: 'string', enum: ['feature', 'modify', 'fix'] },
+    parentDeliveryId: identifier('Optional accepted parent delivery for incremental redelivery.'),
+    impact: {
+      ...impact,
+      description: 'Required with parentDeliveryId: affected and reused acceptance criteria.',
+    },
+    details: changeDetails,
+  },
+  ['expectedVersion', 'request', 'type'],
+);
+const changeH1 = objectSchema({
+  expectedVersion: version,
+  action: {
+    type: 'string',
+    enum: ['request_h1'],
+    description:
+      'Request the same trusted H1 form as sg_request_h1 for the existing change. Never creates a new change or accepts approval through arguments.',
+  },
+});
+
 export const CHANGE_TOOLS = [
   definition(
     'sg_change_preflight',
@@ -196,32 +240,10 @@ export const CHANGE_TOOLS = [
   definition(
     'sg_change',
     'Start a unified feature, modify or fix intake after an active ProjectBaseline and a clean Git worktree, then immediately request the server-owned first round of native user clarification. Type-specific details are validated before requirements proceed. When the result is WAITING_FOR_USER, stop and resume clarification; do not propose, critique or request H1. An optional parentDeliveryId plus impact records the incremental affected and reused acceptance criteria for a customer-feedback change.',
-    objectSchema(
-      {
-        expectedVersion: version,
-        name: identifier(
-          'Optional unique change name; omitted names are derived from the request deterministically.',
-        ),
-        request: string(
-          'Change request relayed by the command. Do not include credentials or claim this text is a native approval.',
-        ),
-        type: {
-          type: 'string',
-          enum: ['feature', 'modify', 'fix'],
-          description: 'Confirmed change type for the unified entry.',
-        },
-        parentDeliveryId: identifier(
-          'Optional accepted parent delivery for incremental redelivery.',
-        ),
-        impact: {
-          ...impact,
-          description:
-            'Required with a parentDeliveryId: affected acceptance criteria, and the historically accepted criteria whose verification is reused. Unknown or inconsistent AC references are rejected.',
-        },
-        details: changeDetails,
-      },
-      ['expectedVersion', 'request', 'type'],
-    ),
+    {
+      ...objectSchema({ ...changeStart.properties, ...changeH1.properties }, ['expectedVersion']),
+      oneOf: [changeStart, changeH1],
+    },
   ),
   definition(
     'sg_change_propose',

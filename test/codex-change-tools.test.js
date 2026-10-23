@@ -8,6 +8,7 @@ import { CHANGE_TOOLS, CHANGE_METHODS, callChangeTool } from '../src/codex/chang
 import { createChangeAddService } from '../src/codex/change-add.js';
 import { createStateStore } from '../src/codex/state-machine.js';
 import { createApprovalAuthority } from '../src/codex/approvals.js';
+import { createToolRegistry } from '../src/codex/workflow-tools.js';
 
 function walk(schema, visit) {
   visit(schema);
@@ -292,4 +293,46 @@ test('unified sg_change accepts feature, modify and fix while rejecting invalid 
   const snapshot = critiqued.state.context.changeAdd.candidate.snapshot;
   assert.equal(snapshot.changeContract.type, 'fix');
   assert.deepEqual(snapshot.changeContract.acceptance, ['AC-1']);
+});
+
+test('unified H1 entry is advertised, schema-validated and cannot mix intake or approval arguments', async () => {
+  const registry = createToolRegistry();
+  const args = { expectedVersion: 12, action: 'request_h1' };
+  assert.equal(registry.validate('sg_change', args), true);
+  assert.match(
+    registry.definitions.find((tool) => tool.name === 'sg_change').description,
+    /request_h1/,
+  );
+  for (const extra of [
+    { request: 'new change', type: 'feature' },
+    { approved: true },
+    { actor: 'alice' },
+  ]) {
+    assert.equal(registry.validate('sg_change', { ...args, ...extra }), false);
+  }
+  assert.equal(registry.validate('sg_change', { expectedVersion: 12 }), false);
+  assert.equal(registry.validate('sg_change', { ...args, action: 'approve' }), false);
+  const { service, store } = fixture();
+  let result = await callChangeTool(service, 'sg_change_add', {
+    expectedVersion: 0,
+    request: 'Search tasks',
+  });
+  result = await callChangeTool(service, 'sg_change_propose', {
+    expectedVersion: result.state.version,
+    requirements: [requirement],
+    assumptions: [],
+    openIssues: [],
+  });
+  result = await callChangeTool(service, 'sg_change_critique', {
+    expectedVersion: result.state.version,
+    report,
+  });
+  assert.equal(result.code, 'H1_DOCUMENT_READY');
+  assert.ok(result.document.absolutePath);
+  result = await callChangeTool(service, 'sg_change', {
+    expectedVersion: result.state.version,
+    action: 'request_h1',
+  });
+  assert.equal(result.code, 'APPROVAL_CHANNEL_UNAVAILABLE');
+  assert.equal((await store.load()).state.phase, 'H1_PENDING');
 });
