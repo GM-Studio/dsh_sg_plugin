@@ -244,14 +244,21 @@ async function downloadFile(url, destination, signal) {
   }
   fs.mkdirSync(path.dirname(destination), { recursive: true });
   const temp = destination + '.part';
+  let promoted = false;
   try {
     await pipeline(Readable.fromWeb(response.body), fs.createWriteStream(temp), { signal });
-  } catch (error) {
-    fs.rmSync(temp, { force: true });
-    throw error;
+    fs.renameSync(temp, destination);
+    promoted = true;
+    return destination;
+  } finally {
+    if (!promoted) {
+      try {
+        fs.rmSync(temp, { force: true, maxRetries: 20, retryDelay: 100 });
+      } catch {
+        // preserve the original download or rename failure; the partial file is never promoted
+      }
+    }
   }
-  fs.renameSync(temp, destination);
-  return destination;
 }
 
 export function archiveExtension(url, platform = process.platform) {

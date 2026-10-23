@@ -123,17 +123,25 @@ export function createControlStore({
   function writeSnapshot(state, headHash) {
     safeFile(snapshotPath);
     const temporary = path.join(resolved, `.state-${randomUUID()}.tmp`);
-    const fd = fs.openSync(temporary, 'wx', 0o600);
+    let promoted = false;
     try {
-      fs.writeFileSync(fd, canonicalJson({ state, headHash }) + '\n');
-      fs.fsyncSync(fd);
-    } finally {
-      fs.closeSync(fd);
-    }
-    try {
+      const fd = fs.openSync(temporary, 'wx', 0o600);
+      try {
+        fs.writeFileSync(fd, canonicalJson({ state, headHash }) + '\n');
+        fs.fsyncSync(fd);
+      } finally {
+        fs.closeSync(fd);
+      }
       fs.renameSync(temporary, snapshotPath);
+      promoted = true;
     } finally {
-      if (exists(temporary)) fs.unlinkSync(temporary);
+      if (!promoted) {
+        try {
+          fs.rmSync(temporary, { force: true, maxRetries: 20, retryDelay: 100 });
+        } catch {
+          // preserve the original write or rename failure; the temp file was never published
+        }
+      }
     }
   }
 

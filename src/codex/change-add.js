@@ -140,15 +140,31 @@ function writeImmutable(root, relative, value) {
   if (Buffer.byteLength(content) > 4 * 1024 * 1024)
     throw new Error('Snapshot exceeds the artifact size limit');
   let descriptor;
+  let created = false;
+  let failure = null;
   try {
     descriptor = fs.openSync(target, 'wx', 0o600);
+    created = true;
     fs.writeFileSync(descriptor, content);
     fs.fsyncSync(descriptor);
   } catch (error) {
-    if (error.code !== 'EEXIST' || fs.readFileSync(checkedFile(root, relative), 'utf8') !== content)
-      throw error;
+    failure = error;
   } finally {
     if (descriptor !== undefined) fs.closeSync(descriptor);
+  }
+  if (failure) {
+    if (created) {
+      try {
+        fs.rmSync(target, { force: true, maxRetries: 20, retryDelay: 100 });
+      } catch {
+        // preserve the original write failure; the partial snapshot is never treated as frozen
+      }
+    }
+    if (
+      failure.code !== 'EEXIST' ||
+      fs.readFileSync(checkedFile(root, relative), 'utf8') !== content
+    )
+      throw failure;
   }
   if (process.platform !== 'win32') {
     const directory = fs.openSync(path.dirname(target), 'r');

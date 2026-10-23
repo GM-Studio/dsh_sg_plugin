@@ -26,6 +26,7 @@ import { collectJavaReports } from '../java-reports.js';
 import { isProcessAlive, inspect as inspectRunLock } from '../lock.js';
 import { provisionToolchain } from './provision.js';
 import { jdkDownloadUrl, resolveMirrors } from './mirrors.js';
+import { createTemporaryDirectory } from '../temp.js';
 
 function readJson(file) {
   return JSON.parse(fs.readFileSync(file, 'utf8'));
@@ -158,7 +159,8 @@ async function runRuntimeSmoke({
     .filter((name) => name.endsWith('.jar') && !name.endsWith('.original'))
     .map((name) => path.join(target, name))[0];
   if (!jar) return { name: 'runtime', status: 1, durationMs: 0, tail: ['No backend jar'] };
-  const dbDir = fs.mkdtempSync(path.join(root, '.specgate', 'verify-db-'));
+  const database = createTemporaryDirectory('verify-db-', { parent: path.join(root, '.specgate') });
+  const dbDir = database.path;
   const port = await freePort();
   const base = 'http://127.0.0.1:' + port;
   const childEnv = {
@@ -303,8 +305,15 @@ async function runRuntimeSmoke({
     };
   } finally {
     await stop(shutdown);
-    fs.closeSync(fd);
-    fs.rmSync(dbDir, { recursive: true, force: true });
+    try {
+      fs.closeSync(fd);
+    } finally {
+      try {
+        database.cleanup();
+      } catch (error) {
+        process.stderr.write(`[specgate] runtime temp cleanup failed: ${error.message}\n`);
+      }
+    }
   }
 }
 
@@ -903,7 +912,10 @@ export async function verifyJavaProject(options = {}) {
       report,
     };
   } finally {
-    fs.closeSync(fd);
-    fs.unlinkSync(lock);
+    try {
+      fs.closeSync(fd);
+    } finally {
+      fs.unlinkSync(lock);
+    }
   }
 }

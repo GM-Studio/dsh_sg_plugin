@@ -1,9 +1,8 @@
-import fs from 'node:fs';
-import os from 'node:os';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { verifyAdoptedProject } from '../src/codex/adopted-verification.js';
 import { loadProjectReadiness } from '../src/codex/project-state.js';
+import { createTemporaryDirectory } from '../src/codex/core/temp.js';
 
 function git(root, args) {
   return spawnSync('git', args, {
@@ -33,7 +32,8 @@ if (!projectRoot || !path.isAbsolute(projectRoot)) {
     );
     process.exitCode = 1;
   } else {
-    const temporaryRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'specgate-adopted-pilot-'));
+    const temporary = createTemporaryDirectory('specgate-adopted-pilot-');
+    const temporaryRoot = temporary.path;
     const worktree = path.join(temporaryRoot, 'worktree');
     let added = false;
     try {
@@ -85,8 +85,11 @@ if (!projectRoot || !path.isAbsolute(projectRoot)) {
       process.exitCode = 1;
     } finally {
       if (added) git(readiness.profile.root, ['worktree', 'remove', '--force', worktree]);
-      else fs.rmSync(temporaryRoot, { recursive: true, force: true });
-      if (fs.existsSync(temporaryRoot)) fs.rmSync(temporaryRoot, { recursive: true, force: true });
+      try {
+        temporary.cleanup();
+      } catch (error) {
+        process.stderr.write(`[specgate] pilot workspace cleanup failed: ${error.message}\n`);
+      }
       git(readiness.profile.root, ['worktree', 'prune']);
     }
   }

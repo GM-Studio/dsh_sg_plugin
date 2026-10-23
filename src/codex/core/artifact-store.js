@@ -125,20 +125,35 @@ export function createArtifactStore({ projectRoot, maximumBytes = 8 * 1024 * 102
         path.dirname(checked.target),
         `.${path.basename(checked.target)}.${randomUUID()}.tmp`,
       );
-      fs.writeFileSync(temporary, content, { flag: 'wx' });
+      let promoted = false;
       try {
-        fs.renameSync(temporary, checked.target);
-      } catch (error) {
-        fs.rmSync(temporary, { force: true });
-        if (error.code === 'EEXIST' || error.code === 'EPERM') {
-          if (!fs.existsSync(checked.target))
-            return failure('ARTIFACT_WRITE_FAILED', 'Artifact cannot be promoted safely');
-          const existing = fs.readFileSync(checked.target);
-          return existing.equals(Buffer.from(content))
-            ? { ok: true, path: relative, hash: digest }
-            : failure('ARTIFACT_CONFLICT', 'Immutable artifact already exists with other content');
+        fs.writeFileSync(temporary, content, { flag: 'wx' });
+        try {
+          fs.renameSync(temporary, checked.target);
+          promoted = true;
+        } catch (error) {
+          fs.rmSync(temporary, { force: true });
+          if (error.code === 'EEXIST' || error.code === 'EPERM') {
+            if (!fs.existsSync(checked.target))
+              return failure('ARTIFACT_WRITE_FAILED', 'Artifact cannot be promoted safely');
+            const existing = fs.readFileSync(checked.target);
+            return existing.equals(Buffer.from(content))
+              ? { ok: true, path: relative, hash: digest }
+              : failure(
+                  'ARTIFACT_CONFLICT',
+                  'Immutable artifact already exists with other content',
+                );
+          }
+          throw error;
         }
-        throw error;
+      } finally {
+        if (!promoted) {
+          try {
+            fs.rmSync(temporary, { force: true, maxRetries: 20, retryDelay: 100 });
+          } catch {
+            // preserve the original write or rename failure; the temp file was never published
+          }
+        }
       }
       return { ok: true, path: relative, hash: digest };
     } catch {

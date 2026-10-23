@@ -44,38 +44,44 @@ function sleepSync(ms) {
 export function atomicWrite(filePath, content) {
   ensureDir(path.dirname(filePath));
   const tmp = `${filePath}.${process.pid}.${Date.now()}.${Math.random().toString(16).slice(2)}.tmp`;
-  let handle;
+  let promoted = false;
   try {
-    handle = fs.openSync(tmp, 'w');
-    fs.writeFileSync(handle, content, 'utf8');
-    fs.fsyncSync(handle);
-  } finally {
-    if (handle !== undefined) {
+    let handle;
+    try {
+      handle = fs.openSync(tmp, 'w');
+      fs.writeFileSync(handle, content, 'utf8');
+      fs.fsyncSync(handle);
+    } finally {
+      if (handle !== undefined) {
+        try {
+          fs.closeSync(handle);
+        } catch {
+          // ignore close errors, rename below reports the real problem
+        }
+      }
+    }
+
+    const retryable = new Set(['EPERM', 'EBUSY', 'EACCES']);
+    let lastError;
+    for (let attempt = 0; attempt < 6; attempt += 1) {
       try {
-        fs.closeSync(handle);
+        fs.renameSync(tmp, filePath);
+        promoted = true;
+        return filePath;
+      } catch (error) {
+        lastError = error;
+        if (!retryable.has(error.code)) break;
+        sleepSync(15 * (attempt + 1));
+      }
+    }
+    throw lastError;
+  } finally {
+    if (!promoted) {
+      try {
+        fs.rmSync(tmp, { force: true, maxRetries: 20, retryDelay: 100 });
       } catch {
-        // ignore close errors, rename below reports the real problem
+        // preserve the original write or rename failure; a stray temp file is never promoted
       }
     }
   }
-
-  const retryable = new Set(['EPERM', 'EBUSY', 'EACCES']);
-  let lastError;
-  for (let attempt = 0; attempt < 6; attempt += 1) {
-    try {
-      fs.renameSync(tmp, filePath);
-      return filePath;
-    } catch (error) {
-      lastError = error;
-      if (!retryable.has(error.code)) break;
-      sleepSync(15 * (attempt + 1));
-    }
-  }
-
-  try {
-    fs.unlinkSync(tmp);
-  } catch {
-    // ignore cleanup failure
-  }
-  throw lastError;
 }

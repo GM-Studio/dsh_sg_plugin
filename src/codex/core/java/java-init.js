@@ -11,6 +11,7 @@ import { gitSafeDirectory } from '../../git-path.js';
 import { resolveGitIdentity } from '../git-identity.js';
 import { writeRequirementsBaseline, answerOf } from '../requirements.js';
 import { patchState } from '../state.js';
+import { removeTemporaryDirectory } from '../temp.js';
 
 const NL = String.fromCharCode(10);
 const BS = String.fromCharCode(92);
@@ -544,7 +545,15 @@ export async function startJavaInit({
       message: '仅生成完成；未验证，可执行 /sg-verify。',
     };
   } catch (error) {
-    if (workRoot) fs.rmSync(workRoot, { recursive: true, force: true });
+    if (workRoot) {
+      try {
+        removeTemporaryDirectory(workRoot, { maxRetries: 20, retryDelay: 100 });
+      } catch (cleanupError) {
+        process.stderr.write(
+          `[specgate] initialization staging cleanup failed: ${cleanupError.message}\n`,
+        );
+      }
+    }
     return {
       ok: false,
       code: 'E_GENERATION_FAILED',

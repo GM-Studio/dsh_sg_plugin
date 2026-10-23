@@ -67,18 +67,26 @@ export function createStorage(projectRoot, { lockTimeoutMs = 5000 } = {}) {
   function persistSnapshot(state, headHash) {
     checkPath(snapshotPath);
     const temporary = path.join(directory, `.state-${randomUUID()}.tmp`);
-    const fd = fs.openSync(temporary, 'wx', 0o600);
+    let promoted = false;
     try {
-      fs.writeFileSync(fd, canonicalJson({ state, headHash }) + '\n');
-      fs.fsyncSync(fd);
-    } finally {
-      fs.closeSync(fd);
-    }
-    try {
+      const fd = fs.openSync(temporary, 'wx', 0o600);
+      try {
+        fs.writeFileSync(fd, canonicalJson({ state, headHash }) + '\n');
+        fs.fsyncSync(fd);
+      } finally {
+        fs.closeSync(fd);
+      }
       fs.renameSync(temporary, snapshotPath);
+      promoted = true;
       syncDirectory();
     } finally {
-      if (exists(temporary)) fs.unlinkSync(temporary);
+      if (!promoted) {
+        try {
+          fs.rmSync(temporary, { force: true, maxRetries: 20, retryDelay: 100 });
+        } catch {
+          // preserve the original write or rename failure; the temp file was never published
+        }
+      }
     }
   }
 

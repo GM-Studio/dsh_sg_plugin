@@ -100,16 +100,29 @@ function writeImmutable(root, relative, value) {
   const target = path.resolve(root, relative);
   ensureDirectory(root, path.dirname(target));
   let fd;
+  let created = false;
+  let failure = null;
   try {
     fd = fs.openSync(target, 'wx', 0o600);
+    created = true;
     fs.writeFileSync(fd, content);
     fs.fsyncSync(fd);
   } catch (error) {
-    if (error.code !== 'EEXIST') throw error;
-    if (fs.readFileSync(target, 'utf8') !== content)
-      fail('REVIEW_ARTIFACT_CONFLICT', 'Review artifact already exists with different content');
+    failure = error;
   } finally {
     if (fd !== undefined) fs.closeSync(fd);
+  }
+  if (failure) {
+    if (created) {
+      try {
+        fs.rmSync(target, { force: true, maxRetries: 20, retryDelay: 100 });
+      } catch {
+        // preserve the original write failure; the partial file is never treated as evidence
+      }
+    }
+    if (failure.code !== 'EEXIST') throw failure;
+    if (fs.readFileSync(target, 'utf8') !== content)
+      fail('REVIEW_ARTIFACT_CONFLICT', 'Review artifact already exists with different content');
   }
 }
 

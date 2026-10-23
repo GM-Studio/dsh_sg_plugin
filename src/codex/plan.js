@@ -421,14 +421,27 @@ export function createPlanService({ projectRoot, store, roleProvider } = {}) {
         fail('PLAN_STORAGE_FAILED', 'Unsafe frozen asset directory');
     }
     let fd;
+    let created = false;
+    let failure = null;
     try {
       fd = fs.openSync(path.join(root, relative), 'wx', 0o600);
+      created = true;
       fs.writeFileSync(fd, content);
       fs.fsyncSync(fd);
     } catch (error) {
-      if (error.code !== 'EEXIST' || read(relative) !== content) throw error;
+      failure = error;
     } finally {
       if (fd !== undefined) fs.closeSync(fd);
+    }
+    if (failure) {
+      if (created) {
+        try {
+          fs.rmSync(path.join(root, relative), { force: true, maxRetries: 20, retryDelay: 100 });
+        } catch {
+          // preserve the original write failure; the partial asset is never treated as frozen
+        }
+      }
+      if (failure.code !== 'EEXIST' || read(relative) !== content) throw failure;
     }
     if (process.platform !== 'win32') {
       const directory = fs.openSync(path.dirname(path.join(root, relative)), 'r');

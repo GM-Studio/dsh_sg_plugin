@@ -37,16 +37,29 @@ export function createFileSessionStore({ root, fileName = 'web-sessions.json' } 
   function writeState(state) {
     fs.mkdirSync(root, { recursive: true, mode: 0o700 });
     const temporary = `${target}.${randomBytes(8).toString('hex')}.tmp`;
-    fs.writeFileSync(temporary, JSON.stringify(state, null, 2) + '\n', {
-      flag: 'wx',
-      mode: 0o600,
-    });
+    let promoted = false;
     try {
-      fs.renameSync(temporary, target);
-    } catch (error) {
-      if (!['EEXIST', 'EPERM'].includes(error.code)) throw error;
-      fs.rmSync(target, { force: true });
-      fs.renameSync(temporary, target);
+      fs.writeFileSync(temporary, JSON.stringify(state, null, 2) + '\n', {
+        flag: 'wx',
+        mode: 0o600,
+      });
+      try {
+        fs.renameSync(temporary, target);
+        promoted = true;
+      } catch (error) {
+        if (!['EEXIST', 'EPERM'].includes(error.code)) throw error;
+        fs.rmSync(target, { force: true });
+        fs.renameSync(temporary, target);
+        promoted = true;
+      }
+    } finally {
+      if (!promoted) {
+        try {
+          fs.rmSync(temporary, { force: true, maxRetries: 20, retryDelay: 100 });
+        } catch {
+          // preserve the original write or rename failure; the temp file was never published
+        }
+      }
     }
   }
 

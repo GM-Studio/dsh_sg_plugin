@@ -6,6 +6,8 @@ import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { createTemporaryDirectory, withTemporaryDirectory } from '../src/codex/core/temp.js';
+import { atomicWrite } from '../src/codex/core/util/fsx.js';
+import { runTestCommand } from '../src/codex/core/testrunner.js';
 import { verifyMatrix } from '../scripts/verify-codex-matrix.mjs';
 import { runPilot } from '../scripts/codex-delivery-pilot.mjs';
 
@@ -64,6 +66,41 @@ test('managed temporary directory is removed after callback failure', async (t) 
     /expected failure/,
   );
   assert.equal(fs.existsSync(created), false);
+});
+
+test('atomic write removes its temporary sibling when writing fails', (t) => {
+  const root = sandbox(t);
+  const target = path.join(root, 'state.json');
+  const original = fs.writeFileSync;
+  fs.writeFileSync = () => {
+    const error = new Error('simulated disk full');
+    error.code = 'ENOSPC';
+    throw error;
+  };
+  try {
+    assert.throws(() => atomicWrite(target, 'value'), /simulated disk full/);
+  } finally {
+    fs.writeFileSync = original;
+  }
+  assert.deepEqual(fs.readdirSync(root), []);
+});
+
+test('test command report workspace is removed after success and failure', (t) => {
+  const root = sandbox(t);
+  const success = runTestCommand({
+    argv: [
+      process.execPath,
+      '--eval',
+      "require('node:fs').writeFileSync(process.env.SG_REPORT, JSON.stringify({ ok: true }))",
+    ],
+    cwd: root,
+  });
+  assert.equal(success.report.ok, true);
+  assert.equal(fs.existsSync(path.dirname(success.reportPath)), false);
+
+  const failure = runTestCommand({ argv: [path.join(root, 'missing-command')], cwd: root });
+  assert.equal(failure.report, null);
+  assert.equal(fs.existsSync(path.dirname(failure.reportPath)), false);
 });
 
 test('managed cleanup is idempotent and targets only its created directory', (t) => {

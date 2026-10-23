@@ -1,6 +1,6 @@
 import fs from 'node:fs';
-import os from 'node:os';
 import path from 'node:path';
+import { createTemporaryDirectory } from './temp.js';
 import { spawnSync } from 'node:child_process';
 import { exists, readText } from './util/fsx.js';
 import { runTestCommand } from './testrunner.js';
@@ -282,49 +282,50 @@ export function runPytestSuite({ suite, worktree, root }) {
     };
   }
   const cwd = path.join(worktree, suite.cwd || '.');
-  const junit = path.join(
-    os.tmpdir(),
-    `sg-junit-${process.pid}-${Date.now()}-${Math.random().toString(16).slice(2)}.xml`,
-  );
-  const env = {
-    ...process.env,
-    VIRTUAL_ENV: venv.venv,
-    PATH: `${path.dirname(venv.python)}${path.delimiter}${process.env.PATH || ''}`,
-  };
-  const result = spawnSync(
-    venv.python,
-    ['-m', 'pytest', `--junitxml=${junit}`, ...(suite.pytestArgs || [])],
-    { cwd, encoding: 'utf8', windowsHide: true, env },
-  );
-  let report = null;
-  let reportError = null;
-  if (fs.existsSync(junit)) {
-    report = parseJunitXml(fs.readFileSync(junit, 'utf8'), {
-      suiteId: suite.id,
-      cwd,
-      worktree,
-    });
-    try {
-      fs.unlinkSync(junit);
-    } catch {
-      // ignore cleanup failure
+  const temporary = createTemporaryDirectory('sg-junit-');
+  const junit = path.join(temporary.path, 'report.xml');
+  try {
+    const env = {
+      ...process.env,
+      VIRTUAL_ENV: venv.venv,
+      PATH: `${path.dirname(venv.python)}${path.delimiter}${process.env.PATH || ''}`,
+    };
+    const result = spawnSync(
+      venv.python,
+      ['-m', 'pytest', `--junitxml=${junit}`, ...(suite.pytestArgs || [])],
+      { cwd, encoding: 'utf8', windowsHide: true, env },
+    );
+    let report = null;
+    let reportError = null;
+    if (fs.existsSync(junit)) {
+      report = parseJunitXml(fs.readFileSync(junit, 'utf8'), {
+        suiteId: suite.id,
+        cwd,
+        worktree,
+      });
+    } else {
+      reportError = 'pytest 没有生成 junit xml';
     }
-  } else {
-    reportError = 'pytest 没有生成 junit xml';
+    return {
+      exitCode: typeof result.status === 'number' ? result.status : -1,
+      stderr: String(result.stderr || ''),
+      report,
+      reportError,
+      python: {
+        version: venv.version,
+        venv: venv.venv,
+        created: !!venv.created,
+        reused: !!venv.reused,
+      },
+      install: installMeta(installed),
+    };
+  } finally {
+    try {
+      temporary.cleanup();
+    } catch (error) {
+      process.stderr.write(`[specgate] junit cleanup failed: ${error.message}\n`);
+    }
   }
-  return {
-    exitCode: typeof result.status === 'number' ? result.status : -1,
-    stderr: String(result.stderr || ''),
-    report,
-    reportError,
-    python: {
-      version: venv.version,
-      venv: venv.venv,
-      created: !!venv.created,
-      reused: !!venv.reused,
-    },
-    install: installMeta(installed),
-  };
 }
 
 export function runMavenSuite({

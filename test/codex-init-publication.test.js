@@ -145,6 +145,39 @@ test('nonempty initialization uses system staging and preserves unrelated projec
   assert.deepEqual(fs.readdirSync(root), ['project']);
 });
 
+test('initialization reclaims a lock left by a dead process and removes staging', async (t) => {
+  const host = temporary(t);
+  const target = path.join(host, 'project');
+  fs.mkdirSync(target);
+  const input = inputFor(target);
+  const preview = previewInit(input);
+  assert.equal(preview.ok, true, JSON.stringify(preview));
+  const lockPath = path.join(os.tmpdir(), 'sg-codex-init-' + hash(preview.root) + '.lock');
+  fs.mkdirSync(lockPath, { recursive: true });
+  fs.writeFileSync(
+    path.join(lockPath, 'owner.json'),
+    JSON.stringify({ schemaVersion: 1, pid: 2147483647 }),
+  );
+  t.after(() => fs.rmSync(lockPath, { recursive: true, force: true }));
+  const stages = [];
+  const originalMkdtemp = fs.mkdtempSync;
+  fs.mkdtempSync = (prefix, ...args) => {
+    const created = originalMkdtemp(prefix, ...args);
+    if (String(prefix).includes('sg-codex-init-')) stages.push(created);
+    return created;
+  };
+  let result;
+  try {
+    result = await executeInit({ ...input, previewHash: preview.previewHash }, {});
+  } finally {
+    fs.mkdtempSync = originalMkdtemp;
+  }
+  assert.equal(result.ok, true, JSON.stringify(result));
+  assert.equal(fs.existsSync(lockPath), false);
+  assert.ok(stages.length > 0);
+  for (const stage of stages) assert.equal(fs.existsSync(stage), false);
+});
+
 test('blank path initializes the bound Git repository once while retaining staged user changes', async (t) => {
   const root = temporary(t);
   const git = (...args) => {

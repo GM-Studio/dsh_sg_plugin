@@ -65,8 +65,21 @@ export function createVerification(root, preset, { full = false } = {}) {
       path.join(directory, 'report.json'),
       path.join(root, '.specgate', 'verify-report.json'),
     ]) {
-      fs.writeFileSync(file + '.tmp', text);
-      fs.renameSync(file + '.tmp', file);
+      const temporary = file + '.tmp';
+      let promoted = false;
+      try {
+        fs.writeFileSync(temporary, text);
+        fs.renameSync(temporary, file);
+        promoted = true;
+      } finally {
+        if (!promoted) {
+          try {
+            fs.rmSync(temporary, { force: true, maxRetries: 20, retryDelay: 100 });
+          } catch {
+            // preserve the original write or rename failure; the temp file was never published
+          }
+        }
+      }
     }
     const initFile = path.join(root, '.specgate', 'init-report.json');
     if (fs.existsSync(initFile)) {

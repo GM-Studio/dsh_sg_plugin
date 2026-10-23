@@ -66,9 +66,30 @@ export function pythonInstallCommand(root, pythonBin) {
   return null;
 }
 
+const INSTALL_MARKER_TTL_MS = 30 * 24 * 60 * 60 * 1000;
+
+function pruneInstallMarkers(dir) {
+  try {
+    const cutoff = Date.now() - INSTALL_MARKER_TTL_MS;
+    for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+      if (!entry.isFile() || !entry.name.endsWith('.json')) continue;
+      const file = path.join(dir, entry.name);
+      try {
+        if (fs.statSync(file).mtimeMs < cutoff)
+          fs.rmSync(file, { force: true, maxRetries: 5, retryDelay: 50 });
+      } catch {
+        // A concurrent install may have replaced or removed the marker.
+      }
+    }
+  } catch {
+    // The marker cache is best-effort.
+  }
+}
+
 function installMarker(root, key) {
   const dir = path.join(os.tmpdir(), 'sg-install');
   fs.mkdirSync(dir, { recursive: true });
+  pruneInstallMarkers(dir);
   const name = `${digest(path.resolve(root)).slice(7, 23)}-${key.slice(7, 19)}.json`;
   return path.join(dir, name);
 }

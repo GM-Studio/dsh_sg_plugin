@@ -43,8 +43,20 @@ function ordinaryFile(target, label) {
 
 function atomicWrite(target, content) {
   const temporary = `${target}.specgate-${process.pid}.tmp`;
-  fs.writeFileSync(temporary, content, { mode: 0o600 });
-  fs.renameSync(temporary, target);
+  let promoted = false;
+  try {
+    fs.writeFileSync(temporary, content, { mode: 0o600 });
+    fs.renameSync(temporary, target);
+    promoted = true;
+  } finally {
+    if (!promoted) {
+      try {
+        fs.rmSync(temporary, { force: true, maxRetries: 20, retryDelay: 100 });
+      } catch {
+        // preserve the original write or rename failure; the temp file was never published
+      }
+    }
+  }
 }
 
 function git(target, args, { allowFailure = false } = {}) {

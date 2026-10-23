@@ -1,8 +1,8 @@
 import fs from 'node:fs';
-import os from 'node:os';
 import path from 'node:path';
 import net from 'node:net';
 import { spawn, spawnSync } from 'node:child_process';
+import { createTemporaryDirectory } from '../temp.js';
 import { commandSpec } from './verify-evidence.js';
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -163,7 +163,7 @@ export async function runBrowserSmoke({
     if (!executable)
       throw new Error('No Chrome/Edge executable found for --full browser verification');
     const debugPort = await freePort();
-    profile = fs.mkdtempSync(path.join(os.tmpdir(), 'sg-browser-'));
+    profile = createTemporaryDirectory('sg-browser-');
     browser = spawn(
       executable,
       [
@@ -175,7 +175,7 @@ export async function runBrowserSmoke({
         '--remote-allow-origins=*',
         '--remote-debugging-address=127.0.0.1',
         '--remote-debugging-port=' + debugPort,
-        '--user-data-dir=' + profile,
+        '--user-data-dir=' + profile.path,
         '--window-size=1280,900',
         'about:blank',
       ],
@@ -285,8 +285,15 @@ export async function runBrowserSmoke({
     }
     stopChild(browser);
     stopChild(frontend);
+    if (profile) {
+      try {
+        profile.cleanup();
+      } catch (error) {
+        write(`Browser profile cleanup failed: ${error.message}`);
+        process.stderr.write(`[specgate] browser profile cleanup failed: ${error.message}\n`);
+      }
+    }
     closed = true;
     fs.closeSync(fd);
-    if (profile) fs.rmSync(profile, { recursive: true, force: true });
   }
 }

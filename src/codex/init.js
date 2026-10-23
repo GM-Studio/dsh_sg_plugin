@@ -14,6 +14,7 @@ import { setupProject } from '../../scripts/codex-source-setup.mjs';
 import { discoverJava } from './core/java/java-env.js';
 import { publishInitialization } from './init-publication.js';
 import { insideSpecGateSource } from './core/project-path.js';
+import { removeTemporaryDirectory } from './core/temp.js';
 
 const SOURCE_ROOT = path.resolve(fileURLToPath(new URL('../..', import.meta.url)));
 const RUNTIME_NAMES = [
@@ -100,6 +101,75 @@ function within(parent, child) {
     relative === '' ||
     (!relative.startsWith('..' + path.sep) && relative !== '..' && !path.isAbsolute(relative))
   );
+}
+
+const INIT_LOCK_STALE_MS = 10 * 60 * 1000;
+
+function processAlive(pid) {
+  if (!Number.isSafeInteger(pid) || pid <= 0) return false;
+  try {
+    process.kill(pid, 0);
+    return true;
+  } catch (error) {
+    return error.code === 'EPERM';
+  }
+}
+
+function staleInitializationLock(lockPath) {
+  let owner = null;
+  try {
+    owner = JSON.parse(fs.readFileSync(path.join(lockPath, 'owner.json'), 'utf8'));
+  } catch {
+    // A lock from an interrupted older version has no owner record.
+  }
+  if (Number.isSafeInteger(owner?.pid) && owner.pid > 0) return !processAlive(owner.pid);
+  try {
+    return Date.now() - fs.statSync(lockPath).mtimeMs > INIT_LOCK_STALE_MS;
+  } catch {
+    return true;
+  }
+}
+
+function acquireInitializationLock(lockPath) {
+  for (let attempt = 0; attempt < 2; attempt += 1) {
+    try {
+      fs.mkdirSync(lockPath);
+    } catch (error) {
+      if (error.code !== 'EEXIST') throw error;
+      if (!staleInitializationLock(lockPath)) return false;
+      try {
+        fs.rmSync(lockPath, { recursive: true, force: true, maxRetries: 20, retryDelay: 100 });
+      } catch {
+        return false;
+      }
+      continue;
+    }
+    try {
+      fs.writeFileSync(
+        path.join(lockPath, 'owner.json'),
+        JSON.stringify({ schemaVersion: 1, pid: process.pid, createdAt: new Date().toISOString() }),
+        { flag: 'wx', mode: 0o600 },
+      );
+      return true;
+    } catch (error) {
+      try {
+        fs.rmSync(lockPath, { recursive: true, force: true, maxRetries: 20, retryDelay: 100 });
+      } catch {
+        // preserve the original lock write failure
+      }
+      throw error;
+    }
+  }
+  return false;
+}
+
+function releaseInitializationLock(lockPath) {
+  try {
+    fs.rmSync(lockPath, { recursive: true, force: true, maxRetries: 20, retryDelay: 100 });
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 function checkedRoot(input) {
@@ -607,19 +677,17 @@ export async function executeInit(
   if (!preview.gitIdentity.ok) return preview.gitIdentity;
   let stageRoot;
   let lockPath;
+  let lockAcquired = false;
   try {
     lockPath = path.join(
       os.tmpdir(),
       'sg-codex-init-' + createHash('sha256').update(preview.root).digest('hex') + '.lock',
     );
-    try {
-      fs.mkdirSync(lockPath);
-    } catch (error) {
+    if (!acquireInitializationLock(lockPath)) {
       lockPath = null;
-      if (error.code === 'EEXIST')
-        return failure('INIT_BUSY', '此目录已有初始化操作或未清理的初始化锁，未修改目标目录');
-      throw error;
+      return failure('INIT_BUSY', '此目录已有初始化操作或未清理的初始化锁，未修改目标目录');
     }
+    lockAcquired = true;
     checked = unchanged(input, preview.previewHash);
     if (!checked.ok) return checked;
     stageRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'sg-codex-init-'));
@@ -778,17 +846,14 @@ export async function executeInit(
   } finally {
     if (stageRoot) {
       try {
-        fs.rmSync(stageRoot, { recursive: true, force: true, maxRetries: 3, retryDelay: 100 });
-      } catch {
-        // A locked staging directory never changes the promoted result or deletes the target.
+        removeTemporaryDirectory(stageRoot, { maxRetries: 20, retryDelay: 100 });
+      } catch (error) {
+        process.stderr.write(
+          `[specgate] initialization staging cleanup failed: ${error.message}\n`,
+        );
       }
     }
-    if (lockPath) {
-      try {
-        fs.rmdirSync(lockPath);
-      } catch {
-        // Keep an unexpected/occupied lock for explicit recovery rather than removing its contents.
-      }
-    }
+    if (lockAcquired && !releaseInitializationLock(lockPath))
+      process.stderr.write(`[specgate] initialization lock cleanup failed: ${lockPath}\n`);
   }
 }

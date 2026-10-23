@@ -851,7 +851,10 @@ export async function verifyProject(
       ...(retainLock ? { recoveryRequired: true, lockPath: lock } : {}),
     };
   } finally {
-    fs.closeSync(fd);
-    if (!retainLock) fs.unlinkSync(lock);
+    try {
+      fs.closeSync(fd);
+    } finally {
+      if (!retainLock) fs.unlinkSync(lock);
+    }
   }
 }

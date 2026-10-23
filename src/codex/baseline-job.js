@@ -80,13 +80,26 @@ function cleanupStaleWorktrees(root) {
 function writeJson(target, value) {
   fs.mkdirSync(path.dirname(target), { recursive: true });
   const temporary = `${target}.${randomUUID()}.tmp`;
-  fs.writeFileSync(temporary, JSON.stringify(value, null, 2) + '\n', { flag: 'wx' });
+  let promoted = false;
   try {
-    fs.renameSync(temporary, target);
-  } catch (error) {
-    if (!['EEXIST', 'EPERM'].includes(error.code)) throw error;
-    fs.rmSync(target, { force: true });
-    fs.renameSync(temporary, target);
+    fs.writeFileSync(temporary, JSON.stringify(value, null, 2) + '\n', { flag: 'wx' });
+    try {
+      fs.renameSync(temporary, target);
+      promoted = true;
+    } catch (error) {
+      if (!['EEXIST', 'EPERM'].includes(error.code)) throw error;
+      fs.rmSync(target, { force: true });
+      fs.renameSync(temporary, target);
+      promoted = true;
+    }
+  } finally {
+    if (!promoted) {
+      try {
+        fs.rmSync(temporary, { force: true, maxRetries: 20, retryDelay: 100 });
+      } catch {
+        // preserve the original write or rename failure; the temp file was never published
+      }
+    }
   }
 }
 
