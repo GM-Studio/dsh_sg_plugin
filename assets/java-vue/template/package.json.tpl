@@ -9,6 +9,8 @@
   "scripts": {
     "setup": "node scripts/run.mjs install",
     "dev": "node scripts/run.mjs dev",
+    "dev:all": "node scripts/run.mjs dev:all",
+    "configure": "node scripts/configure.mjs",
     "backend": "node scripts/run.mjs backend",
     "frontend": "node scripts/run.mjs frontend",
     "build": "node scripts/run.mjs build",

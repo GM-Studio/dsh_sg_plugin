@@ -1,4 +1,5 @@
 server.address=127.0.0.1
+spring.config.import=optional:file:../.env[.properties],optional:file:./.env[.properties]
 server.port=${BACKEND_PORT:8080}
 spring.datasource.url=${DB_URL:jdbc:h2:file:./data/tasks;DB_CLOSE_ON_EXIT=FALSE}
 spring.datasource.username=${DB_USER:sa}

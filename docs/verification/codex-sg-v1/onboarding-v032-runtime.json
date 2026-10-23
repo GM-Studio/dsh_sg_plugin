@@ -1,0 +1,24 @@
+{
+  "ok": true,
+  "root": "C:\\Users\\Administrator\\AppData\\Local\\Temp\\sg-v032-live-YSL1Ia\\hotel",
+  "backendVerify": {
+    "exitCode": 0,
+    "log": "C:\\Users\\Administrator\\AppData\\Local\\Temp\\sg-v032-live-YSL1Ia\\backend-verify.log"
+  },
+  "runtime": {
+    "healthy": true,
+    "logins": [
+      {
+        "username": "admin",
+        "status": 200,
+        "role": "ADMIN"
+      },
+      {
+        "username": "viewer",
+        "status": 200,
+        "role": "VIEWER"
+      }
+    ],
+    "log": "C:\\Users\\Administrator\\AppData\\Local\\Temp\\sg-v032-live-YSL1Ia\\runtime.log"
+  }
+}

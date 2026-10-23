@@ -7,6 +7,7 @@ import { buildChangeContract, normalizeChangeInput, validateChangeInput } from '
 import { createIncrementalPlan } from './incremental.js';
 import { canonicalJson, hashValue } from './events.js';
 import { gitSafeDirectory } from './git-path.js';
+import { categoryLabel, renderChineseData } from './locale.js';
 import { readDeliveryRecord } from './delivery.js';
 import { loadProjectReadiness, PROJECT_PROFILE_PATH } from './project-state.js';
 
@@ -275,6 +276,35 @@ function snapshot(state, data) {
     change: data.change,
     changeContract: data.changeContract,
   };
+}
+
+export function renderRequirementsForUser(candidate) {
+  const lines = [
+    `# 需求文档：${candidate.changeId}（修订 ${candidate.revision}）`,
+    '',
+    '## 用户原始需求',
+    candidate.request,
+    '',
+    '## 需求与验收标准',
+  ];
+  for (const requirement of candidate.requirements) {
+    lines.push(
+      `\n### ${requirement.id} [${categoryLabel(requirement.category)}]`,
+      requirement.text,
+    );
+    for (const ac of requirement.acceptanceCriteria) lines.push(`- ${ac.id}：${ac.text}`);
+  }
+  lines.push('\n## 待用户确认的假设与风险');
+  for (const assumption of candidate.assumptions)
+    lines.push(`- ${assumption.id}：${assumption.text}\n  风险：${assumption.risk}`);
+  lines.push('\n## 未决问题', renderChineseData(candidate.openIssues));
+  lines.push('\n## 用户澄清记录', renderChineseData(candidate.clarifications));
+  lines.push('\n## 反向复述与批判分析', renderChineseData(candidate.critique));
+  lines.push(
+    '\n## 变更范围与约束契约',
+    renderChineseData({ change: candidate.change, changeContract: candidate.changeContract }),
+  );
+  return lines.join('\n');
 }
 
 /** Dependencies are server-owned closures. No user identity, answers, receipt or
@@ -681,7 +711,7 @@ export function createChangeAddService({
     )
       return failure(
         'TRUSTED_USER_INPUT_UNAVAILABLE',
-        'A proven native user interaction source is required for answers',
+        '缺少可信的原生用户交互通道，无法收集澄清回答：请重新加载 SpecGate 插件连接（或以 SPECGATE_INTERACTIVE_APPROVAL=1 启动）并新建会话后重试；模型不能代替用户回答。',
       );
     const actor = { id: identity.id, source: identity.source, kind: 'user' };
     let saved = loaded;
@@ -717,7 +747,7 @@ export function createChangeAddService({
       );
     } catch {
       if (signal?.aborted) return cancelled();
-      return failure('USER_INPUT_FAILED', 'Native clarification did not complete', {
+      return failure('USER_INPUT_FAILED', '原生澄清表单未成功完成；请重试或检查宿主表单通道', {
         actualVersion: saved.state.version,
       });
     }
@@ -731,7 +761,7 @@ export function createChangeAddService({
         (a) => keys(a, ['questionId', 'answer']) && seen.has(a.questionId) && text(a.answer, 8000),
       )
     )
-      return failure('USER_INPUT_INVALID', 'Native answers did not match the pending questions', {
+      return failure('USER_INPUT_INVALID', '原生回答与待答问题不匹配；请重新发起澄清', {
         actualVersion: saved.state.version,
       });
     if (secret(response))
@@ -811,7 +841,7 @@ export function createChangeAddService({
     )
       return failure(
         'REQUIREMENTS_CHANGED',
-        'Requirements changed; run a fresh critique before requesting H1',
+        '需求文档已变化；请重新执行批判分析（sg_change_critique）后再请求 H1 审批',
       );
     if (
       revision.openIssues.some((issue) => issue.blocking) ||
@@ -822,10 +852,13 @@ export function createChangeAddService({
     )
       return failure(
         'REQUIREMENTS_BLOCKED',
-        'Resolve blocking requirements, critique findings and unanswered clarification rounds before H1',
+        '存在阻塞性未决问题、阻塞性批判发现或未回答的澄清轮次；必须先解决，才能请求 H1 审批',
       );
     if (typeof approvalAuthority?.requestApproval !== 'function')
-      return failure('TRUSTED_APPROVAL_UNAVAILABLE', 'A native approval authority is required');
+      return failure(
+        'TRUSTED_APPROVAL_UNAVAILABLE',
+        '缺少原生人工审批通道：请重新加载包含 sg_request_h1 的 SpecGate 插件连接（或以 SPECGATE_INTERACTIVE_APPROVAL=1 启动）并新建会话后重试；普通聊天确认不能作为 H1 审批。',
+      );
     const base = `.specgate/codex/changes/${loaded.state.changeId}/requirements/`;
     const fingerprint = data.candidate.hash.replace(/^sha256:/, '');
     const candidatePath = base + 'candidate-' + fingerprint + '.json';
@@ -847,7 +880,7 @@ export function createChangeAddService({
         if (signal?.aborted) throw abortError();
         return 'sha256:' + hashValue(readJson(root, artifactPath));
       },
-      summary: canonicalJson(data.candidate.snapshot),
+      summary: renderRequirementsForUser(data.candidate.snapshot),
       signal,
     });
     const fresh = await store.load();
@@ -856,10 +889,7 @@ export function createChangeAddService({
       fresh.state.phase !== 'H1_PENDING' ||
       fresh.state.context.changeAdd?.candidate?.hash !== data.candidate.hash
     )
-      return failure(
-        'REQUIREMENTS_CHANGED',
-        'Requirements changed during H1; request new approval',
-      );
+      return failure('REQUIREMENTS_CHANGED', 'H1 审批期间需求文档发生变化；请重新请求审批');
     if (!approved.ok) {
       if (approved.record?.decision === 'cancel') {
         const cancelled = await store.cancel({

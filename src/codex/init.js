@@ -9,6 +9,11 @@ import {
   normalizeProjectNamespace,
 } from './core/java/java-fullstack-template.js';
 import { goldenStatus, normalizeJavaPreset, templateHash } from './core/java/java-versions.js';
+import { resolveGitIdentity } from './core/git-identity.js';
+import { setupProject } from '../../scripts/codex-source-setup.mjs';
+import { discoverJava } from './core/java/java-env.js';
+import { publishInitialization } from './init-publication.js';
+import { insideSpecGateSource } from './core/project-path.js';
 
 const SOURCE_ROOT = path.resolve(fileURLToPath(new URL('../..', import.meta.url)));
 const RUNTIME_NAMES = [
@@ -66,6 +71,18 @@ const EXTRA_FILES = [
 const MAX_ENTRIES = 10000;
 const MAX_BYTES = 64 * 1024 * 1024;
 const WORKER_PATH = fileURLToPath(new URL('./init-worker.js', import.meta.url));
+const INIT_DIRECTORIES = new Set([
+  '.git',
+  '.codex',
+  '.agents',
+  '.specgate',
+  'backend',
+  'frontend',
+  'scripts',
+  'docs',
+  'openspec',
+]);
+const RETAINED_RUNTIME = new Set(['node_modules', 'target', 'dist', 'coverage', '.idea', 'data']);
 
 function failure(code, message, extra = {}) {
   return { ok: false, code, message, ...extra };
@@ -96,7 +113,7 @@ function checkedRoot(input) {
   }
   const root = path.resolve(input);
   if (root === path.parse(root).root) fail('UNSAFE_INIT_PATH', '不能初始化文件系统根目录');
-  if (within(SOURCE_ROOT, root) || within(root, SOURCE_ROOT)) {
+  if (within(SOURCE_ROOT, root) || within(root, SOURCE_ROOT) || insideSpecGateSource(root)) {
     fail('INIT_SOURCE_TARGET_FORBIDDEN', '不能在 SpecGate 插件源码目录或其父目录执行初始化');
   }
   let ancestor = root;
@@ -120,7 +137,7 @@ function checkedRoot(input) {
   return root;
 }
 
-function scan(root) {
+function scan(root, { targetScope = false } = {}) {
   const entries = [];
   let bytes = 0;
   function visit(directory) {
@@ -134,7 +151,11 @@ function scan(root) {
       if (entries.length >= MAX_ENTRIES) fail('INIT_SCAN_LIMIT', '目录扫描超过文件数量上限');
       if (stat.isDirectory()) {
         entries.push({ path: relative, type: 'directory' });
-        visit(target);
+        if (
+          !targetScope ||
+          (!RETAINED_RUNTIME.has(name) && (directory !== root || INIT_DIRECTORIES.has(name)))
+        )
+          visit(target);
       } else {
         bytes += stat.size;
         if (bytes > MAX_BYTES) fail('INIT_SCAN_LIMIT', '目录扫描超过 64 MiB 内容上限');
@@ -263,6 +284,8 @@ export function previewInit({
   company = 'company',
   business = 'tasks',
   frontend = 'vue',
+  gitName,
+  gitEmail,
 } = {}) {
   try {
     const root = checkedRoot(inputRoot);
@@ -276,7 +299,7 @@ export function previewInit({
     const namespace = normalizeProjectNamespace({ company, business });
     if (!namespace.ok) return namespace;
     const preset = normalized.preset;
-    const snapshot = scan(root);
+    const snapshot = scan(root, { targetScope: true });
     if (snapshot.entries.some((entry) => entryKey(entry.path) === '.specgate'))
       return failure('ALREADY_INITIALIZED', '已有 .specgate，拒绝重新初始化');
     const templates = javaFullstackFiles({
@@ -312,6 +335,7 @@ export function previewInit({
     }
     const hash = templateHash(templates);
     const git = inspectGit(root);
+    const gitIdentity = resolveGitIdentity({ root, gitName, gitEmail });
     const body = {
       root,
       preset: preset.id,
@@ -326,6 +350,7 @@ export function previewInit({
       snapshot,
       generated,
       git,
+      gitIdentity,
     };
     const existingFiles = snapshot.entries
       .filter((entry) => entry.type === 'file')
@@ -349,8 +374,9 @@ export function previewInit({
       previewHash: createHash('sha256').update(JSON.stringify(body)).digest('hex'),
       templateHash: hash,
       golden: goldenStatus(preset, hash, frontendChoice),
+      gitIdentity,
       risks: [
-        preset.legacy ? 'legacy：Java 8 / Spring Boot 2.7 维护风险' : null,
+        preset.legacy ? '兼容旧版本：Java 8 / Spring Boot 2.7 维护风险' : null,
         preset.preview ? 'preview：Spring Boot 4.0 预览版本风险' : null,
       ].filter(Boolean),
       files: {
@@ -445,15 +471,15 @@ function generateStaging({
   });
 }
 
-function baseline(root, created, report, templateDirectory) {
+function baseline(root, created, report, templateDirectory, identity, bindingProject) {
   const git = (args) => {
     const step = spawnSync(
       'git',
       [
         '-c',
-        'user.name=SpecGate',
+        'user.name=' + identity.name,
         '-c',
-        'user.email=specgate@local',
+        'user.email=' + identity.email,
         '-c',
         'core.hooksPath=' + templateDirectory,
         '-c',
@@ -474,6 +500,9 @@ function baseline(root, created, report, templateDirectory) {
     return step.stdout.trim();
   };
   git(['init', '-q', '--template=' + templateDirectory]);
+  git(['config', 'user.name', identity.name]);
+  git(['config', 'user.email', identity.email]);
+  report.projectSetup = setupProject({ project: root, bindingProject });
   // Explicit paths preserve preexisting business files without staging or committing them.
   const tracked = created.filter(
     (relative) => !['.specgate/state.json', '.specgate/init-report.json'].includes(relative),
@@ -481,10 +510,13 @@ function baseline(root, created, report, templateDirectory) {
   git(['add', '-f', '--', ...tracked]);
   git([
     'commit',
+    '--only',
     '--no-gpg-sign',
     '-q',
     '-m',
     'chore: initialize Codex Java Vue generated baseline',
+    '--',
+    ...tracked,
   ]);
   report.gitBaseline = {
     mandatory: true,
@@ -503,12 +535,20 @@ function baseline(root, created, report, templateDirectory) {
 }
 
 /** approvalProvider is a server dependency, never an MCP/tool argument. */
-export async function executeInit(input = {}, { approvalProvider, signal } = {}) {
+export async function executeInit(
+  input = {},
+  { approvalProvider, signal, allowExistingGit = false } = {},
+) {
   const preview = previewInit(input);
   if (!preview.ok) return preview;
   if (typeof input.previewHash !== 'string' || input.previewHash !== preview.previewHash)
     return failure('INIT_PREVIEW_STALE', '必须提供当前只读预览的 previewHash');
-  if (preview.git.repository)
+  if (
+    preview.git.repository &&
+    (!allowExistingGit ||
+      preview.git.enclosing ||
+      !fs.lstatSync(path.join(preview.root, '.git')).isDirectory())
+  )
     return failure(
       'INIT_EXISTING_GIT_UNSUPPORTED',
       '已有 Git 仓库的基线迁入尚未支持；未修改文件、索引或历史',
@@ -531,6 +571,7 @@ export async function executeInit(input = {}, { approvalProvider, signal } = {})
         strategy: preview.strategy,
         conflicts: preview.files.conflicts,
         preview,
+        signal,
       });
     } catch (error) {
       return failure('INIT_APPROVAL_FAILED', '目录非空，初始化未执行：' + error.message);
@@ -563,14 +604,13 @@ export async function executeInit(input = {}, { approvalProvider, signal } = {})
   }
   let checked = unchanged(input, preview.previewHash);
   if (!checked.ok) return checked;
+  if (!preview.gitIdentity.ok) return preview.gitIdentity;
   let stageRoot;
-  let preserveStage = false;
   let lockPath;
   try {
-    fs.mkdirSync(path.dirname(preview.root), { recursive: true });
     lockPath = path.join(
-      path.dirname(preview.root),
-      '.' + path.basename(preview.root) + '.sg-codex-init.lock',
+      os.tmpdir(),
+      'sg-codex-init-' + createHash('sha256').update(preview.root).digest('hex') + '.lock',
     );
     try {
       fs.mkdirSync(lockPath);
@@ -582,9 +622,7 @@ export async function executeInit(input = {}, { approvalProvider, signal } = {})
     }
     checked = unchanged(input, preview.previewHash);
     if (!checked.ok) return checked;
-    stageRoot = fs.mkdtempSync(
-      path.join(path.dirname(preview.root), '.' + path.basename(preview.root) + '.sg-codex-'),
-    );
+    stageRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'sg-codex-init-'));
     const generatedRoot = path.join(stageRoot, 'generated');
     const templateDirectory = path.join(stageRoot, 'empty-git-template');
     fs.mkdirSync(templateDirectory);
@@ -628,9 +666,15 @@ export async function executeInit(input = {}, { approvalProvider, signal } = {})
     if (JSON.stringify(actualFiles) !== JSON.stringify(expectedFiles))
       return failure('INIT_MANIFEST_DRIFT', '生成文件清单与只读预览不一致，未修改目标目录');
     const targetStage = path.join(stageRoot, 'target');
-    if (preview.targetExists)
-      fs.cpSync(preview.root, targetStage, { recursive: true, dereference: false });
-    else fs.mkdirSync(targetStage);
+    fs.mkdirSync(targetStage);
+    // Mirror only inspected files, never copy other projects or runtime trees.
+    const originalSnapshot = scan(preview.root, { targetScope: true });
+    for (const entry of originalSnapshot.entries.filter((item) => item.type === 'file')) {
+      const target = path.join(targetStage, entry.path);
+      fs.mkdirSync(path.dirname(target), { recursive: true });
+      fs.copyFileSync(path.join(preview.root, entry.path), target, fs.constants.COPYFILE_EXCL);
+      fs.chmodSync(target, entry.mode);
+    }
     scan(targetStage);
     for (const entry of generatedEntries.filter(
       (entry) =>
@@ -668,32 +712,47 @@ export async function executeInit(input = {}, { approvalProvider, signal } = {})
       path.join(targetStage, '.specgate/init-report.json'),
       JSON.stringify(report, null, 2) + '\n',
     );
-    baseline(targetStage, preview.files.new, report, templateDirectory);
+    baseline(
+      targetStage,
+      preview.files.new,
+      report,
+      templateDirectory,
+      preview.gitIdentity,
+      preview.root,
+    );
+    // Per-project local secrets are not template inputs or Git baseline contents.
+    const java = discoverJava().homes.find(
+      (entry) => String(entry.major) === normalizeJavaPreset(preview.preset).preset.jdk,
+    );
+    const createdLocalEnvironment = !fs.existsSync(path.join(targetStage, '.env'));
+    if (createdLocalEnvironment)
+      fs.writeFileSync(
+        path.join(targetStage, '.env'),
+        `# 本地演示账号 admin / admin、viewer / viewer；不要提交此文件。\nAPP_LOCAL_DEMO=true\nAPP_ADMIN_PASSWORD=admin\nAPP_VIEWER_PASSWORD=viewer\n${java ? 'JAVA_HOME=' + java.home.replaceAll('\\', '/') + '\n' : ''}`,
+        { flag: 'wx', mode: 0o600 },
+      );
+    report.environmentPreparation = {
+      java: java ? 'existing-installation' : 'missing',
+      credentials: 'local-env-file',
+      verification: 'not-run',
+    };
+    fs.writeFileSync(
+      path.join(targetStage, '.specgate/init-report.json'),
+      JSON.stringify(report, null, 2) + '\n',
+    );
     if (signal?.aborted) return failure('INIT_CANCELLED', '初始化已取消；未修改目标目录');
     checked = unchanged(input, preview.previewHash);
     if (!checked.ok) return checked;
-    // The original tree stays recoverable until its complete replacement has been promoted.
-    const backup = path.join(stageRoot, 'original');
-    if (preview.targetExists) fs.renameSync(preview.root, backup);
-    try {
-      if (preview.targetExists && snapshotHash(scan(backup)) !== preview.snapshotHash)
-        fail('INIT_PREVIEW_STALE', '目录提升前检测到目标变化，恢复原目录并拒绝初始化');
-      fs.renameSync(targetStage, preview.root);
-    } catch (error) {
-      if (preview.targetExists) {
-        try {
-          fs.renameSync(backup, preview.root);
-        } catch (restoreError) {
-          preserveStage = true;
-          return failure(
-            'INIT_RECOVERY_REQUIRED',
-            '目录提升失败且原目录恢复失败：' + restoreError.message,
-            { recoveryPath: backup, root: preview.root },
-          );
-        }
-      }
-      throw error;
-    }
+    publishInitialization({
+      source: targetStage,
+      target: preview.root,
+      snapshot: scan(preview.root, { targetScope: true }),
+      files: scan(targetStage)
+        .entries.filter((entry) => entry.type === 'file')
+        .map((entry) => entry.path),
+      managedPaths: report.projectSetup.changed,
+      existingGit: preview.git.repository,
+    });
     return {
       ok: true,
       code: 'GENERATED_ONLY',
@@ -702,19 +761,22 @@ export async function executeInit(input = {}, { approvalProvider, signal } = {})
       generated: true,
       report,
       risks: preview.risks,
+      login: createdLocalEnvironment
+        ? {
+            admin: { username: 'admin', password: 'admin' },
+            viewer: { username: 'viewer', password: 'viewer' },
+            message: '本地演示默认账号：admin / admin。部署时关闭 APP_LOCAL_DEMO 并设置强密码。',
+          }
+        : { message: '保留已有 .env 账号配置，请使用其中设置的密码登录；未擅自重置密码。' },
       message: '仅生成完成；尚未安装、编译或执行验证。',
     };
   } catch (error) {
-    return failure(
-      error.code === 'INIT_PREVIEW_STALE' ? error.code : 'INIT_GENERATION_FAILED',
-      error.message,
-      {
-        root: preview.root,
-        generated: false,
-      },
-    );
+    return failure(error.code || 'INIT_GENERATION_FAILED', error.message, {
+      root: preview.root,
+      generated: false,
+    });
   } finally {
-    if (stageRoot && !preserveStage) {
+    if (stageRoot) {
       try {
         fs.rmSync(stageRoot, { recursive: true, force: true, maxRetries: 3, retryDelay: 100 });
       } catch {

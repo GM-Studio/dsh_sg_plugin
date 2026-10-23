@@ -5,6 +5,8 @@ import { applyAdoption, commitDirtyBaseline, previewAdoption } from './project-a
 import { detectProject } from './project-detect.js';
 import { loadProjectReadiness } from './project-state.js';
 import { recordNewProjectBaseline } from './project-new.js';
+import fs from 'node:fs';
+import path from 'node:path';
 
 const definition = (name, description, properties = {}, required = [], readOnly = false) => ({
   name,
@@ -117,14 +119,37 @@ export async function callProjectTool(services, name, args = {}, { signal } = {}
       return {
         ok: true,
         projectReady: true,
+        projectRoot: root,
+        nextAction: 'WAIT_FOR_USER_REQUIREMENTS',
+        message: '项目已就绪，等待用户提出业务需求。先澄清、反述、批判分析，再请求 H1 人工审批。',
         profile: readiness.profile,
         baseline: readiness.baseline,
         baselineRun: getAdoptionBaselineRun(root) || getBaselineJob(root),
       };
     const detected = detectProject({ root });
+    let initialization = null;
+    try {
+      const report = JSON.parse(
+        fs.readFileSync(path.join(root, '.specgate/init-report.json'), 'utf8'),
+      );
+      initialization = {
+        generated: true,
+        verificationComplete: report.initializationComplete === true,
+      };
+    } catch {
+      /* A missing generation report is expected before initialization. */
+    }
     return {
       ok: true,
       projectReady: false,
+      projectRoot: root,
+      initialization,
+      ...(initialization
+        ? {
+            nextAction: 'VERIFY_PROJECT_THEN_WAIT_FOR_USER_REQUIREMENTS',
+            message: '项目已经生成，继续验证并建立基线，无需再次填写创建表单。',
+          }
+        : {}),
       readiness: readiness.code || readiness.message,
       baselineRun: getAdoptionBaselineRun(root) || getBaselineJob(root),
       detection: detected.ok

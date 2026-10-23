@@ -1,9 +1,9 @@
 {
   "name": "specgate-codex",
-  "version": "0.3.0",
+  "version": "0.3.2",
   "private": false,
   "type": "module",
-  "description": "SpecGate for Codex: asynchronous WorkItems, Web monitoring, Feishu decisions, verified DeliveryRecords and incremental redelivery.",
+  "description": "SpecGate for Codex：中文项目初始化、技术栈选择、需求澄清与人工审批、异步 WorkItem、Web 监控、飞书决策、可验证 DeliveryRecord 与增量再交付。",
   "keywords": [
     "codex",
     "spec-driven",
@@ -37,6 +37,7 @@
     "src/codex",
     "assets/codex",
     "assets/java-vue/template",
+    "assets/java-vue/template-react",
     "docs/quickstart-codex-source.zh.md",
     "docs/install-config-codex.zh.md",
     "docs/verification/codex-sg-v1/crm-native-agent-workflow/README.md",

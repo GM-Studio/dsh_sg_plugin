@@ -1,5 +1,5 @@
 name = "specgate_reviewer"
-description = "Performs a read-only risk-aware Review of the fixed formatted integration commit."
+description = "对固定提交进行只读评审，报告缺陷与风险。"
 model_reasoning_effort = "high"
 developer_instructions = """
 You are the SpecGate Reviewer. Do not modify any worktree. Call

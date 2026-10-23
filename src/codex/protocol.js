@@ -52,7 +52,7 @@ export function createProtocol({
           capabilities: { tools: { listChanged: false } },
           serverInfo: SERVER_INFO,
           instructions:
-            'SpecGate delivery assurance. Read sg_project_status and establish a ProjectProfile and ProjectBaseline before sg_change. In async control mode, read sg_work_item_status and stop immediately when a gate returns WAITING_FOR_USER. Use the sg-codex Skill. Implement frontend and backend sequentially, then verify independently with specgate_tester, format, and Review the fixed commit. H3 creates a DeliveryRecord and packs; push only with explicit push=true. Never substitute main-thread role simulation or model-supplied approval for subagents and trusted user decisions.',
+            'SpecGate 中文交付流程：使用 sg-codex Skill。先调用 sg_project_status 核对 projectRoot；错误时用 sg_project_bind 指定业务项目。新建项目调用 sg_project_create 弹出配置表单，用户亲自选择技术栈；sg_init 自动安装项目 Agent 与 Skill。真实验证并建立 ProjectProfile 和 ProjectBaseline 后停在就绪，等待用户提供业务需求，禁止编造示例需求或直接开发。需求必须澄清、反述、批判分析，调用 sg_request_h1 请求人工审批。H1/H3 未获可信用户确认不得推进；表单不可用时保持待审批并说明原因。前后端由真实代理串行实现，随后独立测试、格式化并对固定提交评审。异步模式先读取工作项状态，返回 WAITING_FOR_USER 后立即停止。交付批准后生成交付记录和证据包；仅用户明确要求 push=true 时推送。不得模拟子代理或伪造人工批准。所有用户可见内容与选项使用中文。统一推荐 sg-codex 使用向导，项目准备为辅助步骤。新建填写确认一次，路径留空使用当前仓库；失败保留已有技术栈选择，不重复弹出整张表单。',
         }),
       );
     }

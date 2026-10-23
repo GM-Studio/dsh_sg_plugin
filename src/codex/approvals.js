@@ -35,15 +35,17 @@ function parseDecision(response) {
       : null;
   }
   const content = response.content;
+  const decision =
+    { 批准: 'approve', 要求修改: 'modify', 取消: 'cancel' }[content?.decision] || content?.decision;
   if (
     response.action !== 'accept' ||
     !isObject(content) ||
     Object.keys(content).some((key) => !['decision', 'comment'].includes(key)) ||
-    !decisions.has(content.decision) ||
+    !decisions.has(decision) ||
     typeof content.comment !== 'string'
   )
     return null;
-  return { decision: content.decision, comment: content.comment };
+  return { decision, comment: content.comment };
 }
 
 async function requestWithDeadline(request, params, { signal, timeoutMs }) {
@@ -138,10 +140,7 @@ export function createApprovalAuthority({
       typeof sink === 'function' &&
       !(await append('approval.failed', { code, ...payload }, sink))
     )
-      return failure(
-        'APPROVAL_AUDIT_FAILED',
-        'Approval audit could not be persisted; approval denied',
-      );
+      return failure('APPROVAL_AUDIT_FAILED', '审批审计无法持久化；本次审批已拒绝');
     return failure(code, message);
   }
 
@@ -150,12 +149,9 @@ export function createApprovalAuthority({
       const current = hash(await readArtifactHash());
       return current === artifactHash
         ? { ok: true }
-        : failure(
-            'APPROVAL_ARTIFACT_CHANGED',
-            'The approved artifact changed; request new approval',
-          );
+        : failure('APPROVAL_ARTIFACT_CHANGED', '已审批的文档内容发生变化；请重新请求审批');
     } catch {
-      return failure('APPROVAL_ARTIFACT_UNREADABLE', 'The artifact hash could not be checked');
+      return failure('APPROVAL_ARTIFACT_UNREADABLE', '无法核对文档指纹');
     }
   }
 
@@ -164,7 +160,9 @@ export function createApprovalAuthority({
     if (!available.available)
       return reject(
         available.reason,
-        'A trusted native user approval source and durable audit are required',
+        available.reason === 'TRUSTED_USER_IDENTITY_UNAVAILABLE'
+          ? '未启用可信人工审批身份：请确认 SpecGate 连接以 SPECGATE_INTERACTIVE_APPROVAL=1 启动，重新加载插件或新建会话后重试；普通聊天确认不能作为审批。'
+          : '缺少可信人工审批通道或持久审计：请重新加载 SpecGate 插件连接或新建会话后重试；普通聊天确认不能作为审批。',
       );
     if (
       !isObject(challenge) ||
@@ -179,48 +177,43 @@ export function createApprovalAuthority({
       !text(challenge.summary) ||
       (challenge.signal !== undefined && !(challenge.signal instanceof AbortSignal))
     )
-      return reject(
-        'APPROVAL_CHALLENGE_INVALID',
-        'A gate, scope, artifact hash, reader and summary are required',
-      );
+      return reject('APPROVAL_CHALLENGE_INVALID', '审批请求缺少门禁、范围、文档指纹、读取器或摘要');
     // Snapshot the challenge before crossing any asynchronous boundary.
     const { gate, scope, summary, readArtifactHash, signal } = challenge;
     const artifactHash = hash(challenge.artifactHash);
     const started = clock();
     const context = { gate, scope, artifactHash };
-    if (signal?.aborted)
-      return reject('APPROVAL_CANCELLED', 'Approval request was cancelled', context);
+    if (signal?.aborted) return reject('APPROVAL_CANCELLED', '审批请求已取消', context);
     const initial = await checkArtifact(readArtifactHash, artifactHash);
     if (!initial.ok) return reject(initial.code, initial.message, context);
     let nonce;
     try {
       nonce = nonceFactory();
     } catch {
-      return reject('APPROVAL_NONCE_INVALID', 'Cannot create an approval nonce', context);
+      return reject('APPROVAL_NONCE_INVALID', '无法生成审批请求编号', context);
     }
     if (typeof nonce !== 'string' || !/^[a-f0-9]{64}$/.test(nonce))
-      return reject('APPROVAL_NONCE_INVALID', 'Approval nonce must contain 256 bits', context);
-    if (nonces.has(nonce))
-      return reject('APPROVAL_NONCE_REUSED', 'Approval nonce was already used', context);
+      return reject('APPROVAL_NONCE_INVALID', '审批请求编号必须包含 256 位随机数', context);
+    if (nonces.has(nonce)) return reject('APPROVAL_NONCE_REUSED', '审批请求编号已被使用', context);
     nonces.add(nonce);
     context.nonce = nonce;
     if (!(await append('approval.requested', { ...context, actor })))
-      return failure('APPROVAL_AUDIT_FAILED', 'Approval request audit could not be persisted');
+      return failure('APPROVAL_AUDIT_FAILED', '审批请求审计无法持久化');
     let response;
     try {
       response = await requestWithDeadline(
         request,
         {
-          message: `SpecGate ${gate}\nScope: ${scope}\nArtifact: ${artifactHash}\nNonce: ${nonce}\n\n${summary}`,
+          message: `SpecGate ${gate} ${gate === 'H1' ? '需求文档人工审批' : gate === 'H3' ? '交付人工验收' : '项目基线确认'}\n范围：${scope}\n文档指纹：${artifactHash}\n请求编号：${nonce}\n请审核完整文档后选择批准、要求修改或取消。\n\n${summary}`,
           requestedSchema: {
             type: 'object',
             properties: {
               decision: {
                 type: 'string',
-                title: 'Decision',
-                enum: ['approve', 'modify', 'cancel'],
+                title: '请选择审批决定',
+                enum: ['批准', '要求修改', '取消'],
               },
-              comment: { type: 'string', title: 'Approval comments' },
+              comment: { type: 'string', title: '审批意见（可为空）' },
             },
             required: ['decision', 'comment'],
           },
@@ -238,19 +231,20 @@ export function createApprovalAuthority({
         ['APPROVAL_CANCELLED', 'APPROVAL_CANCELLED'],
       ]);
       const code = aliases.get(error?.code) ?? 'APPROVAL_REQUEST_FAILED';
-      return reject(code, 'Native approval request did not complete successfully', context);
+      const detail = {
+        APPROVAL_CHANNEL_UNSUPPORTED:
+          '当前宿主不支持审批表单（elicitation）：请重新加载 SpecGate 插件连接或改用支持表单的宿主；保持待审批状态，不能用聊天文字代替。',
+        APPROVAL_TIMEOUT: '审批表单等待超时；请重新发起审批。',
+        APPROVAL_CANCELLED: '审批请求已取消。',
+      }[code];
+      return reject(code, detail || '原生审批请求未成功完成', context);
     }
-    if (signal?.aborted)
-      return reject('APPROVAL_CANCELLED', 'Approval request was cancelled', context);
+    if (signal?.aborted) return reject('APPROVAL_CANCELLED', '审批请求已取消', context);
     if (clock() - started >= ttlMs)
-      return reject(
-        'APPROVAL_EXPIRED',
-        'Approval request expired before the user response',
-        context,
-      );
+      return reject('APPROVAL_EXPIRED', '审批在用户响应前已过期；请重新发起审批', context);
     const decision = parseDecision(response);
     if (!decision)
-      return reject('APPROVAL_RESPONSE_INVALID', 'Native approval response is invalid', context);
+      return reject('APPROVAL_RESPONSE_INVALID', '原生审批响应无效；请重新发起审批', context);
     const issued = clock();
     const record = {
       ...context,
@@ -264,16 +258,18 @@ export function createApprovalAuthority({
     if (!current.ok) {
       record.invalidatedAt = iso();
       if (!(await append('approval.decided', { record })))
-        return failure('APPROVAL_AUDIT_FAILED', 'Approval decision audit could not be persisted');
+        return failure('APPROVAL_AUDIT_FAILED', '审批决定审计无法持久化');
       return reject(current.code, current.message, context);
     }
     if (!(await append('approval.decided', { record })))
-      return failure('APPROVAL_AUDIT_FAILED', 'Approval decision audit could not be persisted');
+      return failure('APPROVAL_AUDIT_FAILED', '审批决定审计无法持久化');
     if (decision.decision !== 'approve')
       return {
         ...failure(
           decision.decision === 'modify' ? 'APPROVAL_MODIFY_REQUESTED' : 'APPROVAL_CANCELLED',
-          'The user did not approve this artifact',
+          decision.decision === 'modify'
+            ? '用户要求修改；请根据审批意见修订文档后重新请求审批。'
+            : '用户未批准本文档。',
         ),
         record: clone(record),
       };
@@ -285,27 +281,19 @@ export function createApprovalAuthority({
   async function consume({ approval, gate, scope, artifactHash } = {}, sink = audit) {
     const deny = (code, message, payload) => reject(code, message, payload, sink);
     const entry = isObject(approval) ? handles.get(approval) : null;
-    if (!entry) return deny('APPROVAL_UNKNOWN', 'No approval was issued for this opaque handle');
+    if (!entry) return deny('APPROVAL_UNKNOWN', '该审批句柄不存在；请重新请求人工审批');
     const { record } = entry;
     const context = { gate: record.gate, scope: record.scope, nonce: record.nonce };
     if (entry.status === 'invalidated')
-      return deny(
-        'APPROVAL_INVALIDATED',
-        'This approval was invalidated; request new approval',
-        context,
-      );
+      return deny('APPROVAL_INVALIDATED', '该审批已失效；请重新请求人工审批', context);
     if (entry.status !== 'active')
-      return deny('APPROVAL_CONSUMED', 'This approval has already been consumed', context);
+      return deny('APPROVAL_CONSUMED', '该审批已被消费；如需继续请重新请求人工审批', context);
     if (
       gate !== record.gate ||
       scope !== record.scope ||
       hash(artifactHash) !== record.artifactHash
     )
-      return deny(
-        'APPROVAL_BINDING_MISMATCH',
-        'Approval gate, scope or artifact hash does not match',
-        context,
-      );
+      return deny('APPROVAL_BINDING_MISMATCH', '审批的门禁、范围或文档指纹不匹配', context);
     // Reserve synchronously so concurrent callers cannot both consume the handle.
     entry.status = 'consuming';
     const invalidate = async (code, message) => {
@@ -314,16 +302,16 @@ export function createApprovalAuthority({
       return deny(code, message, context);
     };
     if (clock() >= Date.parse(record.expiresAt))
-      return invalidate('APPROVAL_EXPIRED', 'This approval has expired; request new approval');
+      return invalidate('APPROVAL_EXPIRED', '该审批已过期；请重新请求人工审批');
     const current = await checkArtifact(entry.readArtifactHash, record.artifactHash);
     if (!current.ok) return invalidate(current.code, current.message);
     if (clock() >= Date.parse(record.expiresAt))
-      return invalidate('APPROVAL_EXPIRED', 'This approval has expired; request new approval');
+      return invalidate('APPROVAL_EXPIRED', '该审批已过期；请重新请求人工审批');
     const consumed = { ...record, consumedAt: iso() };
     if (!(await append('approval.consumed', { record: consumed }, sink))) {
       entry.status = 'invalidated';
       record.invalidatedAt = iso();
-      return failure('APPROVAL_AUDIT_FAILED', 'Consumption audit failed; request new approval');
+      return failure('APPROVAL_AUDIT_FAILED', '审批消费审计失败；请重新请求人工审批');
     }
     entry.record = consumed;
     entry.status = 'consumed';
@@ -337,29 +325,19 @@ export function createApprovalAuthority({
   // recursively acquiring that same lock through the constructor audit callback.
   async function authorizeGate({ gate, state, to, approval, audit: transactionAudit } = {}) {
     if (transactionAudit !== undefined && typeof transactionAudit !== 'function')
-      return reject('APPROVAL_AUDIT_FAILED', 'A server transaction audit callback is required');
+      return reject('APPROVAL_AUDIT_FAILED', '缺少服务端事务审计回调');
     const sink = transactionAudit ?? audit;
     if (
       (gate === 'H1' && to !== 'REQ_FROZEN') ||
       (gate === 'H3' && to !== 'ARCHIVING') ||
       !gates.has(gate)
     )
-      return reject(
-        'APPROVAL_BINDING_MISMATCH',
-        'Approval does not authorize this gate transition',
-        {},
-        sink,
-      );
+      return reject('APPROVAL_BINDING_MISMATCH', '该审批不授权此门禁状态迁移', {}, sink);
     let artifact;
     try {
       artifact = await resolveGateArtifact({ gate, state, to });
     } catch {
-      return reject(
-        'APPROVAL_BINDING_MISMATCH',
-        'Cannot resolve the current gate artifact',
-        {},
-        sink,
-      );
+      return reject('APPROVAL_BINDING_MISMATCH', '无法解析当前门禁对应的文档', {}, sink);
     }
     return consume(
       {

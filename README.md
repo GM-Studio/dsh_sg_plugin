@@ -52,9 +52,9 @@ worktrees 和机器可审计证据完成项目接入、异步交付、独立验�
 （`frontendFramework`、`javaPreset`）；后续变更只能在该事实内工作，栈不匹配时
 fail-closed。
 
-- 后端 JDK：JDK 8、17 或 21（默认 JDK 8 + Spring Boot 2.7）。
-- Spring Boot：2.7.x 与 3.5.x；另有 JDK 21 + Spring Boot 4.0 预览档。
-- 前端：Vue 3（默认）；React 18 计划中，模板落地前选择 React 会 fail-closed。
+- 后端 JDK：JDK 8、17 或 21，必须由用户在中文表单中明确选择。
+- Spring Boot：2.7.x 与 3.5.x；支持 JDK 21 + Spring Boot 3.5。
+- 前端：Vue 3（默认）；React 18 可选，使用独立模板与锁文件。
 
 前端脚手架使用 Vue 3.5 + Element Plus + vue-router + vue-i18n + TypeScript。
 这些只是脚手架选定的版本，**不代表**任何预设已在 Windows + Linux 双平台验证通过：
@@ -62,6 +62,20 @@ fail-closed。
 标记 `verified`。
 
 ## 从源码加载
+
+安装插件后，在业务项目的 Codex 会话中显式调用 `$sg-codex` 或
+`$sg-codex-setup`。新建项目使用 `sg_project_create` 中文表单选择目录、包名、
+技术栈和 Git 身份，自动安装 Agent 与项目 Skill；普通使用无需手动执行安装脚本。
+先看 `sg_project_status.projectRoot`，路径错误时调用 `sg_project_bind`。
+现有项目缺少环境时调用 `sg_project_setup` 自动补齐。
+
+真实验证与基线建立后停在就绪，等待用户提出业务需求，再澄清、反述、批判分析，
+由用户通过 H1 表单审批。宿主必须支持 MCP elicitation 才能显示原生表单；缺少支持
+时工具会明确报告待输入或待审批，不会伪造确认。
+
+生成项目的 `npm run dev` 仅启动前端；`npm run backend` 独立启动后端，
+`npm run dev:all` 联合启动。本地演示默认账号为 `admin / admin`、`viewer / viewer`，配置保存在被 Git 忽略的 `.env`，
+启动脚本与 Spring 会自动读取；已有项目可运行 `npm run configure` 补齐。
 
 先确认所用 Codex 支持 `codex plugin`。本机旧版 npm CLI 0.117.0 不支持该命令；
 桌面端自带 CLI 可能与终端默认版本不同。版本选择、安装状态检查和各平台步骤见
@@ -72,7 +86,6 @@ cd E:\ai_workflow\specgate
 npm ci
 codex plugin marketplace add E:\ai_workflow\specgate
 codex plugin add specgate-codex@specgate-source
-node E:\ai_workflow\specgate\scripts\codex-source-setup.mjs --project <项目绝对路径>
 codex -C <项目绝对路径>
 ```
 

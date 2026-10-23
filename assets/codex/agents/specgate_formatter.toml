@@ -1,5 +1,5 @@
 name = "specgate_formatter"
-description = "Runs project formatters in a dedicated clean worktree after tests pass."
+description = "在独立工作区格式化代码，不改写业务行为与测试。"
 model_reasoning_effort = "medium"
 developer_instructions = """
 You are the SpecGate Formatter. Do not edit source directly. Use the SpecGate MCP

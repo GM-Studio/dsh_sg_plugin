@@ -71,7 +71,13 @@ test('source setup installs six project agents and preserves unrelated AGENTS co
   assert.match(config, /specgate-codex:config-begin/);
   assert.match(config, /\[plugins\."specgate-codex@specgate-source"\.mcp_servers\.specgate\]/);
   assert.equal(first.git.trackedAgents, false);
-  assert.deepEqual(first.git.excluded, ['.codex/', 'AGENTS.md']);
+  assert.deepEqual(first.git.excluded, [
+    '.codex/',
+    '.agents/skills/sg-codex/',
+    '.agents/skills/sg-codex-setup/',
+    '.env',
+    'AGENTS.md',
+  ]);
   assert.deepEqual(first.git.dirtyManagedPaths, []);
   const exclude = fs.readFileSync(path.join(project, '.git', 'info', 'exclude'), 'utf8');
   assert.match(exclude, /^\/\.codex\/$/m);
@@ -92,7 +98,12 @@ test('source setup reports a tracked AGENTS file instead of hiding its required 
 
   const result = setupProject({ project });
   assert.equal(result.git.trackedAgents, true);
-  assert.deepEqual(result.git.excluded, ['.codex/']);
+  assert.deepEqual(result.git.excluded, [
+    '.codex/',
+    '.agents/skills/sg-codex/',
+    '.agents/skills/sg-codex-setup/',
+    '.env',
+  ]);
   assert.deepEqual(result.git.dirtyManagedPaths, ['AGENTS.md']);
   assert.match(result.git.warning, /AGENTS\.md is tracked/i);
   const exclude = fs.readFileSync(path.join(project, '.git', 'info', 'exclude'), 'utf8');
@@ -138,4 +149,20 @@ test('source setup refuses an unmanaged project MCP conflict', () => {
     () => setupProject({ project }),
     (error) => error.code === 'MCP_CONFIG_CONFLICT',
   );
+});
+
+test('setup upgrades an exact previously managed skill but preserves custom changes', () => {
+  const project = gitProject('sg-codex-upgrade-');
+  setupProject({ project });
+  const file = path.join(project, '.agents/skills/sg-codex/agents/openai.yaml');
+  const old =
+    "interface:\n  display_name: 'SpecGate 项目与需求交付'\n  short_description: '新建或接入业务项目，表单选择技术栈，澄清需求并等待人工审批后交付'\n  default_prompt: '使用 $sg-codex 检查业务项目绑定，按中文表单和人工需求审批流程继续。'\n";
+  fs.writeFileSync(file, old);
+  assert.ok(
+    setupProject({ project }).changed.includes('.agents/skills/sg-codex/agents/openai.yaml'),
+  );
+  assert.match(fs.readFileSync(file, 'utf8'), /从这里开始/);
+  fs.writeFileSync(file, old + '# user customization\n');
+  assert.throws(() => setupProject({ project }), /保留已有 Skill/);
+  assert.equal(fs.readFileSync(file, 'utf8'), old + '# user customization\n');
 });

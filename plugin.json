@@ -1,8 +1,8 @@
 {
   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "name": "specgate-codex",
-  "version": "0.3.0",
-  "description": "Asynchronous Codex delivery with Web monitoring, Feishu decisions, verification and delivery records.",
+  "version": "0.3.2",
+  "description": "SpecGate 中文项目初始化、技术栈选择、需求澄清与人工审批、独立验证和交付记录。",
   "author": {
     "name": "andy.zx"
   },
@@ -11,11 +11,12 @@
   "keywords": ["codex", "openspec", "spec-driven", "subagents", "worktree", "quality-gate"],
   "extensions": {
     "com.openai": {
+      "requires_local_executor": true,
       "onboardingSkill": "./skills/setup/SKILL.md",
       "interface": {
         "displayName": "SpecGate for Codex",
-        "shortDescription": "Async delivery control and acceptance records for solo builders",
-        "longDescription": "Run durable Codex WorkItems, monitor execution and evidence in a local Web console, send actionable Feishu decisions, resume automatically, and issue verified DeliveryRecords and customer packs.",
+        "shortDescription": "中文表单初始化、需求审批与可验证交付",
+        "longDescription": "选择业务项目与技术栈，自动准备 Agent 和 Skill，澄清、反述和评审需求，由用户审批后开始开发；支持本地控制台、独立验证和交付记录。",
         "developerName": "andy.zx",
         "category": "Developer Tools",
         "capabilities": ["Read", "Write"]

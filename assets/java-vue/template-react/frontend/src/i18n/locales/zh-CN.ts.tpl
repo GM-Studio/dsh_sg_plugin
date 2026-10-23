@@ -14,7 +14,7 @@ export default {
   login: {
     eyebrow: 'SPECGATE 工作空间',
     title: '欢迎回来',
-    description: '登录后管理任务和文件。',
+    description: '登录后管理工作台。本地演示默认：admin / admin；自定义配置以实际设置为准。',
     username: '用户名',
     password: '密码',
     submit: '登录',

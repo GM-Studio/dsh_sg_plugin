@@ -1,15 +1,13 @@
-# Starter security scope
+# 脚手架安全边界
 
-Supplied controls: Spring Security authorization, Session Cookie login/logout, explicit session rotation, CSRF, BCrypt hashes of environment-supplied passwords, two fixed roles, bounded login failures, loopback binding, safe generic JSON errors, trace ids and bounded CSV import/export processing.
+已有控制：Spring Security 权限、Session Cookie 登录与退出、会话轮换、CSRF、BCrypt 密码哈希、ADMIN/VIEWER 两种角色、登录失败限流、回环地址监听、统一 JSON 错误、traceId 与有界 CSV 导入导出。
 
-This remains a local reference application. It does not provide registration, password recovery, SSO, tenant/owner isolation, antivirus scanning, shared/distributed sessions or production database migrations. Protect the database with operating-system permissions.
+本项目用于本地参考，不包含注册、密码找回、SSO、租户/所有者隔离、恶意文件扫描、分布式会话或生产数据库迁移。数据库和 .env 应受操作系统权限保护。本地演示明确启用 APP_LOCAL_DEMO=true，管理员为 admin / admin、只读账号为 viewer / viewer。环境变量优先，已有自定义配置保留；部署关闭演示模式后强制长密码，不能提交 .env。
 
 ## Legacy stack
 
-Java 8 / Spring Boot 2.7 is out of ordinary open-source support. It is a compatibility preset, not a production recommendation. A maintained vendor JDK and separate dependency/advisory review are required. Pinning versions demonstrates compatibility, not absence of vulnerabilities.
+Java 8 / Spring Boot 2.7 为兼容预设，已结束普通开源支持；需要维护中的厂商 JDK 和单独依赖审查。锁定版本只说明兼容性，不代表不存在漏洞。
 
 ## Exact frontend versions
 
-Vue 3.5.30, Element Plus 2.11.8, Vite 7.3.1, TypeScript 5.9.3, vue-tsc 3.2.5, Vitest/@vitest/coverage-v8 4.0.18, ESLint 9.39.2 and Prettier 3.8.1. The committed npm lockfile fixes transitive resolution. Re-check advisories and compatibility before upgrading; do not replace pins with latest.
-
-Java formatting uses Spotless and Google Java Format AOSP. Checkstyle enforces the documented subset of Alibaba style; no tool result is represented as full handbook compliance. JaCoCo and Vitest enforce both sides' coverage independently, with no business-source exclusion.
+前端精确版本及传递依赖由 frontend/package.json 与 package-lock.json 固定。升级前复核兼容性与安全公告，不得直接替换为 latest。Java 使用 Spotless / Google Java Format AOSP 与 Checkstyle；自动化只覆盖规定子集，不宣称完整手册合规。JaCoCo 和 Vitest 分别检查后端及前端覆盖率，不通过排除业务代码降低标准。

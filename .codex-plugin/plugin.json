@@ -1,7 +1,7 @@
 {
   "name": "specgate-codex",
-  "version": "0.3.0",
-  "description": "SpecGate Codex adapter: asynchronous WorkItems, Web monitoring, Feishu decisions, verified DeliveryRecords and incremental redelivery.",
+  "version": "0.3.2",
+  "description": "SpecGate 中文项目初始化、技术栈选择、需求人工审批、独立验证与交付记录。",
   "author": { "name": "andy.zx" },
   "license": "MIT",
   "skills": "./skills/",
@@ -9,8 +9,8 @@
   "requires_local_executor": true,
   "interface": {
     "displayName": "SpecGate for Codex",
-    "shortDescription": "Async delivery control and acceptance records for solo builders",
-    "longDescription": "Local control plane with durable WorkItems, a Web management console, actionable Feishu decisions, independent verification, DeliveryRecords and incremental redelivery.",
+    "shortDescription": "中文表单初始化、需求审批与可验证交付",
+    "longDescription": "选择业务项目与技术栈，自动准备 Agent 和 Skill，由用户审批需求后开始开发，提供独立验证与可审计交付记录。",
     "developerName": "andy.zx",
     "category": "Developer Tools",
     "capabilities": ["Read", "Write"],

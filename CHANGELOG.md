@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+- Require an explicit absolute business-project path in the create-project form
+  when the session directory is a SpecGate plugin directory; ordinary roots can
+  still leave the path empty to reuse the current repository.
+- Localize approval and clarification failure messages into Chinese with
+  actionable recovery guidance; ordinary chat confirmation never counts as an
+  H1/H3 approval.
+- Bump the plugin version to 0.3.2 so hosts load a fresh cache instead of an
+  old connection missing sg_request_h1 or trusted approval identity.
 - Add a detached async supervisor with durable WorkItems, ExecutionRuns, leases,
   heartbeat and crash recovery.
 - Add asynchronous H1/H3 AttentionRequests that resume the persisted Codex

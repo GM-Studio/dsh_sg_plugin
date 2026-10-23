@@ -1,25 +1,22 @@
-# Java 8 + Vue admin monorepo
+# Java 8 + Spring Boot + 管理后台
 
-Generation copies source and project-local reference examples only. It never installs dependencies, runs checks or starts servers. Golden acceptance is a historical template result, not evidence that this project was tested.
+这是领域中立的管理后台脚手架，包含登录、仪表盘、用户、角色、部门、菜单、只读审计、CSV 导入导出和中英文切换。生成不代表当前项目已完成构建或验证。
 
-## Start
+## 本地启动
 
-- Maintained Java 8 JDK and Maven 3.9.x. Set JAVA_HOME; Maven Wrapper (`backend/mvnw` or `backend/mvnw.cmd`) uses Maven 3.9.11.
-- Node 24 or Node 22 >=22.12 and npm. Dependencies are pinned and frontend/package-lock.json is included.
-- Set APP_ADMIN_PASSWORD and APP_VIEWER_PASSWORD to different private passwords (12+ characters, no more than 72 UTF-8 bytes). There is no default password. Accounts are admin and viewer.
-- Run node scripts/run.mjs install, then node scripts/run.mjs dev. Open http://127.0.0.1:5173. Stop with Ctrl+C.
-- Optional MAVEN_CMD chooses a full Maven executable path. Ports and database options: docs/operations.md.
+- Node 24 或 Node 22 >=22.12，依赖由 frontend/package-lock.json 锁定。
+- npm run setup 安装前端依赖；npm run dev 仅启动前端，打开 http://127.0.0.1:5173，不依赖 Java。
+- 后端需要与所选技术栈匹配的 JDK 和 Maven 3.9.x（backend/mvnw 或 mvnw.cmd）；npm run backend 独立启动，npm run dev:all 联合启动。
+- 本地演示默认管理员为 admin / admin，只读账号为 viewer / viewer；登录页和生成结果会提示。配置在 .env，旧项目可用 npm run configure 创建，已有自定义文件不覆盖。
+- 启动脚本和 Spring 自动读取 .env；环境变量优先。APP_LOCAL_DEMO=true 时允许上述演示密码；部署前关闭演示模式并设置至少 12 个字符、最多 72 个 UTF-8 字节的密码。
+- 端口、持久化与故障处理见 docs/operations.md；IDE 只导入 backend/pom.xml，排除 .specgate 参考快照目录。
 
-The interface is a domain-neutral admin scaffold: login/logout, a dashboard summary, and management of system users, roles, departments, menus and the read-only audit log, each with paged/filtered queries, atomic batch actions and CSV import/export, plus zh-CN/en-US runtime switching. VIEWER reads/exports; ADMIN writes.
+## 验证与需求流程
 
-## Check final source
+node scripts/run.mjs format 执行 Java Spotless 和前端 Prettier；node scripts/run.mjs verify 执行后端测试、JaCoCo、Checkstyle、格式，以及前端构建、Vitest 覆盖率、ESLint 和格式检查。
 
-- node scripts/run.mjs format: apply Spotless AOSP four-space Java formatting and frontend Prettier.
-- node scripts/run.mjs verify: backend tests, JaCoCo thresholds, Checkstyle and format check; frontend typecheck/build, Vitest coverage, ESLint and format check.
-- node scripts/run.mjs test/lint/typecheck/static/format:check: focused commands.
-- /sg-verify additionally exercises a real isolated server, roles, CSRF, CRUD/batch/CSV and graceful restart persistence, retaining logs and reconciled reports.
-- Backend and frontend separately require >=80% line and >=70% branch coverage. Missing reports, skipped required tests or a failed command must not be described as passed.
+sg_verify 还会启动隔离服务，检查权限、CSRF、CRUD、CSV 和重启持久化。前后端分别要求行覆盖率 >=80%、分支覆盖率 >=70%；未执行、跳过或失败不能描述为通过。
 
-Read docs/style.md before sg-change. The fixed reference snapshots in .specgate/examples and their manifest are intentional, committed inputs for planning, implementation and review. Modify normal business files; do not rewrite snapshots to hide drift.
+修改前阅读 docs/style.md；.specgate/examples 中的已提交参考快照不可改写来掩盖漂移。项目基线完成后处于就绪，等待用户提出业务需求，再进行澄清、反述、批判分析和 H1 需求审批；不会自动编造需求或开始开发。
 
-API contracts: docs/api.md and docs/openapi.yaml. Security scope and stack risks: docs/security.md. This is a small local starter; production migrations, SSO and distributed infrastructure are outside its scope.
+API 见 docs/api.md 和 docs/openapi.yaml，安全边界见 docs/security.md。

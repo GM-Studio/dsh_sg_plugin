@@ -1,6 +1,7 @@
 node_modules/
 dist/
 coverage/
+.commandcode/
 assets/**/*.tpl
 assets/**/*.template
 docs/verification/**/*.json

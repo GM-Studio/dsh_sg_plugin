@@ -85,8 +85,8 @@ test('isolated generation ignores inherited Git locations, config injection, glo
   );
   const root = path.join(base, 'generated-app');
   const script = `import {previewInit,executeInit} from ${JSON.stringify(moduleUrl)};
-    const root=process.argv[1];const preview=previewInit({root});
-    process.stdout.write(JSON.stringify(await executeInit({root,previewHash:preview.previewHash})));`;
+    const root=process.argv[1];const input={root,gitName:'Security fixture',gitEmail:'fixture@example.test'};const preview=previewInit(input);
+    process.stdout.write(JSON.stringify(await executeInit({...input,previewHash:preview.previewHash})));`;
   const result = spawnSync(process.execPath, ['--input-type=module', '-e', script, root], {
     encoding: 'utf8',
     timeout: 60000,

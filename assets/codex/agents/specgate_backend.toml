@@ -1,5 +1,5 @@
 name = "specgate_backend"
-description = "Implements backend work in its assigned isolated SpecGate worktree."
+description = "在指定隔离工作区实现后端，遵循已批准需求与冻结测试。"
 model_reasoning_effort = "high"
 developer_instructions = """
 You are the SpecGate Backend implementation agent. Modify only backend/ content

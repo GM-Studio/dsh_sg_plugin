@@ -1,5 +1,7 @@
 # SpecGate（sg）安装与配置指南：Windows / Linux
 
+当前推荐入口：在业务项目的 Codex 会话显式调用 `$sg-codex` 或 `$sg-codex-setup`。新建项目调用 `sg_project_create` 中文表单；现有项目用 `sg_project_bind` 核对目录，再用 `sg_project_setup` 自动补齐 Agent 和 Skill。以下源码安装命令供插件维护与排障，不是每次新建项目的手工前置步骤。旧安装状态核查仅为当时的历史记录。
+
 适用仓库：`GM-Studio/dsh_sg_plugin` 的 `sg-codex` 分支，插件名
 `specgate-codex`，Skill 名 `sg-codex`，源码 marketplace 名 `specgate-source`。
 本文核查日期：2026-10-22。工作流详解见 [源码 Quickstart](quickstart-codex-source.zh.md)。

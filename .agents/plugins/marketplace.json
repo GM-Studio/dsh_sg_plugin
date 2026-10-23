@@ -1,7 +1,7 @@
 {
   "name": "specgate-source",
   "interface": {
-    "displayName": "SpecGate Source Checkout"
+    "displayName": "SpecGate 中文项目交付（源码）"
   },
   "plugins": [
     {

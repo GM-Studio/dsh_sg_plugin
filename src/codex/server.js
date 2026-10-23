@@ -21,8 +21,9 @@ function ordinaryProjectRoot(value) {
 export async function resolveProjectRoot(
   peer,
   fallback,
-  { env = process.env, timeoutMs = 5000 } = {},
+  { env = process.env, timeoutMs = 5000, explicit = false } = {},
 ) {
+  if (explicit) return path.resolve(fallback);
   const configured = ordinaryProjectRoot(env.SPECGATE_PROJECT_ROOT);
   if (configured) return configured;
   if (peer.capabilities().rootsSupported !== true) return path.resolve(fallback);
@@ -60,6 +61,7 @@ export async function resolveProjectRoot(
 
 export function serveStdio({
   projectRoot = process.cwd(),
+  explicitProjectRoot = false,
   trustedUserIdentity = interactiveHostIdentity(),
   nativeAgents = process.env.SPECGATE_NATIVE_AGENTS === '1',
   input = process.stdin,
@@ -102,7 +104,9 @@ export function serveStdio({
     registry: dynamicRegistry,
     onInitialize: async (capabilities) => {
       peer.initialize(capabilities);
-      const resolved = await resolveProjectRoot(peer, projectRoot);
+      const resolved = await resolveProjectRoot(peer, projectRoot, {
+        explicit: explicitProjectRoot,
+      });
       if (resolved !== path.resolve(projectRoot))
         registry = toolRegistryFactory({ ...registryOptions, projectRoot: resolved });
     },
@@ -229,6 +233,7 @@ function main() {
   }
   serveStdio({
     projectRoot: args[1] || process.cwd(),
+    explicitProjectRoot: Boolean(args[1]),
     onFailure: () => {
       process.exitCode = 1;
     },

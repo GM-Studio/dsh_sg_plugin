@@ -1,0 +1,4 @@
+interface:
+  display_name: 'SpecGate 使用向导（从这里开始）'
+  short_description: '首次和后续都用此入口；自动先准备项目，再等待用户需求与人工审批'
+  default_prompt: '使用 $sg-codex 引导我开始，先说明当前阶段，自动完成必要的项目准备，再等待我的业务需求。'

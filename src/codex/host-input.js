@@ -1,4 +1,5 @@
 import os from 'node:os';
+import { categoryLabel } from './locale.js';
 
 const object = (value) => value !== null && typeof value === 'object' && !Array.isArray(value);
 
@@ -58,7 +59,7 @@ export function createPeerUserInputProvider({
           question.id,
           {
             type: 'string',
-            title: `[${question.category}] ${question.text}`,
+            title: `[${categoryLabel(question.category)}] ${question.text}`,
             minLength: 1,
             maxLength: 8000,
           },
@@ -67,7 +68,7 @@ export function createPeerUserInputProvider({
       const result = await requestPeer(
         'elicitation/create',
         {
-          message: `SpecGate ${changeId} clarification round ${round}. Answer all ${questions.length} questions.`,
+          message: `SpecGate ${changeId}：第 ${round} 轮需求澄清，请填写以下 ${questions.length} 个问题。回答仅代表澄清，最终需求文档仍须 H1 人工审批。`,
           requestedSchema: {
             type: 'object',
             properties,

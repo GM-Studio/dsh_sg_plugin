@@ -38,7 +38,7 @@ test('preview scans all categories and remains read-only for missing and nonempt
   assert.equal(fs.existsSync(missing), false);
   assert.equal(planned.nonEmpty, false);
   assert.equal(planned.preset, 'jdk8-boot2.7');
-  assert.ok(planned.risks.some((risk) => risk.includes('legacy')));
+  assert.ok(planned.risks.some((risk) => risk.includes('兼容旧版本')));
   assert.ok(planned.files.new.includes('.specgate/init-report.json'));
   assert.ok(planned.files.new.includes('openspec/REQ.md'));
   const root = temp(t);
@@ -65,7 +65,8 @@ test('four presets generate unchanged templates, complete metadata and real isol
   for (const preset of JAVA_PRESETS) {
     const root = path.join(temp(t), 'app');
     const preview = previewInit({ root, preset: preset.id });
-    assert.equal(preview.templateHash, GOLDEN_MANIFEST.presets[preset.id].templateHash);
+    assert.notEqual(preview.templateHash, GOLDEN_MANIFEST.presets[preset.id].templateHash);
+    assert.equal(preview.golden.verified, false, 'changed templates need fresh matrix evidence');
     const result = await executeInit({ root, preset: preset.id, previewHash: preview.previewHash });
     assert.equal(result.ok, true, JSON.stringify(result));
     assert.equal(result.code, 'GENERATED_ONLY');

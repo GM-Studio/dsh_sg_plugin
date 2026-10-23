@@ -75,13 +75,20 @@ test('init preview is read-only; nonempty initialization cannot manufacture appr
   fs.writeFileSync(path.join(projectRoot, 'README.md'), 'user content');
   const registry = createToolRegistry({ projectRoot });
   const preview = data(
-    await registry.call('sg_init_preview', { company: 'acme', business: 'orders' }),
+    await registry.call('sg_init_preview', {
+      company: 'acme',
+      business: 'orders',
+      preset: 'jdk17-boot3.5',
+      frontend: 'vue',
+    }),
   );
   assert.equal(preview.ok, true);
   assert.equal(preview.nonEmpty, true);
   const denied = data(
     await registry.call('sg_init', {
       previewHash: preview.previewHash,
+      preset: 'jdk17-boot3.5',
+      frontend: 'vue',
       company: 'acme',
       business: 'orders',
     }),
@@ -91,6 +98,8 @@ test('init preview is read-only; nonempty initialization cannot manufacture appr
   const forged = data(
     await registry.call('sg_init', {
       previewHash: preview.previewHash,
+      preset: 'jdk17-boot3.5',
+      frontend: 'vue',
       company: 'acme',
       business: 'orders',
       approved: true,

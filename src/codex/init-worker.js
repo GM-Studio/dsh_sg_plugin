@@ -13,6 +13,7 @@ try {
     company: namespace.company,
     business: namespace.business,
     frontend: namespace.frontend,
+    generateOnly: true,
     userQuestions: { ask: async () => ({ answers: [{ selected: ['确认'] }] }) },
   });
 } catch (error) {

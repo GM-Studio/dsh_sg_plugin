@@ -5834,6 +5834,10 @@ function frontendVersionSection(security) {
 function readmeFor(readme, preset) {
   let value = readme;
   value = value.replace(
+    '# Java 8 + Spring Boot + 管理后台',
+    '# Java ' + preset.jdk + ' + Spring Boot ' + preset.bootVersion + ' + 管理后台',
+  );
+  value = value.replace(
     '# Java 8 + Vue task monorepo',
     '# Java ' + preset.jdk + ' + Spring Boot ' + preset.bootVersion + ' + Vue task monorepo',
   );
@@ -5882,14 +5886,14 @@ function securityFor(security, preset) {
   const header =
     '# ' +
     preset.label +
-    ' security posture\n\n' +
-    'This starter pins Java ' +
+    ' 安全边界\n\n' +
+    '当前脚手架固定 Java ' +
     preset.jdk +
     ', Spring Boot ' +
     preset.bootVersion +
     ' and H2 ' +
     preset.h2 +
-    ' for a local demonstration. Pinned versions ensure compatibility, not security; review dependency advisories and SBOMs before deployment.\n\n' +
+    '，用于本地参考。锁定版本不代表安全保证，部署前请审查依赖公告与 SBOM。\n\n' +
     security.slice(0, security.indexOf('## Legacy stack')) +
     '\n';
   return header + (tail ? tail + '\n' : '');

@@ -1,8 +1,10 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import process from 'node:process';
+import os from 'node:os';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
+import { createHash } from 'node:crypto';
 
 const SOURCE_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const AGENT_ROOT = path.join(SOURCE_ROOT, 'assets', 'codex', 'agents');
@@ -12,6 +14,13 @@ const CONFIG_START = '# specgate-codex:config-begin';
 const CONFIG_END = '# specgate-codex:config-end';
 const EXCLUDE_START = '# specgate-codex:exclude-begin';
 const EXCLUDE_END = '# specgate-codex:exclude-end';
+const managedHistory = JSON.parse(
+  fs.readFileSync(path.join(SOURCE_ROOT, 'assets/codex/managed-file-history.json'), 'utf8'),
+).hashes;
+const previouslyManaged = (relative, content) =>
+  managedHistory[relative]?.includes(
+    createHash('sha256').update(content.replace(/\r\n/g, '\n')).digest('hex'),
+  ) === true;
 
 function fail(code, message) {
   throw Object.assign(new Error(message), { code });
@@ -40,10 +49,18 @@ function atomicWrite(target, content) {
 
 function git(target, args, { allowFailure = false } = {}) {
   try {
-    return execFileSync('git', ['-C', target, ...args], {
+    return execFileSync('git', ['-c', 'core.fsmonitor=false', '-C', target, ...args], {
       encoding: 'utf8',
       stdio: ['ignore', 'pipe', 'pipe'],
       windowsHide: true,
+      timeout: 10000,
+      env: {
+        ...Object.fromEntries(
+          Object.entries(process.env).filter(([key]) => !key.toUpperCase().startsWith('GIT_')),
+        ),
+        GIT_CONFIG_GLOBAL: process.platform === 'win32' ? 'NUL' : os.devNull,
+        GIT_CONFIG_NOSYSTEM: '1',
+      },
     }).trim();
   } catch (error) {
     if (allowFailure) return null;
@@ -77,10 +94,19 @@ function manageLocalExcludes(root, { check }) {
   }
   const trackedAgents =
     git(root, ['ls-files', '--error-unmatch', '--', 'AGENTS.md'], { allowFailure: true }) !== null;
-  const excluded = ['.codex/', ...(trackedAgents ? [] : ['AGENTS.md'])];
+  const excluded = [
+    '.codex/',
+    '.agents/skills/sg-codex/',
+    '.agents/skills/sg-codex-setup/',
+    '.env',
+    ...(trackedAgents ? [] : ['AGENTS.md']),
+  ];
   const block = [
     EXCLUDE_START,
     '/.codex/',
+    '/.agents/skills/sg-codex/',
+    '/.agents/skills/sg-codex-setup/',
+    '/.env',
     ...(trackedAgents ? [] : ['/AGENTS.md']),
     EXCLUDE_END,
   ].join('\n');
@@ -201,6 +227,7 @@ export function setupProject({
   check = false,
   pluginRoot = SOURCE_ROOT,
   marketplace = 'specgate-source',
+  bindingProject = project,
 } = {}) {
   if (typeof project !== 'string' || !project)
     fail('INVALID_ARGUMENT', 'An absolute project path is required');
@@ -216,11 +243,16 @@ export function setupProject({
   for (const template of agentTemplates()) {
     const target = path.join(agents, template.name);
     const existing = ordinaryFile(target, `.codex/agents/${template.name}`);
-    if (existing !== null && existing.replace(/\r\n/g, '\n') !== template.content) {
+    if (
+      existing !== null &&
+      existing.replace(/\r\n/g, '\n') !== template.content &&
+      !previouslyManaged(`.codex/agents/${template.name}`, existing)
+    ) {
       conflicts.push(`.codex/agents/${template.name}`);
       continue;
     }
-    if (existing === null) changes.push({ target, content: template.content });
+    if (existing === null || existing.replace(/\r\n/g, '\n') !== template.content)
+      changes.push({ target, content: template.content });
   }
   if (conflicts.length)
     fail('AGENT_CONFLICT', `Refusing to overwrite project Agent files: ${conflicts.join(', ')}`);
@@ -233,7 +265,7 @@ export function setupProject({
 
   const configFile = path.join(codex, 'config.toml');
   const existingConfig = ordinaryFile(configFile, '.codex/config.toml') || '';
-  const configBlock = managedProjectConfig({ project: root, pluginRoot, marketplace });
+  const configBlock = managedProjectConfig({ project: bindingProject, pluginRoot, marketplace });
   const mergedConfig = mergeManagedToml(existingConfig, configBlock, {
     markerStart: CONFIG_START,
     markerEnd: CONFIG_END,
@@ -242,8 +274,38 @@ export function setupProject({
   if (mergedConfig !== existingConfig.replace(/\r\n/g, '\n'))
     changes.push({ target: configFile, content: mergedConfig });
 
+  // Project-local skills are discoverable even when a host only loads the portable manifest.
+  const skillsRoot = path.join(root, '.agents', 'skills');
+  ordinaryDirectory(path.join(root, '.agents'), '.agents');
+  ordinaryDirectory(skillsRoot, '.agents/skills');
+  for (const [folder, name] of [
+    ['sg-codex', 'sg-codex'],
+    ['setup', 'sg-codex-setup'],
+  ]) {
+    const directory = path.join(skillsRoot, name);
+    ordinaryDirectory(directory, `Skill ${name}`);
+    for (const relative of ['SKILL.md', 'agents/openai.yaml']) {
+      const content = fs
+        .readFileSync(path.join(SOURCE_ROOT, 'skills', folder, relative), 'utf8')
+        .replace(/\r\n/g, '\n');
+      const target = path.join(directory, relative);
+      const existing = ordinaryFile(target, `Skill ${name}`);
+      if (
+        existing !== null &&
+        existing.replace(/\r\n/g, '\n') !== content &&
+        !previouslyManaged(`.agents/skills/${name}/${relative}`, existing)
+      )
+        fail('SKILL_CONFLICT', `保留已有 Skill，拒绝覆盖：${target}`);
+      if (existing === null || existing.replace(/\r\n/g, '\n') !== content)
+        changes.push({ target, content });
+    }
+  }
+
   if (!check) {
-    for (const change of changes) atomicWrite(change.target, change.content);
+    for (const change of changes) {
+      ordinaryDirectory(path.dirname(change.target), '安装目标目录');
+      atomicWrite(change.target, change.content);
+    }
   }
   const gitStatus = manageLocalExcludes(root, { check });
   return {
@@ -253,6 +315,7 @@ export function setupProject({
     changed: changes.map((change) => path.relative(root, change.target).replace(/\\/g, '/')),
     agents: agentTemplates().map((entry) => entry.name.replace(/\.toml$/, '')),
     mcpServer: 'specgate_project',
+    skills: ['sg-codex', 'sg-codex-setup'],
     git: gitStatus,
   };
 }

@@ -10,3 +10,4 @@ coverage/
 .specgate/
 .runtime/
 .npmrc
+.commandcode/

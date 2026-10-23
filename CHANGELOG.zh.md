@@ -2,6 +2,12 @@
 
 ## 未发布
 
+- 新建项目表单在会话目录为 SpecGate 插件目录时要求必填业务项目绝对路径，
+  不再默认把插件目录当"当前仓库"；普通目录仍支持留空复用当前仓库。
+- 审批与澄清失败消息中文化；缺少可信审批/表单通道时给出重新加载插件连接、
+  新建会话等可执行指引，普通聊天确认始终不构成 H1/H3 审批。
+- 插件版本升级到 0.3.2，强制宿主使用新缓存，避免继续加载旧版连接导致
+  sg_request_h1 缺失或 TRUSTED_USER_IDENTITY_UNAVAILABLE。
 - 增加独立异步 supervisor、持久 WorkItem/ExecutionRun/租约/心跳和进程恢复。
 - 增加 H1/H3 异步 AttentionRequest，Decision 后自动 resume Codex session。
 - 增加本地 Web 管理台、一次性配对、CSRF、会话和运行监控。

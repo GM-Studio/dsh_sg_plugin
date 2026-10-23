@@ -2,6 +2,7 @@ import { spawn } from 'node:child_process';
 import { existsSync } from 'node:fs';
 import { dirname, delimiter, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { configure } from './configure.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const children = new Set();
@@ -139,7 +140,19 @@ const workflows = {
   ],
 };
 export async function main(action) {
-  if (action === 'dev') {
+  if (action === 'configure') return configure(root);
+  if (action === 'backend' || action === 'dev:all') {
+    const local = configure(root);
+    process.loadEnvFile(local.file);
+    for (const name of ['APP_ADMIN_PASSWORD', 'APP_VIEWER_PASSWORD']) {
+      const password = process.env[name] || '';
+      const demoPassword = process.env.APP_LOCAL_DEMO === 'true' && password === (name === 'APP_ADMIN_PASSWORD' ? 'admin' : 'viewer');
+      if ((!demoPassword && password.length < 12) || Buffer.byteLength(password) > 72)
+        throw new Error(`${name} 配置无效：请在 .env 中设置至少 12 个字符且不超过 72 个 UTF-8 字节的密码。`);
+    }
+  }
+  if (action === 'dev') action = 'frontend';
+  if (action === 'dev:all') {
     try {
       await Promise.all([
         execute('backend', ['spring-boot:run']),

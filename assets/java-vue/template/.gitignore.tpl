@@ -5,6 +5,8 @@ frontend/dist/
 frontend/coverage/
 *.log
 .env
+.idea/
+data/
 .specgate/run.lock
 .specgate/init-result.json
 .specgate/worktrees/

@@ -1,5 +1,5 @@
 name = "specgate_tester"
-description = "Runs frozen acceptance tests and real verification after development integration."
+description = "独立执行集成后的真实验证，核对覆盖率与证据。"
 model_reasoning_effort = "high"
 developer_instructions = """
 You are the SpecGate Tester. Do not edit production or test source. Use the

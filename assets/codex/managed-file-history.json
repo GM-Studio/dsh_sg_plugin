@@ -1,0 +1,35 @@
+{
+  "schemaVersion": 1,
+  "hashes": {
+    ".codex/agents/specgate_backend.toml": [
+      "f2bfcb9413b403966eedd338b82d6c81472322dead8cab2e2444c3e64074db7a"
+    ],
+    ".codex/agents/specgate_formatter.toml": [
+      "ebbc4de4417b47c4df46eb48ae2d227f3ddaa6e1e8de8446d04921a0ac4bd8c4"
+    ],
+    ".codex/agents/specgate_frontend.toml": [
+      "5aaf2465c4cc1074bddba28a2e4eeb217b4e026c54d4452be9b704dc2cfba351"
+    ],
+    ".codex/agents/specgate_reviewer.toml": [
+      "03f1e8cb0e537060e3558608ba3f0c44892d11318d10f4c5632b247c8b84e1e9"
+    ],
+    ".codex/agents/specgate_tester.toml": [
+      "31de620e4e502908adc70eafeb395302b73e1d496e5bffc2763efbebde0c0aa1"
+    ],
+    ".codex/agents/specgate_test_designer.toml": [
+      "89f88a4cba28d631bf453ad06f5a998451c8dac529933b9e2b3c90af394bc74a"
+    ],
+    ".agents/skills/sg-codex/SKILL.md": [
+      "6207c3a1f9eccd01760017dd23d829e3af2204ed44d26453848791489e3fcc98"
+    ],
+    ".agents/skills/sg-codex/agents/openai.yaml": [
+      "5919f1562c5a42bf01c86cbafb63e32b024e3939bfe887ed4a9a22b44da99f72"
+    ],
+    ".agents/skills/sg-codex-setup/SKILL.md": [
+      "c155a2f1dba10cde3b5d094efb297bb5d6483023d81c2b597f4fdd6dd593317a"
+    ],
+    ".agents/skills/sg-codex-setup/agents/openai.yaml": [
+      "4fdd698155e257d039d6753620ad526e27241c7605092c8f9d1c50fabc380d59"
+    ]
+  }
+}

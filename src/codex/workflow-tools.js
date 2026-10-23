@@ -27,6 +27,13 @@ import { FORMAT_TOOLS, callFormatTool } from './format-tools.js';
 import { CONTROL_TOOLS, callControlTool } from './control/tools.js';
 import { createControlApprovalAuthority } from './control/approval-bridge.js';
 import { createLocalControlRuntime } from './control/runtime.js';
+import { TOOL_DESCRIPTIONS } from './locale.js';
+import {
+  ONBOARDING_TOOLS,
+  bindProject,
+  installProject,
+  createProjectInteractively,
+} from './onboarding.js';
 
 const object = (value) => value !== null && typeof value === 'object' && !Array.isArray(value);
 const NATIVE_RUNNER_ADAPTER = fileURLToPath(new URL('./native-test-runner.mjs', import.meta.url));
@@ -44,12 +51,12 @@ const target = {
 const preset = {
   type: 'string',
   enum: JAVA_PRESETS.map((entry) => entry.id),
-  description: 'Java/Vue preset; defaults to jdk8-boot2.7 (legacy).',
+  description: '用户明确选择的 JDK / Spring Boot 技术栈；不得静默默认。',
 };
 const frontend = {
   type: 'string',
   enum: ['vue', 'react'],
-  description: 'Frontend framework; defaults to vue. React is not yet available.',
+  description: '用户明确选择的前端框架：Vue 3 或 React 18。',
 };
 const javaPackageSegment = {
   type: 'string',
@@ -63,6 +70,18 @@ const reason = {
   type: 'string',
   maxLength: 2048,
   description: 'User-provided reason retained with the event.',
+};
+const gitName = {
+  type: 'string',
+  minLength: 1,
+  maxLength: 256,
+  description: '用户指定的 Git 用户名；省略时复用 Git 环境/配置。',
+};
+const gitEmail = {
+  type: 'string',
+  minLength: 3,
+  maxLength: 256,
+  description: '用户指定的 Git 邮箱；缺失身份时必须先向用户采集。',
 };
 const definition = (name, description, properties = {}, required = [], readOnly = false) => ({
   name,
@@ -132,8 +151,16 @@ const WORKFLOW_TOOLS = [
   definition(
     'sg_init_preview',
     'Scan a Java/Vue initialization target without writing. Return conflicts, retained files, namespace, Git status and the preview hash.',
-    { path: target, preset, frontend, company: javaPackageSegment, business: javaPackageSegment },
-    ['company', 'business'],
+    {
+      path: target,
+      preset,
+      frontend,
+      company: javaPackageSegment,
+      business: javaPackageSegment,
+      gitName,
+      gitEmail,
+    },
+    ['company', 'business', 'preset', 'frontend'],
     true,
   ),
   definition(
@@ -145,13 +172,15 @@ const WORKFLOW_TOOLS = [
       frontend,
       company: javaPackageSegment,
       business: javaPackageSegment,
+      gitName,
+      gitEmail,
       previewHash: {
         type: 'string',
         pattern: '^[a-f0-9]{64}$',
         description: 'Unchanged previewHash returned by sg_init_preview.',
       },
     },
-    ['previewHash', 'company', 'business'],
+    ['previewHash', 'company', 'business', 'preset', 'frontend'],
   ),
   {
     ...definition(
@@ -243,7 +272,7 @@ const result = (data) => ({
   structuredContent: data,
 });
 
-export function createToolRegistry({
+function createBoundToolRegistry({
   projectRoot,
   requestPeer,
   peerCapabilities,
@@ -413,7 +442,41 @@ export function createToolRegistry({
         }
       : undefined);
   const effectiveInitializationApproval =
-    initializationApprovalProvider || (trustedUserIdentity ? authority : undefined);
+    initializationApprovalProvider ||
+    (trustedUserIdentity && requestPeer
+      ? {
+          async requestApproval(challenge) {
+            if (peerCapabilities?.().elicitationSupported !== true) return { approved: false };
+            const response = await requestPeer(
+              'elicitation/create',
+              {
+                message: `初始化非空目录：${challenge.root}\n保留所有现有文件；逐项保留冲突：${challenge.conflicts.map((entry) => entry.path).join('、') || '无'}\n预览：${challenge.previewHash}`,
+                requestedSchema: {
+                  type: 'object',
+                  properties: {
+                    decision: {
+                      type: 'string',
+                      title: '是否按当前预览补齐缺失文件',
+                      enum: ['approve', 'cancel'],
+                    },
+                  },
+                  required: ['decision'],
+                },
+              },
+              { signal: challenge.signal },
+            );
+            return {
+              approved: response?.action === 'accept' && response.content?.decision === 'approve',
+              previewHash: challenge.previewHash,
+              conflicts: challenge.conflicts.map((entry) => ({
+                path: entry.path,
+                decision: 'keep',
+              })),
+              receipt: { source: trustedUserIdentity.source, actor: trustedUserIdentity.id },
+            };
+          },
+        }
+      : undefined);
   let changeService;
   const changes = () =>
     (changeService ||= createChangeAddService({
@@ -655,6 +718,8 @@ export function createToolRegistry({
           frontend: args.frontend,
           company: args.company,
           business: args.business,
+          gitName: args.gitName,
+          gitEmail: args.gitEmail,
         };
         if (name === 'sg_verify') {
           const { verifyProject } = await import('./verify.js');
@@ -688,4 +753,88 @@ export function createToolRegistry({
       }
     },
   };
+}
+
+// Keep project selection at the session boundary so all lazily created services
+// are rebuilt together. A generated target becomes the active business project.
+export function createToolRegistry(options = {}) {
+  let root = path.resolve(options.projectRoot || process.cwd());
+  let bound = createBoundToolRegistry({ ...options, projectRoot: root });
+  const onboardingDraft = {};
+  const definitions = [...bound.definitions, ...ONBOARDING_TOOLS].map((entry) => ({
+    ...entry,
+    description: TOOL_DESCRIPTIONS[entry.name] || entry.description,
+  }));
+  const bind = (selected) => {
+    root = bindProject(selected);
+    bound = createBoundToolRegistry({ ...options, projectRoot: root });
+    return root;
+  };
+  const registry = {
+    definitions,
+    validate(name, args) {
+      const tool = definitions.find((entry) => entry.name === name);
+      return Boolean(tool && validArguments(tool.inputSchema, args));
+    },
+    async call(name, args = {}, context = {}) {
+      if (!definitions.some((entry) => entry.name === name))
+        return result({ ok: false, code: 'UNKNOWN_TOOL', message: 'Tool is not available' });
+      if (!registry.validate(name, args))
+        return result({
+          ok: false,
+          code: 'INVALID_ARGUMENT',
+          message: '工具参数不符合声明的格式。',
+        });
+      if (
+        context.signal?.aborted &&
+        !definitions.find((entry) => entry.name === name).annotations.readOnlyHint
+      )
+        return result({ ok: false, code: 'CANCELLED', message: '操作已取消。' });
+      try {
+        if (name === 'sg_project_bind')
+          return result({
+            ok: true,
+            projectRoot: bind(args.path),
+            message: '已绑定业务项目，请先检查 sg_project_status。',
+          });
+        if (name === 'sg_project_setup') {
+          const installed = installProject(args.path || root);
+          return result({ ...installed, projectRoot: bind(installed.project) });
+        }
+        if (name === 'sg_project_create') {
+          const created = await createProjectInteractively({
+            ...options,
+            projectRoot: root,
+            call: registry.call,
+            signal: context.signal,
+            draft: onboardingDraft,
+            initialPath: args.path,
+            reset: args.reset,
+          });
+          if (created.ok && created.root) {
+            created.projectRoot = bind(created.root);
+            created.nextAction ||= 'VERIFY_PROJECT_THEN_WAIT_FOR_USER_REQUIREMENTS';
+          }
+          return result(created);
+        }
+        const response = await bound.call(name, args, context);
+        if (name === 'sg_init' && response.structuredContent?.ok) {
+          const projectRoot = bind(response.structuredContent.root);
+          return result({
+            ...response.structuredContent,
+            projectRoot,
+            nextAction: 'VERIFY_PROJECT_THEN_WAIT_FOR_USER_REQUIREMENTS',
+          });
+        }
+        return response;
+      } catch (error) {
+        return result({
+          ok: false,
+          code: error.code || 'PROJECT_OPERATION_FAILED',
+          message: error.message,
+        });
+      }
+    },
+  };
+  return registry;
 }

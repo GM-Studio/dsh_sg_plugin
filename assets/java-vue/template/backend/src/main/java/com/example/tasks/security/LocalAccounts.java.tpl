@@ -6,6 +6,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -20,21 +21,27 @@ public class LocalAccounts {
     private final Map<String, Attempt> attempts = new HashMap<>();
     private final String dummyHash;
 
+    public LocalAccounts(String admin, String viewer) {
+        this(admin, viewer, false);
+    }
+
+    @Autowired
     public LocalAccounts(
             @Value("${APP_ADMIN_PASSWORD:}") String admin,
-            @Value("${APP_VIEWER_PASSWORD:}") String viewer) {
-        requirePassword(admin);
-        requirePassword(viewer);
+            @Value("${APP_VIEWER_PASSWORD:}") String viewer,
+            @Value("${APP_LOCAL_DEMO:false}") boolean localDemo) {
+        requirePassword(admin, localDemo && "admin".equals(admin));
+        requirePassword(viewer, localDemo && "viewer".equals(viewer));
         hashes.put("admin", encoder.encode(admin));
         hashes.put("viewer", encoder.encode(viewer));
         dummyHash = encoder.encode(java.util.UUID.randomUUID().toString());
     }
 
-    private void requirePassword(String password) {
+    private void requirePassword(String password, boolean localDemoPassword) {
         int bytes = password.getBytes(StandardCharsets.UTF_8).length;
-        if (password.length() < 12 || bytes > 72) {
+        if ((!localDemoPassword && password.length() < 12) || bytes > 72) {
             throw new IllegalStateException(
-                    "Set APP_ADMIN_PASSWORD and APP_VIEWER_PASSWORD: 12+ characters, at most 72 UTF-8 bytes");
+                    "请配置管理员与只读账号密码：至少 12 个字符，最多 72 个 UTF-8 字节；仅本地演示模式允许预置演示密码");
         }
     }
 

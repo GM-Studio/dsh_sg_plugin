@@ -5,6 +5,7 @@ import { spawnSync } from 'node:child_process';
 import { createArtifactStore } from './core/artifact-store.js';
 import { hashValue } from './events.js';
 import { gitSafeDirectory } from './git-path.js';
+import { resolveGitIdentity } from './core/git-identity.js';
 import { validateDeliveryRecord } from './project-model.js';
 import { checkedProjectRoot } from './project-state.js';
 import { validateDeliveryRecordV3 } from './control/delivery-controlled.js';
@@ -168,11 +169,13 @@ function ensureTag(root, delivery) {
       ? { ok: true, created: false }
       : failure('DELIVERY_TAG_CONFLICT', 'Existing local tag points to another commit');
   }
+  const identity = resolveGitIdentity({ root });
+  if (!identity.ok) return identity;
   const created = git(root, [
     '-c',
-    'user.name=SpecGate',
+    'user.name=' + identity.name,
     '-c',
-    'user.email=specgate@local',
+    'user.email=' + identity.email,
     'tag',
     '-a',
     delivery.tag,

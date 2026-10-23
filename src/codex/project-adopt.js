@@ -4,6 +4,7 @@ import { spawnSync } from 'node:child_process';
 import { createArtifactStore } from './core/artifact-store.js';
 import { hashValue } from './events.js';
 import { gitSafeDirectory } from './git-path.js';
+import { resolveGitIdentity } from './core/git-identity.js';
 import { detectProject } from './project-detect.js';
 import { validateProjectBaseline, validateProjectProfile } from './project-model.js';
 import {
@@ -194,14 +195,16 @@ export async function commitDirtyBaseline(args = {}, { approvalProvider, signal 
     JSON.stringify(sortedUnique(record.paths)) !== JSON.stringify(approved)
   )
     return failure('APPROVAL_BINDING_MISMATCH', 'Approval does not match the current file set');
+  const identity = resolveGitIdentity({ root: preview.root });
+  if (!identity.ok) return identity;
   const add = git(preview.root, ['add', '--', ...approved]);
   if (add.status !== 0)
     return failure('BASELINE_STAGE_FAILED', add.stderr || 'Approved files could not be staged');
   const commit = git(preview.root, [
     '-c',
-    'user.name=SpecGate',
+    'user.name=' + identity.name,
     '-c',
-    'user.email=specgate@local',
+    'user.email=' + identity.email,
     '-c',
     'commit.gpgsign=false',
     'commit',

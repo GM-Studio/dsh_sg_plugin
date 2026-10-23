@@ -8,6 +8,7 @@ import { VERIFY_STAGES } from './verify-evidence.js';
 import { JAVA_PRESETS, goldenStatus, normalizeJavaPreset, templateHash } from './java-versions.js';
 import { initProject, patchConfigRequirements } from '../change.js';
 import { gitSafeDirectory } from '../../git-path.js';
+import { resolveGitIdentity } from '../git-identity.js';
 import { writeRequirementsBaseline, answerOf } from '../requirements.js';
 import { patchState } from '../state.js';
 
@@ -62,12 +63,12 @@ function promoteGeneratedDirectory(workRoot, targetRoot) {
 
 export const JAVA_INIT_REQUIREMENTS = {
   functional: [
-    '用户通过 Vue 页面完成任务 CRUD、分页筛选排序和原子批量操作，调用真实 Java /api/tasks API',
-    '任务以 H2 文件库持久化，后端重启后保留数据',
+    '通用管理脚手架提供用户、角色、部门、菜单、只读审计与仪表盘，使用真实 Java /api/sys API',
+    '通用管理数据以 H2 文件库持久化，后端重启后保留数据；业务需求等待用户提出',
     '查询 GET、写操作 POST JSON；统一 JSON 响应、参数校验和全局异常，删除返回回执',
     '本地 admin/viewer 账号使用 Session Cookie 和 CSRF 防护；后端强制两类角色权限',
     'CSV 支持预校验、原子导入和筛选导出；导入 multipart、下载导出文件流，错误为 JSON',
-    '本地文件经类型大小和路径校验后上传，鉴权下载；内容及元数据重启后保留',
+    '用户与角色提供 CSV 模板下载、预校验、原子导入和筛选导出',
     '提供健康检查和可配置端口，前后端独立构建与启动',
     '项目包名使用 com.<company>.<business>，生成源码包含中文注释',
     '前端使用 i18n，默认显示中文，并支持切换英文',
@@ -81,15 +82,15 @@ export const JAVA_INIT_REQUIREMENTS = {
     'Java8 + Spring Boot2.7.18 + Maven；披露旧版本维护风险',
     'Vue3、TypeScript、Vite 锁定稳定兼容版本；Node 受支持 LTS；npm',
     'company 和 business 必须是合法的小写 Java 包片段，禁止生成 com.example.* 新代码',
-    '初始密码由环境变量提供，无默认运行密码；不含注册、SSO、多租户，不自动发起后续 change；保留 H1/H2/H3 审批',
+    '初始密码从本地 .env 或环境变量读取，本地演示使用 admin/admin 与 viewer/viewer，部署关闭演示后要求强密码；不含注册、SSO、多租户；基线就绪后等待用户需求，不自动发起 change',
   ],
   acceptance: [
-    '页面通过真实 API 完成任务 CRUD，错误输入有反馈',
-    '创建任务、重启 Java 后端、查询任务仍存在',
+    '页面通过真实 API 完成系统用户、角色、部门、菜单管理，错误输入有反馈',
+    '创建管理记录、重启 Java 后端、查询记录仍存在',
     '错误输入、错误方法和缺失资源返回统一 JSON 与正确状态',
     '登录/退出/CSRF/限流有效，只读角色不能写入',
     '合法 CSV 预校验与导入导出正确，非法 CSV 无部分写入',
-    '文件上传下载正确，非法路径/类型/大小与权限错误被拒绝',
+    'CSV 上传下载正确，非法表头、类型、大小与权限错误被拒绝',
     '健康检查、前后端独立构建及端口配置可用',
     '生成后端使用指定包名并可通过构建，前端默认中文且可切换英文',
   ],
@@ -220,6 +221,7 @@ export async function startJavaInit({
   draft,
   company = 'company',
   business = 'tasks',
+  generateOnly = false,
 }) {
   const existing = existingJavaWorkspace(root);
   if (existing) return existing;
@@ -408,6 +410,14 @@ export async function startJavaInit({
     fs.writeFileSync(path.join(workRoot, '.specgate/config.yaml'), baselineConfig(preset));
     patchConfigRequirements(workRoot, { enabled: true, version: 'v1.0' });
     writeRequirementsBaseline(workRoot, requirements, { version: 'v1.0' });
+    for (const relative of ['openspec/REQ.md', 'openspec/history/v1.0/REQ.md']) {
+      const file = path.join(workRoot, relative);
+      fs.writeFileSync(
+        file,
+        '> 本文仅为初始化脚手架能力说明，不是用户业务需求，不代表 H1 人工审批。项目就绪后等待用户提出需求，再澄清、反述、批判分析和审批。\n\n' +
+          fs.readFileSync(file, 'utf8'),
+      );
+    }
     fs.writeFileSync(
       path.join(workRoot, '.specgate/monorepo.json'),
       JSON.stringify(
@@ -477,6 +487,8 @@ export async function startJavaInit({
       path.join(workRoot, '.specgate/init-report.json'),
       JSON.stringify(report, null, 2) + NL,
     );
+    const identity = generateOnly ? null : resolveGitIdentity({ root: workRoot });
+    if (!generateOnly && !identity.ok) throw new Error(identity.message);
     const git = (args) =>
       spawnSync(
         'git',
@@ -484,9 +496,9 @@ export async function startJavaInit({
           '-c',
           `safe.directory=${gitSafeDirectory(workRoot)}`,
           '-c',
-          'user.name=SpecGate',
+          'user.name=' + identity.name,
           '-c',
-          'user.email=specgate@local',
+          'user.email=' + identity.email,
           ...args,
         ],
         {
@@ -495,28 +507,30 @@ export async function startJavaInit({
           timeout: 120000,
         },
       );
-    for (const args of [
-      ['init', '-q'],
-      ['add', '-A'],
-      ['commit', '--no-gpg-sign', '-q', '-m', 'chore: initialize Java Vue req v1 baseline'],
-    ]) {
-      const step = git(args);
-      if (step.status !== 0) throw new Error(step.stderr || step.error?.message || 'git failed');
-    }
-    report.gitBaseline.commit = git(['rev-parse', 'HEAD']).stdout.trim();
-    report.gitBaseline.status = 'passed';
-    report.gitBaseline.tag = 'init-baseline';
-    fs.writeFileSync(
-      path.join(workRoot, '.specgate/init-report.json'),
-      JSON.stringify(report, null, 2) + NL,
-    );
-    for (const args of [
-      ['add', '.specgate/init-report.json'],
-      ['commit', '--no-gpg-sign', '-q', '-m', 'chore: record Java Vue init baseline'],
-      ['tag', 'init-baseline'],
-    ]) {
-      const step = git(args);
-      if (step.status !== 0) throw new Error(step.stderr || step.error?.message || 'git failed');
+    if (!generateOnly) {
+      for (const args of [
+        ['init', '-q'],
+        ['add', '-A'],
+        ['commit', '--no-gpg-sign', '-q', '-m', 'chore: initialize Java Vue req v1 baseline'],
+      ]) {
+        const step = git(args);
+        if (step.status !== 0) throw new Error(step.stderr || step.error?.message || 'git failed');
+      }
+      report.gitBaseline.commit = git(['rev-parse', 'HEAD']).stdout.trim();
+      report.gitBaseline.status = 'passed';
+      report.gitBaseline.tag = 'init-baseline';
+      fs.writeFileSync(
+        path.join(workRoot, '.specgate/init-report.json'),
+        JSON.stringify(report, null, 2) + NL,
+      );
+      for (const args of [
+        ['add', '.specgate/init-report.json'],
+        ['commit', '--no-gpg-sign', '-q', '-m', 'chore: record Java Vue init baseline'],
+        ['tag', 'init-baseline'],
+      ]) {
+        const step = git(args);
+        if (step.status !== 0) throw new Error(step.stderr || step.error?.message || 'git failed');
+      }
     }
     promoteGeneratedDirectory(workRoot, root);
     workRoot = null;
