@@ -195,10 +195,13 @@ node <absolute-specgate-source-path>/scripts/codex-source-setup.mjs \
 - `.codex/config.toml` 中由 `# specgate-codex:config-begin` 包围的项目级 MCP 配置
 
 已有同名自定义 Agent 内容不同时脚本 fail-closed，不会覆盖。
+setup 不再把 `sg-codex*` Skill 复制到 `.agents/skills`；Skill 由全局插件统一提供，
+所有业务项目共享同一份定义。项目级配置只绑定当前项目的数据，不是命令副本。
 
 脚本同时把受管本地文件写入 Git 的 `.git/info/exclude`：
 
 - `/.codex/`
+- `/.env`
 - `/AGENTS.md`（仅当该文件未 tracked）
 
 这样 setup 自身不会让主工作区变 dirty，也不会影响其他克隆或共享仓库。若
@@ -216,7 +219,9 @@ args = ["<source>/src/codex/server.js", "--project-root", "<absolute-project>"]
 
 这样 MCP 状态始终绑定目标项目，而不是 `~/.codex/plugins/cache/...`。部分桌面版的
 plugin server 默认从插件目录启动，`roots/list` 在部分 exec 会话中不可用，因此
-Quickstart 使用项目级显式绑定作为桌面端与 CLI 都可靠的路径。
+Quickstart 使用项目级显式绑定作为桌面端与 CLI 都可靠的路径。没有 `--project-root`
+时，服务优先使用当前会话的启动目录；只有多 roots 无法唯一判定时才保持未绑定，
+需要显式调用 `sg_project_bind`，不会猜测或回退到其他仓库。
 
 ## 5. 启动 Codex
 

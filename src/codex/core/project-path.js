@@ -1,6 +1,27 @@
 import fs from 'node:fs';
 import path from 'node:path';
 
+export function canonicalProjectRoot(value) {
+  if (typeof value !== 'string' || !value) return null;
+  const resolved = path.resolve(value);
+  try {
+    return fs.realpathSync.native(resolved);
+  } catch {
+    return resolved;
+  }
+}
+
+export function sameProject(left, right) {
+  const a = canonicalProjectRoot(left);
+  const b = canonicalProjectRoot(right);
+  if (!a || !b) return false;
+  return process.platform === 'win32' ? a.toLowerCase() === b.toLowerCase() : a === b;
+}
+
+export function workItemProjectRoot(item) {
+  return item?.projectRoot || item?.project?.projectRoot || item?.project?.root || null;
+}
+
 // A cached server and a source checkout are both plugin directories. Never use
 // either as the default business project, including their descendants.
 export function insideSpecGateSource(input) {

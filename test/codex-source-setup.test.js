@@ -71,17 +71,7 @@ test('source setup installs six project agents and preserves unrelated AGENTS co
   assert.match(config, /specgate-codex:config-begin/);
   assert.match(config, /\[plugins\."specgate-codex@specgate-source"\.mcp_servers\.specgate\]/);
   assert.equal(first.git.trackedAgents, false);
-  assert.deepEqual(first.git.excluded, [
-    '.codex/',
-    '.agents/skills/sg-codex/',
-    '.agents/skills/sg-codex-setup/',
-    '.agents/skills/sg-codex-env/',
-    '.agents/skills/sg-codex-project/',
-    '.agents/skills/sg-codex-change/',
-    '.agents/skills/sg-codex-status/',
-    '.env',
-    'AGENTS.md',
-  ]);
+  assert.deepEqual(first.git.excluded, ['.codex/', '.env', 'AGENTS.md']);
   assert.deepEqual(first.git.dirtyManagedPaths, []);
   const exclude = fs.readFileSync(path.join(project, '.git', 'info', 'exclude'), 'utf8');
   assert.match(exclude, /^\/\.codex\/$/m);
@@ -102,16 +92,7 @@ test('source setup reports a tracked AGENTS file instead of hiding its required 
 
   const result = setupProject({ project });
   assert.equal(result.git.trackedAgents, true);
-  assert.deepEqual(result.git.excluded, [
-    '.codex/',
-    '.agents/skills/sg-codex/',
-    '.agents/skills/sg-codex-setup/',
-    '.agents/skills/sg-codex-env/',
-    '.agents/skills/sg-codex-project/',
-    '.agents/skills/sg-codex-change/',
-    '.agents/skills/sg-codex-status/',
-    '.env',
-  ]);
+  assert.deepEqual(result.git.excluded, ['.codex/', '.env']);
   assert.deepEqual(result.git.dirtyManagedPaths, ['AGENTS.md']);
   assert.match(result.git.warning, /AGENTS\.md is tracked/i);
   const exclude = fs.readFileSync(path.join(project, '.git', 'info', 'exclude'), 'utf8');
@@ -159,18 +140,16 @@ test('source setup refuses an unmanaged project MCP conflict', () => {
   );
 });
 
-test('setup upgrades an exact previously managed skill but preserves custom changes', () => {
-  const project = gitProject('sg-codex-upgrade-');
-  setupProject({ project });
-  const file = path.join(project, '.agents/skills/sg-codex/agents/openai.yaml');
-  const old =
-    "interface:\n  display_name: 'SpecGate 项目与需求交付'\n  short_description: '新建或接入业务项目，表单选择技术栈，澄清需求并等待人工审批后交付'\n  default_prompt: '使用 $sg-codex 检查业务项目绑定，按中文表单和人工需求审批流程继续。'\n";
-  fs.writeFileSync(file, old);
-  assert.ok(
-    setupProject({ project }).changed.includes('.agents/skills/sg-codex/agents/openai.yaml'),
+test('setup leaves project-level skills to the global plugin and preserves legacy copies', () => {
+  const project = gitProject('sg-codex-legacy-skill-');
+  const legacy = path.join(project, '.agents/skills/sg-codex/SKILL.md');
+  fs.mkdirSync(path.dirname(legacy), { recursive: true });
+  fs.writeFileSync(legacy, 'custom\n');
+  const result = setupProject({ project });
+  assert.deepEqual(result.skills, []);
+  assert.equal(fs.readFileSync(legacy, 'utf8'), 'custom\n');
+  assert.equal(
+    result.changed.some((entry) => entry.startsWith('.agents/')),
+    false,
   );
-  assert.match(fs.readFileSync(file, 'utf8'), /从这里开始/);
-  fs.writeFileSync(file, old + '# user customization\n');
-  assert.throws(() => setupProject({ project }), /保留已有 Skill/);
-  assert.equal(fs.readFileSync(file, 'utf8'), old + '# user customization\n');
 });

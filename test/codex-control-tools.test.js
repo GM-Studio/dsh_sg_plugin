@@ -74,6 +74,42 @@ test('wait tool creates one durable AttentionRequest and never approves it', asy
   assert.equal(forgedGate.code, 'CONTROL_GATE_TOOL_REQUIRED');
 });
 
+test('status and wait only expose WorkItems owned by the bound project', async () => {
+  const { projectRoot, service } = fixture();
+  const otherProject = fs.mkdtempSync(path.join(os.tmpdir(), 'sg-control-tools-other-'));
+  const first = await callControlTool({ projectRoot, service, env: {} }, 'sg_work_item_create', {
+    title: 'First project',
+    request: 'Deliver the first project',
+  });
+  const second = await callControlTool(
+    { projectRoot: otherProject, service, env: {} },
+    'sg_work_item_create',
+    { title: 'Other project', request: 'Deliver the other project' },
+  );
+  const listed = await callControlTool({ projectRoot, service, env: {} }, 'sg_work_item_status');
+  assert.deepEqual(
+    listed.workItems.map((item) => item.workItemId),
+    [first.workItem.workItemId],
+  );
+  assert.equal(listed.projects, undefined);
+  assert.equal(listed.counts, undefined);
+  assert.equal(listed.attention, undefined);
+  const hidden = await callControlTool({ projectRoot, service, env: {} }, 'sg_work_item_status', {
+    workItemId: second.workItem.workItemId,
+  });
+  assert.equal(hidden.ok, false);
+  assert.equal(hidden.code, 'WORK_ITEM_NOT_FOUND');
+  const wait = await callControlTool({ projectRoot, service, env: {} }, 'sg_work_item_wait', {
+    workItemId: second.workItem.workItemId,
+    type: 'BLOCKED',
+    reason: 'Must not cross projects',
+    question: 'Should this be visible?',
+    actions: ['cancel'],
+  });
+  assert.equal(wait.ok, false);
+  assert.equal(wait.code, 'WORK_ITEM_NOT_FOUND');
+});
+
 test('wait tool retries bounded WorkItem heartbeat version conflicts', async () => {
   const calls = [];
   let version = 10;
@@ -86,6 +122,7 @@ test('wait tool retries bounded WorkItem heartbeat version conflicts', async () 
           workItem: {
             workItemId,
             revision: version,
+            projectRoot: path.resolve('.'),
           },
         };
       },

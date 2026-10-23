@@ -113,13 +113,9 @@ test('native creation form preserves selected React stack, user identity, auto s
   assert.equal(result.phase, 'GENERATED_ONLY');
   assert.equal(result.report.initializationComplete, false);
   assert.equal(fs.existsSync(path.join(target, 'frontend/src/main.tsx')), true);
-  for (const file of [
-    '.codex/agents/specgate_backend.toml',
-    '.agents/skills/sg-codex/SKILL.md',
-    '.agents/skills/sg-codex-setup/SKILL.md',
-    '.env',
-  ])
+  for (const file of ['.codex/agents/specgate_backend.toml', '.env'])
     assert.equal(fs.existsSync(path.join(target, file)), true, file);
+  assert.equal(fs.existsSync(path.join(target, '.agents/skills')), false);
   assert.match(
     fs.readFileSync(path.join(target, '.codex/config.toml'), 'utf8'),
     new RegExp(target.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replaceAll('\\\\', '\\\\\\\\')),

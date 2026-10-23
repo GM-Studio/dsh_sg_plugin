@@ -1,6 +1,7 @@
 import { resolveControlRoot } from './config.js';
 import { createLocalControlRuntime } from './runtime.js';
 import { hashValue } from '../events.js';
+import { sameProject, workItemProjectRoot } from '../core/project-path.js';
 
 const definition = (name, description, properties = {}, required = [], readOnly = false) => ({
   name,
@@ -26,6 +27,20 @@ const textList = (maximumItems, maximumLength, description) => ({
   items: { type: 'string', minLength: 1, maxLength: maximumLength },
   description,
 });
+
+function workItemNotFound() {
+  return { ok: false, code: 'WORK_ITEM_NOT_FOUND', message: 'WorkItem does not exist' };
+}
+
+async function ownedWorkItem(control, workItemId, projectRoot) {
+  const current = await control.projection.getWorkItem(workItemId);
+  if (!current.ok) return current;
+  if (
+    !sameProject(workItemProjectRoot(current.workItem) || current.project?.projectRoot, projectRoot)
+  )
+    return workItemNotFound();
+  return current;
+}
 
 export const CONTROL_TOOLS = Object.freeze([
   definition(
@@ -153,9 +168,16 @@ export async function callControlTool(
     const workItemId = args.workItemId || env.SPECGATE_WORK_ITEM_ID;
     if (!workItemId) {
       const listed = await control.projection.listWorkItems();
-      return listed.ok ? { ...listed, controlRoot: resolveControlRoot({ env }) } : listed;
+      if (!listed.ok) return listed;
+      return {
+        ok: true,
+        workItems: listed.workItems.filter((item) =>
+          sameProject(workItemProjectRoot(item), projectRoot),
+        ),
+        controlRoot: resolveControlRoot({ env }),
+      };
     }
-    const item = await control.projection.getWorkItem(workItemId);
+    const item = await ownedWorkItem(control, workItemId, projectRoot);
     return item.ok ? { ...item, controlRoot: resolveControlRoot({ env }) } : item;
   }
   if (name === 'sg_work_item_wait') {
@@ -174,7 +196,7 @@ export async function callControlTool(
       };
     let result = null;
     for (let attempt = 0; attempt < 3; attempt += 1) {
-      const current = await control.projection.getWorkItem(args.workItemId);
+      const current = await ownedWorkItem(control, args.workItemId, projectRoot);
       if (!current.ok) return current;
       result = await control.requestAttention({
         workItemId: args.workItemId,

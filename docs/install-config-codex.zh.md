@@ -202,43 +202,35 @@ PowerShell 可把上面的 `codex` 换成 `& $Codex`。marketplace 名由 catalo
 执行 setup；项目级 MCP 会绑定该 checkout，后续应保持其版本与插件缓存一致。
 本文未执行 Git 远程安装验收，团队首次分发时应重新完成第 7 节。
 
-### 6.2 手动接入 MCP、Skill 和 Agent
+### 6.2 手动接入 MCP 和 Agent
 
-插件市场不可用时，可用源码 setup 生成项目级 MCP 和 Agent，再单独安装工作流
-Skill。MCP 配置能力见 [OpenAI MCP 指南](https://learn.chatgpt.com/docs/extend/mcp?surface=cli)，
+插件市场不可用时，可用源码 setup 生成项目级 MCP 和 Agent。工作流 Skill 属于
+全局插件能力，由插件安装提供一份，不再复制到每个业务项目。MCP 配置能力见
+[OpenAI MCP 指南](https://learn.chatgpt.com/docs/extend/mcp?surface=cli)，
 Skill 搜索位置见 [OpenAI Skills 指南](https://learn.chatgpt.com/docs/build-skills)。
 
 Windows（沿用 `$Source` / `$Project`）：
 
 ```powershell
 node "$Source\scripts\codex-source-setup.mjs" --project $Project
-$SkillParent = Join-Path $Project '.agents\skills'
-$SkillTarget = Join-Path $SkillParent 'sg-codex'
-if (Test-Path -LiteralPath $SkillTarget) { throw 'Skill 已存在，请先比较内容，避免覆盖。' }
-New-Item -ItemType Directory -Path $SkillParent -Force | Out-Null
-Copy-Item -LiteralPath "$Source\skills\sg-codex" -Destination $SkillTarget -Recurse
 ```
 
 Linux：
 
 ```bash
 node "$SG_SOURCE/scripts/codex-source-setup.mjs" --project "$SG_PROJECT"
-mkdir -p "$SG_PROJECT/.agents/skills"
-if [ -e "$SG_PROJECT/.agents/skills/sg-codex" ]; then
-  echo 'Skill 已存在，请先比较内容，避免覆盖。' >&2
-else
-  cp -R "$SG_SOURCE/skills/sg-codex" "$SG_PROJECT/.agents/skills/sg-codex"
-fi
 ```
 
 setup 会创建 `[mcp_servers.specgate_project]`，设置 `--project-root`、审批和原生
 Agent 环境变量，并禁用标准插件的 `specgate` MCP，防止服务绑定插件缓存目录。
-无需再给同一项目注册第二个用户级 MCP。若只排查 MCP 连接，可通过 `codex mcp add`
-另行注册本地 stdio 服务，但这不会自动安装 Skill 或 Agent，亦不能证明完整流程兼容。
+项目级 MCP 只负责把当前会话绑定到该项目的数据，不是 `sg_*` 命令的副本；命令和
+Skill 仍由全局插件共享。无需再给同一项目注册第二个用户级 MCP。若只排查 MCP
+连接，可通过 `codex mcp add` 另行注册本地 stdio 服务，但这不会自动安装 Agent，
+亦不能证明完整流程兼容。
 旧版 Codex 缺少所需原生 Agent/审批能力时，手动配置不能弥补，仍须升级或换用合适版本。
 
-手工复制的 `.agents/skills/sg-codex` 不属于 setup 的自动 Git exclude 范围；请自行
-决定团队共享提交或仅本地排除。不要同时加载手工副本和插件里的同名 Skill。
+setup 不会创建或覆盖项目级 `.agents/skills`。如果旧版本曾把 Skill 复制到项目，
+确认没有本地定制后再手工删除；不要同时加载旧副本和插件里的同名 Skill。
 
 ### 6.3 离线包与 npm 包
 
@@ -260,7 +252,8 @@ Codex 插件注册。离线包能否完成业务构建，还取决于模型服�
 | 项目配置        | 业务项目 `.codex/config.toml` 中的 SpecGate 受管块                                               |
 | 原生 Agent      | 业务项目 `.codex/agents/specgate_*.toml`，共六个                                                 |
 | 工作流指令      | 业务项目 `AGENTS.md` 中的 `specgate-codex:begin/end` 受管块                                      |
-| 本地排除        | Git `info/exclude`，排除 `.codex/` 和未 tracked 的 `AGENTS.md`                                   |
+| 全局 Skill      | 插件安装目录 `skills/`，所有项目共享；业务项目不再生成 `.agents/skills`                          |
+| 本地排除        | Git `info/exclude`，排除 `.codex/`、`.env` 和未 tracked 的 `AGENTS.md`                           |
 | 项目状态        | 业务项目 `.specgate/`；由 MCP 管理，不手改状态、hash 和证据                                      |
 | 控制面状态      | 默认 Codex home 下 `specgate-control/`；可用 `SPECGATE_CONTROL_HOME` 指定                        |
 
@@ -274,7 +267,8 @@ setup 保留已有非受管配置，拒绝覆盖内容冲突的同名 Agent；`A
 2. 从业务项目执行 `mcp list`，检查 `specgate_project` 启用；会话内用 `/mcp`
    检查实际连接。列表启用只表示配置，成功工具调用才是运行证据。
 3. setup check 的 `changed` 为空，六个 Agent 和 `AGENTS.md` 受管块存在。
-4. 能看到 `sg-codex` Skill，并能调用 `sg_project_status`，确认返回的项目路径正确。
+4. 能看到全局插件提供的 `sg-codex` Skill，并能调用 `sg_project_status`，确认返回
+   当前会话的项目路径正确；不应出现其他项目的 WorkItem。
 5. 新项目按 `sg_init_preview` / `sg_init` / `sg_verify` / `sg_project_finalize_new`
    建立基线；存量项目用 `sg_adopt_preview` / `sg_adopt_apply`，随后查询状态等待
    `projectReady: true`。安装完成不代表业务项目已通过基线。

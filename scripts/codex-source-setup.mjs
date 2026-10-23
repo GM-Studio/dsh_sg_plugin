@@ -5,7 +5,6 @@ import os from 'node:os';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { createHash } from 'node:crypto';
-import { SKILL_ENTRIES } from '../src/codex/skill-entries.js';
 
 const SOURCE_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const AGENT_ROOT = path.join(SOURCE_ROOT, 'assets', 'codex', 'agents');
@@ -107,16 +106,10 @@ function manageLocalExcludes(root, { check }) {
   }
   const trackedAgents =
     git(root, ['ls-files', '--error-unmatch', '--', 'AGENTS.md'], { allowFailure: true }) !== null;
-  const excluded = [
-    '.codex/',
-    ...SKILL_ENTRIES.map(([, name]) => `.agents/skills/${name}/`),
-    '.env',
-    ...(trackedAgents ? [] : ['AGENTS.md']),
-  ];
+  const excluded = ['.codex/', '.env', ...(trackedAgents ? [] : ['AGENTS.md'])];
   const block = [
     EXCLUDE_START,
     '/.codex/',
-    ...SKILL_ENTRIES.map(([, name]) => `/.agents/skills/${name}/`),
     '/.env',
     ...(trackedAgents ? [] : ['/AGENTS.md']),
     EXCLUDE_END,
@@ -285,30 +278,6 @@ export function setupProject({
   if (mergedConfig !== existingConfig.replace(/\r\n/g, '\n'))
     changes.push({ target: configFile, content: mergedConfig });
 
-  // Project-local skills are discoverable even when a host only loads the portable manifest.
-  const skillsRoot = path.join(root, '.agents', 'skills');
-  ordinaryDirectory(path.join(root, '.agents'), '.agents');
-  ordinaryDirectory(skillsRoot, '.agents/skills');
-  for (const [folder, name] of SKILL_ENTRIES) {
-    const directory = path.join(skillsRoot, name);
-    ordinaryDirectory(directory, `Skill ${name}`);
-    for (const relative of ['SKILL.md', 'agents/openai.yaml']) {
-      const content = fs
-        .readFileSync(path.join(SOURCE_ROOT, 'skills', folder, relative), 'utf8')
-        .replace(/\r\n/g, '\n');
-      const target = path.join(directory, relative);
-      const existing = ordinaryFile(target, `Skill ${name}`);
-      if (
-        existing !== null &&
-        existing.replace(/\r\n/g, '\n') !== content &&
-        !previouslyManaged(`.agents/skills/${name}/${relative}`, existing)
-      )
-        fail('SKILL_CONFLICT', `保留已有 Skill，拒绝覆盖：${target}`);
-      if (existing === null || existing.replace(/\r\n/g, '\n') !== content)
-        changes.push({ target, content });
-    }
-  }
-
   if (!check) {
     for (const change of changes) {
       ordinaryDirectory(path.dirname(change.target), '安装目标目录');
@@ -323,7 +292,7 @@ export function setupProject({
     changed: changes.map((change) => path.relative(root, change.target).replace(/\\/g, '/')),
     agents: agentTemplates().map((entry) => entry.name.replace(/\.toml$/, '')),
     mcpServer: 'specgate_project',
-    skills: SKILL_ENTRIES.map(([, name]) => name),
+    skills: [],
     git: gitStatus,
   };
 }

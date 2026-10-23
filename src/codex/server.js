@@ -19,20 +19,6 @@ function ordinaryProjectRoot(value) {
   }
 }
 
-// Hosts launch plugin MCP servers from the plugin cache. That directory is
-// never a business project, and neither is any of its ancestors/descendants.
-const PROJECT_ROOT_ENVIRONMENT_KEYS = [
-  'SPECGATE_PROJECT_ROOT',
-  'CODEX_PROJECT_ROOT',
-  'CODEX_WORKSPACE_ROOT',
-  'CODEX_WORKSPACE',
-  'CODEX_CWD',
-  'WORKSPACE_ROOT',
-  'PROJECT_ROOT',
-  'INIT_CWD',
-  'PWD',
-];
-
 function businessProjectRoot(value, pluginRoot) {
   const root = ordinaryProjectRoot(value);
   if (!root || insideSpecGateSource(root)) return null;
@@ -53,6 +39,10 @@ function businessProjectRoot(value, pluginRoot) {
  * Resolve the business project without ever falling back to the plugin cache.
  * Returns null when the host exposes no usable project: callers must bind or
  * create one explicitly instead of operating on the plugin source tree.
+ *
+ * The server launch directory belongs to this MCP session, so it must win over
+ * ambient shell variables. Only a plugin-cache launch may consult roots/list,
+ * and only when exactly one business root is exposed.
  */
 export async function resolveProjectRoot(
   peer,
@@ -65,14 +55,15 @@ export async function resolveProjectRoot(
     configuredPluginRoot ||
     (fallbackRoot && insideSpecGateSource(fallbackRoot) ? fallbackRoot : null);
   if (explicit) return businessProjectRoot(fallback, pluginRoot);
-  for (const key of PROJECT_ROOT_ENVIRONMENT_KEYS) {
-    const root = businessProjectRoot(env[key], pluginRoot);
-    if (root) return root;
-  }
+  const sessionRoot = businessProjectRoot(fallbackRoot, pluginRoot);
+  if (sessionRoot) return sessionRoot;
+  if (env.SPECGATE_PROJECT_ROOT !== undefined && env.SPECGATE_PROJECT_ROOT !== '')
+    return businessProjectRoot(env.SPECGATE_PROJECT_ROOT, pluginRoot);
   if (peer.capabilities().rootsSupported === true) {
     try {
       const result = await peer.request('roots/list', {}, { timeoutMs });
       const roots = Array.isArray(result?.roots) ? result.roots : [];
+      const candidates = new Set();
       for (const entry of roots) {
         if (typeof entry?.uri !== 'string') continue;
         let candidate = entry.uri;
@@ -84,18 +75,14 @@ export async function resolveProjectRoot(
           }
         }
         const root = businessProjectRoot(candidate, pluginRoot);
-        // `fallback` is the server launch cwd. Prefer a distinct host root when
-        // roots/list supplies one, even when a fixture or wrapper directory is
-        // not recognizable as plugin source. If no other root exists, the
-        // sanitized fallback is still considered below.
-        if (root && fallbackRoot && root === fallbackRoot) continue;
-        if (root) return root;
+        if (root) candidates.add(root);
       }
+      if (candidates.size === 1) return candidates.values().next().value;
     } catch {
-      // Roots are optional; fall through to the sanitized fallback.
+      // Roots are optional; an unbound session is safer than guessing.
     }
   }
-  return businessProjectRoot(fallbackRoot, pluginRoot);
+  return null;
 }
 
 export function serveStdio({
@@ -124,9 +111,17 @@ export function serveStdio({
     nativeAgents,
   };
   const initialProjectRoot = path.resolve(projectRoot);
+  const configuredPluginRoot = ordinaryProjectRoot(process.env.PLUGIN_ROOT);
+  const initialBusinessRoot = businessProjectRoot(
+    initialProjectRoot,
+    configuredPluginRoot || (insideSpecGateSource(initialProjectRoot) ? initialProjectRoot : null),
+  );
   const makeRegistry = (root, projectBound) =>
     toolRegistryFactory({ ...registryOptions, projectRoot: root, projectBound });
-  let registry = makeRegistry(initialProjectRoot, !insideSpecGateSource(initialProjectRoot));
+  let registry = makeRegistry(
+    initialBusinessRoot || initialProjectRoot,
+    Boolean(initialBusinessRoot),
+  );
   const dynamicRegistry = {
     get definitions() {
       return registry.definitions;

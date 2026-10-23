@@ -34,13 +34,70 @@ test('MCP roots bind tools to the target project instead of the plugin cache', a
       };
     },
   };
-  assert.equal(await resolveProjectRoot(peer, pluginRoot), fs.realpathSync(project));
+  assert.equal(
+    await resolveProjectRoot(peer, pluginRoot, { env: { PLUGIN_ROOT: pluginRoot } }),
+    fs.realpathSync(project),
+  );
   assert.deepEqual(calls, ['roots/list']);
   assert.equal(
     await resolveProjectRoot(peer, pluginRoot, {
       env: { SPECGATE_PROJECT_ROOT: project, PLUGIN_ROOT: pluginRoot },
     }),
     fs.realpathSync(project),
+  );
+});
+
+test('session cwd wins over ambient roots and environment variables', async () => {
+  const project = fs.mkdtempSync(path.join(os.tmpdir(), 'sg-session-project-'));
+  const other = fs.mkdtempSync(path.join(os.tmpdir(), 'sg-other-project-'));
+  let rootRequests = 0;
+  const peer = {
+    capabilities: () => ({ rootsSupported: true }),
+    request: async () => {
+      rootRequests += 1;
+      return { roots: [{ uri: pathToFileURL(other).href, name: 'other workspace' }] };
+    },
+  };
+  assert.equal(
+    await resolveProjectRoot(peer, project, {
+      env: {
+        PWD: other,
+        INIT_CWD: other,
+        WORKSPACE_ROOT: other,
+        PROJECT_ROOT: other,
+        SPECGATE_PROJECT_ROOT: other,
+      },
+    }),
+    fs.realpathSync(project),
+  );
+  assert.equal(rootRequests, 0);
+});
+
+test('plugin-cache sessions use one unambiguous business root or stay unbound', async () => {
+  const pluginRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'sg-plugin-cache-multi-'));
+  const first = fs.mkdtempSync(path.join(os.tmpdir(), 'sg-root-first-'));
+  const second = fs.mkdtempSync(path.join(os.tmpdir(), 'sg-root-second-'));
+  const peer = (roots) => ({
+    capabilities: () => ({ rootsSupported: true }),
+    request: async () => ({ roots: roots.map((entry) => ({ uri: pathToFileURL(entry).href })) }),
+  });
+  assert.equal(
+    await resolveProjectRoot(peer([pluginRoot, first]), pluginRoot, {
+      env: { PLUGIN_ROOT: pluginRoot },
+    }),
+    fs.realpathSync(first),
+  );
+  assert.equal(
+    await resolveProjectRoot(peer([first, second]), pluginRoot, {
+      env: { PLUGIN_ROOT: pluginRoot },
+    }),
+    null,
+  );
+  assert.equal(
+    await resolveProjectRoot(peer([first, second]), pluginRoot, {
+      env: { PLUGIN_ROOT: pluginRoot, SPECGATE_PROJECT_ROOT: second },
+    }),
+    fs.realpathSync(second),
   );
 });
 

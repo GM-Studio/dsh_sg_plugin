@@ -5,6 +5,7 @@ import { loadProjectReadiness } from './project-state.js';
 import { projectEnvironmentSelection, readEnvironmentJson } from './core/environment.js';
 import { readControlStore } from './control/store.js';
 import { resolveControlRoot } from './control/config.js';
+import { sameProject, workItemProjectRoot } from './core/project-path.js';
 
 // 不构造 supervisor/runtime/projection；它们的构造过程可能初始化状态目录。
 export async function inspectProjectStatus({ root, environment, env = process.env } = {}) {
@@ -14,8 +15,8 @@ export async function inspectProjectStatus({ root, environment, env = process.en
   const state = workflow.ok ? workflow.state : null;
   const verified = readEnvironmentJson(path.join(root, '.specgate/codex-verify-report.json'));
   const control = readControlStore(resolveControlRoot({ env }));
-  const items = Object.values(control.state?.workItems || {}).filter(
-    (item) => path.resolve(item.projectRoot || item.project?.root || '/') === path.resolve(root),
+  const items = Object.values(control.state?.workItems || {}).filter((item) =>
+    sameProject(workItemProjectRoot(item), root),
   );
   const pendingApproval = ['H1_PENDING', 'H3_PENDING'].includes(state?.phase) ? state.phase : null;
   return {
