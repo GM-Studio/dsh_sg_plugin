@@ -28,6 +28,9 @@ import { CONTROL_TOOLS, callControlTool } from './control/tools.js';
 import { createControlApprovalAuthority } from './control/approval-bridge.js';
 import { createLocalControlRuntime } from './control/runtime.js';
 import { TOOL_DESCRIPTIONS } from './locale.js';
+import { ENVIRONMENT_TOOLS, environmentConsent } from './environment-tools.js';
+import { createEnvironmentService } from './core/environment.js';
+import { inspectProjectStatus } from './project-status.js';
 import {
   ONBOARDING_TOOLS,
   bindProject,
@@ -291,6 +294,7 @@ function createBoundToolRegistry({
   newProjectVerifier,
   dirtyApprovalProvider,
   controlService,
+  environmentGate,
 } = {}) {
   const root = path.resolve(projectRoot);
   const effectiveDevelopmentRoleProvider =
@@ -346,13 +350,24 @@ function createBoundToolRegistry({
   const controlRuntime = controlWorkItemId
     ? controlService
       ? { service: controlService }
-      : createLocalControlRuntime({ env: process.env })
+      : {
+          get service() {
+            return (this.runtime ||= createLocalControlRuntime({ env: process.env })).service;
+          },
+        }
     : null;
   // Native approvals remain the default. In control mode, H1/H3 can only be
   // authorized by a previously consumed, step-up control Decision.
   const authority = controlRuntime
     ? createControlApprovalAuthority({
-        service: controlRuntime.service,
+        service: new Proxy(
+          {},
+          {
+            get(_target, method) {
+              return (...args) => controlRuntime.service[method](...args);
+            },
+          },
+        ),
         workItemId: controlWorkItemId,
       })
     : createApprovalAuthority({
@@ -740,7 +755,7 @@ function createBoundToolRegistry({
           return result(
             await executeInit(
               { ...input, previewHash: args.previewHash },
-              { approvalProvider: effectiveInitializationApproval, signal },
+              { approvalProvider: effectiveInitializationApproval, signal, environmentGate },
             ),
           );
         return result({ ok: false, code: 'UNKNOWN_TOOL', message: 'Tool is not available' });
@@ -759,15 +774,32 @@ function createBoundToolRegistry({
 // are rebuilt together. A generated target becomes the active business project.
 export function createToolRegistry(options = {}) {
   let root = path.resolve(options.projectRoot || process.cwd());
-  let bound = createBoundToolRegistry({ ...options, projectRoot: root });
+  const environments = new Map();
+  const environmentFor = (target) => {
+    target = path.resolve(target);
+    if (!environments.has(target))
+      environments.set(
+        target,
+        options.environmentService ||
+          createEnvironmentService({ root: target, consent: environmentConsent(options) }),
+      );
+    return environments.get(target);
+  };
+  const environmentGate = ({ root: target, ...selection }) =>
+    environmentFor(target).check(selection);
+  let bound = createBoundToolRegistry({ ...options, projectRoot: root, environmentGate });
+  let environment = environmentFor(root);
   const onboardingDraft = {};
-  const definitions = [...bound.definitions, ...ONBOARDING_TOOLS].map((entry) => ({
-    ...entry,
-    description: TOOL_DESCRIPTIONS[entry.name] || entry.description,
-  }));
+  const definitions = [...bound.definitions, ...ONBOARDING_TOOLS, ...ENVIRONMENT_TOOLS].map(
+    (entry) => ({
+      ...entry,
+      description: TOOL_DESCRIPTIONS[entry.name] || entry.description,
+    }),
+  );
   const bind = (selected) => {
     root = bindProject(selected);
-    bound = createBoundToolRegistry({ ...options, projectRoot: root });
+    bound = createBoundToolRegistry({ ...options, projectRoot: root, environmentGate });
+    environment = environmentFor(root);
     return root;
   };
   const registry = {
@@ -791,6 +823,9 @@ export function createToolRegistry(options = {}) {
       )
         return result({ ok: false, code: 'CANCELLED', message: '操作已取消。' });
       try {
+        if (name === 'sg_env_check') return result(await environment.check(args));
+        if (name === 'sg_env_prepare') return result(await environment.prepare(args, context));
+        if (name === 'sg_status') return result(await inspectProjectStatus({ root, environment }));
         if (name === 'sg_project_bind')
           return result({
             ok: true,
@@ -810,12 +845,35 @@ export function createToolRegistry(options = {}) {
             draft: onboardingDraft,
             initialPath: args.path,
             reset: args.reset,
+            environmentGate,
           });
           if (created.ok && created.root) {
             created.projectRoot = bind(created.root);
             created.nextAction ||= 'VERIFY_PROJECT_THEN_WAIT_FOR_USER_REQUIREMENTS';
           }
           return result(created);
+        }
+        if (
+          [
+            'sg_adopt_apply',
+            'sg_verify',
+            'sg_development_prepare',
+            'sg_development_run',
+            'sg_development_repair',
+            'sg_development_rework',
+            'sg_quality_run',
+            'sg_format_run',
+            'sg_review_run',
+            'sg_release_archive',
+            'sg_resume',
+          ].includes(name) &&
+          (fs.existsSync(path.join(root, '.specgate/monorepo.json')) ||
+            fs.existsSync(path.join(root, '.specgate/codex/project.json')) ||
+            fs.existsSync(path.join(root, 'backend/pom.xml')))
+        ) {
+          const ready = await environment.check();
+          if (!ready.environmentReady)
+            return result({ ...ready, ok: false, code: ready.code || 'ENV_NOT_READY' });
         }
         const response = await bound.call(name, args, context);
         if (name === 'sg_init' && response.structuredContent?.ok) {

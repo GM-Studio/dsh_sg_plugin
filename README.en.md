@@ -1,5 +1,11 @@
 # SpecGate for Codex
 
+Public in-session Skills: `$sg-codex` routes intent, `$sg-codex-env` checks/reuses
+and installs missing tools for the selected stack, `$sg-codex-project` prepares
+or adopts a project, `$sg-codex-change` handles changes and task controls, and
+`$sg-codex-status` reports read-only status. `$sg-codex-setup` remains a preparation
+alias. See the [in-session guide](docs/environment-codex.zh.md).
+
 SpecGate is a native Codex plugin for project readiness, asynchronous delivery,
 accepted changes, independent verification, delivery records and incremental
 redelivery with real subagents, isolated worktrees, executable tests and

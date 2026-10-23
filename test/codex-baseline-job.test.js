@@ -84,7 +84,8 @@ test('detached baseline worker survives the starter and persists readiness', asy
 
   let readiness;
   let job;
-  for (let attempt = 0; attempt < 200; attempt += 1) {
+  const deadline = Date.now() + 30000;
+  while (Date.now() < deadline) {
     await new Promise((resolve) => setTimeout(resolve, 25));
     job = getBaselineJob(projectRoot);
     readiness = loadProjectReadiness({ projectRoot });

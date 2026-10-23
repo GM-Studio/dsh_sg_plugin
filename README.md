@@ -63,8 +63,19 @@ fail-closed。
 
 ## 从源码加载
 
-安装插件后，在业务项目的 Codex 会话中显式调用 `$sg-codex` 或
-`$sg-codex-setup`。新建项目使用 `sg_project_create` 中文表单选择目录、包名、
+日常使用入口：[Codex 会话内使用与环境准备](docs/environment-codex.zh.md)。
+
+| Skill               | 职责                               |
+| ------------------- | ---------------------------------- |
+| `$sg-codex`         | 统一导航与帮助                     |
+| `$sg-codex-env`     | 环境预检、复用、按项目补齐与验证   |
+| `$sg-codex-project` | 初始化、存量接入、项目配置和基线   |
+| `$sg-codex-change`  | 新增/修改/修复、任务控制和验收交付 |
+| `$sg-codex-status`  | 只读项目信息与状态                 |
+
+`$sg-codex-setup` 保留为准备能力的兼容别名。环境操作在会话内完成，当前项目不需要的 JDK 不预装，查询状态不触发安装、初始化或恢复。
+
+安装插件后，在业务项目的 Codex 会话中使用 `$sg-codex` 导航或直接调用相应任务 Skill。新建项目使用 `sg_project_create` 中文表单选择目录、包名、
 技术栈和 Git 身份，自动安装 Agent 与项目 Skill；普通使用无需手动执行安装脚本。
 先看 `sg_project_status.projectRoot`，路径错误时调用 `sg_project_bind`。
 现有项目缺少环境时调用 `sg_project_setup` 自动补齐。
@@ -126,7 +137,7 @@ MCP 或飞书/MFA 凭据。
 ```text
 plugin.json / mcp.json                 portable plugin entry
 .codex-plugin/ / .mcp.json             compatibility manifests
-skills/                                sg-codex and setup Skills
+skills/                                router, four task Skills and setup alias
 assets/codex/                          six project Agent templates
 assets/java-vue/template/              generated Java/Vue baseline
 src/codex/                             MCP server and workflow services

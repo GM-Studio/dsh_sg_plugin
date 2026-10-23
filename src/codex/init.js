@@ -607,7 +607,7 @@ function baseline(root, created, report, templateDirectory, identity, bindingPro
 /** approvalProvider is a server dependency, never an MCP/tool argument. */
 export async function executeInit(
   input = {},
-  { approvalProvider, signal, allowExistingGit = false } = {},
+  { approvalProvider, signal, allowExistingGit = false, environmentGate } = {},
 ) {
   const preview = previewInit(input);
   if (!preview.ok) return preview;
@@ -675,6 +675,20 @@ export async function executeInit(
   let checked = unchanged(input, preview.previewHash);
   if (!checked.ok) return checked;
   if (!preview.gitIdentity.ok) return preview.gitIdentity;
+  if (environmentGate) {
+    const readiness = await environmentGate({
+      root: preview.root,
+      preset: input.preset,
+      frontend: input.frontend,
+    });
+    if (!readiness.environmentReady)
+      return {
+        ...readiness,
+        ok: false,
+        code: readiness.code || 'ENV_NOT_READY',
+        selectionRetained: true,
+      };
+  }
   let stageRoot;
   let lockPath;
   let lockAcquired = false;

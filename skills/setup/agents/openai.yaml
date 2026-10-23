@@ -1,4 +1,4 @@
 interface:
-  display_name: 'SpecGate 项目准备（辅助入口）'
-  short_description: '仅用于初始化、接入或修复环境；使用向导会自动安排，无需手动先调用'
-  default_prompt: '使用 $sg-codex-setup 仅准备或修复项目环境，完成后停在就绪，不开始业务开发。'
+  display_name: 'SpecGate 准备（旧入口兼容）'
+  short_description: '兼容旧请求并转接环境或项目准备，保留原选择且不重复执行'
+  default_prompt: '使用 $sg-codex-setup 将我的准备请求转接到环境或项目入口，完成后停止。'

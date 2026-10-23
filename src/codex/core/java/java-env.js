@@ -304,6 +304,7 @@ export function javaRoots({ env = process.env, platform = process.platform, home
       }
     }
     roots.push(
+      path.join(home, '.specgate', 'toolchains'),
       path.join(home, '.jdks'),
       path.join(home, '.sdkman', 'candidates', 'java'),
       path.join(
@@ -329,6 +330,7 @@ export function javaRoots({ env = process.env, platform = process.platform, home
     ];
   }
   return [
+    path.join(home, '.specgate', 'toolchains'),
     '/usr/lib/jvm',
     '/usr/java',
     '/opt/java',
@@ -409,6 +411,7 @@ export function mavenRoots({ env = process.env, platform = process.platform, hom
       roots.push(base, path.join(base, 'apache-maven'), path.join(base, 'Maven'));
     }
     roots.push(
+      path.join(home, '.specgate', 'toolchains'),
       'C:\\apache-maven',
       'D:\\apache-maven',
       'C:\\maven',
@@ -430,6 +433,7 @@ export function mavenRoots({ env = process.env, platform = process.platform, hom
     ];
   }
   return [
+    path.join(home, '.specgate', 'toolchains'),
     '/usr/share/maven',
     '/usr/share/maven3',
     '/usr/local/maven',
@@ -513,6 +517,9 @@ export function discoverNode({
   const home = envHome(env, homedir);
   const seen = new Set();
   const candidates = [];
+  for (const dir of listDirs(path.join(home, '.specgate', 'toolchains')).slice(0, 32))
+    if (/^node-/.test(path.basename(dir)))
+      candidates.push(path.join(dir, platform === 'win32' ? 'node.exe' : 'bin/node'));
   for (const dir of pathEntries(env, platform)) {
     if (exists(path.join(dir, exe('node', platform))))
       candidates.push(path.join(dir, exe('node', platform)));

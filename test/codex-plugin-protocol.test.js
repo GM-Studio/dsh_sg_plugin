@@ -136,6 +136,9 @@ test('stdio handshake and diagnostic tools leave a nonempty project unchanged', 
       'sg_project_bind',
       'sg_project_setup',
       'sg_project_create',
+      'sg_env_check',
+      'sg_env_prepare',
+      'sg_status',
     ],
   );
   for (const tool of tools) {
@@ -157,6 +160,8 @@ test('stdio handshake and diagnostic tools leave a nonempty project unchanged', 
         'sg_review_inspect',
         'sg_release_preview',
         'sg_work_item_status',
+        'sg_env_check',
+        'sg_status',
       ].includes(tool.name),
     );
     assert.equal(tool.inputSchema.additionalProperties, false);
@@ -213,7 +218,7 @@ test('lifecycle rejects calls before handshake and repeated initialization', () 
   assert.equal(result.messages[0].error.code, -32002);
   assert.equal(result.messages[2].error.code, -32002);
   assert.equal(result.messages[3].error.code, -32600);
-  assert.equal(result.messages[4].result.tools.length, 50);
+  assert.equal(result.messages[4].result.tools.length, 53);
 });
 
 test('malformed JSON, batch messages and invalid envelopes do not terminate the server', () => {

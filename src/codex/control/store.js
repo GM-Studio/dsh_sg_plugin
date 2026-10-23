@@ -68,6 +68,42 @@ function safeFile(target) {
   return true;
 }
 
+export function readControlStore(root) {
+  try {
+    if (typeof root !== 'string' || !path.isAbsolute(root))
+      return failure('UNSAFE_PATH', 'Control Store root must be absolute');
+    let ancestor = path.resolve(root);
+    for (let depth = 0; depth <= 128; depth++) {
+      const stat = exists(ancestor);
+      if (stat && (stat.isSymbolicLink() || !stat.isDirectory()))
+        return failure('UNSAFE_PATH', 'Control store path is unsafe');
+      const parent = path.dirname(ancestor);
+      if (parent === ancestor) break;
+      if (depth === 128) return failure('UNSAFE_PATH', 'Control store path exceeds depth bound');
+      ancestor = parent;
+    }
+    if (!safeDirectory(root)) return { ok: true, state: createInitialControlState() };
+    const events = path.join(root, 'events.jsonl');
+    const snapshotPath = path.join(root, 'state.json');
+    for (const file of [events, snapshotPath])
+      if (safeFile(file) && fs.statSync(file).size > 64 * 1024 * 1024)
+        return failure('CONTROL_STATUS_TOO_LARGE', '控制面日志过大，请使用控制台查看');
+    const verified = verifyEventChain(exists(events) ? fs.readFileSync(events, 'utf8') : '');
+    if (!verified.ok || !exists(snapshotPath)) return verified;
+    const snapshot = JSON.parse(fs.readFileSync(snapshotPath, 'utf8'));
+    const version = snapshot?.state?.version;
+    const event =
+      Number.isSafeInteger(version) && version > 0 ? verified.events[version - 1] : null;
+    return event &&
+      snapshot.headHash === event.hash &&
+      canonicalJson(snapshot.state) === canonicalJson(event.state)
+      ? verified
+      : failure('AUDIT_CORRUPT', 'Control snapshot differs from its event chain');
+  } catch (error) {
+    return failure(error.code || 'CONTROL_STATUS_UNAVAILABLE', '控制面只读状态不可用');
+  }
+}
+
 export function createControlStore({
   root,
   clock = Date.now,

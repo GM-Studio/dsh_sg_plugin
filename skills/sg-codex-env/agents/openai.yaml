@@ -1,0 +1,4 @@
+interface:
+  display_name: 'SpecGate 环境准备'
+  short_description: '在当前会话内预检与复用已有环境，仅按项目补齐缺失工具链'
+  default_prompt: '使用 $sg-codex-env 检查当前项目环境，展示复用和缺项，再按需安装并真实验证。'

@@ -1,20 +1,15 @@
 ---
 name: sg-codex-setup
-description: SpecGate 项目准备辅助入口，仅初始化、接入或修复环境；统一向导会自动安排，无需用户先手动调用。支持 $sg-codex-setup。
+description: 用户仍通过旧的 $sg-codex-setup 请求环境修复、初始化或项目接入时使用的兼容入口。
 ---
 
-# SpecGate 项目环境准备
+# SpecGate 准备入口兼容转接
 
-这是辅助入口，仅负责项目准备，不接受业务需求或开始开发。推荐用户首次和后续都使用 `$sg-codex` 统一向导，由向导自动安排准备工作；不要求用户先后手动调用两个技能。
+只解释一次旧入口现转到明确的准备能力，不维护另一套执行流程。
 
-全程中文。新建表单只确认一次；路径可留空，留空使用当前绑定仓库并明确显示。初始化失败保留原技术栈和包名，修复原目录权限或路径后继续，不重新索要整张表单。已经生成的项目继续验证，不再次创建。非空目录保留已有文件并只补齐缺失项；已有完整业务工程则接入。
+- 缺 JDK/Maven/Node、环境自检、安装或诊断：读取并使用 `$sg-codex-env`。
+- 新建、初始化、存量接入、Agent/Skill/MCP 配置：读取并使用 `$sg-codex-project`，由项目入口按需衔接环境准备。
+- 意图不明确：先只读 `sg_status` 并做必要澄清。
+- 业务需求：说明应使用 `$sg-codex-change`，不在准备别名里开始开发。
 
-1. 读取 sg_project_status 并核对 projectRoot；目录错误时调用 sg_project_bind，使用用户提供的业务项目绝对路径。
-2. 新建项目调用 sg_project_create，弹出中文表单选择目录、包名、技术栈和 Git 身份，确认后自动安装环境。不能替用户代选技术栈。
-3. 现有项目或缺少 Agent/Skill 时直接调用 sg_project_setup；不要要求用户手工运行 PowerShell 或安装脚本。
-4. 安装器保护已有配置，冲突时显示路径并保留原文件。确认六个 specgate_* Agent 以及 .agents/skills/sg-codex 和 sg-codex-setup；安装后的 Skill 可显式调用。若宿主需重载，告知用户新建该业务目录的 Codex 会话。
-5. 当前宿主的 MCP 支持表单时使用 elicitation。不可用就明确告知，不能声称弹出了对话框，也不能伪造技术栈选择或用户审批。
-6. 继续项目接入或验证：新项目 sg_verify 后 sg_project_finalize_new；现有项目 sg_adopt_preview 后走接入。生成不是验证。
-7. ProjectProfile 与 ProjectBaseline 就绪后停下，等待用户提出需求，再澄清、反述和批判分析，提交 H1 人工审批。
-
-源码安装脚本 scripts/codex-source-setup.mjs 仅供自动工具或维护诊断使用，普通用户流程无需手工执行。必要时由 Codex 执行 doctor 检查 plugin、exec --json、原生 subagents、elicitation，missing / not-probed 不能冒充可用。
+调用旧入口不等于安装确认或 H1/H3 审批。保留技术栈选择，不能重复表单、初始化或安装。不要求用户离开 Codex 执行外部安装脚本。

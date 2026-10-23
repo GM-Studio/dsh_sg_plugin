@@ -1,6 +1,6 @@
 # Codex 源码加载与原生 Agent Quickstart
 
-当前推荐入口：在业务项目的 Codex 会话显式调用 `$sg-codex` 或 `$sg-codex-setup`。新建项目调用 `sg_project_create` 中文表单；现有项目用 `sg_project_bind` 核对目录，再用 `sg_project_setup` 自动补齐 Agent 和 Skill。以下源码安装命令供插件维护与排障，不是每次新建项目的手工前置步骤。旧安装状态核查仅为当时的历史记录。
+当前入口：`$sg-codex` 统一导航；`$sg-codex-env` 会话内环境预检与按需安装；`$sg-codex-project` 初始化/接入与基线；`$sg-codex-change` 需求开发及任务控制；`$sg-codex-status` 只读信息与状态。旧 `$sg-codex-setup` 仅兼容转接。环境安装不提供外部脚本，普通用户无需手工调用 MCP 工具。详见[会话内使用指南](environment-codex.zh.md)。本文源码配置命令仅供插件维护和排障，历史核查记录不代表本次已验证。
 
 本 Quickstart 让 Codex 从当前 SpecGate 源码目录加载插件，并在目标项目中安装真实 subagent 配置。Windows / Linux 的完整安装方式、配置和排障见 [安装配置指南](install-config-codex.zh.md)。
 

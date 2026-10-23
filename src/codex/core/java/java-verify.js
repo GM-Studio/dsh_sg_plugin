@@ -26,6 +26,7 @@ import { collectJavaReports } from '../java-reports.js';
 import { isProcessAlive, inspect as inspectRunLock } from '../lock.js';
 import { provisionToolchain } from './provision.js';
 import { jdkDownloadUrl, resolveMirrors } from './mirrors.js';
+import { withEnvironmentMirrors } from '../environment-mirrors.js';
 import { createTemporaryDirectory } from '../temp.js';
 
 function readJson(file) {
@@ -330,6 +331,8 @@ async function verifyJavaProjectUnlocked({
   javaHome: customJavaHome,
   mavenHome: customMavenHome,
   full = false,
+  mirrorSettings,
+  dependencySources,
 } = {}) {
   root = path.resolve(root);
   const marker = path.join(root, '.specgate', 'monorepo.json');
@@ -628,7 +631,12 @@ async function verifyJavaProjectUnlocked({
   const npmCommand = (args) =>
     npmPlan(npm, toolchains.node ? toolchains.node.node : process.execPath, args);
   const plan = [
-    ['backend-verify', maven, ['-B', '-ntp', 'clean', 'verify'], path.join(root, 'backend')],
+    [
+      'backend-verify',
+      maven,
+      ['-B', '-ntp', ...(mirrorSettings ? ['-s', mirrorSettings] : []), 'clean', 'verify'],
+      path.join(root, 'backend'),
+    ],
     [
       'frontend-install',
       ...npmCommand([
@@ -656,6 +664,7 @@ async function verifyJavaProjectUnlocked({
   evidence.save({
     plan: plan.map(([name, command, args, cwd]) => ({ name, command, args, cwd })),
     toolchain: { javaHome, maven },
+    dependencySources,
   });
   let failed = null;
   for (const [name, command, args, cwd] of plan) {
@@ -886,7 +895,17 @@ export async function verifyJavaProject(options = {}) {
   }
   if (fd === undefined) return { ok: false, code: 'VERIFY_LOCKED', message: '无法获取验证锁。' };
   try {
-    return await verifyJavaProjectUnlocked({ ...options, root });
+    return await withEnvironmentMirrors(
+      { env: options.env || process.env },
+      ({ env, mirrors, mavenSettings }) =>
+        verifyJavaProjectUnlocked({
+          ...options,
+          root,
+          env,
+          mirrorSettings: mavenSettings,
+          dependencySources: mirrors,
+        }),
+    );
   } catch (error) {
     let report = null;
     try {

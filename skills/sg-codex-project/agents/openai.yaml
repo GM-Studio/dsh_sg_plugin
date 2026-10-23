@@ -1,0 +1,4 @@
+interface:
+  display_name: 'SpecGate 项目准备'
+  short_description: '初始化或接入业务项目，配置 Agent 并建立真实基线'
+  default_prompt: '使用 $sg-codex-project 准备业务项目，复用技术栈选择和环境结果，基线就绪后等待需求。'

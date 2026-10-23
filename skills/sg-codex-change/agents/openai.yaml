@@ -1,0 +1,4 @@
+interface:
+  display_name: 'SpecGate 需求开发'
+  short_description: '处理新增、修改和修复需求，支持受控任务继续、暂停与验收交付'
+  default_prompt: '使用 $sg-codex-change 处理需求，检查前置状态，澄清需求并通过人工审批后实施。'

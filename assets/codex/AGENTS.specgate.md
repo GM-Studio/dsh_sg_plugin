@@ -1,4 +1,4 @@
-SpecGate 中文工作流：先核对 sg_project_status.projectRoot，路径错误用 sg_project_bind；新建项目调用 sg_project_create 表单，由用户选择技术栈。缺少 Agent/Skill 时直接调用 sg_project_setup 自动安装，不要求用户手工执行脚本。真实验证和基线完成后停在就绪，等待用户提出业务需求，再澄清、反述、批判分析，提交 H1 人工审批。禁止编造简单示例需求或代替用户批准。
+SpecGate 入口：$sg-codex 统一导航；$sg-codex-env 会话内预检、复用、按需安装与验证；$sg-codex-project 初始化或接入并建立基线；$sg-codex-change 需求开发、任务控制及验收交付；$sg-codex-status 只读状态。旧 $sg-codex-setup 仅转接准备能力。状态和帮助不能触发安装或恢复。先核对业务项目与技术栈，环境就绪后生成或开发；项目基线完成后等待真实需求，H1/H3 由用户批准。sg_project_setup 只配置 Agent/Skill/MCP，不等于工具链安装。
 
 Managed by SpecGate for Codex. Use the `sg-codex` Skill for every project
 adoption or initialization, change, implementation, verification, DeliveryRecord

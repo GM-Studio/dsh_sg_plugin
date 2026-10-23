@@ -33,7 +33,7 @@ export const ONBOARDING_TOOLS = [
   {
     name: 'sg_project_create',
     description:
-      '打开中文新建项目表单，让用户选择目录、包名、JDK/Spring Boot、Vue/React 和 Git 身份，确认预览后自动生成并安装 Agent 与 Skill。完成验证后停在就绪，等待用户业务需求。',
+      '打开中文新建项目表单选择目录、包名、技术栈和 Git 身份；先通过环境预检门禁再生成和配置 Agent/Skill。验证基线后等待需求，失败保留原选择。',
     inputSchema: {
       type: 'object',
       properties: {
@@ -117,6 +117,7 @@ export async function createProjectInteractively({
   draft = {},
   initialPath,
   reset = false,
+  environmentGate,
 }) {
   if (reset) {
     delete draft.input;
@@ -333,7 +334,7 @@ export async function createProjectInteractively({
     };
   const created = await executeInit(
     { ...draft.input, previewHash: preview.previewHash },
-    { approvalProvider: draft.approvalProvider, signal, allowExistingGit: true },
+    { approvalProvider: draft.approvalProvider, signal, allowExistingGit: true, environmentGate },
   );
   return {
     ...created,

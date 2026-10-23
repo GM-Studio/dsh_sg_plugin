@@ -52,7 +52,7 @@ export function createProtocol({
           capabilities: { tools: { listChanged: false } },
           serverInfo: SERVER_INFO,
           instructions:
-            'SpecGate 中文交付流程：使用 sg-codex Skill。先调用 sg_project_status 核对 projectRoot；错误时用 sg_project_bind 指定业务项目。新建项目调用 sg_project_create 弹出配置表单，用户亲自选择技术栈；sg_init 自动安装项目 Agent 与 Skill。真实验证并建立 ProjectProfile 和 ProjectBaseline 后停在就绪，等待用户提供业务需求，禁止编造示例需求或直接开发。需求必须澄清、反述、批判分析，调用 sg_request_h1 请求人工审批。H1/H3 未获可信用户确认不得推进；表单不可用时保持待审批并说明原因。前后端由真实代理串行实现，随后独立测试、格式化并对固定提交评审。异步模式先读取工作项状态，返回 WAITING_FOR_USER 后立即停止。交付批准后生成交付记录和证据包；仅用户明确要求 push=true 时推送。不得模拟子代理或伪造人工批准。所有用户可见内容与选项使用中文。统一推荐 sg-codex 使用向导，项目准备为辅助步骤。新建填写确认一次，路径留空使用当前仓库；失败保留已有技术栈选择，不重复弹出整张表单。',
+            'SpecGate 统一导航使用 $sg-codex；环境自检、复用、按需安装使用 $sg-codex-env；初始化或接入项目使用 $sg-codex-project；新增/修改/修复及任务控制和验收交付使用 $sg-codex-change；只读项目信息与状态使用 $sg-codex-status。旧 $sg-codex-setup 仅转接准备能力。先识别业务项目与技术栈，sg_env_check 只读预检，缺项由 sg_env_prepare 请求可信确认并真实验证；不提供外部安装脚本。sg_status 不触发安装、初始化、恢复或审批。环境通过后才能生成或实现，项目基线就绪且用户未提供需求时等待。真实用户选择技术栈，需求澄清、反述、批判分析后请求 H1，H1/H3 未获可信审批不得推进。真实子代理串行实现，独立测试、格式化和固定提交评审；不得模拟角色或伪造证据。异步 WAITING_FOR_USER 后停止，真实 Decision 后重读状态。用户明确 push=true 才推送。全程中文，保留已有技术栈与目录选择，不重复新建。',
         }),
       );
     }

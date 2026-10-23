@@ -20,16 +20,20 @@
       "89f88a4cba28d631bf453ad06f5a998451c8dac529933b9e2b3c90af394bc74a"
     ],
     ".agents/skills/sg-codex/SKILL.md": [
-      "6207c3a1f9eccd01760017dd23d829e3af2204ed44d26453848791489e3fcc98"
+      "6207c3a1f9eccd01760017dd23d829e3af2204ed44d26453848791489e3fcc98",
+      "5e0416a02e9904d266cfa955f2d946a84083c0ff4efc58b1c167adc98e15a9dc"
     ],
     ".agents/skills/sg-codex/agents/openai.yaml": [
-      "5919f1562c5a42bf01c86cbafb63e32b024e3939bfe887ed4a9a22b44da99f72"
+      "5919f1562c5a42bf01c86cbafb63e32b024e3939bfe887ed4a9a22b44da99f72",
+      "cc077727949b727984c629303558447dd9b748565780e786341b0a7d2612ec19"
     ],
     ".agents/skills/sg-codex-setup/SKILL.md": [
-      "c155a2f1dba10cde3b5d094efb297bb5d6483023d81c2b597f4fdd6dd593317a"
+      "c155a2f1dba10cde3b5d094efb297bb5d6483023d81c2b597f4fdd6dd593317a",
+      "62bf73dd64e67a919c4fff7881ccbf0686ff32802da5d65fb427e0de73224b72"
     ],
     ".agents/skills/sg-codex-setup/agents/openai.yaml": [
-      "4fdd698155e257d039d6753620ad526e27241c7605092c8f9d1c50fabc380d59"
+      "4fdd698155e257d039d6753620ad526e27241c7605092c8f9d1c50fabc380d59",
+      "aa6cfb658b1e937cefef85aa44182c8056abc1a109db6f574c525718c81776c2"
     ]
   }
 }

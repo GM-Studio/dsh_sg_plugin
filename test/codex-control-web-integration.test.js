@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import { randomInt } from 'node:crypto';
 import { createControlStore } from '../src/codex/control/store.js';
 import { createControlService } from '../src/codex/control/service.js';
 import { createControlManagementServices } from '../src/codex/control/management-services.js';
@@ -14,6 +15,18 @@ import {
 } from '../src/codex/control/step-up.js';
 import { createDeliveryRecordV3 } from '../src/codex/control/delivery-controlled.js';
 import { persistDeliveryV3, readDeliveryRecord } from '../src/codex/delivery.js';
+
+// 某些 Windows 动态端口范围包含 Fetch 禁用端口；仅测试在安全的高位范围监听。
+async function startOnFetchPort(management) {
+  for (let attempt = 0; attempt < 10; attempt++) {
+    try {
+      return await management.start({ port: 49152 + randomInt(16384) });
+    } catch (error) {
+      if (error.code !== 'EADDRINUSE') throw error;
+    }
+  }
+  throw new Error('没有取得可用于 Fetch 回归的空闲测试端口');
+}
 
 test('Web step-up Decision consumes one AttentionRequest and queues automatic resume', async (t) => {
   const controlRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'sg-control-web-'));
@@ -50,7 +63,7 @@ test('Web step-up Decision consumes one AttentionRequest and queues automatic re
     clock: () => now,
     pairingToken: 'integration-pairing-token',
   });
-  const started = await management.start();
+  const started = await startOnFetchPort(management);
   t.after(() => management.close());
   const paired = await fetch(`${started.baseUrl}/api/session`, {
     method: 'POST',
@@ -183,7 +196,7 @@ test('Web customer acceptance atomically links a DeliveryRecord receipt and Cont
     clock: () => now,
     pairingToken: 'acceptance-pairing-token',
   });
-  const started = await management.start();
+  const started = await startOnFetchPort(management);
   t.after(() => management.close());
   const paired = await fetch(`${started.baseUrl}/api/session`, {
     method: 'POST',

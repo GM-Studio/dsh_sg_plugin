@@ -1,0 +1,38 @@
+{
+  "ok": true,
+  "platform": "win32",
+  "node": "v24.14.0",
+  "projectRoot": "E:\\ai_workflow\\specgate\\.specgate\\environment-frozen-20261023",
+  "controlRoot": "C:\\Users\\Administrator\\.codex\\specgate-control",
+  "managementPublicUrl": "http://127.0.0.1:43120",
+  "feishuConfigured": false,
+  "mfaConfigured": false,
+  "codex": {
+    "command": "codex",
+    "homeConfigured": false,
+    "sandbox": "workspace-write",
+    "available": true,
+    "version": "codex-cli 0.163.0-alpha.11"
+  },
+  "capabilities": {
+    "states": {
+      "plugin": "available",
+      "execJson": "available",
+      "nativeAgents": "available",
+      "elicitation": "missing"
+    },
+    "mode": "native",
+    "degradations": [
+      "interactive-gates-pending"
+    ],
+    "blocked": [
+      "interactive-gates"
+    ],
+    "versionGateHint": "MCP elicitation is absent; interactive gates stay pending."
+  },
+  "isolation": {
+    "explicitProjectBinding": true,
+    "unrelatedMcpDisabled": true,
+    "controlSecretsExcluded": true
+  }
+}

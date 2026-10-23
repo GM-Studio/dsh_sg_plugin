@@ -1,0 +1,4 @@
+interface:
+  display_name: 'SpecGate 项目信息与状态'
+  short_description: '只读查看当前项目、环境和任务进度，报告阻塞原因与待审批事项'
+  default_prompt: '使用 $sg-codex-status 只读汇总当前项目与任务状态，不执行安装、初始化或恢复。'

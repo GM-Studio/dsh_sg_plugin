@@ -11,7 +11,8 @@ class LocalAccountsTest {
     @Test
     void localDemoPasswordsRequireExplicitDemoMode() {
         assertThrows(IllegalStateException.class, () -> new LocalAccounts("admin", "viewer"));
-        assertThrows(IllegalStateException.class, () -> new LocalAccounts("admin", "viewer", false));
+        assertThrows(
+                IllegalStateException.class, () -> new LocalAccounts("admin", "viewer", false));
         assertThrows(IllegalStateException.class, () -> new LocalAccounts("123", "viewer", true));
         LocalAccounts accounts = new LocalAccounts("admin", "viewer", true);
         assertEquals("admin", accounts.login("admin", "admin", "demo-admin").getName());

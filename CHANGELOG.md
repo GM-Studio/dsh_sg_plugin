@@ -2,6 +2,15 @@
 
 ## Unreleased
 
+- Add environment, project, change and read-only status task Skills behind the
+  shared router, with setup alias compatibility and synchronized project copies.
+- Add selected-stack environment preflight and installation with trusted consent,
+  pinned official checksums, domestic mirrors, temporary configuration cleanup,
+  and environment gates before generation and workflow execution.
+- Aggregate status without starting a control runtime; exclude external installer
+  prototypes from the package. Fix template formatting exposed by real matrix
+  runs and bound the baseline worker test wait for slower virtual machines.
+
 - Isolate all automated-test workers under one ownership-marked temporary root,
   clean it on normal, failing and signalled exits, recover interrupted leftovers
   on the next run, and always remove matrix/pilot workspaces after preserving

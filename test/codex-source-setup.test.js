@@ -35,7 +35,7 @@ test('portable plugin manifests expose the bundled stdio MCP server and setup sk
   const marketplace = readJson('.agents/plugins/marketplace.json');
   assert.equal(plugin.name, 'specgate-codex');
   assert.equal(plugin.$schema, 'https://agent-plugins.org/schemas/1.0.0/plugin.schema.json');
-  assert.equal(plugin.extensions['com.openai'].onboardingSkill, './skills/setup/SKILL.md');
+  assert.equal(plugin.extensions['com.openai'].onboardingSkill, './skills/sg-codex/SKILL.md');
   assert.equal(mcp.$schema, 'https://agent-plugins.org/schemas/1.0.0/mcp.schema.json');
   assert.equal(mcp.mcpServers.specgate.type, 'stdio');
   assert.deepEqual(mcp.mcpServers.specgate.args, ['${PLUGIN_ROOT}/src/codex/server.js']);
@@ -75,6 +75,10 @@ test('source setup installs six project agents and preserves unrelated AGENTS co
     '.codex/',
     '.agents/skills/sg-codex/',
     '.agents/skills/sg-codex-setup/',
+    '.agents/skills/sg-codex-env/',
+    '.agents/skills/sg-codex-project/',
+    '.agents/skills/sg-codex-change/',
+    '.agents/skills/sg-codex-status/',
     '.env',
     'AGENTS.md',
   ]);
@@ -102,6 +106,10 @@ test('source setup reports a tracked AGENTS file instead of hiding its required 
     '.codex/',
     '.agents/skills/sg-codex/',
     '.agents/skills/sg-codex-setup/',
+    '.agents/skills/sg-codex-env/',
+    '.agents/skills/sg-codex-project/',
+    '.agents/skills/sg-codex-change/',
+    '.agents/skills/sg-codex-status/',
     '.env',
   ]);
   assert.deepEqual(result.git.dirtyManagedPaths, ['AGENTS.md']);
