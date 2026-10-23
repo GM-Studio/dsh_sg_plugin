@@ -13,8 +13,8 @@ function fixture(options = {}) {
   const events = [];
   const requests = [];
   const authority = createApprovalAuthority({
-    request: async (method, params) => {
-      requests.push({ method, params });
+    request: async (method, params, options) => {
+      requests.push({ method, params, options });
       return { action: 'accept', content: { decision: 'approve', comment: 'Reviewed.' } };
     },
     trustedPeerIdentity: identity,
@@ -55,6 +55,15 @@ test('approval fails closed without request, native user identity, or durable au
   }
 });
 
+test('H1 approval probes the host channel even when elicitation is unadvertised', async () => {
+  const f = fixture();
+  const result = await f.authority.requestApproval(f.challenge());
+  assert.equal(result.ok, true, JSON.stringify(result));
+  assert.equal(f.requests.length, 1);
+  assert.equal(f.requests[0].method, 'elicitation/create');
+  assert.equal(f.requests[0].options.allowUnadvertised, true);
+  assert.equal(f.requests[0].options.timeoutMs, 300000);
+});
 test('only peer elicitation response issues an approval with actor, timestamps, and an opaque handle', async () => {
   const f = fixture();
   const result = await f.authority.requestApproval(f.challenge());

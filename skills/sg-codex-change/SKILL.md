@@ -9,9 +9,20 @@ description: 用户请求 SpecGate 新增功能、修改或修复已有功能，
 
 ## 需求与 H1
 
-`sg_change` 接受 feature / modify / fix 及 details；`sg_change_add` 是 feature 别名。`sg_change_propose` 覆盖功能、非功能、边界、失败场景及验收标准；`sg_change_questions` 收集真实答案，反述并 `sg_change_critique` 分析歧义、安全、性能、并发和测试盲区。
+`sg_change` 接受 feature / modify / fix 及 details；`sg_change_add` 是 feature 别名。两者创建 Change 并进入 `REQ_CLARIFYING` 后，服务端必须立即发起原生澄清第 1 轮（5 个固定问题）。不得先自行 propose，也不得把模型推断当成用户回答。
 
-展示完整文档、验收标准与假设，再 `sg_request_h1` 请求可信人工审批。只有真实批准可冻结；模型同意、普通聊天或工具参数不能冒充回执。elicitation 不可用时明确保持 H1_PENDING / WAITING_FOR_USER。
+固定流程：
+
+1. `sg_change` / `sg_change_add` → 自动原生澄清第 1 轮。
+2. 仍有歧义时，用 `sg_change_questions` 发起第 2 / 3 轮；每轮最多 5 问。
+3. 向用户展示真实回答，再 `sg_change_propose`，覆盖功能、非功能、边界、失败场景及验收标准。
+4. 反向复述需求并执行 `sg_change_critique`，覆盖歧义、矛盾、不可行、非功能、安全/性能/并发及测试盲区。
+5. 展示完整需求、验收标准、显式假设、未决问题、风险和反向复述。
+6. 最后调用 `sg_request_h1` 请求可信人工审批。
+
+收到 `WAITING_FOR_USER`、`CLARIFICATION_REQUIRED`、`CLARIFICATION_PENDING` 或 `USER_INPUT_UNAVAILABLE` 时立即停止，不得继续 propose / critique / H1，也不得代替用户作答。待答轮次已持久化时，只能用 `sg_change_questions({ expectedVersion, round })` 恢复同一轮，不得新建重复轮次或 Change。
+
+只有真实批准可冻结；模型同意、普通聊天或工具参数不能冒充回执。原生澄清或 H1 表单不可用时报告阻塞并保持待用户状态；重新加载 SpecGate 插件连接、新建会话后再继续。
 
 ## 实现与独立验证
 

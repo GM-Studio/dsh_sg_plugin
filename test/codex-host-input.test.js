@@ -24,7 +24,7 @@ test('interactive approval identity is server-derived only when explicitly enabl
   );
 });
 
-test('MCP elicitation supplies clarification answers without tool-provided identity', async () => {
+test('MCP elicitation probes the real channel and supplies clarification answers', async () => {
   const trustedUserIdentity = {
     id: 'alice',
     kind: 'user',
@@ -33,9 +33,8 @@ test('MCP elicitation supplies clarification answers without tool-provided ident
   const calls = [];
   const provider = createPeerUserInputProvider({
     trustedUserIdentity,
-    peerCapabilities: () => ({ elicitationSupported: true }),
-    requestPeer: async (method, params) => {
-      calls.push({ method, params });
+    requestPeer: async (method, params, options) => {
+      calls.push({ method, params, options });
       return {
         action: 'accept',
         content: Object.fromEntries(
@@ -53,6 +52,8 @@ test('MCP elicitation supplies clarification answers without tool-provided ident
     ],
   });
   assert.equal(calls[0].method, 'elicitation/create');
+  assert.equal(calls[0].options.allowUnadvertised, true);
+  assert.equal(calls[0].options.timeoutMs, 300000);
   assert.deepEqual(calls[0].params.requestedSchema.required, ['Q-1', 'Q-2']);
   assert.deepEqual(result.answers, [
     { questionId: 'Q-1', answer: 'answer-Q-1' },
@@ -60,24 +61,10 @@ test('MCP elicitation supplies clarification answers without tool-provided ident
   ]);
 });
 
-test('clarification fails closed without elicitation or acceptance', async () => {
+test('clarification fails closed when the real channel rejects or cancels', async () => {
   const identity = { id: 'alice', kind: 'user', source: 'codex-mcp-os-user' };
-  const unavailable = createPeerUserInputProvider({
-    trustedUserIdentity: identity,
-    peerCapabilities: () => ({ elicitationSupported: false }),
-    requestPeer: async () => assert.fail('should not call the peer'),
-  });
-  await assert.rejects(
-    unavailable.request({
-      changeId: 'change',
-      round: 1,
-      questions: [{ id: 'Q-1', category: 'functional', text: 'Question?' }],
-    }),
-    (error) => error.code === 'ELICITATION_UNSUPPORTED',
-  );
   const rejected = createPeerUserInputProvider({
     trustedUserIdentity: identity,
-    peerCapabilities: () => ({ elicitationSupported: true }),
     requestPeer: async () => ({ action: 'decline' }),
   });
   await assert.rejects(

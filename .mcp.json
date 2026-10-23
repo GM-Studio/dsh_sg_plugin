@@ -6,7 +6,8 @@
       "env": {
         "SPECGATE_INTERACTIVE_APPROVAL": "1",
         "SPECGATE_NATIVE_AGENTS": "1"
-      }
+      },
+      "enabled": false
     }
   }
 }

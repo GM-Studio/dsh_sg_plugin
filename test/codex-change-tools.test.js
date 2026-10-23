@@ -145,6 +145,11 @@ test('declared examples dispatch through the actual controlled service and fail 
     request: 'Add task title search.',
   });
   assert.equal(result.ok, true, JSON.stringify(result));
+  assert.equal(result.state.context.changeAdd.rounds.length, 1);
+  assert.equal(result.state.context.changeAdd.rounds[0].source, 'server-intake');
+  assert.equal(result.state.context.changeAdd.rounds[0].status, 'answered');
+  assert.equal(result.state.context.changeAdd.rounds[0].questions.length, 5);
+  assert.equal(result.state.context.changeAdd.rounds[0].answers[0].source, 'native-user-provider');
   result = await callChangeTool(service, 'sg_change_propose', {
     expectedVersion: result.state.version,
     requirements: [requirement],
@@ -157,6 +162,9 @@ test('declared examples dispatch through the actual controlled service and fail 
     questions: [{ id: 'Q-1', category: 'functional', text: 'Which task field is searchable?' }],
   });
   assert.equal(result.ok, true, JSON.stringify(result));
+  assert.equal(result.state.context.changeAdd.rounds.length, 2);
+  assert.equal(result.state.context.changeAdd.rounds[1].source, 'model-proposal');
+  assert.equal(result.state.context.changeAdd.rounds[1].status, 'answered');
   result = await callChangeTool(service, 'sg_change_critique', {
     expectedVersion: result.state.version,
     report,
@@ -265,6 +273,10 @@ test('unified sg_change accepts feature, modify and fix while rejecting invalid 
   });
   assert.equal(started.ok, true, JSON.stringify(started));
   assert.equal(started.state.context.changeAdd.change.type, 'fix');
+  assert.equal(started.state.context.changeAdd.rounds.length, 1);
+  assert.equal(started.state.context.changeAdd.rounds[0].source, 'server-intake');
+  assert.equal(started.state.context.changeAdd.rounds[0].status, 'answered');
+  assert.equal(started.state.context.changeAdd.rounds[0].questions.length, 5);
   const proposed = await callChangeTool(service, 'sg_change_propose', {
     expectedVersion: started.state.version,
     requirements: [requirement],

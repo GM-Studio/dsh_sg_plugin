@@ -67,6 +67,97 @@ export function stableChangeName(request) {
   return `${slug || 'change'}-${hashValue(request).slice(0, 12)}`;
 }
 
+const INTAKE_QUESTIONS = Object.freeze([
+  {
+    id: 'Q-INTAKE-1',
+    category: 'functional',
+    text: '这个变更要解决的核心问题是什么？目标用户和期望结果是什么？',
+  },
+  {
+    id: 'Q-INTAKE-2',
+    category: 'constraint',
+    text: '哪些内容明确在范围内，哪些明确不在范围内？',
+  },
+  {
+    id: 'Q-INTAKE-3',
+    category: 'acceptance',
+    text: '完成后有哪些可观察、可验证的验收标准？',
+  },
+  {
+    id: 'Q-INTAKE-4',
+    category: 'failure',
+    text: '需要覆盖哪些失败、边界或兼容场景？',
+  },
+  {
+    id: 'Q-INTAKE-5',
+    category: 'security',
+    text: '有哪些安全、性能或并发约束？',
+  },
+]);
+
+const INPUT_ERROR_CODES = Object.freeze({
+  ELICITATION_UNSUPPORTED: 'USER_INPUT_UNAVAILABLE',
+  TRUSTED_USER_INPUT_UNAVAILABLE: 'USER_INPUT_UNAVAILABLE',
+  PEER_CANCELLED: 'CANCELLED',
+  CANCELLED: 'USER_INPUT_CANCELLED',
+  PEER_TIMEOUT: 'USER_INPUT_TIMEOUT',
+  USER_INPUT_REJECTED: 'USER_INPUT_REJECTED',
+  USER_INPUT_INVALID: 'USER_INPUT_INVALID',
+});
+
+const inputFailure = (error, actualVersion) => {
+  const code = INPUT_ERROR_CODES[error?.code] ?? 'USER_INPUT_FAILED';
+  if (code === 'CANCELLED')
+    return failure('CANCELLED', 'The server cancelled this requirements operation', {
+      actualVersion,
+    });
+  const messages = {
+    USER_INPUT_UNAVAILABLE:
+      '原生澄清通道当前不可用；变更已保留为待用户澄清状态。请重新加载 SpecGate 插件连接并新建会话后重试。',
+    USER_INPUT_CANCELLED: '用户取消了原生澄清表单；变更仍保留待澄清状态。',
+    USER_INPUT_TIMEOUT: '原生澄清表单等待超时；变更仍保留待澄清状态。',
+    USER_INPUT_REJECTED: '用户未提交澄清回答；变更仍保留待澄清状态。',
+    USER_INPUT_INVALID: '原生回答与待答问题不匹配；变更仍保留待澄清状态。',
+    USER_INPUT_FAILED: '原生澄清表单未成功完成；变更仍保留待澄清状态。',
+  };
+  return failure(code, messages[code], {
+    status: 'WAITING_FOR_USER',
+    nextAction: 'RESUME_CLARIFICATION',
+    actualVersion,
+  });
+};
+
+function clarificationGate(data, actualVersion) {
+  const answered = data?.rounds?.filter((round) => round.status === 'answered') ?? [];
+  const pending = data?.rounds?.find((round) => round.status === 'pending') ?? null;
+  const native =
+    answered.length > 0 &&
+    answered.every(
+      (round) =>
+        Array.isArray(round.answers) &&
+        round.answers.length > 0 &&
+        round.answers.every(
+          (answer) =>
+            answer?.source === 'native-user-provider' &&
+            object(answer.actor) &&
+            answer.actor.kind === 'user' &&
+            text(answer.actor.id) &&
+            text(answer.actor.source),
+        ),
+    );
+  if (!pending && native) return null;
+  return failure(
+    'CLARIFICATION_REQUIRED',
+    pending
+      ? '存在尚未回答的原生澄清轮次；请先恢复该轮并取得真实用户回答。'
+      : '至少需要一轮真实原生用户澄清回答，才能继续批判分析或请求 H1 审批。',
+    {
+      status: 'WAITING_FOR_USER',
+      nextAction: pending ? 'RESUME_CLARIFICATION' : 'ASK_CLARIFICATION',
+      actualVersion,
+    },
+  );
+}
 const abortError = () => Object.assign(new Error('Operation cancelled'), { code: 'CANCELLED' });
 
 // Providers may ignore AbortSignal. Stop awaiting them and never apply their
@@ -481,7 +572,14 @@ export function createChangeAddService({
       },
     });
 
-  async function startCommon(args, type, details, parentDeliveryId = null, impact = null) {
+  async function startCommon(
+    args,
+    type,
+    details,
+    parentDeliveryId = null,
+    impact = null,
+    { signal } = {},
+  ) {
     const validation = validateChangeInput({ type, request: args.request, details });
     if (!validation.ok) return validation;
     const ready = await inspectPrerequisites();
@@ -539,7 +637,7 @@ export function createChangeAddService({
       }
       incremental = { hash, path: artifactPath, plan: clone(plan.plan) };
     }
-    return store.create({
+    const created = await store.create({
       expectedVersion: args.expectedVersion,
       changeId,
       context: {
@@ -563,9 +661,39 @@ export function createChangeAddService({
         prerequisiteVerification: ready.verification,
       },
     });
+    if (!created.ok) return created;
+    const moved = await store.transition({
+      expectedVersion: created.state.version,
+      to: 'REQ_CLARIFYING',
+    });
+    if (!moved.ok) return moved;
+    const clarification = await requestClarification({
+      state: moved.state,
+      questions: INTAKE_QUESTIONS,
+      source: 'server-intake',
+      signal,
+    });
+    if (!clarification.ok) {
+      if (clarification.code === 'CANCELLED') return clarification;
+      const latest = await store.load();
+      if (!latest.ok) return latest;
+      return {
+        ...clarification,
+        changeId: latest.state.changeId ?? moved.state.changeId,
+        state: latest.state,
+        actualVersion: latest.state.version,
+        status: clarification.status ?? 'WAITING_FOR_USER',
+        nextAction: clarification.nextAction ?? 'RESUME_CLARIFICATION',
+        clarification: {
+          code: clarification.code,
+          message: clarification.message,
+        },
+      };
+    }
+    return clarification;
   }
 
-  async function start(args = {}) {
+  async function start(args = {}, { signal } = {}) {
     if (
       !keys(args, ['name', 'request', 'expectedVersion']) ||
       !text(args.request) ||
@@ -577,10 +705,10 @@ export function createChangeAddService({
       );
     if (secret(args.request))
       return failure('SENSITIVE_INPUT', 'Remove credentials from the change request');
-    return startCommon(args, 'feature', {}, null);
+    return startCommon(args, 'feature', {}, null, null, { signal });
   }
 
-  async function startTyped(args = {}) {
+  async function startTyped(args = {}, { signal } = {}) {
     if (
       !keys(args, [
         'name',
@@ -615,6 +743,7 @@ export function createChangeAddService({
       normalized.details,
       args.parentDeliveryId ?? null,
       args.impact,
+      { signal },
     );
   }
 
@@ -632,6 +761,8 @@ export function createChangeAddService({
       return failure('INVALID_ARGUMENT', 'Only a requirements proposal may be submitted');
     const loaded = await current(args, ['REQ_INTAKE', 'REQ_CLARIFYING', 'H1_PENDING']);
     if (!loaded.ok) return loaded;
+    const gate = clarificationGate(loaded.state.context.changeAdd, loaded.state.version);
+    if (gate) return gate;
     if (!validDraft(args))
       return failure(
         'REQUIREMENTS_INVALID',
@@ -664,6 +795,87 @@ export function createChangeAddService({
     return update(state, data);
   }
 
+  async function requestClarification({ state, questions, source, round, signal }) {
+    const resume = Number.isSafeInteger(round);
+    const roundIndex = resume ? round - 1 : state.context.changeAdd.rounds.length;
+    const questionIds = new Set(questions.map((question) => question.id));
+    const data = clone(state.context.changeAdd);
+    let saved = { ok: true, state };
+    if (!resume) {
+      data.rounds.push({
+        round: roundIndex + 1,
+        at: now(),
+        status: 'pending',
+        questions: clone(questions),
+        source,
+        answers: [],
+      });
+      data.critique = null;
+      data.candidate = null;
+      if (signal?.aborted) return cancelled();
+      saved = await update(state, data);
+      if (!saved.ok) return saved;
+    }
+    const identity = userInputProvider?.trustedUserIdentity;
+    if (
+      typeof userInputProvider?.request !== 'function' ||
+      !object(identity) ||
+      identity.kind !== 'user' ||
+      !text(identity.id) ||
+      !text(identity.source) ||
+      /(?:client[-_ ]?info|capabilit)|^(?:client|mcp-client)$/i.test(identity.source)
+    )
+      return inputFailure({ code: 'TRUSTED_USER_INPUT_UNAVAILABLE' }, saved.state.version);
+    const actor = { id: identity.id, source: identity.source, kind: 'user' };
+    let response;
+    try {
+      response = await raceAbort(
+        () =>
+          userInputProvider.request(
+            {
+              changeId: saved.state.changeId,
+              round: roundIndex + 1,
+              questions: clone(questions),
+            },
+            { signal },
+          ),
+        signal,
+      );
+    } catch (error) {
+      if (signal?.aborted) return cancelled();
+      return inputFailure(error, saved.state.version);
+    }
+    if (signal?.aborted) return cancelled();
+    if (
+      !keys(response, ['answers']) ||
+      !Array.isArray(response.answers) ||
+      response.answers.length !== questions.length ||
+      new Set(response.answers.map((a) => a?.questionId)).size !== questions.length ||
+      !response.answers.every(
+        (a) =>
+          keys(a, ['questionId', 'answer']) &&
+          questionIds.has(a.questionId) &&
+          text(a.answer, 8000),
+      )
+    )
+      return inputFailure({ code: 'USER_INPUT_INVALID' }, saved.state.version);
+    if (secret(response))
+      return failure(
+        'SENSITIVE_INPUT',
+        'Native answers contain apparent credentials and were not recorded',
+        { actualVersion: saved.state.version },
+      );
+    data.rounds[roundIndex].status = 'answered';
+    data.rounds[roundIndex].answers = response.answers.map((a) => ({
+      ...a,
+      source: 'native-user-provider',
+      actor,
+      at: now(),
+    }));
+    if (signal?.aborted) return cancelled();
+    return update(saved.state, data);
+  }
+
   async function askQuestions(args = {}, { signal } = {}) {
     if (!keys(args, ['expectedVersion', 'questions', 'round']))
       return failure(
@@ -673,7 +885,7 @@ export function createChangeAddService({
     if (signal?.aborted) return cancelled();
     const loaded = await current(args, ['REQ_CLARIFYING']);
     if (!loaded.ok) return loaded;
-    const data = clone(loaded.state.context.changeAdd);
+    const data = loaded.state.context.changeAdd;
     const resume = args.round !== undefined;
     if (
       resume &&
@@ -688,6 +900,11 @@ export function createChangeAddService({
       return failure(
         'CLARIFICATION_PENDING',
         'Resume the unanswered clarification round before opening another',
+        {
+          status: 'WAITING_FOR_USER',
+          nextAction: 'RESUME_CLARIFICATION',
+          actualVersion: loaded.state.version,
+        },
       );
     const questions = resume ? data.rounds[args.round - 1].questions : args.questions;
     if (
@@ -716,93 +933,21 @@ export function createChangeAddService({
       return failure('INVALID_ARGUMENT', 'Questions require unique IDs, categories and text');
     if (secret(questions))
       return failure('SENSITIVE_INPUT', 'Remove credentials from clarification questions');
-    const identity = userInputProvider?.trustedUserIdentity;
-    if (
-      typeof userInputProvider?.request !== 'function' ||
-      !object(identity) ||
-      identity.kind !== 'user' ||
-      !text(identity.id) ||
-      !text(identity.source) ||
-      /(?:client[-_ ]?info|capabilit)|^(?:client|mcp-client)$/i.test(identity.source)
-    )
-      return failure(
-        'TRUSTED_USER_INPUT_UNAVAILABLE',
-        '缺少可信的原生用户交互通道，无法收集澄清回答：请重新加载 SpecGate 插件连接（或以 SPECGATE_INTERACTIVE_APPROVAL=1 启动）并新建会话后重试；模型不能代替用户回答。',
-      );
-    const actor = { id: identity.id, source: identity.source, kind: 'user' };
-    let saved = loaded;
-    const roundIndex = resume ? args.round - 1 : data.rounds.length;
-    if (!resume) {
-      data.rounds.push({
-        round: roundIndex + 1,
-        at: now(),
-        status: 'pending',
-        questions: clone(questions),
-        source: 'model-proposal',
-        answers: [],
-      });
-      data.critique = null;
-      data.candidate = null;
-      if (signal?.aborted) return cancelled();
-      saved = await update(loaded.state, data);
-      if (!saved.ok) return saved;
-    }
-    let response;
-    try {
-      response = await raceAbort(
-        () =>
-          userInputProvider.request(
-            {
-              changeId: saved.state.changeId,
-              round: roundIndex + 1,
-              questions: clone(questions),
-            },
-            { signal },
-          ),
-        signal,
-      );
-    } catch {
-      if (signal?.aborted) return cancelled();
-      return failure('USER_INPUT_FAILED', '原生澄清表单未成功完成；请重试或检查宿主表单通道', {
-        actualVersion: saved.state.version,
-      });
-    }
-    if (signal?.aborted) return cancelled();
-    if (
-      !keys(response, ['answers']) ||
-      !Array.isArray(response.answers) ||
-      response.answers.length !== questions.length ||
-      new Set(response.answers.map((a) => a?.questionId)).size !== questions.length ||
-      !response.answers.every(
-        (a) => keys(a, ['questionId', 'answer']) && seen.has(a.questionId) && text(a.answer, 8000),
-      )
-    )
-      return failure('USER_INPUT_INVALID', '原生回答与待答问题不匹配；请重新发起澄清', {
-        actualVersion: saved.state.version,
-      });
-    if (secret(response))
-      return failure(
-        'SENSITIVE_INPUT',
-        'Native answers contain apparent credentials and were not recorded',
-        { actualVersion: saved.state.version },
-      );
-    data.rounds[roundIndex].status = 'answered';
-    data.rounds[roundIndex].answers = response.answers.map((a) => ({
-      ...a,
-      source: 'native-user-provider',
-      actor,
-      at: now(),
-    }));
-    if (signal?.aborted) return cancelled();
-    saved = await update(saved.state, data);
-    return saved;
+    return requestClarification({
+      state: loaded.state,
+      questions,
+      source: resume ? data.rounds[args.round - 1].source : 'model-proposal',
+      round: resume ? args.round : undefined,
+      signal,
+    });
   }
-
   async function critique(args = {}) {
     if (!keys(args, ['expectedVersion', 'report']))
       return failure('INVALID_ARGUMENT', 'Only a structured critique report may be submitted');
     const loaded = await current(args, ['REQ_CLARIFYING', 'REQ_CRITIQUE']);
     if (!loaded.ok) return loaded;
+    const gate = clarificationGate(loaded.state.context.changeAdd, loaded.state.version);
+    if (gate) return gate;
     const revision = loaded.state.context.changeAdd.revisions.at(-1);
     if (!revision || !validCritique(args.report, revision.requirements))
       return failure(
@@ -848,6 +993,8 @@ export function createChangeAddService({
     if (signal?.aborted) return cancelled();
     const loaded = await current(args, ['H1_PENDING']);
     if (!loaded.ok) return loaded;
+    const gate = clarificationGate(loaded.state.context.changeAdd, loaded.state.version);
+    if (gate) return gate;
     const data = clone(loaded.state.context.changeAdd);
     const revision = data.revisions.at(-1);
     if (
@@ -863,8 +1010,7 @@ export function createChangeAddService({
       revision.openIssues.some((issue) => issue.blocking) ||
       FINDINGS.some((category) =>
         data.critique.report[category].some((finding) => finding.severity === 'blocking'),
-      ) ||
-      data.rounds.some((round) => round.status !== 'answered')
+      )
     )
       return failure(
         'REQUIREMENTS_BLOCKED',

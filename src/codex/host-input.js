@@ -30,11 +30,7 @@ export function interactiveHostIdentity({
  * Converts MCP elicitation into the provider contract used by requirements
  * clarification. Answers stay user-authored and never enter tool arguments.
  */
-export function createPeerUserInputProvider({
-  requestPeer,
-  peerCapabilities,
-  trustedUserIdentity,
-} = {}) {
+export function createPeerUserInputProvider({ requestPeer, trustedUserIdentity } = {}) {
   if (typeof requestPeer !== 'function') return null;
   if (
     !object(trustedUserIdentity) ||
@@ -46,10 +42,6 @@ export function createPeerUserInputProvider({
   return {
     trustedUserIdentity,
     async request({ changeId, round, questions }, { signal } = {}) {
-      if (peerCapabilities?.().elicitationSupported !== true)
-        throw Object.assign(new Error('The MCP client does not support elicitation'), {
-          code: 'ELICITATION_UNSUPPORTED',
-        });
       if (!Array.isArray(questions) || !questions.length)
         throw Object.assign(new Error('Clarification questions are required'), {
           code: 'INVALID_ARGUMENT',
@@ -76,7 +68,14 @@ export function createPeerUserInputProvider({
             additionalProperties: false,
           },
         },
-        { signal },
+        {
+          signal,
+          // Some Codex hosts can render elicitation even when the client did
+          // not advertise the capability. Probe the real channel; the native
+          // response still has to arrive before any answer is recorded.
+          allowUnadvertised: true,
+          timeoutMs: 5 * 60 * 1000,
+        },
       );
       if (!object(result) || result.action !== 'accept' || !object(result.content))
         throw Object.assign(new Error('The user did not supply clarification answers'), {

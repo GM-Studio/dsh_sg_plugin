@@ -220,6 +220,15 @@ function incrementalFixture() {
     projectRoot: root,
     store,
     verifyPrerequisites: async () => ({ ok: true, sourceHash: 'synthetic-fixture' }),
+    userInputProvider: {
+      trustedUserIdentity: nativeUser,
+      request: async ({ questions }) => ({
+        answers: questions.map((question) => ({
+          questionId: question.id,
+          answer: 'Synthetic incremental fixture answer.',
+        })),
+      }),
+    },
   });
   return { root, store, service, deliveryId: 'delivery-feedback-1' };
 }
@@ -230,6 +239,26 @@ async function start(f) {
     expectedVersion: 0,
   });
   assert.equal(result.ok, true, JSON.stringify(result));
+  assert.equal(result.state.context.changeAdd.rounds[0].source, 'server-intake');
+  assert.equal(result.state.context.changeAdd.rounds[0].status, 'answered');
+  assert.equal(result.state.context.changeAdd.rounds[0].questions.length, 5);
+  return result.state;
+}
+
+async function pendingIntake(f, code = 'USER_INPUT_UNAVAILABLE') {
+  const result = await f.service.start({
+    request: 'Add a searchable task list.',
+    expectedVersion: 0,
+  });
+  assert.equal(result.ok, false, JSON.stringify(result));
+  assert.equal(result.code, code);
+  assert.equal(result.status, 'WAITING_FOR_USER');
+  assert.equal(result.nextAction, 'RESUME_CLARIFICATION');
+  assert.equal(result.state.phase, 'REQ_CLARIFYING');
+  assert.equal(result.state.context.changeAdd.rounds.length, 1);
+  assert.equal(result.state.context.changeAdd.rounds[0].source, 'server-intake');
+  assert.equal(result.state.context.changeAdd.rounds[0].questions.length, 5);
+  assert.equal(result.state.context.changeAdd.rounds[0].status, 'pending');
   return result.state;
 }
 
@@ -291,7 +320,7 @@ test('generated-only initialization, dirty tracked files, and untracked files re
 });
 
 test('only one active change can be created and model text cannot forge user provenance', async () => {
-  const f = fixture();
+  const f = fixture({ input: true });
   const state = await start(f);
   assert.equal(state.context.changeAdd.request.source, 'command-input');
   assert.equal(
@@ -313,7 +342,7 @@ test('only one active change can be created and model text cannot forge user pro
 });
 
 test('draft revisions preserve history and label inferred content as model proposals', async () => {
-  const f = fixture();
+  const f = fixture({ input: true });
   await start(f);
   await draft(f);
   const state = await draft(f, {
@@ -341,15 +370,21 @@ test('clarification enforces three rounds and five questions and records only tr
     ).code,
     'QUESTION_LIMIT',
   );
-  for (let index = 0; index < 3; index++) {
+  state = (await f.store.load()).state;
+  assert.equal(state.context.changeAdd.rounds.length, 1);
+  assert.equal(state.context.changeAdd.rounds[0].source, 'server-intake');
+  assert.equal(state.context.changeAdd.rounds[0].status, 'answered');
+  assert.equal(state.context.changeAdd.rounds[0].questions.length, 5);
+  for (let round = 2; round <= 3; round++) {
     state = (await f.store.load()).state;
     const result = await f.service.askQuestions({ expectedVersion: state.version, questions });
     assert.equal(result.ok, true, JSON.stringify(result));
+    assert.equal(result.state.context.changeAdd.rounds.length, round);
     assert.equal(
-      result.state.context.changeAdd.rounds[index].answers[0].source,
+      result.state.context.changeAdd.rounds[round - 1].answers[0].source,
       'native-user-provider',
     );
-    assert.deepEqual(result.state.context.changeAdd.rounds[index].answers[0].actor, nativeUser);
+    assert.deepEqual(result.state.context.changeAdd.rounds[round - 1].answers[0].actor, nativeUser);
   }
   state = (await f.store.load()).state;
   assert.equal(
@@ -358,14 +393,17 @@ test('clarification enforces three rounds and five questions and records only tr
   );
 });
 
-test('without a trusted input source, plain tool answers and client identities are refused', async () => {
+test('without a trusted input source, the pending intake is preserved and tool answers are refused', async () => {
   const f = fixture();
-  await start(f);
-  const state = await draft(f);
+  const state = await pendingIntake(f);
   const questions = [{ id: 'Q-1', category: 'functional', text: 'Which task fields?' }];
   assert.equal(
     (await f.service.askQuestions({ expectedVersion: state.version, questions })).code,
-    'TRUSTED_USER_INPUT_UNAVAILABLE',
+    'CLARIFICATION_PENDING',
+  );
+  assert.equal(
+    (await f.service.askQuestions({ expectedVersion: state.version, round: 1 })).code,
+    'USER_INPUT_UNAVAILABLE',
   );
   assert.equal(
     (
@@ -377,11 +415,13 @@ test('without a trusted input source, plain tool answers and client identities a
     ).code,
     'INVALID_ARGUMENT',
   );
-  assert.equal((await f.store.load()).state.context.changeAdd.rounds.length, 0);
+  const after = (await f.store.load()).state;
+  assert.equal(after.context.changeAdd.rounds.length, 1);
+  assert.equal(after.context.changeAdd.rounds[0].status, 'pending');
 });
 
 test('critique requires structured categories and valid requirement references', async () => {
-  const f = fixture();
+  const f = fixture({ input: true });
   await start(f);
   const state = await draft(f);
   assert.equal(
@@ -409,7 +449,7 @@ test('critique requires structured categories and valid requirement references',
 
 test('blocking issues or critique findings cannot freeze at H1', async () => {
   for (const mode of ['issue', 'critique']) {
-    const f = fixture({ native: true });
+    const f = fixture({ input: true, native: true });
     await start(f);
     await draft(
       f,
@@ -445,15 +485,16 @@ test('blocking issues or critique findings cannot freeze at H1', async () => {
 });
 
 test('actual default approval remains unavailable and never freezes requirements', async () => {
-  const f = fixture();
+  const f = fixture({ input: true });
   const state = await reviewed(f);
   const result = await f.service.requestH1({ expectedVersion: state.version });
   assert.equal(result.ok, false);
+  assert.equal(result.code, 'APPROVAL_CHANNEL_UNAVAILABLE');
   assert.equal((await f.store.load()).state.phase, 'H1_PENDING');
 });
 
 test('simulated native H1 approval creates a versioned immutable snapshot bound to the approval hash', async () => {
-  const f = fixture({ native: true });
+  const f = fixture({ input: true, native: true });
   const state = await reviewed(f);
   const result = await f.service.requestH1({ expectedVersion: state.version });
   assert.equal(result.ok, true, JSON.stringify(result));
@@ -481,7 +522,7 @@ test('simulated native H1 approval creates a versioned immutable snapshot bound 
 });
 
 test('revised requirements invalidate the old candidate and require a fresh critique', async () => {
-  const f = fixture({ native: true });
+  const f = fixture({ input: true, native: true });
   const reviewedState = await reviewed(f);
   const oldHash = reviewedState.context.artifacts.requirements.hash;
   const revised = await draft(f, {
@@ -501,7 +542,7 @@ test('revised requirements invalidate the old candidate and require a fresh crit
 });
 
 test('CAS conflicts, invalid schema and apparent secrets refuse modification', async () => {
-  const f = fixture();
+  const f = fixture({ input: true });
   const state = await start(f);
   assert.equal(
     (await f.service.propose({ expectedVersion: 0, requirements, assumptions: [], openIssues: [] }))
@@ -531,7 +572,7 @@ test('CAS conflicts, invalid schema and apparent secrets refuse modification', a
 
 test('native modify and cancel decisions control H1 without freezing a snapshot', async () => {
   for (const decision of ['modify', 'cancel']) {
-    const f = fixture({ native: true, decision });
+    const f = fixture({ input: true, native: true, decision });
     const state = await reviewed(f);
     const result = await f.service.requestH1({ expectedVersion: state.version });
     assert.equal(result.ok, false);
@@ -540,8 +581,8 @@ test('native modify and cancel decisions control H1 without freezing a snapshot'
   }
 });
 
-test('a failed clarification resumes the same round without accepting tool-supplied answers', async () => {
-  const f = fixture({ input: true });
+test('a failed automatic clarification resumes the same round without accepting tool answers', async () => {
+  const f = fixture();
   let calls = 0;
   f.service = createChangeAddService({
     ...f.options,
@@ -555,14 +596,21 @@ test('a failed clarification resumes the same round without accepting tool-suppl
       },
     },
   });
-  await start(f);
-  const state = await draft(f);
+  const pending = await pendingIntake(f, 'USER_INPUT_FAILED');
+  const before = (await f.store.load()).state;
+  const refused = await f.service.propose({
+    expectedVersion: pending.version,
+    requirements,
+    assumptions: [],
+    openIssues: [],
+  });
+  assert.equal(refused.code, 'CLARIFICATION_REQUIRED');
+  assert.equal(refused.status, 'WAITING_FOR_USER');
+  assert.equal(refused.nextAction, 'RESUME_CLARIFICATION');
+  const unchanged = (await f.store.load()).state;
+  assert.equal(unchanged.version, before.version);
+  assert.equal(unchanged.context.changeAdd.revisions.length, 0);
   const questions = [{ id: 'Q-1', category: 'functional', text: 'Which fields?' }];
-  assert.equal(
-    (await f.service.askQuestions({ expectedVersion: state.version, questions })).code,
-    'USER_INPUT_FAILED',
-  );
-  const pending = (await f.store.load()).state;
   assert.equal(
     (await f.service.askQuestions({ expectedVersion: pending.version, questions })).code,
     'CLARIFICATION_PENDING',
@@ -574,7 +622,7 @@ test('a failed clarification resumes the same round without accepting tool-suppl
 });
 
 test('the final snapshot is rehashed during gate consumption and tampering refuses freeze', async () => {
-  const f = fixture({ native: true });
+  const f = fixture({ input: true, native: true });
   const original = f.store;
   f.service = createChangeAddService({
     ...f.options,
@@ -610,7 +658,7 @@ test('source repository guard is read-only and refuses to create an active produ
 });
 
 test('explicit assumptions are required for nonblocking unresolved issues', async () => {
-  const f = fixture();
+  const f = fixture({ input: true });
   const state = await start(f);
   const args = {
     expectedVersion: state.version,
@@ -635,7 +683,7 @@ test('explicit assumptions are required for nonblocking unresolved issues', asyn
 });
 
 test('concurrent intake creates one active change without queueing another', async () => {
-  const f = fixture();
+  const f = fixture({ input: true });
   const results = await Promise.all([
     f.service.start({ expectedVersion: 0, request: 'First candidate.' }),
     f.service.start({ expectedVersion: 0, request: 'Second candidate.' }),
@@ -647,7 +695,7 @@ test('concurrent intake creates one active change without queueing another', asy
 });
 
 test('preexisting immutable artifact conflicts fail closed instead of overwriting a revision', async () => {
-  const f = fixture({ native: true });
+  const f = fixture({ input: true, native: true });
   const state = await reviewed(f);
   const directory = path.join(f.root, '.specgate/codex/changes', state.changeId, 'requirements');
   fs.mkdirSync(directory, { recursive: true });
@@ -666,12 +714,21 @@ test('preexisting immutable artifact conflicts fail closed instead of overwritin
 
 test('native answers containing apparent credentials are never persisted', async () => {
   const f = fixture();
+  let calls = 0;
   f.service = createChangeAddService({
     ...f.options,
     userInputProvider: {
       trustedUserIdentity: nativeUser,
-      request: async () => ({
-        answers: [{ questionId: 'Q-1', answer: 'password=top-secret-native-value' }],
+      request: async ({ questions }) => ({
+        answers: questions.map((question, index) => ({
+          questionId: question.id,
+          answer:
+            calls++ === 0
+              ? 'Synthetic intake answer.'
+              : index === 0
+                ? 'password=top-secret-native-value'
+                : 'Synthetic answer.',
+        })),
       }),
     },
   });
@@ -719,13 +776,21 @@ test('aborting native clarification retains the pending round and discards late 
   const f = fixture();
   let release;
   let started;
+  let calls = 0;
   const entered = new Promise((resolve) => (started = resolve));
   const controller = new AbortController();
   f.service = createChangeAddService({
     ...f.options,
     userInputProvider: {
       trustedUserIdentity: nativeUser,
-      request: async (_input, { signal }) => {
+      request: async ({ questions }, { signal }) => {
+        if (calls++ === 0)
+          return {
+            answers: questions.map((q) => ({
+              questionId: q.id,
+              answer: 'Synthetic automatic intake answer.',
+            })),
+          };
         assert.equal(signal, controller.signal);
         started();
         return new Promise((resolve) => (release = resolve)); // Deliberately ignores abort.
@@ -747,7 +812,8 @@ test('aborting native clarification retains the pending round and discards late 
   assert.equal(cancelled.code, 'CANCELLED');
   const checkpoint = (await f.store.load()).state;
   assert.equal(cancelled.actualVersion, checkpoint.version);
-  assert.equal(checkpoint.context.changeAdd.rounds[0].status, 'pending');
+  assert.equal(checkpoint.context.changeAdd.rounds.length, 2);
+  assert.equal(checkpoint.context.changeAdd.rounds[1].status, 'pending');
   const stopped = await f.store.cancel({
     expectedVersion: checkpoint.version,
     reason: 'Synthetic cancellation',
@@ -758,7 +824,7 @@ test('aborting native clarification retains the pending round and discards late 
   const after = (await f.store.load()).state;
   assert.equal(after.version, stopped.state.version);
   assert.equal(after.phase, 'CANCELLED');
-  assert.deepEqual(after.context.changeAdd.rounds[0].answers, []);
+  assert.deepEqual(after.context.changeAdd.rounds[1].answers, []);
 });
 
 test('aborting H1 terminates an unresponsive native peer and cannot apply a late approval', async () => {
@@ -766,6 +832,7 @@ test('aborting H1 terminates an unresponsive native peer and cannot apply a late
   let started;
   const entered = new Promise((resolve) => (started = resolve));
   const f = fixture({
+    input: true,
     native: true,
     nativeRequest: async (_method, _params, { signal }) => {
       assert.ok(signal instanceof AbortSignal);
@@ -860,6 +927,8 @@ test('a parent change with a valid impact persists an auditable incremental plan
     impact: { affectedAcIds: ['AC-2'], reusedAcIds: ['AC-2'] },
   });
   assert.equal(result.ok, true, JSON.stringify(result));
+  assert.equal(result.state.context.changeAdd.rounds[0].source, 'server-intake');
+  assert.equal(result.state.context.changeAdd.rounds[0].status, 'answered');
   const incremental = result.state.context.changeAdd.incremental;
   assert.ok(incremental, 'the change state exposes an incremental plan');
   assert.match(incremental.hash, /^sha256:[a-f0-9]{64}$/);

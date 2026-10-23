@@ -69,7 +69,14 @@ async function requestWithDeadline(request, params, { signal, timeoutMs }) {
       Promise.resolve().then(() => {
         if (controller.signal.aborted)
           throw Object.assign(new Error('Approval cancelled'), { code: 'APPROVAL_CANCELLED' });
-        return request('elicitation/create', params, { signal: controller.signal, timeoutMs });
+        return request('elicitation/create', params, {
+          signal: controller.signal,
+          timeoutMs,
+          // Probe the actual host channel even when the client omitted the
+          // elicitation capability advertisement. A real native response is
+          // still required before an approval can be issued.
+          allowUnadvertised: true,
+        });
       }),
       cancelled,
     ]);

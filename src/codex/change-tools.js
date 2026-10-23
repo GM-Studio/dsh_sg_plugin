@@ -179,7 +179,7 @@ export const CHANGE_TOOLS = [
   ),
   definition(
     'sg_change_add',
-    'Start one add-change requirements intake after real verification and a clean Git worktree. Preserve the command input provenance; an optional name defaults to a stable slug. Does not freeze requirements.',
+    'Start one add-change requirements intake after real verification and a clean Git worktree, then immediately request the server-owned first round of native user clarification. Preserve the command input provenance; an optional name defaults to a stable slug. When the result is WAITING_FOR_USER, stop and resume clarification; do not propose, critique or request H1. Does not freeze requirements.',
     objectSchema(
       {
         expectedVersion: version,
@@ -195,7 +195,7 @@ export const CHANGE_TOOLS = [
   ),
   definition(
     'sg_change',
-    'Start a unified feature, modify or fix intake after an active ProjectBaseline and a clean Git worktree. Type-specific details are validated before requirements proceed. An optional parentDeliveryId plus impact records the incremental affected and reused acceptance criteria for a customer-feedback change.',
+    'Start a unified feature, modify or fix intake after an active ProjectBaseline and a clean Git worktree, then immediately request the server-owned first round of native user clarification. Type-specific details are validated before requirements proceed. When the result is WAITING_FOR_USER, stop and resume clarification; do not propose, critique or request H1. An optional parentDeliveryId plus impact records the incremental affected and reused acceptance criteria for a customer-feedback change.',
     objectSchema(
       {
         expectedVersion: version,
@@ -235,7 +235,7 @@ export const CHANGE_TOOLS = [
   ),
   definition(
     'sg_change_questions',
-    'Request at most five native-user clarification questions in each of at most three rounds, or resume an unanswered round. A proven native user source is required; the default unavailable source refuses answers. Tool arguments cannot submit answers or a user identity.',
+    'Request at most five native-user clarification questions in each of at most three rounds, or resume an unanswered round. A pending round is persisted before the native form opens and remains resumable if the channel fails. A proven native user source is required; the default unavailable source refuses answers. Tool arguments cannot submit answers or a user identity.',
     {
       ...objectSchema(
         {
@@ -256,12 +256,12 @@ export const CHANGE_TOOLS = [
   ),
   definition(
     'sg_change_critique',
-    'Record a structured model critique with reverse restatements and findings tied to requirement IDs. All categories are required, using empty arrays when no finding is proposed. Enter H1 pending; unresolved blocking findings still prevent freezing.',
+    'Record a structured model critique with reverse restatements and findings tied to requirement IDs. At least one answered native-user clarification round is mandatory and every clarification round must be answered; otherwise return WAITING_FOR_USER without creating a candidate. All categories are required, using empty arrays when no finding is proposed. Enter H1 pending; unresolved blocking findings still prevent freezing.',
     objectSchema({ expectedVersion: version, report }),
   ),
   definition(
     'sg_request_h1',
-    'Ask the server approval authority to review the complete immutable requirements candidate. Only a trusted native user response can authorize freezing; the default unavailable source fails closed. No approval, receipt, answer or actor can be supplied here.',
+    'Ask the server approval authority to review the complete immutable requirements candidate. The same native clarification gate must pass before any candidate artifact or approval request is created. Only a trusted native user response can authorize freezing; the default unavailable source fails closed. No approval, receipt, answer or actor can be supplied here.',
     objectSchema({ expectedVersion: version }),
   ),
 ];
