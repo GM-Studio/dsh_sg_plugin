@@ -11,6 +11,7 @@ import { createDeliveryRecord, persistDelivery } from '../src/codex/delivery.js'
 import { createIncrementalPlan } from '../src/codex/incremental.js';
 import { buildChangeContract } from '../src/codex/change-policy.js';
 import { hashValue } from '../src/codex/events.js';
+import { createTemporaryDirectory } from '../src/codex/core/temp.js';
 import { commandSpec } from '../src/codex/core/java/verify-evidence.js';
 
 const PRESETS = ['jdk17-boot3.5', 'jdk21-boot3.5'];
@@ -693,12 +694,15 @@ async function runScenario({
 
 export async function runPilot({
   output = 'docs/verification/codex-delivery-assurance/pilot-20261022',
+  presets = PRESETS,
+  scenarios = SCENARIOS,
 } = {}) {
   const evidenceRoot = path.resolve(output);
   if (fs.existsSync(evidenceRoot) && fs.readdirSync(evidenceRoot).length)
     throw new Error('Pilot evidence directory already exists and is not empty');
   fs.mkdirSync(evidenceRoot, { recursive: true });
-  const workspace = fs.mkdtempSync(path.join(os.tmpdir(), 'sg-delivery-pilot-'));
+  const temporary = createTemporaryDirectory('sg-delivery-pilot-');
+  const workspace = temporary.path;
   const report = {
     schemaVersion: 1,
     scope: 'codex-delivery-assurance-real-project-pilot',
@@ -716,118 +720,137 @@ export async function runPilot({
   };
   const save = () =>
     fs.writeFileSync(path.join(evidenceRoot, 'pilot.json'), JSON.stringify(report, null, 2) + '\n');
-  save();
-  for (const preset of PRESETS) {
-    const projectRoot = path.join(workspace, preset);
-    const projectStarted = Date.now();
-    process.stdout.write(JSON.stringify({ preset, phase: 'initialize' }) + '\n');
-    const preview = previewInit({
-      root: projectRoot,
-      preset,
-      company: 'specgate',
-      business: 'tasks',
-    });
-    if (!preview.ok) throw new Error(JSON.stringify(preview));
-    const generated = await executeInit({
-      root: projectRoot,
-      preset,
-      company: 'specgate',
-      business: 'tasks',
-      previewHash: preview.previewHash,
-    });
-    if (!generated.ok) throw new Error(JSON.stringify(generated));
-    process.stdout.write(JSON.stringify({ preset, phase: 'verify' }) + '\n');
-    const verification = await verifyProject({ root: projectRoot, timeoutMs: 300000 });
-    if (!verification.ok) throw new Error(JSON.stringify(verification));
-    const verificationRecord = {
-      ok: verification.ok,
-      runId: verification.report.runId,
-      sourceHash: verification.report.sourceHash,
-      report: verification.report,
-    };
-    const recorded = recordNewProjectBaseline({ projectRoot, verification: verificationRecord });
-    if (!recorded.ok) throw new Error(JSON.stringify(recorded));
-    const metadataCommit = commit(projectRoot, 'chore: record project readiness');
-    const readiness = loadProjectReadiness({ projectRoot });
-    if (!readiness.ok) throw new Error(JSON.stringify(readiness));
-    const environmentFingerprint = readiness.baseline.environmentFingerprint;
-    const maven = verificationRecord.report.environment.maven.path;
-    const npm = verificationRecord.report.environment.npm;
-    const javaHome = verification.legacyReport?.toolchain?.javaHome;
-    if (!javaHome) throw new Error('Verified project did not expose its selected JAVA_HOME');
-    process.env.JAVA_HOME = javaHome;
-    process.env.APP_ADMIN_PASSWORD = `pilot-admin-${hashValue(projectRoot).slice(0, 12)}`;
-    process.env.APP_VIEWER_PASSWORD = `pilot-viewer-${hashValue(projectRoot).slice(12, 24)}`;
-    report.presets.push({
-      preset,
-      status: 'ready',
-      root: projectRoot,
-      projectId: readiness.profile.projectId,
-      baselineId: readiness.baseline.baselineId,
-      baselineCommit: readiness.baseline.commit,
-      metadataCommit,
-      setupDurationMs: Date.now() - projectStarted,
-      verificationRunId: verificationRecord.runId,
-    });
+  let operationError = null;
+  try {
     save();
-
-    let parentDelivery = null;
-    for (const [index, scenario] of SCENARIOS.entries()) {
-      process.stdout.write(JSON.stringify({ preset, scenario, phase: 'change' }) + '\n');
-      const spec = SCENARIO_SPECS[scenario];
-      const result = await runScenario({
-        projectRoot,
+    for (const preset of presets) {
+      const projectRoot = path.join(workspace, preset);
+      const projectStarted = Date.now();
+      process.stdout.write(JSON.stringify({ preset, phase: 'initialize' }) + '\n');
+      const preview = previewInit({
+        root: projectRoot,
         preset,
-        scenario,
-        type: spec.type,
-        acceptance: spec.acceptance,
-        parentDelivery,
-        baselineId: readiness.baseline.baselineId,
-        environmentFingerprint,
-        maven,
-        npm,
-        evidenceRoot,
+        company: 'specgate',
+        business: 'tasks',
       });
-      parentDelivery = result.delivery;
-      report.changes.push(result);
+      if (!preview.ok) throw new Error(JSON.stringify(preview));
+      const generated = await executeInit({
+        root: projectRoot,
+        preset,
+        company: 'specgate',
+        business: 'tasks',
+        previewHash: preview.previewHash,
+      });
+      if (!generated.ok) throw new Error(JSON.stringify(generated));
+      process.stdout.write(JSON.stringify({ preset, phase: 'verify' }) + '\n');
+      const verification = await verifyProject({ root: projectRoot, timeoutMs: 300000 });
+      if (!verification.ok) throw new Error(JSON.stringify(verification));
+      const verificationRecord = {
+        ok: verification.ok,
+        runId: verification.report.runId,
+        sourceHash: verification.report.sourceHash,
+        report: verification.report,
+      };
+      const recorded = recordNewProjectBaseline({ projectRoot, verification: verificationRecord });
+      if (!recorded.ok) throw new Error(JSON.stringify(recorded));
+      const metadataCommit = commit(projectRoot, 'chore: record project readiness');
+      const readiness = loadProjectReadiness({ projectRoot });
+      if (!readiness.ok) throw new Error(JSON.stringify(readiness));
+      const environmentFingerprint = readiness.baseline.environmentFingerprint;
+      const maven = verificationRecord.report.environment.maven.path;
+      const npm = verificationRecord.report.environment.npm;
+      const javaHome = verification.legacyReport?.toolchain?.javaHome;
+      if (!javaHome) throw new Error('Verified project did not expose its selected JAVA_HOME');
+      process.env.JAVA_HOME = javaHome;
+      process.env.APP_ADMIN_PASSWORD = `pilot-admin-${hashValue(projectRoot).slice(0, 12)}`;
+      process.env.APP_VIEWER_PASSWORD = `pilot-viewer-${hashValue(projectRoot).slice(12, 24)}`;
+      report.presets.push({
+        preset,
+        status: 'ready',
+        root: projectRoot,
+        projectId: readiness.profile.projectId,
+        baselineId: readiness.baseline.baselineId,
+        baselineCommit: readiness.baseline.commit,
+        metadataCommit,
+        setupDurationMs: Date.now() - projectStarted,
+        verificationRunId: verificationRecord.runId,
+      });
       save();
-      if (index === SCENARIOS.length - 1) {
-        process.stdout.write(JSON.stringify({ preset, phase: 'final-verify' }) + '\n');
-        const finalVerification = await verifyProject({ root: projectRoot, timeoutMs: 300000 });
-        if (!finalVerification.ok) throw new Error(JSON.stringify(finalVerification));
-        const presetReport = report.presets.find((entry) => entry.preset === preset);
-        presetReport.finalVerification = {
-          status: finalVerification.report.status,
-          runId: finalVerification.report.runId,
-          sourceHash: finalVerification.report.sourceHash,
-        };
+
+      let parentDelivery = null;
+      for (const [index, scenario] of scenarios.entries()) {
+        process.stdout.write(JSON.stringify({ preset, scenario, phase: 'change' }) + '\n');
+        const spec = SCENARIO_SPECS[scenario];
+        const result = await runScenario({
+          projectRoot,
+          preset,
+          scenario,
+          type: spec.type,
+          acceptance: spec.acceptance,
+          parentDelivery,
+          baselineId: readiness.baseline.baselineId,
+          environmentFingerprint,
+          maven,
+          npm,
+          evidenceRoot,
+        });
+        parentDelivery = result.delivery;
+        report.changes.push(result);
         save();
+        if (index === scenarios.length - 1) {
+          process.stdout.write(JSON.stringify({ preset, phase: 'final-verify' }) + '\n');
+          const finalVerification = await verifyProject({ root: projectRoot, timeoutMs: 300000 });
+          if (!finalVerification.ok) throw new Error(JSON.stringify(finalVerification));
+          const presetReport = report.presets.find((entry) => entry.preset === preset);
+          presetReport.finalVerification = {
+            status: finalVerification.report.status,
+            runId: finalVerification.report.runId,
+            sourceHash: finalVerification.report.sourceHash,
+          };
+          save();
+        }
       }
     }
+    report.status = 'passed';
+    report.endedAt = now();
+    save();
+    fs.writeFileSync(
+      path.join(evidenceRoot, 'README.md'),
+      [
+        '# Delivery Assurance Real Project Pilot',
+        '',
+        '- Date: 2026-10-22',
+        `- Projects: ${report.presets.length}`,
+        `- Changes: ${report.changes.length}`,
+        '- Scenarios exercise the domain-neutral sys admin scaffold: audit log filtering, role description handling and user enable/disable status.',
+        '- All changes executed real Java Maven tests, frontend Vitest tests, frontend builds and final runtime verification.',
+        '- The feature and modify scenarios include an observed red test before implementation.',
+        '- The fix scenario includes an observed failing regression before repair.',
+        '',
+        'See `pilot.json` for exact commands, commits, DeliveryRecords and timings.',
+        '',
+        'This pilot uses isolated generated Java/Vue applications and a server-owned harness for approvals.',
+        'It does not claim customer production deployment or native interactive H1/H3 execution.',
+        '',
+      ].join('\n'),
+    );
+  } catch (error) {
+    operationError = error;
   }
-  report.status = 'passed';
-  report.endedAt = now();
+  let cleanupError = null;
+  try {
+    temporary.cleanup();
+    report.workspaceCleanup = { status: 'removed', at: now() };
+  } catch (error) {
+    cleanupError = error;
+    report.workspaceCleanup = { status: 'failed', at: now(), message: error.message };
+  }
   save();
-  fs.writeFileSync(
-    path.join(evidenceRoot, 'README.md'),
-    [
-      '# Delivery Assurance Real Project Pilot',
-      '',
-      '- Date: 2026-10-22',
-      `- Projects: ${report.presets.length}`,
-      `- Changes: ${report.changes.length}`,
-      '- Scenarios exercise the domain-neutral sys admin scaffold: audit log filtering, role description handling and user enable/disable status.',
-      '- All changes executed real Java Maven tests, frontend Vitest tests, frontend builds and final runtime verification.',
-      '- The feature and modify scenarios include an observed red test before implementation.',
-      '- The fix scenario includes an observed failing regression before repair.',
-      '',
-      'See `pilot.json` for exact commands, commits, DeliveryRecords and timings.',
-      '',
-      'This pilot uses isolated generated Java/Vue applications and a server-owned harness for approvals.',
-      'It does not claim customer production deployment or native interactive H1/H3 execution.',
-      '',
-    ].join('\n'),
-  );
+  if (operationError) {
+    if (cleanupError) operationError.cleanupError = cleanupError;
+    throw operationError;
+  }
+  if (cleanupError) throw cleanupError;
   return report;
 }
 

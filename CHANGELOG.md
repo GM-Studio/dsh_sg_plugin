@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Isolate all automated-test workers under one ownership-marked temporary root,
+  clean it on normal, failing and signalled exits, recover interrupted leftovers
+  on the next run, and always remove matrix/pilot workspaces after preserving
+  their explicit evidence directories.
 - Require an explicit absolute business-project path in the create-project form
   when the session directory is a SpecGate plugin directory; ordinary roots can
   still leave the path empty to reuse the current repository.

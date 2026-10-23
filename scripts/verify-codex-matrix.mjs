@@ -1,9 +1,9 @@
 import fs from 'node:fs';
-import os from 'node:os';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { previewInit, executeInit } from '../src/codex/init.js';
 import { verifyProject, validateVerificationEvidence } from '../src/codex/verify.js';
+import { createTemporaryDirectory } from '../src/codex/core/temp.js';
 import {
   GOLDEN_MANIFEST,
   JAVA_PRESETS,
@@ -38,7 +38,8 @@ export async function verifyMatrix({
       'Evidence already exists; choose a new output directory to retain previous runs',
     );
   fs.mkdirSync(directory, { recursive: true });
-  const workspace = fs.mkdtempSync(path.join(os.tmpdir(), 'sg-codex-acceptance-'));
+  const temporary = createTemporaryDirectory('sg-codex-acceptance-');
+  const workspace = temporary.path;
   const report = {
     scope: 'codex-java-vue-dual-platform-matrix',
     startedAt: new Date().toISOString(),
@@ -61,148 +62,171 @@ export async function verifyMatrix({
   };
   const save = () =>
     fs.writeFileSync(path.join(directory, 'matrix.json'), JSON.stringify(report, null, 2) + '\n');
-  save();
-  let next = 0;
-  async function run() {
-    while (next < report.presets.length) {
-      const entry = report.presets[next++];
-      entry.root = path.join(workspace, entry.preset);
-      entry.startedAt = new Date().toISOString();
-      entry.status = 'generating';
-      save();
-      const evidenceDirectory = path.join(
-        directory,
-        frontend === 'vue' ? entry.preset : entry.preset + '-' + frontend,
-      );
-      fs.mkdirSync(evidenceDirectory);
-      let validation = null;
-      let result = null;
-      try {
-        const preview = previewInit({
-          root: entry.root,
-          preset: entry.preset,
-          company: 'specgate',
-          business: 'tasks',
-          frontend,
-        });
-        fs.writeFileSync(
-          path.join(evidenceDirectory, 'preview.json'),
-          JSON.stringify(preview, null, 2) + '\n',
-        );
-        if (!preview.ok) throw new Error(preview.code + ': ' + preview.message);
-        const generated = await executeInit({
-          root: entry.root,
-          preset: entry.preset,
-          company: 'specgate',
-          business: 'tasks',
-          frontend,
-          previewHash: preview.previewHash,
-        });
-        fs.writeFileSync(
-          path.join(evidenceDirectory, 'generation.json'),
-          JSON.stringify(generated, null, 2) + '\n',
-        );
-        if (!generated.ok) throw new Error(generated.code + ': ' + generated.message);
-        entry.status = 'verifying';
+  let operationError = null;
+  try {
+    save();
+    let next = 0;
+    async function run() {
+      while (next < report.presets.length) {
+        const entry = report.presets[next++];
+        entry.root = path.join(workspace, entry.preset);
+        entry.startedAt = new Date().toISOString();
+        entry.status = 'generating';
         save();
-        const progressFile = path.join(evidenceDirectory, 'progress.txt');
-        result = await verifyProject(
-          { root: entry.root, timeoutMs: 300000 },
-          {
-            onProgress: (event) => {
-              fs.appendFileSync(
-                progressFile,
-                JSON.stringify({ at: new Date().toISOString(), ...event }) + '\n',
-              );
-              process.stdout.write(JSON.stringify({ preset: entry.preset, ...event }) + '\n');
+        const evidenceDirectory = path.join(
+          directory,
+          frontend === 'vue' ? entry.preset : entry.preset + '-' + frontend,
+        );
+        fs.mkdirSync(evidenceDirectory);
+        let validation = null;
+        let result = null;
+        try {
+          const preview = previewInit({
+            root: entry.root,
+            preset: entry.preset,
+            company: 'specgate',
+            business: 'tasks',
+            frontend,
+          });
+          fs.writeFileSync(
+            path.join(evidenceDirectory, 'preview.json'),
+            JSON.stringify(preview, null, 2) + '\n',
+          );
+          if (!preview.ok) throw new Error(preview.code + ': ' + preview.message);
+          const generated = await executeInit({
+            root: entry.root,
+            preset: entry.preset,
+            company: 'specgate',
+            business: 'tasks',
+            frontend,
+            previewHash: preview.previewHash,
+          });
+          fs.writeFileSync(
+            path.join(evidenceDirectory, 'generation.json'),
+            JSON.stringify(generated, null, 2) + '\n',
+          );
+          if (!generated.ok) throw new Error(generated.code + ': ' + generated.message);
+          entry.status = 'verifying';
+          save();
+          const progressFile = path.join(evidenceDirectory, 'progress.txt');
+          result = await verifyProject(
+            { root: entry.root, timeoutMs: 300000 },
+            {
+              onProgress: (event) => {
+                fs.appendFileSync(
+                  progressFile,
+                  JSON.stringify({ at: new Date().toISOString(), ...event }) + '\n',
+                );
+                process.stdout.write(JSON.stringify({ preset: entry.preset, ...event }) + '\n');
+              },
             },
-          },
-        );
-        fs.writeFileSync(
-          path.join(evidenceDirectory, 'verification.json'),
-          JSON.stringify(result, null, 2) + '\n',
-        );
-        validation = validateVerificationEvidence({ root: entry.root });
-        fs.writeFileSync(
-          path.join(evidenceDirectory, 'evidence-validation.json'),
-          JSON.stringify(validation, null, 2) + '\n',
-        );
-        entry.status =
-          result.ok && validation.ok
-            ? 'passed'
-            : result.report?.status === 'blocked'
-              ? 'not-run'
-              : 'failed';
-        entry.code = result.code;
-        entry.failedStage = result.report?.failedStage || null;
-        entry.checks = result.report?.checks || [];
-        entry.reason = result.ok ? validation.message || null : result.message;
-        for (const [source, destination] of [
-          ['.specgate/codex-verify-runs', 'codex-runs'],
-          ['.specgate/verify-runs', 'legacy-runs'],
-        ]) {
-          const sourceDirectory = path.join(entry.root, source);
-          if (fs.existsSync(sourceDirectory))
-            fs.cpSync(sourceDirectory, path.join(evidenceDirectory, destination), {
-              recursive: true,
-            });
+          );
+          fs.writeFileSync(
+            path.join(evidenceDirectory, 'verification.json'),
+            JSON.stringify(result, null, 2) + '\n',
+          );
+          validation = validateVerificationEvidence({ root: entry.root });
+          fs.writeFileSync(
+            path.join(evidenceDirectory, 'evidence-validation.json'),
+            JSON.stringify(validation, null, 2) + '\n',
+          );
+          entry.status =
+            result.ok && validation.ok
+              ? 'passed'
+              : result.report?.status === 'blocked'
+                ? 'not-run'
+                : 'failed';
+          entry.code = result.code;
+          entry.failedStage = result.report?.failedStage || null;
+          entry.checks = result.report?.checks || [];
+          entry.reason = result.ok ? validation.message || null : result.message;
+          for (const [source, destination] of [
+            ['.specgate/codex-verify-runs', 'codex-runs'],
+            ['.specgate/verify-runs', 'legacy-runs'],
+          ]) {
+            const sourceDirectory = path.join(entry.root, source);
+            if (fs.existsSync(sourceDirectory))
+              fs.cpSync(sourceDirectory, path.join(evidenceDirectory, destination), {
+                recursive: true,
+              });
+          }
+        } catch (error) {
+          entry.status = 'failed';
+          entry.reason = error.message;
         }
-      } catch (error) {
-        entry.status = 'failed';
-        entry.reason = error.message;
+        entry.endedAt = new Date().toISOString();
+        // Persist the platform-scoped record through the shared helper so the
+        // matrix JSON and any later manifest update use one shape. A `passed`
+        // entry carries the real validation evidence (runId + sourceHash); the
+        // helper refuses to fabricate it.
+        try {
+          const update = platformVerificationRecord(entry.preset, {
+            platform,
+            frontend,
+            result: entry.status,
+            verifiedAt: entry.endedAt,
+            evidence:
+              entry.status === 'passed'
+                ? validation
+                : result?.report
+                  ? {
+                      ok: false,
+                      code: result.code,
+                      status: result.report.status,
+                      failedStage: result.report.failedStage || null,
+                    }
+                  : null,
+          });
+          entry.platforms = { [update.platform]: update.record };
+        } catch (error) {
+          entry.status = 'failed';
+          entry.reason = 'golden record refused: ' + error.message;
+          entry.platforms = { [platform]: { result: 'failed', verifiedAt: null, evidence: null } };
+        }
+        save();
+        process.stdout.write(
+          JSON.stringify({
+            preset: entry.preset,
+            platform,
+            status: entry.status,
+            code: entry.code,
+            reason: entry.reason,
+          }) + '\n',
+        );
       }
-      entry.endedAt = new Date().toISOString();
-      // Persist the platform-scoped record through the shared helper so the
-      // matrix JSON and any later manifest update use one shape. A `passed`
-      // entry carries the real validation evidence (runId + sourceHash); the
-      // helper refuses to fabricate it.
-      try {
-        const update = platformVerificationRecord(entry.preset, {
-          platform,
-          frontend,
-          result: entry.status,
-          verifiedAt: entry.endedAt,
-          evidence:
-            entry.status === 'passed'
-              ? validation
-              : result?.report
-                ? {
-                    ok: false,
-                    code: result.code,
-                    status: result.report.status,
-                    failedStage: result.report.failedStage || null,
-                  }
-                : null,
-        });
-        entry.platforms = { [update.platform]: update.record };
-      } catch (error) {
-        entry.status = 'failed';
-        entry.reason = 'golden record refused: ' + error.message;
-        entry.platforms = { [platform]: { result: 'failed', verifiedAt: null, evidence: null } };
-      }
-      save();
-      process.stdout.write(
-        JSON.stringify({
-          preset: entry.preset,
-          platform,
-          status: entry.status,
-          code: entry.code,
-          reason: entry.reason,
-        }) + '\n',
-      );
     }
+    await Promise.all(Array.from({ length: Math.min(2, Math.max(1, concurrency)) }, run));
+    report.endedAt = new Date().toISOString();
+    const allPassed = report.presets.every((entry) => entry.status === 'passed');
+    report.status =
+      requiredPlatforms.includes(platform) && platform !== 'darwin' && allPassed
+        ? 'passed'
+        : 'incomplete';
+    // `linux` stays `not-run` unconditionally: a single invocation only ever
+    // vouches for its own `platform`, so this run never claims Linux acceptance.
+    // Per-platform truth lives in `platform` and `presets[].platforms[<platform>]`.
+    save();
+  } catch (error) {
+    operationError = error;
   }
-  await Promise.all(Array.from({ length: Math.min(2, Math.max(1, concurrency)) }, run));
-  report.endedAt = new Date().toISOString();
-  const allPassed = report.presets.every((entry) => entry.status === 'passed');
-  report.status =
-    requiredPlatforms.includes(platform) && platform !== 'darwin' && allPassed
-      ? 'passed'
-      : 'incomplete';
-  // `linux` stays `not-run` unconditionally: a single invocation only ever
-  // vouches for its own `platform`, so this run never claims Linux acceptance.
-  // Per-platform truth lives in `platform` and `presets[].platforms[<platform>]`.
+  let cleanupError = null;
+  try {
+    temporary.cleanup();
+    report.workspaceCleanup = { status: 'removed', at: new Date().toISOString() };
+  } catch (error) {
+    cleanupError = error;
+    report.workspaceCleanup = {
+      status: 'failed',
+      at: new Date().toISOString(),
+      message: error.message,
+    };
+  }
   save();
+  if (operationError) {
+    if (cleanupError) operationError.cleanupError = cleanupError;
+    throw operationError;
+  }
+  if (cleanupError) throw cleanupError;
   return report;
 }
 
