@@ -49,6 +49,22 @@ test('unsupported elicitation and arbitrary server methods fail before sending',
   peer.close();
 });
 
+test('a bounded form-first request can probe a host that omitted the capability flag', async () => {
+  const sent = [];
+  const peer = createMcpPeer({ send: (message) => sent.push(message) });
+  peer.initialize({});
+  const pending = peer.request(
+    'elicitation/create',
+    { message: 'project form', requestedSchema: { type: 'object', properties: {} } },
+    { allowUnadvertised: true, timeoutMs: 1000 },
+  );
+  assert.equal(sent.length, 1);
+  assert.equal(sent[0].method, 'elicitation/create');
+  peer.receive({ jsonrpc: '2.0', id: sent[0].id, result: { action: 'accept', content: {} } });
+  assert.deepEqual(await pending, { action: 'accept', content: {} });
+  peer.close();
+});
+
 test('timeouts, aborts, peer errors and disconnects reject pending requests', async () => {
   const sent = [];
   const peer = createMcpPeer({ send: (message) => sent.push(message), timeoutMs: 25 });

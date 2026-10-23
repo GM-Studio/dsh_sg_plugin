@@ -317,7 +317,7 @@ export async function startJavaInit({
       return { ok: false, code: 'E_TEMPLATE', message: error.message };
     }
     hash = templateHash(files);
-    golden = goldenStatus(preset, hash);
+    golden = goldenStatus(preset, hash, frontend);
     let answer;
     try {
       answer = await userQuestions.ask({

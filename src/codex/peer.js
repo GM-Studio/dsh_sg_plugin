@@ -26,13 +26,17 @@ export function createMcpPeer({ send, timeoutMs = 120000 } = {}) {
     capabilities() {
       return { elicitationSupported, rootsSupported, trustedUserIdentity: false };
     },
-    request(method, params, { signal, timeoutMs: requestedTimeout = timeoutMs } = {}) {
+    request(
+      method,
+      params,
+      { signal, timeoutMs: requestedTimeout = timeoutMs, allowUnadvertised = false } = {},
+    ) {
       if (closed) return Promise.reject(peerError('PEER_CLOSED', 'MCP peer is disconnected'));
       if (!['elicitation/create', 'roots/list'].includes(method))
         return Promise.reject(
           peerError('PEER_METHOD_UNSUPPORTED', 'Only elicitation and roots requests are supported'),
         );
-      if (method === 'elicitation/create' && !elicitationSupported)
+      if (method === 'elicitation/create' && !elicitationSupported && !allowUnadvertised)
         return Promise.reject(
           peerError('ELICITATION_UNSUPPORTED', 'MCP client does not advertise elicitation'),
         );

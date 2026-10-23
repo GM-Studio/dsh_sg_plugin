@@ -34,6 +34,25 @@ test('explicit startup binding wins over workspace roots and environment', async
   );
 });
 
+test('plugin cache fallback stays unbound instead of becoming the business project', async () => {
+  const peer = {
+    capabilities: () => ({ rootsSupported: false }),
+    request: () => {
+      throw new Error('must not request roots');
+    },
+  };
+  assert.equal(
+    await resolveProjectRoot(peer, process.cwd(), { env: { PLUGIN_ROOT: process.cwd() } }),
+    null,
+  );
+  const registry = createToolRegistry({ projectRoot: process.cwd(), projectBound: false });
+  const status = data(await registry.call('sg_project_status'));
+  assert.equal(status.ok, true);
+  assert.equal(status.projectRoot, null);
+  assert.equal(status.code, 'PROJECT_NOT_BOUND');
+  assert.equal(data(await registry.call('sg_verify')).code, 'PROJECT_NOT_BOUND');
+});
+
 test('binding switches every subsequent project tool without writing either tree', async (t) => {
   const first = temporary(t),
     second = temporary(t);
@@ -80,7 +99,6 @@ test('native creation form preserves selected React stack, user identity, auto s
           preset: 'JDK 17 + Spring Boot 3.5（通用项目）',
           frontend: 'React 18（管理后台）',
           nonempty: '保留已有文件，只补齐缺失文件',
-          confirm: true,
         };
         if (params.requestedSchema.properties.gitName)
           Object.assign(content, { gitName: 'Fixture User', gitEmail: 'fixture@example.test' });
@@ -107,6 +125,9 @@ test('native creation form preserves selected React stack, user identity, auto s
     new RegExp(target.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replaceAll('\\\\', '\\\\\\\\')),
   );
   assert.equal(data(await registry.call('status')).projectRoot, fs.realpathSync(target));
+  const projectStatus = data(await registry.call('sg_project_status'));
+  assert.equal(projectStatus.nextTool, 'sg_project_verify');
+  assert.deepEqual(projectStatus.verificationTools, ['sg_project_verify', 'sg_verify']);
   assert.equal(fs.existsSync(path.join(target, '.specgate/codex/changes')), false);
   const git = (...args) => spawnSync('git', args, { cwd: target, encoding: 'utf8' }).stdout.trim();
   assert.equal(git('status', '--porcelain'), '');
@@ -122,6 +143,37 @@ test('native creation form preserves selected React stack, user identity, auto s
   assert.equal(result.login.admin.password, 'admin');
   assert.equal(data(await registry.call('sg_project_create')).alreadyInitialized, true);
   assert.equal(requests.length, 1, '已经生成的项目应继续验证，而不是重新填写');
+});
+
+test('cancelled project form is attempted again instead of degrading to text', async (t) => {
+  const root = temporary(t);
+  let requests = 0;
+  const registry = createToolRegistry({
+    projectRoot: root,
+    trustedUserIdentity: { kind: 'user', id: 'fixture', source: 'test-native' },
+    peerCapabilities: () => ({ elicitationSupported: true }),
+    requestPeer: async () => {
+      requests += 1;
+      return { action: 'cancel' };
+    },
+  });
+  for (let attempt = 0; attempt < 2; attempt += 1) {
+    const result = data(await registry.call('sg_project_create'));
+    assert.equal(result.code, 'INIT_CANCELLED');
+    assert.equal(result.status, 'WAITING_FOR_USER');
+  }
+  assert.equal(requests, 2);
+  assert.deepEqual(fs.readdirSync(root), []);
+});
+
+test('project verification alias remains equivalent to sg_verify', async (t) => {
+  const registry = createToolRegistry({ projectRoot: temporary(t) });
+  const direct = data(await registry.call('sg_verify'));
+  const project = data(await registry.call('sg_project_verify'));
+  assert.equal(project.code, direct.code);
+  assert.equal(project.ok, direct.ok);
+  assert.equal(project.reportPath, direct.reportPath);
+  assert.equal(project.nextAction, direct.nextAction);
 });
 
 test('identity resolver reuses explicit Git author environment and never supplies a fake identity', (t) => {

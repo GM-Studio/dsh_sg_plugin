@@ -96,6 +96,7 @@ test('stdio handshake and diagnostic tools leave a nonempty project unchanged', 
       'sg_init_preview',
       'sg_init',
       'sg_verify',
+      'sg_project_verify',
       'sg_project_status',
       'sg_adopt_preview',
       'sg_adopt_commit_dirty',
@@ -218,7 +219,7 @@ test('lifecycle rejects calls before handshake and repeated initialization', () 
   assert.equal(result.messages[0].error.code, -32002);
   assert.equal(result.messages[2].error.code, -32002);
   assert.equal(result.messages[3].error.code, -32600);
-  assert.equal(result.messages[4].result.tools.length, 53);
+  assert.equal(result.messages[4].result.tools.length, 54);
 });
 
 test('malformed JSON, batch messages and invalid envelopes do not terminate the server', () => {

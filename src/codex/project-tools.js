@@ -114,6 +114,8 @@ export async function callProjectTool(services, name, args = {}, { signal } = {}
     return { ok: false, code: 'INVALID_ARGUMENT', message: 'Project tool arguments are invalid' };
   const root = services?.projectRoot;
   if (name === 'sg_project_status') {
+    const { verificationSnapshot } = await import('./verify.js');
+    const verification = verificationSnapshot({ root });
     const readiness = loadProjectReadiness({ projectRoot: root });
     if (readiness.ok)
       return {
@@ -125,6 +127,7 @@ export async function callProjectTool(services, name, args = {}, { signal } = {}
         profile: readiness.profile,
         baseline: readiness.baseline,
         baselineRun: getAdoptionBaselineRun(root) || getBaselineJob(root),
+        verification,
       };
     const detected = detectProject({ root });
     let initialization = null;
@@ -147,10 +150,15 @@ export async function callProjectTool(services, name, args = {}, { signal } = {}
       ...(initialization
         ? {
             nextAction: 'VERIFY_PROJECT_THEN_WAIT_FOR_USER_REQUIREMENTS',
-            message: '项目已经生成，继续验证并建立基线，无需再次填写创建表单。',
+            nextTool: verification.nextAction === 'RUN_SG_VERIFY' ? 'sg_project_verify' : undefined,
+            verificationTools: ['sg_project_verify', 'sg_verify'],
+            message:
+              '项目已经生成，继续验证并建立基线，无需再次填写创建表单。' +
+              (verification.message ? ' ' + verification.message : ''),
           }
         : {}),
       readiness: readiness.code || readiness.message,
+      verification,
       baselineRun: getAdoptionBaselineRun(root) || getBaselineJob(root),
       detection: detected.ok
         ? { stack: detected.stack, git: detected.git, commands: detected.commands }
@@ -216,11 +224,22 @@ export async function callProjectTool(services, name, args = {}, { signal } = {}
     if (typeof verifier !== 'function')
       return {
         ok: false,
-        code: 'VERIFICATION_EVIDENCE_INVALID',
-        message: 'A server-owned verification evidence provider is required',
+        code: 'VERIFICATION_EVIDENCE_PROVIDER_MISSING',
+        nextAction: 'RUN_SG_VERIFY',
+        nextTool: 'sg_project_verify',
+        message:
+          '缺少服务端验证证据读取器，不能建立基线。请先调用 sg_project_verify（或 sg_verify）写入完整验证证据后重试。',
       };
     const verification = await verifier({ root, projectRoot: root });
-    if (!verification?.ok) return verification;
+    if (!verification?.ok)
+      return {
+        ...verification,
+        nextAction: 'RUN_SG_VERIFY',
+        nextTool: 'sg_project_verify',
+        message:
+          (verification?.message || '当前没有完整且有效的验证证据。') +
+          ' 请先完整执行 sg_project_verify（或 sg_verify）；它会把证据写入 .specgate/codex-verify-report.json，然后重试 sg_project_finalize_new。',
+      };
     return recordNewProjectBaseline({ projectRoot: root, verification });
   }
   return { ok: false, code: 'UNKNOWN_TOOL', message: 'Project tool is unavailable' };

@@ -5,6 +5,7 @@ import { createProtocol, rpcError } from './protocol.js';
 import { createMcpPeer } from './peer.js';
 import { createToolRegistry } from './workflow-tools.js';
 import { interactiveHostIdentity } from './host-input.js';
+import { insideSpecGateSource } from './core/project-path.js';
 
 export const MAX_MESSAGE_BYTES = 1024 * 1024;
 
@@ -18,45 +19,83 @@ function ordinaryProjectRoot(value) {
   }
 }
 
+// Hosts launch plugin MCP servers from the plugin cache. That directory is
+// never a business project, and neither is any of its ancestors/descendants.
+const PROJECT_ROOT_ENVIRONMENT_KEYS = [
+  'SPECGATE_PROJECT_ROOT',
+  'CODEX_PROJECT_ROOT',
+  'CODEX_WORKSPACE_ROOT',
+  'CODEX_WORKSPACE',
+  'CODEX_CWD',
+  'WORKSPACE_ROOT',
+  'PROJECT_ROOT',
+  'INIT_CWD',
+  'PWD',
+];
+
+function businessProjectRoot(value, pluginRoot) {
+  const root = ordinaryProjectRoot(value);
+  if (!root || insideSpecGateSource(root)) return null;
+  if (pluginRoot) {
+    const relativeToPlugin = path.relative(pluginRoot, root);
+    if (
+      root === pluginRoot ||
+      (relativeToPlugin &&
+        !relativeToPlugin.startsWith('..' + path.sep) &&
+        relativeToPlugin !== '..')
+    )
+      return null;
+  }
+  return root;
+}
+
+/**
+ * Resolve the business project without ever falling back to the plugin cache.
+ * Returns null when the host exposes no usable project: callers must bind or
+ * create one explicitly instead of operating on the plugin source tree.
+ */
 export async function resolveProjectRoot(
   peer,
   fallback,
   { env = process.env, timeoutMs = 5000, explicit = false } = {},
 ) {
-  if (explicit) return path.resolve(fallback);
-  const configured = ordinaryProjectRoot(env.SPECGATE_PROJECT_ROOT);
-  if (configured) return configured;
-  if (peer.capabilities().rootsSupported !== true) return path.resolve(fallback);
-  try {
-    const result = await peer.request('roots/list', {}, { timeoutMs });
-    const roots = Array.isArray(result?.roots) ? result.roots : [];
-    const pluginRoot = ordinaryProjectRoot(env.PLUGIN_ROOT) || ordinaryProjectRoot(fallback);
-    for (const entry of roots) {
-      if (typeof entry?.uri !== 'string') continue;
-      let candidate = entry.uri;
-      if (candidate.startsWith('file:')) {
-        try {
-          candidate = fileURLToPath(candidate);
-        } catch {
-          continue;
-        }
-      }
-      const root = ordinaryProjectRoot(candidate);
-      if (!root) continue;
-      const relativeToPlugin = pluginRoot ? path.relative(pluginRoot, root) : null;
-      if (
-        (pluginRoot && root === pluginRoot) ||
-        (relativeToPlugin &&
-          !relativeToPlugin.startsWith('..' + path.sep) &&
-          relativeToPlugin !== '..')
-      )
-        continue;
-      return root;
-    }
-  } catch {
-    // Roots are optional; retain the host-provided fallback.
+  const fallbackRoot = ordinaryProjectRoot(fallback);
+  const configuredPluginRoot = ordinaryProjectRoot(env.PLUGIN_ROOT);
+  const pluginRoot =
+    configuredPluginRoot ||
+    (fallbackRoot && insideSpecGateSource(fallbackRoot) ? fallbackRoot : null);
+  if (explicit) return businessProjectRoot(fallback, pluginRoot);
+  for (const key of PROJECT_ROOT_ENVIRONMENT_KEYS) {
+    const root = businessProjectRoot(env[key], pluginRoot);
+    if (root) return root;
   }
-  return path.resolve(fallback);
+  if (peer.capabilities().rootsSupported === true) {
+    try {
+      const result = await peer.request('roots/list', {}, { timeoutMs });
+      const roots = Array.isArray(result?.roots) ? result.roots : [];
+      for (const entry of roots) {
+        if (typeof entry?.uri !== 'string') continue;
+        let candidate = entry.uri;
+        if (candidate.startsWith('file:')) {
+          try {
+            candidate = fileURLToPath(candidate);
+          } catch {
+            continue;
+          }
+        }
+        const root = businessProjectRoot(candidate, pluginRoot);
+        // `fallback` is the server launch cwd. Prefer a distinct host root when
+        // roots/list supplies one, even when a fixture or wrapper directory is
+        // not recognizable as plugin source. If no other root exists, the
+        // sanitized fallback is still considered below.
+        if (root && fallbackRoot && root === fallbackRoot) continue;
+        if (root) return root;
+      }
+    } catch {
+      // Roots are optional; fall through to the sanitized fallback.
+    }
+  }
+  return businessProjectRoot(fallbackRoot, pluginRoot);
 }
 
 export function serveStdio({
@@ -84,10 +123,10 @@ export function serveStdio({
     trustedUserIdentity,
     nativeAgents,
   };
-  let registry = toolRegistryFactory({
-    ...registryOptions,
-    projectRoot: path.resolve(projectRoot),
-  });
+  const initialProjectRoot = path.resolve(projectRoot);
+  const makeRegistry = (root, projectBound) =>
+    toolRegistryFactory({ ...registryOptions, projectRoot: root, projectBound });
+  let registry = makeRegistry(initialProjectRoot, !insideSpecGateSource(initialProjectRoot));
   const dynamicRegistry = {
     get definitions() {
       return registry.definitions;
@@ -107,8 +146,7 @@ export function serveStdio({
       const resolved = await resolveProjectRoot(peer, projectRoot, {
         explicit: explicitProjectRoot,
       });
-      if (resolved !== path.resolve(projectRoot))
-        registry = toolRegistryFactory({ ...registryOptions, projectRoot: resolved });
+      registry = makeRegistry(resolved || initialProjectRoot, Boolean(resolved));
     },
   });
   const close = () => {

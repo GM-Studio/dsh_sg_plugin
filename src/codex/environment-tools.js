@@ -62,14 +62,20 @@ export function environmentConsent({ requestPeer, peerCapabilities, trustedUserI
         requestedSchema: {
           type: 'object',
           properties: {
-            confirm: { type: 'boolean', title: '确认此项目的缺项安装计划', default: false },
+            selection: {
+              type: 'string',
+              title: '确认此项目的缺项安装计划（提交即确认）',
+              const: 'install',
+            },
           },
-          required: ['confirm'],
+          required: [],
           additionalProperties: false,
         },
       },
-      { signal },
+      { signal, allowUnadvertised: true },
     );
-    return response?.action === 'accept' && response.content?.confirm === true;
+    // Submitting the form is the confirmation. A separate unchecked boolean was
+    // the reason completed forms were still treated as cancelled.
+    return response?.action === 'accept';
   };
 }

@@ -1,11 +1,13 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
+  CURRENT_TEMPLATE_REVISIONS,
   GOLDEN_MANIFEST,
   JAVA_PRESETS,
   goldenStatus,
   platformVerificationRecord,
 } from '../src/codex/core/java/java-versions.js';
+import { javaFullstackFiles } from '../src/codex/core/java/java-fullstack-template.js';
 
 const PRESET_ID = 'jdk17-boot3.5';
 const REAL_HASH = GOLDEN_MANIFEST.presets[PRESET_ID].templateHash;
@@ -65,6 +67,27 @@ test('hash mismatch is not verified and the reason names the changed template', 
   const status = goldenStatus({ id: PRESET_ID }, 'deadbeef'.repeat(8));
   assert.equal(status.verified, false);
   assert.match(status.reason, /模板已变化/);
+});
+
+test('current frontend-specific template revisions are pending rather than mismatched', () => {
+  for (const preset of JAVA_PRESETS) {
+    for (const frontend of ['vue', 'react']) {
+      const files = javaFullstackFiles({ preset, frontend, company: 'company', business: 'tasks' });
+      const hash = files.__specgateCanonicalTemplateHash;
+      assert.equal(hash, CURRENT_TEMPLATE_REVISIONS[preset.id][frontend].templateHash);
+      const status = goldenStatus(preset, hash, frontend);
+      assert.equal(status.status, 'awaiting-verification');
+      assert.equal(status.blocking, false);
+      assert.equal(status.action, 'RUN_SG_VERIFY');
+      assert.equal(status.record.templateHash, hash);
+      assert.equal(status.record.result, 'not-run');
+      assert.equal(status.record.verifiedAt, null);
+      assert.deepEqual(status.pendingPlatforms, GOLDEN_MANIFEST.requiredPlatforms);
+      for (const platform of GOLDEN_MANIFEST.requiredPlatforms)
+        assert.equal(status.record.platforms[platform].result, 'not-run');
+      assert.doesNotMatch(status.reason, /不一致|已变化/);
+    }
+  }
 });
 
 test('the helper records a real pass and a not-run platform in one shape', () => {

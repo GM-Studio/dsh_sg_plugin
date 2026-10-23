@@ -6046,9 +6046,93 @@ export function platformVerificationRecord(preset, run = {}) {
   };
 }
 
+/**
+ * Template revisions recorded after the 2026-10-22 golden run.
+ *
+ * Commits b4c0595 and e1b6337 changed scaffold files (tests, scripts, i18n and
+ * docs) after that run, so the historical `GOLDEN_MANIFEST` hashes only describe
+ * the previous content. These hashes pin the current content and keep it in an
+ * explicit `awaiting-verification` state: initialization is allowed, but no
+ * "verified" badge is claimed until a real sg_project_verify/sg_verify run
+ * records evidence for the current content. Update this map whenever the
+ * templates change again.
+ */
+export const CURRENT_TEMPLATE_REVISIONS = Object.freeze({
+  'jdk8-boot2.7': Object.freeze({
+    vue: Object.freeze({
+      templateHash: 'cc2e6b30efa0b7f88f2c10b865643c4a16c32156db215ed32915bb6b0754a966',
+      verification: 'not-run',
+    }),
+    react: Object.freeze({
+      templateHash: 'c9ccc890c774c8dbedc302a26298b4f757dff8238556e9c4521dc747c9b2db01',
+      verification: 'not-run',
+    }),
+  }),
+  'jdk17-boot3.5': Object.freeze({
+    vue: Object.freeze({
+      templateHash: '07af01334facddf6fc0a98f3ff6b782b8fb1bc54c12ad5a7518e5eaaf08a6d63',
+      verification: 'not-run',
+    }),
+    react: Object.freeze({
+      templateHash: '1026148807659701eb309c91b194c6c3338471f1cfa41b8c75a29f6d9b9bf689',
+      verification: 'not-run',
+    }),
+  }),
+  'jdk21-boot3.5': Object.freeze({
+    vue: Object.freeze({
+      templateHash: 'b350998d405921bc64aac73b7c917ecc913dcacea1a8914672c8926b2f880881',
+      verification: 'not-run',
+    }),
+    react: Object.freeze({
+      templateHash: 'e7fc43cc3e4589fd614450553c29299f7f3cf327812b5efd8d763bcd41f367d3',
+      verification: 'not-run',
+    }),
+  }),
+});
+
 export function goldenStatus(preset, hash, frontend = 'vue') {
   const entry = GOLDEN_MANIFEST.presets[preset.id];
   const record = frontend === 'vue' ? entry : (entry?.frontends?.[frontend] ?? null);
+  const revision = CURRENT_TEMPLATE_REVISIONS[preset.id]?.[frontend];
+  const requiredPlatforms = GOLDEN_MANIFEST.requiredPlatforms || [];
+  if (revision && revision.templateHash === hash && revision.verification !== 'passed') {
+    const pendingPlatforms = [...requiredPlatforms];
+    return {
+      verified: false,
+      pending: true,
+      status: 'awaiting-verification',
+      frontend,
+      reason:
+        '当前模板内容尚未记录本次真实验收；生成后执行 sg_project_verify（或 sg_verify）写入证据即可，不阻止初始化，也不表示已通过。',
+      action: 'RUN_SG_VERIFY',
+      blocking: false,
+      templateHash: hash,
+      matrixComplete: false,
+      pendingPlatforms,
+      record: {
+        templateHash: hash,
+        frontend,
+        result: revision.verification,
+        verifiedAt: null,
+        verifiedBy: null,
+        toolchain: null,
+        commands: [],
+        platforms: Object.fromEntries(
+          pendingPlatforms.map((platform) => [
+            platform,
+            { result: 'not-run', verifiedAt: null, evidence: null },
+          ]),
+        ),
+      },
+      historicalRecord: record
+        ? {
+            templateHash: record.templateHash,
+            result: record.result,
+            verifiedAt: record.verifiedAt || null,
+          }
+        : null,
+    };
+  }
   if (!entry || !record) {
     return {
       verified: false,
@@ -6067,7 +6151,6 @@ export function goldenStatus(preset, hash, frontend = 'vue') {
       record,
     };
   }
-  const requiredPlatforms = GOLDEN_MANIFEST.requiredPlatforms || [];
   const pendingPlatforms = requiredPlatforms.filter(
     (platform) => record.platforms?.[platform]?.result !== 'passed',
   );

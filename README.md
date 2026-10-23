@@ -39,7 +39,7 @@ worktrees 和机器可审计证据完成项目接入、异步交付、独立验�
 
 生成遵循 `com.<company>.<business>` 包、中文源码注释和统一响应信封；生成只写入
 源码、测试和文档，**不下载依赖、不构建、不启动服务**。生成不是验证：真实构建、
-测试和运行必须由后续 `sg_verify` 在你授权的环境中执行，未运行或失败的命令不得
+测试和运行必须由后续 `sg_project_verify`（与 `sg_verify` 同一实现）在你授权的环境中执行，未运行或失败的命令不得
 描述为通过。
 
 脚手架附带可评审的风格基线 `docs/style.md`。变更前应先阅读它；Reviewer 把没有
@@ -57,9 +57,10 @@ fail-closed。
 - 前端：Vue 3（默认）；React 18 可选，使用独立模板与锁文件。
 
 前端脚手架使用 Vue 3.5 + Element Plus + vue-router + vue-i18n + TypeScript。
-这些只是脚手架选定的版本，**不代表**任何预设已在 Windows + Linux 双平台验证通过：
-`GOLDEN_MANIFEST` 中每个预设当前都是 `pending`，只有在两平台重跑真实矩阵后才会
-标记 `verified`。
+这些只是脚手架选定的版本。`GOLDEN_MANIFEST` 保留历史模板哈希的 Windows + Linux
+真实矩阵证据；当前模板修订使用独立哈希并保持 `awaiting-verification`，只有针对当前
+内容重跑真实矩阵后才会标记 `verified`。初始化可以继续，但这不代表模板或生成项目
+已经验证通过。
 
 ## 从源码加载
 
@@ -77,7 +78,9 @@ fail-closed。
 
 安装插件后，在业务项目的 Codex 会话中使用 `$sg-codex` 导航或直接调用相应任务 Skill。新建项目使用 `sg_project_create` 中文表单选择目录、包名、
 技术栈和 Git 身份，自动安装 Agent 与项目 Skill；普通使用无需手动执行安装脚本。
-先看 `sg_project_status.projectRoot`，路径错误时调用 `sg_project_bind`。
+先看 `sg_project_status.projectRoot`：插件缓存不会再显示为业务项目；路径为空或错误时
+调用 `sg_project_bind`。已生成项目通过 `sg_project_verify` / `sg_verify` 写入真实证据，
+再调用 `sg_project_finalize_new` 建立基线。
 现有项目缺少环境时调用 `sg_project_setup` 自动补齐。
 
 真实验证与基线建立后停在就绪，等待用户提出业务需求，再澄清、反述、批判分析，

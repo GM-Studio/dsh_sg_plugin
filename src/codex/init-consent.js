@@ -3,7 +3,6 @@
 export function createNativeInitConsent({ response, identity, root, preset, policy }) {
   const confirmed =
     response?.action === 'accept' &&
-    response.content?.confirm === true &&
     identity?.kind === 'user' &&
     typeof identity.id === 'string' &&
     typeof identity.source === 'string' &&

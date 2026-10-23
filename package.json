@@ -1,6 +1,6 @@
 {
   "name": "specgate-codex",
-  "version": "0.3.2",
+  "version": "0.3.3",
   "private": false,
   "type": "module",
   "description": "SpecGate for Codex：中文项目初始化、技术栈选择、需求澄清与人工审批、异步 WorkItem、Web 监控、飞书决策、可验证 DeliveryRecord 与增量再交付。",

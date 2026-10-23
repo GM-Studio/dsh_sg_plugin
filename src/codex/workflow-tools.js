@@ -30,6 +30,7 @@ import { createLocalControlRuntime } from './control/runtime.js';
 import { TOOL_DESCRIPTIONS } from './locale.js';
 import { ENVIRONMENT_TOOLS, environmentConsent } from './environment-tools.js';
 import { createEnvironmentService } from './core/environment.js';
+import { insideSpecGateSource } from './core/project-path.js';
 import { inspectProjectStatus } from './project-status.js';
 import {
   ONBOARDING_TOOLS,
@@ -189,6 +190,39 @@ const WORKFLOW_TOOLS = [
     ...definition(
       'sg_verify',
       'Run real Java/Vue dependency, build, test, lint, format, coverage and HTTP checks. Reuse installed toolchains; SDK auto-download is disabled. Preserve failed and not-run evidence.',
+      {
+        path: target,
+        javaHome: {
+          type: 'string',
+          minLength: 1,
+          maxLength: 32768,
+          description: 'Optional absolute path to an existing JDK installation.',
+        },
+        mavenHome: {
+          type: 'string',
+          minLength: 1,
+          maxLength: 32768,
+          description: 'Optional absolute path to an existing Maven installation.',
+        },
+        timeoutMs: {
+          type: 'integer',
+          minimum: 1000,
+          maximum: 1800000,
+          description: 'Maximum time per quality command in milliseconds.',
+        },
+      },
+    ),
+    annotations: {
+      readOnlyHint: false,
+      destructiveHint: false,
+      idempotentHint: false,
+      openWorldHint: true,
+    },
+  },
+  {
+    ...definition(
+      'sg_project_verify',
+      'Project-scoped alias of sg_verify. Run real Java/frontend checks and write the same server-owned verification evidence before finalizing a new-project baseline.',
       {
         path: target,
         javaHome: {
@@ -736,19 +770,23 @@ function createBoundToolRegistry({
           gitName: args.gitName,
           gitEmail: args.gitEmail,
         };
-        if (name === 'sg_verify') {
+        if (name === 'sg_verify' || name === 'sg_project_verify') {
           const { verifyProject } = await import('./verify.js');
-          return result(
-            await verifyProject(
-              {
-                root: input.root,
-                ...(args.javaHome ? { javaHome: args.javaHome } : {}),
-                ...(args.mavenHome ? { mavenHome: args.mavenHome } : {}),
-                ...(args.timeoutMs ? { timeoutMs: args.timeoutMs } : {}),
-              },
-              { signal },
-            ),
+          const verified = await verifyProject(
+            {
+              root: input.root,
+              ...(args.javaHome ? { javaHome: args.javaHome } : {}),
+              ...(args.mavenHome ? { mavenHome: args.mavenHome } : {}),
+              ...(args.timeoutMs ? { timeoutMs: args.timeoutMs } : {}),
+            },
+            { signal },
           );
+          return result({
+            ...verified,
+            evidenceWritten: verified.ok === true,
+            reportPath: '.specgate/codex-verify-report.json',
+            nextAction: verified.ok ? 'FINALIZE_BASELINE' : 'FIX_AND_RETRY_VERIFY',
+          });
         }
         if (name === 'sg_init_preview') return result(previewInit(input));
         if (name === 'sg_init')
@@ -770,10 +808,56 @@ function createBoundToolRegistry({
   };
 }
 
+const PROJECT_NOT_BOUND_MESSAGE =
+  '当前会话尚未绑定业务项目；SpecGate 插件源码或缓存目录不能作为业务项目。' +
+  '请先调用 sg_project_bind 绑定用户给出的业务项目绝对路径，或调用 sg_project_create 新建项目。';
+
+const projectNotBound = (nextAction = 'BIND_PROJECT') => ({
+  ok: false,
+  code: 'PROJECT_NOT_BOUND',
+  projectReady: false,
+  projectRoot: null,
+  nextAction,
+  nextTool: nextAction === 'CREATE_PROJECT' ? 'sg_project_create' : 'sg_project_bind',
+  message: PROJECT_NOT_BOUND_MESSAGE,
+});
+
+const unboundProjectStatus = () => ({
+  ...projectNotBound('BIND_OR_CREATE_PROJECT'),
+  ok: true,
+  projectRoot: null,
+  detection: null,
+  baselineRun: null,
+  message:
+    PROJECT_NOT_BOUND_MESSAGE +
+    ' 如果用户已经在消息中给出了项目路径，直接绑定该路径，不要再次要求用户确认。',
+});
+
+const unboundSessionStatus = () => ({
+  ...projectNotBound('BIND_OR_CREATE_PROJECT'),
+  ok: true,
+  stage: 'P1',
+  projectRoot: null,
+  environment: { status: 'not-checked', environmentReady: false },
+  project: { ready: false, generated: false, baseline: null },
+  workflow: { ok: true, phase: null, changeId: null, pendingApproval: null },
+  workItems: { status: 'unavailable', items: [] },
+  verification: { status: 'not-run', ok: false, nextAction: 'RUN_SG_VERIFY' },
+  delivery: null,
+  message:
+    PROJECT_NOT_BOUND_MESSAGE +
+    ' 如果用户已经在消息中给出了项目路径，直接绑定该路径，不要再次要求用户确认。',
+});
+
 // Keep project selection at the session boundary so all lazily created services
 // are rebuilt together. A generated target becomes the active business project.
 export function createToolRegistry(options = {}) {
-  let root = path.resolve(options.projectRoot || process.cwd());
+  const initialRoot = path.resolve(options.projectRoot || process.cwd());
+  let root = initialRoot;
+  let projectBound =
+    options.projectBound === undefined
+      ? !insideSpecGateSource(initialRoot)
+      : options.projectBound === true;
   const environments = new Map();
   const environmentFor = (target) => {
     target = path.resolve(target);
@@ -798,10 +882,21 @@ export function createToolRegistry(options = {}) {
   );
   const bind = (selected) => {
     root = bindProject(selected);
+    projectBound = true;
     bound = createBoundToolRegistry({ ...options, projectRoot: root, environmentGate });
     environment = environmentFor(root);
     return root;
   };
+  const unboundAllowed = new Set([
+    'health',
+    'version',
+    'status',
+    'sg_status',
+    'sg_project_status',
+    'sg_project_bind',
+    'sg_project_create',
+    'sg_project_setup',
+  ]);
   const registry = {
     definitions,
     validate(name, args) {
@@ -823,6 +918,13 @@ export function createToolRegistry(options = {}) {
       )
         return result({ ok: false, code: 'CANCELLED', message: '操作已取消。' });
       try {
+        if (!projectBound) {
+          if (name === 'sg_project_status') return result(unboundProjectStatus());
+          if (name === 'sg_status') return result(unboundSessionStatus());
+          if (name === 'status')
+            return result({ ...unboundSessionStatus(), service: 'specgate', transport: 'stdio' });
+          if (!unboundAllowed.has(name)) return result(projectNotBound());
+        }
         if (name === 'sg_env_check') return result(await environment.check(args));
         if (name === 'sg_env_prepare') return result(await environment.prepare(args, context));
         if (name === 'sg_status') return result(await inspectProjectStatus({ root, environment }));
@@ -833,13 +935,14 @@ export function createToolRegistry(options = {}) {
             message: '已绑定业务项目，请先检查 sg_project_status。',
           });
         if (name === 'sg_project_setup') {
+          if (!projectBound && !args.path) return result(projectNotBound('BIND_OR_CREATE_PROJECT'));
           const installed = installProject(args.path || root);
           return result({ ...installed, projectRoot: bind(installed.project) });
         }
         if (name === 'sg_project_create') {
           const created = await createProjectInteractively({
             ...options,
-            projectRoot: root,
+            projectRoot: projectBound ? root : null,
             call: registry.call,
             signal: context.signal,
             draft: onboardingDraft,
@@ -857,6 +960,7 @@ export function createToolRegistry(options = {}) {
           [
             'sg_adopt_apply',
             'sg_verify',
+            'sg_project_verify',
             'sg_development_prepare',
             'sg_development_run',
             'sg_development_repair',

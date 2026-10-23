@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+- Bump the plugin to 0.3.3 so hosts cannot reuse the 0.3.2 cache that bound the
+  plugin directory and exposed an incomplete interactive verification path.
+- Treat native project-form submission as confirmation, retry the form after a
+  cancellation/rejection, and retain the selected stack across environment failures.
+- Keep `sg_verify` and add the equivalent project-scoped `sg_project_verify`
+  entrypoint while keeping baseline finalization fail-closed on missing evidence.
+- Track current Vue/React template revisions separately from historical Golden
+  evidence, reporting unverified current content as pending instead of mismatch.
 - Add environment, project, change and read-only status task Skills behind the
   shared router, with setup alias compatibility and synchronized project copies.
 - Add selected-stack environment preflight and installation with trusted consent,

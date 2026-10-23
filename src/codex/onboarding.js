@@ -79,6 +79,32 @@ export const STACK_CHOICES = {
 };
 const FRONTEND_CHOICES = { 'Vue 3（管理后台）': 'vue', 'React 18（管理后台）': 'react' };
 
+// Used only when the host cannot render an MCP elicitation form. The agent can
+// still present these fields instead of silently cancelling the request.
+function formDescriptor(selectedRoot, pluginDirectory) {
+  return {
+    title: 'SpecGate 项目准备',
+    path: {
+      required: pluginDirectory,
+      ...(pluginDirectory ? {} : { default: selectedRoot }),
+    },
+    fields: [
+      { name: 'path', kind: 'absolute-path', required: pluginDirectory },
+      { name: 'company', kind: 'string', required: true },
+      { name: 'business', kind: 'string', required: true },
+      { name: 'preset', kind: 'enum', required: true, options: Object.keys(STACK_CHOICES) },
+      { name: 'frontend', kind: 'enum', required: true, options: Object.keys(FRONTEND_CHOICES) },
+      {
+        name: 'nonempty',
+        kind: 'enum',
+        required: false,
+        default: NONEMPTY_KEEP,
+        options: [NONEMPTY_KEEP, NONEMPTY_CHILD, '取消创建'],
+      },
+    ],
+  };
+}
+
 function existingProject(root) {
   if (!fs.existsSync(root)) return null;
   if (fs.existsSync(path.join(root, '.specgate/init-report.json')))
@@ -127,26 +153,24 @@ export async function createProjectInteractively({
   const selectedRoot =
     typeof initialPath === 'string' && initialPath.trim()
       ? initialPath.trim()
-      : draft.input?.root || projectRoot;
-  if (!path.isAbsolute(selectedRoot))
+      : draft.input?.root || projectRoot || null;
+  if (selectedRoot !== null && !path.isAbsolute(selectedRoot))
     return {
       ok: false,
       code: 'UNSAFE_INIT_PATH',
       message: '项目目录必须是绝对路径；留空时使用当前仓库。',
     };
-  // 插件源码或缓存目录不是业务项目：此时路径必须显式填写，不能默认留空。
-  const pluginDirectory = insideSpecGateSource(selectedRoot);
-  const existing = existingProject(selectedRoot);
+  // 插件源码或缓存目录不是业务项目，未绑定业务项目时也一样：此时路径必须显式填写。
+  const pluginDirectory = selectedRoot === null || insideSpecGateSource(selectedRoot);
+  const existing = selectedRoot === null ? null : existingProject(selectedRoot);
   if (existing) return existing;
-  if (
-    peerCapabilities?.().elicitationSupported !== true ||
-    !trustedUserIdentity ||
-    typeof requestPeer !== 'function'
-  )
+  if (!trustedUserIdentity || typeof requestPeer !== 'function')
     return {
       ok: false,
       code: 'PROJECT_FORM_UNAVAILABLE',
       status: 'WAITING_FOR_USER',
+      nextAction: 'RESUBMIT_WITH_FORM',
+      form: formDescriptor(selectedRoot, pluginDirectory),
       message:
         '当前宿主未提供可信表单。请使用支持表单的宿主，或按用户明确给出的目录和技术栈继续；不能代替用户确认。',
     };
@@ -187,41 +211,63 @@ export async function createProjectInteractively({
         default: NONEMPTY_KEEP,
       },
       ...(!identity.ok ? { gitName: field('提交用户名'), gitEmail: field('提交邮箱') } : {}),
-      confirm: {
-        type: 'boolean',
-        title: '确认以上选择：保留原文件，补齐项目并建立仅包含生成文件的本地提交',
-        default: false,
-      },
     };
-    const response = await requestPeer(
-      'elicitation/create',
-      {
-        message:
-          'SpecGate 项目准备：只需填写并确认这一次。' +
-          (pluginDirectory
-            ? '当前会话目录是 SpecGate 插件目录，必须填写业务项目绝对路径。'
-            : '路径留空使用当前仓库：' + selectedRoot + '。') +
-          '确认后生成所选脚手架并安装项目环境；非空目录按你的保留策略处理。默认本地管理员账号：admin，密码：admin；验证就绪后等待你提出业务需求。' +
-          (identity.ok ? '\n复用提交身份：' + identity.name + ' <' + identity.email + '>' : ''),
-        requestedSchema: {
-          type: 'object',
-          properties,
-          required: Object.keys(properties).filter(
-            (key) => !['nonempty', ...(pluginDirectory ? [] : ['path'])].includes(key),
-          ),
-          additionalProperties: false,
+    let response;
+    try {
+      // Form-first even when the client did not advertise elicitation: some
+      // hosts implement it without the capability flag. A real rejection falls
+      // back to the structured field list below.
+      response = await requestPeer(
+        'elicitation/create',
+        {
+          message:
+            'SpecGate 项目准备：只需填写这一次，提交表单即表示确认。' +
+            (pluginDirectory
+              ? selectedRoot
+                ? '当前会话目录是 SpecGate 插件目录，必须填写业务项目绝对路径。'
+                : '当前会话尚未绑定业务项目，必须填写业务项目绝对路径。'
+              : '路径留空使用当前仓库：' + selectedRoot + '。') +
+            '确认后生成所选脚手架并安装项目环境；非空目录按你的保留策略处理。默认本地管理员账号：admin，密码：admin；验证就绪后等待你提出业务需求。' +
+            (identity.ok ? '\n复用提交身份：' + identity.name + ' <' + identity.email + '>' : ''),
+          requestedSchema: {
+            type: 'object',
+            properties,
+            required: Object.keys(properties).filter(
+              (key) => !['nonempty', ...(pluginDirectory ? [] : ['path'])].includes(key),
+            ),
+            additionalProperties: false,
+          },
         },
-      },
-      { signal },
-    );
-    if (response?.action !== 'accept' || response.content?.confirm !== true)
-      return { ok: false, code: 'INIT_CANCELLED', message: '尚未确认，未创建项目。' };
+        { signal, allowUnadvertised: true, timeoutMs: 30000 },
+      );
+    } catch (error) {
+      return {
+        ok: false,
+        code: 'PROJECT_FORM_UNAVAILABLE',
+        status: 'WAITING_FOR_USER',
+        nextAction: 'RESUBMIT_WITH_FORM',
+        form: formDescriptor(selectedRoot, pluginDirectory),
+        message:
+          '当前宿主未返回可信表单（' +
+          (error?.code || error?.message || 'unknown') +
+          '），未创建项目。请重新执行以再次打开表单，或显式提供完整目录和技术栈；不能代替用户确认。',
+      };
+    }
+    if (response?.action !== 'accept')
+      return {
+        ok: false,
+        code: 'INIT_CANCELLED',
+        status: 'WAITING_FOR_USER',
+        message: '表单尚未提交，未创建项目。再次执行 sg_project_create 会重新打开表单。',
+      };
     const args = response.content;
     if (
       !args ||
       typeof args !== 'object' ||
       Array.isArray(args) ||
-      Object.keys(args).some((key) => !Object.hasOwn(properties, key)) ||
+      // Some older Codex hosts echo the removed confirmation checkbox. Accept
+      // that response shape without rendering or requiring the checkbox.
+      Object.keys(args).some((key) => key !== 'confirm' && !Object.hasOwn(properties, key)) ||
       [
         'company',
         'business',
@@ -248,6 +294,12 @@ export async function createProjectInteractively({
       };
     const rawPath =
       typeof args.path === 'string' && args.path.trim() ? args.path.trim() : selectedRoot;
+    if (!rawPath)
+      return {
+        ok: false,
+        code: 'UNSAFE_INIT_PATH',
+        message: '请填写业务项目绝对路径；未绑定业务项目时不能留空。',
+      };
     if (pluginDirectory && rawPath === selectedRoot)
       return {
         ok: false,
@@ -296,22 +348,41 @@ export async function createProjectInteractively({
           'SpecGate 插件目录不能作为业务项目；请提供业务项目绝对路径，已保留原包名与技术栈选择。',
       };
     // A changed directory needs fresh consent, but never asks for stack fields again.
-    const response = await requestPeer(
-      'elicitation/create',
-      {
-        message: '仅修正项目目录，保留已选择的包名和技术栈。新目录：' + selectedRoot,
-        requestedSchema: {
-          type: 'object',
-          properties: {
-            confirm: { type: 'boolean', title: '确认改用此目录，继续保留已有文件', default: false },
+    let response;
+    try {
+      response = await requestPeer(
+        'elicitation/create',
+        {
+          message: '仅修正项目目录，保留已选择的包名和技术栈。新目录：' + selectedRoot,
+          requestedSchema: {
+            type: 'object',
+            properties: {
+              path: {
+                type: 'string',
+                title: '确认改用此目录，继续保留已有文件',
+                default: selectedRoot,
+              },
+            },
+            required: [],
           },
-          required: ['confirm'],
         },
-      },
-      { signal },
-    );
-    if (response?.action !== 'accept' || response.content?.confirm !== true)
-      return { ok: false, code: 'INIT_CANCELLED', message: '未确认目录变更，原选择已保留。' };
+        { signal, allowUnadvertised: true, timeoutMs: 30000 },
+      );
+    } catch (error) {
+      return {
+        ok: false,
+        code: 'PROJECT_FORM_UNAVAILABLE',
+        status: 'WAITING_FOR_USER',
+        nextAction: 'RESUBMIT_WITH_FORM',
+        form: { title: '仅修正项目目录', path: { required: true, default: selectedRoot } },
+        message:
+          '当前宿主未返回可信表单（' +
+          (error?.code || error?.message || 'unknown') +
+          '），原选择已保留，未修改目录。',
+      };
+    }
+    if (response?.action !== 'accept')
+      return { ok: false, code: 'INIT_CANCELLED', message: '未提交目录变更，原选择已保留。' };
     draft.input.root = path.resolve(selectedRoot);
     draft.approvalProvider = createNativeInitConsent({
       response,

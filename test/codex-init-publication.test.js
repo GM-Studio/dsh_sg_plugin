@@ -25,7 +25,7 @@ const inputFor = (root) => ({
   frontend: 'vue',
 });
 
-test('native initialization consent cannot approve without user confirmation or outside its scope', async () => {
+test('native form submission confirms initialization only inside its bound scope', async () => {
   const binding = {
     identity,
     root: path.resolve('fixture'),
@@ -42,13 +42,21 @@ test('native initialization consent cannot approve without user confirmation or 
   };
   for (const response of [
     { action: 'accept', content: {} },
-    { action: 'decline' },
     { action: 'accept', content: { confirm: false } },
   ])
     assert.equal(
       (await createNativeInitConsent({ ...binding, response }).requestApproval(challenge)).approved,
-      false,
+      true,
     );
+  assert.equal(
+    (
+      await createNativeInitConsent({
+        ...binding,
+        response: { action: 'decline' },
+      }).requestApproval(challenge)
+    ).approved,
+    false,
+  );
   const consent = createNativeInitConsent({
     ...binding,
     response: { action: 'accept', content: { confirm: true } },

@@ -31,6 +31,13 @@ test('Codex manifest and MCP entry stay contained in the shipped plugin', () => 
   );
   const packageJson = readJson(path.join(root, 'package.json'));
   assert.equal(packageJson.name, 'specgate-codex');
+  assert.equal(manifest.version, packageJson.version);
+  assert.equal(readJson(path.join(root, 'plugin.json')).version, packageJson.version);
+  assert.equal(readJson(path.join(root, 'package-lock.json')).version, packageJson.version);
+  assert.equal(
+    readJson(path.join(root, 'package-lock.json')).packages[''].version,
+    packageJson.version,
+  );
   assert.equal(packageJson.exports, undefined);
   assert.equal(packageJson.files.includes('src/codex'), true);
   for (const removed of ['index.js', 'cordis.patch.yml'])
