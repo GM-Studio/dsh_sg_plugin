@@ -326,7 +326,23 @@ export async function callChangeTool(service, name, args = {}, context = {}) {
       message: 'A server-owned change service is required',
     };
   try {
-    return await method.call(service, args, context);
+    const response = await method.call(service, args, context);
+    if (
+      (name === 'sg_request_h1' || (name === 'sg_change' && args.action === 'request_h1')) &&
+      response.state
+    ) {
+      // Return a clear button outcome without echoing the full candidate,
+      // clarification history and audit event back into the host UI.
+      const { state, event: _event, record, ...outcome } = response;
+      const document = state.context?.changeAdd?.document;
+      return {
+        ...outcome,
+        state: { changeId: state.changeId, phase: state.phase, version: state.version },
+        ...(record ? { decision: record.decision } : {}),
+        ...(document ? { document: { path: document.path } } : {}),
+      };
+    }
+    return response;
   } catch {
     return {
       ok: false,

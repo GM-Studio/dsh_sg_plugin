@@ -69,9 +69,13 @@ test('only peer elicitation response issues an approval with actor, timestamps, 
   const result = await f.authority.requestApproval(f.challenge());
   assert.equal(result.ok, true);
   assert.equal(f.requests[0].method, 'elicitation/create');
-  assert.equal(f.requests[0].params.requestedSchema.properties.decision.enum.length, 3);
+  assert.deepEqual(f.requests[0].params.requestedSchema, {
+    type: 'object',
+    properties: {},
+    additionalProperties: false,
+  });
   assert.match(f.requests[0].params.message, /H1/);
-  assert.match(f.requests[0].params.message, /sha256:/);
+  assert.doesNotMatch(f.requests[0].params.message, /sha256:|请求编号/);
   assert.equal(Object.isFrozen(result.approval), true);
   assert.equal(JSON.stringify(result.approval), '{}');
   assert.deepEqual(result.record.actor, identity);
@@ -132,20 +136,23 @@ test('single use survives concurrent consumption and changes to public records',
   assert.equal((await f.authority.consumeApproval(input)).code, 'APPROVAL_CONSUMED');
 });
 
-test('modify and cancel decisions are audited and never return an authorizing handle', async () => {
-  for (const response of [
-    { action: 'accept', content: { decision: 'modify', comment: 'Fix acceptance criterion 2.' } },
-    { action: 'accept', content: { decision: 'cancel', comment: 'Stop this change.' } },
-    { action: 'decline' },
-    { action: 'cancel' },
-    { action: 'decline', content: null },
-    { action: 'cancel', content: null },
+test('modify, reject and cancel decisions are audited and never return an authorizing handle', async () => {
+  for (const [response, expectedDecision] of [
+    [
+      { action: 'accept', content: { decision: 'modify', comment: 'Fix acceptance criterion 2.' } },
+      'modify',
+    ],
+    [{ action: 'accept', content: { decision: 'cancel', comment: 'Stop this change.' } }, 'cancel'],
+    [{ action: 'decline' }, 'modify'],
+    [{ action: 'cancel' }, 'dismiss'],
+    [{ action: 'decline', content: null }, 'modify'],
+    [{ action: 'cancel', content: null }, 'dismiss'],
   ]) {
     const f = fixture({ request: async () => response });
     const result = await f.authority.requestApproval(f.challenge());
     assert.equal(result.ok, false);
     assert.equal(result.approval, undefined);
-    assert.equal(result.record.decision, response.content?.decision || 'cancel');
+    assert.equal(result.record.decision, expectedDecision);
     assert.equal(f.events.at(-1).type, 'approval.decided');
   }
 });
@@ -154,7 +161,6 @@ test('malformed or model-like responses cannot sign approvals', async () => {
   for (const response of [
     'approved',
     { approved: true },
-    { action: 'accept', content: { decision: 'approve' } },
     { action: 'accept', content: { decision: 'approve', comment: '', actor: identity } },
     { action: 'accept', content: { decision: 'approve', comment: 42 } },
     { action: 'accept', content: { decision: 'yes', comment: '' } },
@@ -166,6 +172,31 @@ test('malformed or model-like responses cannot sign approvals', async () => {
       'APPROVAL_RESPONSE_INVALID',
     );
   }
+});
+
+test('H1 confirm submits an empty native form and issues approval', async () => {
+  const f = fixture();
+  await f.authority.requestApproval(f.challenge());
+  const schema = f.requests[0].params.requestedSchema;
+  assert.deepEqual(schema.properties, {});
+  assert.equal(schema.required, undefined);
+  assert.equal(schema.additionalProperties, false);
+  const emptyConfirm = fixture({
+    request: async () => ({ action: 'accept', content: {} }),
+  });
+  const result = await emptyConfirm.authority.requestApproval(emptyConfirm.challenge());
+  assert.equal(result.ok, true);
+  assert.equal(result.record.comment, '');
+});
+
+test('H3 keeps an explicit decision field with an optional comment', async () => {
+  const f = fixture();
+  const result = await f.authority.requestApproval(f.challenge({ gate: 'H3' }));
+  assert.equal(result.ok, true);
+  const schema = f.requests[0].params.requestedSchema;
+  assert.deepEqual(schema.required, ['decision']);
+  assert.equal(schema.properties.decision.enum.length, 3);
+  assert.equal(schema.properties.comment.default, '');
 });
 
 test('unsupported, failed, timed out and cancelled native requests fail closed', async () => {

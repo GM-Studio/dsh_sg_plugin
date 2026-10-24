@@ -23,29 +23,41 @@ function trustedIdentity(value) {
   );
 }
 
-function parseDecision(response) {
+function parseDecision(response, { confirmation = false } = {}) {
   if (
     !isObject(response) ||
     Object.keys(response).some((key) => !['action', 'content', '_meta'].includes(key))
   )
     return null;
-  if (response.action === 'cancel' || response.action === 'decline') {
-    return response.content === undefined || response.content === null
-      ? { decision: 'cancel', comment: '' }
-      : null;
+  if (response.action === 'cancel') {
+    // Closing a native dialog does not authorize terminating the business
+    // change. Some hosts include an empty or partially filled content object.
+    return { decision: 'dismiss', comment: '' };
   }
+  if (response.action === 'decline')
+    return { decision: confirmation ? 'modify' : 'dismiss', comment: '' };
   const content = response.content;
+  // Codex's native confirmation UI can submit an empty object for a schema
+  // with no fields. The action itself is the human confirmation for H1.
+  if (
+    confirmation &&
+    response.action === 'accept' &&
+    (content === undefined || (isObject(content) && Object.keys(content).length === 0))
+  )
+    return { decision: 'approve', comment: '' };
   const decision =
-    { 批准: 'approve', 要求修改: 'modify', 取消: 'cancel' }[content?.decision] || content?.decision;
+    { 批准: 'approve', 要求修改: 'modify', 取消: 'cancel', 取消变更: 'cancel' }[
+      content?.decision
+    ] || content?.decision;
   if (
     response.action !== 'accept' ||
     !isObject(content) ||
     Object.keys(content).some((key) => !['decision', 'comment'].includes(key)) ||
     !decisions.has(decision) ||
-    typeof content.comment !== 'string'
+    (content.comment !== undefined && typeof content.comment !== 'string')
   )
     return null;
-  return { decision, comment: content.comment };
+  return { decision, comment: content.comment ?? '' };
 }
 
 async function requestWithDeadline(request, params, { signal, timeoutMs }) {
@@ -207,23 +219,31 @@ export function createApprovalAuthority({
     if (!(await append('approval.requested', { ...context, actor })))
       return failure('APPROVAL_AUDIT_FAILED', '审批请求审计无法持久化');
     let response;
+    const confirmation = gate === 'H1';
     try {
       response = await requestWithDeadline(
         request,
         {
-          message: `SpecGate ${gate} ${gate === 'H1' ? '需求文档人工审批' : gate === 'H3' ? '交付人工验收' : '项目基线确认'}\n范围：${scope}\n文档指纹：${artifactHash}\n请求编号：${nonce}\n请审核完整文档后选择批准、要求修改或取消。\n\n${summary}`,
-          requestedSchema: {
-            type: 'object',
-            properties: {
-              decision: {
-                type: 'string',
-                title: '请选择审批决定',
-                enum: ['批准', '要求修改', '取消'],
+          message: `SpecGate ${gate} ${gate === 'H1' ? '需求审批' : gate === 'H3' ? '交付人工验收' : '项目基线确认'}\n${summary}\n\n${
+            confirmation
+              ? '点击“确认”批准本次需求；点击“拒绝”返回修改；关闭表单保留待审批。'
+              : '选择决定后点击确认；关闭表单保留待审批。'
+          }`,
+          requestedSchema: confirmation
+            ? { type: 'object', properties: {}, additionalProperties: false }
+            : {
+                type: 'object',
+                properties: {
+                  decision: {
+                    type: 'string',
+                    title: '请选择审批决定',
+                    enum: ['批准', '要求修改', '取消'],
+                  },
+                  comment: { type: 'string', title: '审批意见（选填）', default: '' },
+                },
+                required: ['decision'],
+                additionalProperties: false,
               },
-              comment: { type: 'string', title: '审批意见（可为空）' },
-            },
-            required: ['decision', 'comment'],
-          },
         },
         { signal, timeoutMs: Math.min(requestTimeoutMs, ttlMs) },
       );
@@ -249,7 +269,7 @@ export function createApprovalAuthority({
     if (signal?.aborted) return reject('APPROVAL_CANCELLED', '审批请求已取消', context);
     if (clock() - started >= ttlMs)
       return reject('APPROVAL_EXPIRED', '审批在用户响应前已过期；请重新发起审批', context);
-    const decision = parseDecision(response);
+    const decision = parseDecision(response, { confirmation });
     if (!decision)
       return reject('APPROVAL_RESPONSE_INVALID', '原生审批响应无效；请重新发起审批', context);
     const issued = clock();
@@ -273,10 +293,16 @@ export function createApprovalAuthority({
     if (decision.decision !== 'approve')
       return {
         ...failure(
-          decision.decision === 'modify' ? 'APPROVAL_MODIFY_REQUESTED' : 'APPROVAL_CANCELLED',
+          decision.decision === 'modify'
+            ? 'APPROVAL_MODIFY_REQUESTED'
+            : decision.decision === 'dismiss'
+              ? 'APPROVAL_DISMISSED'
+              : 'APPROVAL_CANCELLED',
           decision.decision === 'modify'
             ? '用户要求修改；请根据审批意见修订文档后重新请求审批。'
-            : '用户未批准本文档。',
+            : decision.decision === 'dismiss'
+              ? '审批表单已关闭，保留原需求的待审批状态；可重新请求审批。'
+              : '已确认取消变更，未批准本文档。',
         ),
         record: clone(record),
       };

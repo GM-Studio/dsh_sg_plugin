@@ -8,7 +8,7 @@ import { createInterface } from 'node:readline';
 
 async function simulatedHost(
   t,
-  { cancel = false, pingBeforeReply = false, duplicate = false } = {},
+  { cancel = false, pingBeforeReply = false, duplicate = false, approvalResponse } = {},
 ) {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'sg-codex-peer-server-'));
   const fixture = path.join(root, 'server.mjs');
@@ -16,9 +16,18 @@ async function simulatedHost(
     fixture,
     `
 import { serveStdio } from ${JSON.stringify(new URL('../src/codex/server.js', import.meta.url).href)};
+import { createApprovalAuthority } from ${JSON.stringify(new URL('../src/codex/approvals.js', import.meta.url).href)};
 serveStdio({ toolRegistryFactory: ({ requestPeer }) => ({
   definitions: [{ name: 'ask', inputSchema: {type:'object', properties:{}, additionalProperties:false} }],
   call: async (_name, _args, {signal}) => {
+    if (${Boolean(approvalResponse)}) {
+      const authority = createApprovalAuthority({ request: requestPeer,
+        trustedPeerIdentity: {kind:'user', id:'fixture', source:'simulated-native-host'}, audit: async () => {} });
+      const hash = 'sha256:' + 'a'.repeat(64);
+      const response = await authority.requestApproval({gate:'H1', scope:'fixture-only',
+        artifactHash:hash, readArtifactHash:async () => hash, summary:'变更内容：新增客房查询。变更方式：扩展现有后台。', signal});
+      return {isError:!response.ok, content:[{type:'text', text:JSON.stringify(response)}], structuredContent:response};
+    }
     const response = await requestPeer('elicitation/create', {
       message: 'Simulated transport fixture only; this does not authorize an SG gate.',
       requestedSchema: {type:'object', properties:{decision:{type:'string', enum:['decline']}}}
@@ -50,7 +59,8 @@ serveStdio({ toolRegistryFactory: ({ requestPeer }) => ({
     output.push(message);
     if (message.method === 'elicitation/create') {
       reverseRequests++;
-      if (duplicate)
+      if (approvalResponse) send({ jsonrpc: '2.0', id: message.id, result: approvalResponse });
+      else if (duplicate)
         send({
           jsonrpc: '2.0',
           id: 2,
@@ -128,4 +138,19 @@ test('duplicate in-flight tool ids cannot replace the original cancellation cont
     output.filter((message) => message.id === 2 && message.error?.code === -32600).length,
     1,
   );
+});
+
+test('empty native H1 confirm and dialog cancel both complete over real stdio', async (t) => {
+  for (const response of [
+    { action: 'accept', content: {} },
+    { action: 'cancel', content: {} },
+  ]) {
+    const { result, output } = await simulatedHost(t, { approvalResponse: response });
+    const data = result.result.structuredContent;
+    assert.equal(data.ok, response.action === 'accept');
+    if (response.action === 'cancel') assert.equal(data.code, 'APPROVAL_DISMISSED');
+    const form = output.find((message) => message.method === 'elicitation/create').params;
+    assert.deepEqual(form.requestedSchema.properties, {});
+    assert.equal(form.requestedSchema.additionalProperties, false);
+  }
 });

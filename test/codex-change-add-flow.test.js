@@ -4,6 +4,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
+import { createHash } from 'node:crypto';
 import { createChangeAddService, stableChangeName } from '../src/codex/change-add.js';
 import { createStateStore } from '../src/codex/state-machine.js';
 import { createApprovalAuthority } from '../src/codex/approvals.js';
@@ -564,6 +565,8 @@ test('critique writes a reviewable requirements document before any approval and
   const document = state.context.changeAdd.document;
   assert.ok(document?.path);
   const markdown = fs.readFileSync(path.join(f.root, document.path), 'utf8');
+  assert.ok(markdown.includes(state.context.changeAdd.request.text));
+  assert.doesNotMatch(markdown, /\[object Object\]/);
   assert.match(markdown, /REQ-1/);
   assert.match(markdown, /AC-1/);
   assert.match(markdown, /用户澄清记录/);
@@ -575,6 +578,131 @@ test('critique writes a reviewable requirements document before any approval and
   assert.equal(approved.ok, true, JSON.stringify(approved));
   assert.equal(approved.state.phase, 'REQ_FROZEN');
   assert.equal(approvals, 1);
+});
+
+test('H1 opens immediately for an existing pending change without a review document', async () => {
+  let approvals = 0;
+  const f = fixture({
+    input: true,
+    native: true,
+    nativeRequest: async () => {
+      approvals++;
+      return { action: 'accept', content: { decision: '批准' } };
+    },
+  });
+  const state = await reviewed(f);
+  const data = structuredClone(state.context.changeAdd);
+  data.document = null;
+  const saved = await f.store.update({
+    expectedVersion: state.version,
+    patch: { context: { changeAdd: data } },
+  });
+  assert.equal(saved.ok, true);
+  const result = await f.service.requestH1({ expectedVersion: saved.state.version });
+  assert.equal(result.state?.phase, 'REQ_FROZEN', JSON.stringify(result));
+  assert.equal(result.code, 'H1_APPROVED');
+  assert.match(result.message, /批准/);
+  assert.equal(approvals, 1);
+});
+
+test('H1 form contains a bounded change summary rather than the full requirements document', async () => {
+  let form;
+  const f = fixture({
+    input: true,
+    native: true,
+    nativeRequest: async (_method, params) => {
+      form = params;
+      return { action: 'accept', content: { decision: '批准' } };
+    },
+  });
+  const state = await reviewed(f);
+  const result = await f.service.requestH1({ expectedVersion: state.version });
+  assert.equal(result.ok, true, JSON.stringify(result));
+  assert.match(form.message, /变更目标/);
+  assert.match(form.message, /涉及功能/);
+  assert.match(form.message, /\[打开完整文档\]\(file:\/\/\//);
+  assert.ok(form.message.includes(requirements[0].text));
+  assert.ok(form.message.length < 1200);
+  assert.ok(form.message.split('\n').length <= 12);
+  assert.doesNotMatch(form.message, /用户澄清记录|反向复述与批判分析|请求编号|sha256:/);
+  assert.deepEqual(form.requestedSchema, {
+    type: 'object',
+    properties: {},
+    additionalProperties: false,
+  });
+});
+
+test('closing H1 keeps the change pending and rejecting it returns to clarification', async () => {
+  for (const [action, code, phase] of [
+    ['cancel', 'APPROVAL_DISMISSED', 'H1_PENDING'],
+    ['decline', 'APPROVAL_MODIFY_REQUESTED', 'REQ_CLARIFYING'],
+  ]) {
+    const f = fixture({
+      input: true,
+      native: true,
+      nativeRequest: async () => ({ action, content: {} }),
+    });
+    const state = await reviewed(f);
+    const result = await f.service.requestH1({ expectedVersion: state.version });
+    assert.equal(result.code, code);
+    assert.equal(result.state?.phase, phase);
+    assert.equal(result.actualVersion, (await f.store.inspect()).state.version);
+  }
+});
+
+test('H1 upgrades an untouched old renderer document and preserves edited legacy documents', async () => {
+  for (const edited of [false, true]) {
+    let approvals = 0;
+    const f = fixture({
+      input: true,
+      native: true,
+      nativeRequest: async () => {
+        approvals++;
+        return { action: 'accept', content: { decision: '批准' } };
+      },
+    });
+    const state = await reviewed(f);
+    const data = structuredClone(state.context.changeAdd);
+    const document = data.document;
+    const legacyPath = document.path.replace('-review-v2.md', '.md');
+    const markdown = fs
+      .readFileSync(path.join(f.root, document.path), 'utf8')
+      .replace('## 用户原始需求\n' + data.request.text, '## 用户原始需求\n[object Object]');
+    const legacyHash = 'sha256:' + createHash('sha256').update(markdown).digest('hex');
+    fs.writeFileSync(path.join(f.root, legacyPath), markdown + (edited ? '\n用户修改' : ''));
+    data.document = { ...document, path: legacyPath, hash: legacyHash };
+    delete data.document.rendererVersion;
+    const saved = await f.store.update({
+      expectedVersion: state.version,
+      patch: {
+        context: {
+          changeAdd: data,
+          artifacts: {
+            requirements: {
+              ...state.context.artifacts.requirements,
+              documentPath: legacyPath,
+              documentHash: legacyHash,
+            },
+          },
+        },
+      },
+    });
+    assert.equal(saved.ok, true);
+    const result = await f.service.requestH1({ expectedVersion: saved.state.version });
+    assert.equal(approvals, edited ? 0 : 1);
+    if (edited) assert.equal(result.code, 'REQUIREMENTS_CHANGED');
+    else {
+      assert.equal(result.state.phase, 'REQ_FROZEN', JSON.stringify(result));
+      assert.doesNotMatch(
+        fs.readFileSync(path.join(f.root, result.state.context.changeAdd.document.path), 'utf8'),
+        /\[object Object\]/,
+      );
+    }
+    assert.equal(
+      fs.readFileSync(path.join(f.root, legacyPath), 'utf8'),
+      markdown + (edited ? '\n用户修改' : ''),
+    );
+  }
 });
 
 test('editing a review document prevents approval until a new proposal and critique are written', async () => {

@@ -145,7 +145,7 @@ export const TOOL_DESCRIPTIONS = {
     '通过可信中文表单澄清：input=choice 单选、multi-choice 多选并提供 options；text 为文本框。禁止代填用户答案。',
   sg_change_critique:
     '记录反向复述、歧义、冲突、风险与测试盲点，写入需求 Markdown 并返回审阅链接；用户查看/修改后再请求 H1，阻塞问题必须先解决。',
-  sg_request_h1: '展示完整需求文档并请求用户通过中文表单审批；未批准不能冻结或开发。',
+  sg_request_h1: '立即打开精简的变更摘要审批表单；全文保留在需求文档中，未批准不能冻结或开发。',
   sg_plan_inspect: '只读查看已冻结的计划、契约与测试证据。',
   sg_plan_generate: '在需求批准后生成实现计划、验收映射和工作边界。',
   sg_plan_freeze_contracts: '冻结当前计划的接口契约和工作范围，保留不可变指纹。',

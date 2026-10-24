@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { createHash } from 'node:crypto';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import { spawnSync } from 'node:child_process';
 import { buildChangeContract, normalizeChangeInput, validateChangeInput } from './change-policy.js';
 import { createIncrementalPlan } from './incremental.js';
@@ -430,7 +430,7 @@ function snapshot(state, data) {
   };
 }
 
-export function renderRequirementsForUser(candidate) {
+function renderRequirements(candidate, legacyRequest = false) {
   // Storage canonicalizes object key order. Render the same bytes before and
   // after a reload so document hashes remain stable across MCP calls.
   candidate = JSON.parse(canonicalJson(candidate));
@@ -438,7 +438,11 @@ export function renderRequirementsForUser(candidate) {
     `# 需求文档：${candidate.changeId}（修订 ${candidate.revision}）`,
     '',
     '## 用户原始需求',
-    candidate.request,
+    legacyRequest
+      ? candidate.request
+      : typeof candidate.request === 'string'
+        ? candidate.request
+        : (candidate.request?.text ?? ''),
     '',
     '## 需求与验收标准',
   ];
@@ -458,6 +462,45 @@ export function renderRequirementsForUser(candidate) {
   lines.push(
     '\n## 变更范围与约束契约',
     renderChineseData({ change: candidate.change, changeContract: candidate.changeContract }),
+  );
+  return lines.join('\n');
+}
+
+export function renderRequirementsForUser(candidate) {
+  return renderRequirements(candidate);
+}
+
+export function renderH1Summary(candidate, documentPath) {
+  const brief = (value, limit = 64) => {
+    const valueText = typeof value === 'string' ? value.replace(/\s+/g, ' ').trim() : '';
+    return valueText.length > limit ? valueText.slice(0, limit - 1) + '…' : valueText;
+  };
+  const requirements = candidate.requirements || [];
+  const details = candidate.change?.details || {};
+  const functional = requirements.filter((item) => item.category === 'functional');
+  const changes = (functional.length ? functional : requirements).slice(0, 3);
+  const coreRequirements = requirements
+    .filter((item) => ['non-functional', 'constraint', 'compatibility'].includes(item.category))
+    .slice(0, 2);
+  const target =
+    candidate.request?.text || details.desiredBehavior || details.expectedBehavior || '';
+  const type =
+    { feature: '新增功能', modify: '修改功能', fix: '修复问题' }[candidate.change?.type] ||
+    '需求变更';
+  const lines = [
+    `变更类型：${type} · ${brief(candidate.changeId, 48)}`,
+    `变更目标：${brief(target) || '详见需求文档'}`,
+    '涉及功能：',
+    ...(changes.length ? changes.map((item) => '- ' + brief(item.text)) : ['- 详见需求文档。']),
+  ];
+  if (coreRequirements.length)
+    lines.push('核心要求：', ...coreRequirements.map((item) => '- ' + brief(item.text)));
+  lines.push(
+    `验收标准：${requirements.reduce(
+      (count, item) => count + item.acceptanceCriteria.length,
+      0,
+    )} 项`,
+    `需求文档：[打开完整文档](${pathToFileURL(documentPath).href})`,
   );
   return lines.join('\n');
 }
@@ -1046,7 +1089,8 @@ export function createChangeAddService({
     const fingerprint = data.candidate.hash.replace(/^sha256:/, '');
     const base = `.specgate/codex/changes/${state.changeId}/requirements/`;
     const candidatePath = base + 'candidate-' + fingerprint + '.json';
-    const documentPath = base + 'revision-' + revision.revision + '-' + fingerprint + '.md';
+    const documentPath =
+      base + 'revision-' + revision.revision + '-' + fingerprint + '-review-v2.md';
     const markdown = renderRequirementsForUser(data.candidate.snapshot) + '\n';
     const documentHash = rawHash(markdown);
     try {
@@ -1062,6 +1106,7 @@ export function createChangeAddService({
       );
     }
     data.document = {
+      rendererVersion: 2,
       path: documentPath,
       hash: documentHash,
       candidateHash: data.candidate.hash,
@@ -1133,9 +1178,38 @@ export function createChangeAddService({
     const documentPath =
       data.document?.path ?? base + 'revision-' + revision.revision + '-' + fingerprint + '.md';
 
-    // Older pending changes may predate document generation. Prepare their
-    // review document first and require another call before requesting approval.
-    if (!data.document) return prepareRequirementsDocument(loaded.state, data);
+    // A direct approval request must open the native form in this invocation,
+    // including older changes that have not generated their review document.
+    if (!data.document) {
+      const prepared = await prepareRequirementsDocument(loaded.state, data);
+      if (!prepared.ok) return prepared;
+      return requestH1({ expectedVersion: prepared.state.version }, { signal });
+    }
+
+    // Upgrade only an untouched document produced by the known old renderer.
+    // Keep the immutable old file and the exact requirements candidate; user
+    // edits must still go through proposal and critique instead of being lost.
+    if (data.document.rendererVersion !== 2 && data.document.hash !== documentHash) {
+      const legacyHash = rawHash(renderRequirements(data.candidate.snapshot, true) + '\n');
+      try {
+        if (
+          data.document.hash === legacyHash &&
+          rawHash(readMarkdown(root, documentPath)) === legacyHash &&
+          data.document.candidateHash === data.candidate.hash &&
+          loaded.state.context.artifacts.requirements?.documentHash === legacyHash &&
+          loaded.state.context.artifacts.requirements?.documentPath === documentPath &&
+          loaded.state.context.artifacts.requirements?.candidatePath === candidatePath &&
+          loaded.state.context.artifacts.requirements?.hash === data.candidate.hash &&
+          'sha256:' + hashValue(readJson(root, candidatePath)) === data.candidate.hash
+        ) {
+          const prepared = await prepareRequirementsDocument(loaded.state, data);
+          if (!prepared.ok) return prepared;
+          return requestH1({ expectedVersion: prepared.state.version }, { signal });
+        }
+      } catch {
+        return failure('REQUIREMENTS_CHANGED', '旧需求审查文档无法核对；请重新提案和批判分析');
+      }
+    }
 
     if (
       data.document.path !== documentPath ||
@@ -1185,13 +1259,7 @@ export function createChangeAddService({
       scope: loaded.state.changeId,
       artifactHash: data.candidate.hash,
       readArtifactHash,
-      summary:
-        markdown +
-        '\n\n---\n审批前请确认以上内容。审查文档路径：' +
-        documentPath +
-        '\n文档指纹：' +
-        documentHash +
-        '\n如需修改，请拒绝批准并重新执行 sg_change_propose 与 sg_change_critique；任何编辑后都必须重新生成审批指纹。',
+      summary: renderH1Summary(data.candidate.snapshot, path.resolve(root, documentPath)),
       signal,
     });
     const fresh = await store.load();
@@ -1223,7 +1291,13 @@ export function createChangeAddService({
         if (!moved.ok) return moved;
         return { ...approved, state: moved.state, actualVersion: moved.state?.version };
       }
-      return { ...approved, actualVersion: fresh.state.version };
+      return {
+        ...approved,
+        status: 'WAITING_FOR_USER',
+        state: fresh.state,
+        actualVersion: fresh.state.version,
+        nextAction: 'REQUEST_H1_APPROVAL',
+      };
     }
     if (signal?.aborted) return cancelled();
     const frozenPath = base + 'revision-' + revision.revision + '-' + fingerprint + '.json';
@@ -1253,11 +1327,19 @@ export function createChangeAddService({
     });
     if (!saved.ok) return saved;
     if (signal?.aborted) return cancelled();
-    return store.transition({
+    const frozen = await store.transition({
       expectedVersion: saved.state.version,
       to: 'REQ_FROZEN',
       approval: approved.approval,
     });
+    return frozen.ok
+      ? {
+          ...frozen,
+          code: 'H1_APPROVED',
+          message: 'H1 已批准，需求已冻结，可继续生成实现计划。',
+          actualVersion: frozen.state.version,
+        }
+      : frozen;
   }
   return Object.freeze({
     inspectPrerequisites,
