@@ -125,12 +125,33 @@ export function createAttentionNotifier({
   outbox,
   managementBaseUrl,
   tokenFactory = () => null,
+  credentialFactory = null,
 } = {}) {
   if (!outbox || typeof outbox.enqueue !== 'function')
     throw new TypeError('A notification outbox is required');
   const checked = validateManagementUrl(managementBaseUrl);
   if (!checked.ok) throw new TypeError(checked.message);
   const base = checked.url.endsWith('/') ? checked.url : `${checked.url}/`;
+
+  async function accessCredential(attention) {
+    const generated =
+      typeof credentialFactory === 'function'
+        ? await credentialFactory(attention)
+        : tokenFactory
+          ? { parameter: 'token', value: await tokenFactory(attention) }
+          : null;
+    if (!generated || typeof generated !== 'object') return null;
+    if (!['token', 'nonce'].includes(generated.parameter)) return null;
+    return typeof generated.value === 'string' && generated.value.length > 0 ? generated : null;
+  }
+
+  async function managementFragment(attention) {
+    const credential = await accessCredential(attention);
+    return [
+      `attention=${encodeURIComponent(attention.requestId)}`,
+      ...(credential ? [`${credential.parameter}=${encodeURIComponent(credential.value)}`] : []),
+    ].join('&');
+  }
 
   async function notify({ workItem, attention } = {}) {
     if (
@@ -142,13 +163,7 @@ export function createAttentionNotifier({
       !Number.isSafeInteger(attention.revision)
     )
       return failure('NOTIFICATION_INVALID', 'WorkItem and Attention state are required');
-    const token = tokenFactory();
-    const fragment = [
-      `attention=${encodeURIComponent(attention.requestId)}`,
-      ...(typeof token === 'string' && token.length > 0
-        ? [`token=${encodeURIComponent(token)}`]
-        : []),
-    ].join('&');
+    const fragment = await managementFragment(attention);
     const managementUrl = `${base}#${fragment}`;
     return outbox.enqueue({
       kind: 'attention',
@@ -170,13 +185,7 @@ export function createAttentionNotifier({
       !['DECIDED', 'SUPERSEDED', 'EXPIRED'].includes(attention.status)
     )
       return failure('NOTIFICATION_INVALID', 'A resolved AttentionRequest is required');
-    const token = tokenFactory();
-    const fragment = [
-      `attention=${encodeURIComponent(attention.requestId)}`,
-      ...(typeof token === 'string' && token.length > 0
-        ? [`token=${encodeURIComponent(token)}`]
-        : []),
-    ].join('&');
+    const fragment = await managementFragment(attention);
     const managementUrl = `${base}#${fragment}`;
     const resolutionKey =
       attention.decisionId ||

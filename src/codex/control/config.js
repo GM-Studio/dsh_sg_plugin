@@ -1,5 +1,6 @@
 import os from 'node:os';
 import path from 'node:path';
+import { createHash } from 'node:crypto';
 import { CONTROL_MODES, modeConfig } from './projects.js';
 
 const PORTABLE_ENV_NAMES = new Set([
@@ -43,6 +44,8 @@ const PORTABLE_ENV_NAMES = new Set([
 ]);
 const PORTABLE_ENV_PREFIXES = ['CODEX_', 'LC_', 'XDG_'];
 const MANAGEMENT_DEPLOYMENT_MODES = ['local', 'remote'];
+const AUTH_CONFIRMATION_HASH = /^[a-f0-9]{64}$/;
+const AUTH_ENCRYPTION_KEY = /^(?:[a-f0-9]{64}|[A-Za-z0-9_-]{43})$/;
 
 function listEnvironmentValue(value) {
   return String(value || '')
@@ -118,6 +121,13 @@ export function localControlEnvironment(env = process.env) {
     managementAllowedHosts: listEnvironmentValue(env.SPECGATE_MANAGEMENT_ALLOWED_HOSTS),
     managementAllowedOrigins: listEnvironmentValue(env.SPECGATE_MANAGEMENT_ALLOWED_ORIGINS),
     managementTrustedProxies: listEnvironmentValue(env.SPECGATE_MANAGEMENT_TRUSTED_PROXIES),
+    mysqlConfigPath: env.SPECGATE_MYSQL_CONFIG || null,
+    authEncryptionKey: env.SPECGATE_AUTH_ENCRYPTION_KEY || null,
+    authDeviceConfirmationCodeHash:
+      env.SPECGATE_AUTH_DEVICE_CONFIRMATION_CODE_HASH ||
+      (env.SPECGATE_AUTH_DEVICE_CONFIRMATION_CODE
+        ? createHash('sha256').update(env.SPECGATE_AUTH_DEVICE_CONFIRMATION_CODE).digest('hex')
+        : null),
     codexCommand: env.SPECGATE_CODEX_COMMAND || 'codex',
     codexHome: env.SPECGATE_CODEX_HOME || null,
     codexSandbox: env.SPECGATE_CODEX_SANDBOX || 'workspace-write',
@@ -175,6 +185,19 @@ export function validateManagementDeployment({ config = {}, host = '127.0.0.1' }
       code: 'REMOTE_MODE_CONFIG_INVALID',
       message:
         'Remote management requires HTTPS, allowed Host/Origin values, trusted proxies and a non-public bind address',
+    };
+  }
+  if (
+    typeof config.mysqlConfigPath !== 'string' ||
+    !path.isAbsolute(config.mysqlConfigPath) ||
+    !AUTH_ENCRYPTION_KEY.test(config.authEncryptionKey || '') ||
+    !AUTH_CONFIRMATION_HASH.test(config.authDeviceConfirmationCodeHash || '')
+  ) {
+    return {
+      ok: false,
+      code: 'REMOTE_AUTH_NOT_CONFIGURED',
+      message:
+        'Remote management requires a MySQL config, a 256-bit auth encryption key and a hashed device confirmation code',
     };
   }
   return { ok: true, mode };

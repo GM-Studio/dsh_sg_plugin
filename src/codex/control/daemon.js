@@ -18,6 +18,7 @@ import { createSyncProbeRunner, describeDegradation, detectCapabilities } from '
 import { resolveGlobalConcurrency } from './projects.js';
 import { createFeishuNotifier } from '../channels/feishu.js';
 import { createAttentionNotifier, createNotificationOutbox } from '../channels/outbox.js';
+import { createConfiguredAuthService } from './auth-runtime.js';
 
 const failure = (code, message) => ({ ok: false, code, message });
 
@@ -62,6 +63,7 @@ export async function startControlDaemon({
   managementHost = '127.0.0.1',
   adapter = null,
   feishuNotifier = null,
+  authService: providedAuthService = null,
   runtime: providedRuntime = null,
   requireExecJson = false,
   probeCapabilities = false,
@@ -144,10 +146,21 @@ export async function startControlDaemon({
     service: runtime.service,
     defaultProjectRoot: resolvedProjectRoot,
   });
+  const configuredAuth = providedAuthService
+    ? {
+        ok: true,
+        authService: providedAuthService,
+        close: async () => {},
+      }
+    : config.managementDeploymentMode === 'remote'
+      ? await createConfiguredAuthService({ config, clock })
+      : { ok: true, authService: null, close: async () => {} };
+  if (!configuredAuth.ok) return configuredAuth;
   const pairing = { token: randomBytes(24).toString('base64url') };
   const sessionStore = createFileSessionStore({ root: runtime.store.root });
   const management = createManagementServer({
     services: managed.services,
+    authService: configuredAuth.authService,
     clock,
     pairingToken: pairing.token,
     port: managementPort ?? config.managementPort,
@@ -159,6 +172,9 @@ export async function startControlDaemon({
     allowedOrigins: config.managementAllowedOrigins,
     trustedProxies: config.managementTrustedProxies,
     sessionStore,
+    mysqlConfigPath: config.mysqlConfigPath,
+    authEncryptionKey: config.authEncryptionKey,
+    authDeviceConfirmationCodeHash: config.authDeviceConfirmationCodeHash,
   });
   const started = await management.start();
   const executionAdapter =
@@ -201,7 +217,18 @@ export async function startControlDaemon({
     attentionNotifier = createAttentionNotifier({
       outbox,
       managementBaseUrl: config.managementPublicUrl,
-      tokenFactory: () => management.issuePairingToken().token,
+      ...(configuredAuth.authService
+        ? {
+            credentialFactory: async (attention) => {
+              const issued = await configuredAuth.authService.createAttentionNonce({
+                attentionId: attention.requestId,
+              });
+              return issued.ok
+                ? { parameter: 'nonce', value: issued.nonce }
+                : { parameter: 'nonce', value: null };
+            },
+          }
+        : { tokenFactory: () => management.issuePairingToken().token }),
     });
   }
 
@@ -315,7 +342,7 @@ export async function startControlDaemon({
 
   const statusPath = path.join(runtime.store.root, 'daemon.json');
   const baseUrl = started.baseUrl;
-  const pairingUrl = management.pairingUrl(baseUrl);
+  const pairingUrl = configuredAuth.authService ? null : management.pairingUrl(baseUrl);
   let registeredProjects = [];
   if (typeof runtime.service.projection.listRegistry === 'function') {
     const registry = await runtime.service.projection.listRegistry();
@@ -336,6 +363,7 @@ export async function startControlDaemon({
     pairingUrl,
     feishuConfigured: Boolean(feishu),
     mfaConfigured: Boolean(config.mfaSecret),
+    authMode: configuredAuth.authService ? 'account' : 'pairing',
     codexCommand: config.codexCommand,
     codexSandbox: config.codexSandbox,
     codexHomeConfigured: Boolean(config.codexHome),
@@ -354,6 +382,7 @@ export async function startControlDaemon({
     const timeout = new Promise((resolve) => setTimeout(resolve, shutdownTimeoutMs));
     await Promise.race([drained, timeout]);
     await management.close();
+    await configuredAuth.close();
     try {
       fs.rmSync(statusPath, { force: true });
     } catch {

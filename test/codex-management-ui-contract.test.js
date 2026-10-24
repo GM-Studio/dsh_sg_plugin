@@ -75,6 +75,8 @@ test('management UI renders a cross-project attention home ordered by severity',
   // Existing per-item decision buttons and their bound data attributes remain.
   assert.match(app, /data-decision-action=/);
   assert.match(app, /data-attention-id=/);
+  assert.match(app, /打开审批文档/);
+  assert.match(app, /\/api\/attention\/.*\/document/s);
   assert.match(app, /function runDecision\(/);
 });
 
@@ -97,7 +99,16 @@ test('management UI stays read-only plus the allow-listed mutation routes', () =
     '/api/decisions',
     '/api/deliveries/accept',
     '/api/attention',
+    '/api/attention/',
     '/api/notifications',
+    '/api/auth/methods',
+    '/api/auth/login',
+    '/api/auth/logout',
+    '/api/auth/devices',
+    '/api/auth/devices/revoke',
+    '/api/auth/step-up/challenge',
+    '/api/auth/step-up/verify',
+    '/api/auth/attention/redeem',
   ]);
   const referenced = all.match(/\/api\/[a-z0-9/-]+/gi) || [];
   assert.ok(referenced.length > 0);

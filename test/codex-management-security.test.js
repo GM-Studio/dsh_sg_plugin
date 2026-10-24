@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { randomInt } from 'node:crypto';
 import { createManagementServer } from '../src/codex/management/server.js';
 
 function services() {
@@ -57,7 +58,16 @@ async function start(t, overrides = {}) {
     clock: () => Date.parse('2026-10-22T10:00:00.000Z'),
     ...overrides,
   });
-  const started = await management.start();
+  let started;
+  for (let attempt = 0; attempt < 10; attempt += 1) {
+    try {
+      started = await management.start({ port: 49152 + randomInt(16384) });
+      break;
+    } catch (error) {
+      if (error.code !== 'EADDRINUSE') throw error;
+    }
+  }
+  if (!started) throw new Error('没有取得可用于 Fetch 回归的空闲测试端口');
   t.after(() => management.close());
   return { management, services: injected, ...started };
 }

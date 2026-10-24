@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import path from 'node:path';
+import { createHash } from 'node:crypto';
 import {
   CONTROL_MODE_ENV,
   controlExecutionEnvironment,
@@ -59,6 +60,9 @@ test('remote management deployment requires an explicit HTTPS proxy boundary', (
     SPECGATE_MANAGEMENT_ALLOWED_HOSTS: 'control.example.test',
     SPECGATE_MANAGEMENT_ALLOWED_ORIGINS: 'https://control.example.test',
     SPECGATE_MANAGEMENT_TRUSTED_PROXIES: '127.0.0.1,::1',
+    SPECGATE_MYSQL_CONFIG: path.resolve('mysql-auth.json'),
+    SPECGATE_AUTH_ENCRYPTION_KEY: 'a'.repeat(64),
+    SPECGATE_AUTH_DEVICE_CONFIRMATION_CODE_HASH: 'b'.repeat(64),
   });
 
   assert.equal(config.managementDeploymentMode, 'remote');
@@ -66,6 +70,9 @@ test('remote management deployment requires an explicit HTTPS proxy boundary', (
   assert.deepEqual(config.managementAllowedOrigins, ['https://control.example.test']);
   assert.deepEqual(config.managementTrustedProxies, ['127.0.0.1', '::1']);
   assert.equal(validateManagementDeployment({ config, host: '127.0.0.1' }).ok, true);
+  assert.equal(config.mysqlConfigPath, path.resolve('mysql-auth.json'));
+  assert.equal(config.authEncryptionKey, 'a'.repeat(64));
+  assert.equal(config.authDeviceConfirmationCodeHash, 'b'.repeat(64));
 
   const missingProxy = validateManagementDeployment({
     config: { ...config, managementTrustedProxies: [] },
@@ -77,6 +84,13 @@ test('remote management deployment requires an explicit HTTPS proxy boundary', (
   const publicBind = validateManagementDeployment({ config, host: '0.0.0.0' });
   assert.equal(publicBind.ok, false);
   assert.equal(publicBind.code, 'REMOTE_MODE_CONFIG_INVALID');
+
+  const missingAuth = validateManagementDeployment({
+    config: { ...config, authEncryptionKey: null },
+    host: '127.0.0.1',
+  });
+  assert.equal(missingAuth.ok, false);
+  assert.equal(missingAuth.code, 'REMOTE_AUTH_NOT_CONFIGURED');
 });
 
 test('management deployment mode fails closed on an unknown value', () => {
@@ -84,6 +98,17 @@ test('management deployment mode fails closed on an unknown value', () => {
     () => localControlEnvironment({ SPECGATE_MANAGEMENT_DEPLOYMENT_MODE: 'internet' }),
     (error) => error?.code === 'MANAGEMENT_DEPLOYMENT_MODE_INVALID',
   );
+});
+
+test('device confirmation input is hashed before it enters deployment config', () => {
+  const config = localControlEnvironment({
+    SPECGATE_AUTH_DEVICE_CONFIRMATION_CODE: 'one-time-device-confirmation',
+  });
+  assert.equal(
+    config.authDeviceConfirmationCodeHash,
+    createHash('sha256').update('one-time-device-confirmation').digest('hex'),
+  );
+  assert.equal(Object.hasOwn(config, 'authDeviceConfirmationCode'), false);
 });
 
 test('control mode defaults to aggregate and fails closed on an invalid value', () => {

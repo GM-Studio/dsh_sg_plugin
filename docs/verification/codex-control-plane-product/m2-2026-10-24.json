@@ -1,0 +1,205 @@
+{
+  "version": 1,
+  "stage": "M2",
+  "date": "2026-10-24",
+  "timezone": "Asia/Shanghai",
+  "branch": "sg-codex",
+  "baseCommit": "3ce4406",
+  "worktreeId": "WORKTREE-2026-10-24-M2",
+  "hashPolicy": "SHA-256 of UTF-8 text with CRLF normalized to LF; sourceArtifactSha256 hashes the ordered files array JSON",
+  "sourceArtifactSha256": "51f36e7003f045f0ae51ab4c6e2558a28efbf99f6e5c8599ff8284a6534f5c30",
+  "files": [
+    {
+      "path": "src/codex/core/control/auth/auth-service.js",
+      "sha256": "28acebb07da35e19fdaa1eb69a8fe780ae98a3a191ef4fa286c03cb62c4490e7"
+    },
+    {
+      "path": "src/codex/core/control/auth/memory-auth-store.js",
+      "sha256": "6f0c35a6497d2a8c24d5e310c20f1c838fca65281fbdefd958ba88c962d5051b"
+    },
+    {
+      "path": "src/codex/core/control/auth/mysql-auth-store.js",
+      "sha256": "f5b6ac5b6c04e2dbef8317385e2431dbc40a542768a68b9ddc27ea1c39040825"
+    },
+    {
+      "path": "src/codex/core/control/auth/password.js",
+      "sha256": "1f7b57d85eb2fe0a7b1ffe2a8d791c41cd1a70aa36d26f88b07f22a50ab6ed7e"
+    },
+    {
+      "path": "src/codex/core/control/auth/policy.js",
+      "sha256": "dc1af1a2a5f0dfac7c7edd237bc735dff7ac5b2c0bd27c07fe71508d7d84acf8"
+    },
+    {
+      "path": "src/codex/core/control/auth/secret-box.js",
+      "sha256": "e0ed5732926d14b7c437ae6e5a58a19035fbbce7ea6665988a34b394276b888d"
+    },
+    {
+      "path": "src/codex/core/control/persistence/migrations/003-auth-hardening.sql",
+      "sha256": "1cdfd481e3d91ac6ff618d1440b59b2f81c67c8a5c5ee179ea4d28ad08ae7b7e"
+    },
+    {
+      "path": "src/codex/core/control/persistence/mysql-backup.js",
+      "sha256": "be3baa378daf256cc4534b73a6b6b5e000c09186d3fba805c95b056f616d7557"
+    },
+    {
+      "path": "src/codex/control/auth-runtime.js",
+      "sha256": "6188d09732c91482cb0b32077a971ad779ba408d8066a898a55c780ecc263c7b"
+    },
+    {
+      "path": "src/codex/control/config.js",
+      "sha256": "b6be1ef866b3d39226a40b8d60278a7d7958eaf980b3fca9018d5a6c51232102"
+    },
+    {
+      "path": "src/codex/control/daemon.js",
+      "sha256": "9253c1e728d13f79eb9dc584a8baaa8cc599ecd48dbb3057487f40471d5a645d"
+    },
+    {
+      "path": "src/codex/channels/outbox.js",
+      "sha256": "5c0b1b0b308c519562fea51b8a84d0108647c052579faf7030bf8d55244fa2e2"
+    },
+    {
+      "path": "src/codex/management/server.js",
+      "sha256": "71fb101e8329ed688961f94dff1328ecfacebb375abda321bc208f4af47208c4"
+    },
+    {
+      "path": "src/codex/management/public/app.js",
+      "sha256": "dbd49726e3aedc1714bb9fbca5bfb3a26e4829983b0aa15aa793b59c74948f42"
+    },
+    {
+      "path": "src/codex/management/public/index.html",
+      "sha256": "c907542a109d471237de1e1391743aebdf283128d1ee3b16df6354f2199eee8a"
+    },
+    {
+      "path": "src/codex/management/public/style.css",
+      "sha256": "f2f4ee0f060976040826d40549d9e34572d855d9543a372eca89d905f9345986"
+    },
+    {
+      "path": "scripts/specgate-control.mjs",
+      "sha256": "b24a83ce890dc9bb70d559f7aa1fd0392f24bdf01df287cebd763e9434df0ed3"
+    },
+    {
+      "path": "test/codex-control-auth-service.test.js",
+      "sha256": "3a7c400f88ca01fc39321e2ef52df39413642635391b1615cc755200a24b6891"
+    },
+    {
+      "path": "test/codex-control-auth-mysql.test.js",
+      "sha256": "f3d72fb0ec93c7a645cbd2de2061b43255a62ade4c74cadf95af3d605712e726"
+    },
+    {
+      "path": "test/codex-control-auth-runtime.test.js",
+      "sha256": "87e066b5e1174aad8cbb240234d2d1bf49bb4685ec0a1d6838c4bc02b41ced5e"
+    },
+    {
+      "path": "test/codex-management-auth.test.js",
+      "sha256": "d15a85c10a4acd821340489a78c318731f4791faa5d17d64f2ba363c84945332"
+    },
+    {
+      "path": "test/codex-management-auth-ui-contract.test.js",
+      "sha256": "9fbf12f1e3faae5bf133bd0ceed5243ce86bc379377764620702ab613dd56c30"
+    },
+    {
+      "path": "test/codex-management-ui-contract.test.js",
+      "sha256": "5a8def43d23cdd95158c8af436ca146f66ce5a3b4abe26ff1ccf2be8fec9a1ed"
+    },
+    {
+      "path": "test/codex-management-remote-mode.test.js",
+      "sha256": "9401dcc76dfc990d572fabc0203a9dfbce7aab6ecc9973b64ecffa36f150f155"
+    },
+    {
+      "path": "test/codex-control-config.test.js",
+      "sha256": "0094d0158595ec91fc405bae2ec99be617f639e1abf4d6f2b2977a02cf4e8091"
+    },
+    {
+      "path": "test/codex-control-daemon.test.js",
+      "sha256": "2f9c18d057d6304c7a1693b8d666432976702e1a560f6c0939668b8a2e43698e"
+    },
+    {
+      "path": "test/codex-notification-outbox.test.js",
+      "sha256": "be2647101884e28d16d9380e872b6befe430549ebd51f891e21452285145ffc2"
+    },
+    {
+      "path": "test/codex-management-security.test.js",
+      "sha256": "e168e28e6e1c28f4b46490e6f3472975bad84a62738bfb33f969342c02521bc0"
+    }
+  ],
+  "environment": {
+    "platform": "win32",
+    "node": "v24.14.0",
+    "npm": "11.9.0",
+    "mysql": "8.4.13",
+    "engine": "InnoDB",
+    "databaseTimezone": "UTC",
+    "network": "127.0.0.1 only; MySQL X disabled"
+  },
+  "checks": [
+    {
+      "command": "node --import ./test/setup-temp.mjs --test test/codex-control-auth-service.test.js test/codex-control-auth-mysql.test.js test/codex-control-auth-runtime.test.js test/codex-management-auth.test.js test/codex-management-auth-ui-contract.test.js test/codex-management-ui-contract.test.js test/codex-management-remote-mode.test.js test/codex-control-config.test.js test/codex-control-daemon.test.js test/codex-notification-outbox.test.js test/codex-management-security.test.js",
+      "exitCode": 0,
+      "tests": 86,
+      "pass": 86,
+      "fail": 0,
+      "cancelled": 0,
+      "skipped": 0,
+      "todo": 0
+    },
+    {
+      "command": "npm test",
+      "mysqlConfigured": true,
+      "exitCode": 0,
+      "tests": 595,
+      "pass": 594,
+      "fail": 0,
+      "cancelled": 0,
+      "skipped": 1,
+      "todo": 0
+    },
+    {
+      "command": "npm run lint",
+      "exitCode": 0
+    },
+    {
+      "command": "npm run format:check",
+      "exitCode": 0
+    },
+    {
+      "command": "npm run pack:check",
+      "npmCache": "project .npm-cache",
+      "exitCode": 0
+    },
+    {
+      "command": "git diff --check",
+      "exitCode": 0
+    }
+  ],
+  "skipped": [
+    {
+      "name": "requesting the react frontend without its template tree fails closed",
+      "reason": "react template tree is already on disk"
+    }
+  ],
+  "verifiedScenarios": [
+    "scrypt password hashing and invalid-record rejection",
+    "AES-256-GCM encrypted TOTP seed at rest",
+    "TOTP anti-replay and concurrent counter single winner",
+    "atomic login/TOTP rate limits",
+    "new-device confirmation and device ownership binding",
+    "device revocation cascades active sessions",
+    "CSRF and HttpOnly/SameSite/Secure session cookies",
+    "one-time action/resource-bound step-up proof",
+    "Attention nonce is single use and never creates a session",
+    "remote mode fails closed without account auth configuration",
+    "real MySQL migration repeat and M1 compatibility",
+    "real HTTP account login and step-up against MySQL",
+    "auth audit redaction and append-only",
+    "logical backup and restore of authentication state"
+  ],
+  "notRun": [
+    "real cloud HTTPS deployment and mobile browser pilot",
+    "real Feishu/DingTalk Attention nonce delivery",
+    "production identity provider and key management",
+    "MySQL 8.0.x separate matrix and production disaster recovery",
+    "M3 outbound Worker and M4 Codex session resume",
+    "human acceptance of the M2 stage"
+  ],
+  "humanAcceptance": "PENDING"
+}

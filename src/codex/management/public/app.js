@@ -1,7 +1,23 @@
-/* global document, history, location, alert */
+/* global alert, document, history, location */
+
+const DEVICE_ID_STORAGE_KEY = 'specgate.auth.deviceId';
+const STEP_UP_ERROR_CODES = new Set([
+  'STEP_UP_REQUIRED',
+  'STEP_UP_EXPIRED',
+  'CHALLENGE_EXPIRED',
+  'STEP_UP_CHALLENGE_EXPIRED',
+  'STEP_UP_PROOF_EXPIRED',
+  'STEP_UP_PROOF_REPLAYED',
+  'STEP_UP_BINDING_MISMATCH',
+]);
 
 const state = {
+  authMode: null,
   csrfToken: null,
+  user: null,
+  deviceId: null,
+  devices: [],
+  deepLink: null,
   currentView: 'attention',
   overview: null,
   workItems: [],
@@ -12,18 +28,33 @@ const state = {
   refreshTimer: null,
   abortController: null,
   action: null,
+  actionConfig: null,
 };
 
 const elements = {
   app: document.querySelector('#app'),
+  auth: document.querySelector('#auth'),
+  accountLogin: document.querySelector('#account-login'),
+  accountLoginForm: document.querySelector('#account-login-form'),
+  loginUsername: document.querySelector('#login-username'),
+  loginPassword: document.querySelector('#login-password'),
+  loginTotp: document.querySelector('#login-totp'),
+  loginDeviceName: document.querySelector('#login-device-name'),
+  loginDeviceConfirmation: document.querySelector('#login-device-confirmation'),
+  accountLoginError: document.querySelector('#account-login-error'),
   pairing: document.querySelector('#pairing'),
   workspace: document.querySelector('#workspace'),
   pairingForm: document.querySelector('#pairing-form'),
   pairingToken: document.querySelector('#pairing-token'),
   pairingError: document.querySelector('#pairing-error'),
+  authNotice: document.querySelector('#auth-notice'),
+  workspaceNotice: document.querySelector('#workspace-notice'),
+  currentUser: document.querySelector('#current-user'),
   connection: document.querySelector('#connection'),
   refresh: document.querySelector('#refresh'),
+  logout: document.querySelector('#logout'),
   attentionCount: document.querySelector('#attention-count'),
+  securityNav: document.querySelector('[data-view="security"]'),
   attentionList: document.querySelector('#attention-list'),
   projectList: document.querySelector('#project-list'),
   portfolioList: document.querySelector('#portfolio-list'),
@@ -31,6 +62,10 @@ const elements = {
   workItemList: document.querySelector('#work-item-list'),
   monitoringList: document.querySelector('#monitoring-list'),
   notificationList: document.querySelector('#notification-list'),
+  securitySummary: document.querySelector('#security-summary'),
+  securityError: document.querySelector('#security-error'),
+  deviceList: document.querySelector('#device-list'),
+  refreshDevices: document.querySelector('#refresh-devices'),
   newWorkItemForm: document.querySelector('#new-work-item-form'),
   newWorkItemTitle: document.querySelector('#new-work-item-title'),
   newWorkItemRequest: document.querySelector('#new-work-item-request'),
@@ -49,6 +84,7 @@ const elements = {
   budgetField: document.querySelector('#budget-field'),
   budgetModels: document.querySelector('#action-budget-models'),
   stepUpField: document.querySelector('#step-up-field'),
+  stepUpLabel: document.querySelector('#step-up-label'),
   stepUpCode: document.querySelector('#step-up-code'),
   actionError: document.querySelector('#action-error'),
   cancelAction: document.querySelector('#cancel-action'),
@@ -138,39 +174,174 @@ async function api(path, options = {}) {
   } catch {
     body = { ok: false, code: 'INVALID_RESPONSE', message: '服务返回了无法解析的响应' };
   }
-  if (response.status === 401) showPairing();
+  if (response.status === 401) showAuthRequired();
   return { response, body };
 }
 
-async function openSession(token) {
+function generateDeviceId() {
+  const webCrypto = globalThis.crypto;
+  if (webCrypto?.randomUUID) return webCrypto.randomUUID();
+  const bytes = webCrypto.getRandomValues(new Uint8Array(18));
+  return Array.from(bytes, (byte) => byte.toString(16).padStart(2, '0')).join('');
+}
+
+function persistentDeviceId() {
+  if (state.deviceId) return state.deviceId;
+  try {
+    const stored = localStorage.getItem(DEVICE_ID_STORAGE_KEY);
+    if (stored && /^[A-Za-z0-9_-]{16,128}$/.test(stored)) state.deviceId = stored;
+  } catch {
+    // Storage can be disabled; the in-memory id still keeps this page coherent.
+  }
+  if (!state.deviceId) {
+    const deviceId = generateDeviceId();
+    state.deviceId = deviceId;
+    try {
+      localStorage.setItem(DEVICE_ID_STORAGE_KEY, deviceId);
+    } catch {
+      // A non-persistent device id is safer than storing any credential here.
+    }
+  }
+  return state.deviceId;
+}
+
+function defaultDeviceName() {
+  const platform = String(navigator.platform || '').trim();
+  return platform ? `${platform} 浏览器` : '浏览器设备';
+}
+
+function setAuthNotice(message = '') {
+  elements.authNotice.textContent = message;
+  elements.authNotice.classList.toggle('hidden', !message);
+}
+
+function setWorkspaceNotice(message = '') {
+  elements.workspaceNotice.textContent = message;
+  elements.workspaceNotice.classList.toggle('hidden', !message);
+}
+
+function setSession(body) {
+  state.csrfToken = body.csrfToken;
+  state.user = body.user || state.user;
+}
+
+async function openPairingSession(token) {
   const { response, body } = await api('/api/session', {
     method: 'POST',
     body: { token },
   });
   if (!response.ok || !body.ok) throw new Error(body.message || '配对失败');
-  state.csrfToken = body.csrfToken;
+  setSession(body);
 }
 
 async function restoreSession() {
   const { response, body } = await api('/api/session');
   if (!response.ok || !body.ok) return false;
-  state.csrfToken = body.csrfToken;
+  setSession(body);
   return true;
 }
 
-function showPairing() {
+function hideWorkspaceForAuthentication() {
   clearInterval(state.refreshTimer);
   state.refreshTimer = null;
+  state.abortController?.abort();
   state.csrfToken = null;
+  state.action = null;
+  state.actionConfig = null;
+  elements.actionDialog.classList.add('hidden');
   elements.workspace.classList.add('hidden');
-  elements.pairing.classList.remove('hidden');
+  elements.auth.classList.remove('hidden');
+  elements.logout.classList.add('hidden');
+  elements.currentUser.classList.add('hidden');
   setConnection('未连接', 'offline');
 }
 
+function showAuthRequired(notice = '') {
+  const mode = state.authMode || 'account';
+  hideWorkspaceForAuthentication();
+  elements.accountLogin.classList.toggle('hidden', mode !== 'account');
+  elements.pairing.classList.toggle('hidden', mode !== 'pairing');
+  elements.accountLoginError.textContent = '';
+  elements.pairingError.textContent = '';
+  if (mode === 'account') {
+    elements.loginUsername.focus?.();
+    if (!elements.loginDeviceName.value) elements.loginDeviceName.value = defaultDeviceName();
+  } else {
+    elements.pairingToken.focus?.();
+  }
+  setAuthNotice(notice);
+}
+
 function showWorkspace() {
+  elements.auth.classList.add('hidden');
   elements.pairing.classList.add('hidden');
+  elements.accountLogin.classList.add('hidden');
   elements.workspace.classList.remove('hidden');
+  elements.securityNav.classList.toggle('hidden', state.authMode !== 'account');
+  if (state.authMode === 'account') {
+    elements.logout.classList.remove('hidden');
+    elements.currentUser.textContent =
+      state.user?.displayName || state.user?.username || state.user?.email || '已认证 Owner';
+    elements.currentUser.classList.remove('hidden');
+  } else if (state.currentView === 'security') {
+    chooseView('attention');
+  }
   setConnection('已连接', 'online');
+}
+
+function captureDeepLink() {
+  const hash = new URLSearchParams(location.hash.slice(1));
+  const attentionId = hash.get('attention');
+  const nonce = hash.get('nonce');
+  const pairingToken = hash.get('token');
+  if (pairingToken) {
+    history.replaceState(null, '', `${location.pathname}${location.search}`);
+  }
+  if (!attentionId && !nonce) return { pairingToken };
+  state.deepLink = { attentionId: attentionId || null, nonce: nonce || null };
+  // Keep the nonce in memory for one redemption only; never leave it in history.
+  history.replaceState(
+    null,
+    '',
+    `${location.pathname}${location.search}${
+      attentionId ? `#attention=${encodeURIComponent(attentionId)}` : ''
+    }`,
+  );
+  return { pairingToken };
+}
+
+async function redeemDeepLink() {
+  if (!state.deepLink?.nonce) return true;
+  const nonce = state.deepLink.nonce;
+  state.deepLink.nonce = null;
+  const { response, body } = await api('/api/auth/attention/redeem', {
+    method: 'POST',
+    body: { nonce },
+  });
+  if (!response.ok || !body.ok) {
+    const message =
+      body.message || '该消息链接已失效或无权访问。链接不会建立管理会话，请从受信任入口重新登录。';
+    setAuthNotice(message);
+    setWorkspaceNotice(message);
+    return false;
+  }
+  const attentionId = body.attentionId || state.deepLink.attentionId;
+  if (attentionId) state.deepLink = { attentionId, nonce: null };
+  chooseView('attention');
+  setAuthNotice('');
+  setWorkspaceNotice('');
+  return true;
+}
+
+function focusDeepLinkedAttention() {
+  const attentionId = state.deepLink?.attentionId;
+  if (!attentionId) return;
+  for (const card of document.querySelectorAll('[data-attention-card]')) {
+    if (card.dataset.attentionCard !== attentionId) continue;
+    card.classList.add('focused');
+    card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    return;
+  }
 }
 
 function empty(message = '当前没有需要展示的内容') {
@@ -186,7 +357,7 @@ function renderAttention() {
   elements.attentionList.innerHTML = state.attention
     .map(
       (entry) => `
-      <article class="attention-card">
+      <article class="attention-card" data-attention-card="${escapeHtml(entry.requestId)}">
         <div class="card-topline">
           <span class="status status-warning">${escapeHtml(entry.type || '决策')}</span>
           <span class="muted">${escapeHtml(entry.status || 'OPEN')}</span>
@@ -214,6 +385,13 @@ function renderAttention() {
                    type="button">${escapeHtml(actionLabel(action))}</button>`,
             )
             .join('')}
+          ${
+            entry.documentPath
+              ? `<a class="button ghost" href="/api/attention/${encodeURIComponent(
+                  entry.requestId,
+                )}/document" target="_blank" rel="noopener noreferrer">打开审批文档</a>`
+              : ''
+          }
           <button class="button ghost" data-open-work-item="${escapeHtml(entry.workItemId)}" type="button">查看详情</button>
         </div>
       </article>`,
@@ -450,6 +628,84 @@ function renderNotifications() {
     .join('');
 }
 
+function deviceKey(device) {
+  return device?.deviceId || device?.id || '';
+}
+
+function isCurrentDevice(device) {
+  return Boolean(
+    device?.current ||
+    device?.isCurrent ||
+    (state.deviceId && deviceKey(device) === state.deviceId),
+  );
+}
+
+function renderSecurity() {
+  const userLabel =
+    state.user?.displayName || state.user?.username || state.user?.email || '当前认证 Owner';
+  const current = state.devices.find(isCurrentDevice);
+  elements.securitySummary.innerHTML = `
+    <div class="card-topline">
+      <span class="status">${escapeHtml(userLabel)}</span>
+      <span class="muted">${escapeHtml(state.devices.length)} 台已登记设备</span>
+    </div>
+    <p class="muted">当前设备：${escapeHtml(
+      current?.name || current?.deviceName || (state.deviceId ? '本浏览器' : '未识别'),
+    )}</p>
+    <p class="muted">撤销其他设备前需要输入动态验证码；验证码会被兑换为当前操作的短期证明。</p>`;
+
+  if (!state.devices.length) {
+    elements.deviceList.innerHTML = empty('尚未读取到已登记设备');
+    return;
+  }
+  elements.deviceList.innerHTML = state.devices
+    .map((device) => {
+      const id = deviceKey(device);
+      const currentDevice = isCurrentDevice(device);
+      const name = device.name || device.deviceName || id || '未命名设备';
+      const status = device.revokedAt ? '已撤销' : device.status || '可用';
+      return `<article class="device-row${currentDevice ? ' current' : ''}">
+        <div>
+          <div class="card-topline">
+            <h3>${escapeHtml(name)}</h3>
+            <span class="status ${device.revokedAt ? 'status-error' : ''}">${escapeHtml(
+              currentDevice ? '当前设备' : status,
+            )}</span>
+          </div>
+          <div class="device-meta">
+            <span>设备 ID：${escapeHtml(id || '未提供')}</span>
+            <span>最近活动：${escapeHtml(
+              device.lastSeenAt || device.lastUsedAt || device.updatedAt || '未提供',
+            )}</span>
+          </div>
+        </div>
+        ${
+          currentDevice || device.revokedAt
+            ? ''
+            : `<button class="button danger" data-revoke-device="${escapeHtml(id)}" type="button">撤销设备</button>`
+        }
+      </article>`;
+    })
+    .join('');
+}
+
+async function loadDevices() {
+  if (state.authMode !== 'account') {
+    state.devices = [];
+    elements.securityError.textContent = '';
+    renderSecurity();
+    return;
+  }
+  elements.securityError.textContent = '';
+  const { response, body } = await api('/api/auth/devices');
+  if (!response.ok || !body.ok) {
+    elements.securityError.textContent = body.message || '设备列表读取失败';
+    return;
+  }
+  state.devices = body.devices || [];
+  renderSecurity();
+}
+
 function renderAll() {
   renderAttention();
   renderPortfolio();
@@ -457,6 +713,7 @@ function renderAll() {
   renderWorkItems();
   renderMonitoring();
   renderNotifications();
+  renderSecurity();
 }
 
 async function refresh() {
@@ -549,6 +806,7 @@ function chooseView(view) {
     button.classList.toggle('active', button.dataset.view === view);
   for (const section of document.querySelectorAll('.view'))
     section.classList.toggle('hidden', section.id !== `view-${view}`);
+  if (view === 'security' && state.authMode === 'account') void loadDevices();
 }
 
 function openActionDialog({
@@ -557,16 +815,33 @@ function openActionDialog({
   needsComment = false,
   budgetCurrent = null,
   needsStepUp = false,
+  stepUpAction = null,
+  resourceId = null,
   action,
+  initialError = '',
 }) {
-  state.action = action;
+  const pendingAction = { ...action, stepUpAction, resourceId };
+  state.action = pendingAction;
+  state.actionConfig = {
+    title,
+    description,
+    needsComment,
+    budgetCurrent,
+    needsStepUp,
+    stepUpAction,
+    resourceId,
+    action: pendingAction,
+  };
   elements.actionTitle.textContent = title;
   elements.actionDescription.textContent = description;
   elements.actionComment.value = '';
   elements.budgetModels.value =
     budgetCurrent === null ? '' : String(Math.min(2000000000, budgetCurrent * 2));
   elements.stepUpCode.value = '';
-  elements.actionError.textContent = '';
+  elements.stepUpCode.required = needsStepUp;
+  elements.stepUpLabel.textContent =
+    state.authMode === 'account' ? '动态验证码（当前操作专用）' : '升级认证码';
+  elements.actionError.textContent = initialError;
   elements.commentField.classList.toggle('hidden', !needsComment);
   elements.budgetField.classList.toggle('hidden', budgetCurrent === null);
   elements.stepUpField.classList.toggle('hidden', !needsStepUp);
@@ -583,12 +858,30 @@ function openActionDialog({
 
 function closeActionDialog() {
   state.action = null;
+  state.actionConfig = null;
   elements.actionDialog.classList.add('hidden');
+}
+
+function reopenActionDialog(message) {
+  const config = state.actionConfig;
+  if (!config) return;
+  state.actionConfig = null;
+  closeActionDialog();
+  openActionDialog({ ...config, initialError: message });
+}
+
+function stepUpFailure(body) {
+  const code = String(body?.code || '').toUpperCase();
+  return (
+    STEP_UP_ERROR_CODES.has(code) ||
+    (code.includes('CHALLENGE') && (code.includes('EXPIRED') || code.includes('NOT_FOUND')))
+  );
 }
 
 async function submitAction(event) {
   event.preventDefault();
   if (!state.action) return;
+  const action = state.action;
   const payload = { ...state.action.body };
   const decisionPayload = {
     ...(elements.commentField.classList.contains('hidden')
@@ -599,19 +892,89 @@ async function submitAction(event) {
       : { budget: { maxModelTokens: Number(elements.budgetModels.value) } }),
   };
   if (Object.keys(decisionPayload).length) payload.payload = decisionPayload;
-  if (!elements.stepUpField.classList.contains('hidden'))
-    payload.stepUpCode = elements.stepUpCode.value;
-  const { response, body } = await api(state.action.path, {
-    method: 'POST',
-    body: payload,
-  });
-  if (!response.ok || !body.ok) {
-    elements.actionError.textContent = body.message || '动作未完成';
-    return;
+  const needsStepUp = !elements.stepUpField.classList.contains('hidden');
+  let proof = null;
+  try {
+    if (needsStepUp) {
+      const totpCode = elements.stepUpCode.value.trim();
+      if (!totpCode) {
+        elements.actionError.textContent = '请输入动态验证码';
+        elements.stepUpCode.focus();
+        return;
+      }
+      if (state.authMode === 'pairing') {
+        payload.stepUpCode = totpCode;
+      } else {
+        const stepUpAction = action.stepUpAction;
+        const resourceId =
+          action.resourceId ||
+          action.body.attentionId ||
+          action.body.workItemId ||
+          action.body.deviceId;
+        if (!stepUpAction || !resourceId) {
+          elements.actionError.textContent = '当前动作缺少授权绑定信息';
+          return;
+        }
+        const challenge = await api('/api/auth/step-up/challenge', {
+          method: 'POST',
+          body: { action: stepUpAction, resourceId },
+        });
+        if (!challenge.response.ok || !challenge.body.ok) {
+          const message = challenge.body.message || '无法创建当前操作的授权挑战';
+          if (stepUpFailure(challenge.body)) reopenActionDialog(message);
+          else elements.actionError.textContent = message;
+          return;
+        }
+        const verification = await api('/api/auth/step-up/verify', {
+          method: 'POST',
+          body: {
+            challengeId: challenge.body.challengeId,
+            totpCode,
+          },
+        });
+        elements.stepUpCode.value = '';
+        if (!verification.response.ok || !verification.body.ok) {
+          const message = verification.body.message || '动态验证码验证失败，请重新输入';
+          if (stepUpFailure(verification.body)) reopenActionDialog(message);
+          else elements.actionError.textContent = message;
+          return;
+        }
+        proof = verification.body.proof;
+        if (!proof) {
+          elements.actionError.textContent = '服务端未返回当前操作的授权证明';
+          return;
+        }
+        payload.stepUpProof = proof;
+      }
+    }
+    const { response, body } = await api(action.path, {
+      method: 'POST',
+      body: payload,
+    });
+    delete payload.stepUpProof;
+    proof = null;
+    if (!response.ok || !body.ok) {
+      if (state.authMode === 'account' && stepUpFailure(body))
+        reopenActionDialog(body.message || '授权已过期，请重新输入动态验证码');
+      else elements.actionError.textContent = body.message || '动作未完成';
+      return;
+    }
+    const afterSuccess = action.afterSuccess;
+    closeActionDialog();
+    if (afterSuccess === 'devices') {
+      await loadDevices();
+      return;
+    }
+    await refresh();
+    if (state.selectedWorkItemId) await openDetail(state.selectedWorkItemId);
+  } catch (error) {
+    if (error.name !== 'AbortError')
+      elements.actionError.textContent = error.message || '动作未完成';
+  } finally {
+    elements.stepUpCode.value = '';
+    proof = null;
+    delete payload.stepUpProof;
   }
-  closeActionDialog();
-  await refresh();
-  if (state.selectedWorkItemId) await openDetail(state.selectedWorkItemId);
 }
 
 async function runWorkAction(action, button) {
@@ -625,8 +988,14 @@ async function runWorkAction(action, button) {
   if (action === 'request-changes') {
     openActionDialog({
       title: '要求修改',
-      description: '说明需要改变的业务结果；本说明会进入下一轮 AI 执行。',
+      description:
+        state.authMode === 'account'
+          ? '说明需要改变的业务结果。当前操作需要动态验证码授权。'
+          : '说明需要改变的业务结果；本说明会进入下一轮 AI 执行。',
       needsComment: true,
+      needsStepUp: state.authMode === 'account',
+      stepUpAction: 'request_changes',
+      resourceId: item.workItemId,
       action: { path: '/api/work-items/request-changes', body: base },
     });
     return;
@@ -636,7 +1005,20 @@ async function runWorkAction(action, button) {
       title: '取消 WorkItem',
       description: '取消会终止当前工作。请输入升级认证码以继续。',
       needsStepUp: true,
+      stepUpAction: 'cancel',
+      resourceId: item.workItemId,
       action: { path: '/api/work-items/cancel', body: base },
+    });
+    return;
+  }
+  if (state.authMode === 'account' && ['resume', 'retry'].includes(action)) {
+    openActionDialog({
+      title: actionLabel(action),
+      description: '该状态变更需要近期动态验证码，授权只绑定当前 WorkItem。',
+      needsStepUp: true,
+      stepUpAction: action,
+      resourceId: item.workItemId,
+      action: { path: `/api/work-items/${action}`, body: base },
     });
     return;
   }
@@ -661,13 +1043,21 @@ function runDecision(button) {
     idempotencyKey: `${button.dataset.attentionId}:${action}`,
   };
   if (action === 'request_changes' || action === 'answer') {
+    const highRiskAttention = ['H1_APPROVAL', 'H3_APPROVAL', 'CUSTOMER_ACCEPTANCE'].includes(
+      button.dataset.attentionType,
+    );
+    const needsStepUp =
+      (highRiskAttention && action === 'approve') ||
+      (action === 'request_changes' && state.authMode === 'account');
     openActionDialog({
       title: actionLabel(action),
-      description: '补充业务说明后提交受控 Decision。',
+      description: needsStepUp
+        ? '补充业务说明后提交受控 Decision；动态验证码只兑换当前 Decision 的一次性证明。'
+        : '补充业务说明后提交受控 Decision。',
       needsComment: true,
-      needsStepUp: ['H1_APPROVAL', 'H3_APPROVAL', 'CUSTOMER_ACCEPTANCE'].includes(
-        button.dataset.attentionType,
-      ),
+      needsStepUp,
+      stepUpAction: action,
+      resourceId: button.dataset.attentionId,
       action: { path: '/api/decisions', body },
     });
     return;
@@ -677,6 +1067,8 @@ function runDecision(button) {
       title: actionLabel(action),
       description: '将先校验不可变 DeliveryRecord，再写入客户接受回执。请输入升级认证码。',
       needsStepUp: true,
+      stepUpAction: 'accept_delivery',
+      resourceId: button.dataset.attentionId,
       action: { path: '/api/deliveries/accept', body },
     });
     return;
@@ -688,6 +1080,8 @@ function runDecision(button) {
       description: '输入高于当前上限的模型 Token 预算；该变更会进入受审计 Decision。',
       budgetCurrent: item?.budget?.maxModelTokens || 500000,
       needsStepUp: true,
+      stepUpAction: 'resume',
+      resourceId: button.dataset.attentionId,
       action: { path: '/api/decisions', body },
     });
     return;
@@ -696,46 +1090,159 @@ function runDecision(button) {
     title: actionLabel(action),
     description: '高风险 Decision 需要升级认证码。对象和版本已绑定。',
     needsStepUp: true,
+    stepUpAction: action,
+    resourceId: button.dataset.attentionId,
     action: { path: '/api/decisions', body },
   });
 }
 
-async function bootstrap() {
-  const hash = new URLSearchParams(location.hash.slice(1));
-  const pairingToken = hash.get('token');
-  if (pairingToken) {
-    history.replaceState(null, '', `${location.pathname}${location.search}`);
-    try {
-      await openSession(pairingToken);
-    } catch (error) {
-      elements.pairingError.textContent = error.message;
-      showPairing();
-      return;
+async function discoverAuthMode() {
+  try {
+    const { response, body } = await api('/api/auth/methods');
+    if (!response.ok || !body.ok) {
+      showAuthRequired(body.message || '无法读取认证方式，请稍后刷新。');
+      return false;
     }
-  } else if (!(await restoreSession())) {
-    showPairing();
-    return;
+    state.authMode = body.mode === 'account' ? 'account' : 'pairing';
+    return true;
+  } catch {
+    showAuthRequired('无法连接认证服务，请检查服务状态后刷新。');
+    return false;
   }
-  showWorkspace();
-  await refresh();
+}
+
+function startPolling() {
+  clearInterval(state.refreshTimer);
   state.refreshTimer = setInterval(refresh, 4000);
 }
+
+async function finishAuthentication() {
+  showWorkspace();
+  setWorkspaceNotice('');
+  await redeemDeepLink();
+  if (!state.csrfToken) return;
+  await refresh();
+  focusDeepLinkedAttention();
+  if (state.authMode === 'account') await loadDevices();
+  startPolling();
+}
+
+async function loginAccount() {
+  elements.accountLoginError.textContent = '';
+  setAuthNotice('');
+  const deviceId = persistentDeviceId();
+  const { response, body } = await api('/api/auth/login', {
+    method: 'POST',
+    body: {
+      username: elements.loginUsername.value.trim(),
+      password: elements.loginPassword.value,
+      totpCode: elements.loginTotp.value.trim(),
+      deviceId,
+      deviceName: elements.loginDeviceName.value.trim() || defaultDeviceName(),
+      deviceConfirmationCode: elements.loginDeviceConfirmation.value.trim(),
+    },
+  });
+  elements.loginTotp.value = '';
+  if (!response.ok || !body.ok) {
+    elements.accountLoginError.textContent = body.message || '账号登录失败';
+    if (body.code === 'DEVICE_CONFIRMATION_REQUIRED') {
+      elements.loginDeviceConfirmation.focus();
+      setAuthNotice('这是新设备。请按服务端提示填写额外确认码后重试。');
+    }
+    return;
+  }
+  elements.loginPassword.value = '';
+  elements.loginDeviceConfirmation.value = '';
+  setSession(body);
+  await finishAuthentication();
+}
+
+async function logoutAccount() {
+  const { response, body } = await api('/api/auth/logout', { method: 'POST' });
+  if (!response.ok || !body.ok) {
+    setWorkspaceNotice(body.message || '退出登录失败');
+    return;
+  }
+  state.csrfToken = null;
+  state.user = null;
+  state.devices = [];
+  setWorkspaceNotice('');
+  showAuthRequired('已安全退出。消息链接不会保留管理会话。');
+}
+
+function runRevokeDevice(button) {
+  const deviceId = button.dataset.revokeDevice;
+  if (!deviceId) return;
+  openActionDialog({
+    title: '撤销设备',
+    description: '撤销后该设备绑定的现有会话将失效。请输入动态验证码确认当前操作。',
+    needsStepUp: true,
+    stepUpAction: 'device.revoke',
+    resourceId: deviceId,
+    action: {
+      path: '/api/auth/devices/revoke',
+      body: { deviceId },
+      afterSuccess: 'devices',
+    },
+  });
+}
+
+async function bootstrap() {
+  const { pairingToken } = captureDeepLink();
+  if (!(await discoverAuthMode())) return;
+  if (pairingToken) {
+    if (state.authMode !== 'pairing') {
+      showAuthRequired('当前服务使用账号认证，配对令牌不能建立管理会话。');
+      return;
+    }
+    try {
+      await openPairingSession(pairingToken);
+    } catch (error) {
+      elements.pairingError.textContent = error.message;
+      showAuthRequired();
+      return;
+    }
+    showWorkspace();
+    await refresh();
+    startPolling();
+    return;
+  }
+  if (!(await restoreSession())) {
+    showAuthRequired(
+      state.deepLink?.nonce ? '该消息链接需要账号登录。转发链接不会建立管理会话。' : '',
+    );
+    return;
+  }
+  await finishAuthentication();
+}
+
+elements.accountLoginForm.addEventListener('submit', async (event) => {
+  event.preventDefault();
+  try {
+    await loginAccount();
+  } catch (error) {
+    elements.loginTotp.value = '';
+    elements.accountLoginError.textContent = error.message || '账号登录失败';
+  }
+});
 
 elements.pairingForm.addEventListener('submit', async (event) => {
   event.preventDefault();
   elements.pairingError.textContent = '';
   try {
-    await openSession(elements.pairingToken.value.trim());
+    await openPairingSession(elements.pairingToken.value.trim());
     elements.pairingToken.value = '';
     showWorkspace();
     await refresh();
-    state.refreshTimer = setInterval(refresh, 4000);
+    startPolling();
   } catch (error) {
     elements.pairingError.textContent = error.message;
   }
 });
 
 elements.refresh.addEventListener('click', refresh);
+elements.refreshDevices.addEventListener('click', loadDevices);
+elements.logout.addEventListener('click', logoutAccount);
 elements.filter.addEventListener('change', renderWorkItems);
 elements.newWorkItemForm.addEventListener('submit', async (event) => {
   event.preventDefault();
@@ -775,6 +1282,8 @@ document.addEventListener('click', async (event) => {
   if (workAction) await runWorkAction(workAction.dataset.workAction, workAction);
   const decision = event.target.closest('[data-decision-action]');
   if (decision) runDecision(decision);
+  const revokeDevice = event.target.closest('[data-revoke-device]');
+  if (revokeDevice) runRevokeDevice(revokeDevice);
 });
 
 document.addEventListener('keydown', async (event) => {

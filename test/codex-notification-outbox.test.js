@@ -230,3 +230,32 @@ test('Attention resolution uses a stable dedupe key and resolution card payload'
   assert.equal(enqueued[0].notification.kind, 'resolution');
   assert.equal(enqueued[0].notification.action, 'approve');
 });
+
+test('account-mode attention links carry a short-lived nonce instead of a pairing token', async () => {
+  const enqueued = [];
+  const notifier = createAttentionNotifier({
+    outbox: {
+      async enqueue(value) {
+        enqueued.push(value);
+        return { ok: true };
+      },
+    },
+    managementBaseUrl: 'https://management.example.test/',
+    credentialFactory: (attention) => ({
+      parameter: 'nonce',
+      value: `nonce-${attention.requestId}`,
+    }),
+  });
+  const result = await notifier.notify({
+    workItem: { workItemId: 'work-1', title: 'Export' },
+    attention: {
+      requestId: 'attention-1',
+      attentionKey: 'key-1',
+      revision: 1,
+      actions: ['approve'],
+    },
+  });
+  assert.equal(result.ok, true);
+  assert.match(enqueued[0].managementUrl, /#attention=attention-1&nonce=nonce-attention-1$/);
+  assert.doesNotMatch(enqueued[0].managementUrl, /token=/);
+});

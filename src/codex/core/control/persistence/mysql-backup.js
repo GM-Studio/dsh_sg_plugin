@@ -8,6 +8,7 @@ const TABLES = Object.freeze([
   'control_user',
   'device',
   'auth_session',
+  'auth_challenge',
   'project',
   'worker',
   'project_worker',
@@ -15,12 +16,15 @@ const TABLES = Object.freeze([
   'execution_run',
   'lease',
   'attention',
+  'attention_nonce',
   'decision',
   'evidence_event',
   'notification_delivery',
   'delivery',
   'audit_log',
   'repository_head',
+  'auth_rate_limit',
+  'auth_audit',
 ]);
 const MAX_BYTES = 32 * 1024 * 1024;
 const AAD = Buffer.from('specgate-mysql-backup-v1');

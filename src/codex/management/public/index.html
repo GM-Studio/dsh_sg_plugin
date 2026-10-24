@@ -14,23 +14,96 @@
         <h1>异步交付控制台</h1>
       </div>
       <div class="topbar-actions">
+        <span id="current-user" class="account-chip hidden"></span>
         <span id="connection" class="connection" data-state="idle">等待连接</span>
         <button id="refresh" class="button secondary" type="button">刷新</button>
+        <button id="logout" class="button ghost hidden" type="button">退出登录</button>
       </div>
     </header>
 
     <main id="app" aria-live="polite">
-      <section id="pairing" class="panel pairing hidden">
-        <h2>连接本地控制面</h2>
-        <p>输入控制服务启动时给出的一次性配对令牌。</p>
-        <form id="pairing-form" class="inline-form">
-          <label>
-            配对令牌
-            <input id="pairing-token" name="token" autocomplete="off" required />
-          </label>
-          <button class="button" type="submit">连接</button>
-        </form>
-        <p id="pairing-error" class="error" role="alert"></p>
+      <section id="auth" class="panel auth hidden">
+        <section id="account-login">
+          <p class="eyebrow">Account security</p>
+          <h2>登录交付控制面</h2>
+          <p class="muted">需要账号密码、动态验证码和已确认设备。消息链接不会直接建立管理会话。</p>
+          <form id="account-login-form" class="auth-form">
+            <label>
+              账号
+              <input
+                id="login-username"
+                name="username"
+                autocomplete="username"
+                maxlength="256"
+                required
+              />
+            </label>
+            <label>
+              密码
+              <input
+                id="login-password"
+                name="password"
+                type="password"
+                autocomplete="current-password"
+                required
+              />
+            </label>
+            <label>
+              动态验证码
+              <input
+                id="login-totp"
+                name="totpCode"
+                inputmode="numeric"
+                autocomplete="one-time-code"
+                pattern="[0-9]{6}"
+                maxlength="6"
+                required
+              />
+            </label>
+            <label>
+              设备名称
+              <input
+                id="login-device-name"
+                name="deviceName"
+                autocomplete="off"
+                maxlength="120"
+                placeholder="例如：办公室浏览器"
+                required
+              />
+            </label>
+            <label>
+              新设备确认码
+              <input
+                id="login-device-confirmation"
+                name="deviceConfirmationCode"
+                autocomplete="off"
+                maxlength="128"
+                placeholder="已有设备可留空；新设备按服务端提示填写"
+              />
+            </label>
+            <div class="auth-actions">
+              <button class="button" type="submit">安全登录</button>
+              <span class="muted">验证码只用于本次登录，不会保存。</span>
+            </div>
+          </form>
+          <p id="account-login-error" class="error" role="alert"></p>
+        </section>
+
+        <section id="pairing" class="hidden">
+          <p class="eyebrow">Local pairing</p>
+          <h2>连接本地控制面</h2>
+          <p>输入控制服务启动时给出的一次性配对令牌。</p>
+          <form id="pairing-form" class="inline-form">
+            <label>
+              配对令牌
+              <input id="pairing-token" name="token" autocomplete="off" required />
+            </label>
+            <button class="button" type="submit">连接</button>
+          </form>
+          <p id="pairing-error" class="error" role="alert"></p>
+        </section>
+
+        <p id="auth-notice" class="notice hidden" role="status"></p>
       </section>
 
       <section id="workspace" class="workspace hidden">
@@ -44,6 +117,7 @@
             <button class="nav-button" data-view="work-items" type="button">WorkItems</button>
             <button class="nav-button" data-view="monitoring" type="button">执行监控</button>
             <button class="nav-button" data-view="notifications" type="button">通知健康</button>
+            <button class="nav-button" data-view="security" type="button">设备与安全</button>
           </nav>
           <div class="sidebar-footer">
             <p class="muted">只在关键门禁请求判断。</p>
@@ -52,6 +126,7 @@
         </aside>
 
         <section class="content">
+          <p id="workspace-notice" class="notice hidden" role="status"></p>
           <section id="view-attention" class="view">
             <div class="view-heading">
               <div>
@@ -136,6 +211,19 @@
             <div id="notification-list" class="card-grid"></div>
           </section>
 
+          <section id="view-security" class="view hidden">
+            <div class="view-heading">
+              <div>
+                <p class="eyebrow">Devices and security</p>
+                <h2>设备与安全</h2>
+              </div>
+              <button id="refresh-devices" class="button secondary" type="button">刷新设备</button>
+            </div>
+            <div id="security-summary" class="panel security-summary"></div>
+            <p id="security-error" class="error" role="alert"></p>
+            <div id="device-list" class="device-list"></div>
+          </section>
+
           <section id="detail" class="panel detail hidden" aria-labelledby="detail-title">
             <div class="detail-heading">
               <div>
@@ -163,8 +251,14 @@
           <input id="action-budget-models" type="number" min="1" step="1" />
         </label>
         <label id="step-up-field" class="hidden">
-          升级认证码
-          <input id="step-up-code" inputmode="numeric" autocomplete="one-time-code" />
+          <span id="step-up-label">升级认证码</span>
+          <input
+            id="step-up-code"
+            inputmode="numeric"
+            autocomplete="one-time-code"
+            pattern="[0-9]{6}"
+            maxlength="6"
+          />
         </label>
         <p id="action-error" class="error" role="alert"></p>
         <div class="dialog-actions">

@@ -19,6 +19,7 @@ import {
   describeDegradation,
   detectCapabilities,
 } from '../src/codex/control/capabilities.js';
+import { initializeConfiguredOwner } from '../src/codex/control/auth-runtime.js';
 
 const SOURCE_ROOT = path.resolve(fileURLToPath(new URL('..', import.meta.url)));
 const WORKER = path.join(SOURCE_ROOT, 'src/codex/control/daemon-worker.mjs');
@@ -135,6 +136,7 @@ export async function runControlCli({
         'specgate-control list [--mode aggregate|isolated]',
         'specgate-control attention',
         'specgate-control mfa',
+        'specgate-control auth-init --username <name>',
         'specgate-control doctor [--project <path>]',
         `Control mode defaults to aggregate; set --mode or ${CONTROL_MODE_ENV}=aggregate|isolated.`,
       ],
@@ -254,6 +256,24 @@ export async function runControlCli({
         'Set SPECGATE_MFA_SECRET to this secret in the control daemon environment. Do not commit it.',
     };
   }
+  if (command === 'auth-init') {
+    const config = localControlEnvironment(env);
+    const username = option(args, '--username', env.SPECGATE_AUTH_USERNAME || null);
+    const password = env.SPECGATE_AUTH_PASSWORD || null;
+    if (!username || !password)
+      return {
+        ok: false,
+        code: 'AUTH_INPUT_REQUIRED',
+        message:
+          'Set SPECGATE_AUTH_USERNAME and SPECGATE_AUTH_PASSWORD, then rerun auth-init; credentials are never accepted as CLI arguments.',
+      };
+    return initializeConfiguredOwner({
+      config,
+      username,
+      password,
+      displayName: option(args, '--display-name', username),
+    });
+  }
   if (command === 'doctor') {
     const config = localControlEnvironment(env);
     const codexEnv = controlExecutionEnvironment({
@@ -291,6 +311,9 @@ export async function runControlCli({
       managementPublicUrl: config.managementPublicUrl,
       feishuConfigured: Boolean(config.feishuWebhookUrl),
       mfaConfigured: Boolean(config.mfaSecret),
+      authConfigured: Boolean(
+        config.mysqlConfigPath && config.authEncryptionKey && config.authDeviceConfirmationCodeHash,
+      ),
       codex: {
         command: config.codexCommand,
         homeConfigured: Boolean(config.codexHome),

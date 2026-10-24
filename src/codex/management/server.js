@@ -3,9 +3,12 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import { createHash, randomBytes, timingSafeEqual } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
+import { requiredAuth } from '../core/control/auth/policy.js';
 
 const PUBLIC_ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), 'public');
 const MAX_BODY_BYTES = 256 * 1024;
+const AUTH_CONFIRMATION_HASH = /^[a-f0-9]{64}$/;
+const AUTH_ENCRYPTION_KEY = /^(?:[a-f0-9]{64}|[A-Za-z0-9_-]{43})$/;
 const STATIC_FILES = new Map([
   ['/', { file: 'index.html', type: 'text/html; charset=utf-8' }],
   ['/index.html', { file: 'index.html', type: 'text/html; charset=utf-8' }],
@@ -112,6 +115,15 @@ function sendJson(response, status, value) {
   response.end(body);
 }
 
+function escapeHtml(value) {
+  return String(value)
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#39;');
+}
+
 const PRIVATE_KEYS = new Set([
   'projectRoot',
   'cwd',
@@ -157,7 +169,30 @@ function sanitizeForWeb(value, key = null, depth = 0) {
 
 function statusFor(result) {
   if (!result || result.ok !== false) return 200;
-  if (['STEP_UP_REQUIRED', 'UNAUTHORIZED'].includes(result.code)) return 403;
+  if (['UNAUTHORIZED', 'INVALID_CREDENTIALS'].includes(result.code)) return 401;
+  if (
+    [
+      'STEP_UP_REQUIRED',
+      'AUTH_FAILED',
+      'DEVICE_REVOKED',
+      'DEVICE_CONFIRMATION_REQUIRED',
+      'TOTP_REPLAY',
+      'TOTP_REPLAYED',
+      'INVALID_TOTP',
+      'CHALLENGE_INVALID',
+      'NONCE_INVALID',
+      'ATTENTION_NONCE_INVALID',
+      'CSRF_INVALID',
+      'STEP_UP_CHALLENGE_EXPIRED',
+      'STEP_UP_CHALLENGE_REPLAYED',
+      'STEP_UP_PROOF_EXPIRED',
+      'STEP_UP_PROOF_REPLAYED',
+      'STEP_UP_PROOF_INVALID',
+      'STEP_UP_BINDING_MISMATCH',
+    ].includes(result.code)
+  )
+    return 403;
+  if (result.code === 'RATE_LIMITED') return 429;
   if (result.code === 'NOT_FOUND' || result.code?.endsWith('_NOT_FOUND')) return 404;
   if (
     [
@@ -223,6 +258,7 @@ function decodeId(value) {
 
 export function createManagementServer({
   services,
+  authService = null,
   clock = Date.now,
   pairingToken = randomBytes(24).toString('base64url'),
   sessionTtlMs = 8 * 60 * 60 * 1000,
@@ -238,6 +274,9 @@ export function createManagementServer({
   allowedOrigins = [],
   trustedProxies = [],
   sessionStore = null,
+  mysqlConfigPath = null,
+  authEncryptionKey = null,
+  authDeviceConfirmationCodeHash = null,
 } = {}) {
   if (!services?.projection || !services?.decisions)
     throw new TypeError('Management server requires projection and decision services');
@@ -256,6 +295,25 @@ export function createManagementServer({
     throw new TypeError('sessionStore must provide load() and save()');
   if (!['local', 'remote'].includes(deploymentMode))
     throw remoteConfigurationError('Deployment mode must be local or remote');
+  if (
+    authService !== null &&
+    [
+      'login',
+      'authenticate',
+      'verifyCsrf',
+      'beginStepUp',
+      'completeStepUp',
+      'authorizeStepUp',
+      'listDevices',
+      'revokeDevice',
+      'logout',
+      'redeemAttentionNonce',
+      'createAttentionNonce',
+    ].some((method) => typeof authService[method] !== 'function')
+  )
+    throw new TypeError('authService does not implement the management authentication contract');
+  if (deploymentMode === 'remote' && authService === null)
+    throw remoteConfigurationError('Remote mode requires account authentication');
   if (deploymentMode === 'remote') {
     if (!secureCookie || !trustProxyHttps) {
       throw remoteConfigurationError('Remote mode requires Secure cookies and trusted HTTPS');
@@ -270,6 +328,16 @@ export function createManagementServer({
       throw remoteConfigurationError('Remote mode Origins must use HTTPS');
     if (isPublicBindAddress(host))
       throw remoteConfigurationError('Remote mode must not bind an unprotected public address');
+    if (
+      authService === null ||
+      typeof mysqlConfigPath !== 'string' ||
+      !path.isAbsolute(mysqlConfigPath) ||
+      !AUTH_ENCRYPTION_KEY.test(authEncryptionKey || '') ||
+      !AUTH_CONFIRMATION_HASH.test(authDeviceConfirmationCodeHash || '')
+    )
+      throw remoteConfigurationError(
+        'Remote mode requires account authentication backed by MySQL and encrypted TOTP seeds',
+      );
   }
 
   const sessions = new Map();
@@ -279,6 +347,7 @@ export function createManagementServer({
   const originSet = new Set(allowedOrigins.map(normalizeOrigin).filter(Boolean));
   const proxySet = new Set(trustedProxies.map(normalizeAddress).filter(Boolean));
   const defaultActor = { kind: 'user', id: 'local-owner', source: 'web' };
+  const accountMode = authService !== null;
   const pairKey = (value) =>
     typeof value === 'string' ? createHash('sha256').update(value).digest('hex') : null;
   pairingTokens.set(pairKey(pairingToken), {
@@ -416,15 +485,48 @@ export function createManagementServer({
     return null;
   }
 
+  function clientAddress(request) {
+    if (deploymentMode === 'remote') {
+      const forwarded = String(request.headers['x-forwarded-for'] || '')
+        .split(',')[0]
+        .trim();
+      const normalized = normalizeAddress(forwarded);
+      if (normalized) return normalized;
+    }
+    return normalizeAddress(request.socket?.remoteAddress) || 'unknown';
+  }
+
   async function sessionFor(request) {
     const token = parseCookies(request.headers.cookie).specgate_session;
+    if (accountMode) {
+      if (!token) return null;
+      const authenticated = await authService.authenticate({ token });
+      if (!authenticated.ok) return null;
+      return {
+        id: authenticated.session.sessionId,
+        mode: 'account',
+        token,
+        csrfHash: authenticated.session.csrfHash,
+        expiresAt: Date.parse(authenticated.session.expiresAt),
+        createdAt: Date.parse(authenticated.session.createdAt),
+        actor: {
+          kind: 'user',
+          id: authenticated.user.userId,
+          username: authenticated.user.username,
+          role: authenticated.user.role,
+          source: 'web',
+        },
+        device: authenticated.device,
+        authLevel: authenticated.session.authLevel,
+      };
+    }
     const session = token ? sessions.get(token) : null;
     if (!session) return null;
     if (session.expiresAt <= clock()) {
       await removeSession(token);
       return null;
     }
-    return { id: token, ...session };
+    return { id: token, mode: 'pairing', token, ...session };
   }
 
   async function requireSession(request, response) {
@@ -438,26 +540,182 @@ export function createManagementServer({
 
   function verifyCsrf(request, session, response) {
     const supplied = request.headers['x-specgate-csrf'];
-    if (!equalSecret(supplied, session.csrfToken)) {
+    const valid =
+      session.mode === 'account'
+        ? typeof supplied === 'string' && authService.verifyCsrf(session, supplied)
+        : equalSecret(supplied, session.csrfToken);
+    if (!valid) {
       sendJson(response, 403, failure('CSRF_INVALID', 'CSRF validation failed'));
       return false;
     }
     return true;
   }
 
+  function sessionCookie(request, token, maxAgeSeconds) {
+    const secure =
+      secureCookie ||
+      request.socket.encrypted ||
+      (trustProxyHttps && request.headers['x-forwarded-proto'] === 'https');
+    return `specgate_session=${token}; HttpOnly; SameSite=Strict; Path=/; Max-Age=${maxAgeSeconds}${
+      secure ? '; Secure' : ''
+    }`;
+  }
+
+  function csrfCookie(request, token, maxAgeSeconds) {
+    const secure =
+      secureCookie ||
+      request.socket.encrypted ||
+      (trustProxyHttps && request.headers['x-forwarded-proto'] === 'https');
+    return `specgate_csrf=${token}; SameSite=Strict; Path=/; Max-Age=${maxAgeSeconds}${
+      secure ? '; Secure' : ''
+    }`;
+  }
+
+  async function accountRoute(request, response, pathname) {
+    if (pathname === '/api/auth/methods') {
+      if (request.method !== 'GET') return methodFailure(response, ['GET']);
+      sendJson(response, 200, {
+        ok: true,
+        mode: accountMode ? 'account' : 'pairing',
+        methods: accountMode ? ['password', 'totp'] : ['pairing'],
+      });
+      return;
+    }
+    if (!accountMode) {
+      sendJson(response, 404, failure('NOT_FOUND', 'Account authentication is not configured'));
+      return;
+    }
+    if (pathname === '/api/auth/login') {
+      if (request.method !== 'POST') return methodFailure(response, ['POST']);
+      let body;
+      try {
+        body = await readBody(request);
+      } catch (error) {
+        sendJson(response, 400, failure(error.code, error.message));
+        return;
+      }
+      const result = await authService.login({
+        username: body.username,
+        password: body.password,
+        totpCode: body.totpCode,
+        deviceId: body.deviceId,
+        deviceName: body.deviceName,
+        deviceConfirmationCode: body.deviceConfirmationCode,
+        clientKey: clientAddress(request),
+      });
+      if (!result.ok) {
+        sendJson(response, statusFor(result), result);
+        return;
+      }
+      const expiresAt =
+        typeof result.expiresAt === 'number' ? result.expiresAt : Date.parse(result.expiresAt);
+      const maxAge = Math.max(1, Math.floor((expiresAt - clock()) / 1000));
+      response.setHeader('Set-Cookie', [
+        sessionCookie(request, result.token, maxAge),
+        csrfCookie(request, result.csrfToken, maxAge),
+      ]);
+      sendJson(response, 200, {
+        ok: true,
+        csrfToken: result.csrfToken,
+        expiresAt: new Date(expiresAt).toISOString(),
+        user: result.user,
+        device: result.device,
+      });
+      return;
+    }
+
+    const session = await requireSession(request, response);
+    if (!session) return;
+    if (request.method === 'GET' && pathname === '/api/auth/devices') {
+      const result = await authService.listDevices({ token: session.token });
+      sendJson(response, statusFor(result), sanitizeForWeb(result));
+      return;
+    }
+    if (request.method !== 'POST') return methodFailure(response, ['GET', 'POST']);
+    if (!verifyCsrf(request, session, response)) return;
+    let body;
+    try {
+      body = await readBody(request);
+    } catch (error) {
+      sendJson(response, 400, failure(error.code, error.message));
+      return;
+    }
+    let result;
+    if (pathname === '/api/auth/logout') {
+      result = await authService.logout({
+        token: session.token,
+        csrf: request.headers['x-specgate-csrf'],
+      });
+      if (result.ok)
+        response.setHeader('Set-Cookie', [
+          sessionCookie(request, '', 0),
+          csrfCookie(request, '', 0),
+        ]);
+    } else if (pathname === '/api/auth/step-up/challenge') {
+      result = await authService.beginStepUp({
+        token: session.token,
+        csrf: request.headers['x-specgate-csrf'],
+        action: body.action,
+        resourceId: body.resourceId,
+      });
+    } else if (pathname === '/api/auth/step-up/verify') {
+      result = await authService.completeStepUp({
+        token: session.token,
+        csrf: request.headers['x-specgate-csrf'],
+        challengeId: body.challengeId,
+        totpCode: body.totpCode,
+      });
+    } else if (pathname === '/api/auth/attention/redeem') {
+      result = await authService.redeemAttentionNonce({
+        token: session.token,
+        nonce: body.nonce,
+      });
+    } else if (pathname === '/api/auth/devices/revoke') {
+      result = await authService.revokeDevice({
+        token: session.token,
+        csrf: request.headers['x-specgate-csrf'],
+        deviceId: body.deviceId,
+        proof: body.stepUpProof,
+      });
+    } else {
+      result = failure('NOT_FOUND', 'Account authentication route does not exist');
+    }
+    sendJson(response, statusFor(result), sanitizeForWeb(result));
+  }
+
   async function sessionRoute(request, response) {
     if (request.method === 'GET') {
       const session = await requireSession(request, response);
       if (!session) return;
-      sendJson(response, 200, {
-        ok: true,
-        csrfToken: session.csrfToken,
-        expiresAt: new Date(session.expiresAt).toISOString(),
-        actor: session.actor,
-      });
+      if (session.mode === 'account') {
+        const csrfToken = parseCookies(request.headers.cookie).specgate_csrf;
+        sendJson(response, 200, {
+          ok: true,
+          mode: 'account',
+          csrfToken:
+            typeof csrfToken === 'string' && authService.verifyCsrf(session, csrfToken)
+              ? csrfToken
+              : null,
+          expiresAt: new Date(session.expiresAt).toISOString(),
+          actor: session.actor,
+          device: session.device,
+        });
+      } else {
+        sendJson(response, 200, {
+          ok: true,
+          mode: 'pairing',
+          csrfToken: session.csrfToken,
+          expiresAt: new Date(session.expiresAt).toISOString(),
+          actor: session.actor,
+        });
+      }
       return;
     }
     if (request.method !== 'POST') return methodFailure(response, ['GET', 'POST']);
+    if (accountMode) {
+      sendJson(response, 401, failure('PAIRING_DISABLED', 'Use account authentication'));
+      return;
+    }
     let body;
     try {
       body = await readBody(request);
@@ -484,18 +742,7 @@ export function createManagementServer({
     }
     sessions.set(id, { csrfToken, expiresAt, createdAt, actor });
     await persistState();
-    const secure =
-      secureCookie ||
-      request.socket.encrypted ||
-      (trustProxyHttps && request.headers['x-forwarded-proto'] === 'https')
-        ? '; Secure'
-        : '';
-    response.setHeader(
-      'Set-Cookie',
-      `specgate_session=${id}; HttpOnly; SameSite=Strict; Path=/; Max-Age=${Math.floor(
-        sessionTtlMs / 1000,
-      )}${secure}`,
-    );
+    response.setHeader('Set-Cookie', sessionCookie(request, id, Math.floor(sessionTtlMs / 1000)));
     sendJson(response, 200, {
       ok: true,
       csrfToken,
@@ -531,6 +778,33 @@ export function createManagementServer({
     sendJson(response, statusFor(result), sanitizeForWeb(result));
   }
 
+  async function attentionDocumentRoute(request, response, attentionId) {
+    const session = await requireSession(request, response);
+    if (!session) return;
+    if (request.method !== 'GET' && request.method !== 'HEAD')
+      return methodFailure(response, ['GET', 'HEAD']);
+    const result = await services.projection.getAttentionDocument(attentionId);
+    if (!result.ok) return sendJson(response, statusFor(result), sanitizeForWeb(result));
+    const html = `<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>SpecGate 审批文档</title>
+</head>
+<body>
+  <main>
+    <p><a href="/">返回 SpecGate 控制台</a></p>
+    <p>${escapeHtml(result.document.path)}</p>
+    <pre>${escapeHtml(result.document.content)}</pre>
+  </main>
+</body>
+</html>`;
+    response.statusCode = 200;
+    response.setHeader('Content-Type', 'text/html; charset=utf-8');
+    response.end(request.method === 'HEAD' ? undefined : html);
+  }
+
   async function mutationRoute(request, response, pathname) {
     const session = await requireSession(request, response);
     if (!session) return;
@@ -544,7 +818,39 @@ export function createManagementServer({
       return;
     }
     let authLevel = 'session';
-    if (body.stepUpCode !== undefined) {
+    let stepUpProof = body.stepUpProof;
+    delete body.stepUpProof;
+    if (session.mode === 'account') {
+      const action =
+        pathname === '/api/decisions'
+          ? body.action
+          : {
+              '/api/work-items/pause': 'pause',
+              '/api/work-items/resume': 'resume',
+              '/api/work-items/retry': 'retry',
+              '/api/work-items/cancel': 'cancel',
+              '/api/work-items/request-changes': 'request_changes',
+              '/api/deliveries/accept': 'accept_delivery',
+            }[pathname] || pathname.slice('/api/'.length).replaceAll('/', '.');
+      const resourceId = body.attentionId || body.workItemId || body.deliveryId || null;
+      if (requiredAuth(action) === 'step-up') {
+        if (!stepUpProof) {
+          sendJson(response, 403, failure('STEP_UP_REQUIRED', 'A one-time TOTP proof is required'));
+          return;
+        }
+        const authorized = await authService.authorizeStepUp({
+          token: session.token,
+          proof: stepUpProof,
+          action,
+          resourceId,
+        });
+        if (!authorized.ok) {
+          sendJson(response, statusFor(authorized), authorized);
+          return;
+        }
+        authLevel = 'step-up';
+      }
+    } else if (body.stepUpCode !== undefined) {
       let verified = false;
       try {
         verified = await services.verifyStepUp?.(body.stepUpCode);
@@ -559,6 +865,7 @@ export function createManagementServer({
     }
     const input = { ...body };
     delete input.stepUpCode;
+    delete input.stepUpProof;
     input.actorId = session.actor.id;
     input.source = 'web';
     input.authLevel = authLevel;
@@ -637,8 +944,20 @@ export function createManagementServer({
     }
     const pathname = url.pathname;
     try {
+      if (pathname.startsWith('/api/auth/')) {
+        return await accountRoute(request, response, pathname);
+      }
       if (pathname === '/api/session') return await sessionRoute(request, response);
       if (MUTATIONS.has(pathname)) return await mutationRoute(request, response, pathname);
+      const documentMatch = /^\/api\/attention\/([^/]+)\/document$/.exec(pathname);
+      if (documentMatch) {
+        const attentionId = decodeId(documentMatch[1]);
+        if (!attentionId) {
+          sendJson(response, 400, failure('INVALID_ARGUMENT', 'AttentionRequest id is invalid'));
+          return;
+        }
+        return await attentionDocumentRoute(request, response, attentionId);
+      }
       if (pathname.startsWith('/api/')) return await queryRoute(request, response, pathname);
       return await staticRoute(request, response, pathname);
     } catch {

@@ -5,6 +5,48 @@ import os from 'node:os';
 import path from 'node:path';
 import { startControlDaemon } from '../src/codex/control/daemon.js';
 import { runControlCli } from '../scripts/specgate-control.mjs';
+
+function remoteAuthService() {
+  return {
+    async login() {
+      return {
+        ok: true,
+        token: 'remote-session',
+        csrfToken: 'remote-csrf',
+        expiresAt: Date.now() + 60000,
+        user: { userId: 'owner-1', username: 'owner', role: 'owner' },
+        device: { deviceId: 'device-1', name: 'Phone', status: 'ACTIVE' },
+      };
+    },
+    async authenticate({ token }) {
+      return token === 'remote-session'
+        ? {
+            ok: true,
+            session: {
+              sessionId: 'session-1',
+              userId: 'owner-1',
+              deviceId: 'device-1',
+              csrfHash: '0'.repeat(64),
+              authLevel: 'session',
+              createdAt: new Date().toISOString(),
+              expiresAt: new Date(Date.now() + 60000).toISOString(),
+            },
+            user: { userId: 'owner-1', username: 'owner', role: 'owner' },
+            device: { deviceId: 'device-1', name: 'Phone', status: 'ACTIVE' },
+          }
+        : { ok: false, code: 'UNAUTHORIZED' };
+    },
+    verifyCsrf: () => false,
+    beginStepUp: async () => ({ ok: true }),
+    completeStepUp: async () => ({ ok: true }),
+    authorizeStepUp: async () => ({ ok: true }),
+    listDevices: async () => ({ ok: true, devices: [] }),
+    revokeDevice: async () => ({ ok: true }),
+    logout: async () => ({ ok: true }),
+    redeemAttentionNonce: async () => ({ ok: true }),
+    createAttentionNonce: async () => ({ ok: true, nonce: 'nonce-1' }),
+  };
+}
 import { createControlStore } from '../src/codex/control/store.js';
 import { createControlService } from '../src/codex/control/service.js';
 import {
@@ -66,6 +108,9 @@ test('remote management daemon refuses incomplete deployment configuration befor
       SPECGATE_MANAGEMENT_PUBLIC_URL: 'https://control.example.test',
       SPECGATE_MANAGEMENT_ALLOWED_HOSTS: 'control.example.test',
       SPECGATE_MANAGEMENT_ALLOWED_ORIGINS: 'https://control.example.test',
+      SPECGATE_MYSQL_CONFIG: path.join(controlRoot, 'mysql-config-placeholder.json'),
+      SPECGATE_AUTH_ENCRYPTION_KEY: 'a'.repeat(64),
+      SPECGATE_AUTH_DEVICE_CONFIRMATION_CODE_HASH: 'b'.repeat(64),
     },
     projectRoot,
     managementPort: 0,
@@ -94,10 +139,14 @@ test('remote management daemon starts only behind a configured HTTPS proxy bound
       SPECGATE_MANAGEMENT_ALLOWED_HOSTS: 'control.example.test',
       SPECGATE_MANAGEMENT_ALLOWED_ORIGINS: 'https://control.example.test',
       SPECGATE_MANAGEMENT_TRUSTED_PROXIES: '127.0.0.1',
+      SPECGATE_MYSQL_CONFIG: path.join(controlRoot, 'mysql-config-placeholder.json'),
+      SPECGATE_AUTH_ENCRYPTION_KEY: 'a'.repeat(64),
+      SPECGATE_AUTH_DEVICE_CONFIRMATION_CODE_HASH: 'b'.repeat(64),
     },
     projectRoot,
     managementPort: 0,
     pollMs: 60000,
+    authService: remoteAuthService(),
     adapter: {
       async run() {
         return { ok: true, exitCode: 0, sessionId: 'remote-valid-session' };
@@ -117,10 +166,14 @@ test('control CLI exposes help and generates MFA material without writing config
   const help = await runControlCli({ args: ['help'], env: {} });
   assert.equal(help.ok, true);
   assert.ok(help.usage.some((line) => line.includes('specgate-control start')));
+  assert.ok(help.usage.some((line) => line.includes('specgate-control auth-init')));
   const mfa = await runControlCli({ args: ['mfa'], env: {} });
   assert.equal(mfa.ok, true);
   assert.match(mfa.secret, /^[A-Z2-7]+$/);
   assert.match(mfa.otpauth, /^otpauth:\/\/totp\//);
+  const missingAuthInput = await runControlCli({ args: ['auth-init'], env: {} });
+  assert.equal(missingAuthInput.ok, false);
+  assert.equal(missingAuthInput.code, 'AUTH_INPUT_REQUIRED');
 });
 
 test('control CLI doctor reports portable launch readiness without leaking secrets', async () => {
