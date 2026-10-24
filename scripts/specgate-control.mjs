@@ -310,6 +310,7 @@ export async function runControlCli({
       controlRoot,
       managementPublicUrl: config.managementPublicUrl,
       feishuConfigured: Boolean(config.feishuWebhookUrl),
+      dingtalkConfigured: Boolean(config.dingtalkWebhookUrl),
       mfaConfigured: Boolean(config.mfaSecret),
       authConfigured: Boolean(
         config.mysqlConfigPath && config.authEncryptionKey && config.authDeviceConfirmationCodeHash,

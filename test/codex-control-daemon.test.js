@@ -317,7 +317,7 @@ test('control CLI refuses to silently rebind an already running daemon project',
   assert.equal(result.code, 'PROJECT_BINDING_CONFLICT');
 });
 
-test('daemon dispatches open AttentionRequest through Feishu Outbox without blocking state', async (t) => {
+test('daemon fans out AttentionRequest through Feishu and DingTalk without blocking state', async (t) => {
   const controlRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'sg-control-notify-'));
   const projectRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'sg-control-notify-project-'));
   const env = {
@@ -337,6 +337,7 @@ test('daemon dispatches open AttentionRequest through Feishu Outbox without bloc
     service,
   };
   const sent = [];
+  const dingtalkSent = [];
   const daemon = await startControlDaemon({
     env,
     runtime,
@@ -344,6 +345,7 @@ test('daemon dispatches open AttentionRequest through Feishu Outbox without bloc
     managementPort: 0,
     maxConcurrent: 1,
     pollMs: 60000,
+    initialTick: false,
     adapter: {
       async run() {
         return { ok: true, exitCode: 0 };
@@ -353,6 +355,12 @@ test('daemon dispatches open AttentionRequest through Feishu Outbox without bloc
       async send(message) {
         sent.push(message);
         return { ok: true, receipt: { messageId: 'message-1' } };
+      },
+    },
+    dingtalkNotifier: {
+      async send(message) {
+        dingtalkSent.push(message);
+        return { ok: true, receipt: { messageId: 'dingtalk-message-1' } };
       },
     },
   });
@@ -377,8 +385,22 @@ test('daemon dispatches open AttentionRequest through Feishu Outbox without bloc
   assert.equal(dispatched.dispatched, 1);
   const drained = await daemon.outbox.drain();
   assert.equal(drained.ok, true);
-  assert.equal(drained.sent, 1);
-  assert.equal(sent.length, 1);
+  assert.equal(drained.sent, 2);
+  const notificationState = await service.projection.listNotifications();
+  assert.equal(
+    sent.length,
+    1,
+    JSON.stringify({
+      sent: sent.map((message) => message.notification),
+      notifications: notificationState.notifications,
+    }),
+  );
+  assert.equal(
+    dingtalkSent.length,
+    1,
+    JSON.stringify(dingtalkSent.map((message) => message.notification)),
+  );
+  assert.deepEqual(daemon.notificationChannels, ['feishu', 'dingtalk']);
   assert.match(sent[0].managementUrl, /#attention=/);
   const current = await service.projection.getWorkItem(created.workItem.workItemId);
   assert.equal(current.workItem.executionState, 'WAITING_FOR_USER');
@@ -400,8 +422,9 @@ test('daemon dispatches open AttentionRequest through Feishu Outbox without bloc
   assert.equal(resolved.ok, true);
   assert.equal(resolved.dispatched, 1);
   const resolutionDrain = await daemon.outbox.drain();
-  assert.equal(resolutionDrain.sent, 1);
+  assert.equal(resolutionDrain.sent, 2);
   assert.equal(sent.length, 2);
+  assert.equal(dingtalkSent.length, 2);
   assert.equal(sent[1].notification.kind, 'resolution');
   assert.equal(sent[1].notification.status, 'DECIDED');
 });

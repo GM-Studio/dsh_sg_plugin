@@ -17,7 +17,13 @@ import {
 import { createSyncProbeRunner, describeDegradation, detectCapabilities } from './capabilities.js';
 import { resolveGlobalConcurrency } from './projects.js';
 import { createFeishuNotifier } from '../channels/feishu.js';
-import { createAttentionNotifier, createNotificationOutbox } from '../channels/outbox.js';
+import { createDingTalkNotifier } from '../channels/dingtalk.js';
+import { createNotificationFanout } from '../channels/fanout.js';
+import { createAttentionNotifier } from '../channels/outbox.js';
+import {
+  createAttentionLifecycle,
+  createAttentionLifecycleNotifier,
+} from './attention-lifecycle.js';
 import { createConfiguredAuthService } from './auth-runtime.js';
 import { createConfiguredWorkerGateway } from './worker-runtime.js';
 
@@ -64,11 +70,13 @@ export async function startControlDaemon({
   managementHost = '127.0.0.1',
   adapter = null,
   feishuNotifier = null,
+  dingtalkNotifier = null,
   authService: providedAuthService = null,
   workerGateway: providedWorkerGateway = null,
   runtime: providedRuntime = null,
   requireExecJson = false,
   probeCapabilities = false,
+  initialTick = true,
   detectCapabilitiesFn = detectCapabilities,
   probeRunnerFactory = createSyncProbeRunner,
   logger = () => {},
@@ -218,8 +226,10 @@ export async function startControlDaemon({
   });
 
   let feishu = null;
+  let dingtalk = null;
   let outbox = null;
   let attentionNotifier = null;
+  const channels = [];
   if (feishuNotifier || config.feishuWebhookUrl) {
     feishu =
       feishuNotifier ||
@@ -227,14 +237,25 @@ export async function startControlDaemon({
         webhookUrl: config.feishuWebhookUrl,
         clock,
       });
-    outbox = createNotificationOutbox({
+    channels.push({ name: 'feishu', notifier: feishu });
+  }
+  if (dingtalkNotifier || config.dingtalkWebhookUrl) {
+    dingtalk =
+      dingtalkNotifier ||
+      createDingTalkNotifier({
+        webhookUrl: config.dingtalkWebhookUrl,
+        clock,
+      });
+    channels.push({ name: 'dingtalk', notifier: dingtalk });
+  }
+  if (channels.length > 0) {
+    outbox = createNotificationFanout({
       store: runtime.service,
-      notifier: feishu,
+      channels,
       clock,
-      ownerId: `outbox-${process.pid}`,
     });
     attentionNotifier = createAttentionNotifier({
-      outbox,
+      outbox: { enqueue: outbox.enqueue },
       managementBaseUrl: config.managementPublicUrl,
       ...(configuredAuth.authService
         ? {
@@ -250,6 +271,42 @@ export async function startControlDaemon({
         : { tokenFactory: () => management.issuePairingToken().token }),
     });
   }
+  const lifecycleNotifier = outbox
+    ? createAttentionLifecycleNotifier({
+        fanout: outbox,
+        managementBaseUrl: config.managementPublicUrl,
+        credentialFactory: async (attention) => {
+          if (configuredAuth.authService) {
+            const issued = await configuredAuth.authService.createAttentionNonce({
+              attentionId: attention.requestId,
+            });
+            return issued.ok
+              ? { parameter: 'nonce', value: issued.nonce }
+              : { parameter: 'nonce', value: null };
+          }
+          return { parameter: 'token', value: management.issuePairingToken().token };
+        },
+      })
+    : {
+        notifyReminder: async () =>
+          failure('NOTIFICATION_CHANNEL_UNAVAILABLE', 'No notification channel is configured'),
+        notifyEscalation: async () =>
+          failure('NOTIFICATION_CHANNEL_UNAVAILABLE', 'No notification channel is configured'),
+        notifyDecision: async () =>
+          failure('NOTIFICATION_CHANNEL_UNAVAILABLE', 'No notification channel is configured'),
+        notifyResolution: async () =>
+          failure('NOTIFICATION_CHANNEL_UNAVAILABLE', 'No notification channel is configured'),
+        notifyOutcome: async () =>
+          failure('NOTIFICATION_CHANNEL_UNAVAILABLE', 'No notification channel is configured'),
+      };
+  const attentionLifecycle = createAttentionLifecycle({
+    service: runtime.service,
+    notifier: lifecycleNotifier,
+    clock,
+    reminderAfterMs: config.attentionReminderAfterMs,
+    escalationBeforeMs: config.attentionEscalationBeforeMs,
+    maxReminders: config.attentionMaxReminders,
+  });
 
   let stopped = false;
   const active = new Set();
@@ -345,6 +402,7 @@ export async function startControlDaemon({
     }
     await dispatchAttention();
     await dispatchResolutions();
+    await attentionLifecycle.tick();
     if (outbox) await outbox.drain({ maxBatches: 20 });
   }
 
@@ -353,11 +411,12 @@ export async function startControlDaemon({
     () => {
       void dispatchAttention();
       void dispatchResolutions();
+      void attentionLifecycle.tick();
       if (outbox) void outbox.drain({ maxBatches: 20 });
     },
     Math.max(1000, pollMs),
   );
-  void tick();
+  if (initialTick) void tick();
 
   const statusPath = path.join(runtime.store.root, 'daemon.json');
   const baseUrl = started.baseUrl;
@@ -381,6 +440,8 @@ export async function startControlDaemon({
     managementPublicUrl: config.managementPublicUrl,
     pairingUrl,
     feishuConfigured: Boolean(feishu),
+    dingtalkConfigured: Boolean(dingtalk),
+    notificationChannels: outbox?.channels || [],
     mfaConfigured: Boolean(config.mfaSecret),
     authMode: configuredAuth.authService ? 'account' : 'pairing',
     workerApiConfigured: Boolean(configuredWorker.workerGateway),
@@ -399,6 +460,7 @@ export async function startControlDaemon({
     clearInterval(timer);
     clearInterval(dispatchTimer);
     supervisor.stop();
+    attentionLifecycle.stop();
     const drained = Promise.allSettled([...active]);
     const timeout = new Promise((resolve) => setTimeout(resolve, shutdownTimeoutMs));
     await Promise.race([drained, timeout]);
@@ -418,6 +480,8 @@ export async function startControlDaemon({
     management,
     supervisor,
     outbox,
+    attentionLifecycle,
+    notificationChannels: outbox?.channels || [],
     workerGateway: configuredWorker.workerGateway,
     workerStorage: configuredWorker.storage,
     mode: controlMode,

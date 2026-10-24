@@ -33,7 +33,10 @@
 | M2 认证、设备与会话           | 完成   | `09-m2-auth-delivery.md`；账号/TOTP、设备撤销、proof、nonce 与真实 MySQL             |
 | M3 Worker 与云端连接          | 完成   | `10-m3-worker-delivery.md`；出站、白名单、租约、补偿、类型化命令与真实 MySQL         |
 | M4 WorkItem/Run 与 Codex 恢复 | 完成   | `11-m4-codex-recovery-delivery.md`；远程执行、举手、Decision 应用和原 session resume |
-| M5-M10                        | 待开始 | 按原计划依赖顺序推进                                                                 |
+| M5 通知与 Attention 生命周期  | 完成   | `12-m5-notifications-delivery.md`；多渠道扇出、提醒/升级/过期与故障隔离              |
+| M6 决策、审计与证据时间线     | 实施中 | 脱敏事件、审计查询导出、artifact/版本关联和可回放时间线                              |
+| M7 多项目例外收件箱与 SSE     | 实施中 | 风险排序、项目/角色裁剪、SSE 与轮询回退                                              |
+| M8-M10                        | 待开始 | 按原计划依赖顺序推进                                                                 |
 
 验收映射与未执行边界仍以
 `docs/implementation/2026-10-23-codex-ai-delivery-control-plane/05-acceptance-mapping.md`

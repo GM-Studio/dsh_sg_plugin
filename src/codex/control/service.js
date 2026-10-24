@@ -1422,7 +1422,10 @@ export function createControlService({
         notificationId: record.notificationId,
         workItemId: record.workItemId,
         attentionId: record.attentionId,
-        kind: record.kind === 'resolution' ? 'resolution' : 'attention',
+        kind: ['attention', 'reminder', 'escalation', 'resolution'].includes(record.kind)
+          ? record.kind
+          : 'attention',
+        ...(record.channel ? { channel: record.channel } : {}),
         dedupeKey: record.dedupeKey,
         message: clone(record.message),
         status: 'pending',
@@ -1453,15 +1456,23 @@ export function createControlService({
     });
   }
 
-  async function claimPendingNotifications({ now = clock(), limit = 10, owner = ownerId } = {}) {
+  async function claimPendingNotifications({
+    now = clock(),
+    limit = 10,
+    owner = ownerId,
+    channel = null,
+  } = {}) {
     if (!Number.isSafeInteger(limit) || limit < 1 || limit > 100)
       return failure('INVALID_ARGUMENT', 'Notification claim limit is invalid');
+    if (channel !== null && !['feishu', 'dingtalk', 'webhook'].includes(channel))
+      return failure('INVALID_ARGUMENT', 'Notification channel is invalid');
     return store.mutate((state) => {
       const claimed = [];
       for (const notification of Object.values(state.notifications)
         .filter(
           (entry) =>
             ['pending', 'failed', 'sending'].includes(entry.status) &&
+            (channel === null || entry.channel === channel) &&
             Date.parse(entry.nextAttemptAt) <= now &&
             (entry.status !== 'sending' ||
               !entry.leaseExpiresAt ||

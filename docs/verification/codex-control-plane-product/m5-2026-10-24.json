@@ -1,0 +1,119 @@
+{
+  "version": 1,
+  "stage": "M5",
+  "date": "2026-10-24",
+  "timezone": "Asia/Shanghai",
+  "branch": "sg-codex",
+  "baseCommit": "221f5f5",
+  "worktreeId": "WORKTREE-2026-10-24-M5",
+  "hashPolicy": "SHA-256 of UTF-8 text with CRLF normalized to LF; sourceArtifactSha256 hashes the ordered files array JSON",
+  "sourceArtifactSha256": "13f7e3eee553b0f5931577a737abc6204d0591b21af1fbf1764db00a0795457e",
+  "files": [
+    {
+      "path": "src/codex/channels/adapter.js",
+      "sha256": "9d2902a408ef1b099532d9a2388bdd2c570c19b705d42b2a9611cbead6938ebd"
+    },
+    {
+      "path": "src/codex/channels/dingtalk.js",
+      "sha256": "017d389ae53b49b15c00cae3e344885268a07761d28140bf7381f737baa36635"
+    },
+    {
+      "path": "src/codex/channels/fanout.js",
+      "sha256": "098d1801bd4d79f25e1a42b19f7750142a26c7e8394421cf0f8735f1e85dbc0d"
+    },
+    {
+      "path": "src/codex/channels/outbox.js",
+      "sha256": "1ef6acd659d1d18557e2a7a1ee0d1bdeda15345761e9c18f8bffec0adc4c86a8"
+    },
+    {
+      "path": "src/codex/channels/feishu.js",
+      "sha256": "e8255cadfb85a388cb632435e8d0520c33213c9040fe1ebe29dc82fec69ebe17"
+    },
+    {
+      "path": "src/codex/control/attention-lifecycle.js",
+      "sha256": "7158bd080f5760a414cf8a38ba599225defe7c4000d7ed9e99144c7305af3dfb"
+    },
+    {
+      "path": "src/codex/control/daemon.js",
+      "sha256": "d5a5246bec03d28c66e7d0aff627cac453b4a23e01831b5c067c2c338f1e33dd"
+    },
+    {
+      "path": "src/codex/control/config.js",
+      "sha256": "df94877a5ab668148c7f75ee466bdb1651c108137eea45d222f97295c835c791"
+    },
+    {
+      "path": "src/codex/control/service.js",
+      "sha256": "0738d55dbe3d0f04a8d0f953c2dd437c02da4a76939a73dcda30e427de470fe5"
+    },
+    {
+      "path": "scripts/specgate-control.mjs",
+      "sha256": "cb7e51309a3b67636adef9203d7d3cf7f24a6d645d61e328928df43f2eed4060"
+    },
+    {
+      "path": "test/codex-control-m5-notifications.test.js",
+      "sha256": "c19853af3b1b858044aa113b4526972ff87ab96a1636affc0f9b30eb7c1aa9aa"
+    },
+    {
+      "path": "test/codex-notification-outbox.test.js",
+      "sha256": "be2647101884e28d16d9380e872b6befe430549ebd51f891e21452285145ffc2"
+    },
+    {
+      "path": "test/codex-feishu.test.js",
+      "sha256": "660f12b5e7cf9a40cca908361dd3a20ddcf3e2762b71999d1f4df59a2d29041e"
+    },
+    {
+      "path": "test/codex-control-daemon.test.js",
+      "sha256": "fd9c197a7ba36d011c764a562277ac146a8ed76a8751167ae2cf59a0bff0bf64"
+    },
+    {
+      "path": "test/codex-control-service.test.js",
+      "sha256": "a8e221ebe557fdbb1e4ef864ee66448fe811b21dbdd4e743c306a810df5d550d"
+    },
+    {
+      "path": "test/codex-control-config.test.js",
+      "sha256": "0094d0158595ec91fc405bae2ec99be617f639e1abf4d6f2b2977a02cf4e8091"
+    }
+  ],
+  "checks": [
+    {
+      "command": "M5 focused notifications/Feishu/outbox/daemon/service/config suite",
+      "exitCode": 0,
+      "tests": 63,
+      "pass": 63,
+      "fail": 0,
+      "cancelled": 0,
+      "skipped": 0,
+      "todo": 0
+    },
+    {
+      "command": "npm run lint",
+      "exitCode": 0
+    },
+    {
+      "command": "npm run format:check",
+      "exitCode": 0
+    },
+    {
+      "command": "git diff --check",
+      "exitCode": 0
+    }
+  ],
+  "verifiedScenarios": [
+    "independent Feishu and DingTalk outbox delivery",
+    "one channel failure does not block another",
+    "per-channel claim filtering and dedupe",
+    "all-channel outage does not block Attention expiry",
+    "bounded reminder and one escalation",
+    "expired outcome and resolution notifications",
+    "double redaction and forbidden content fail closed",
+    "no inbound channel callbacks"
+  ],
+  "notRun": [
+    "real Feishu webhook delivery",
+    "real DingTalk webhook delivery",
+    "real mobile deep-link delivery",
+    "full combined npm test deferred until M5-M7 integration",
+    "human acceptance of the M5 stage"
+  ],
+  "humanAcceptance": "PENDING"
+}

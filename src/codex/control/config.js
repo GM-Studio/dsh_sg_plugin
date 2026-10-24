@@ -54,6 +54,11 @@ function listEnvironmentValue(value) {
     .filter(Boolean);
 }
 
+function positiveInteger(value, fallback, { minimum = 1, maximum = 2_000_000_000 } = {}) {
+  const parsed = Number(value);
+  return Number.isSafeInteger(parsed) && parsed >= minimum && parsed <= maximum ? parsed : fallback;
+}
+
 function managementDeploymentMode(value) {
   const mode = String(value || 'local')
     .trim()
@@ -115,6 +120,19 @@ export function localControlEnvironment(env = process.env) {
     ownerId: env.SPECGATE_OWNER_ID || 'local-owner',
     mfaSecret: env.SPECGATE_MFA_SECRET || null,
     feishuWebhookUrl: env.SPECGATE_FEISHU_WEBHOOK_URL || null,
+    dingtalkWebhookUrl: env.SPECGATE_DINGTALK_WEBHOOK_URL || null,
+    attentionReminderAfterMs: positiveInteger(
+      env.SPECGATE_ATTENTION_REMINDER_AFTER_MS,
+      30 * 60 * 1000,
+    ),
+    attentionEscalationBeforeMs: positiveInteger(
+      env.SPECGATE_ATTENTION_ESCALATION_BEFORE_MS,
+      30 * 60 * 1000,
+    ),
+    attentionMaxReminders: positiveInteger(env.SPECGATE_ATTENTION_MAX_REMINDERS, 3, {
+      minimum: 0,
+      maximum: 100,
+    }),
     managementPort,
     managementPublicUrl: env.SPECGATE_MANAGEMENT_PUBLIC_URL || `http://127.0.0.1:${managementPort}`,
     managementDeploymentMode: managementDeploymentMode(env.SPECGATE_MANAGEMENT_DEPLOYMENT_MODE),
