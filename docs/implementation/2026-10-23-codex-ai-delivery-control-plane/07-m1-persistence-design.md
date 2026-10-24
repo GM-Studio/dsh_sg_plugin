@@ -2,12 +2,15 @@
 
 - 日期：2026-10-23
 - 分支：`feat_web`
-- 状态：**受控内存契约已实现；真实 MySQL 验收未执行**
+- 状态：**2026-10-23 历史记录；真实 MySQL 后续证据见 08-m1-mysql-delivery.md**
 - 适用需求：`docs/requirements/2026-10-23-codex-ai-delivery-control-plane-product.zh.md`
 - 适用计划：`docs/plans/2026-10-23-codex-ai-delivery-control-plane-product-plan.zh.md`
 - 工作树证据：`WORKTREE-2026-10-23-02`
 
 本文件记录 M1 的实现边界、不变量、已执行证据和未执行风险。它不是生产验收报告，也不能替代真实 MySQL、备份恢复或并发演练。
+
+2026-10-24 已补齐 MySQL adapter 和加密恢复演练。以下未执行项描述本文件原始记录时点；
+当前阶段状态以 [M1 MySQL 交付报告](08-m1-mysql-delivery.md) 为准。
 
 ## 1. 目标与边界
 

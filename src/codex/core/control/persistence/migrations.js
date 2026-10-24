@@ -48,7 +48,7 @@ export async function readMigrationFiles({ directory = DEFAULT_DIRECTORY } = {})
     entries.push({
       migrationId: name.replace(/\.sql$/, ''),
       file: name,
-      checksum: sha256(sql),
+      checksum: sha256(sql.replace(/\r\n/g, '\n')),
       sql,
     });
   }
@@ -160,7 +160,11 @@ export async function applyMigrations({
       await connection.query(entry.sql);
       await connection.query(
         'INSERT INTO schema_migration (migration_id, checksum, applied_at) VALUES (?, ?, ?)',
-        [entry.migrationId, entry.checksum, new Date().toISOString()],
+        [
+          entry.migrationId,
+          entry.checksum,
+          new Date().toISOString().replace('T', ' ').slice(0, 23),
+        ],
       );
     }
     await connection.commit();

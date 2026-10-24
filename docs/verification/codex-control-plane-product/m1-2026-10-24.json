@@ -1,0 +1,163 @@
+{
+  "version": 1,
+  "stage": "M1",
+  "date": "2026-10-24",
+  "timezone": "Asia/Shanghai",
+  "branch": "sg-codex",
+  "baseCommit": "06482cf8601292860cc647667ac5b93313a8ef99",
+  "worktreeId": "WORKTREE-2026-10-24-M1",
+  "hashPolicy": "SHA-256 of UTF-8 text with CRLF normalized to LF; sourceArtifactSha256 hashes the ordered files array JSON",
+  "sourceArtifactSha256": "858f3e3c97e3d5a2e77630c63250cc95bd1ab416bae6df250b5a053d692c5e38",
+  "files": [
+    {
+      "path": "package-lock.json",
+      "sha256": "467e4e28940388c379d10b9fe980cf3568a50c31d1a87ba7aaa317fa1a118caa"
+    },
+    {
+      "path": "package.json",
+      "sha256": "b96b12a4b223d36f3cd6147e238f3255fe717d81015a38170b8e39de866c5b32"
+    },
+    {
+      "path": "src/codex/core/control/persistence/memory-repository.js",
+      "sha256": "3d0a695f9ed9b4658d115771e44fb45b134955e914b5130be2a51f4224d7305b"
+    },
+    {
+      "path": "src/codex/core/control/persistence/migrations.js",
+      "sha256": "c86a2bdbe2c8c9ca22a623bb1abcc7295ebdd1443b662d51b13d69648a6d7c19"
+    },
+    {
+      "path": "src/codex/core/control/persistence/migrations/001-initial.sql",
+      "sha256": "4f379795ff4b5920b4da17f22da012810adefeb363fc7f1a7e20a805e3247888"
+    },
+    {
+      "path": "src/codex/core/control/persistence/migrations/002-repository-contract.sql",
+      "sha256": "80a236fa7b52cbff739fea314001bae3574becf985280fcf62758131a97c8093"
+    },
+    {
+      "path": "src/codex/core/control/persistence/mysql-backup.js",
+      "sha256": "5d2430117bcb27dca21cf79bb87789044f0c83bf6a3b007bc16b057cc8745141"
+    },
+    {
+      "path": "src/codex/core/control/persistence/mysql-repository.js",
+      "sha256": "916b33e3f1bbbabb31dd92ef10b78f60cce465bd598f285d75c1f05ead08b7ad"
+    },
+    {
+      "path": "src/codex/core/control/persistence/repository-contract.js",
+      "sha256": "f7d8d10d8bb5b32b10316c5267f791ad59fde57c51d4f34b159eaa80bf2058c1"
+    },
+    {
+      "path": "src/codex/core/control/persistence/state-machine.js",
+      "sha256": "3395280e1a01111db968557b34c02e538d5d067f396d459decd8f6a7e631ffe6"
+    },
+    {
+      "path": "test/codex-control-persistence-audit-retention.test.js",
+      "sha256": "110d3a584ec25f9c729f8918df2e010281cdeab3a8cdbd98b7c6616bc30fcde8"
+    },
+    {
+      "path": "test/codex-control-persistence-migrations.test.js",
+      "sha256": "f13f436121372687c631b6c4ad42ee7cc7b503f6c35165f6e0b1d3bd0513dde1"
+    },
+    {
+      "path": "test/codex-control-persistence-mysql.test.js",
+      "sha256": "94e4f8b955fe2144f4216d7ac8e1a33bbe0bf0826ff52e27be79f4f0094b3860"
+    },
+    {
+      "path": "test/codex-control-persistence-repository.test.js",
+      "sha256": "d5446db70462c0b841f7a91b26afb43c07f70c298a30d810b6442eb225ecb9e6"
+    },
+    {
+      "path": "test/codex-control-persistence-schema.test.js",
+      "sha256": "137a7aab4d3c0d468d5c3dcde956c77c7a203f882897f7e88e217f79090af89d"
+    },
+    {
+      "path": "test/codex-control-persistence-state-machine.test.js",
+      "sha256": "acf099ce2b4e3723071f6ba0e678519c429b1efec0c13067987849e0c088d743"
+    },
+    {
+      "path": "test/codex-plugin-package.test.js",
+      "sha256": "c808be608e1321390005bcb00bec7c80d92f8711f62d57782d8eddb7a0c2d31b"
+    }
+  ],
+  "environment": {
+    "platform": "win32",
+    "node": "v24.14.0",
+    "npm": "11.9.0",
+    "mysql": "8.4.13",
+    "engine": "InnoDB",
+    "databaseTimezone": "UTC",
+    "network": "127.0.0.1 only; MySQL X disabled"
+  },
+  "checks": [
+    {
+      "command": "node --import ./test/setup-temp.mjs --test test/codex-control-persistence-migrations.test.js test/codex-control-persistence-state-machine.test.js test/codex-control-persistence-schema.test.js test/codex-control-persistence-repository.test.js test/codex-control-persistence-audit-retention.test.js test/codex-control-persistence-mysql.test.js test/codex-plugin-package.test.js",
+      "exitCode": 0,
+      "tests": 52,
+      "pass": 52,
+      "fail": 0,
+      "cancelled": 0,
+      "skipped": 0,
+      "todo": 0
+    },
+    {
+      "command": "npm test",
+      "mysqlConfigured": true,
+      "exitCode": 0,
+      "tests": 545,
+      "pass": 544,
+      "fail": 0,
+      "cancelled": 0,
+      "skipped": 1,
+      "todo": 0
+    },
+    {
+      "command": "npm run lint",
+      "exitCode": 0
+    },
+    {
+      "command": "npm run format:check",
+      "exitCode": 0
+    },
+    {
+      "command": "npm run pack:check",
+      "npmCache": "project .npm-cache",
+      "exitCode": 0
+    },
+    {
+      "command": "git diff --check",
+      "exitCode": 0
+    }
+  ],
+  "skipped": [
+    {
+      "name": "requesting the react frontend without its template tree fails closed",
+      "reason": "react template tree is already on disk"
+    }
+  ],
+  "verifiedScenarios": [
+    "empty/repeat/concurrent migration",
+    "64-character database name",
+    "checksum drift rejection",
+    "DDL partial effects and recovery",
+    "two-pool CAS with one winner",
+    "Decision and Evidence idempotency",
+    "atomic Decision application and stale rejection",
+    "Notification dedupe and recipient hash",
+    "16 concurrent audit appends",
+    "SQL write/delete fault rollback",
+    "cross-project retention isolation",
+    "encrypted authenticated logical backup and empty-database restore",
+    "all restored table rows, revisions and audit chain match",
+    "audit tampering and tail-deletion rejection",
+    "offline tarball install, bundled driver load and MCP smoke"
+  ],
+  "notRun": [
+    "Linux/MySQL version matrix",
+    "production binlog/RPO/RTO disaster-recovery drill",
+    "cloud HTTPS browser deployment",
+    "remote password/TOTP/device auth",
+    "outbound Worker and real Codex resume",
+    "real Feishu/DingTalk delivery",
+    "audit archival and verifiable deletion"
+  ],
+  "humanAcceptance": "PENDING"
+}

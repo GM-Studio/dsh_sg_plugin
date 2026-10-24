@@ -78,6 +78,14 @@ test('empty database plans all migrations and repeated plan applies none', async
   assert.deepEqual(repeated.pending, []);
 });
 
+test('migration checksums survive Windows and POSIX checkouts', async () => {
+  const directory = fixture({ '001-initial.sql': 'SELECT 1;\r\nSELECT 2;\r\n' });
+  const windows = await createMigrationManifest({ directory });
+  fs.writeFileSync(path.join(directory, '001-initial.sql'), 'SELECT 1;\nSELECT 2;\n');
+  const posix = await createMigrationManifest({ directory });
+  assert.equal(windows[0].checksum, posix[0].checksum);
+});
+
 test('checksum mismatch and unknown applied migrations fail closed', async () => {
   const directory = fixture();
   const manifest = await createMigrationManifest({ directory });

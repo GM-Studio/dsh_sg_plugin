@@ -125,6 +125,20 @@ test(
       installRoot,
     );
     const pluginRoot = path.join(installRoot, 'node_modules/specgate-codex');
+    const driverSmoke = spawnSync(
+      process.execPath,
+      [
+        '--input-type=module',
+        '-e',
+        'const m = await import(process.argv[1]); const p = m.createMysqlPool({database:"offline"}); await p.end();',
+        pathToFileURL(
+          path.join(pluginRoot, 'src/codex/core/control/persistence/mysql-repository.js'),
+        ).href,
+      ],
+      { cwd: installRoot, encoding: 'utf8', timeout: 10000, windowsHide: true },
+    );
+    assert.ifError(driverSmoke.error);
+    assert.equal(driverSmoke.status, 0, driverSmoke.stderr);
     const { smokePlugin } = await import('../scripts/codex-plugin-smoke.mjs');
     const projectRoot = path.join(fixture, 'project 中文');
     fs.mkdirSync(projectRoot);

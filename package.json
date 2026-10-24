@@ -72,5 +72,11 @@
     "eslint": "^10.13.0",
     "globals": "^17.13.0",
     "prettier": "^3.9.10"
-  }
+  },
+  "dependencies": {
+    "mysql2": "^3.24.6"
+  },
+  "bundledDependencies": [
+    "mysql2"
+  ]
 }
