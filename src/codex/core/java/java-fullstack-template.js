@@ -162,7 +162,7 @@ function resolveFrontend(value) {
  * can be generated; otherwise the request fails closed instead of silently
  * emitting Vue files under a React name.
  */
-function readFrontendTree(frontend) {
+export function readFrontendTree(frontend) {
   const dir = frontend.dir;
   const missing = !dir || !fs.existsSync(dir) || !fs.statSync(dir).isDirectory();
   if (missing)

@@ -7,7 +7,7 @@
   "baseCommit": "42d83e2",
   "worktreeId": "WORKTREE-2026-10-24-M10",
   "hashPolicy": "SHA-256 of UTF-8 text with CRLF normalized to LF; sourceArtifactSha256 hashes the ordered files array JSON",
-  "sourceArtifactSha256": "06a85d2c89278cd816444afda5308a6afa6fa48b9a02059cb39e90c4375591de",
+  "sourceArtifactSha256": "c031de0502e25a13cdfea4565dbf58f1ed63612f48913253c14242bc653852f2",
   "files": [
     {
       "path": "src/codex/core/control/worker/worker-scheduler.js",
@@ -30,6 +30,10 @@
       "sha256": "3ea577d3a27052f2afc187e04ca382c04d4e473e9a977a8902664d5203f0e019"
     },
     {
+      "path": "src/codex/core/java/java-fullstack-template.js",
+      "sha256": "da0b9d07462a0bff68a983a55f715b85292e4b8e4e7d9e9d5c2ced3ea5882035"
+    },
+    {
       "path": "test/codex-control-m10-scheduler.test.js",
       "sha256": "212b95f3a423afeaa1cffe24ce64346a093b78efeb26c1dbf3a8d7919057f368"
     },
@@ -39,7 +43,31 @@
     },
     {
       "path": "test/codex-control-worker-runtime.test.js",
-      "sha256": "082aa8aa6a2b937f1380a063afd9df163f7d6ae8a14de17eb3f302e60ea1846e"
+      "sha256": "c5706ff106a93c8fb434c876b3f61704ea26b5314b92229e29306c2bc099c68a"
+    },
+    {
+      "path": "test/mysql-test-config.mjs",
+      "sha256": "76cf51eb0c5f49eeef05a44da57b463288d3c172ddd162b9e6ec659e916d9f9d"
+    },
+    {
+      "path": "test/codex-project-conventions.test.js",
+      "sha256": "ca798e5beabd9dc824b1a9537579d5d0ddc456ec4a2d7db13b4ed8be4543eacb"
+    },
+    {
+      "path": "test/codex-control-auth-mysql.test.js",
+      "sha256": "58dd19fe3986c39bbcec733bedc6badb426cc3938d4d6131768f3f4a4a60c90e"
+    },
+    {
+      "path": "test/codex-control-auth-runtime.test.js",
+      "sha256": "bd03d302fd3a50d9f3476ec204935effec46a56539671f9ea6a82b1bb638183f"
+    },
+    {
+      "path": "test/codex-control-persistence-mysql.test.js",
+      "sha256": "7175c323d1917feff42af5b34b34b7ad2b228d34887643d331f7bee33d25e7af"
+    },
+    {
+      "path": "test/codex-control-worker-mysql.test.js",
+      "sha256": "5319d9c427ae7225595fabc6bca24800903a34c007718c64582bd81f1af15f6b"
     }
   ],
   "checks": [
@@ -55,13 +83,13 @@
     },
     {
       "command": "npm test",
-      "mysqlConfigured": false,
+      "mysqlConfigured": true,
       "exitCode": 0,
-      "tests": 709,
-      "pass": 703,
+      "tests": 737,
+      "pass": 737,
       "fail": 0,
       "cancelled": 0,
-      "skipped": 6,
+      "skipped": 0,
       "todo": 0
     },
     {
@@ -90,6 +118,8 @@
     "expired lease takeover increments fencing and rejects the old token",
     "disconnect and reconnect replay with event deduplication",
     "revoked-worker and cross-project access rejection with audit",
+    "mandatory real MySQL test discovery without conditional skips",
+    "deterministic React missing-template and entry failures",
     "100 workers and 1000 queued items remain bounded"
   ],
   "notRun": [

@@ -5,6 +5,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { randomUUID, randomBytes } from 'node:crypto';
 import mysql from 'mysql2/promise';
+import { readMysqlTestOptions } from './mysql-test-config.mjs';
 import {
   createMysqlBackup,
   restoreMysqlBackup,
@@ -107,14 +108,9 @@ test('pool refuses missing configuration and overrides unsafe driver flags', asy
 
 test(
   'real MySQL M1 migration, concurrency, audit, retention and restore',
-  {
-    skip:
-      !process.env.SPECGATE_MYSQL_TEST_CONFIG &&
-      'NOT_RUN: set SPECGATE_MYSQL_TEST_CONFIG to a local JSON connection file',
-    timeout: 60000,
-  },
+  { timeout: 60000 },
   async (t) => {
-    const options = JSON.parse(await fs.readFile(process.env.SPECGATE_MYSQL_TEST_CONFIG, 'utf8'));
+    const options = await readMysqlTestOptions();
     // The supplied account only creates random test databases; existing databases are never touched.
     delete options.database;
     const admin = await mysql.createConnection({

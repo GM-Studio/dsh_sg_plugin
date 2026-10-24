@@ -7,6 +7,7 @@ import { fileURLToPath } from 'node:url';
 import {
   javaFullstackFiles,
   normalizeProjectNamespace,
+  readFrontendTree,
 } from '../src/codex/core/java/java-fullstack-template.js';
 import {
   applyJavaPreset,
@@ -246,15 +247,22 @@ test('an unknown frontend fails closed instead of defaulting to vue', () => {
   }
 });
 
-test('requesting the react frontend without its template tree fails closed', (t) => {
-  if (fs.existsSync(reactTemplateTree)) return t.skip('react template tree is already on disk');
-  const error = thrown(() => generate('react'));
+test('requesting the react frontend without its template tree fails closed', () => {
+  const missing = path.join(os.tmpdir(), `sg-missing-react-${process.pid}-${Date.now()}`);
+  assert.equal(fs.existsSync(missing), false);
+  const error = thrown(() =>
+    readFrontendTree({
+      dir: missing,
+      relative: 'assets/java-vue/template-react/frontend',
+      label: 'React 18',
+    }),
+  );
   assert.ok(error instanceof Error);
   assert.equal(error.code, 'FRONTEND_UNAVAILABLE');
 });
 
-test('the react frontend replaces the vue tree and keeps shared files identical', (t) => {
-  if (!fs.existsSync(reactTemplateTree)) return t.skip('react template tree is not on disk yet');
+test('the react frontend replaces the vue tree and keeps shared files identical', () => {
+  assert.equal(fs.existsSync(reactTemplateTree), true);
   const vue = generate('vue');
   const react = generate('react');
   const names = Object.keys(react);
@@ -291,9 +299,8 @@ test('the react frontend replaces the vue tree and keeps shared files identical'
   assert.ok(samples.includes(samplePrefix + 'frontend/package.json'));
 });
 
-test('the react frontend emits a .tsx entry with Chinese notes and no .vue files', (t) => {
-  if (!fs.existsSync(path.join(reactTemplateTree, 'src', 'main.tsx.tpl')))
-    return t.skip('the react entry frontend/src/main.tsx is still being authored');
+test('the react frontend emits a .tsx entry with Chinese notes and no .vue files', () => {
+  assert.equal(fs.existsSync(path.join(reactTemplateTree, 'src', 'main.tsx.tpl')), true);
   const react = generate('react');
   const names = Object.keys(react);
   assert.equal(names.includes('frontend/src/main.tsx'), true);

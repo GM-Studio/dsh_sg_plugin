@@ -5,6 +5,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { createHash, randomUUID } from 'node:crypto';
 import mysql from 'mysql2/promise';
+import { readMysqlTestOptions } from './mysql-test-config.mjs';
 import { createConfiguredAuthService } from '../src/codex/control/auth-runtime.js';
 import { currentTotp } from '../src/codex/control/step-up.js';
 
@@ -18,16 +19,9 @@ test('remote auth runtime fails closed without MySQL and TOTP encryption configu
 
 test(
   'configured MySQL auth runtime migrates, provisions and logs in',
-  {
-    skip:
-      !process.env.SPECGATE_MYSQL_TEST_CONFIG &&
-      'NOT_RUN: set SPECGATE_MYSQL_TEST_CONFIG to a local JSON connection file',
-    timeout: 60000,
-  },
+  { timeout: 60000 },
   async (t) => {
-    const adminOptions = JSON.parse(
-      await fs.readFile(process.env.SPECGATE_MYSQL_TEST_CONFIG, 'utf8'),
-    );
+    const adminOptions = await readMysqlTestOptions();
     delete adminOptions.database;
     const admin = await mysql.createConnection({
       ...adminOptions,

@@ -193,6 +193,12 @@ point or compatibility directories.
 
 ## Verification
 
+MySQL integration tests are mandatory rather than silently skipped. Point
+`SPECGATE_MYSQL_TEST_CONFIG` to a local connection JSON file, or place the same
+configuration in the ignored `.runtime/mysql-test/config.json`. Missing real
+MySQL fails the suite explicitly. The test account should only create and drop
+random `sg_*` databases and must never target a production database.
+
 ```powershell
 npm test
 npm run lint

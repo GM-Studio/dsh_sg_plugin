@@ -5,6 +5,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createHash, randomBytes, randomUUID } from 'node:crypto';
 import mysql from 'mysql2/promise';
+import { readMysqlTestOptions } from './mysql-test-config.mjs';
 import {
   WORKER_AUDIT_EVENTS,
   WORKER_COMMAND_KINDS,
@@ -112,14 +113,9 @@ test('MySQL worker store exposes the gateway persistence contract', () => {
 
 test(
   'real MySQL M3 worker identity, outbox, replay and audit',
-  {
-    skip:
-      !process.env.SPECGATE_MYSQL_TEST_CONFIG &&
-      'NOT_RUN: set SPECGATE_MYSQL_TEST_CONFIG to a local JSON connection file',
-    timeout: 60000,
-  },
+  { timeout: 60000 },
   async (t) => {
-    const options = JSON.parse(await fs.readFile(process.env.SPECGATE_MYSQL_TEST_CONFIG, 'utf8'));
+    const options = await readMysqlTestOptions();
     delete options.database;
     const admin = await mysql.createConnection({
       ...options,

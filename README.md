@@ -202,6 +202,10 @@ test/codex-*.test.js                   focused Codex regressions
 
 ## 验证
 
+MySQL 集成测试不再静默跳过。请通过 `SPECGATE_MYSQL_TEST_CONFIG` 指向本地连接
+JSON，或把同一配置放在忽略目录 `.runtime/mysql-test/config.json`；缺少真实数据库时
+测试会显式失败。测试账号只应能创建/删除随机 `sg_*` 测试库，不得复用生产库。
+
 ```powershell
 npm test
 npm run lint

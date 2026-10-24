@@ -5,6 +5,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { randomUUID } from 'node:crypto';
 import mysql from 'mysql2/promise';
+import { readMysqlTestOptions } from './mysql-test-config.mjs';
 import { createConfiguredWorkerGateway } from '../src/codex/control/worker-runtime.js';
 
 function controlService() {
@@ -37,16 +38,9 @@ test('local Worker runtime uses an in-memory registry without cloud inbound acce
 
 test(
   'configured Worker runtime persists registry and rotation in MySQL',
-  {
-    skip:
-      !process.env.SPECGATE_MYSQL_TEST_CONFIG &&
-      'NOT_RUN: set SPECGATE_MYSQL_TEST_CONFIG to a local JSON connection file',
-    timeout: 60000,
-  },
+  { timeout: 60000 },
   async (t) => {
-    const adminOptions = JSON.parse(
-      await fs.readFile(process.env.SPECGATE_MYSQL_TEST_CONFIG, 'utf8'),
-    );
+    const adminOptions = await readMysqlTestOptions();
     delete adminOptions.database;
     const admin = await mysql.createConnection({
       ...adminOptions,

@@ -5,6 +5,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createHash, randomUUID } from 'node:crypto';
 import mysql from 'mysql2/promise';
+import { readMysqlTestOptions } from './mysql-test-config.mjs';
 import { createMysqlAuthStore } from '../src/codex/core/control/auth/mysql-auth-store.js';
 import { createAuthService } from '../src/codex/core/control/auth/auth-service.js';
 import { createManagementServer } from '../src/codex/management/server.js';
@@ -98,14 +99,9 @@ test('MySQL auth store requires a pool', () => {
 
 test(
   'real MySQL M2 auth hardening and concurrency',
-  {
-    skip:
-      !process.env.SPECGATE_MYSQL_TEST_CONFIG &&
-      'NOT_RUN: set SPECGATE_MYSQL_TEST_CONFIG to a local JSON connection file',
-    timeout: 60000,
-  },
+  { timeout: 60000 },
   async (t) => {
-    const options = JSON.parse(await fs.readFile(process.env.SPECGATE_MYSQL_TEST_CONFIG, 'utf8'));
+    const options = await readMysqlTestOptions();
     delete options.database;
     const admin = await mysql.createConnection({
       ...options,
