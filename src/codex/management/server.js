@@ -321,6 +321,8 @@ export function createManagementServer({
   services,
   authService = null,
   workerGateway = null,
+  timeline = null,
+  auditQuery = null,
   clock = Date.now,
   pairingToken = randomBytes(24).toString('base64url'),
   sessionTtlMs = 8 * 60 * 60 * 1000,
@@ -401,6 +403,16 @@ export function createManagementServer({
     ].some((method) => typeof workerGateway[method] !== 'function')
   )
     throw new TypeError('workerGateway does not implement the management Worker contract');
+  if (
+    timeline !== null &&
+    ['record', 'list', 'export'].some((method) => typeof timeline[method] !== 'function')
+  )
+    throw new TypeError('timeline does not implement the management timeline contract');
+  if (
+    auditQuery !== null &&
+    ['list', 'export'].some((method) => typeof auditQuery[method] !== 'function')
+  )
+    throw new TypeError('auditQuery does not implement the audit query contract');
   if (deploymentMode === 'remote') {
     if (!secureCookie || !trustProxyHttps) {
       throw remoteConfigurationError('Remote mode requires Secure cookies and trusted HTTPS');
@@ -581,6 +593,78 @@ export function createManagementServer({
       if (normalized) return normalized;
     }
     return normalizeAddress(request.socket?.remoteAddress) || 'unknown';
+  }
+
+  async function recordTimelineMutation(pathname, result, body) {
+    if (!timeline || !result?.ok) return;
+    const workItem = result.workItem || null;
+    const decision = result.decision || null;
+    const attention = result.attention || null;
+    const event = (() => {
+      if (pathname === '/api/decisions' && decision && workItem) {
+        return {
+          type: 'decision.recorded',
+          eventId: `decision-recorded:${decision.decisionId}`,
+          projectId: workItem.projectId,
+          workItemId: workItem.workItemId,
+          correlationId: decision.decisionId,
+          artifactHash: decision.artifactHash,
+          occurredAt: decision.createdAt,
+          summary: `Decision ${decision.action} was recorded.`,
+          decision: {
+            decisionId: decision.decisionId,
+            action: decision.action,
+            status: decision.status,
+            artifactHash: decision.artifactHash,
+            artifactVersion: decision.expectedWorkItemVersion,
+          },
+        };
+      }
+      if (pathname === '/api/worker/waiting' && attention) {
+        return {
+          type: 'gate.requested',
+          eventId: `gate-requested:${attention.requestId}`,
+          projectId: attention.projectId,
+          workItemId: attention.workItemId,
+          correlationId: attention.requestId,
+          artifactHash: attention.artifactHash,
+          occurredAt: attention.createdAt,
+          summary: `Human gate ${attention.type} was requested.`,
+        };
+      }
+      if (
+        ['/api/worker/decisions/complete', '/api/worker/decisions/fail'].includes(pathname) &&
+        decision &&
+        workItem
+      ) {
+        return {
+          type: 'decision.applied',
+          eventId: `decision-applied:${decision.decisionId}`,
+          projectId: workItem.projectId,
+          workItemId: workItem.workItemId,
+          correlationId: decision.decisionId,
+          artifactHash: decision.artifactHash,
+          occurredAt: decision.appliedAt || new Date(clock()).toISOString(),
+          summary: pathname.endsWith('/fail')
+            ? `Decision ${decision.action} failed to apply.`
+            : `Decision ${decision.action} was applied.`,
+          decision: {
+            decisionId: decision.decisionId,
+            action: decision.action,
+            status: decision.status,
+            artifactHash: decision.artifactHash,
+            artifactVersion: decision.expectedWorkItemVersion,
+          },
+          payload:
+            pathname.endsWith('/fail') && body?.error
+              ? { error: String(body.error).slice(0, 1000) }
+              : {},
+        };
+      }
+      return null;
+    })();
+    if (!event) return;
+    await timeline.record(event);
   }
 
   async function sessionFor(request) {
@@ -838,12 +922,63 @@ export function createManagementServer({
     });
   }
 
-  async function queryRoute(request, response, pathname) {
+  async function queryRoute(request, response, pathname, url) {
     const session = await requireSession(request, response);
     if (!session) return;
     if (request.method !== 'GET') return methodFailure(response, ['GET']);
     const projection = services.projection;
     let result;
+    const timelineMatch = /^\/api\/work-items\/([^/]+)\/timeline(?:\/export)?$/.exec(pathname);
+    if (timelineMatch) {
+      const workItemId = decodeId(timelineMatch[1]);
+      const workItem = workItemId ? await projection.getWorkItem(workItemId) : null;
+      if (!workItem?.ok || !workItem.workItem) {
+        result = workItem || failure('WORK_ITEM_NOT_FOUND', 'WorkItem was not found');
+      } else if (!timeline) {
+        result = failure('NOT_AVAILABLE', 'Evidence timeline is not configured');
+      } else {
+        const projectId = workItem.workItem.projectId;
+        const options = {
+          projectId,
+          workItemId,
+          role: session.actor.role || 'owner',
+          allowedProjects: [projectId],
+          ...(url.searchParams.get('after') ? { after: url.searchParams.get('after') } : {}),
+          ...(url.searchParams.get('limit')
+            ? { limit: Number(url.searchParams.get('limit')) }
+            : {}),
+        };
+        result = pathname.endsWith('/export')
+          ? await timeline.export({
+              ...options,
+              format: url.searchParams.get('format') || 'jsonl',
+            })
+          : await timeline.list(options);
+      }
+      sendJson(response, statusFor(result), sanitizeForWeb(result));
+      return;
+    }
+    if (pathname === '/api/audit' || pathname === '/api/audit/export') {
+      if (!auditQuery) {
+        sendJson(response, 404, failure('NOT_AVAILABLE', 'Audit query is not configured'));
+        return;
+      }
+      const projectId = url.searchParams.get('projectId');
+      const options = {
+        ...(projectId ? { projectId } : {}),
+        ...(url.searchParams.get('action') ? { action: url.searchParams.get('action') } : {}),
+        ...(url.searchParams.get('after') ? { after: url.searchParams.get('after') } : {}),
+        ...(url.searchParams.get('limit') ? { limit: Number(url.searchParams.get('limit')) } : {}),
+      };
+      result = pathname.endsWith('/export')
+        ? await auditQuery.export({
+            ...options,
+            format: url.searchParams.get('format') || 'jsonl',
+          })
+        : await auditQuery.list(options);
+      sendJson(response, statusFor(result), sanitizeForWeb(result));
+      return;
+    }
     if (pathname === '/api/health') result = await projection.health();
     else if (pathname === '/api/projects') {
       const overview = await projection.overview();
@@ -971,6 +1106,7 @@ export function createManagementServer({
       result = await workerGateway.completeDecisionApply({ token, ...body });
     else if (pathname === '/api/worker/decisions/fail')
       result = await workerGateway.failDecisionApply({ token, ...body });
+    await recordTimelineMutation(pathname, result, body);
     sendJson(response, statusFor(result), sanitizeForWeb(result));
   }
 
@@ -1074,6 +1210,7 @@ export function createManagementServer({
         result = await workerGateway.issueCommand(workerInput);
       else result = failure('NOT_FOUND', 'Worker management route does not exist');
     } else result = failure('NOT_FOUND', 'Management mutation does not exist');
+    await recordTimelineMutation(pathname, result, body);
     sendJson(response, statusFor(result), sanitizeForWeb(result));
   }
 
@@ -1140,7 +1277,7 @@ export function createManagementServer({
         }
         return await attentionDocumentRoute(request, response, attentionId);
       }
-      if (pathname.startsWith('/api/')) return await queryRoute(request, response, pathname);
+      if (pathname.startsWith('/api/')) return await queryRoute(request, response, pathname, url);
       return await staticRoute(request, response, pathname);
     } catch {
       if (!response.headersSent)

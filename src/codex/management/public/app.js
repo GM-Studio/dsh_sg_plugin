@@ -748,13 +748,32 @@ async function refresh() {
 
 async function openDetail(workItemId) {
   state.selectedWorkItemId = workItemId;
-  const { response, body } = await api(`/api/work-items/${encodeURIComponent(workItemId)}`);
+  const [{ response, body }, timelineResult] = await Promise.all([
+    api(`/api/work-items/${encodeURIComponent(workItemId)}`),
+    api(`/api/work-items/${encodeURIComponent(workItemId)}/timeline?limit=100`),
+  ]);
   if (!response.ok || !body.ok) {
     await refresh();
     return;
   }
   const item = body.workItem;
   const run = body.run;
+  const timeline =
+    timelineResult.response.ok && timelineResult.body.ok ? timelineResult.body.events || [] : [];
+  const timelineHtml = timeline.length
+    ? timeline
+        .map(
+          (event) => `<li class="timeline-event">
+            <div class="card-topline">
+              <span class="status">${escapeHtml(event.type)}</span>
+              <span class="muted">${escapeHtml(event.occurredAt)}</span>
+            </div>
+            <p>${escapeHtml(event.summary)}</p>
+            <code>${escapeHtml(String(event.artifactHash || '').slice(0, 12))}</code>
+          </li>`,
+        )
+        .join('')
+    : '<li class="muted">尚无可回放证据。未执行检查不会被标记为通过。</li>';
   elements.detailTitle.textContent = item.title;
   elements.detailContent.innerHTML = `
     <div class="detail-grid">
@@ -774,6 +793,13 @@ async function openDetail(workItemId) {
         <details>
           <summary>Evidence 与风险</summary>
           <pre>${escapeHtml(JSON.stringify(item.outcome || {}, null, 2))}</pre>
+        </details>
+        <details open>
+          <summary>证据时间线</summary>
+          <ol class="timeline-list">${timelineHtml}</ol>
+          <a class="button ghost" href="/api/work-items/${encodeURIComponent(
+            item.workItemId,
+          )}/timeline/export?format=jsonl">导出时间线</a>
         </details>
       </section>
       <aside>

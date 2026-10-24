@@ -315,6 +315,21 @@ export function createControlStore({
 
   return Object.freeze({
     root: resolved,
+    inspectEvents: async () => {
+      try {
+        const result = read();
+        return result.ok
+          ? {
+              ok: true,
+              events: clone(result.events),
+              headHash: result.headHash,
+              version: result.events.at(-1)?.sequence ?? 0,
+            }
+          : result;
+      } catch (error) {
+        return failure(error.code || 'CONTROL_STORE_FAILED', error.message);
+      }
+    },
     inspect: async () => {
       try {
         const result = read();

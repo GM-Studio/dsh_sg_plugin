@@ -24,6 +24,9 @@ import {
   createAttentionLifecycle,
   createAttentionLifecycleNotifier,
 } from './attention-lifecycle.js';
+import { createEvidenceTimeline } from './evidence-timeline.js';
+import { createAuditQuery } from './audit-query.js';
+import { createControlStoreAuditRepository } from './store-audit-adapter.js';
 import { createConfiguredAuthService } from './auth-runtime.js';
 import { createConfiguredWorkerGateway } from './worker-runtime.js';
 
@@ -182,12 +185,19 @@ export async function startControlDaemon({
     await configuredAuth.close();
     return configuredWorker;
   }
+  const evidenceTimeline = createEvidenceTimeline({ clock });
+  const auditQuery = createAuditQuery({
+    repository: createControlStoreAuditRepository({ store: runtime.store }),
+    role: 'owner',
+  });
   const pairing = { token: randomBytes(24).toString('base64url') };
   const sessionStore = createFileSessionStore({ root: runtime.store.root });
   const management = createManagementServer({
     services: managed.services,
     authService: configuredAuth.authService,
     workerGateway: configuredWorker.workerGateway,
+    timeline: evidenceTimeline,
+    auditQuery,
     clock,
     pairingToken: pairing.token,
     port: managementPort ?? config.managementPort,
@@ -481,6 +491,7 @@ export async function startControlDaemon({
     supervisor,
     outbox,
     attentionLifecycle,
+    evidenceTimeline,
     notificationChannels: outbox?.channels || [],
     workerGateway: configuredWorker.workerGateway,
     workerStorage: configuredWorker.storage,

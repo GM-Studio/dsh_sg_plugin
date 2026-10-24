@@ -1,0 +1,97 @@
+{
+  "version": 1,
+  "stage": "M6",
+  "date": "2026-10-24",
+  "timezone": "Asia/Shanghai",
+  "branch": "sg-codex",
+  "baseCommit": "cd5f887",
+  "worktreeId": "WORKTREE-2026-10-24-M6",
+  "hashPolicy": "SHA-256 of UTF-8 text with CRLF normalized to LF; sourceArtifactSha256 hashes the ordered files array JSON",
+  "sourceArtifactSha256": "c8c22c13241ff5ddfe23ee28e492c5517741c409daea7bcf9150120870161e58",
+  "files": [
+    {
+      "path": "src/codex/control/evidence-timeline.js",
+      "sha256": "f30c2f42772d7501cd207996fddd52cc882cf7ffa64869eae1c7d89beeb9d71a"
+    },
+    {
+      "path": "src/codex/control/audit-query.js",
+      "sha256": "1cddcb49aa2a0d48ead3619461686ea9803fffd467ae13f97418cb3f8b7405e6"
+    },
+    {
+      "path": "src/codex/control/store-audit-adapter.js",
+      "sha256": "a6f3224d24d52adb5efc8537993f44e4d7f205114b5556ba7cc50bc9770c7150"
+    },
+    {
+      "path": "src/codex/control/store.js",
+      "sha256": "05fb2c75cbbb9654ef4399c2412af60a734bef4b8820fa24fef64a7764aa18a2"
+    },
+    {
+      "path": "src/codex/control/daemon.js",
+      "sha256": "3f3e461298293bb38515e58c1116b3e98104ae17090d71f026ddf5e13ca66abc"
+    },
+    {
+      "path": "src/codex/management/server.js",
+      "sha256": "7b001c8169e85674d47defc5f22be2dd8ee1dd470c3f80572da2a52949378f4a"
+    },
+    {
+      "path": "src/codex/management/public/app.js",
+      "sha256": "35f6604369c59c91ae23dc1131d1868d07bb33046992291930ff9aaaffffba61"
+    },
+    {
+      "path": "src/codex/management/public/style.css",
+      "sha256": "c11dfb6fe81fe73e06857e40acd4e7903e55a728eea941316b1186cb1033a400"
+    },
+    {
+      "path": "test/codex-control-m6-timeline.test.js",
+      "sha256": "37aadb2761d78d62aec7b8dcda9696f33041f89ecacb60971547cacaaaf121b5"
+    },
+    {
+      "path": "test/codex-control-m6-web.test.js",
+      "sha256": "fdacae2c0c64c33a6f8ca5c182c3cfece6e86459a37209a8ca6c1f63d3570c0e"
+    },
+    {
+      "path": "test/codex-management-ui-contract.test.js",
+      "sha256": "5a8def43d23cdd95158c8af436ca146f66ce5a3b4abe26ff1ccf2be8fec9a1ed"
+    }
+  ],
+  "checks": [
+    {
+      "command": "M6 timeline/web/UI focused suite",
+      "exitCode": 0,
+      "tests": 21,
+      "pass": 21,
+      "fail": 0,
+      "cancelled": 0,
+      "skipped": 0,
+      "todo": 0
+    },
+    {
+      "command": "npm run lint",
+      "exitCode": 0
+    },
+    {
+      "command": "npm run format:check",
+      "exitCode": 0
+    },
+    {
+      "command": "git diff --check",
+      "exitCode": 0
+    }
+  ],
+  "verifiedScenarios": [
+    "discrete allowed timeline events",
+    "artifact and version distinction for decisions",
+    "timeline redaction and fail-closed prohibited content",
+    "control event chain mapped to audit query records",
+    "audit chain verification before query",
+    "authenticated timeline and audit APIs",
+    "timeline export without raw payload dumps"
+  ],
+  "notRun": [
+    "large production audit export",
+    "real cloud timeline replay",
+    "full combined npm test deferred until M5-M7 integration",
+    "human acceptance of the M6 stage"
+  ],
+  "humanAcceptance": "PENDING"
+}
