@@ -27,6 +27,8 @@ import {
 import { createEvidenceTimeline } from './evidence-timeline.js';
 import { createAuditQuery } from './audit-query.js';
 import { createControlStoreAuditRepository } from './store-audit-adapter.js';
+import { createExceptionInbox } from './exception-inbox.js';
+import { createSseHub } from './sse-hub.js';
 import { createConfiguredAuthService } from './auth-runtime.js';
 import { createConfiguredWorkerGateway } from './worker-runtime.js';
 
@@ -190,6 +192,11 @@ export async function startControlDaemon({
     repository: createControlStoreAuditRepository({ store: runtime.store }),
     role: 'owner',
   });
+  const exceptionInbox = createExceptionInbox({
+    projection: runtime.service.projection,
+    clock,
+  });
+  const sseHub = createSseHub({ clock });
   const pairing = { token: randomBytes(24).toString('base64url') };
   const sessionStore = createFileSessionStore({ root: runtime.store.root });
   const management = createManagementServer({
@@ -198,6 +205,8 @@ export async function startControlDaemon({
     workerGateway: configuredWorker.workerGateway,
     timeline: evidenceTimeline,
     auditQuery,
+    exceptionInbox,
+    sseHub,
     clock,
     pairingToken: pairing.token,
     port: managementPort ?? config.managementPort,
@@ -471,6 +480,7 @@ export async function startControlDaemon({
     clearInterval(dispatchTimer);
     supervisor.stop();
     attentionLifecycle.stop();
+    sseHub.close();
     const drained = Promise.allSettled([...active]);
     const timeout = new Promise((resolve) => setTimeout(resolve, shutdownTimeoutMs));
     await Promise.race([drained, timeout]);
@@ -492,6 +502,8 @@ export async function startControlDaemon({
     outbox,
     attentionLifecycle,
     evidenceTimeline,
+    exceptionInbox,
+    sseHub,
     notificationChannels: outbox?.channels || [],
     workerGateway: configuredWorker.workerGateway,
     workerStorage: configuredWorker.storage,

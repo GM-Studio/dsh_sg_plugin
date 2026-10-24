@@ -1,4 +1,4 @@
-/* global alert, document, history, location */
+/* global alert, document, EventSource, history, location */
 
 const DEVICE_ID_STORAGE_KEY = 'specgate.auth.deviceId';
 const STEP_UP_ERROR_CODES = new Set([
@@ -23,6 +23,10 @@ const state = {
   workItems: [],
   attention: [],
   notifications: [],
+  inboxVersion: 0,
+  inboxFilters: { projectId: '', risk: '', status: '' },
+  eventSource: null,
+  refreshDebounce: null,
   expandedProjects: new Set(),
   selectedWorkItemId: null,
   refreshTimer: null,
@@ -54,6 +58,9 @@ const elements = {
   refresh: document.querySelector('#refresh'),
   logout: document.querySelector('#logout'),
   attentionCount: document.querySelector('#attention-count'),
+  inboxProjectFilter: document.querySelector('#inbox-project-filter'),
+  inboxRiskFilter: document.querySelector('#inbox-risk-filter'),
+  inboxStatusFilter: document.querySelector('#inbox-status-filter'),
   securityNav: document.querySelector('[data-view="security"]'),
   attentionList: document.querySelector('#attention-list'),
   projectList: document.querySelector('#project-list'),
@@ -244,6 +251,10 @@ async function restoreSession() {
 function hideWorkspaceForAuthentication() {
   clearInterval(state.refreshTimer);
   state.refreshTimer = null;
+  clearTimeout(state.refreshDebounce);
+  state.refreshDebounce = null;
+  state.eventSource?.close();
+  state.eventSource = null;
   state.abortController?.abort();
   state.csrfToken = null;
   state.action = null;
@@ -348,7 +359,23 @@ function empty(message = '当前没有需要展示的内容') {
   return `<div class="empty-state"><strong>${escapeHtml(message)}</strong></div>`;
 }
 
+function renderInboxFilters() {
+  const projects = state.overview?.projects || [];
+  const selected = state.inboxFilters.projectId;
+  elements.inboxProjectFilter.innerHTML = [
+    '<option value="">全部项目</option>',
+    ...projects.map(
+      (project) =>
+        `<option value="${escapeHtml(project.projectId)}">${escapeHtml(
+          project.name || project.projectId,
+        )}</option>`,
+    ),
+  ].join('');
+  elements.inboxProjectFilter.value = selected;
+}
+
 function renderAttention() {
+  renderInboxFilters();
   elements.attentionCount.textContent = String(state.attention.length);
   if (!state.attention.length) {
     elements.attentionList.innerHTML = empty('目前没有需要你处理的决定');
@@ -360,26 +387,38 @@ function renderAttention() {
       <article class="attention-card" data-attention-card="${escapeHtml(entry.requestId)}">
         <div class="card-topline">
           <span class="status status-warning">${escapeHtml(entry.type || '决策')}</span>
-          <span class="muted">${escapeHtml(entry.status || 'OPEN')}</span>
+          <span class="status ${
+            entry.expired || entry.notificationFailure ? 'status-error' : ''
+          }">${escapeHtml(
+            entry.expired ? 'EXPIRED' : entry.notificationFailure ? '通知失败' : entry.status,
+          )}</span>
         </div>
-        <h3>${escapeHtml(entry.question || entry.reason || '需要你的决定')}</h3>
+        <h3>${escapeHtml(entry.question || entry.reason || entry.title || '需要你的决定')}</h3>
         <p>${escapeHtml(entry.summary || entry.reason || '')}</p>
         <dl class="compact">
           <div><dt>项目</dt><dd>${escapeHtml(projectLabel(entry.projectId))}</dd></div>
           <div><dt>类型</dt><dd>${escapeHtml(entry.type || '决策')}</dd></div>
+          <div><dt>风险</dt><dd class="risk-${escapeHtml(entry.risk || 'low')}">${escapeHtml(
+            entry.risk || 'low',
+          )}</dd></div>
           <div><dt>失效时间</dt><dd>${escapeHtml(entry.expiresAt || '未设置')}</dd></div>
-          <div><dt>版本</dt><dd>${escapeHtml(entry.revision || 1)}</dd></div>
+          <div><dt>等待</dt><dd>${escapeHtml(Math.round((entry.waitingMs || 0) / 60000))} 分钟</dd></div>
         </dl>
+        ${
+          entry.notificationFailure
+            ? '<p class="error">通知渠道有失败记录；事项仍需处理，请检查通知健康。</p>'
+            : ''
+        }
         <div class="button-row">
-          ${(entry.actions || [])
+          ${(entry.attentionId ? entry.actions || [] : [])
             .map(
               (action) =>
                 `<button class="button ${action === 'approve' ? '' : 'secondary'}"
                    data-decision-action="${escapeHtml(action)}"
-                   data-attention-id="${escapeHtml(entry.requestId)}"
+                   data-attention-id="${escapeHtml(entry.attentionId)}"
                    data-work-item-id="${escapeHtml(entry.workItemId)}"
                    data-revision="${escapeHtml(entry.revision)}"
-                   data-version="${escapeHtml(entry.workItemVersion)}"
+                   data-version="${escapeHtml(entry.workItemVersion || entry.revision)}"
                    data-artifact="${escapeHtml(entry.artifactHash)}"
                    data-attention-type="${escapeHtml(entry.type)}"
                    type="button">${escapeHtml(actionLabel(action))}</button>`,
@@ -392,7 +431,9 @@ function renderAttention() {
                 )}/document" target="_blank" rel="noopener noreferrer">打开审批文档</a>`
               : ''
           }
-          <button class="button ghost" data-open-work-item="${escapeHtml(entry.workItemId)}" type="button">查看详情</button>
+          <button class="button ghost" data-open-work-item="${escapeHtml(
+            entry.workItemId,
+          )}" type="button">查看详情</button>
         </div>
       </article>`,
     )
@@ -723,18 +764,32 @@ async function refresh() {
   state.abortController = controller;
   try {
     setConnection('同步中', 'syncing');
-    const [overview, workItems, attention, notifications] = await Promise.all([
+    const inboxQuery = new URLSearchParams({ limit: '100' });
+    if (state.inboxFilters.projectId) inboxQuery.set('projectId', state.inboxFilters.projectId);
+    if (state.inboxFilters.risk) inboxQuery.set('risk', state.inboxFilters.risk);
+    if (state.inboxFilters.status) inboxQuery.set('status', state.inboxFilters.status);
+    const [overview, workItems, inbox, notifications] = await Promise.all([
       api('/api/projects', { signal: controller.signal }),
       api('/api/work-items', { signal: controller.signal }),
-      api('/api/attention', { signal: controller.signal }),
+      api(`/api/inbox?${inboxQuery}`, { signal: controller.signal }),
       api('/api/notifications', { signal: controller.signal }),
     ]);
-    if ([overview, workItems, attention, notifications].some((entry) => !entry.response.ok))
+    if ([overview, workItems, inbox, notifications].some((entry) => !entry.response.ok))
       throw new Error('部分管理数据不可用');
     state.overview = { projects: overview.body.projects || [] };
     state.workItems = workItems.body.workItems || [];
-    state.attention = (attention.body.attention || [])
-      .filter((entry) => ['OPEN', 'DELIVERED', 'REMINDED'].includes(entry.status))
+    state.inboxVersion = Number.isSafeInteger(inbox.body.version) ? inbox.body.version : 0;
+    state.attention = (inbox.body.items || [])
+      .map((item) => ({
+        ...item,
+        requestId: item.attentionId || item.id,
+        question: item.title || item.summary,
+        summary: item.summary,
+        revision: item.attentionRevision,
+        workItemVersion: item.workItemVersion,
+        artifactHash: item.artifactHash,
+        attentionType: item.type,
+      }))
       .sort(compareAttention);
     state.notifications = notifications.body.notifications || [];
     renderAll();
@@ -1139,7 +1194,31 @@ async function discoverAuthMode() {
 
 function startPolling() {
   clearInterval(state.refreshTimer);
-  state.refreshTimer = setInterval(refresh, 4000);
+  state.refreshTimer = setInterval(refresh, 15000);
+}
+
+function scheduleRefresh() {
+  state.refreshDebounce ??= setTimeout(() => {
+    state.refreshDebounce = null;
+    void refresh();
+  }, 250);
+}
+
+function startRealtime() {
+  state.eventSource?.close();
+  state.eventSource = null;
+  if (typeof EventSource !== 'function') return;
+  const params = new URLSearchParams();
+  if (state.inboxFilters.projectId) params.set('projectId', state.inboxFilters.projectId);
+  state.eventSource = new EventSource(`/api/events${params.size ? `?${params}` : ''}`, {
+    withCredentials: true,
+  });
+  state.eventSource.addEventListener('state.changed', scheduleRefresh);
+  state.eventSource.addEventListener('reset', scheduleRefresh);
+  state.eventSource.onerror = () => {
+    // Polling remains active as the bounded fallback when SSE disconnects.
+    setConnection('实时连接中断，轮询中', 'syncing');
+  };
 }
 
 async function finishAuthentication() {
@@ -1151,6 +1230,7 @@ async function finishAuthentication() {
   focusDeepLinkedAttention();
   if (state.authMode === 'account') await loadDevices();
   startPolling();
+  startRealtime();
 }
 
 async function loginAccount() {
@@ -1270,6 +1350,17 @@ elements.refresh.addEventListener('click', refresh);
 elements.refreshDevices.addEventListener('click', loadDevices);
 elements.logout.addEventListener('click', logoutAccount);
 elements.filter.addEventListener('change', renderWorkItems);
+for (const [element, key] of [
+  [elements.inboxProjectFilter, 'projectId'],
+  [elements.inboxRiskFilter, 'risk'],
+  [elements.inboxStatusFilter, 'status'],
+]) {
+  element.addEventListener('change', () => {
+    state.inboxFilters[key] = element.value;
+    startRealtime();
+    void refresh();
+  });
+}
 elements.newWorkItemForm.addEventListener('submit', async (event) => {
   event.preventDefault();
   elements.newWorkItemError.textContent = '';

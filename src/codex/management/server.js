@@ -323,6 +323,8 @@ export function createManagementServer({
   workerGateway = null,
   timeline = null,
   auditQuery = null,
+  exceptionInbox = null,
+  sseHub = null,
   clock = Date.now,
   pairingToken = randomBytes(24).toString('base64url'),
   sessionTtlMs = 8 * 60 * 60 * 1000,
@@ -413,6 +415,16 @@ export function createManagementServer({
     ['list', 'export'].some((method) => typeof auditQuery[method] !== 'function')
   )
     throw new TypeError('auditQuery does not implement the audit query contract');
+  if (
+    exceptionInbox !== null &&
+    ['list', 'get'].some((method) => typeof exceptionInbox[method] !== 'function')
+  )
+    throw new TypeError('exceptionInbox does not implement the inbox contract');
+  if (
+    sseHub !== null &&
+    ['publish', 'subscribe', 'poll'].some((method) => typeof sseHub[method] !== 'function')
+  )
+    throw new TypeError('sseHub does not implement the SSE contract');
   if (deploymentMode === 'remote') {
     if (!secureCookie || !trustProxyHttps) {
       throw remoteConfigurationError('Remote mode requires Secure cookies and trusted HTTPS');
@@ -665,6 +677,26 @@ export function createManagementServer({
     })();
     if (!event) return;
     await timeline.record(event);
+  }
+
+  function publishStateChange(pathname, result) {
+    if (!sseHub || !result?.ok) return;
+    const projectId =
+      result.projectId ||
+      result.workItem?.projectId ||
+      result.attention?.projectId ||
+      result.worker?.projectId ||
+      result.events?.find?.((event) => typeof event?.projectId === 'string')?.projectId ||
+      null;
+    if (typeof projectId !== 'string') return;
+    sseHub.publish({
+      type: 'state.changed',
+      projectId,
+      summary:
+        pathname === '/api/worker/events'
+          ? 'Worker evidence was accepted.'
+          : 'Control state changed.',
+    });
   }
 
   async function sessionFor(request) {
@@ -928,6 +960,32 @@ export function createManagementServer({
     if (request.method !== 'GET') return methodFailure(response, ['GET']);
     const projection = services.projection;
     let result;
+    if (pathname === '/api/inbox') {
+      if (!exceptionInbox) {
+        sendJson(response, 404, failure('NOT_AVAILABLE', 'Exception inbox is not configured'));
+        return;
+      }
+      const projectIds = [
+        ...url.searchParams.getAll('projectId'),
+        ...String(url.searchParams.get('projectIds') || '')
+          .split(',')
+          .map((entry) => entry.trim())
+          .filter(Boolean),
+      ];
+      result = await exceptionInbox.list({
+        role: session.actor.role || 'owner',
+        ...(projectIds.length ? { projectIds } : {}),
+        ...(url.searchParams.get('risk') ? { risk: url.searchParams.get('risk') } : {}),
+        ...(url.searchParams.get('status') ? { status: url.searchParams.get('status') } : {}),
+        ...(url.searchParams.get('limit') ? { limit: Number(url.searchParams.get('limit')) } : {}),
+        ...(url.searchParams.get('cursor') ? { cursor: url.searchParams.get('cursor') } : {}),
+        ...(url.searchParams.get('sinceVersion')
+          ? { sinceVersion: Number(url.searchParams.get('sinceVersion')) }
+          : {}),
+      });
+      sendJson(response, statusFor(result), sanitizeForWeb(result));
+      return;
+    }
     const timelineMatch = /^\/api\/work-items\/([^/]+)\/timeline(?:\/export)?$/.exec(pathname);
     if (timelineMatch) {
       const workItemId = decodeId(timelineMatch[1]);
@@ -1031,6 +1089,68 @@ export function createManagementServer({
     response.end(request.method === 'HEAD' ? undefined : html);
   }
 
+  async function sseRoute(request, response, url) {
+    if (!sseHub) {
+      sendJson(response, 404, failure('NOT_AVAILABLE', 'SSE is not configured'));
+      return;
+    }
+    const session = await requireSession(request, response);
+    if (!session) return;
+    if (request.method !== 'GET') return methodFailure(response, ['GET']);
+    const projectIds = [
+      ...url.searchParams.getAll('projectId'),
+      ...String(url.searchParams.get('projectIds') || '')
+        .split(',')
+        .map((entry) => entry.trim())
+        .filter(Boolean),
+    ];
+    const send = (frame) => {
+      if (response.destroyed || response.writableEnded) return false;
+      response.write(`id: ${frame.id}\nevent: ${frame.type}\n`);
+      response.write(`data: ${JSON.stringify(frame)}\n\n`);
+      return true;
+    };
+    response.statusCode = 200;
+    response.setHeader('Content-Type', 'text/event-stream; charset=utf-8');
+    response.setHeader('Cache-Control', 'no-cache, no-store');
+    response.setHeader('Connection', 'keep-alive');
+    response.setHeader('X-Accel-Buffering', 'no');
+    response.flushHeaders?.();
+    const handle = sseHub.subscribe(
+      {
+        send,
+        actor: session.actor,
+        ...(projectIds.length ? { projectIds } : {}),
+        lastEventId:
+          request.headers['last-event-id'] || url.searchParams.get('lastEventId') || undefined,
+      },
+      { send },
+    );
+    if (!handle.ok) {
+      response.end(
+        `event: error\ndata: ${JSON.stringify({
+          code: handle.code,
+          message: 'SSE subscription failed',
+          reconnectHintMs: handle.reconnectHintMs ?? null,
+        })}\n\n`,
+      );
+      return;
+    }
+    response.write(`retry: ${handle.reconnectHintMs}\n\n`);
+    if (handle.reset) {
+      response.write(
+        `event: reset\ndata: ${JSON.stringify({
+          reason: handle.reason,
+          version: handle.version,
+          reconnectHintMs: handle.reconnectHintMs,
+        })}\n\n`,
+      );
+    }
+    request.once('close', () => {
+      sseHub.unsubscribe(handle.id);
+    });
+  }
+
   async function workerRoute(request, response, url) {
     if (!workerGateway) {
       sendJson(response, 404, failure('NOT_FOUND', 'Worker API is not configured'));
@@ -1107,6 +1227,7 @@ export function createManagementServer({
     else if (pathname === '/api/worker/decisions/fail')
       result = await workerGateway.failDecisionApply({ token, ...body });
     await recordTimelineMutation(pathname, result, body);
+    publishStateChange(pathname, result);
     sendJson(response, statusFor(result), sanitizeForWeb(result));
   }
 
@@ -1211,6 +1332,7 @@ export function createManagementServer({
       else result = failure('NOT_FOUND', 'Worker management route does not exist');
     } else result = failure('NOT_FOUND', 'Management mutation does not exist');
     await recordTimelineMutation(pathname, result, body);
+    publishStateChange(pathname, result);
     sendJson(response, statusFor(result), sanitizeForWeb(result));
   }
 
@@ -1267,6 +1389,7 @@ export function createManagementServer({
         return await accountRoute(request, response, pathname);
       }
       if (pathname === '/api/session') return await sessionRoute(request, response);
+      if (pathname === '/api/events') return await sseRoute(request, response, url);
       if (MUTATIONS.has(pathname)) return await mutationRoute(request, response, pathname);
       const documentMatch = /^\/api\/attention\/([^/]+)\/document$/.exec(pathname);
       if (documentMatch) {

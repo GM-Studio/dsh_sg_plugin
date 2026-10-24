@@ -31,7 +31,8 @@ test('management UI exposes attention, monitoring, evidence and controlled actio
     assert.match(all, new RegExp(expected, 'i'));
   assert.match(app, /x-specgate-csrf/);
   assert.match(app, /signal|AbortController/);
-  assert.match(app, /\['OPEN',\s*'DELIVERED',\s*'REMINDED'\]/);
+  assert.match(app, /\/api\/inbox/);
+  assert.match(app, /inbox-risk-filter/);
   assert.match(app, /\/api\/deliveries\/accept/);
   assert.match(app, /不可变 DeliveryRecord/);
 });
@@ -101,6 +102,8 @@ test('management UI stays read-only plus the allow-listed mutation routes', () =
     '/api/attention',
     '/api/attention/',
     '/api/notifications',
+    '/api/inbox',
+    '/api/events',
     '/api/auth/methods',
     '/api/auth/login',
     '/api/auth/logout',

@@ -1,0 +1,118 @@
+{
+  "version": 1,
+  "stage": "M7",
+  "date": "2026-10-24",
+  "timezone": "Asia/Shanghai",
+  "branch": "sg-codex",
+  "baseCommit": "40f430b",
+  "worktreeId": "WORKTREE-2026-10-24-M7",
+  "hashPolicy": "SHA-256 of UTF-8 text with CRLF normalized to LF; sourceArtifactSha256 hashes the ordered files array JSON",
+  "sourceArtifactSha256": "17b81fa5fbc7c9e203a5c1d8a516fb3842338351b06f1a31844e87207c2419da",
+  "files": [
+    {
+      "path": "src/codex/control/exception-inbox.js",
+      "sha256": "baa5318e3479cf06f9e4dfb27b5a8564f74f778e7c246dd8bf3f3ec30305481c"
+    },
+    {
+      "path": "src/codex/control/sse-hub.js",
+      "sha256": "28fe992b6ecfbd8355c2315d46d1a673276ca521aec21be3550bd57f7d0c6e30"
+    },
+    {
+      "path": "src/codex/control/daemon.js",
+      "sha256": "78548e793d76f6d5425dad50ca615136b12eb7aff40c932e5beca17c9de57536"
+    },
+    {
+      "path": "src/codex/management/server.js",
+      "sha256": "572d81a9568901b3d4271120d7c973d23757e7bc9c90f3db6f38a3a35a4f072c"
+    },
+    {
+      "path": "src/codex/management/public/app.js",
+      "sha256": "569b6a45d10c1871c847acfc179deaf93962c9a429971cfdd90377df5e4f16c0"
+    },
+    {
+      "path": "src/codex/management/public/index.html",
+      "sha256": "7ff1e121fb57817edbd7ba43dc02c2f9c2f817d789c990c8b605e81c8afa2643"
+    },
+    {
+      "path": "src/codex/management/public/style.css",
+      "sha256": "04ce8597f21a8af644f0a2d4bf8dc90a93fbabb51765030f610922b348bf9c3c"
+    },
+    {
+      "path": "test/codex-control-m7-inbox.test.js",
+      "sha256": "a736f78b153e6e6d1dead9a478b22da91c70c3fe963e4408f1bf641adaea2a28"
+    },
+    {
+      "path": "test/codex-control-m7-web.test.js",
+      "sha256": "aa5325ca1191e33096bceef1c90dc2d3727b1b01156a518019d46f852ce65bf2"
+    },
+    {
+      "path": "test/codex-management-ui-contract.test.js",
+      "sha256": "712f083ed379d760f820ee686c3cbb0939f0d48320071ad41cce7a0b9a512d56"
+    }
+  ],
+  "checks": [
+    {
+      "command": "M7 inbox/SSE/Web/UI focused suite",
+      "exitCode": 0,
+      "tests": 18,
+      "pass": 18,
+      "fail": 0,
+      "cancelled": 0,
+      "skipped": 0,
+      "todo": 0
+    },
+    {
+      "command": "npm test",
+      "mysqlConfigured": true,
+      "exitCode": 0,
+      "tests": 700,
+      "pass": 699,
+      "fail": 0,
+      "cancelled": 0,
+      "skipped": 1,
+      "todo": 0
+    },
+    {
+      "command": "npm run lint",
+      "exitCode": 0
+    },
+    {
+      "command": "npm run format:check",
+      "exitCode": 0
+    },
+    {
+      "command": "npm run pack:check",
+      "npmCache": "project .npm-cache",
+      "exitCode": 0
+    },
+    {
+      "command": "git diff --check",
+      "exitCode": 0
+    }
+  ],
+  "skipped": [
+    {
+      "name": "requesting the react frontend without its template tree fails closed",
+      "reason": "react template tree is already on disk"
+    }
+  ],
+  "verifiedScenarios": [
+    "risk and urgency ordering",
+    "project isolation and filters",
+    "expired and notification failure visibility",
+    "owner-only default scope with explicit scoped roles",
+    "bounded SSE event retention and sanitization",
+    "Last-Event-ID replay and backpressure reset",
+    "authenticated inbox API",
+    "authenticated SSE frame delivery",
+    "EventSource with 15-second polling fallback",
+    "M5-M7 combined full-suite regression with real MySQL"
+  ],
+  "notRun": [
+    "real browser EventSource through a public TLS proxy",
+    "mobile network disconnect and proxy buffering",
+    "real multi-user role pilot",
+    "human acceptance of the M7 stage"
+  ],
+  "humanAcceptance": "PENDING"
+}

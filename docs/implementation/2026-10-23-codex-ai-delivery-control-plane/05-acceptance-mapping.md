@@ -6,7 +6,7 @@
 - 需求字节哈希：`16875BBF80B6960A205763E1C7C0192626D0520E275FA4DCE91F277EE99CBBC6`
 - 计划基线：`docs/plans/2026-10-23-codex-ai-delivery-control-plane-product-plan.zh.md`
 - 计划字节哈希：`CE64DC087A6F4CA1EB63292E7FBC779836D75CA8F84C4DA5883CD07F8520272A`
-- 状态：**M0-M4 实现与真实 MySQL 验证已具备证据；M2-M4 人工接受待确认，通知、时间线、再交付与云部署仍为 NOT_RUN / PARTIAL**
+- 状态：**M0-M7 实现与真实 MySQL 验证已具备证据；M2-M7 人工接受待确认，再交付与云部署仍为 NOT_RUN / PARTIAL**
 
 本文件只记录验收口径、证据位置和真实状态。设计完成、代码生成、测试文件存在，均不能替代真实执行证据。状态取值限定为：
 
@@ -29,17 +29,17 @@
 
 | AC   | 验收口径         | 自动化或人工步骤                                                                                                | 证据类型                         | 当前状态 | 证据 / 原因                                                                                                     |
 | ---- | ---------------- | --------------------------------------------------------------------------------------------------------------- | -------------------------------- | -------- | --------------------------------------------------------------------------------------------------------------- |
-| AC01 | 远程通知闭环     | 创建 WorkItem，触发 H1/H3 Attention；验证飞书与钉钉各一条通知、执行进程退出、租约释放、链接定位正确 Attention   | 集成测试 + 真实渠道记录          | NOT_RUN  | 现有飞书 outbox 与 daemon 测试只覆盖单渠道路径，钉钉未实现                                                      |
+| AC01 | 远程通知闭环     | 创建 WorkItem，触发 H1/H3 Attention；验证飞书与钉钉各一条通知、执行进程退出、租约释放、链接定位正确 Attention   | 集成测试 + 真实渠道记录          | PARTIAL  | M3-M5 已证明租约释放、双渠道独立投递和 Attention 链接；真实飞书/钉钉渠道与手机跳转待 M9                         |
 | AC02 | 链接转发安全     | 将消息链接交给无会话客户端；验证不能建立管理会话、不能读取、不能批准，只返回登录或失效提示                      | 自动化负向测试 + 人工浏览器验证  | PARTIAL  | M2 已证明短期 Attention nonce、单次兑换、无会话拒绝和无法建立会话；真实手机浏览器人工验证仍未执行               |
 | AC03 | 高风险 step-up   | 分别提交无当前操作 TOTP 的 H1/H3、cancel、accept_delivery；验证拒绝并审计                                       | 自动化负向测试                   | PARTIAL  | M2 已证明动作/资源绑定 proof、TOTP 重放拒绝和认证审计；真实独立 Authenticator 设备与人工操作仍未执行            |
 | AC04 | 旧制品失效       | 冻结 artifactHash 后替换制品；尝试应用旧 Decision；验证 STALE、新 Attention、必须重新决策                       | 自动化测试 + 端到端测试          | PARTIAL  | M1 真实 MySQL 覆盖旧 revision / artifactHash 拒绝且无部分写入；STALE 账本流转与真实 Worker 应用前复验仍待 M3-M6 |
 | AC05 | 决策幂等         | 同一幂等键并发/重复提交；验证一个 Decision、一次恢复、一次结果通知                                              | 并发自动化测试                   | PARTIAL  | M1+M4 已证明 Decision 唯一、单消费者 PENDING_APPLY/APPLIED 和一次原 session 恢复；结果通知仍待 M5               |
 | AC06 | Worker 断线      | Worker 离线时记录 Decision；验证 PENDING_APPLY；恢复后拉取、校验、应用或明确拒绝告警                            | 断网/重启端到端测试              | PARTIAL  | M3+M4 已证明主动出站、租约释放不完成、PENDING_APPLY、恢复后应用和失败告警；真实跨公网断网演练待 M9              |
-| AC07 | 渠道故障隔离     | 模拟飞书失败、钉钉成功；验证独立投递、重试上限、失败记录、Attention 生命周期不受影响、无重复轰炸                | 故障注入测试                     | NOT_RUN  | 多渠道扇出与钉钉适配器尚未实现                                                                                  |
-| AC08 | Attention 过期   | 使用可控时钟推进提醒、临期、过期；验证 EXPIRED、链接失效、不自动批准、不自动续跑                                | 时间推进自动化测试               | PARTIAL  | 现有 Attention 状态机覆盖过期终态；提醒/升级/深链失效的完整链路未验证                                           |
+| AC07 | 渠道故障隔离     | 模拟飞书失败、钉钉成功；验证独立投递、重试上限、失败记录、Attention 生命周期不受影响、无重复轰炸                | 故障注入测试                     | PARTIAL  | M5 已通过独立 Outbox、单渠道故障、全渠道故障、重试上限和去重测试；真实渠道故障注入待 M9                         |
+| AC08 | Attention 过期   | 使用可控时钟推进提醒、临期、过期；验证 EXPIRED、链接失效、不自动批准、不自动续跑                                | 时间推进自动化测试               | PARTIAL  | M5 已覆盖确定性提醒、单次升级、独立过期和不自动续跑；真实浏览器深链失效人工验证待 M9                            |
 | AC09 | 决策到再交付闭环 | 批准 -> Worker 应用 -> 原 session resume -> 再验证 -> 结果通知 -> 时间线回放                                    | 端到端测试 + 运行证据            | PARTIAL  | M4 受控 E2E 已闭合批准、Worker 应用和原 session resume；再验证、结果通知、时间线回放仍待 M5/M6/M8               |
-| AC10 | 数据边界         | 注入源码、密钥、绝对路径、客户名；检查云端持久化、通知、时间线、日志                                            | 自动化脱敏测试 + 代码审查        | PARTIAL  | M1 真实数据库通知仅存 recipientHash，加密备份拒绝错误密钥；服务层脱敏与日志全链路仍待 M5-M6                     |
-| AC11 | 多项目隔离       | 创建多个项目、独立通知策略和 Worker 白名单；验证排序、决策不串项目、Worker 越权被拒                             | 集成测试 + 越权负向测试          | PARTIAL  | M1/M3 已证明项目绑定、清理隔离、Worker 白名单和越权拒绝；独立通知策略与角色化 UI 仍待 M5/M7                     |
+| AC10 | 数据边界         | 注入源码、密钥、绝对路径、客户名；检查云端持久化、通知、时间线、日志                                            | 自动化脱敏测试 + 代码审查        | PARTIAL  | M1/M5/M6 已覆盖通知双脱敏、时间线 fail closed、审计脱敏和备份；日志全链路与真实云持久化待 M9                    |
+| AC11 | 多项目隔离       | 创建多个项目、独立通知策略和 Worker 白名单；验证排序、决策不串项目、Worker 越权被拒                             | 集成测试 + 越权负向测试          | PARTIAL  | M3/M7 已证明 Worker 白名单、收件箱排序、项目过滤和角色裁剪；按项目独立通知策略仍待后续                          |
 | AC12 | 多 Worker 预留   | 验证 Worker 注册表、独立令牌、白名单、租约、心跳；第二 Worker 越权领取失败                                      | 自动化并发与越权测试             | PASS     | M3 网关、真实 MySQL、HTTP E2E 已验证独立令牌/撤销/白名单/租约/心跳，第二 Worker 无法越权领取；正式调度仍属 M10  |
 | AC13 | 未验证如实记录   | 人为跳过、取消、超时测试；验证交付记录显式列出未执行项，冻结测试不可被 AI 改写                                  | 测试 + 验收脚本                  | PARTIAL  | 本台账与 M1 设计明确列出 NOT_RUN；交付记录强制字段和冻结测试机制未实现                                          |
 | AC14 | 保留期与审计     | 配置 7 天/30 天/1 年；执行删除并检查审计；篡改审计链；验证显式失败或告警                                        | 自动化测试 + 真实 MySQL 运维演练 | PARTIAL  | M1 真实 MySQL 覆盖并发链、篡改/尾删拒绝、删除回滚、保留期及加密恢复；审计到期归档和生产运维仍未执行             |
@@ -70,6 +70,10 @@
 | `docs/verification/codex-control-plane-product/m3-2026-10-24.json`                           | M3 命令、源码摘要和未执行项                                 | PASS     | 绑定 M3 源码文件哈希；不替代真实云网络和 M4 恢复闭环                                         |
 | `11-m4-codex-recovery-delivery.md`                                                           | M4 远程执行、举手、Decision 应用与原 session resume         | PASS     | M4 聚焦 68/68/0/0；全仓 662/661/0/1，见 M4 报告与 JSON                                       |
 | `docs/verification/codex-control-plane-product/m4-2026-10-24.json`                           | M4 命令、源码摘要和未执行项                                 | PASS     | 绑定 M4 源码文件哈希；不替代真实 Codex 模型执行和云上试点                                    |
+| `12-m5-notifications-delivery.md`                                                            | M5 双渠道、扇出和 Attention 生命周期                        | PASS     | M5 聚焦 63/63；真实渠道投放待 M9，见 M5 报告与 JSON                                          |
+| `13-m6-timeline-delivery.md`                                                                 | M6 证据时间线与审计查询                                     | PASS     | M6 聚焦 21/21；真实云审计导出待 M9，见 M6 报告与 JSON                                        |
+| `14-m7-inbox-sse-delivery.md`                                                                | M7 例外收件箱、权限裁剪与 SSE                               | PASS     | M7 聚焦 18/18；真实浏览器/公网 SSE 待 M9，见 M7 报告与 JSON                                  |
+| `docs/verification/codex-control-plane-product/m5-2026-10-24.json` … `m7-2026-10-24.json`    | M5-M7 命令、源码摘要和未执行项                              | PASS     | 分别绑定阶段源码哈希；不替代真实渠道、浏览器和云部署                                         |
 | `npm run lint`                                                                               | 全仓 lint                                                   | FAIL     | 仅既有 `src/codex/change-add.js` 3 个未使用符号错误；本轮未修改该文件                        |
 | `npm run format:check`                                                                       | 全仓格式检查                                                | FAIL     | 仅既有 `src/codex/change-add.js`；本轮改动文件的精确 Prettier 检查另行记录                   |
 | `npm pack --dry-run --cache .npm-cache`                                                      | 打包内容检查                                                | PASS     | package 628.5 kB、total files 308、退出码 `0`；默认 npm 缓存路径存在 EPERM                   |
@@ -162,6 +166,33 @@ M0 只有在以下条件同时满足时才能退出：
   session。
 - 真实 Codex 模型执行、公网代理和 M9 试点仍未执行，见
   [M4 交付报告](11-m4-codex-recovery-delivery.md)。
+
+### 4.9 M5 通知与生命周期证据（2026-10-24）
+
+- 制品标识：`WORKTREE-2026-10-24-M5`。
+- M5 聚焦测试 63 项，63 通过、0 失败、0 跳过。
+- Feishu/DingTalk 使用独立 channel、Outbox、重试和回执；单渠道失败不阻塞另一渠道。
+- 可控时钟验证提醒、单次升级、独立过期和重复 tick 幂等。
+- 真实 Webhook 和移动端链接仍未执行，见
+  [M5 交付报告](12-m5-notifications-delivery.md)。
+
+### 4.10 M6 时间线与审计证据（2026-10-24）
+
+- 制品标识：`WORKTREE-2026-10-24-M6`。
+- M6 聚焦测试 21 项，21 通过、0 失败、0 跳过。
+- 14 类离散事件、artifact/版本区分、脱敏 fail closed、审计链查询/导出和
+  WorkItem 时间线 UI 已验证。
+- 真实云审计导出和人工回放仍未执行，见
+  [M6 交付报告](13-m6-timeline-delivery.md)。
+
+### 4.11 M7 例外收件箱与 SSE 证据（2026-10-24）
+
+- 制品标识：`WORKTREE-2026-10-24-M7`。
+- M7 聚焦测试 18 项，18 通过、0 失败、0 跳过。
+- 已验证风险/临期排序、项目过滤、通知失败/过期可见、角色裁剪、SSE 回放/背压和
+  15 秒轮询回退。
+- 真实浏览器 EventSource、公网代理和移动断网仍未执行，见
+  [M7 交付报告](14-m7-inbox-sse-delivery.md)。
 
 ## 5. 维护规则
 

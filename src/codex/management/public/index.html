@@ -134,6 +134,36 @@
                 <h2>等待你的决定</h2>
               </div>
             </div>
+            <div class="inbox-filters panel">
+              <label>
+                项目
+                <select id="inbox-project-filter">
+                  <option value="">全部项目</option>
+                </select>
+              </label>
+              <label>
+                风险
+                <select id="inbox-risk-filter">
+                  <option value="">全部风险</option>
+                  <option value="critical">紧急</option>
+                  <option value="high">高</option>
+                  <option value="medium">中</option>
+                  <option value="low">低</option>
+                </select>
+              </label>
+              <label>
+                状态
+                <select id="inbox-status-filter">
+                  <option value="">全部状态</option>
+                  <option value="OPEN">待处理</option>
+                  <option value="DELIVERED">已送达</option>
+                  <option value="REMINDED">已提醒</option>
+                  <option value="EXPIRED">已过期</option>
+                  <option value="BLOCKED">已阻塞</option>
+                  <option value="FAILED">失败</option>
+                </select>
+              </label>
+            </div>
             <div id="attention-list" class="card-grid"></div>
           </section>
 
