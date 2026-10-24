@@ -20,6 +20,11 @@ function createFakeControlService(clock) {
     releases: [],
     evidence: [],
     applied: [],
+    applications: [],
+    applicationFailures: [],
+    attention: [],
+    finishes: [],
+    beginApplicationFailure: null,
   };
   let sequence = 0;
 
@@ -37,12 +42,16 @@ function createFakeControlService(clock) {
   return {
     state,
     calls,
-    addWorkItem(projectId, workItemId, executionState = 'QUEUED') {
+    addWorkItem(projectId, workItemId, executionState = 'QUEUED', extra = {}) {
       state.workItems[workItemId] = {
         workItemId,
         projectId,
         executionState,
         revision: 1,
+        currentAttentionId: null,
+        currentRunId: null,
+        resume: null,
+        ...extra,
       };
     },
     addDecision(decisionId, workItemId, status, extra = {}) {
@@ -83,6 +92,7 @@ function createFakeControlService(clock) {
         ownerId,
         executionState: 'RUNNING',
         revision: 1,
+        sessionId: workItem.resume?.sessionId ?? null,
       };
       const lease = {
         leaseId: `lease-${sequence}`,
@@ -97,6 +107,7 @@ function createFakeControlService(clock) {
       state.leases[workItem.projectId] = lease;
       workItem.executionState = 'RUNNING';
       workItem.currentRunId = runId;
+      workItem.revision += 1;
       return {
         ok: true,
         type: 'run.claimed',
@@ -119,7 +130,9 @@ function createFakeControlService(clock) {
         return { ok: false, code: 'VERSION_CONFLICT', message: 'Run changed' };
       Object.assign(run, clone(updates));
       run.revision += 1;
-      return { ok: true, run: clone(run) };
+      const workItem = state.workItems[run.workItemId];
+      if (workItem) workItem.revision += 1;
+      return { ok: true, run: clone(run), workItem: clone(workItem) };
     },
     async releaseLease({ runId, leaseToken, ownerId }) {
       calls.releases.push({ runId, leaseToken, ownerId });
@@ -130,6 +143,135 @@ function createFakeControlService(clock) {
       delete state.leases[run.projectId];
       run.executionState = 'INTERRUPTED';
       return { ok: true, released: true };
+    },
+    async getRun(runId) {
+      const run = state.runs[runId];
+      return run
+        ? {
+            ok: true,
+            run: clone(run),
+            workItem: clone(state.workItems[run.workItemId]),
+          }
+        : { ok: false, code: 'RUN_NOT_FOUND', message: 'Run not found' };
+    },
+    async getWorkItem(workItemId) {
+      const workItem = state.workItems[workItemId];
+      if (!workItem)
+        return { ok: false, code: 'WORK_ITEM_NOT_FOUND', message: 'WorkItem not found' };
+      return {
+        ok: true,
+        workItem: clone(workItem),
+        attention: workItem.currentAttentionId
+          ? clone(state.attention?.[workItem.currentAttentionId] ?? null)
+          : null,
+        decisions: Object.values(state.decisions)
+          .filter((decision) => decision.workItemId === workItemId)
+          .map(clone),
+      };
+    },
+    async requestAttention(input) {
+      calls.attention.push(clone(input));
+      expireLeases();
+      const workItem = state.workItems[input.workItemId];
+      if (!workItem)
+        return { ok: false, code: 'WORK_ITEM_NOT_FOUND', message: 'WorkItem not found' };
+      if (workItem.revision !== input.expectedVersion)
+        return {
+          ok: false,
+          code: 'VERSION_CONFLICT',
+          message: 'WorkItem changed',
+          actualVersion: workItem.revision,
+        };
+      const run = workItem.currentRunId ? state.runs[workItem.currentRunId] : null;
+      const attention = {
+        requestId: `attention-${calls.attention.length}`,
+        workItemId: workItem.workItemId,
+        projectId: workItem.projectId,
+        type: input.type,
+        status: 'OPEN',
+        actions: clone(input.actions),
+        artifactHash: input.artifactHash,
+      };
+      state.attention ??= {};
+      state.attention[attention.requestId] = attention;
+      workItem.currentAttentionId = attention.requestId;
+      workItem.executionState = 'WAITING_FOR_USER';
+      workItem.revision += 1;
+      if (
+        run &&
+        !['COMPLETED', 'FAILED', 'CANCELLED', 'INTERRUPTED'].includes(run.executionState)
+      ) {
+        run.executionState = 'WAITING_FOR_USER';
+        run.revision += 1;
+      }
+      for (const [projectId, lease] of Object.entries(state.leases)) {
+        if (lease.workItemId === workItem.workItemId) delete state.leases[projectId];
+      }
+      return { ok: true, attention: clone(attention) };
+    },
+    async finishRun(input) {
+      calls.finishes.push(clone(input));
+      expireLeases();
+      const run = state.runs[input.runId];
+      const lease = run ? state.leases[run.projectId] : null;
+      if (!run || !lease || lease.runId !== run.runId || lease.token !== input.leaseToken)
+        return { ok: false, code: 'LEASE_INVALID', message: 'Lease is invalid' };
+      run.executionState = input.status;
+      run.revision += 1;
+      delete state.leases[run.projectId];
+      const workItem = state.workItems[run.workItemId];
+      workItem.currentRunId = null;
+      workItem.executionState = input.status;
+      workItem.revision += 1;
+      return {
+        ok: true,
+        result: { run: clone(run), workItem: clone(workItem) },
+      };
+    },
+    async beginDecisionApplication(input) {
+      calls.applications.push(clone(input));
+      if (calls.beginApplicationFailure) return clone(calls.beginApplicationFailure);
+      return {
+        ok: true,
+        decisionApplication: {
+          decisionId: input.decisionId,
+          workItemId: input.workItemId,
+          consumer: input.consumer,
+          applyStatus: 'PENDING_APPLY',
+        },
+      };
+    },
+    async markDecisionApplied(input) {
+      calls.applied.push(clone(input));
+      if (
+        !calls.applications.some(
+          (application) =>
+            application.decisionId === input.decisionId &&
+            application.workItemId === input.workItemId,
+        )
+      )
+        return {
+          ok: false,
+          code: 'DECISION_APPLICATION_NOT_STARTED',
+          message: 'Decision application must be started first',
+        };
+      return {
+        ok: true,
+        decision: {
+          decisionId: input.decisionId,
+          workItemId: input.workItemId,
+          status: 'APPLIED',
+          appliedAt: new Date(clock()).toISOString(),
+        },
+      };
+    },
+    async failDecisionApplication(input) {
+      calls.applicationFailures.push(clone(input));
+      return {
+        ok: false,
+        code: 'DECISION_APPLICATION_FAILED',
+        message: 'Decision could not be applied',
+      };
     },
     async inspect() {
       return { ok: true, state: clone(state) };
@@ -313,6 +455,81 @@ test('claims use only the server whitelist and ignore idle as completion', async
   assert.ok(harness.audits.some((entry) => entry.action === 'worker.projects.update'));
 });
 
+test('claim begins the pending resume decision and returns its application context', async () => {
+  const harness = createHarness();
+  const worker = await harness.gateway.register({
+    displayName: 'Resume worker',
+    projectIds: ['project-a'],
+    capabilities: ['codex'],
+    actorId: 'owner-1',
+  });
+  await harness.gateway.connect({ token: worker.token });
+  harness.controlService.addWorkItem('project-a', 'work-resume', 'QUEUED', {
+    resume: {
+      decisionId: 'decision-resume',
+      action: 'request_changes',
+      payload: { feedback: 'apply review comments' },
+      sessionId: 'session-original',
+    },
+  });
+
+  const claimed = await harness.gateway.claim({ token: worker.token });
+  assert.equal(claimed.ok, true);
+  assert.equal(claimed.run.sessionId, 'session-original');
+  assert.deepEqual(harness.controlService.calls.applications, [
+    {
+      decisionId: 'decision-resume',
+      workItemId: 'work-resume',
+      consumer: worker.worker.workerId,
+    },
+  ]);
+  assert.deepEqual(claimed.decisionApplication, {
+    decisionId: 'decision-resume',
+    workItemId: 'work-resume',
+    consumer: worker.worker.workerId,
+    applyStatus: 'PENDING_APPLY',
+  });
+});
+
+test('claim releases the remote lease when decision application cannot begin', async () => {
+  const harness = createHarness();
+  const worker = await harness.gateway.register({
+    displayName: 'Blocked resume worker',
+    projectIds: ['project-a'],
+    capabilities: ['codex'],
+    actorId: 'owner-1',
+  });
+  await harness.gateway.connect({ token: worker.token });
+  harness.controlService.addWorkItem('project-a', 'work-blocked-resume', 'QUEUED', {
+    resume: {
+      decisionId: 'decision-blocked',
+      action: 'retry',
+      payload: {},
+      sessionId: 'session-original',
+    },
+  });
+  harness.controlService.calls.beginApplicationFailure = {
+    ok: false,
+    code: 'DECISION_RESUME_BLOCKED',
+    message: 'The original session cannot be resumed',
+  };
+
+  const claimed = await harness.gateway.claim({ token: worker.token });
+  assert.equal(claimed.ok, false);
+  assert.equal(claimed.code, 'DECISION_RESUME_BLOCKED');
+  assert.equal(claimed.leaseReleased, true);
+  assert.equal(Object.keys(harness.controlService.state.leases).length, 0);
+  assert.equal(
+    (
+      await harness.store.getLease({
+        workerId: worker.worker.workerId,
+        runId: 'run-1',
+      })
+    ).code,
+    'WORKER_LEASE_NOT_FOUND',
+  );
+});
+
 test('two workers receive only one lease and a disconnected worker is not completed', async () => {
   const harness = createHarness();
   const first = await harness.gateway.register({
@@ -413,6 +630,128 @@ test('heartbeat renews an owned run and release never reports completion', async
   assert.equal(expired.ok, false);
   assert.equal(expired.code, 'LEASE_INVALID');
   assert.equal(harness.controlService.state.workItems['work-expired'].executionState, 'BLOCKED');
+});
+
+test('waiting records the session, creates Attention and releases the owned lease', async () => {
+  const harness = createHarness();
+  const worker = await harness.gateway.register({
+    displayName: 'Waiting worker',
+    projectIds: ['project-a'],
+    capabilities: ['codex'],
+    actorId: 'owner-1',
+  });
+  await harness.gateway.connect({ token: worker.token });
+  harness.controlService.addWorkItem('project-a', 'work-waiting');
+  const claimed = await harness.gateway.claim({ token: worker.token });
+  const waiting = await harness.gateway.reportWaiting({
+    token: worker.token,
+    runId: claimed.run.runId,
+    leaseToken: claimed.lease.token,
+    sessionId: 'session-waiting',
+    waiting: {
+      type: 'H1_APPROVAL',
+      reason: 'Approval is required',
+      question: 'Approve this implementation plan?',
+      actions: ['approve', 'request_changes'],
+      artifactHash: 'b'.repeat(64),
+    },
+  });
+
+  assert.equal(waiting.ok, true);
+  assert.equal(waiting.status, 'waiting');
+  assert.equal(waiting.attention.type, 'H1_APPROVAL');
+  assert.equal(waiting.leaseReleased, true);
+  assert.equal(harness.controlService.calls.heartbeats.at(-1).updates.sessionId, 'session-waiting');
+  assert.equal(harness.controlService.calls.attention.length, 1);
+  assert.equal(
+    harness.controlService.calls.attention[0].expectedVersion,
+    harness.controlService.state.workItems['work-waiting'].revision - 1,
+  );
+  assert.equal(
+    harness.controlService.state.workItems['work-waiting'].executionState,
+    'WAITING_FOR_USER',
+  );
+  assert.notEqual(harness.controlService.state.runs[claimed.run.runId].executionState, 'COMPLETED');
+  assert.equal(
+    (
+      await harness.store.getLease({
+        workerId: worker.worker.workerId,
+        runId: claimed.run.runId,
+      })
+    ).code,
+    'WORKER_LEASE_NOT_FOUND',
+  );
+});
+
+test('waiting without a Codex session fails closed and keeps the execution lease', async () => {
+  const harness = createHarness();
+  const worker = await harness.gateway.register({
+    displayName: 'Missing session worker',
+    projectIds: ['project-a'],
+    capabilities: ['codex'],
+    actorId: 'owner-1',
+  });
+  await harness.gateway.connect({ token: worker.token });
+  harness.controlService.addWorkItem('project-a', 'work-no-session');
+  const claimed = await harness.gateway.claim({ token: worker.token });
+  const waiting = await harness.gateway.reportWaiting({
+    token: worker.token,
+    runId: claimed.run.runId,
+    leaseToken: claimed.lease.token,
+    waiting: {
+      type: 'H1_APPROVAL',
+      reason: 'Approval is required',
+      question: 'Approve?',
+      actions: ['approve', 'request_changes'],
+      artifactHash: 'c'.repeat(64),
+    },
+  });
+
+  assert.equal(waiting.ok, false);
+  assert.equal(waiting.code, 'WORKER_SESSION_REQUIRED');
+  assert.equal(
+    (
+      await harness.store.getLease({
+        workerId: worker.worker.workerId,
+        runId: claimed.run.runId,
+      })
+    ).ok,
+    true,
+  );
+});
+
+test('failed finish creates a FAILED Attention and never reports completion', async () => {
+  const harness = createHarness();
+  const worker = await harness.gateway.register({
+    displayName: 'Failure worker',
+    projectIds: ['project-a'],
+    capabilities: ['codex'],
+    actorId: 'owner-1',
+  });
+  await harness.gateway.connect({ token: worker.token });
+  harness.controlService.addWorkItem('project-a', 'work-failed');
+  const claimed = await harness.gateway.claim({ token: worker.token });
+  const finished = await harness.gateway.finishRun({
+    token: worker.token,
+    runId: claimed.run.runId,
+    leaseToken: claimed.lease.token,
+    status: 'FAILED',
+    error: { code: 'SESSION_NOT_FOUND', message: 'Original session is unavailable' },
+  });
+
+  assert.equal(finished.ok, true);
+  assert.equal(finished.status, 'FAILED');
+  assert.equal(harness.controlService.calls.finishes[0].status, 'FAILED');
+  assert.equal(finished.attention.type, 'FAILED');
+  assert.equal(harness.controlService.calls.attention[0].type, 'FAILED');
+  assert.notEqual(
+    harness.controlService.state.workItems['work-failed'].executionState,
+    'COMPLETED',
+  );
+  assert.equal(
+    harness.controlService.calls.finishes.some((entry) => entry.status === 'COMPLETED'),
+    false,
+  );
 });
 
 test('worker events are idempotent, conflict-aware, project-scoped and fail closed', async () => {
@@ -611,7 +950,9 @@ test('pending decisions are bounded and isolated to the worker project whitelist
   );
   for (const decision of synced.pendingDecisions) {
     assert.equal(decision.projectId, 'project-a');
-    assert.equal(decision.payload, undefined);
+    assert.deepEqual(decision.payload, { privateDecisionPayload: true });
+    assert.equal(decision.sessionId, null);
+    assert.equal(decision.applyStatus, decision.status);
     assert.equal(decision.actorId, undefined);
   }
   assert.equal(harness.controlService.calls.applied.length, 0);
@@ -622,6 +963,136 @@ test('pending decisions are bounded and isolated to the worker project whitelist
   });
   assert.equal(next.ok, true);
   assert.equal(next.pendingDecisions.length, 0);
+});
+
+test('CONSUMED resume decisions expose bounded metadata and cancel applies without a run', async () => {
+  const harness = createHarness();
+  const worker = await harness.gateway.register({
+    displayName: 'M4 decision worker',
+    projectIds: ['project-a'],
+    capabilities: ['codex'],
+    actorId: 'owner-1',
+  });
+  await harness.gateway.connect({ token: worker.token });
+  harness.controlService.addWorkItem('project-a', 'work-resume', 'QUEUED', {
+    resume: {
+      decisionId: 'decision-resume',
+      action: 'approve',
+      payload: { feedback: 'continue with the approved plan' },
+      sessionId: 'session-local-only',
+    },
+  });
+  harness.controlService.addWorkItem('project-a', 'work-cancel', 'CANCELLED');
+  harness.controlService.addWorkItem('project-b', 'work-other');
+  harness.controlService.addDecision('decision-resume', 'work-resume', 'CONSUMED', {
+    action: 'approve',
+    payload: { feedback: 'continue with the approved plan' },
+    createdAt: '2026-10-24T00:01:01.000Z',
+  });
+  harness.controlService.addDecision('decision-cancel', 'work-cancel', 'CONSUMED', {
+    action: 'cancel',
+    payload: { reason: 'operator cancelled' },
+    createdAt: '2026-10-24T00:01:02.000Z',
+  });
+  harness.controlService.addDecision('decision-applied', 'work-resume', 'APPLIED', {
+    createdAt: '2026-10-24T00:01:03.000Z',
+  });
+  harness.controlService.addDecision('decision-rejected', 'work-resume', 'REJECTED', {
+    createdAt: '2026-10-24T00:01:04.000Z',
+  });
+  harness.controlService.addDecision('decision-other', 'work-other', 'CONSUMED', {
+    action: 'cancel',
+    createdAt: '2026-10-24T00:01:05.000Z',
+  });
+
+  const synced = await harness.gateway.sync({ token: worker.token });
+  assert.equal(synced.ok, true);
+  assert.deepEqual(
+    synced.pendingDecisions.map((decision) => decision.decisionId),
+    ['decision-resume', 'decision-cancel'],
+  );
+  assert.deepEqual(synced.pendingDecisions[0], {
+    decisionId: 'decision-resume',
+    workItemId: 'work-resume',
+    projectId: 'project-a',
+    attentionId: 'attention-decision-resume',
+    action: 'approve',
+    artifactHash: 'a'.repeat(64),
+    payload: { feedback: 'continue with the approved plan' },
+    sessionId: 'session-local-only',
+    expectedWorkItemVersion: 2,
+    attentionRevision: 1,
+    status: 'CONSUMED',
+    applyStatus: 'PENDING_APPLY',
+    createdAt: '2026-10-24T00:01:01.000Z',
+  });
+  assert.equal(synced.pendingDecisions[1].applyStatus, 'PENDING_APPLY');
+  assert.equal(synced.pendingDecisions[1].sessionId, null);
+
+  const claimedRuns = () => Object.keys(harness.controlService.state.runs).length;
+  const before = claimedRuns();
+  const completed = await harness.gateway.completeDecisionApply({
+    token: worker.token,
+    decisionId: 'decision-cancel',
+    workItemId: 'work-cancel',
+  });
+  assert.equal(completed.ok, true);
+  assert.equal(harness.controlService.calls.applications[0].decisionId, 'decision-cancel');
+  assert.equal(claimedRuns(), before);
+  assert.equal(harness.controlService.calls.claims.length, 0);
+});
+
+test('decision apply failure creates a FAILED Attention and remains an explicit failure', async () => {
+  const harness = createHarness();
+  const worker = await harness.gateway.register({
+    displayName: 'Decision failure worker',
+    projectIds: ['project-a'],
+    capabilities: ['codex'],
+    actorId: 'owner-1',
+  });
+  await harness.gateway.connect({ token: worker.token });
+  harness.controlService.addWorkItem('project-a', 'work-decision-failure', 'BLOCKED');
+
+  const failed = await harness.gateway.failDecisionApply({
+    token: worker.token,
+    decisionId: 'decision-failure',
+    workItemId: 'work-decision-failure',
+    error: { code: 'SESSION_UNAVAILABLE', message: 'resume failed' },
+  });
+  assert.equal(failed.ok, false);
+  assert.equal(failed.code, 'DECISION_APPLICATION_FAILED');
+  assert.equal(failed.attention.type, 'FAILED');
+  assert.equal(harness.controlService.calls.applicationFailures.length, 1);
+  assert.equal(harness.controlService.calls.applicationFailures[0].error, 'resume failed');
+  assert.equal(harness.controlService.calls.attention[0].type, 'FAILED');
+});
+
+test('M4 worker inputs reject callback and shell fields before any control action', async () => {
+  const harness = createHarness();
+  const worker = await harness.gateway.register({
+    displayName: 'Typed M4 worker',
+    projectIds: ['project-a'],
+    capabilities: ['codex'],
+    actorId: 'owner-1',
+  });
+  for (const method of [
+    'reportWaiting',
+    'finishRun',
+    'beginDecisionApply',
+    'completeDecisionApply',
+    'failDecisionApply',
+  ]) {
+    const result = await harness.gateway[method]({
+      token: worker.token,
+      callbackUrl: 'https://attacker.invalid/hook',
+      command: 'whoami',
+    });
+    assert.equal(result.ok, false);
+    assert.equal(result.code, 'WORKER_INPUT_INVALID');
+  }
+  assert.equal(harness.controlService.calls.attention.length, 0);
+  assert.equal(harness.controlService.calls.finishes.length, 0);
+  assert.equal(harness.controlService.calls.applications.length, 0);
 });
 
 test('connection inputs reject callback URLs and no inbound endpoint is accepted', async () => {

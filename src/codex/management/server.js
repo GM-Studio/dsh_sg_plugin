@@ -39,6 +39,11 @@ const WORKER_ROUTES = new Set([
   '/api/worker/events',
   '/api/worker/commands/ack',
   '/api/worker/release',
+  '/api/worker/waiting',
+  '/api/worker/finish',
+  '/api/worker/decisions/apply',
+  '/api/worker/decisions/complete',
+  '/api/worker/decisions/fail',
 ]);
 const MUTATION_ACTIONS = Object.freeze({
   '/api/work-items/pause': 'pause',
@@ -260,6 +265,9 @@ function statusFor(result) {
       'LEASE_INVALID',
       'WORKER_EVENT_CONFLICT',
       'WORKER_OFFLINE',
+      'RESUME_SESSION_REQUIRED',
+      'DECISION_APPLY_FAILED',
+      'DECISION_ALREADY_APPLIED',
     ].includes(result.code)
   )
     return 409;
@@ -385,6 +393,11 @@ export function createManagementServer({
       'ackCommand',
       'release',
       'issueCommand',
+      'reportWaiting',
+      'finishRun',
+      'beginDecisionApply',
+      'completeDecisionApply',
+      'failDecisionApply',
     ].some((method) => typeof workerGateway[method] !== 'function')
   )
     throw new TypeError('workerGateway does not implement the management Worker contract');
@@ -948,6 +961,16 @@ export function createManagementServer({
       result = await workerGateway.ackCommand({ token, commandId: body.commandId });
     else if (pathname === '/api/worker/release')
       result = await workerGateway.release({ token, ...body });
+    else if (pathname === '/api/worker/waiting')
+      result = await workerGateway.reportWaiting({ token, ...body });
+    else if (pathname === '/api/worker/finish')
+      result = await workerGateway.finishRun({ token, ...body });
+    else if (pathname === '/api/worker/decisions/apply')
+      result = await workerGateway.beginDecisionApply({ token, ...body });
+    else if (pathname === '/api/worker/decisions/complete')
+      result = await workerGateway.completeDecisionApply({ token, ...body });
+    else if (pathname === '/api/worker/decisions/fail')
+      result = await workerGateway.failDecisionApply({ token, ...body });
     sendJson(response, statusFor(result), sanitizeForWeb(result));
   }
 

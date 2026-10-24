@@ -24,6 +24,11 @@ export const WORKER_ROUTES = Object.freeze({
   events: 'api/worker/events',
   ack: 'api/worker/commands/ack',
   release: 'api/worker/release',
+  reportWaiting: 'api/worker/waiting',
+  finishRun: 'api/worker/finish',
+  beginDecisionApply: 'api/worker/decisions/apply',
+  completeDecisionApply: 'api/worker/decisions/complete',
+  failDecisionApply: 'api/worker/decisions/fail',
 });
 
 export const WORKER_COMMAND_KINDS = COMMAND_KINDS;
@@ -569,6 +574,16 @@ export function createOutboundWorker({
     }
   }
 
+  async function sendBounded(route, payload, code) {
+    if (!isPlainObject(payload))
+      return failure(code, 'Request payload must be an object', { retryable: false });
+    try {
+      return await request(route, boundedJson(payload, 64 * 1024));
+    } catch (error) {
+      return failure(error.code || code, error.message, { retryable: false });
+    }
+  }
+
   async function connect() {
     return request(WORKER_ROUTES.connect, {});
   }
@@ -683,11 +698,27 @@ export function createOutboundWorker({
   }
 
   async function release(payload = {}) {
-    try {
-      return await request(WORKER_ROUTES.release, boundedJson(payload, 64 * 1024));
-    } catch (error) {
-      return failure(error.code || 'RELEASE_INVALID', error.message, { retryable: false });
-    }
+    return sendBounded(WORKER_ROUTES.release, payload, 'RELEASE_INVALID');
+  }
+
+  async function reportWaiting(payload = {}) {
+    return sendBounded(WORKER_ROUTES.reportWaiting, payload, 'WAITING_INVALID');
+  }
+
+  async function finishRun(payload = {}) {
+    return sendBounded(WORKER_ROUTES.finishRun, payload, 'FINISH_INVALID');
+  }
+
+  async function beginDecisionApply(payload = {}) {
+    return sendBounded(WORKER_ROUTES.beginDecisionApply, payload, 'DECISION_APPLY_INVALID');
+  }
+
+  async function completeDecisionApply(payload = {}) {
+    return sendBounded(WORKER_ROUTES.completeDecisionApply, payload, 'DECISION_COMPLETE_INVALID');
+  }
+
+  async function failDecisionApply(payload = {}) {
+    return sendBounded(WORKER_ROUTES.failDecisionApply, payload, 'DECISION_FAIL_INVALID');
   }
 
   async function emitLifecycle(event) {
@@ -1013,6 +1044,11 @@ export function createOutboundWorker({
     reportEvents,
     ackCommand,
     release,
+    reportWaiting,
+    finishRun,
+    beginDecisionApply,
+    completeDecisionApply,
+    failDecisionApply,
     runOnce,
     start,
     stop,

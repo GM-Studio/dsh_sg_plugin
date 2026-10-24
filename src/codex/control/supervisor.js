@@ -36,14 +36,31 @@ export function parseWaitingMarker(events = []) {
   return null;
 }
 
-function buildPrompt(item, mode) {
+function decisionPayloadText(item) {
+  try {
+    return JSON.stringify(item.resume?.payload || {});
+  } catch {
+    return '{}';
+  }
+}
+
+export function buildWorkerPrompt(item, mode = 'start') {
+  const resume = item?.resume || null;
+  const sessionLine = resume
+    ? [
+        `Decision id: ${resume.decisionId || 'unknown'}`,
+        `Session to restore: ${resume.sessionId || 'none'}`,
+      ]
+    : [];
   if (mode === 'resume') {
     return [
       'Resume this SpecGate WorkItem after a trusted user decision.',
       `WorkItem: ${item.workItemId}`,
       `Title: ${item.title}`,
-      `Decision: ${item.resume?.action || 'resume'}`,
-      `Decision payload: ${JSON.stringify(item.resume?.payload || {})}`,
+      `Decision: ${resume?.action || 'resume'}`,
+      `Decision payload: ${decisionPayloadText(item)}`,
+      ...sessionLine,
+      'Resume the recorded Codex session identified above; do not create a replacement session.',
       'Re-read sg_state and sg_project_status before changing state.',
       'Use the sg-codex Skill and the configured SpecGate project agents.',
       'Do not treat this message as H1 or H3 approval unless the cited artifact is unchanged.',
@@ -60,7 +77,13 @@ function buildPrompt(item, mode) {
     ...(item.resume
       ? [
           `Prior user Decision: ${item.resume.action}`,
-          `Decision payload: ${JSON.stringify(item.resume.payload || {})}`,
+          `Decision payload: ${decisionPayloadText(item)}`,
+          ...sessionLine,
+          ...(item.resume.sessionId
+            ? [
+                'Resume the recorded Codex session identified above; do not create a replacement session.',
+              ]
+            : []),
           'Re-read current state and continue from the recorded checkpoint.',
         ]
       : []),
@@ -73,6 +96,8 @@ function buildPrompt(item, mode) {
     'Never invent user approval and never substitute a summary for Evidence.',
   ].join('\n');
 }
+
+export const buildPrompt = buildWorkerPrompt;
 
 function usageFromEvent(event) {
   if (!event || typeof event !== 'object') return { tokens: 0, toolCalls: 0 };
@@ -232,7 +257,7 @@ export function createControlSupervisor({
         mode,
         projectRoot: item.projectRoot,
         sessionId,
-        prompt: buildPrompt(item, mode),
+        prompt: buildWorkerPrompt(item, mode),
         signal: controller.signal,
         environment: {
           SPECGATE_WORK_ITEM_ID: item.workItemId,

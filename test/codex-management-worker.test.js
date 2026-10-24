@@ -86,6 +86,26 @@ function workerGateway() {
       calls.push(['release', input]);
       return { ok: true, released: true };
     },
+    async reportWaiting(input) {
+      calls.push(['reportWaiting', input]);
+      return { ok: true, status: 'waiting', attention: { requestId: 'attention-1' } };
+    },
+    async finishRun(input) {
+      calls.push(['finishRun', input]);
+      return { ok: true, status: input.status };
+    },
+    async beginDecisionApply(input) {
+      calls.push(['beginDecisionApply', input]);
+      return { ok: true, decision: { decisionId: input.decisionId, applyStatus: 'PENDING_APPLY' } };
+    },
+    async completeDecisionApply(input) {
+      calls.push(['completeDecisionApply', input]);
+      return { ok: true, decision: { decisionId: input.decisionId, status: 'APPLIED' } };
+    },
+    async failDecisionApply(input) {
+      calls.push(['failDecisionApply', input]);
+      return { ok: false, code: 'DECISION_APPLY_FAILED' };
+    },
     async issueCommand(input) {
       calls.push(['issueCommand', input]);
       return { ok: true, command: { commandId: 'command-1', kind: input.kind } };
@@ -251,6 +271,42 @@ test('worker API uses independent bearer auth without cookies or CSRF', async (t
     leaseToken: 'lease-token',
   });
   assert.equal(released.status, 200);
+  const waiting = await workerPost(server, '/api/worker/waiting', {
+    runId: 'run-1',
+    leaseToken: 'lease-token',
+    sessionId: 'session-1',
+    waiting: {
+      type: 'H1_APPROVAL',
+      reason: 'Confirm',
+      question: 'Approve?',
+      actions: ['approve', 'request_changes'],
+      artifactHash: 'a'.repeat(64),
+    },
+  });
+  assert.equal(waiting.status, 200);
+  const finished = await workerPost(server, '/api/worker/finish', {
+    runId: 'run-1',
+    leaseToken: 'lease-token',
+    status: 'COMPLETED',
+    outcome: { summary: 'done' },
+  });
+  assert.equal(finished.status, 200);
+  const applying = await workerPost(server, '/api/worker/decisions/apply', {
+    decisionId: 'decision-1',
+    workItemId: 'work-1',
+  });
+  assert.equal(applying.status, 200);
+  const completedApply = await workerPost(server, '/api/worker/decisions/complete', {
+    decisionId: 'decision-1',
+    workItemId: 'work-1',
+  });
+  assert.equal(completedApply.status, 200);
+  const failedApply = await workerPost(server, '/api/worker/decisions/fail', {
+    decisionId: 'decision-1',
+    workItemId: 'work-1',
+    error: 'session unavailable',
+  });
+  assert.equal(failedApply.status, 409);
   const calls = server.gateway.calls;
   assert.ok(calls.some(([name]) => name === 'connect'));
   assert.ok(calls.some(([name]) => name === 'sync'));
@@ -259,6 +315,11 @@ test('worker API uses independent bearer auth without cookies or CSRF', async (t
   assert.ok(calls.some(([name]) => name === 'reportEvents'));
   assert.ok(calls.some(([name]) => name === 'ackCommand'));
   assert.ok(calls.some(([name]) => name === 'release'));
+  assert.ok(calls.some(([name]) => name === 'reportWaiting'));
+  assert.ok(calls.some(([name]) => name === 'finishRun'));
+  assert.ok(calls.some(([name]) => name === 'beginDecisionApply'));
+  assert.ok(calls.some(([name]) => name === 'completeDecisionApply'));
+  assert.ok(calls.some(([name]) => name === 'failDecisionApply'));
 });
 
 test('worker API rejects unknown routes and malformed command cursors', async (t) => {

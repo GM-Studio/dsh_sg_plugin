@@ -77,6 +77,20 @@ test('all public requests use only fixed HTTPS routes and a bearer header', asyn
   await client.reportEvents([{ type: 'worker.ready' }]);
   await client.ackCommand('command-one');
   await client.release({ reason: 'idle' });
+  await client.reportWaiting({
+    runId: 'run-one',
+    leaseToken: 'lease-one',
+    sessionId: 'session-one',
+    waiting: { type: 'H1_APPROVAL' },
+  });
+  await client.finishRun({ runId: 'run-one', leaseToken: 'lease-one', status: 'COMPLETED' });
+  await client.beginDecisionApply({ decisionId: 'decision-one', workItemId: 'work-one' });
+  await client.completeDecisionApply({ decisionId: 'decision-one', workItemId: 'work-one' });
+  await client.failDecisionApply({
+    decisionId: 'decision-one',
+    workItemId: 'work-one',
+    error: 'session unavailable',
+  });
 
   const expected = [
     WORKER_ROUTES.connect,
@@ -86,6 +100,11 @@ test('all public requests use only fixed HTTPS routes and a bearer header', asyn
     WORKER_ROUTES.events,
     WORKER_ROUTES.ack,
     WORKER_ROUTES.release,
+    WORKER_ROUTES.reportWaiting,
+    WORKER_ROUTES.finishRun,
+    WORKER_ROUTES.beginDecisionApply,
+    WORKER_ROUTES.completeDecisionApply,
+    WORKER_ROUTES.failDecisionApply,
   ];
   assert.deepEqual(
     calls.map(({ url }) => new URL(url).pathname),
@@ -435,6 +454,32 @@ test('event uploads are chunked to the bounded batch size', async () => {
   );
 });
 
+test('M4 request methods reject unbounded payloads before any network request', async () => {
+  let calls = 0;
+  const client = worker(async () => {
+    calls += 1;
+    return response({ ok: true });
+  });
+  const oversized = {
+    runId: 'run-one',
+    outcome: 'x'.repeat(65 * 1024),
+  };
+  for (const method of [
+    'reportWaiting',
+    'finishRun',
+    'beginDecisionApply',
+    'completeDecisionApply',
+    'failDecisionApply',
+  ]) {
+    const invalidType = await client[method](null);
+    assert.equal(invalidType.ok, false);
+  }
+  const tooLarge = await client.finishRun(oversized);
+  assert.equal(tooLarge.ok, false);
+  assert.equal(tooLarge.retryable, false);
+  assert.equal(calls, 0);
+});
+
 test('static transport contract has no listener or arbitrary URL callback parameter', async () => {
   const source = await fs.readFile(sourcePath, 'utf8');
   assert.doesNotMatch(source, /\b(?:createServer|listen)\s*\(/);
@@ -448,6 +493,11 @@ test('static transport contract has no listener or arbitrary URL callback parame
     'events',
     'ack',
     'release',
+    'reportWaiting',
+    'finishRun',
+    'beginDecisionApply',
+    'completeDecisionApply',
+    'failDecisionApply',
   ]);
   assert.deepEqual(WORKER_COMMAND_KINDS, [
     'CLAIM',

@@ -1,4 +1,5 @@
 import { randomBytes } from 'node:crypto';
+import { hashValue } from '../../../events.js';
 import {
   AUTHENTICATED_WORKER_STATUSES,
   boundedText,
@@ -20,6 +21,41 @@ import {
 } from './worker-contract.js';
 
 const INPUT_INVALID = (message) => failure('WORKER_INPUT_INVALID', message);
+const WAITING_TYPES = new Set([
+  'H1_APPROVAL',
+  'H3_APPROVAL',
+  'CLARIFICATION',
+  'BLOCKED',
+  'FAILED',
+  'OFFLINE',
+  'BUDGET',
+  'CUSTOMER_ACCEPTANCE',
+  'COMPLETION',
+]);
+const DECISION_ACTIONS = new Set([
+  'approve',
+  'request_changes',
+  'answer',
+  'pause',
+  'resume',
+  'retry',
+  'cancel',
+  'accept_delivery',
+]);
+const RESUME_ACTIONS = new Set(['approve', 'request_changes', 'resume', 'retry']);
+const WAITING_FIELDS = new Set([
+  'type',
+  'reason',
+  'question',
+  'actions',
+  'summary',
+  'risks',
+  'evidence',
+  'artifactHash',
+]);
+const FAILED_ATTENTION_ACTIONS = new Set(['retry', 'request_changes', 'cancel']);
+const HASH = /^[a-f0-9]{64}$/i;
+const TERMINAL_RUN_STATES = new Set(['COMPLETED', 'FAILED', 'CANCELLED', 'INTERRUPTED']);
 
 function exactInput(input, allowed) {
   return (
@@ -52,6 +88,74 @@ function decisionCursor(value) {
 
 function controlResult(result) {
   return result?.result && isPlainObject(result.result) ? result.result : result;
+}
+
+function boundedJson(value, maximumBytes = 256 * 1024) {
+  try {
+    const text = JSON.stringify(value);
+    if (Buffer.byteLength(text, 'utf8') > maximumBytes) return null;
+    return JSON.parse(text);
+  } catch {
+    return null;
+  }
+}
+
+function normalizeWaitingMarker(value, { type = null } = {}) {
+  if (
+    !isPlainObject(value) ||
+    Object.keys(value).some((key) => !WAITING_FIELDS.has(key)) ||
+    (type === null && !WAITING_TYPES.has(value.type)) ||
+    (type !== null && value.type !== undefined && value.type !== type) ||
+    !boundedText(value.reason, 4000) ||
+    !boundedText(value.question, 4000) ||
+    !Array.isArray(value.actions) ||
+    value.actions.length < 1 ||
+    value.actions.length > 8 ||
+    value.actions.some((action) => !DECISION_ACTIONS.has(action)) ||
+    new Set(value.actions).size !== value.actions.length ||
+    (value.summary !== undefined && !boundedText(value.summary, 16000)) ||
+    (value.risks !== undefined &&
+      (!Array.isArray(value.risks) ||
+        value.risks.length > 100 ||
+        value.risks.some((entry) => !boundedText(entry, 4000)))) ||
+    (value.evidence !== undefined &&
+      (!Array.isArray(value.evidence) ||
+        value.evidence.length > 200 ||
+        value.evidence.some((entry) => !boundedText(entry, 1024)))) ||
+    !HASH.test(value.artifactHash || '')
+  )
+    return failure('WORKER_WAITING_INVALID', 'Waiting marker is invalid');
+  if (type !== null && value.actions.some((action) => !FAILED_ATTENTION_ACTIONS.has(action)))
+    return failure('WORKER_FAILURE_ATTENTION_INVALID', 'Failed Attention actions are invalid');
+  if (containsForbiddenCloudContent(value))
+    return failure(
+      'WORKER_WAITING_SENSITIVE',
+      'Waiting marker contains credentials, callbacks or local paths',
+    );
+  return {
+    ok: true,
+    value: {
+      ...cloneWorkerValue(value),
+      ...(type === null ? {} : { type }),
+      summary: value.summary || value.question,
+      risks: cloneWorkerValue(value.risks || []),
+      evidence: cloneWorkerValue(value.evidence || []),
+      artifactHash: value.artifactHash.toLowerCase(),
+    },
+  };
+}
+
+function failedAttentionFallback({ workItemId, runId, code }) {
+  return {
+    type: 'FAILED',
+    reason: 'Remote Codex execution could not complete safely.',
+    question: 'Retry, request changes, or cancel this WorkItem?',
+    actions: ['retry', 'request_changes', 'cancel'],
+    summary: `Execution ${runId} failed for WorkItem ${workItemId}.`,
+    risks: ['The original session may no longer be recoverable.'],
+    evidence: [code],
+    artifactHash: hashValue({ workItemId, runId, code }),
+  };
 }
 
 function delay(ms) {
@@ -116,6 +220,102 @@ export function createWorkerGateway({
       // The worker audit ledger remains the authoritative in-process record.
     }
     return entry;
+  }
+
+  function requireControlMethod(name) {
+    const method = controlService?.[name];
+    return typeof method === 'function'
+      ? { ok: true, method }
+      : failure('WORKER_CONTROL_UNAVAILABLE', `Control service does not implement ${name}`);
+  }
+
+  async function getOwnedLease({ workerId, runId, leaseToken }) {
+    const localLease = await store.getLease({ workerId, runId });
+    if (!localLease?.ok || localLease.lease?.leaseToken !== leaseToken) {
+      await writeAudit({
+        actorType: 'worker',
+        actorId: workerId,
+        action: 'worker.lease.rejected',
+        objectType: 'run',
+        objectId: runId,
+        outcome: 'failure',
+        detail: { reason: 'LEASE_OWNER_MISMATCH' },
+      });
+      return failure('LEASE_INVALID', 'Execution lease is no longer valid');
+    }
+    return localLease;
+  }
+
+  async function releaseLocalLeaseConfirmed({ workerId, runId }) {
+    const deleted = await store.deleteLease({ workerId, runId });
+    if (!deleted?.ok)
+      return failure(
+        deleted?.code || 'LEASE_RELEASE_FAILED',
+        deleted?.message || 'Execution lease could not be released',
+      );
+    const remaining = await store.getLease({ workerId, runId });
+    if (remaining?.ok)
+      return failure('LEASE_RELEASE_UNCONFIRMED', 'Execution lease is still present');
+    if (remaining?.code !== 'WORKER_LEASE_NOT_FOUND')
+      return failure(
+        remaining?.code || 'LEASE_RELEASE_UNCONFIRMED',
+        remaining?.message || 'Execution lease release could not be confirmed',
+      );
+    return { ok: true, released: true };
+  }
+
+  async function loadWorkerWorkItem(worker, workItemId) {
+    if (!boundedText(workItemId, 128))
+      return failure('WORKER_INPUT_INVALID', 'WorkItem id is required');
+    const method = requireControlMethod('getWorkItem');
+    if (!method.ok) return method;
+    const current = await method.method.call(controlService, workItemId);
+    if (!current?.ok) return current;
+    const projectId = current.workItem?.projectId;
+    if (!worker.projectIds.includes(projectId))
+      return failure('WORKER_PROJECT_DENIED', 'WorkItem is outside the worker project whitelist');
+    return current;
+  }
+
+  async function existingFailedAttention(workItemId) {
+    const method = requireControlMethod('getWorkItem');
+    if (!method.ok) return null;
+    const current = await method.method.call(controlService, workItemId);
+    if (!current?.ok) return null;
+    const attention = current.attention;
+    return attention?.type === 'FAILED' &&
+      ['OPEN', 'DELIVERED', 'REMINDED'].includes(attention.status)
+      ? cloneWorkerValue(attention)
+      : null;
+  }
+
+  async function createFailedAttention({ workItemId, runId, code, attention: suppliedAttention }) {
+    const duplicate = await existingFailedAttention(workItemId);
+    if (duplicate) return { ok: true, attention: duplicate, duplicate: true };
+    const request = requireControlMethod('requestAttention');
+    if (!request.ok) return request;
+    const getWorkItem = requireControlMethod('getWorkItem');
+    if (!getWorkItem.ok) return getWorkItem;
+    const current = await getWorkItem.method.call(controlService, workItemId);
+    if (!current?.ok) return current;
+    const candidate =
+      suppliedAttention === undefined
+        ? failedAttentionFallback({ workItemId, runId, code })
+        : { ...suppliedAttention, type: 'FAILED' };
+    const checked = normalizeWaitingMarker(candidate, { type: 'FAILED' });
+    if (!checked.ok) return checked;
+    const result = await request.method.call(controlService, {
+      workItemId,
+      expectedVersion: current.workItem.revision,
+      ...checked.value,
+    });
+    if (!result?.ok) return result;
+    const projected = controlResult(result);
+    return {
+      ok: true,
+      attention: cloneWorkerValue(projected?.attention ?? result.attention),
+      duplicate: false,
+    };
   }
 
   async function issueRawToken() {
@@ -373,20 +573,46 @@ export function createWorkerGateway({
         : [];
     const whitelist = new Set(worker.projectIds);
     const rows = [];
+    let invalid = null;
     for (const decision of decisions) {
       if (
         !isPlainObject(decision) ||
-        !['RECORDED', 'PENDING_APPLY'].includes(decision.status) ||
+        ['APPLIED', 'REJECTED'].includes(decision.status) ||
         !boundedText(decision.decisionId, 128)
       )
         continue;
       const workItem = workItems.find((entry) => entry?.workItemId === decision.workItemId);
       const projectId = decision.projectId ?? workItem?.projectId;
       if (!whitelist.has(projectId)) continue;
+      const resumable =
+        decision.status === 'CONSUMED' &&
+        !decision.appliedAt &&
+        ((RESUME_ACTIONS.has(decision.action) &&
+          workItem?.resume?.decisionId === decision.decisionId) ||
+          decision.action === 'cancel');
+      const deliveryPending = ['RECORDED', 'PENDING_APPLY'].includes(decision.status);
+      if (!resumable && !deliveryPending) continue;
       const createdAt = validIso(decision.createdAt);
       if (!createdAt) continue;
       const cursor = `${createdAt}|${decision.decisionId}`;
       if (cursor <= after) continue;
+      const rawPayload = decision.payload ?? workItem?.resume?.payload ?? {};
+      if (!isPlainObject(rawPayload)) {
+        invalid = failure('WORKER_DECISION_INVALID', 'Decision payload must be an object');
+        break;
+      }
+      if (containsForbiddenCloudContent(rawPayload)) {
+        invalid = failure(
+          'WORKER_DECISION_SENSITIVE',
+          'Decision payload contains credentials, callbacks or local paths',
+        );
+        break;
+      }
+      const payload = boundedJson(rawPayload, 64 * 1024);
+      if (!payload) {
+        invalid = failure('WORKER_DECISION_INVALID', 'Decision payload exceeds its bounds');
+        break;
+      }
       rows.push({
         cursor,
         value: {
@@ -396,16 +622,24 @@ export function createWorkerGateway({
           attentionId: decision.attentionId,
           action: decision.action,
           artifactHash: decision.artifactHash,
+          payload,
+          sessionId: workItem?.resume?.sessionId ?? null,
           expectedWorkItemVersion: decision.expectedWorkItemVersion,
           attentionRevision: decision.attentionRevision,
           status: decision.status,
+          applyStatus:
+            decision.status === 'PENDING_APPLY' || decision.status === 'CONSUMED'
+              ? 'PENDING_APPLY'
+              : decision.status,
           createdAt,
         },
       });
     }
+    if (invalid) return invalid;
     rows.sort((left, right) => left.cursor.localeCompare(right.cursor));
     const selected = rows.slice(0, 50);
     return {
+      ok: true,
       pendingDecisions: selected.map((row) => row.value),
       cursor: selected.length > 0 ? selected.at(-1).cursor : after,
     };
@@ -436,6 +670,7 @@ export function createWorkerGateway({
         worker,
         decisionCursor(cursor),
       );
+      if (!pending.ok) return pending;
     }
     return {
       ok: true,
@@ -557,6 +792,65 @@ export function createWorkerGateway({
         'Control service returned a WorkItem outside the worker whitelist',
       );
     }
+    let decisionApplication = null;
+    if (claimed.workItem.resume?.decisionId) {
+      const releaseClaimedLease = async () => {
+        const releaseOperation =
+          controlService.releaseLease ?? controlService.release ?? controlService.releaseRun;
+        if (typeof releaseOperation !== 'function') return false;
+        const releaseResult = await releaseOperation.call(controlService, {
+          runId: claimed.run.runId,
+          leaseToken: claimed.lease.token,
+          ownerId: authenticated.worker.workerId,
+        });
+        return releaseResult?.ok === true;
+      };
+      const begin = requireControlMethod('beginDecisionApplication');
+      if (!begin.ok) {
+        const released = await releaseClaimedLease();
+        return { ...begin, leaseReleased: released };
+      }
+      const application = await begin.method.call(controlService, {
+        decisionId: claimed.workItem.resume.decisionId,
+        workItemId: claimed.workItem.workItemId,
+        consumer: authenticated.worker.workerId,
+      });
+      if (!application?.ok) {
+        const released = await releaseClaimedLease();
+        await writeAudit({
+          actorType: 'worker',
+          actorId: authenticated.worker.workerId,
+          action: 'worker.decision.begin',
+          objectType: 'decision',
+          objectId: claimed.workItem.resume.decisionId,
+          outcome: 'failure',
+          detail: {
+            code: application?.code ?? 'DECISION_BEGIN_FAILED',
+            leaseReleased: released,
+          },
+        });
+        return {
+          ...application,
+          ok: false,
+          code: application?.code ?? 'DECISION_BEGIN_FAILED',
+          message: application?.message ?? 'Decision application could not begin',
+          leaseReleased: released,
+        };
+      }
+      const projected = controlResult(application);
+      decisionApplication = cloneWorkerValue(
+        projected?.decisionApplication ??
+          (projected?.decision
+            ? {
+                decisionId: projected.decision.decisionId,
+                workItemId: projected.decision.workItemId,
+                consumer: authenticated.worker.workerId,
+                applyStatus: projected.decision.applyStatus ?? 'PENDING_APPLY',
+                duplicate: projected.duplicate === true,
+              }
+            : (projected?.application ?? projected)),
+      );
+    }
     await store.setLease({
       workerId: authenticated.worker.workerId,
       lease: {
@@ -585,6 +879,7 @@ export function createWorkerGateway({
       workItem: cloneWorkerValue(claimed.workItem),
       run: cloneWorkerValue(claimed.run),
       lease: cloneWorkerValue(claimed.lease),
+      ...(decisionApplication === null ? {} : { decisionApplication }),
       heartbeatIntervalMs,
     };
   }
@@ -711,6 +1006,369 @@ export function createWorkerGateway({
       detail: { code: result?.ok ? null : (result?.code ?? 'CONTROL_ERROR') },
     });
     return result;
+  }
+
+  async function reportWaiting(input) {
+    const allowed = new Set(['token', 'runId', 'leaseToken', 'sessionId', 'waiting', 'marker']);
+    if (!exactInput(input, allowed) || (input.waiting !== undefined && input.marker !== undefined))
+      return INPUT_INVALID('Worker waiting input is invalid');
+    if (!boundedText(input.runId, 128) || !boundedText(input.leaseToken, 256))
+      return INPUT_INVALID('Run and lease are required');
+    if (!boundedText(input.sessionId, 256))
+      return failure('WORKER_SESSION_REQUIRED', 'A Codex sessionId is required to wait');
+    const waiting = normalizeWaitingMarker(input.waiting ?? input.marker);
+    if (!waiting.ok) return waiting;
+    const authenticated = await authenticateWorker(input.token);
+    if (!authenticated.ok) return authenticated;
+    const owned = await getOwnedLease({
+      workerId: authenticated.worker.workerId,
+      runId: input.runId,
+      leaseToken: input.leaseToken,
+    });
+    if (!owned.ok) return owned;
+    const getRun = requireControlMethod('getRun');
+    if (!getRun.ok) return getRun;
+    let current = await getRun.method.call(controlService, input.runId);
+    if (!current?.ok) return current;
+    if (current.run?.workItemId !== owned.lease.workItemId)
+      return failure('LEASE_INVALID', 'Execution lease does not match the Run');
+    if (TERMINAL_RUN_STATES.has(current.run?.executionState))
+      return failure('RUN_STOPPED', 'ExecutionRun is no longer running');
+
+    let run = current.run;
+    let workItem = current.workItem;
+    if (run.sessionId !== input.sessionId) {
+      const heartbeat = requireControlMethod('heartbeat');
+      if (!heartbeat.ok) return heartbeat;
+      const beat = await heartbeat.method.call(controlService, {
+        runId: input.runId,
+        leaseToken: input.leaseToken,
+        expectedRunVersion: run.revision,
+        updates: { sessionId: input.sessionId },
+      });
+      if (!beat?.ok) return beat;
+      const projected = controlResult(beat);
+      run = projected.run ?? run;
+      workItem = projected.workItem ?? workItem;
+      if (!workItem) {
+        current = await getRun.method.call(controlService, input.runId);
+        if (!current?.ok) return current;
+        run = current.run;
+        workItem = current.workItem;
+      }
+    }
+    if (!workItem || !Number.isSafeInteger(workItem.revision))
+      return failure('WORKER_CONTROL_UNAVAILABLE', 'Current WorkItem revision is unavailable');
+    const requestAttention = requireControlMethod('requestAttention');
+    if (!requestAttention.ok) return requestAttention;
+    const requested = await requestAttention.method.call(controlService, {
+      workItemId: workItem.workItemId,
+      expectedVersion: workItem.revision,
+      ...waiting.value,
+    });
+    if (!requested?.ok) return requested;
+    const released = await releaseLocalLeaseConfirmed({
+      workerId: authenticated.worker.workerId,
+      runId: input.runId,
+    });
+    const projected = controlResult(requested);
+    await writeAudit({
+      actorType: 'worker',
+      actorId: authenticated.worker.workerId,
+      action: 'worker.waiting',
+      objectType: 'run',
+      objectId: input.runId,
+      outcome: released.ok ? 'success' : 'failure',
+      detail: {
+        workItemId: workItem.workItemId,
+        attentionId: projected?.attention?.requestId ?? null,
+        leaseReleased: released.ok,
+      },
+    });
+    if (!released.ok)
+      return {
+        ...released,
+        attention: cloneWorkerValue(projected?.attention ?? requested.attention),
+        leaseReleased: false,
+      };
+    return {
+      ok: true,
+      status: 'waiting',
+      workItemId: workItem.workItemId,
+      runId: input.runId,
+      attention: cloneWorkerValue(projected?.attention ?? requested.attention),
+      leaseReleased: true,
+    };
+  }
+
+  async function finishRun(input) {
+    const allowed = new Set([
+      'token',
+      'runId',
+      'leaseToken',
+      'status',
+      'outcome',
+      'error',
+      'attention',
+    ]);
+    if (!exactInput(input, allowed)) return INPUT_INVALID('Worker finish input is invalid');
+    if (
+      !boundedText(input.runId, 128) ||
+      !boundedText(input.leaseToken, 256) ||
+      !['COMPLETED', 'FAILED'].includes(input.status)
+    )
+      return INPUT_INVALID('Run, lease and terminal status are required');
+    const outcome = boundedJson(input.outcome ?? null);
+    const error = boundedJson(input.error ?? null);
+    if (outcome === null && input.outcome !== undefined && input.outcome !== null)
+      return failure('WORKER_FINISH_INVALID', 'Execution outcome is invalid');
+    if (error === null && input.error !== undefined && input.error !== null)
+      return failure('WORKER_FINISH_INVALID', 'Execution error is invalid');
+    if (hasDangerousCommandFields(outcome) || hasDangerousCommandFields(error))
+      return failure(
+        'WORKER_FINISH_SHELL_REJECTED',
+        'Execution outcome and error must not contain shell commands',
+      );
+    if (containsForbiddenCloudContent(outcome) || containsForbiddenCloudContent(error))
+      return failure(
+        'WORKER_FINISH_SENSITIVE',
+        'Execution outcome or error contains credentials, callbacks or local paths',
+      );
+    const authenticated = await authenticateWorker(input.token);
+    if (!authenticated.ok) return authenticated;
+    const owned = await getOwnedLease({
+      workerId: authenticated.worker.workerId,
+      runId: input.runId,
+      leaseToken: input.leaseToken,
+    });
+    if (!owned.ok) return owned;
+    const finish = requireControlMethod('finishRun');
+    if (!finish.ok) return finish;
+    const finished = await finish.method.call(controlService, {
+      runId: input.runId,
+      leaseToken: input.leaseToken,
+      status: input.status,
+      outcome,
+      error,
+    });
+    if (!finished?.ok) return finished;
+    const projected = controlResult(finished);
+    const released = await releaseLocalLeaseConfirmed({
+      workerId: authenticated.worker.workerId,
+      runId: input.runId,
+    });
+    if (!released.ok)
+      return {
+        ...released,
+        runFinished: true,
+        status: input.status,
+        finished: cloneWorkerValue(projected),
+      };
+
+    let attention = null;
+    if (input.status === 'FAILED') {
+      const rawCode =
+        typeof error === 'string'
+          ? error
+          : typeof error?.code === 'string'
+            ? error.code
+            : 'CODEX_EXECUTION_FAILED';
+      const code = /^[A-Za-z0-9._:-]{1,128}$/.test(rawCode) ? rawCode : 'CODEX_EXECUTION_FAILED';
+      const requested = await createFailedAttention({
+        workItemId:
+          projected?.workItem?.workItemId ?? owned.lease.workItemId ?? projected?.run?.workItemId,
+        runId: input.runId,
+        code,
+        attention: input.attention,
+      });
+      if (!requested.ok) {
+        await writeAudit({
+          actorType: 'worker',
+          actorId: authenticated.worker.workerId,
+          action: 'worker.finish',
+          objectType: 'run',
+          objectId: input.runId,
+          outcome: 'failure',
+          detail: {
+            status: input.status,
+            code: requested.code ?? 'FAILED_ATTENTION_CREATE_FAILED',
+          },
+        });
+        return {
+          ...requested,
+          ok: false,
+          runFinished: true,
+          status: 'FAILED',
+          finished: cloneWorkerValue(projected),
+        };
+      }
+      attention = requested.attention;
+    }
+    await writeAudit({
+      actorType: 'worker',
+      actorId: authenticated.worker.workerId,
+      action: 'worker.finish',
+      objectType: 'run',
+      objectId: input.runId,
+      outcome: 'success',
+      detail: { status: input.status },
+    });
+    return {
+      ok: true,
+      status: input.status,
+      workItemId:
+        projected?.workItem?.workItemId ?? owned.lease.workItemId ?? projected?.run?.workItemId,
+      runId: input.runId,
+      run: cloneWorkerValue(projected?.run ?? projected?.finished?.run ?? null),
+      workItem: cloneWorkerValue(projected?.workItem ?? projected?.finished?.workItem ?? null),
+      ...(attention === null ? {} : { attention: cloneWorkerValue(attention) }),
+      leaseReleased: true,
+    };
+  }
+
+  async function beginDecisionApply(input) {
+    const allowed = new Set(['token', 'decisionId', 'workItemId']);
+    if (!exactInput(input, allowed)) return INPUT_INVALID('Decision application input is invalid');
+    if (!boundedText(input.decisionId, 128) || !boundedText(input.workItemId, 128))
+      return INPUT_INVALID('Decision and WorkItem ids are required');
+    const authenticated = await authenticateWorker(input.token);
+    if (!authenticated.ok) return authenticated;
+    const current = await loadWorkerWorkItem(authenticated.worker, input.workItemId);
+    if (!current.ok) return current;
+    const begin = requireControlMethod('beginDecisionApplication');
+    if (!begin.ok) return begin;
+    const result = await begin.method.call(controlService, {
+      decisionId: input.decisionId,
+      workItemId: input.workItemId,
+      consumer: authenticated.worker.workerId,
+    });
+    await writeAudit({
+      actorType: 'worker',
+      actorId: authenticated.worker.workerId,
+      action: 'worker.decision.begin',
+      objectType: 'decision',
+      objectId: input.decisionId,
+      outcome: result?.ok ? 'success' : 'failure',
+      detail: { code: result?.ok ? null : (result?.code ?? 'DECISION_BEGIN_FAILED') },
+    });
+    return result;
+  }
+
+  async function completeDecisionApply(input) {
+    const allowed = new Set(['token', 'decisionId', 'workItemId']);
+    if (!exactInput(input, allowed)) return INPUT_INVALID('Decision completion input is invalid');
+    if (!boundedText(input.decisionId, 128) || !boundedText(input.workItemId, 128))
+      return INPUT_INVALID('Decision and WorkItem ids are required');
+    const authenticated = await authenticateWorker(input.token);
+    if (!authenticated.ok) return authenticated;
+    const current = await loadWorkerWorkItem(authenticated.worker, input.workItemId);
+    if (!current.ok) return current;
+    const apply = requireControlMethod('markDecisionApplied');
+    if (!apply.ok) return apply;
+    const applyInput = {
+      decisionId: input.decisionId,
+      workItemId: input.workItemId,
+      consumer: authenticated.worker.workerId,
+    };
+    let result = await apply.method.call(controlService, applyInput);
+    const decision = Array.isArray(current.decisions)
+      ? current.decisions.find((entry) => entry.decisionId === input.decisionId)
+      : null;
+    if (
+      result?.ok === false &&
+      result.code === 'DECISION_APPLICATION_NOT_STARTED' &&
+      decision?.action === 'cancel'
+    ) {
+      const begin = requireControlMethod('beginDecisionApplication');
+      if (!begin.ok) return begin;
+      const begun = await begin.method.call(controlService, applyInput);
+      if (!begun?.ok) return begun;
+      result = await apply.method.call(controlService, applyInput);
+    }
+    await writeAudit({
+      actorType: 'worker',
+      actorId: authenticated.worker.workerId,
+      action: 'worker.decision.complete',
+      objectType: 'decision',
+      objectId: input.decisionId,
+      outcome: result?.ok ? 'success' : 'failure',
+      detail: { code: result?.ok ? null : (result?.code ?? 'DECISION_APPLY_FAILED') },
+    });
+    return result;
+  }
+
+  async function failDecisionApply(input) {
+    const allowed = new Set(['token', 'decisionId', 'workItemId', 'error', 'attention']);
+    if (!exactInput(input, allowed)) return INPUT_INVALID('Decision failure input is invalid');
+    if (!boundedText(input.decisionId, 128) || !boundedText(input.workItemId, 128))
+      return INPUT_INVALID('Decision and WorkItem ids are required');
+    const error = boundedJson(input.error ?? 'DECISION_APPLY_FAILED', 64 * 1024);
+    if (error === null)
+      return failure('WORKER_DECISION_FAILURE_INVALID', 'Decision failure is invalid');
+    if (hasDangerousCommandFields(error))
+      return failure(
+        'WORKER_DECISION_FAILURE_SHELL_REJECTED',
+        'Decision failure must not contain shell commands',
+      );
+    if (containsForbiddenCloudContent(error))
+      return failure(
+        'WORKER_DECISION_FAILURE_SENSITIVE',
+        'Decision failure contains credentials, callbacks or local paths',
+      );
+    const authenticated = await authenticateWorker(input.token);
+    if (!authenticated.ok) return authenticated;
+    const current = await loadWorkerWorkItem(authenticated.worker, input.workItemId);
+    if (!current.ok) return current;
+    const fail = requireControlMethod('failDecisionApplication');
+    const errorMessage =
+      typeof error === 'string'
+        ? error
+        : typeof error?.message === 'string'
+          ? error.message
+          : typeof error?.code === 'string'
+            ? error.code
+            : 'DECISION_APPLY_FAILED';
+    let result = fail.ok
+      ? await fail.method.call(controlService, {
+          decisionId: input.decisionId,
+          workItemId: input.workItemId,
+          consumer: authenticated.worker.workerId,
+          error: errorMessage.slice(0, 4000),
+        })
+      : fail;
+    const rawCode =
+      typeof error === 'string'
+        ? error
+        : typeof error?.code === 'string'
+          ? error.code
+          : result?.code || 'DECISION_APPLY_FAILED';
+    const code = /^[A-Za-z0-9._:-]{1,128}$/.test(rawCode) ? rawCode : 'DECISION_APPLY_FAILED';
+    const requested = await createFailedAttention({
+      workItemId: input.workItemId,
+      runId: current.workItem?.currentRunId ?? null,
+      code,
+      attention: input.attention,
+    });
+    await writeAudit({
+      actorType: 'worker',
+      actorId: authenticated.worker.workerId,
+      action: 'worker.decision.fail',
+      objectType: 'decision',
+      objectId: input.decisionId,
+      outcome: 'failure',
+      detail: {
+        code: result?.code ?? 'DECISION_APPLY_FAILED',
+        attentionCreated: requested.ok,
+      },
+    });
+    return {
+      ok: false,
+      code: result?.code || 'DECISION_APPLY_FAILED',
+      message: result?.message || 'Decision application failed',
+      decision: cloneWorkerValue(controlResult(result)?.decision ?? null),
+      attention: requested.ok ? cloneWorkerValue(requested.attention) : null,
+      ...(requested.ok ? {} : { attentionError: cloneWorkerValue(requested) }),
+    };
   }
 
   async function reportEvents(input) {
@@ -939,6 +1597,11 @@ export function createWorkerGateway({
     connect,
     sync,
     heartbeat,
+    reportWaiting,
+    finishRun,
+    beginDecisionApply,
+    completeDecisionApply,
+    failDecisionApply,
     reportEvents,
     pullCommands,
     ackCommand,

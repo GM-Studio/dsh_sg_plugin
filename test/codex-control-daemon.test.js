@@ -64,6 +64,11 @@ function workerGateway() {
     ackCommand: async () => ({ ok: true }),
     release: async () => ({ ok: true }),
     issueCommand: async () => ({ ok: true }),
+    reportWaiting: async () => ({ ok: true }),
+    finishRun: async () => ({ ok: true }),
+    beginDecisionApply: async () => ({ ok: true }),
+    completeDecisionApply: async () => ({ ok: true }),
+    failDecisionApply: async () => ({ ok: false }),
   };
 }
 import { createControlStore } from '../src/codex/control/store.js';

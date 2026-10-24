@@ -1,0 +1,159 @@
+{
+  "version": 1,
+  "stage": "M4",
+  "date": "2026-10-24",
+  "timezone": "Asia/Shanghai",
+  "branch": "sg-codex",
+  "baseCommit": "b3273cb",
+  "worktreeId": "WORKTREE-2026-10-24-M4",
+  "hashPolicy": "SHA-256 of UTF-8 text with CRLF normalized to LF; sourceArtifactSha256 hashes the ordered files array JSON",
+  "sourceArtifactSha256": "f61ba91b7a4e5ab61c2b0c7d0c766ec85398ef355aeac7f23a257c31404421dc",
+  "files": [
+    {
+      "path": "src/codex/control/service.js",
+      "sha256": "f96606fdb1e825b54ffe6b636e6f663c8a99b61f132bc1028a1330ea71ad2e8b"
+    },
+    {
+      "path": "src/codex/control/supervisor.js",
+      "sha256": "e7b1a34fae9ca027ac08ab3ddae6cc283edb618c93907e7b10e789dcabc3e794"
+    },
+    {
+      "path": "src/codex/control/remote-worker-supervisor.js",
+      "sha256": "ebfe8912253bde1866d02209ad9f2391421086b1cfef9c9dea078ea924344b6a"
+    },
+    {
+      "path": "src/codex/control/outbound-worker.js",
+      "sha256": "9af7ae1eddc69826902a057e0f94886c69b44dad9afb652243c4b0b0a4fe536c"
+    },
+    {
+      "path": "src/codex/core/control/worker/worker-gateway.js",
+      "sha256": "7b1d9f237c893b42da2fa37ca2ab00d855bf89f4c4c55c03137207f42358b023"
+    },
+    {
+      "path": "src/codex/management/server.js",
+      "sha256": "3224680650ec2f44b6395696ecffb9fb69405697fc1d6b4d73af9e7e920c6e9a"
+    },
+    {
+      "path": "scripts/specgate-worker.mjs",
+      "sha256": "769bc9ef8e04ebcedb9413feb4844c81c7fb8c709b609f50a86714fb7b2c8b6f"
+    },
+    {
+      "path": "test/codex-control-m4-decision-application.test.js",
+      "sha256": "bae8b8031ba5be383184c4a285d72cf582a31f7cd7ec9485279d4b679d27a6d8"
+    },
+    {
+      "path": "test/codex-control-remote-worker.test.js",
+      "sha256": "3899205217b697afe33c879912980a18b2a08b3922a692eeebfb3c68815e492f"
+    },
+    {
+      "path": "test/codex-control-m4-e2e.test.js",
+      "sha256": "312ce4738ae7ffcfea9842c185dd7e09a18ed08ddf5c2a5e5af93d38dcbf0de4"
+    },
+    {
+      "path": "test/codex-control-worker-gateway.test.js",
+      "sha256": "598b15b6c822562f0dd311a3385d8370da4aefd419217d4fb4b366f2c40e2711"
+    },
+    {
+      "path": "test/codex-control-outbound-worker.test.js",
+      "sha256": "bab03c31c51bb0a55251d598da7ea9ac9414c12a781f3fa72a1f494e8a7b83ab"
+    },
+    {
+      "path": "test/codex-management-worker.test.js",
+      "sha256": "d31126a61450694593d6ac1d9484eb04a5123b5cf020c32ee565ecbd94c10a96"
+    },
+    {
+      "path": "test/codex-control-worker-runtime.test.js",
+      "sha256": "4805b792d0a06e64cc190d92c43e48bd40dfd8c3b2f96a1a121668ab0fd3f0cb"
+    },
+    {
+      "path": "test/codex-control-resume-integration.test.js",
+      "sha256": "a39d28e2960382b241352103afd2494052540ce7d5e316b638cca29f3a720eb5"
+    },
+    {
+      "path": "test/codex-control-service.test.js",
+      "sha256": "a8e221ebe557fdbb1e4ef864ee66448fe811b21dbdd4e743c306a810df5d550d"
+    },
+    {
+      "path": "test/codex-control-approval-bridge.test.js",
+      "sha256": "ebae73fe7bded53550c2e941317640383aa12f4a95efd4a0ae93275bb711c872"
+    }
+  ],
+  "environment": {
+    "platform": "win32",
+    "node": "v24.14.0",
+    "npm": "11.9.0",
+    "mysql": "8.4.13",
+    "engine": "InnoDB",
+    "databaseTimezone": "UTC",
+    "executionAdapter": "controlled fake Codex adapter; real model execution NOT_RUN"
+  },
+  "checks": [
+    {
+      "command": "M4 focused Decision/Worker/HTTP/E2E suite",
+      "mysqlConfigured": true,
+      "exitCode": 0,
+      "tests": 68,
+      "pass": 68,
+      "fail": 0,
+      "cancelled": 0,
+      "skipped": 0,
+      "todo": 0
+    },
+    {
+      "command": "npm test",
+      "mysqlConfigured": true,
+      "exitCode": 0,
+      "tests": 662,
+      "pass": 661,
+      "fail": 0,
+      "cancelled": 0,
+      "skipped": 1,
+      "todo": 0
+    },
+    {
+      "command": "npm run lint",
+      "exitCode": 0
+    },
+    {
+      "command": "npm run format:check",
+      "exitCode": 0
+    },
+    {
+      "command": "npm run pack:check",
+      "npmCache": "project .npm-cache",
+      "exitCode": 0
+    },
+    {
+      "command": "git diff --check",
+      "exitCode": 0
+    }
+  ],
+  "skipped": [
+    {
+      "name": "requesting the react frontend without its template tree fails closed",
+      "reason": "react template tree is already on disk"
+    }
+  ],
+  "verifiedScenarios": [
+    "remote waiting marker releases lease and persists session",
+    "approve Decision PENDING_APPLY to APPLIED with exact original session resume",
+    "request_changes payload included in resume prompt",
+    "cancel Decision completes without Codex execution",
+    "missing original session blocks without replacement session",
+    "adapter resume failure records REJECTED and FAILED Attention",
+    "idle worker never finishes a Run",
+    "heartbeat serialization and cleanup",
+    "project roots resolved only from local mapping",
+    "M3 worker token whitelist lease events and commands remain compatible"
+  ],
+  "notRun": [
+    "real Codex model exec --json and actual original-session resume on a physical worker host",
+    "real cloud HTTPS reverse proxy and cross-internet long polling",
+    "M5 Feishu/DingTalk closure reminders and escalation",
+    "M6 replayable timeline and audit query UI",
+    "M8 independent verification and redelivery",
+    "M9 cloud pilot",
+    "human acceptance of the M4 stage"
+  ],
+  "humanAcceptance": "PENDING"
+}

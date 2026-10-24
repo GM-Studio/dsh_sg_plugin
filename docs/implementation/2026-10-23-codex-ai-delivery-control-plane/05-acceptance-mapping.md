@@ -6,7 +6,7 @@
 - 需求字节哈希：`16875BBF80B6960A205763E1C7C0192626D0520E275FA4DCE91F277EE99CBBC6`
 - 计划基线：`docs/plans/2026-10-23-codex-ai-delivery-control-plane-product-plan.zh.md`
 - 计划字节哈希：`CE64DC087A6F4CA1EB63292E7FBC779836D75CA8F84C4DA5883CD07F8520272A`
-- 状态：**M0-M3 实现与真实 MySQL 验证已具备证据；M2/M3 人工接受待确认，通知闭环、恢复闭环与云部署仍为 NOT_RUN / PARTIAL**
+- 状态：**M0-M4 实现与真实 MySQL 验证已具备证据；M2-M4 人工接受待确认，通知、时间线、再交付与云部署仍为 NOT_RUN / PARTIAL**
 
 本文件只记录验收口径、证据位置和真实状态。设计完成、代码生成、测试文件存在，均不能替代真实执行证据。状态取值限定为：
 
@@ -33,11 +33,11 @@
 | AC02 | 链接转发安全     | 将消息链接交给无会话客户端；验证不能建立管理会话、不能读取、不能批准，只返回登录或失效提示                      | 自动化负向测试 + 人工浏览器验证  | PARTIAL  | M2 已证明短期 Attention nonce、单次兑换、无会话拒绝和无法建立会话；真实手机浏览器人工验证仍未执行               |
 | AC03 | 高风险 step-up   | 分别提交无当前操作 TOTP 的 H1/H3、cancel、accept_delivery；验证拒绝并审计                                       | 自动化负向测试                   | PARTIAL  | M2 已证明动作/资源绑定 proof、TOTP 重放拒绝和认证审计；真实独立 Authenticator 设备与人工操作仍未执行            |
 | AC04 | 旧制品失效       | 冻结 artifactHash 后替换制品；尝试应用旧 Decision；验证 STALE、新 Attention、必须重新决策                       | 自动化测试 + 端到端测试          | PARTIAL  | M1 真实 MySQL 覆盖旧 revision / artifactHash 拒绝且无部分写入；STALE 账本流转与真实 Worker 应用前复验仍待 M3-M6 |
-| AC05 | 决策幂等         | 同一幂等键并发/重复提交；验证一个 Decision、一次恢复、一次结果通知                                              | 并发自动化测试                   | PARTIAL  | M1 两个独立连接池并发产生同一 Decision、仅一次应用，异指纹拒绝；一次恢复/结果通知仍待 M4-M5                     |
-| AC06 | Worker 断线      | Worker 离线时记录 Decision；验证 PENDING_APPLY；恢复后拉取、校验、应用或明确拒绝告警                            | 断网/重启端到端测试              | PARTIAL  | M3 已证明主动出站、heartbeat/离线、租约释放不完成、命令/事件补传和撤销；Decision 的 PENDING_APPLY 应用闭环待 M4 |
+| AC05 | 决策幂等         | 同一幂等键并发/重复提交；验证一个 Decision、一次恢复、一次结果通知                                              | 并发自动化测试                   | PARTIAL  | M1+M4 已证明 Decision 唯一、单消费者 PENDING_APPLY/APPLIED 和一次原 session 恢复；结果通知仍待 M5               |
+| AC06 | Worker 断线      | Worker 离线时记录 Decision；验证 PENDING_APPLY；恢复后拉取、校验、应用或明确拒绝告警                            | 断网/重启端到端测试              | PARTIAL  | M3+M4 已证明主动出站、租约释放不完成、PENDING_APPLY、恢复后应用和失败告警；真实跨公网断网演练待 M9              |
 | AC07 | 渠道故障隔离     | 模拟飞书失败、钉钉成功；验证独立投递、重试上限、失败记录、Attention 生命周期不受影响、无重复轰炸                | 故障注入测试                     | NOT_RUN  | 多渠道扇出与钉钉适配器尚未实现                                                                                  |
 | AC08 | Attention 过期   | 使用可控时钟推进提醒、临期、过期；验证 EXPIRED、链接失效、不自动批准、不自动续跑                                | 时间推进自动化测试               | PARTIAL  | 现有 Attention 状态机覆盖过期终态；提醒/升级/深链失效的完整链路未验证                                           |
-| AC09 | 决策到再交付闭环 | 批准 -> Worker 应用 -> 原 session resume -> 再验证 -> 结果通知 -> 时间线回放                                    | 端到端测试 + 运行证据            | PARTIAL  | 本地决策与 outbox 有部分测试；云端 Worker 与真实 session resume 未验证                                          |
+| AC09 | 决策到再交付闭环 | 批准 -> Worker 应用 -> 原 session resume -> 再验证 -> 结果通知 -> 时间线回放                                    | 端到端测试 + 运行证据            | PARTIAL  | M4 受控 E2E 已闭合批准、Worker 应用和原 session resume；再验证、结果通知、时间线回放仍待 M5/M6/M8               |
 | AC10 | 数据边界         | 注入源码、密钥、绝对路径、客户名；检查云端持久化、通知、时间线、日志                                            | 自动化脱敏测试 + 代码审查        | PARTIAL  | M1 真实数据库通知仅存 recipientHash，加密备份拒绝错误密钥；服务层脱敏与日志全链路仍待 M5-M6                     |
 | AC11 | 多项目隔离       | 创建多个项目、独立通知策略和 Worker 白名单；验证排序、决策不串项目、Worker 越权被拒                             | 集成测试 + 越权负向测试          | PARTIAL  | M1/M3 已证明项目绑定、清理隔离、Worker 白名单和越权拒绝；独立通知策略与角色化 UI 仍待 M5/M7                     |
 | AC12 | 多 Worker 预留   | 验证 Worker 注册表、独立令牌、白名单、租约、心跳；第二 Worker 越权领取失败                                      | 自动化并发与越权测试             | PASS     | M3 网关、真实 MySQL、HTTP E2E 已验证独立令牌/撤销/白名单/租约/心跳，第二 Worker 无法越权领取；正式调度仍属 M10  |
@@ -68,6 +68,8 @@
 | `09-m2-auth-delivery.md`                                                                     | M2 账号、TOTP、设备、会话、nonce 和 step-up                 | PASS     | 真实 MySQL；聚焦 86/86；全仓 595/594/0/1，见 M2 报告与 JSON                                  |
 | `10-m3-worker-delivery.md`                                                                   | M3 Worker 注册、出站、白名单、租约、补偿和命令边界          | PASS     | 真实 MySQL；M3 聚焦 80/80；全仓 636/635/0/1，见 M3 报告与 JSON                               |
 | `docs/verification/codex-control-plane-product/m3-2026-10-24.json`                           | M3 命令、源码摘要和未执行项                                 | PASS     | 绑定 M3 源码文件哈希；不替代真实云网络和 M4 恢复闭环                                         |
+| `11-m4-codex-recovery-delivery.md`                                                           | M4 远程执行、举手、Decision 应用与原 session resume         | PASS     | M4 聚焦 68/68/0/0；全仓 662/661/0/1，见 M4 报告与 JSON                                       |
+| `docs/verification/codex-control-plane-product/m4-2026-10-24.json`                           | M4 命令、源码摘要和未执行项                                 | PASS     | 绑定 M4 源码文件哈希；不替代真实 Codex 模型执行和云上试点                                    |
 | `npm run lint`                                                                               | 全仓 lint                                                   | FAIL     | 仅既有 `src/codex/change-add.js` 3 个未使用符号错误；本轮未修改该文件                        |
 | `npm run format:check`                                                                       | 全仓格式检查                                                | FAIL     | 仅既有 `src/codex/change-add.js`；本轮改动文件的精确 Prettier 检查另行记录                   |
 | `npm pack --dry-run --cache .npm-cache`                                                      | 打包内容检查                                                | PASS     | package 628.5 kB、total files 308、退出码 `0`；默认 npm 缓存路径存在 EPERM                   |
@@ -148,6 +150,18 @@ M0 只有在以下条件同时满足时才能退出：
   命令 ACK、事件重放、任意 shell 拒绝和撤销后认证失败。
 - 全仓测试 636 项，635 通过、0 失败、1 跳过；真实网络分区、云代理和 M4
   Codex 恢复仍未执行，见 [M3 交付报告](10-m3-worker-delivery.md)。
+
+### 4.8 M4 Codex 恢复闭环证据（2026-10-24）
+
+- 制品标识：`WORKTREE-2026-10-24-M4`。
+- M4 聚焦测试 68 项，68 通过、0 失败、0 跳过；全仓 662 项，661 通过、
+  0 失败、1 跳过。
+- 受控 HTTP E2E 已验证 waiting → 释放 lease → approve → claim resume →
+  Decision APPLIED；cancel 不调用 Codex。
+- 缺少原 session、adapter resume 失败和 heartbeat 失败均显式阻塞，不创建替代
+  session。
+- 真实 Codex 模型执行、公网代理和 M9 试点仍未执行，见
+  [M4 交付报告](11-m4-codex-recovery-delivery.md)。
 
 ## 5. 维护规则
 

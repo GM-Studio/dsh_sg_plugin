@@ -29,6 +29,27 @@ const id = (prefix, randomId, value) =>
     .replace(/[^A-Za-z0-9]/g, '')}`;
 const projectIdForRoot = (root) => `project-${hashValue({ root }).slice(0, 16)}`;
 const priorityRank = { high: 0, normal: 1, low: 2 };
+const RESUME_DECISION_ACTIONS = new Set(['approve', 'request_changes', 'resume', 'retry']);
+const NATIVE_GATE_ATTENTION_TYPES = new Set(['H1_APPROVAL', 'H3_APPROVAL']);
+
+function decisionMatchesWorkItem(state, decision, item) {
+  if (!decision || !item || decision.workItemId !== item.workItemId) return false;
+  if (decision.projectId && decision.projectId !== item.projectId) return false;
+  const attention = decision.attentionId ? state.attention[decision.attentionId] : null;
+  return (
+    !attention ||
+    (attention.workItemId === item.workItemId &&
+      (!attention.projectId || attention.projectId === item.projectId))
+  );
+}
+
+function hasResumeSession(item, decision) {
+  return text(item?.resume?.sessionId, 512) && item.resume.decisionId === decision.decisionId;
+}
+
+function isNativeGateDecision(decision, attention) {
+  return decision.action === 'approve' && NATIVE_GATE_ATTENTION_TYPES.has(attention?.type);
+}
 
 function checkedProjectRoot(value) {
   try {
@@ -496,6 +517,7 @@ export function createControlService({
         schemaVersion: 1,
         decisionId,
         workItemId: item.workItemId,
+        projectId: item.projectId,
         attentionId: attention.requestId,
         scope: attention.scope,
         attentionRevision: attention.revision,
@@ -616,27 +638,163 @@ export function createControlService({
     });
   }
 
+  async function beginDecisionApplication({ decisionId, workItemId, consumer } = {}) {
+    if (!text(decisionId, 128) || !text(workItemId, 128) || !text(consumer, 256))
+      return failure('INVALID_ARGUMENT', 'Decision id, WorkItem id and consumer are required');
+    return store.mutate((state) => {
+      const decision = state.decisions[decisionId];
+      const item = state.workItems[workItemId];
+      if (!decision || !item || !decisionMatchesWorkItem(state, decision, item))
+        return failure('DECISION_NOT_FOUND', 'Decision does not belong to this WorkItem');
+      if (decision.status === 'REJECTED' || decision.applyStatus === 'REJECTED')
+        return failure('DECISION_REJECTED', 'Decision application was rejected');
+      if (decision.appliedAt || decision.status === 'APPLIED' || decision.applyStatus === 'APPLIED')
+        return failure('DECISION_ALREADY_APPLIED', 'Decision was already applied');
+      if (decision.status !== 'CONSUMED')
+        return failure('DECISION_NOT_CONSUMED', 'Decision has not been consumed');
+      if (decision.applyStatus === 'PENDING_APPLY') {
+        if (decision.applyBy !== consumer)
+          return failure(
+            'DECISION_APPLICATION_CONFLICT',
+            'Decision application is owned by another consumer',
+            { applyBy: decision.applyBy || null },
+          );
+        return {
+          ok: true,
+          type: 'decision.application_pending',
+          payload: { decisionId, workItemId, consumer, duplicate: true },
+          result: { duplicate: true, decision: clone(decision), workItem: clone(item) },
+        };
+      }
+      if (decision.applyStatus)
+        return failure('DECISION_APPLICATION_CONFLICT', 'Decision application state is invalid');
+      if (decision.attentionId && !state.attention[decision.attentionId])
+        return failure('DECISION_EXPIRED', 'Decision binding has expired');
+      if (RESUME_DECISION_ACTIONS.has(decision.action) && !hasResumeSession(item, decision))
+        return failure(
+          'RESUME_SESSION_REQUIRED',
+          'The original Codex session is required before applying this Decision',
+        );
+      decision.applyStatus = 'PENDING_APPLY';
+      decision.applyStartedAt = nowIso();
+      decision.applyBy = consumer;
+      return {
+        ok: true,
+        type: 'decision.application_pending',
+        payload: { decisionId, workItemId, consumer },
+        result: { duplicate: false, decision: clone(decision), workItem: clone(item) },
+      };
+    });
+  }
+
   async function markDecisionApplied({ decisionId, workItemId, consumer } = {}) {
     if (!text(decisionId, 128) || !text(workItemId, 128) || !text(consumer, 256))
       return failure('INVALID_ARGUMENT', 'Decision id, WorkItem id and consumer are required');
     return store.mutate((state) => {
       const decision = state.decisions[decisionId];
-      if (!decision || decision.workItemId !== workItemId)
+      const item = state.workItems[workItemId];
+      if (!decision || !item || !decisionMatchesWorkItem(state, decision, item))
         return failure('DECISION_NOT_FOUND', 'Decision does not belong to this WorkItem');
-      const attention = state.attention[decision.attentionId];
-      if (!attention || Date.parse(attention.expiresAt) <= clock())
+      const attention = decision.attentionId ? state.attention[decision.attentionId] : null;
+      if (decision.attentionId && (!attention || Date.parse(attention.expiresAt) <= clock()))
         return failure('DECISION_EXPIRED', 'Decision binding has expired');
-      if (decision.appliedAt)
+      if (decision.appliedAt || decision.status === 'APPLIED' || decision.applyStatus === 'APPLIED')
         return failure('DECISION_ALREADY_APPLIED', 'Decision was already applied');
+      if (decision.status === 'REJECTED' || decision.applyStatus === 'REJECTED')
+        return failure('DECISION_REJECTED', 'Decision application was rejected');
       if (decision.status !== 'CONSUMED')
         return failure('DECISION_NOT_CONSUMED', 'Decision has not been consumed');
+      if (decision.applyStatus === 'PENDING_APPLY' && decision.applyBy !== consumer)
+        return failure(
+          'DECISION_APPLICATION_CONFLICT',
+          'Decision application is owned by another consumer',
+          { applyBy: decision.applyBy || null },
+        );
+      if (decision.applyStatus !== 'PENDING_APPLY' && !isNativeGateDecision(decision, attention))
+        return failure(
+          'DECISION_APPLICATION_NOT_STARTED',
+          'Decision application must be started before it can complete',
+        );
+      if (
+        decision.applyStatus === 'PENDING_APPLY' &&
+        RESUME_DECISION_ACTIONS.has(decision.action) &&
+        !hasResumeSession(item, decision)
+      )
+        return failure(
+          'RESUME_SESSION_REQUIRED',
+          'The original Codex session is required before applying this Decision',
+        );
+      decision.status = 'APPLIED';
+      decision.applyStatus = 'APPLIED';
       decision.appliedAt = nowIso();
       decision.appliedBy = consumer;
       return {
         ok: true,
         type: 'decision.applied',
         payload: { decisionId, workItemId, consumer },
-        result: { decision: clone(decision) },
+        result: { decision: clone(decision), workItem: clone(item) },
+      };
+    });
+  }
+
+  async function failDecisionApplication({ decisionId, workItemId, consumer, error } = {}) {
+    if (
+      !text(decisionId, 128) ||
+      !text(workItemId, 128) ||
+      !text(consumer, 256) ||
+      !text(error, 4000)
+    )
+      return failure(
+        'INVALID_ARGUMENT',
+        'Decision id, WorkItem id, consumer and a bounded error are required',
+      );
+    return store.mutate((state) => {
+      const decision = state.decisions[decisionId];
+      const item = state.workItems[workItemId];
+      if (!decision || !item || !decisionMatchesWorkItem(state, decision, item))
+        return failure('DECISION_NOT_FOUND', 'Decision does not belong to this WorkItem');
+      if (decision.appliedAt || decision.status === 'APPLIED' || decision.applyStatus === 'APPLIED')
+        return failure('DECISION_ALREADY_APPLIED', 'Decision was already applied');
+      if (decision.status === 'REJECTED' || decision.applyStatus === 'REJECTED') {
+        if (decision.appliedBy !== consumer || decision.applyError !== error)
+          return failure(
+            'DECISION_APPLICATION_CONFLICT',
+            'Decision application failed with different details',
+          );
+        return {
+          ok: true,
+          type: 'decision.application_failed',
+          payload: { decisionId, workItemId, consumer, duplicate: true },
+          result: { duplicate: true, decision: clone(decision), workItem: clone(item) },
+        };
+      }
+      if (decision.status !== 'CONSUMED')
+        return failure('DECISION_NOT_CONSUMED', 'Decision has not been consumed');
+      if (decision.applyStatus === 'PENDING_APPLY' && decision.applyBy !== consumer)
+        return failure(
+          'DECISION_APPLICATION_CONFLICT',
+          'Decision application is owned by another consumer',
+          { applyBy: decision.applyBy || null },
+        );
+      const now = nowIso();
+      decision.status = 'REJECTED';
+      decision.applyStatus = 'REJECTED';
+      decision.applyError = error;
+      decision.appliedBy = consumer;
+      if (item.executionState !== 'CANCELLED') {
+        item.executionState = 'BLOCKED';
+        item.hostHealth = HOST_INTERRUPTED;
+        item.nextOwner = 'user';
+        item.nextAction = `Decision application failed: ${error}`;
+        item.completedAt = null;
+        item.revision += 1;
+        item.updatedAt = now;
+      }
+      return {
+        ok: true,
+        type: 'decision.application_failed',
+        payload: { decisionId, workItemId, consumer, error },
+        result: { decision: clone(decision), workItem: clone(item) },
       };
     });
   }
@@ -1145,6 +1303,7 @@ export function createControlService({
         schemaVersion: 1,
         decisionId,
         workItemId,
+        projectId: item.projectId,
         attentionId: item.currentAttentionId,
         attentionRevision: item.currentAttentionId
           ? state.attention[item.currentAttentionId]?.revision || 0
@@ -1633,7 +1792,9 @@ export function createControlService({
     requestAttention,
     decide,
     expireAttention,
+    beginDecisionApplication,
     markDecisionApplied,
+    failDecisionApplication,
     claimNext,
     heartbeat,
     finishRun,
@@ -1674,6 +1835,9 @@ export function createControlService({
     decisions: Object.freeze({
       create: decide,
       preview: previewDecision,
+      beginApplication: beginDecisionApplication,
+      markApplied: markDecisionApplied,
+      failApplication: failDecisionApplication,
       pause,
       resume,
       retry,
