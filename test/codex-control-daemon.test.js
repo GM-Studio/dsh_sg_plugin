@@ -47,6 +47,25 @@ function remoteAuthService() {
     createAttentionNonce: async () => ({ ok: true, nonce: 'nonce-1' }),
   };
 }
+
+function workerGateway() {
+  return {
+    register: async () => ({ ok: true, worker: { workerId: 'worker-1' }, token: 'sgw_test' }),
+    rotateToken: async () => ({ ok: true, token: 'sgw_rotated' }),
+    revoke: async () => ({ ok: true }),
+    listWorkers: async () => ({ ok: true, workers: [] }),
+    setProjects: async () => ({ ok: true, projectIds: [] }),
+    connect: async () => ({ ok: true, heartbeatIntervalMs: 15000 }),
+    sync: async () => ({ ok: true, commands: [], pendingDecisions: [], cursor: 0 }),
+    claim: async () => ({ ok: true, idle: true }),
+    heartbeat: async () => ({ ok: true }),
+    reportEvents: async () => ({ ok: true }),
+    pullCommands: async () => ({ ok: true, commands: [], cursor: 0 }),
+    ackCommand: async () => ({ ok: true }),
+    release: async () => ({ ok: true }),
+    issueCommand: async () => ({ ok: true }),
+  };
+}
 import { createControlStore } from '../src/codex/control/store.js';
 import { createControlService } from '../src/codex/control/service.js';
 import {
@@ -77,6 +96,9 @@ test('control daemon starts management independently and stops without deleting 
   assert.equal(daemon.ok, true);
   assert.match(daemon.baseUrl, /^http:\/\/127\.0\.0\.1:\d+$/);
   assert.equal(fs.existsSync(daemon.statusPath), true);
+  const daemonStatus = JSON.parse(fs.readFileSync(daemon.statusPath, 'utf8'));
+  assert.equal(daemonStatus.workerApiConfigured, true);
+  assert.equal(daemonStatus.workerStorage, 'memory');
   assert.equal(
     JSON.parse(fs.readFileSync(daemon.statusPath, 'utf8')).projectRoot,
     path.resolve(projectRoot),
@@ -87,6 +109,10 @@ test('control daemon starts management independently and stops without deleting 
     body: JSON.stringify({ token: new URL(daemon.pairingUrl).hash.split('token=')[1] }),
   });
   assert.equal(paired.status, 200);
+  const cookie = paired.headers.get('set-cookie').split(';')[0];
+  const workers = await fetch(`${daemon.baseUrl}/api/workers`, { headers: { cookie } });
+  assert.equal(workers.status, 200);
+  assert.deepEqual((await workers.json()).workers, []);
   const status = await runControlCli({
     args: ['status'],
     env: { ...process.env, SPECGATE_CONTROL_HOME: controlRoot },
@@ -147,6 +173,7 @@ test('remote management daemon starts only behind a configured HTTPS proxy bound
     managementPort: 0,
     pollMs: 60000,
     authService: remoteAuthService(),
+    workerGateway: workerGateway(),
     adapter: {
       async run() {
         return { ok: true, exitCode: 0, sessionId: 'remote-valid-session' };

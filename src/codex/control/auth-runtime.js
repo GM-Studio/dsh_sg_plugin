@@ -6,7 +6,7 @@ import { createMysqlPool, migrateMysql } from '../core/control/persistence/mysql
 
 const failure = (code, message, extra = {}) => ({ ok: false, code, message, ...extra });
 
-async function readMysqlConfig(configPath) {
+export async function readMysqlConfig(configPath) {
   if (typeof configPath !== 'string' || !path.isAbsolute(configPath))
     return failure('MYSQL_CONFIG_INVALID', 'An absolute MySQL config path is required');
   let value;

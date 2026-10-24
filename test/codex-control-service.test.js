@@ -175,6 +175,56 @@ test('heartbeat and offline reconciliation are explicit', async () => {
   assert.equal(state.attention[attentionId].type, 'OFFLINE');
 });
 
+test('claimNext only leases within the server-provided project whitelist', async () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'sg-control-whitelist-'));
+  const projectA = path.join(root, 'project-a');
+  const projectB = path.join(root, 'project-b');
+  fs.mkdirSync(projectA);
+  fs.mkdirSync(projectB);
+  let next = 0;
+  const service = createControlService({
+    store: createControlStore({ root, clock: () => Date.parse('2026-10-22T10:00:00.000Z') }),
+    clock: () => Date.parse('2026-10-22T10:00:00.000Z'),
+    randomId: () => `whitelist-${++next}`,
+  });
+  const first = await service.createWorkItem({
+    title: 'Project A',
+    request: 'First queued item',
+    projectRoot: projectA,
+  });
+  const second = await service.createWorkItem({
+    title: 'Project B',
+    request: 'Second queued item',
+    projectRoot: projectB,
+  });
+  const claimedB = await service.claimNext({
+    ownerId: 'worker-b',
+    leaseMs: 30000,
+    projectIds: [second.workItem.projectId],
+  });
+  assert.equal(claimedB.ok, true);
+  assert.equal(claimedB.workItem.projectId, second.workItem.projectId);
+  const secondWorkerDenied = await service.claimNext({
+    ownerId: 'worker-b2',
+    leaseMs: 30000,
+    projectIds: [second.workItem.projectId],
+  });
+  assert.equal(secondWorkerDenied.idle, true);
+  const claimedA = await service.claimNext({
+    ownerId: 'worker-a',
+    leaseMs: 30000,
+    projectIds: [first.workItem.projectId],
+  });
+  assert.equal(claimedA.ok, true);
+  assert.equal(claimedA.workItem.projectId, first.workItem.projectId);
+  const invalid = await service.claimNext({
+    ownerId: 'worker-invalid',
+    projectIds: ['ok', ''],
+  });
+  assert.equal(invalid.ok, false);
+  assert.equal(invalid.code, 'INVALID_ARGUMENT');
+});
+
 test('a stale heartbeat marks the host SUSPECT before it goes OFFLINE', async () => {
   const { service, projectRoot } = fixture();
   const created = await service.createWorkItem({

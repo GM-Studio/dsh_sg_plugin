@@ -482,6 +482,11 @@ test('central auth policy maps sensitive mutations to step-up', () => {
     'approve',
     'cancel',
     'accept_delivery',
+    'device.revoke',
+    'worker.register',
+    'worker.rotate',
+    'worker.revoke',
+    'worker.projects',
   ]) {
     assert.equal(requiredAuth(action), 'step-up');
   }

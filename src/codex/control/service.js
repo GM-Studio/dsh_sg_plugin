@@ -641,9 +641,21 @@ export function createControlService({
     });
   }
 
-  async function claimNext({ ownerId: claimOwner = ownerId, leaseMs = defaultLeaseMs } = {}) {
+  async function claimNext({
+    ownerId: claimOwner = ownerId,
+    leaseMs = defaultLeaseMs,
+    projectIds = null,
+  } = {}) {
     if (!text(claimOwner, 256) || !Number.isSafeInteger(leaseMs) || leaseMs <= 0)
       return failure('INVALID_ARGUMENT', 'A bounded lease owner and duration are required');
+    if (
+      projectIds !== null &&
+      (!Array.isArray(projectIds) ||
+        projectIds.length > 100 ||
+        projectIds.some((projectId) => !text(projectId, 128)))
+    )
+      return failure('INVALID_ARGUMENT', 'Claim project whitelist is invalid');
+    const allowedProjects = projectIds === null ? null : new Set(projectIds);
     return store.mutate((state) => {
       const now = clock();
       const nowText = new Date(now).toISOString();
@@ -669,7 +681,11 @@ export function createControlService({
         delete state.leases[projectId];
       }
       const ordered = Object.values(state.workItems)
-        .filter((item) => item.executionState === 'QUEUED')
+        .filter(
+          (item) =>
+            item.executionState === 'QUEUED' &&
+            (allowedProjects === null || allowedProjects.has(item.projectId)),
+        )
         .sort(
           (left, right) =>
             priorityRank[left.priority] - priorityRank[right.priority] ||
@@ -1622,6 +1638,11 @@ export function createControlService({
     heartbeat,
     finishRun,
     interruptRun,
+    releaseLease: (input = {}) =>
+      interruptRun({
+        ...input,
+        reason: input.reason || 'WORKER_RELEASED',
+      }),
     reconcile,
     pause,
     resume,

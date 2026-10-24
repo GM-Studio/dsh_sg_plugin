@@ -19,6 +19,7 @@ import { resolveGlobalConcurrency } from './projects.js';
 import { createFeishuNotifier } from '../channels/feishu.js';
 import { createAttentionNotifier, createNotificationOutbox } from '../channels/outbox.js';
 import { createConfiguredAuthService } from './auth-runtime.js';
+import { createConfiguredWorkerGateway } from './worker-runtime.js';
 
 const failure = (code, message) => ({ ok: false, code, message });
 
@@ -64,6 +65,7 @@ export async function startControlDaemon({
   adapter = null,
   feishuNotifier = null,
   authService: providedAuthService = null,
+  workerGateway: providedWorkerGateway = null,
   runtime: providedRuntime = null,
   requireExecJson = false,
   probeCapabilities = false,
@@ -156,11 +158,28 @@ export async function startControlDaemon({
       ? await createConfiguredAuthService({ config, clock })
       : { ok: true, authService: null, close: async () => {} };
   if (!configuredAuth.ok) return configuredAuth;
+  const configuredWorker = providedWorkerGateway
+    ? {
+        ok: true,
+        workerGateway: providedWorkerGateway,
+        storage: 'provided',
+        close: async () => {},
+      }
+    : await createConfiguredWorkerGateway({
+        config,
+        controlService: runtime.service,
+        clock,
+      });
+  if (!configuredWorker.ok) {
+    await configuredAuth.close();
+    return configuredWorker;
+  }
   const pairing = { token: randomBytes(24).toString('base64url') };
   const sessionStore = createFileSessionStore({ root: runtime.store.root });
   const management = createManagementServer({
     services: managed.services,
     authService: configuredAuth.authService,
+    workerGateway: configuredWorker.workerGateway,
     clock,
     pairingToken: pairing.token,
     port: managementPort ?? config.managementPort,
@@ -364,6 +383,8 @@ export async function startControlDaemon({
     feishuConfigured: Boolean(feishu),
     mfaConfigured: Boolean(config.mfaSecret),
     authMode: configuredAuth.authService ? 'account' : 'pairing',
+    workerApiConfigured: Boolean(configuredWorker.workerGateway),
+    workerStorage: configuredWorker.storage,
     codexCommand: config.codexCommand,
     codexSandbox: config.codexSandbox,
     codexHomeConfigured: Boolean(config.codexHome),
@@ -382,6 +403,7 @@ export async function startControlDaemon({
     const timeout = new Promise((resolve) => setTimeout(resolve, shutdownTimeoutMs));
     await Promise.race([drained, timeout]);
     await management.close();
+    await configuredWorker.close();
     await configuredAuth.close();
     try {
       fs.rmSync(statusPath, { force: true });
@@ -396,6 +418,8 @@ export async function startControlDaemon({
     management,
     supervisor,
     outbox,
+    workerGateway: configuredWorker.workerGateway,
+    workerStorage: configuredWorker.storage,
     mode: controlMode,
     projectRoot: resolvedProjectRoot,
     registration,

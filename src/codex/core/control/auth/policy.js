@@ -7,6 +7,10 @@ export const AUTH_ACTION_POLICIES = Object.freeze({
   cancel: 'step-up',
   accept_delivery: 'step-up',
   'device.revoke': 'step-up',
+  'worker.register': 'step-up',
+  'worker.rotate': 'step-up',
+  'worker.revoke': 'step-up',
+  'worker.projects': 'step-up',
 });
 
 const authLevels = new Set(['session', 'step-up']);

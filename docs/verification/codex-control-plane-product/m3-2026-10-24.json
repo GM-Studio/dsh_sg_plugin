@@ -1,0 +1,185 @@
+{
+  "version": 1,
+  "stage": "M3",
+  "date": "2026-10-24",
+  "timezone": "Asia/Shanghai",
+  "branch": "sg-codex",
+  "baseCommit": "29f5c76",
+  "worktreeId": "WORKTREE-2026-10-24-M3",
+  "hashPolicy": "SHA-256 of UTF-8 text with CRLF normalized to LF; sourceArtifactSha256 hashes the ordered files array JSON",
+  "sourceArtifactSha256": "2dd7a6ca3268772395afb93692623ee8031442fd9bfe06c936346f3d2634bdca",
+  "files": [
+    {
+      "path": "scripts/specgate-worker.mjs",
+      "sha256": "9b8c4e2d4d8e00b6bb4882bea25b2ccf5e51bd568de8e25b02e9a5fcf83eb285"
+    },
+    {
+      "path": "package.json",
+      "sha256": "822f9b6c8e505ecb9a4576635cb1f0356b19bc5d98fcd7ad5a167f4ab3ebcf7c"
+    },
+    {
+      "path": "src/codex/control/outbound-worker.js",
+      "sha256": "a7a667fa1e6f137307cc449a160a3deb3c6a211ab01c6460c4c529e5a77ec9f0"
+    },
+    {
+      "path": "src/codex/control/worker-runtime.js",
+      "sha256": "19883b9f7c9ad8da1ae568cd11cd6679de4c0cb52ca9de4f32539b779ba29d94"
+    },
+    {
+      "path": "src/codex/control/auth-runtime.js",
+      "sha256": "7f5882db30f68cfc3ddf7039da72796a7d24bc21997d45e1186f936cb1f0345b"
+    },
+    {
+      "path": "src/codex/control/service.js",
+      "sha256": "c53f429bb9b34a1dada3b1061785e2f9c8d64e443394924cc674598b87a7cafd"
+    },
+    {
+      "path": "src/codex/control/daemon.js",
+      "sha256": "636162afae7ccd8171191bb9d17d4d3add8b9047b69ab06fc94ed6ede3281654"
+    },
+    {
+      "path": "src/codex/core/control/auth/policy.js",
+      "sha256": "1eb01847d920031dc8e20d21c80357b36a70e5e8be745497d69f19d4c4717b31"
+    },
+    {
+      "path": "src/codex/management/server.js",
+      "sha256": "4c5f79808b7b76f341926f426965226ca520c3fc267074825cb2cde6efb458d3"
+    },
+    {
+      "path": "src/codex/core/control/persistence/migrations/004-worker-connections.sql",
+      "sha256": "ff266f46f561f39b10f355375acc7c66f08d35b6b84f29b791006e1e357947af"
+    },
+    {
+      "path": "src/codex/core/control/persistence/mysql-backup.js",
+      "sha256": "6370bfdbe8c5433e6c86c382c14831df5abe09836008f25a44ab2297f3d88fb1"
+    },
+    {
+      "path": "src/codex/core/control/worker/worker-contract.js",
+      "sha256": "9f59732bb79e684a76ed0279646260bf60e463b3ba4a21f30c10d35516a65ac9"
+    },
+    {
+      "path": "src/codex/core/control/worker/memory-worker-store.js",
+      "sha256": "2c973e0b0ea3c09799ebaedc91fd7a52eacf1d6a297879be31418b1dcab88af8"
+    },
+    {
+      "path": "src/codex/core/control/worker/mysql-worker-store.js",
+      "sha256": "bd98fcee0a84cb8d085c5133f478edb03a3ea93d3ea5150a01154ff0b989ff1b"
+    },
+    {
+      "path": "src/codex/core/control/worker/worker-gateway.js",
+      "sha256": "12fe71d853833ca7956673dcd8b23789f0fc6f3a6ab378d210e36c5abf38aaa9"
+    },
+    {
+      "path": "test/codex-control-outbound-worker.test.js",
+      "sha256": "b9e5c31ff84be340d940fa6ea4407bf91529455ca69110cb4b4151c45cbb0c24"
+    },
+    {
+      "path": "test/codex-control-worker-e2e.test.js",
+      "sha256": "559b9b2ea251c69417573f560846c68da0e6be23568f42f0cc41402df9a750a1"
+    },
+    {
+      "path": "test/codex-control-worker-gateway.test.js",
+      "sha256": "e6599828737fbedfa226be6e3d8de42d1e399fc0e1a96d31d990264d663e067a"
+    },
+    {
+      "path": "test/codex-control-worker-mysql.test.js",
+      "sha256": "1a20060bde0110742fa47da1546a750522bb444080a635401c2790cacbcdbf8d"
+    },
+    {
+      "path": "test/codex-control-worker-runtime.test.js",
+      "sha256": "4805b792d0a06e64cc190d92c43e48bd40dfd8c3b2f96a1a121668ab0fd3f0cb"
+    },
+    {
+      "path": "test/codex-management-worker.test.js",
+      "sha256": "dc5b9ea5a7b86bf46901c4f95f00684c4aaf554e24fe9d5f3c193623ce058926"
+    },
+    {
+      "path": "test/codex-control-service.test.js",
+      "sha256": "a8e221ebe557fdbb1e4ef864ee66448fe811b21dbdd4e743c306a810df5d550d"
+    },
+    {
+      "path": "test/codex-control-daemon.test.js",
+      "sha256": "1abd787cc2fedd69ca6c4ccc9d7d0ec30a21e364177475a6041764ea7d05d643"
+    },
+    {
+      "path": "test/codex-control-auth-service.test.js",
+      "sha256": "6aee0791b1bae5766b3879c22e3b48fa77dad48dc5d63103e5e6607fd02880a1"
+    }
+  ],
+  "environment": {
+    "platform": "win32",
+    "node": "v24.14.0",
+    "npm": "11.9.0",
+    "mysql": "8.4.13",
+    "engine": "InnoDB",
+    "databaseTimezone": "UTC",
+    "network": "127.0.0.1 only; MySQL X disabled"
+  },
+  "checks": [
+    {
+      "command": "M3 focused Worker/HTTP/MySQL suite",
+      "exitCode": 0,
+      "tests": 80,
+      "pass": 80,
+      "fail": 0,
+      "cancelled": 0,
+      "skipped": 0,
+      "todo": 0
+    },
+    {
+      "command": "npm test",
+      "mysqlConfigured": true,
+      "exitCode": 0,
+      "tests": 636,
+      "pass": 635,
+      "fail": 0,
+      "cancelled": 0,
+      "skipped": 1,
+      "todo": 0
+    },
+    {
+      "command": "npm run lint",
+      "exitCode": 0
+    },
+    {
+      "command": "npm run format:check",
+      "exitCode": 0
+    },
+    {
+      "command": "npm run pack:check",
+      "npmCache": "project .npm-cache",
+      "exitCode": 0
+    },
+    {
+      "command": "git diff --check",
+      "exitCode": 0
+    }
+  ],
+  "skipped": [
+    {
+      "name": "requesting the react frontend without its template tree fails closed",
+      "reason": "react template tree is already on disk"
+    }
+  ],
+  "verifiedScenarios": [
+    "worker bearer token hashing rotation and revocation",
+    "server-side project whitelist with outbound claim",
+    "two-worker single lease and idempotent release",
+    "heartbeat online/offline and interrupted-not-completed semantics",
+    "durable command outbox cursor dedupe and ack",
+    "worker event replay dedupe conflict and sanitized evidence",
+    "typed command allowlist and shell/callback rejection",
+    "outbound retry timeout abort and revocation stop",
+    "real MySQL migration concurrency audit and backup restore",
+    "real HTTP admin auth plus worker bearer E2E"
+  ],
+  "notRun": [
+    "real cloud HTTPS reverse proxy and cross-internet long polling",
+    "real network partition DNS proxy and mobile network failover",
+    "M4 Codex exec session resume and pending decision application",
+    "M10 multi-worker scheduling and preemption",
+    "MySQL 8.0.x separate matrix and production disaster recovery",
+    "human acceptance of the M3 stage"
+  ],
+  "humanAcceptance": "PENDING"
+}

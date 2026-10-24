@@ -25,7 +25,33 @@ const MUTATIONS = new Set([
   '/api/work-items/request-changes',
   '/api/notifications/resend',
   '/api/deliveries/accept',
+  '/api/workers/register',
+  '/api/workers/rotate',
+  '/api/workers/revoke',
+  '/api/workers/projects',
+  '/api/workers/commands',
 ]);
+const WORKER_ROUTES = new Set([
+  '/api/worker/connect',
+  '/api/worker/sync',
+  '/api/worker/claim',
+  '/api/worker/heartbeat',
+  '/api/worker/events',
+  '/api/worker/commands/ack',
+  '/api/worker/release',
+]);
+const MUTATION_ACTIONS = Object.freeze({
+  '/api/work-items/pause': 'pause',
+  '/api/work-items/resume': 'resume',
+  '/api/work-items/retry': 'retry',
+  '/api/work-items/cancel': 'cancel',
+  '/api/work-items/request-changes': 'request_changes',
+  '/api/deliveries/accept': 'accept_delivery',
+  '/api/workers/register': 'worker.register',
+  '/api/workers/rotate': 'worker.rotate',
+  '/api/workers/revoke': 'worker.revoke',
+  '/api/workers/projects': 'worker.projects',
+});
 
 function failure(code, message) {
   return { ok: false, code, message };
@@ -89,6 +115,17 @@ function parseCookies(header) {
   return cookies;
 }
 
+function bearerToken(header) {
+  const value = typeof header === 'string' ? header.trim() : '';
+  const match = /^Bearer ([A-Za-z0-9._~+/-]{16,1024})$/i.exec(value);
+  return match ? match[1] : null;
+}
+
+function isWorkerApiRequest(request) {
+  const pathname = String(request.url || '').split('?')[0];
+  return pathname === '/api/worker' || pathname.startsWith('/api/worker/');
+}
+
 function securityHeaders(response) {
   response.setHeader(
     'Content-Security-Policy',
@@ -134,6 +171,7 @@ const PRIVATE_KEYS = new Set([
   'credentials',
   'authorization',
   'webhookUrl',
+  'tokenHash',
 ]);
 
 function redactedText(value) {
@@ -169,7 +207,16 @@ function sanitizeForWeb(value, key = null, depth = 0) {
 
 function statusFor(result) {
   if (!result || result.ok !== false) return 200;
-  if (['UNAUTHORIZED', 'INVALID_CREDENTIALS'].includes(result.code)) return 401;
+  if (
+    [
+      'UNAUTHORIZED',
+      'INVALID_CREDENTIALS',
+      'WORKER_UNAUTHORIZED',
+      'WORKER_TOKEN_INVALID',
+      'WORKER_AUTH_INVALID',
+    ].includes(result.code)
+  )
+    return 401;
   if (
     [
       'STEP_UP_REQUIRED',
@@ -189,6 +236,9 @@ function statusFor(result) {
       'STEP_UP_PROOF_REPLAYED',
       'STEP_UP_PROOF_INVALID',
       'STEP_UP_BINDING_MISMATCH',
+      'WORKER_REVOKED',
+      'WORKER_PROJECT_FORBIDDEN',
+      'COMMAND_REJECTED',
     ].includes(result.code)
   )
     return 403;
@@ -207,6 +257,9 @@ function statusFor(result) {
       'CUSTOMER_ALREADY_ACCEPTED',
       'ACTION_NOT_ALLOWED',
       'INVALID_TRANSITION',
+      'LEASE_INVALID',
+      'WORKER_EVENT_CONFLICT',
+      'WORKER_OFFLINE',
     ].includes(result.code)
   )
     return 409;
@@ -259,6 +312,7 @@ function decodeId(value) {
 export function createManagementServer({
   services,
   authService = null,
+  workerGateway = null,
   clock = Date.now,
   pairingToken = randomBytes(24).toString('base64url'),
   sessionTtlMs = 8 * 60 * 60 * 1000,
@@ -314,6 +368,26 @@ export function createManagementServer({
     throw new TypeError('authService does not implement the management authentication contract');
   if (deploymentMode === 'remote' && authService === null)
     throw remoteConfigurationError('Remote mode requires account authentication');
+  if (
+    workerGateway !== null &&
+    [
+      'register',
+      'rotateToken',
+      'revoke',
+      'listWorkers',
+      'setProjects',
+      'connect',
+      'sync',
+      'claim',
+      'heartbeat',
+      'reportEvents',
+      'pullCommands',
+      'ackCommand',
+      'release',
+      'issueCommand',
+    ].some((method) => typeof workerGateway[method] !== 'function')
+  )
+    throw new TypeError('workerGateway does not implement the management Worker contract');
   if (deploymentMode === 'remote') {
     if (!secureCookie || !trustProxyHttps) {
       throw remoteConfigurationError('Remote mode requires Secure cookies and trusted HTTPS');
@@ -477,7 +551,7 @@ export function createManagementServer({
     if (request.headers['x-forwarded-proto'] !== 'https') return 'HTTPS_REQUIRED';
     const host = normalizeHost(request.headers.host);
     if (!hostSet.has(host)) return 'HOST_NOT_ALLOWED';
-    if (request.method === 'POST') {
+    if (request.method === 'POST' && !isWorkerApiRequest(request)) {
       const origin = normalizeOrigin(request.headers.origin);
       if (!origin) return 'ORIGIN_REQUIRED';
       if (!originSet.has(origin)) return 'ORIGIN_NOT_ALLOWED';
@@ -774,6 +848,10 @@ export function createManagementServer({
         : failure('INVALID_ARGUMENT', 'Run id is invalid');
     } else if (pathname === '/api/attention') result = await projection.listAttention();
     else if (pathname === '/api/notifications') result = await projection.listNotifications();
+    else if (pathname === '/api/workers')
+      result = workerGateway
+        ? await workerGateway.listWorkers()
+        : failure('NOT_AVAILABLE', 'Worker management is not configured');
     else result = failure('NOT_FOUND', 'Management route does not exist');
     sendJson(response, statusFor(result), sanitizeForWeb(result));
   }
@@ -805,6 +883,74 @@ export function createManagementServer({
     response.end(request.method === 'HEAD' ? undefined : html);
   }
 
+  async function workerRoute(request, response, url) {
+    if (!workerGateway) {
+      sendJson(response, 404, failure('NOT_FOUND', 'Worker API is not configured'));
+      return;
+    }
+    const token = bearerToken(request.headers.authorization);
+    if (!token) {
+      sendJson(response, 401, failure('WORKER_UNAUTHORIZED', 'A Worker bearer token is required'));
+      return;
+    }
+    const pathname = url.pathname;
+    let result;
+    if (pathname === '/api/worker/commands') {
+      if (request.method !== 'GET') return methodFailure(response, ['GET']);
+      const after = url.searchParams.get('after');
+      const limit = url.searchParams.get('limit');
+      if (
+        (after !== null && (!/^\d+$/.test(after) || !Number.isSafeInteger(Number(after)))) ||
+        (limit !== null &&
+          (!/^\d+$/.test(limit) ||
+            !Number.isSafeInteger(Number(limit)) ||
+            Number(limit) < 1 ||
+            Number(limit) > 100))
+      ) {
+        sendJson(response, 400, failure('INVALID_ARGUMENT', 'Command cursor is invalid'));
+        return;
+      }
+      result = await workerGateway.pullCommands({
+        token,
+        ...(after === null ? {} : { after: Number(after) }),
+        ...(limit === null ? {} : { limit: Number(limit) }),
+      });
+      sendJson(response, statusFor(result), sanitizeForWeb(result));
+      return;
+    }
+    if (!WORKER_ROUTES.has(pathname)) {
+      sendJson(response, 404, failure('NOT_FOUND', 'Worker route does not exist'));
+      return;
+    }
+    if (request.method !== 'POST') return methodFailure(response, ['POST']);
+    let body;
+    try {
+      body = await readBody(request);
+    } catch (error) {
+      sendJson(response, 400, failure(error.code, error.message));
+      return;
+    }
+    if (pathname === '/api/worker/connect')
+      result = await workerGateway.connect({ token, capabilities: body.capabilities });
+    else if (pathname === '/api/worker/sync')
+      result = await workerGateway.sync({
+        token,
+        cursor: body.cursor,
+        waitMs: body.waitMs,
+      });
+    else if (pathname === '/api/worker/claim')
+      result = await workerGateway.claim({ token, leaseMs: body.leaseMs });
+    else if (pathname === '/api/worker/heartbeat')
+      result = await workerGateway.heartbeat({ token, ...body });
+    else if (pathname === '/api/worker/events')
+      result = await workerGateway.reportEvents({ token, events: body.events });
+    else if (pathname === '/api/worker/commands/ack')
+      result = await workerGateway.ackCommand({ token, commandId: body.commandId });
+    else if (pathname === '/api/worker/release')
+      result = await workerGateway.release({ token, ...body });
+    sendJson(response, statusFor(result), sanitizeForWeb(result));
+  }
+
   async function mutationRoute(request, response, pathname) {
     const session = await requireSession(request, response);
     if (!session) return;
@@ -820,19 +966,11 @@ export function createManagementServer({
     let authLevel = 'session';
     let stepUpProof = body.stepUpProof;
     delete body.stepUpProof;
+    const action =
+      pathname === '/api/decisions' ? body.action : (MUTATION_ACTIONS[pathname] ?? null);
+    const resourceId =
+      body.attentionId || body.workItemId || body.deliveryId || body.workerId || null;
     if (session.mode === 'account') {
-      const action =
-        pathname === '/api/decisions'
-          ? body.action
-          : {
-              '/api/work-items/pause': 'pause',
-              '/api/work-items/resume': 'resume',
-              '/api/work-items/retry': 'retry',
-              '/api/work-items/cancel': 'cancel',
-              '/api/work-items/request-changes': 'request_changes',
-              '/api/deliveries/accept': 'accept_delivery',
-            }[pathname] || pathname.slice('/api/'.length).replaceAll('/', '.');
-      const resourceId = body.attentionId || body.workItemId || body.deliveryId || null;
       if (requiredAuth(action) === 'step-up') {
         if (!stepUpProof) {
           sendJson(response, 403, failure('STEP_UP_REQUIRED', 'A one-time TOTP proof is required'));
@@ -850,7 +988,10 @@ export function createManagementServer({
         }
         authLevel = 'step-up';
       }
-    } else if (body.stepUpCode !== undefined) {
+    } else if (
+      (action?.startsWith('worker.') && requiredAuth(action) === 'step-up') ||
+      body.stepUpCode !== undefined
+    ) {
       let verified = false;
       try {
         verified = await services.verifyStepUp?.(body.stepUpCode);
@@ -894,6 +1035,21 @@ export function createManagementServer({
         typeof services.deliveries?.accept === 'function'
           ? await services.deliveries.accept(input)
           : failure('NOT_AVAILABLE', 'Customer acceptance is not configured');
+    } else if (pathname.startsWith('/api/workers/')) {
+      const workerInput = { ...input };
+      delete workerInput.source;
+      delete workerInput.authLevel;
+      if (!workerGateway) result = failure('NOT_AVAILABLE', 'Worker management is not configured');
+      else if (pathname === '/api/workers/register')
+        result = await workerGateway.register(workerInput);
+      else if (pathname === '/api/workers/rotate')
+        result = await workerGateway.rotateToken(workerInput);
+      else if (pathname === '/api/workers/revoke') result = await workerGateway.revoke(workerInput);
+      else if (pathname === '/api/workers/projects')
+        result = await workerGateway.setProjects(workerInput);
+      else if (pathname === '/api/workers/commands')
+        result = await workerGateway.issueCommand(workerInput);
+      else result = failure('NOT_FOUND', 'Worker management route does not exist');
     } else result = failure('NOT_FOUND', 'Management mutation does not exist');
     sendJson(response, statusFor(result), sanitizeForWeb(result));
   }
@@ -944,6 +1100,9 @@ export function createManagementServer({
     }
     const pathname = url.pathname;
     try {
+      if (pathname.startsWith('/api/worker/')) {
+        return await workerRoute(request, response, url);
+      }
       if (pathname.startsWith('/api/auth/')) {
         return await accountRoute(request, response, pathname);
       }
