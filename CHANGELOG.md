@@ -2,6 +2,19 @@
 
 ## Unreleased
 
+- Fix `.mcp.json` disabling the Codex server and hiding planning tools such as
+  `sg_test_design_prepare`; keep both portable MCP entry points equivalent.
+- Serve authenticated H1/H3 approval documents from the management page instead
+  of exposing a stale local URL.
+- Assign the full task, agent configuration, frozen inputs, worktree and commit
+  requirements to real Codex Test Designer, Frontend and Backend processes over
+  stdin; fail closed when the process does not commit.
+- Bump the plugin to 0.3.4 so hosts load the corrected tool projection and native
+  role execution path.
+- Complete M2 authentication, devices and sessions: scrypt account passwords,
+  replay-resistant TOTP, new-device confirmation, cascading revocation, CSRF
+  sessions, one-time action/resource-bound step-up proofs, Attention nonces and
+  MySQL auth audit. Remote mode now refuses to start without account auth.
 - Bump the plugin to 0.3.3 so hosts cannot reuse the 0.3.2 cache that bound the
   plugin directory and exposed an incomplete interactive verification path.
 - Treat native project-form submission as confirmation, retry the form after a

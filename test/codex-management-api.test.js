@@ -26,6 +26,14 @@ function services() {
       }),
       getRun: async (id) => ({ ok: true, run: { runId: id, currentPhase: 'REVIEWING' } }),
       listAttention: async () => ({ ok: true, attention: [{ requestId: 'attention-1' }] }),
+      getAttentionDocument: async (id) => ({
+        ok: true,
+        attentionId: id,
+        document: {
+          path: '.specgate/codex/changes/change-1/requirements/revision-1.md',
+          content: '# 需求文档\n\n<script>alert("unsafe")</script>',
+        },
+      }),
       listNotifications: async () => ({
         ok: true,
         notifications: [{ notificationId: 'notice-1' }],
@@ -123,6 +131,20 @@ test('management shell is served without exposing API data', async (t) => {
   assert.match(html, /SpecGate/);
   assert.match(html, /异步交付控制台/);
   assert.doesNotMatch(html, /local-owner|csrfToken|projectRoot/);
+});
+
+test('H1 attention documents open as authenticated escaped HTML pages', async (t) => {
+  const server = await setup(t);
+  const response = await fetch(`${server.baseUrl}/api/attention/attention-1/document`, {
+    headers: { cookie: server.cookie },
+  });
+  assert.equal(response.status, 200);
+  assert.match(response.headers.get('content-type'), /text\/html/);
+  const html = await response.text();
+  assert.match(html, /需求文档/);
+  assert.match(html, /&lt;script&gt;alert\(&quot;unsafe&quot;\)&lt;\/script&gt;/);
+  assert.doesNotMatch(html, /<script>alert/);
+  assert.match(html, /SpecGate 审批文档/);
 });
 
 test('all management mutations use POST and route to the shared Decision service', async (t) => {

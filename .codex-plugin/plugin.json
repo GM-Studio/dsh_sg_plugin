@@ -1,6 +1,6 @@
 {
   "name": "specgate-codex",
-  "version": "0.3.3",
+  "version": "0.3.4",
   "description": "SpecGate 中文项目初始化、技术栈选择、需求人工审批、独立验证与交付记录。",
   "author": { "name": "andy.zx" },
   "license": "MIT",

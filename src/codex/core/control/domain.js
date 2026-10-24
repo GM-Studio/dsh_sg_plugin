@@ -93,6 +93,7 @@ const SAFE_ATTENTION_KEYS = new Set([
   'risks',
   'evidence',
   'artifactHash',
+  'documentPath',
   'expiresAt',
 ]);
 const SAFE_DECISION_KEYS = new Set([
@@ -207,6 +208,13 @@ export function validateAttentionInput(value) {
     value.actions.length > 8 ||
     !value.actions.every((entry) => DECISION_ACTIONS.includes(entry)) ||
     !HASH.test(value.artifactHash || '') ||
+    (value.documentPath !== undefined &&
+      (typeof value.documentPath !== 'string' ||
+        value.documentPath.length > 32768 ||
+        value.documentPath.includes('..') ||
+        !/^\.specgate\/codex\/changes\/[A-Za-z0-9][A-Za-z0-9._/-]*\.md$/.test(
+          value.documentPath,
+        ))) ||
     (value.summary !== undefined && !text(value.summary, 16000)) ||
     (value.risks !== undefined && !list(value.risks, 100, 4000)) ||
     (value.evidence !== undefined && !list(value.evidence, 200, 1024)) ||

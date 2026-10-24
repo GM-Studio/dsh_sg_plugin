@@ -27,7 +27,7 @@ description: 用户请求 SpecGate 新增功能、修改或修复已有功能，
 
 ## 实现与独立验证
 
-H1 后 `sg_plan_generate` → `sg_plan_freeze_contracts` → `sg_test_design_prepare`，启动真实 specgate_test_designer 等待提交，再 `sg_test_design_freeze`。
+H1 后 `sg_plan_generate` → `sg_plan_freeze_contracts` → `sg_test_design_prepare`。该工具会把完整挑战、工作区、角色配置和提交要求交给真实 specgate_test_designer；原生宿主不可调用时使用受控 `codex exec` 进程。只有返回真实提交后才调用 `sg_test_design_freeze`。
 
 `sg_development_prepare` 后真实前端 Agent 与后端 Agent 串行实现，再 `sg_development_run` 验证集成；不能模拟子代理或修改冻结测试。
 

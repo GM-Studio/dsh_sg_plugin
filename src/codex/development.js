@@ -699,30 +699,34 @@ export function createDevelopmentService({
         : development.freezeCommit;
     let result;
     try {
-      result = await roleProvider(role, {
-        operation: challenge.operation,
-        changeId: development.changeId,
+      result = await roleProvider(
         role,
-        worktree,
-        branch: record.branch,
-        freezeCommit: development.freezeCommit,
-        previousCommit: previousHead,
-        graph: challenge.graph,
-        contract: challenge.contract,
-        model: challenge.model,
-        conventions: challenge.conventions,
-        tests: {
-          hash: development.testsHash,
-          cases: challenge.tests.cases,
+        {
+          operation: challenge.operation || 'implement',
+          changeId: development.changeId,
+          role,
+          worktree,
+          branch: record.branch,
+          freezeCommit: development.freezeCommit,
+          previousCommit: previousHead,
+          graph: challenge.graph,
+          contract: challenge.contract,
+          model: challenge.model,
+          conventions: challenge.conventions,
+          tests: {
+            hash: development.testsHash,
+            cases: challenge.tests.cases,
+          },
+          ...(challenge.conflictPaths ? { conflictPaths: challenge.conflictPaths } : {}),
+          ...(challenge.integrationBranch
+            ? {
+                integrationBranch: challenge.integrationBranch,
+                integrationCommit: challenge.integrationCommit,
+              }
+            : {}),
         },
-        ...(challenge.conflictPaths ? { conflictPaths: challenge.conflictPaths } : {}),
-        ...(challenge.integrationBranch
-          ? {
-              integrationBranch: challenge.integrationBranch,
-              integrationCommit: challenge.integrationCommit,
-            }
-          : {}),
-      });
+        { signal },
+      );
     } catch (error) {
       return failure(error.code || 'ROLE_PROVIDER_FAILED', errorText(error));
     }

@@ -25,6 +25,13 @@ test('Codex manifest and MCP entry stay contained in the shipped plugin', () => 
   assert.equal(server.env.SPECGATE_NATIVE_AGENTS, '1');
   assert.equal(server.env.SPECGATE_INTERACTIVE_APPROVAL, '1');
   assert.equal(server.cwd, undefined, 'keep the host project cwd rather than the plugin root');
+  const portableMcp = readJson(path.join(root, '.mcp.json'));
+  assert.deepEqual(
+    portableMcp.mcpServers,
+    readJson(path.join(root, 'mcp.json')).mcpServers,
+    'both portable MCP entry points must project the same server',
+  );
+  assert.notEqual(portableMcp.mcpServers.specgate.enabled, false);
   assert.match(
     fs.readFileSync(path.join(root, manifest.skills, 'sg-codex/SKILL.md'), 'utf8'),
     /^---\r?\nname: sg-codex\r?\ndescription: .+/,
@@ -147,6 +154,7 @@ test(
     assert.equal(evidence.status, 'passed');
     assert.deepEqual(evidence.testedTools, ['health', 'version', 'status']);
     assert.ok(evidence.tools.includes('sg_pause'));
+    assert.ok(evidence.tools.includes('sg_test_design_prepare'));
     assert.equal(evidence.projectStatus.verification.status, 'not-run');
     assert.equal(evidence.projectStatus.projectRoot, projectRoot);
     assert.deepEqual(fs.readdirSync(projectRoot), []);

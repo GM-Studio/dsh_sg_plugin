@@ -28,12 +28,14 @@ test('H1 control bridge waits without holding an approval and later authorizes o
   const { service, created } = await fixture();
   const artifactHash = 'a'.repeat(64);
   const readArtifactHash = async () => artifactHash;
+  const documentPath = '.specgate/codex/changes/change-1/requirements/revision-1.md';
   const challenge = {
     gate: 'H1',
     scope: 'change-1',
     artifactHash,
     readArtifactHash,
-    summary: 'Requirements snapshot',
+    summary: 'Requirements snapshot\n需求文档：[打开完整文档](file:///C:/stale/hardcoded.md)',
+    documentPath,
   };
   const first = createControlApprovalAuthority({
     service,
@@ -43,6 +45,14 @@ test('H1 control bridge waits without holding an approval and later authorizes o
   assert.equal(waiting.code, 'WAITING_FOR_USER');
   assert.equal(waiting.attention.status, 'OPEN');
   const attention = waiting.attention;
+  assert.equal(attention.documentPath, documentPath);
+  assert.doesNotMatch(attention.summary, /file:\/\/|hardcoded/);
+  const documentFile = path.join(created.project.projectRoot, documentPath);
+  fs.mkdirSync(path.dirname(documentFile), { recursive: true });
+  fs.writeFileSync(documentFile, '# 动态需求文档\n', 'utf8');
+  const document = await service.projection.getAttentionDocument(attention.requestId);
+  assert.equal(document.ok, true, JSON.stringify(document));
+  assert.equal(document.document.content, '# 动态需求文档\n');
   const decided = await service.decide({
     workItemId: created.workItem.workItemId,
     attentionId: attention.requestId,

@@ -92,7 +92,7 @@ export const PLAN_TOOLS = Object.freeze([
   ),
   definition(
     'sg_test_design_prepare',
-    'Create the dedicated test-design Git worktree and return the manifest/contract challenge for a real Codex Test Designer subagent.',
+    'Create the dedicated test-design worktree, assign the complete challenge to the real Codex Test Designer, run it through non-interactive exec when configured, and require a commit before freeze.',
     { expectedVersion },
     ['expectedVersion'],
   ),
@@ -123,7 +123,7 @@ export const PLAN_TOOLS = Object.freeze([
   ),
   definition(
     'sg_development_run',
-    'Run frontend and backend role providers serially, enforce their boundaries, merge their exact commits through integration, and return conflicts to the owning role.',
+    'Assign and run the real frontend and backend Codex role agents serially, enforce their boundaries, merge their exact commits through integration, and return conflicts to the owning role.',
     { expectedVersion },
     ['expectedVersion'],
   ),

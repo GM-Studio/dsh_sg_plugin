@@ -344,6 +344,7 @@ export function createControlService({
         risks: [...checked.value.risks],
         evidence: [...checked.value.evidence],
         artifactHash: checked.value.artifactHash,
+        documentPath: checked.value.documentPath || null,
         workItemVersion: item.revision + 1,
         expiresAt,
         notificationId: null,
@@ -1502,6 +1503,54 @@ export function createControlService({
     };
   }
 
+  async function getAttentionDocument(attentionId) {
+    if (!text(attentionId, 128))
+      return failure('INVALID_ARGUMENT', 'AttentionRequest id is invalid');
+    const inspected = await store.inspect();
+    if (!inspected.ok) return inspected;
+    const attention = inspected.state.attention[attentionId];
+    if (!attention) return failure('ATTENTION_NOT_FOUND', 'AttentionRequest does not exist');
+    if (!attention.documentPath)
+      return failure('DOCUMENT_NOT_FOUND', 'This AttentionRequest has no linked document');
+    const project = inspected.state.projects[attention.projectId];
+    if (!project?.projectRoot)
+      return failure('PROJECT_NOT_FOUND', 'The AttentionRequest project is unavailable');
+    if (
+      typeof attention.documentPath !== 'string' ||
+      attention.documentPath.includes('..') ||
+      !/^\.specgate\/codex\/changes\/[A-Za-z0-9][A-Za-z0-9._/-]*\.md$/.test(attention.documentPath)
+    )
+      return failure('DOCUMENT_INVALID', 'The linked document path is invalid');
+    try {
+      const projectRoot = fs.realpathSync(project.projectRoot);
+      const documentPath = path.resolve(projectRoot, attention.documentPath);
+      const relative = path.relative(projectRoot, documentPath);
+      if (path.isAbsolute(relative) || relative === '..' || relative.startsWith('..' + path.sep))
+        return failure('DOCUMENT_INVALID', 'The linked document escaped the project');
+      const realDocument = fs.realpathSync(documentPath);
+      const realRelative = path.relative(projectRoot, realDocument);
+      if (
+        path.isAbsolute(realRelative) ||
+        realRelative === '..' ||
+        realRelative.startsWith('..' + path.sep)
+      )
+        return failure('DOCUMENT_INVALID', 'The linked document escaped the project');
+      const stat = fs.lstatSync(realDocument);
+      if (!stat.isFile() || stat.isSymbolicLink() || stat.size > 2 * 1024 * 1024)
+        return failure('DOCUMENT_INVALID', 'The linked document is not a bounded regular file');
+      return {
+        ok: true,
+        attentionId,
+        document: {
+          path: attention.documentPath,
+          content: fs.readFileSync(realDocument, 'utf8'),
+        },
+      };
+    } catch {
+      return failure('DOCUMENT_UNREADABLE', 'The linked document is no longer readable');
+    }
+  }
+
   async function listNotifications() {
     const inspected = await store.inspect();
     if (!inspected.ok) return inspected;
@@ -1594,6 +1643,7 @@ export function createControlService({
       getWorkItem,
       getRun,
       listAttention,
+      getAttentionDocument,
       listNotifications,
       listRegistry,
       aggregate,

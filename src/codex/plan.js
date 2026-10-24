@@ -368,7 +368,7 @@ function safeRelative(relative) {
   );
 }
 
-export function createPlanService({ projectRoot, store, roleProvider } = {}) {
+export function createPlanService({ projectRoot, store, roleProvider, testDesignerRunner } = {}) {
   const root = fs.realpathSync(projectRoot);
   if (!store || typeof store.inspect !== 'function')
     throw new TypeError('A server state store is required');
@@ -867,7 +867,7 @@ export function createPlanService({ projectRoot, store, roleProvider } = {}) {
         }
         return recordTestAssets(loaded, checked, assets);
       }),
-    testDesignPrepare: (args = {}) =>
+    testDesignPrepare: (args = {}, { signal } = {}) =>
       protect(async () => {
         const loaded = await current(args, ['TEST_DESIGN']);
         if (!loaded.ok) return loaded;
@@ -898,21 +898,66 @@ export function createPlanService({ projectRoot, store, roleProvider } = {}) {
           manifest: 'specgate-tests.json',
           preparedAt: new Date().toISOString(),
         };
+        const challenge = {
+          requirements: checked.plan.graph,
+          contract: verifyRef(checked.ref.contract),
+          model: verifyRef(checked.ref.model),
+          manifest: 'specgate-tests.json',
+          testRoot: 'specgate-tests/',
+          conventions: readProjectConventions({ projectRoot: root }),
+        };
         const saved = await update(loaded.state, { ...checked.ref, testDesign });
-        return saved.ok
-          ? {
-              ...saved,
-              testDesign,
-              challenge: {
-                requirements: checked.plan.graph,
-                contract: verifyRef(checked.ref.contract),
-                model: verifyRef(checked.ref.model),
-                manifest: 'specgate-tests.json',
-                testRoot: 'specgate-tests/',
-                conventions: readProjectConventions({ projectRoot: root }),
-              },
-            }
-          : saved;
+        if (!saved.ok) return saved;
+        if (typeof testDesignerRunner !== 'function')
+          return {
+            ...saved,
+            testDesign,
+            challenge,
+            nextAction: 'ASSIGN_SPECGATE_TEST_DESIGNER_THEN_FREEZE',
+          };
+        const execution = await testDesignerRunner(
+          'test-designer',
+          {
+            operation: 'design-executable-tests',
+            changeId: loaded.state.changeId,
+            worktree: worktree.path,
+            branch,
+            baseCommit,
+            ...challenge,
+          },
+          { signal },
+        );
+        if (!execution?.ok)
+          return {
+            ...(execution || failure('TEST_DESIGNER_FAILED', 'The Test Designer did not run')),
+            ok: false,
+            code: execution?.code || 'TEST_DESIGNER_FAILED',
+            message: execution?.message || 'The Test Designer did not complete its task',
+            state: saved.state,
+            actualVersion: saved.state.version,
+            testDesign,
+            challenge,
+          };
+        const headAfter = git(worktree.path, ['rev-parse', 'HEAD']);
+        if (headAfter === baseCommit)
+          return {
+            ...failure(
+              'TEST_COMMIT_REQUIRED',
+              'The Test Designer returned without creating a real commit',
+            ),
+            state: saved.state,
+            actualVersion: saved.state.version,
+            testDesign,
+            execution,
+          };
+        return {
+          ...saved,
+          testDesign,
+          challenge,
+          execution,
+          testDesignerCommit: headAfter,
+          nextAction: 'FREEZE_TEST_DESIGN',
+        };
       }),
     testDesignFreeze: (args = {}) =>
       protect(async () => {

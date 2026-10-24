@@ -11,7 +11,8 @@ import { previewInit, executeInit } from './init.js';
 import { JAVA_PRESETS } from './core/java/java-versions.js';
 import { CHANGE_TOOLS, CHANGE_METHODS, callChangeTool } from './change-tools.js';
 import { createChangeAddService } from './change-add.js';
-import { createDevelopmentService, createPrecompletedRoleProvider } from './development.js';
+import { createDevelopmentService } from './development.js';
+import { createNativeCodexRoleProvider } from './native-role-agent.js';
 import { createPlanService } from './plan.js';
 import { PLAN_TOOLS, callPlanTool } from './plan-tools.js';
 import { createQualityService } from './quality.js';
@@ -316,6 +317,8 @@ function createBoundToolRegistry({
   initializationApprovalProvider,
   planRoleProvider,
   developmentRoleProvider,
+  nativeRoleProvider,
+  testDesignerRunner,
   redRunner,
   qualityTestRunner,
   qualityVerifier,
@@ -331,8 +334,11 @@ function createBoundToolRegistry({
   environmentGate,
 } = {}) {
   const root = path.resolve(projectRoot);
-  const effectiveDevelopmentRoleProvider =
-    developmentRoleProvider || (nativeAgents ? createPrecompletedRoleProvider() : undefined);
+  const effectiveNativeRoleProvider =
+    nativeRoleProvider ||
+    (nativeAgents ? createNativeCodexRoleProvider({ projectRoot: root }) : undefined);
+  const effectiveDevelopmentRoleProvider = developmentRoleProvider || effectiveNativeRoleProvider;
+  const effectiveTestDesignerRunner = testDesignerRunner || effectiveNativeRoleProvider;
   const effectiveRedRunner =
     redRunner ||
     (nativeAgents
@@ -544,6 +550,7 @@ function createBoundToolRegistry({
       projectRoot: root,
       store: stateStore(),
       roleProvider: planRoleProvider,
+      testDesignerRunner: effectiveTestDesignerRunner,
     }));
   let developmentService;
   const development = () =>
@@ -650,7 +657,7 @@ function createBoundToolRegistry({
                 typeof planRoleProvider === 'function'
                   ? 'server-provider'
                   : nativeAgents
-                    ? 'native-subagent'
+                    ? 'native-codex-exec'
                     : 'unavailable',
             };
             data.development = {

@@ -12,6 +12,12 @@ function fakeSpawn(lines, exitCode = 0) {
   const spawnImpl = (command, args, options) => {
     calls.push({ command, args, options });
     const child = new EventEmitter();
+    child.stdin = new EventEmitter();
+    child.stdin.end = (value) => {
+      child.prompt = value;
+      calls.at(-1).prompt = value;
+      return true;
+    };
     child.stdout = new EventEmitter();
     child.stderr = new EventEmitter();
     child.kill = () => true;
@@ -46,6 +52,9 @@ test('Codex adapter starts exec with JSON events and extracts session id', async
   assert.equal(events.length, 2);
   assert.deepEqual(fake.calls[0].args.slice(0, 4), ['exec', '--json', '--color', 'never']);
   assert.ok(fake.calls[0].args.includes('--cd'));
+  assert.equal(fake.calls[0].args.at(-1), '-');
+  assert.equal(fake.calls[0].args.includes('Implement the feature'), false);
+  assert.equal(fake.calls[0].prompt, 'Implement the feature');
   assert.equal(fake.calls[0].options.cwd, projectRoot);
 });
 
@@ -137,6 +146,8 @@ test('session extraction only accepts explicit session or thread identifiers', (
 test('Codex adapter fails closed for invalid session and non-JSON output', async () => {
   const spawnImpl = (_command, _args, _options) => {
     const child = new EventEmitter();
+    child.stdin = new EventEmitter();
+    child.stdin.end = () => true;
     child.stdout = new EventEmitter();
     child.stderr = new EventEmitter();
     child.kill = () => true;

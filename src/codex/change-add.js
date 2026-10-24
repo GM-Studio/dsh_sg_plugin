@@ -1260,6 +1260,7 @@ export function createChangeAddService({
       artifactHash: data.candidate.hash,
       readArtifactHash,
       summary: renderH1Summary(data.candidate.snapshot, path.resolve(root, documentPath)),
+      documentPath,
       signal,
     });
     const fresh = await store.load();

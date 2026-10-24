@@ -90,7 +90,14 @@ export function createControlApprovalAuthority({ service, workItemId, clock = Da
       !text(challenge.scope, 256) ||
       !hash(challenge.artifactHash) ||
       typeof challenge.readArtifactHash !== 'function' ||
-      !text(challenge.summary, 64000)
+      !text(challenge.summary, 64000) ||
+      (challenge.documentPath !== undefined &&
+        (typeof challenge.documentPath !== 'string' ||
+          challenge.documentPath.length > 32768 ||
+          challenge.documentPath.includes('..') ||
+          !/^\.specgate\/codex\/changes\/[A-Za-z0-9][A-Za-z0-9._/-]*\.md$/.test(
+            challenge.documentPath,
+          )))
     )
       return failure('APPROVAL_CHALLENGE_INVALID', 'Approval challenge is invalid');
     const artifactHash = hash(challenge.artifactHash);
@@ -155,7 +162,11 @@ export function createControlApprovalAuthority({ service, workItemId, clock = Da
       actions: ['approve', 'request_changes', 'cancel'],
       artifactHash,
       scope: challenge.scope,
-      summary: challenge.summary.slice(0, 16000),
+      ...(challenge.documentPath ? { documentPath: challenge.documentPath } : {}),
+      summary: challenge.summary
+        .replace(/^需求文档：\[打开完整文档\]\([^)]*\)\s*$/gm, '')
+        .trim()
+        .slice(0, 16000),
       risks: [],
       evidence: [],
     });

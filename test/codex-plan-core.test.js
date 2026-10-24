@@ -18,7 +18,7 @@ function requirements(count = 1) {
   }));
 }
 
-async function fixture({ count = 1, forged = false, roleProvider } = {}) {
+async function fixture({ count = 1, forged = false, roleProvider, testDesignerRunner } = {}) {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'sg-codex-plan-'));
   const relative = '.specgate/codex/changes/example/requirements/revision-1-fixture.json';
   const snapshot = {
@@ -94,7 +94,12 @@ async function fixture({ count = 1, forged = false, roleProvider } = {}) {
     ).ok,
     true,
   );
-  const service = createPlanService({ projectRoot: root, store, roleProvider });
+  const service = createPlanService({
+    projectRoot: root,
+    store,
+    roleProvider,
+    testDesignerRunner,
+  });
   const version = async () => (await store.inspect()).state.version;
   return { root, store, service, version, relative, snapshot };
 }
@@ -446,4 +451,83 @@ test('native Test Designer freezes only committed specgate test assets from its 
   assert.equal(frozen.tests.source.role, 'test-designer');
   assert.equal(fs.existsSync(path.join(context.root, 'backend', 'specgate-tests.json')), false);
   assert.equal((await context.service.inspect()).ok, true);
+});
+
+test('test design preparation assigns and runs the real designer before reporting completion', async () => {
+  const assignments = [];
+  const context = await fixture({
+    testDesignerRunner: async (role, challenge) => {
+      assignments.push({ role, challenge });
+      fs.mkdirSync(path.join(challenge.worktree, 'specgate-tests'), { recursive: true });
+      fs.writeFileSync(
+        path.join(challenge.worktree, 'specgate-tests', 'case.test.mjs'),
+        "import test from 'node:test'; import assert from 'node:assert/strict'; test('case',()=>assert.fail('red'));\n",
+      );
+      fs.writeFileSync(
+        path.join(challenge.worktree, 'specgate-tests', 'runner.mjs'),
+        "import fs from 'node:fs'; const args=process.argv; const report=args[args.indexOf('--report')+1]; fs.writeFileSync(report, JSON.stringify({cases:[{id:'CASE-AC-1',status:'fail'}]})); process.exit(1);\n",
+      );
+      fs.writeFileSync(
+        path.join(challenge.worktree, 'specgate-tests', 'fixture.json'),
+        '{"id":"fixture"}\n',
+      );
+      fs.writeFileSync(
+        path.join(challenge.worktree, 'specgate-tests.json'),
+        JSON.stringify({
+          schemaVersion: 1,
+          code: ['specgate-tests/case.test.mjs', 'specgate-tests/runner.mjs'],
+          fixtures: ['specgate-tests/fixture.json'],
+          runner: 'specgate-tests/runner.mjs',
+          coverage: { lines: 80, branches: 70 },
+          cases: [
+            {
+              id: 'CASE-AC-1',
+              acIds: ['AC-1'],
+              description: 'Prove AC-1.',
+              codeFiles: ['specgate-tests/case.test.mjs'],
+            },
+          ],
+        }) + '\n',
+      );
+      const commit = commitAll(challenge.worktree, 'test: assigned designer output');
+      return {
+        ok: true,
+        role,
+        agent: 'specgate_test_designer',
+        summary: 'Committed the assigned tests.',
+        assignmentHash: 'f'.repeat(64),
+        commit,
+      };
+    },
+  });
+  git(context.root, ['init', '-q']);
+  git(context.root, ['config', 'user.email', 'test@example.com']);
+  git(context.root, ['config', 'user.name', 'test']);
+  fs.writeFileSync(path.join(context.root, '.gitignore'), '.specgate/\n');
+  fs.mkdirSync(path.join(context.root, 'backend'), { recursive: true });
+  fs.writeFileSync(path.join(context.root, 'backend', 'App.java'), 'final class App {}\n');
+  commitAll(context.root, 'product baseline');
+  await context.service.generate({ expectedVersion: await context.version() });
+  await context.service.freezeContracts({
+    expectedVersion: await context.version(),
+    ...contracts,
+  });
+
+  const prepared = await context.service.testDesignPrepare({
+    expectedVersion: await context.version(),
+  });
+  assert.equal(prepared.ok, true, JSON.stringify(prepared));
+  assert.equal(assignments.length, 1);
+  assert.equal(assignments[0].role, 'test-designer');
+  assert.equal(assignments[0].challenge.operation, 'design-executable-tests');
+  assert.equal(assignments[0].challenge.worktree, prepared.testDesign.path);
+  assert.equal(assignments[0].challenge.contract.content.endpoints[0].path, '/tasks');
+  assert.equal(prepared.nextAction, 'FREEZE_TEST_DESIGN');
+  assert.equal(prepared.execution.agent, 'specgate_test_designer');
+  assert.notEqual(prepared.testDesignerCommit, prepared.testDesign.baseCommit);
+  const frozen = await context.service.testDesignFreeze({
+    expectedVersion: await context.version(),
+  });
+  assert.equal(frozen.ok, true, JSON.stringify(frozen));
+  assert.equal(frozen.state.phase, 'TEST_CASES_FROZEN');
 });

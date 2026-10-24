@@ -81,6 +81,7 @@ function commandArgs({ mode, projectRoot, sessionId, serverPath, childEnvironmen
       sessionId,
       '--json',
       ...controlConfigArgs(projectRoot, serverPath, childEnvironment),
+      '-',
     ];
   return [
     'exec',
@@ -92,6 +93,7 @@ function commandArgs({ mode, projectRoot, sessionId, serverPath, childEnvironmen
     sandbox,
     '--cd',
     projectRoot,
+    '-',
   ];
 }
 
@@ -165,7 +167,6 @@ export function createCodexExecutionAdapter({
         childEnvironment: environment,
         sandbox,
       }),
-      prompt,
     ];
     const boundedEnv = Object.fromEntries(
       Object.entries(env).filter(([key]) => !FORBIDDEN_CHILD_ENV.has(key)),
@@ -183,7 +184,7 @@ export function createCodexExecutionAdapter({
           },
           detached: platform !== 'win32',
           windowsHide: true,
-          stdio: ['ignore', 'pipe', 'pipe'],
+          stdio: ['pipe', 'pipe', 'pipe'],
         });
       } catch (error) {
         resolve(failure('CODEX_START_FAILED', 'Codex execution could not start'));
@@ -221,6 +222,10 @@ export function createCodexExecutionAdapter({
         abort();
       }, timeoutMs);
       signal?.addEventListener('abort', abort, { once: true });
+      child.stdin?.on?.('error', () => {
+        // A closed stdin is reported through the process exit code.
+      });
+      child.stdin?.end(prompt);
       const consumeLine = (line) => {
         if (!line.trim()) return;
         let event;

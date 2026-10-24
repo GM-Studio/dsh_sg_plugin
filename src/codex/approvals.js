@@ -187,13 +187,28 @@ export function createApprovalAuthority({
       !isObject(challenge) ||
       Object.keys(challenge).some(
         (key) =>
-          !['gate', 'scope', 'artifactHash', 'readArtifactHash', 'summary', 'signal'].includes(key),
+          ![
+            'gate',
+            'scope',
+            'artifactHash',
+            'readArtifactHash',
+            'summary',
+            'documentPath',
+            'signal',
+          ].includes(key),
       ) ||
       !gates.has(challenge.gate) ||
       !text(challenge.scope) ||
       !hash(challenge.artifactHash) ||
       typeof challenge.readArtifactHash !== 'function' ||
       !text(challenge.summary) ||
+      (challenge.documentPath !== undefined &&
+        (typeof challenge.documentPath !== 'string' ||
+          challenge.documentPath.length > 32768 ||
+          !/^\.specgate\/codex\/changes\/[A-Za-z0-9][A-Za-z0-9._/-]*\.md$/.test(
+            challenge.documentPath,
+          ) ||
+          challenge.documentPath.includes('..'))) ||
       (challenge.signal !== undefined && !(challenge.signal instanceof AbortSignal))
     )
       return reject('APPROVAL_CHALLENGE_INVALID', '审批请求缺少门禁、范围、文档指纹、读取器或摘要');
