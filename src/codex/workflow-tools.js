@@ -925,6 +925,10 @@ export function createToolRegistry(options = {}) {
       )
         return result({ ok: false, code: 'CANCELLED', message: '操作已取消。' });
       try {
+        // The MCP launch directory can be the plugin cache even when the chat
+        // is inside a business repository. An explicit check path is session
+        // selection only; it never writes project configuration or files.
+        if (name === 'sg_env_check' && args.path) bind(args.path);
         if (!projectBound) {
           if (name === 'sg_project_status') return result(unboundProjectStatus());
           if (name === 'sg_status') return result(unboundSessionStatus());
@@ -932,7 +936,11 @@ export function createToolRegistry(options = {}) {
             return result({ ...unboundSessionStatus(), service: 'specgate', transport: 'stdio' });
           if (!unboundAllowed.has(name)) return result(projectNotBound());
         }
-        if (name === 'sg_env_check') return result(await environment.check(args));
+        if (name === 'sg_env_check') {
+          const selection = { ...args };
+          delete selection.path;
+          return result({ ...(await environment.check(selection)), projectRoot: root });
+        }
         if (name === 'sg_env_prepare') return result(await environment.prepare(args, context));
         if (name === 'sg_status') return result(await inspectProjectStatus({ root, environment }));
         if (name === 'sg_project_bind')

@@ -83,6 +83,13 @@ fail-closed。
 再调用 `sg_project_finalize_new` 建立基线。
 现有项目缺少环境时调用 `sg_project_setup` 自动补齐。
 
+聊天所在仓库和 MCP 进程的启动目录可能不同。环境检查可直接传入
+`sg_env_check({ path: "E:\\new_project\\test_demo" })`，在当前连接绑定该业务目录后只读检查；
+不会写入项目配置。目录不存在或指向插件源码时明确拒绝，保留原绑定。
+`sg_project_setup` 生成带 `--project-root` 的项目 MCP 配置，需由宿主重新加载后生效。
+`sg_project_status.workflow` 返回当前需求、阶段和版本；H1 待审批时返回可用于
+`sg_change` 的 `nextArguments`，无需依赖另一个状态工具或重新创建需求。
+
 真实验证与基线建立后停在就绪，等待用户提出业务需求，再澄清、反述、批判分析，
 由用户通过 H1 表单审批。宿主必须支持 MCP elicitation 才能显示原生表单；缺少支持
 时工具会明确报告待输入或待审批，不会伪造确认。
@@ -93,6 +100,10 @@ fail-closed。
 修改需重新提案、分析并生成新文档；查看后用 `sg_request_h1` 打开批准/要求修改/取消表单。
 宿主未暴露该工具时，可用 `sg_change({ action: "request_h1", expectedVersion })`
 打开同一可信审批；批准后才进入 `REQ_FROZEN`，随后推进计划。
+
+H1 表单只显示精简的变更内容、变更方式、范围边界、验收数量和完整文档路径，
+审批意见可留空。已有需求缺少文档时会在同一次 H1 调用内补齐并弹出表单。
+关闭表单保留待审批状态；选择“取消变更”并确认才终止需求。每次操作返回明确结果和最新版本。
 
 生成项目的 `npm run dev` 仅启动前端；`npm run backend` 独立启动后端，
 `npm run dev:all` 联合启动。本地演示默认账号为 `admin / admin`、`viewer / viewer`，配置保存在被 Git 忽略的 `.env`，

@@ -8,7 +8,20 @@ export const ENVIRONMENT_TOOLS = [
     name: 'sg_env_check',
     description:
       '只读预检当前项目所选技术栈，报告可复用工具、缺项、固定安装版本与环境门禁；不下载、不写入。',
-    inputSchema: { type: 'object', properties: selection, additionalProperties: false },
+    inputSchema: {
+      type: 'object',
+      properties: {
+        ...selection,
+        path: {
+          type: 'string',
+          minLength: 1,
+          maxLength: 32768,
+          description:
+            '业务项目绝对路径；宿主未传递当前仓库时显式绑定此路径后检查，不使用插件目录。',
+        },
+      },
+      additionalProperties: false,
+    },
     annotations: {
       readOnlyHint: true,
       destructiveHint: false,

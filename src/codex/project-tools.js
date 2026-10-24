@@ -5,6 +5,7 @@ import { applyAdoption, commitDirtyBaseline, previewAdoption } from './project-a
 import { detectProject } from './project-detect.js';
 import { loadProjectReadiness } from './project-state.js';
 import { recordNewProjectBaseline } from './project-new.js';
+import { createStateStore } from './state-machine.js';
 import fs from 'node:fs';
 import path from 'node:path';
 
@@ -117,6 +118,30 @@ export async function callProjectTool(services, name, args = {}, { signal } = {}
     const { verificationSnapshot } = await import('./verify.js');
     const verification = verificationSnapshot({ root });
     const readiness = loadProjectReadiness({ projectRoot: root });
+    const inspected = await createStateStore({ projectRoot: root }).inspect();
+    const state = inspected.ok ? inspected.state : null;
+    const workflow = {
+      ok: inspected.ok,
+      code: inspected.code || null,
+      phase: state?.phase || null,
+      version: state?.version ?? null,
+      changeId: state?.changeId || null,
+    };
+    const continuation =
+      state?.phase === 'H1_PENDING'
+        ? {
+            nextAction: 'REVIEW_REQUIREMENTS_THEN_REQUEST_H1',
+            nextTool: 'sg_change',
+            nextArguments: { action: 'request_h1', expectedVersion: state.version },
+            message:
+              '已有需求等待 H1；先展示需求文档，再用 nextArguments 请求同一需求的可信审批。无需新建需求；未暴露 sg_request_h1 时使用 sg_change。',
+          }
+        : state?.changeId && !['ARCHIVED', 'ARCHIVED_NOT_PUSHED', 'CANCELLED'].includes(state.phase)
+          ? {
+              nextAction: 'INSPECT_CURRENT_CHANGE',
+              message: '已有活动需求，请继续当前需求，不要重复创建。',
+            }
+          : {};
     if (readiness.ok)
       return {
         ok: true,
@@ -128,6 +153,8 @@ export async function callProjectTool(services, name, args = {}, { signal } = {}
         baseline: readiness.baseline,
         baselineRun: getAdoptionBaselineRun(root) || getBaselineJob(root),
         verification,
+        workflow,
+        ...continuation,
       };
     const detected = detectProject({ root });
     let initialization = null;
@@ -163,6 +190,8 @@ export async function callProjectTool(services, name, args = {}, { signal } = {}
       detection: detected.ok
         ? { stack: detected.stack, git: detected.git, commands: detected.commands }
         : { code: detected.code, message: detected.message },
+      workflow,
+      ...continuation,
     };
   }
   if (name === 'sg_adopt_preview') return previewAdoption({ projectRoot: root });
