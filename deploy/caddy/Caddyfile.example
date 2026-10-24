@@ -1,0 +1,27 @@
+# Replace control.example.com with the approved public DNS name.
+# The application trusts only the loopback Caddy proxy and validates the
+# public Host and browser Origin independently.
+https://control.example.com {
+	encode zstd gzip
+
+	request_body {
+		max_size 1MB
+	}
+
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "DENY"
+		Referrer-Policy "no-referrer"
+		Permissions-Policy "camera=(), microphone=(), geolocation=()"
+		Cross-Origin-Opener-Policy "same-origin"
+		-Server
+	}
+
+	reverse_proxy 127.0.0.1:43120 {
+		header_up -X-Forwarded-Host
+		header_up X-Forwarded-Proto https
+		header_up X-Forwarded-For {remote_host}
+		flush_interval -1
+	}
+}

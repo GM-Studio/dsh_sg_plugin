@@ -197,6 +197,39 @@ export async function startControlDaemon({
     clock,
   });
   const sseHub = createSseHub({ clock });
+  const metricsProvider = async () => {
+    const [workers, attention, notifications] = await Promise.all([
+      configuredWorker.store.listWorkers(),
+      runtime.service.projection.listAttention(),
+      runtime.service.projection.listNotifications(),
+    ]);
+    const workerRows = workers.ok && Array.isArray(workers.workers) ? workers.workers : [];
+    const attentionRows =
+      attention.ok && Array.isArray(attention.attention) ? attention.attention : [];
+    const notificationRows =
+      notifications.ok && Array.isArray(notifications.notifications)
+        ? notifications.notifications
+        : [];
+    return {
+      workerCounts: {
+        online: workerRows.filter((worker) => ['ONLINE', 'ACTIVE'].includes(worker.status)).length,
+        offline: workerRows.filter((worker) => !['ONLINE', 'ACTIVE'].includes(worker.status))
+          .length,
+      },
+      pendingAttentionCount: attentionRows.filter((entry) =>
+        ['OPEN', 'DELIVERED', 'REMINDED'].includes(entry.status),
+      ).length,
+      notificationFailures: notificationRows.filter((entry) => entry.status === 'failed').length,
+      lastWorkerHeartbeatAt:
+        workerRows
+          .map((worker) => worker.lastSeenAt || worker.lastHeartbeatAt)
+          .filter(Boolean)
+          .sort()
+          .at(-1) || null,
+      databaseStatus: configuredWorker.storage === 'mysql' ? 'UP' : undefined,
+      version: process.env.npm_package_version || null,
+    };
+  };
   const pairing = { token: randomBytes(24).toString('base64url') };
   const sessionStore = createFileSessionStore({ root: runtime.store.root });
   const management = createManagementServer({
@@ -207,6 +240,7 @@ export async function startControlDaemon({
     auditQuery,
     exceptionInbox,
     sseHub,
+    metricsProvider,
     clock,
     pairingToken: pairing.token,
     port: managementPort ?? config.managementPort,

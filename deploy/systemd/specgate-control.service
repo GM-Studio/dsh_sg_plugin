@@ -1,0 +1,48 @@
+[Unit]
+Description=SpecGate control plane
+Documentation=https://github.com/GM-Studio/dsh_sg_plugin
+After=network-online.target
+Wants=network-online.target
+StartLimitIntervalSec=60
+StartLimitBurst=5
+
+[Service]
+Type=simple
+User=specgate
+Group=specgate
+WorkingDirectory=/opt/specgate
+EnvironmentFile=/etc/specgate/control.env
+Environment=NODE_ENV=production
+Environment=SPECGATE_MANAGEMENT_DEPLOYMENT_MODE=remote
+Environment=SPECGATE_MANAGEMENT_BIND=127.0.0.1
+Environment=SPECGATE_MANAGEMENT_PORT=43120
+Environment=SPECGATE_MANAGEMENT_TRUSTED_PROXIES=127.0.0.1
+ExecStart=/usr/bin/node /opt/specgate/scripts/specgate-control.mjs
+Restart=on-failure
+RestartSec=5
+TimeoutStartSec=30
+TimeoutStopSec=30
+KillSignal=SIGTERM
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true
+PrivateDevices=true
+ProtectSystem=strict
+ProtectHome=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+ProtectClock=true
+ProtectHostname=true
+RestrictSUIDSGID=true
+LockPersonality=true
+RestrictRealtime=true
+CapabilityBoundingSet=
+AmbientCapabilities=
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+SystemCallArchitectures=native
+ReadWritePaths=/var/lib/specgate /var/log/specgate /var/backups/specgate
+LimitNOFILE=65536
+
+[Install]
+WantedBy=multi-user.target

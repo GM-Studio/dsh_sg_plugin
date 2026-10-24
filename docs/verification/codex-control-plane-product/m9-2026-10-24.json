@@ -1,0 +1,120 @@
+{
+  "version": 1,
+  "stage": "M9",
+  "date": "2026-10-24",
+  "timezone": "Asia/Shanghai",
+  "branch": "sg-codex",
+  "baseCommit": "31aeeb6",
+  "worktreeId": "WORKTREE-2026-10-24-M9",
+  "hashPolicy": "SHA-256 of UTF-8 text with CRLF normalized to LF; sourceArtifactSha256 hashes the ordered files array JSON",
+  "sourceArtifactSha256": "5d6d4fd2439dcf8280428f5d9c2ca2b7dca49f325fb11be169d657e641f861c6",
+  "files": [
+    {
+      "path": "src/codex/control/deployment-assurance.js",
+      "sha256": "1f76b0548b4f3997eeb9bf3e76d196f99386d58b3daa7dc3d4db95ae761948a5"
+    },
+    {
+      "path": "src/codex/control/daemon.js",
+      "sha256": "d171c4d66621150a8f407d275bfaa4a386ba83566cea74e1d4a3641939032d87"
+    },
+    {
+      "path": "src/codex/management/server.js",
+      "sha256": "bf2f346ec516aa8a1490628d38b8c416880dcc40b523a7b7cfd40da92c8977c7"
+    },
+    {
+      "path": "scripts/specgate-release-check.mjs",
+      "sha256": "51d6feeda42d00c1d00e31acfb15287641e4a5723840beb61323dc36fa10f6b1"
+    },
+    {
+      "path": "deploy/systemd/specgate-control.service",
+      "sha256": "f25bfa1f003f877bcf5e0754ad0d4a3889446082cd9c815f000e34e9bbf5e71a"
+    },
+    {
+      "path": "deploy/caddy/Caddyfile.example",
+      "sha256": "24af9ce599cfe93f0655035d2f06c1a4aa8252937f3e3eb894ad4f709e169e37"
+    },
+    {
+      "path": "deploy/mysql/backup.sh",
+      "sha256": "fabbffd22511584d8e2eaf05110168e44f4b6989d5017a7d19abdf092ae4df69"
+    },
+    {
+      "path": "deploy/mysql/restore.sh",
+      "sha256": "9f55444bf16bee3ac88aecd663604e1f8e6d3b59dc69148cdcf849579919be1d"
+    },
+    {
+      "path": "package.json",
+      "sha256": "12b3b905ba743659eef6577e1adba1074e84965bf99a6e05bf6cee777c08e82e"
+    },
+    {
+      "path": "test/codex-control-m9-deployment.test.js",
+      "sha256": "0f1fd76587444b09516fbeeabd2e17f3de112440e2dd69bb600fc198fb451f28"
+    },
+    {
+      "path": "test/codex-control-m9-web.test.js",
+      "sha256": "bb880d3456ff3d016d171996562ff1d8d1635759826a1fda4e331026f589f4b5"
+    }
+  ],
+  "checks": [
+    {
+      "command": "M9 deployment and metrics web focused suite",
+      "exitCode": 0,
+      "tests": 15,
+      "pass": 15,
+      "fail": 0,
+      "cancelled": 0,
+      "skipped": 0,
+      "todo": 0
+    },
+    {
+      "command": "npm test",
+      "mysqlConfigured": false,
+      "exitCode": 0,
+      "tests": 705,
+      "pass": 699,
+      "fail": 0,
+      "cancelled": 0,
+      "skipped": 6,
+      "todo": 0
+    },
+    {
+      "command": "npm run lint",
+      "exitCode": 0
+    },
+    {
+      "command": "npm run format:check",
+      "exitCode": 0
+    },
+    {
+      "command": "bash -n deploy/mysql/backup.sh deploy/mysql/restore.sh",
+      "exitCode": 0
+    },
+    {
+      "command": "npm run pack:check",
+      "exitCode": 0
+    },
+    {
+      "command": "git diff --check",
+      "exitCode": 0
+    }
+  ],
+  "verifiedScenarios": [
+    "secure deployment manifest validation",
+    "release gate PASS/PARTIAL/BLOCKED semantics",
+    "fresh evidence and RPO/RTO targets",
+    "security drill completeness",
+    "bounded metrics redaction",
+    "systemd and Caddy deployment boundaries",
+    "strict-mode full plus binlog backup and guarded restore",
+    "read-only release check CLI"
+  ],
+  "notRun": [
+    "real cloud server and DNS deployment",
+    "real HTTPS reverse proxy and browser traffic",
+    "production MySQL binlog backup and measured RPO/RTO",
+    "real Feishu/DingTalk and mobile security drills",
+    "real two-project single-Worker pilot",
+    "release acceptance verdict remains PARTIAL"
+  ],
+  "releaseStatus": "PARTIAL",
+  "humanAcceptance": "PENDING"
+}

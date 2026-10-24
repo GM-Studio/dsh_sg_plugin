@@ -4,6 +4,7 @@ import path from 'node:path';
 import { createHash, randomBytes, timingSafeEqual } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { requiredAuth } from '../core/control/auth/policy.js';
+import { metricsSnapshot } from '../control/deployment-assurance.js';
 
 const PUBLIC_ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), 'public');
 const MAX_BODY_BYTES = 256 * 1024;
@@ -325,6 +326,7 @@ export function createManagementServer({
   auditQuery = null,
   exceptionInbox = null,
   sseHub = null,
+  metricsProvider = null,
   clock = Date.now,
   pairingToken = randomBytes(24).toString('base64url'),
   sessionTtlMs = 8 * 60 * 60 * 1000,
@@ -425,6 +427,8 @@ export function createManagementServer({
     ['publish', 'subscribe', 'poll'].some((method) => typeof sseHub[method] !== 'function')
   )
     throw new TypeError('sseHub does not implement the SSE contract');
+  if (metricsProvider !== null && typeof metricsProvider !== 'function')
+    throw new TypeError('metricsProvider must be a function');
   if (deploymentMode === 'remote') {
     if (!secureCookie || !trustProxyHttps) {
       throw remoteConfigurationError('Remote mode requires Secure cookies and trusted HTTPS');
@@ -960,6 +964,14 @@ export function createManagementServer({
     if (request.method !== 'GET') return methodFailure(response, ['GET']);
     const projection = services.projection;
     let result;
+    if (pathname === '/api/metrics') {
+      result = await metricsSnapshot({
+        service: metricsProvider || services.metrics || {},
+        clock,
+      });
+      sendJson(response, statusFor(result), sanitizeForWeb(result));
+      return;
+    }
     if (pathname === '/api/inbox') {
       if (!exceptionInbox) {
         sendJson(response, 404, failure('NOT_AVAILABLE', 'Exception inbox is not configured'));
