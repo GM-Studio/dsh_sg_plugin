@@ -1,0 +1,68 @@
+{
+  "version": 1,
+  "stage": "M8",
+  "date": "2026-10-24",
+  "timezone": "Asia/Shanghai",
+  "branch": "sg-codex",
+  "baseCommit": "655c0e8",
+  "worktreeId": "WORKTREE-2026-10-24-M8",
+  "hashPolicy": "SHA-256 of UTF-8 text with CRLF normalized to LF; sourceArtifactSha256 hashes the ordered files array JSON",
+  "sourceArtifactSha256": "a484d2457fc250a1d8f80522ca1b564ba23563ca65bffe8d7c548ea376a166e5",
+  "files": [
+    {
+      "path": "src/codex/control/delivery-assurance.js",
+      "sha256": "e6031a351fc9be551a402ca95d25ad10e824d617bfad8b3a233a14d5b20421fc"
+    },
+    {
+      "path": "test/codex-control-m8-assurance.test.js",
+      "sha256": "fccd4e497048636ae2f4d8357a2cb10651cdb7894d5ffda139b5bf442deceb48"
+    }
+  ],
+  "checks": [
+    {
+      "command": "M8 assurance focused suite",
+      "exitCode": 0,
+      "tests": 8,
+      "pass": 8,
+      "fail": 0,
+      "cancelled": 0,
+      "skipped": 0,
+      "todo": 0
+    },
+    {
+      "command": "npm test",
+      "mysqlConfigured": false,
+      "exitCode": 0,
+      "tests": 702,
+      "pass": 696,
+      "fail": 0,
+      "cancelled": 0,
+      "skipped": 6,
+      "todo": 0
+    },
+    {
+      "command": "npm run lint",
+      "exitCode": 0
+    },
+    {
+      "command": "git diff --check",
+      "exitCode": 0
+    }
+  ],
+  "verifiedScenarios": [
+    "bounded repair rounds and budget",
+    "frozen test manifests and immutable v1",
+    "server-owned independent verification",
+    "test mutation during verification rejected",
+    "AI signer and provider runner rejected",
+    "skipped/not-run/cancelled/timeout cannot pass",
+    "immutable delivery package with unexecuted checks",
+    "incremental redelivery requires accepted parent and new artifact"
+  ],
+  "notRun": [
+    "real failed-project repair pilot",
+    "full combined M8-M10 regression with real MySQL",
+    "human acceptance of the M8 stage"
+  ],
+  "humanAcceptance": "PENDING"
+}
