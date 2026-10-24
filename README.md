@@ -132,7 +132,7 @@ npm run codex:control -- start --project <项目绝对路径>
 npm run codex:control -- doctor --project <项目绝对路径>
 ```
 
-`start` 返回一次性 Web 配对链接。关闭 Codex 会话不会停止 supervisor；
+本地模式 `start` 返回一次性 Web 配对链接。关闭 Codex 会话不会停止 supervisor；
 `npm run codex:control -- stop` 通过跨平台停止请求安全结束控制进程并保留
 WorkItem。控制进程只向子 Codex 注入项目绑定的 SpecGate MCP，不继承宿主其他
 MCP 或飞书/MFA 凭据。
@@ -146,6 +146,31 @@ MCP 或飞书/MFA 凭据。
 
 控制面的 Web 会话与配对 token 会持久化到磁盘（`web-sessions.json`），控制面重启后
 在其 TTL 内仍然可用，无需重新配对。
+
+远程模式必须使用账号密码 + TOTP + 设备绑定，不再接受配对链接建立管理会话。
+MySQL 连接、256 位认证加密密钥和一次性设备确认码均通过本地环境提供：
+
+```powershell
+$env:SPECGATE_MYSQL_CONFIG = 'C:\secure\specgate-mysql.json'
+$env:SPECGATE_AUTH_ENCRYPTION_KEY = '<64 hex chars or 43-char base64url key>'
+$env:SPECGATE_AUTH_DEVICE_CONFIRMATION_CODE = '<new-device confirmation code>'
+$env:SPECGATE_AUTH_USERNAME = '<owner name>'
+$env:SPECGATE_AUTH_PASSWORD = '<owner password>'
+npm run codex:control -- auth-init
+```
+
+`auth-init` 只显示一次 TOTP 注册 URI/种子，密码不会出现在命令行参数或输出中。
+数据库只保存 scrypt 密码摘要、AES-256-GCM 加密的 TOTP 种子和会话/CSRF 哈希。
+新设备登录必须同时提供额外确认码；高风险操作先绑定动作与资源兑换一次性 proof，
+消息深链只携带短期 Attention nonce，不能建立会话。
+
+多 Worker 模式复用同一套出站 Worker API。Worker 在注册或连接时可声明项目白名单、
+`toolchains`、`labels`、`maxConcurrency`、`region`、`priority` 和技能状态；
+控制面按项目绑定、能力/区域硬约束、业务优先级、截止时间、风险和项目公平性选择
+候选 Worker。同一项目仍只持有一个活动租约，超时接管会生成新的 fencing token，
+旧 Worker 的续租、等待和完成请求会被拒绝。断线期间的事件由持久化事件账本按
+`eventId`/`dedupeKey` 补传去重，Decision 游标独立同步。多机压测和真实网络分区演练
+仍需在外部环境执行，不能由本地受控测试替代。
 
 `doctor` 除检查 Codex `--version` 外，还对宿主 Codex 做只读、非交互、限时的能力
 探测（`plugin`、`exec --json`、原生 subagents、elicitation），逐项报告

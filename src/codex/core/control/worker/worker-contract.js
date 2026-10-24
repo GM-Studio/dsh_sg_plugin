@@ -17,6 +17,8 @@ const EVENT_ID = /^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$/;
 const EVENT_TYPE = /^[A-Za-z][A-Za-z0-9]*(?:[._:-][A-Za-z0-9]+){0,7}$/;
 const OPERATION_TYPE = /^[a-z][a-z0-9]*(?:[._-][a-z][a-z0-9]*){1,7}$/;
 const HASH = /^[a-f0-9]{64}$/;
+const CAPABILITY_TOKEN = /^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$/;
+const CAPABILITY_REGION = /^[A-Za-z0-9][A-Za-z0-9._:-]{0,63}$/;
 const SENSITIVE_KEY =
   /^(?:password|passwd|secret|token|tokenHash|authorization|cookie|csrf|proof|nonce|credential|private[_-]?key|api[_-]?key|webhook(?:Url)?|callback(?:Url)?)$/i;
 const LOCAL_PATH =
@@ -25,6 +27,20 @@ const CREDENTIAL_TEXT =
   /(?:\bBearer\s+[A-Za-z0-9._~+/-]{12,}|-----BEGIN [A-Z ]*PRIVATE KEY-----|\b(?:password|passwd|secret|token|authorization|api[_-]?key)\s*[:=]\s*["']?[A-Za-z0-9_./+=-]{8,})/i;
 const CALLBACK_FIELD = /^(?:callback|callbackUrl|webhook|webhookUrl|inboundUrl|endpointUrl)$/i;
 const INVALID_COMMAND_FIELDS = new Set(['command', 'shell', 'argv', 'executable', 'script', 'cwd']);
+const SCHEDULING_CAPABILITY_FIELDS = new Set([
+  'projectIds',
+  'projects',
+  'toolchains',
+  'skills',
+  'labels',
+  'maxConcurrency',
+  'region',
+  'priority',
+  'lastAssignedAt',
+  'skillStatuses',
+]);
+const AVAILABLE_SKILL_STATES = new Set(['ACTIVE', 'AVAILABLE', 'ONLINE']);
+const UNAVAILABLE_SKILL_STATES = new Set(['DISCONNECTED', 'OFFLINE', 'REVOKED']);
 
 const COMMAND_PAYLOAD_FIELDS = Object.freeze({
   CLAIM: new Set(),
@@ -185,16 +201,86 @@ export function normalizeCapabilities(value) {
   }
   if (!isPlainObject(value) || !boundedJson(value))
     return failure('WORKER_CAPABILITIES_INVALID', 'Capabilities are invalid');
+  if (hasDangerousCommandFields(value) || containsForbiddenCloudContent(value))
+    return failure(
+      'WORKER_CAPABILITIES_INVALID',
+      'Capabilities must not contain shell, callback, secret or local path data',
+    );
   const entries = Object.entries(value);
-  if (
-    entries.length > 32 ||
-    entries.some(
-      ([key, entry]) =>
-        !/^[A-Za-z][A-Za-z0-9_.-]{0,127}$/.test(key) ||
-        !['string', 'number', 'boolean'].includes(typeof entry),
-    )
-  )
+  if (entries.length > 64 || entries.some(([key]) => !/^[A-Za-z][A-Za-z0-9_.-]{0,127}$/.test(key)))
     return failure('WORKER_CAPABILITIES_INVALID', 'Capabilities are invalid');
+  for (const [key, entry] of entries) {
+    if (!SCHEDULING_CAPABILITY_FIELDS.has(key)) {
+      if (!['string', 'number', 'boolean'].includes(typeof entry))
+        return failure('WORKER_CAPABILITIES_INVALID', 'Capabilities are invalid');
+      continue;
+    }
+    if (key === 'projectIds' || key === 'projects' || key === 'toolchains' || key === 'labels') {
+      if (
+        !Array.isArray(entry) ||
+        entry.length > 64 ||
+        entry.some((item) => typeof item !== 'string' || !CAPABILITY_TOKEN.test(item.trim())) ||
+        new Set(entry.map((item) => item.trim())).size !== entry.length
+      )
+        return failure('WORKER_CAPABILITIES_INVALID', 'Capabilities are invalid');
+      continue;
+    }
+    if (key === 'skills') {
+      if (Array.isArray(entry)) {
+        if (
+          entry.length > 64 ||
+          entry.some((item) => typeof item !== 'string' || !CAPABILITY_TOKEN.test(item.trim())) ||
+          new Set(entry.map((item) => item.trim())).size !== entry.length
+        )
+          return failure('WORKER_CAPABILITIES_INVALID', 'Capabilities are invalid');
+      } else if (
+        !isPlainObject(entry) ||
+        Object.keys(entry).length > 64 ||
+        Object.entries(entry).some(
+          ([skill, status]) =>
+            !CAPABILITY_TOKEN.test(skill) ||
+            typeof status !== 'string' ||
+            (!AVAILABLE_SKILL_STATES.has(status.toUpperCase()) &&
+              !UNAVAILABLE_SKILL_STATES.has(status.toUpperCase())),
+        )
+      ) {
+        return failure('WORKER_CAPABILITIES_INVALID', 'Capabilities are invalid');
+      }
+      continue;
+    }
+    if (key === 'skillStatuses') {
+      if (
+        !isPlainObject(entry) ||
+        Object.keys(entry).length > 64 ||
+        Object.entries(entry).some(
+          ([skill, status]) =>
+            !CAPABILITY_TOKEN.test(skill) ||
+            typeof status !== 'string' ||
+            (!AVAILABLE_SKILL_STATES.has(status.toUpperCase()) &&
+              !UNAVAILABLE_SKILL_STATES.has(status.toUpperCase())),
+        )
+      )
+        return failure('WORKER_CAPABILITIES_INVALID', 'Capabilities are invalid');
+      continue;
+    }
+    if (key === 'maxConcurrency') {
+      if (!Number.isSafeInteger(entry) || entry < 1 || entry > 100)
+        return failure('WORKER_CAPABILITIES_INVALID', 'Capabilities are invalid');
+      continue;
+    }
+    if (key === 'priority') {
+      if (!Number.isSafeInteger(entry) || entry < 0 || entry > 1000)
+        return failure('WORKER_CAPABILITIES_INVALID', 'Capabilities are invalid');
+      continue;
+    }
+    if (key === 'region') {
+      if (typeof entry !== 'string' || !CAPABILITY_REGION.test(entry.trim()))
+        return failure('WORKER_CAPABILITIES_INVALID', 'Capabilities are invalid');
+      continue;
+    }
+    if (key === 'lastAssignedAt' && validIso(entry) === null)
+      return failure('WORKER_CAPABILITIES_INVALID', 'Capabilities are invalid');
+  }
   return { ok: true, value: cloneWorkerValue(value) };
 }
 

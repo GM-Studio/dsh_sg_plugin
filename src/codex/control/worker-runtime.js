@@ -2,6 +2,7 @@ import { readMysqlConfig } from './auth-runtime.js';
 import { createMemoryWorkerStore } from '../core/control/worker/memory-worker-store.js';
 import { createMysqlWorkerStore } from '../core/control/worker/mysql-worker-store.js';
 import { createWorkerGateway } from '../core/control/worker/worker-gateway.js';
+import { createWorkerScheduler } from '../core/control/worker/worker-scheduler.js';
 import { createMysqlPool, migrateMysql } from '../core/control/persistence/mysql-repository.js';
 
 const failure = (code, message, extra = {}) => ({ ok: false, code, message, ...extra });
@@ -20,6 +21,7 @@ export async function createConfiguredWorkerGateway({
 
   if (!config.mysqlConfigPath) {
     const store = createMemoryWorkerStore({ clock });
+    const scheduler = createWorkerScheduler({ clock });
     const gateway = createWorkerGateway({
       store,
       controlService,
@@ -28,11 +30,13 @@ export async function createConfiguredWorkerGateway({
       heartbeatIntervalMs,
       offlineAfterMs,
       waitMs,
+      scheduler,
     });
     return {
       ok: true,
       workerGateway: gateway,
       store,
+      scheduler,
       storage: 'memory',
       close: async () => {},
     };
@@ -49,6 +53,7 @@ export async function createConfiguredWorkerGateway({
       return migrated;
     }
     const store = createMysqlWorkerStore({ pool, clock });
+    const scheduler = createWorkerScheduler({ clock });
     const workerGateway = createWorkerGateway({
       store,
       controlService,
@@ -57,11 +62,13 @@ export async function createConfiguredWorkerGateway({
       heartbeatIntervalMs,
       offlineAfterMs,
       waitMs,
+      scheduler,
     });
     return {
       ok: true,
       workerGateway,
       store,
+      scheduler,
       storage: 'mysql',
       close: async () => {
         await pool.end();

@@ -127,6 +127,36 @@ Control-plane Web sessions and pairing tokens persist to disk
 (`web-sessions.json`), so a session stays usable across a restarted control plane
 within its TTL, without re-pairing.
 
+Remote mode requires password + TOTP account authentication with device binding;
+a pairing link cannot establish a remote management session. Supply the MySQL
+configuration, a 256-bit authentication encryption key and a new-device
+confirmation code through local environment variables, then provision the owner:
+
+```powershell
+$env:SPECGATE_MYSQL_CONFIG = 'C:\secure\specgate-mysql.json'
+$env:SPECGATE_AUTH_ENCRYPTION_KEY = '<64 hex chars or 43-char base64url key>'
+$env:SPECGATE_AUTH_DEVICE_CONFIRMATION_CODE = '<new-device confirmation code>'
+$env:SPECGATE_AUTH_USERNAME = '<owner name>'
+$env:SPECGATE_AUTH_PASSWORD = '<owner password>'
+npm run codex:control -- auth-init
+```
+
+`auth-init` reveals the TOTP enrollment URI/seed once. MySQL stores only a scrypt
+password digest, an AES-256-GCM encrypted TOTP seed, and hashed session/CSRF
+tokens. High-risk actions consume a one-time proof bound to the action and
+resource; notification deep links carry only a short-lived Attention nonce.
+
+Multi-Worker mode reuses the same outbound Worker API. A Worker may declare its
+project whitelist, `toolchains`, `labels`, `maxConcurrency`, `region`, `priority`
+and skill states at registration or connection time. The control plane applies
+project binding, hard capability/region constraints, business priority, deadline,
+risk and project fairness. A project still has only one active lease; timeout
+takeover issues a new fencing token and rejects the old Worker's renew, waiting and
+finish requests. Reconnect replays are deduplicated by `eventId`/`dedupeKey` in the
+durable event ledger, while Decision cursors advance independently. Multi-host
+pressure tests and real network-partition drills must still run in the target
+environment and cannot be replaced by local controlled tests.
+
 Use `npm run codex:control -- doctor --project <absolute-project-path>` before
 starting on a new host. Besides the Codex `--version` check, `doctor` runs a
 read-only, non-interactive, bounded capability probe of the host Codex (`plugin`,

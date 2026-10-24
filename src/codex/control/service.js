@@ -803,6 +803,7 @@ export function createControlService({
     ownerId: claimOwner = ownerId,
     leaseMs = defaultLeaseMs,
     projectIds = null,
+    workItemId = null,
   } = {}) {
     if (!text(claimOwner, 256) || !Number.isSafeInteger(leaseMs) || leaseMs <= 0)
       return failure('INVALID_ARGUMENT', 'A bounded lease owner and duration are required');
@@ -813,6 +814,8 @@ export function createControlService({
         projectIds.some((projectId) => !text(projectId, 128)))
     )
       return failure('INVALID_ARGUMENT', 'Claim project whitelist is invalid');
+    if (workItemId !== null && !text(workItemId, 128))
+      return failure('INVALID_ARGUMENT', 'Claim WorkItem id is invalid');
     const allowedProjects = projectIds === null ? null : new Set(projectIds);
     return store.mutate((state) => {
       const now = clock();
@@ -842,7 +845,8 @@ export function createControlService({
         .filter(
           (item) =>
             item.executionState === 'QUEUED' &&
-            (allowedProjects === null || allowedProjects.has(item.projectId)),
+            (allowedProjects === null || allowedProjects.has(item.projectId)) &&
+            (workItemId === null || item.workItemId === workItemId),
         )
         .sort(
           (left, right) =>

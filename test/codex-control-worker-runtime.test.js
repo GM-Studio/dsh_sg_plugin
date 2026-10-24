@@ -21,6 +21,7 @@ test('local Worker runtime uses an in-memory registry without cloud inbound acce
   });
   assert.equal(runtime.ok, true);
   assert.equal(runtime.storage, 'memory');
+  assert.equal(typeof runtime.scheduler.selectClaim, 'function');
   const registered = await runtime.workerGateway.register({
     displayName: 'Local worker',
     projectIds: ['project-1'],

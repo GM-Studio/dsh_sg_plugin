@@ -172,6 +172,7 @@ export function createWorkerGateway({
   offlineAfterMs = 45000,
   waitMs = 0,
   audit = async () => {},
+  scheduler = null,
 } = {}) {
   if (!store || typeof store.findWorkerByTokenHash !== 'function')
     throw new TypeError('A worker store is required');
@@ -191,8 +192,16 @@ export function createWorkerGateway({
   }
   if (!Number.isSafeInteger(waitMs) || waitMs < 0)
     throw new TypeError('Worker waitMs must be a non-negative integer');
+  if (
+    scheduler !== null &&
+    ['assign', 'release', 'validateLeaseToken', 'revokeWorker'].some(
+      (method) => typeof scheduler[method] !== 'function',
+    )
+  )
+    throw new TypeError('worker scheduler does not implement the gateway contract');
 
   const nowIso = () => new Date(clock()).toISOString();
+  const scheduledLeases = new Map();
 
   async function writeAudit({
     actorType,
@@ -470,6 +479,7 @@ export function createWorkerGateway({
       patch: { status: 'REVOKED', revokedAt: nowIso() },
     });
     if (!updated.ok) return updated;
+    scheduler?.revokeWorker({ workerId: input.workerId, now: clock(), reason: 'REVOKED' });
     await writeAudit({
       actorType: 'user',
       actorId: input.actorId,
@@ -719,6 +729,78 @@ export function createWorkerGateway({
     };
   }
 
+  function schedulerWorker(worker) {
+    const capabilities = isPlainObject(worker.capabilities) ? worker.capabilities : {};
+    const declaredSkills = isPlainObject(capabilities.skills) ? capabilities.skills : null;
+    return {
+      workerId: worker.workerId,
+      projectIds: Array.isArray(worker.projectIds) ? worker.projectIds : [],
+      status: worker.status,
+      toolchains:
+        capabilities.toolchains ??
+        (declaredSkills ? Object.keys(declaredSkills) : capabilities.skills),
+      labels: capabilities.labels,
+      maxConcurrency: capabilities.maxConcurrency,
+      region: capabilities.region,
+      priority: capabilities.priority,
+      skillStatuses: capabilities.skillStatuses ?? declaredSkills,
+      lastAssignedAt: capabilities.lastAssignedAt,
+    };
+  }
+
+  async function scheduleClaim(worker, requestedLeaseMs) {
+    if (!scheduler) return { ok: true, scheduled: null };
+    const [workers, inspected] = await Promise.all([store.listWorkers(), controlService.inspect()]);
+    if (!workers?.ok) return workers || failure('WORKER_STORE_UNAVAILABLE', 'Workers unavailable');
+    if (!inspected?.ok)
+      return inspected || failure('WORKER_CONTROL_UNAVAILABLE', 'Control state unavailable');
+    for (const candidate of workers.workers) {
+      scheduler.registerWorker(schedulerWorker(candidate), { now: clock() });
+    }
+    const selected = scheduler.assign({
+      requestingWorkerId: worker.workerId,
+      workers: workers.workers.map(schedulerWorker),
+      workItems: Object.values(inspected.state?.workItems || {}),
+      leases: Object.values(inspected.state?.leases || {}),
+      now: clock(),
+      leaseMs: requestedLeaseMs,
+    });
+    return selected?.ok && !selected.idle
+      ? { ok: true, scheduled: selected }
+      : { ok: true, scheduled: null, selection: selected };
+  }
+
+  function releaseScheduledLease(runId, reason = 'RELEASED') {
+    const scheduled = scheduledLeases.get(runId);
+    if (!scheduled) return;
+    let result = scheduler?.release({
+      workerId: scheduled.workerId,
+      leaseToken: scheduled.leaseToken,
+      now: clock(),
+      reason,
+    });
+    if (!result?.ok && scheduled.leaseId)
+      result = scheduler?.release({
+        workerId: scheduled.workerId,
+        leaseId: scheduled.leaseId,
+        now: clock(),
+        reason,
+      });
+    if (result?.ok || !scheduler) scheduledLeases.delete(runId);
+  }
+
+  function validateScheduledLease(runId, workerId) {
+    if (!scheduler) return true;
+    const scheduled = scheduledLeases.get(runId);
+    if (!scheduled || scheduled.workerId !== workerId) return false;
+    const result = scheduler.validateLeaseToken({
+      workerId,
+      leaseToken: scheduled.leaseToken,
+      now: clock(),
+    });
+    return result.ok === true;
+  }
+
   async function claim(input) {
     const allowed = new Set(['token', 'leaseMs']);
     if (!exactInput(input, allowed))
@@ -732,13 +814,45 @@ export function createWorkerGateway({
       requestedLease > 24 * 60 * 60 * 1000
     )
       return INPUT_INVALID('Lease duration is invalid');
-    const result = await controlService.claimNext({
+    const scheduling = await scheduleClaim(authenticated.worker, requestedLease);
+    if (!scheduling.ok) return scheduling;
+    if (scheduling.selection?.ok === false) return scheduling.selection;
+    if (scheduler && !scheduling.scheduled) {
+      await writeAudit({
+        actorType: 'worker',
+        actorId: authenticated.worker.workerId,
+        action: 'worker.claim.deny',
+        objectType: 'worker',
+        objectId: authenticated.worker.workerId,
+        outcome: 'failure',
+        detail: { reason: 'SCHEDULER_IDLE' },
+      });
+      return {
+        ok: true,
+        idle: true,
+        workItem: null,
+        run: null,
+        lease: null,
+        scheduler: scheduling.selection || null,
+      };
+    }
+    const scheduled = scheduling.scheduled;
+    const claimInput = {
       ownerId: authenticated.worker.workerId,
-      projectIds: [...authenticated.worker.projectIds],
+      projectIds: scheduled ? [scheduled.projectId] : [...authenticated.worker.projectIds],
       leaseMs: requestedLease,
-    });
+    };
+    if (scheduled) claimInput.workItemId = scheduled.workItemId;
+    const result = await controlService.claimNext(claimInput);
     const claimed = controlResult(result);
     if (!result?.ok) {
+      if (scheduled)
+        scheduler.release({
+          workerId: authenticated.worker.workerId,
+          leaseToken: scheduled.lease.leaseToken,
+          now: clock(),
+          reason: 'CONTROL_REJECTED',
+        });
       await writeAudit({
         actorType: 'worker',
         actorId: authenticated.worker.workerId,
@@ -751,6 +865,13 @@ export function createWorkerGateway({
       return result;
     }
     if (claimed?.idle === true || !claimed?.workItem || !claimed?.lease || !claimed?.run) {
+      if (scheduled)
+        scheduler.release({
+          workerId: authenticated.worker.workerId,
+          leaseToken: scheduled.lease.leaseToken,
+          now: clock(),
+          reason: 'CONTROL_IDLE',
+        });
       await writeAudit({
         actorType: 'worker',
         actorId: authenticated.worker.workerId,
@@ -768,6 +889,14 @@ export function createWorkerGateway({
         lease: null,
       };
     }
+    if (scheduled) {
+      claimed.lease.fencingToken = scheduled.lease.fencingToken;
+      scheduledLeases.set(claimed.run.runId, {
+        workerId: authenticated.worker.workerId,
+        leaseId: scheduled.lease.leaseId,
+        leaseToken: scheduled.lease.leaseToken,
+      });
+    }
     const projectId =
       claimed.workItem?.projectId ?? claimed.run?.projectId ?? claimed.lease?.projectId;
     if (!authenticated.worker.projectIds.includes(projectId)) {
@@ -778,6 +907,7 @@ export function createWorkerGateway({
           ownerId: authenticated.worker.workerId,
         });
       }
+      releaseScheduledLease(claimed.run.runId, 'PROJECT_OUTSIDE_WHITELIST');
       await writeAudit({
         actorType: 'worker',
         actorId: authenticated.worker.workerId,
@@ -797,12 +927,16 @@ export function createWorkerGateway({
       const releaseClaimedLease = async () => {
         const releaseOperation =
           controlService.releaseLease ?? controlService.release ?? controlService.releaseRun;
-        if (typeof releaseOperation !== 'function') return false;
+        if (typeof releaseOperation !== 'function') {
+          releaseScheduledLease(claimed.run.runId, 'DECISION_APPLY_FAILED');
+          return false;
+        }
         const releaseResult = await releaseOperation.call(controlService, {
           runId: claimed.run.runId,
           leaseToken: claimed.lease.token,
           ownerId: authenticated.worker.workerId,
         });
+        releaseScheduledLease(claimed.run.runId, 'DECISION_APPLY_FAILED');
         return releaseResult?.ok === true;
       };
       const begin = requireControlMethod('beginDecisionApplication');
@@ -851,7 +985,7 @@ export function createWorkerGateway({
             : (projected?.application ?? projected)),
       );
     }
-    await store.setLease({
+    const storedLease = await store.setLease({
       workerId: authenticated.worker.workerId,
       lease: {
         runId: claimed.run.runId,
@@ -861,6 +995,18 @@ export function createWorkerGateway({
         expiresAt: claimed.lease.expiresAt,
       },
     });
+    if (!storedLease?.ok) {
+      const releaseOperation =
+        controlService.releaseLease ?? controlService.release ?? controlService.releaseRun;
+      if (typeof releaseOperation === 'function')
+        await releaseOperation.call(controlService, {
+          runId: claimed.run.runId,
+          leaseToken: claimed.lease.token,
+          ownerId: authenticated.worker.workerId,
+        });
+      releaseScheduledLease(claimed.run.runId, 'LEASE_STORE_FAILED');
+      return storedLease;
+    }
     await writeAudit({
       actorType: 'worker',
       actorId: authenticated.worker.workerId,
@@ -918,6 +1064,8 @@ export function createWorkerGateway({
       );
     const authenticated = await authenticateWorker(input.token);
     if (!authenticated.ok) return authenticated;
+    if (!validateScheduledLease(input.runId, authenticated.worker.workerId))
+      return failure('LEASE_INVALID', 'Execution lease is no longer valid');
     const localLease = await store.getLease({
       workerId: authenticated.worker.workerId,
       runId: input.runId,
@@ -942,6 +1090,16 @@ export function createWorkerGateway({
       expectedRunVersion: input.expectedRunVersion,
       updates: cloneWorkerValue(updates),
     });
+    if (result?.ok) {
+      const scheduled = scheduledLeases.get(input.runId);
+      if (scheduled)
+        scheduler.renew({
+          workerId: authenticated.worker.workerId,
+          leaseToken: scheduled.leaseToken,
+          now: clock(),
+          ttlMs: leaseMs,
+        });
+    }
     if (!result?.ok && result?.code === 'LEASE_INVALID')
       await store.deleteLease({
         workerId: authenticated.worker.workerId,
@@ -996,6 +1154,7 @@ export function createWorkerGateway({
         workerId: authenticated.worker.workerId,
         runId: input.runId,
       });
+    if (result?.ok) releaseScheduledLease(input.runId, 'RELEASED');
     await writeAudit({
       actorType: 'worker',
       actorId: authenticated.worker.workerId,
@@ -1020,6 +1179,8 @@ export function createWorkerGateway({
     if (!waiting.ok) return waiting;
     const authenticated = await authenticateWorker(input.token);
     if (!authenticated.ok) return authenticated;
+    if (!validateScheduledLease(input.runId, authenticated.worker.workerId))
+      return failure('LEASE_INVALID', 'Execution lease is no longer valid');
     const owned = await getOwnedLease({
       workerId: authenticated.worker.workerId,
       runId: input.runId,
@@ -1071,6 +1232,7 @@ export function createWorkerGateway({
       workerId: authenticated.worker.workerId,
       runId: input.runId,
     });
+    if (released.ok) releaseScheduledLease(input.runId, 'WAITING_FOR_USER');
     const projected = controlResult(requested);
     await writeAudit({
       actorType: 'worker',
@@ -1136,6 +1298,8 @@ export function createWorkerGateway({
       );
     const authenticated = await authenticateWorker(input.token);
     if (!authenticated.ok) return authenticated;
+    if (!validateScheduledLease(input.runId, authenticated.worker.workerId))
+      return failure('LEASE_INVALID', 'Execution lease is no longer valid');
     const owned = await getOwnedLease({
       workerId: authenticated.worker.workerId,
       runId: input.runId,
@@ -1152,6 +1316,7 @@ export function createWorkerGateway({
       error,
     });
     if (!finished?.ok) return finished;
+    releaseScheduledLease(input.runId, `FINISHED_${input.status}`);
     const projected = controlResult(finished);
     const released = await releaseLocalLeaseConfirmed({
       workerId: authenticated.worker.workerId,
