@@ -1,6 +1,6 @@
 # SpecGate Core 最小可靠交付 MVP 执行计划与里程碑
 
-- 计划状态：**v1.0-approved；M0–M1 已验证，M2 未开始**
+- 计划状态：**v1.0-approved；M0–M3 已验证，M4 未开始**
 - 日期：2026-10-25
 - 适用仓库：SpecGate Codex 插件
 - 关联需求：`docs/requirements/2026-10-25-specgate-core-reliable-delivery-mvp.zh.md`
@@ -1239,13 +1239,15 @@ baseline 报告
 - 批准前本计划正文规范化 LF SHA-256：`6661bf5486c7f2ba2eb1d9aa8cb280f415e5c4b620b25e851032e5c3ec6a8cea`。
 - 用户另行选择独立干净工作区，批准登记金丝雀路径 `E:\ai_workflow\pilot-java-api`；未授权修改其生产代码或替换冻结技术栈。
 - 实施分支：`codex/core-reliable-delivery-mvp-v1`；工作区：`E:\ai_workflow\specgate\.runtime\core-mvp-v1-worktree`。
-- 未执行 commit / push / publish；计划批准不构成此类授权。
+- 本轮开始前用户另行授权本地提交，M0/M1 已提交为 `bfeaeab`；M2/M3 新改动尚未提交，未执行 push / publish。
 
 | 阶段  | 当前结果 | 真实依据                                                                                                                                           |
 | ----- | -------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
 | M0    | 已验证   | 24 RQ / 94 AC 映射完整；737 tests / 737 pass / 0 fail / 0 skipped；lint、format check、pack check、MCP smoke 均退出码 0；原目录 868 文件哈希无变化 |
 | M1    | 已验证   | 聚焦 97/97；全量 745/745，0 fail / 0 skipped；lint、format、pack、smoke 全部退出码 0，见 M1 验收报告                                               |
-| M2–M5 | 未开始   | 必须依次实施、测试和验收后更新，不沿用 M0/M1 的 PASS                                                                                               |
+| M2    | 已验证   | 聚焦 111/111；全量 758/758；lint、format、pack、smoke 全部退出码 0，见 M2 报告                                                                     |
+| M3    | 已验证   | 聚焦 79/79；全量 779/779，0 fail / skipped；lint、format、pack、smoke 均退出码 0，见 M3 报告                                                       |
+| M4–M5 | 未开始   | 依次实施、测试和验收，不继承前阶段 PASS                                                                                                            |
 | M6    | BLOCKED  | 用户指定项目为 Java 8 + Boot 2.7.18，无 Vue，不满足 AC-022-02；真实完整闭环 NOT_RUN                                                                |
 
 M0 报告：
@@ -1257,3 +1259,7 @@ M0 报告：
 M0 当前实现仍包含旧可选 MySQL 测试、默认 WorkItem 工具及 bundled mysql2。本次基线通过不代表核心隔离已实现，也不代表 MVP 已交付。两份原始冻结/历史文件在原目录保持不变。
 
 M1 在全部最终验证通过后更新：[M1 可信状态与审批内核验收](../implementation/2026-10-25-specgate-core-mvp/03-m1-acceptance.md)。本次记录只对应当前工作树，不代表最终 DeliveryRecord 或 MVP 已完成。
+
+M2 在全部验证通过后更新：[M2 需求、计划与测试前移验收](../implementation/2026-10-25-specgate-core-mvp/04-m2-acceptance.md)。本轮开始前按用户要求完成本地提交 bfeaeab；M2 新改动尚未提交、未推送。
+
+M3 在全部验证通过后更新：[M3 隔离实现、确定性质量门与有界修复验收](../implementation/2026-10-25-specgate-core-mvp/05-m3-acceptance.md)。M3 新改动尚未提交；本阶段仅完成仓库实现验收，真实宿主与金丝雀完整交付仍未执行。可选 Worker 测试曾有随机端口失败，诊断、重跑和最终全绿证据均保留在报告中。

@@ -11,6 +11,8 @@ import { gitSafeDirectory } from './git-path.js';
 import { categoryLabel, renderChineseData } from './locale.js';
 import { readDeliveryRecord } from './delivery.js';
 import { loadProjectReadiness, PROJECT_PROFILE_PATH } from './project-state.js';
+import { observableAcceptanceCriterion } from './project-model.js';
+import { validDependencyChanges } from './core/task-policy.js';
 
 const SOURCE_ROOT = fileURLToPath(new URL('../..', import.meta.url));
 const TERMINAL = new Set(['ARCHIVED', 'ARCHIVED_NOT_PUSHED', 'CANCELLED']);
@@ -340,11 +342,16 @@ function validDraft(args) {
       return false;
     reqIds.add(req.id);
     for (const ac of req.acceptanceCriteria) {
-      if (!keys(ac, ['id', 'text']) || !id(ac.id) || acIds.has(ac.id) || !text(ac.text))
+      if (
+        !keys(ac, ['id', 'text', 'verification']) ||
+        !observableAcceptanceCriterion(ac) ||
+        acIds.has(ac.id)
+      )
         return false;
       acIds.add(ac.id);
     }
   }
+  if (!validDependencyChanges(args.dependencyChanges || [], [...acIds])) return false;
   const assumptionIds = new Set();
   for (const assumption of args.assumptions) {
     if (
@@ -421,6 +428,9 @@ function snapshot(state, data) {
     revision: revision.revision,
     request: data.request,
     requirements: revision.requirements,
+    ...(revision.dependencyChanges?.length
+      ? { dependencyChanges: revision.dependencyChanges }
+      : {}),
     assumptions: revision.assumptions,
     openIssues: revision.openIssues,
     clarifications: data.rounds,
@@ -451,8 +461,13 @@ function renderRequirements(candidate, legacyRequest = false) {
       `\n### ${requirement.id} [${categoryLabel(requirement.category)}]`,
       requirement.text,
     );
-    for (const ac of requirement.acceptanceCriteria) lines.push(`- ${ac.id}：${ac.text}`);
+    for (const ac of requirement.acceptanceCriteria)
+      lines.push(
+        `- ${ac.id}：${ac.text}${ac.verification ? `\n  验证方式：${ac.verification}` : ''}`,
+      );
   }
+  if (candidate.dependencyChanges?.length)
+    lines.push('\n## 待 H1 批准的依赖文件变更', renderChineseData(candidate.dependencyChanges));
   lines.push('\n## 待用户确认的假设与风险');
   for (const assumption of candidate.assumptions)
     lines.push(`- ${assumption.id}：${assumption.text}\n  风险：${assumption.risk}`);
@@ -502,6 +517,10 @@ export function renderH1Summary(candidate, documentPath) {
     )} 项`,
     `需求文档：[打开完整文档](${pathToFileURL(documentPath).href})`,
   );
+  if (candidate.dependencyChanges?.length)
+    lines.push(
+      `依赖文件变更：${candidate.dependencyChanges.length} 项（具体文件、目标 SHA-256、AC 与原因见完整文档）`,
+    );
   return lines.join('\n');
 }
 
@@ -856,7 +875,15 @@ export function createChangeAddService({
   }
 
   async function propose(args = {}) {
-    if (!keys(args, ['expectedVersion', 'requirements', 'assumptions', 'openIssues']))
+    if (
+      !keys(args, [
+        'expectedVersion',
+        'requirements',
+        'assumptions',
+        'openIssues',
+        'dependencyChanges',
+      ])
+    )
       return failure('INVALID_ARGUMENT', 'Only a requirements proposal may be submitted');
     const loaded = await current(args, ['REQ_INTAKE', 'REQ_CLARIFYING', 'H1_PENDING']);
     if (!loaded.ok) return loaded;
@@ -887,6 +914,7 @@ export function createChangeAddService({
       requirements: args.requirements,
       assumptions: args.assumptions,
       openIssues: args.openIssues,
+      ...(args.dependencyChanges?.length ? { dependencyChanges: args.dependencyChanges } : {}),
     });
     data.critique = null;
     data.candidate = null;

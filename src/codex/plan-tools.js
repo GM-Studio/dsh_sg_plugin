@@ -26,9 +26,16 @@ const artifact = {
   type: 'object',
   properties: {
     version: { type: 'integer', const: 1 },
+    acIds: {
+      type: 'array',
+      items: { type: 'string', minLength: 1, maxLength: 192 },
+      minItems: 1,
+      maxItems: 200,
+      uniqueItems: true,
+    },
     content,
   },
-  required: ['version', 'content'],
+  required: ['version', 'content', 'acIds'],
   additionalProperties: false,
 };
 const contentMap = {
@@ -75,7 +82,33 @@ export const PLAN_TOOLS = Object.freeze([
   definition(
     'sg_plan_generate',
     'Generate a dynamic AC task graph from frozen requirements and enter planning. Requires a consumed H1 approval and intact P4 snapshot.',
-    { expectedVersion },
+    {
+      expectedVersion,
+      taskPolicies: {
+        type: 'object',
+        maxProperties: 1000,
+        additionalProperties: {
+          type: 'object',
+          properties: {
+            allowedFiles: {
+              type: 'array',
+              items: { type: 'string', minLength: 1, maxLength: 1024 },
+              minItems: 1,
+              maxItems: 200,
+              uniqueItems: true,
+            },
+            forbiddenFiles: {
+              type: 'array',
+              items: { type: 'string', minLength: 1, maxLength: 1024 },
+              maxItems: 200,
+              uniqueItems: true,
+            },
+          },
+          required: ['allowedFiles'],
+          additionalProperties: false,
+        },
+      },
+    },
     ['expectedVersion'],
   ),
   definition(
@@ -104,7 +137,7 @@ export const PLAN_TOOLS = Object.freeze([
   ),
   definition(
     'sg_test_replace_assets',
-    'Replace frozen executable tests after a Test Designer revision, preserving the prior manifest and recording the bounded reason.',
+    'Historical entry: frozen tests are immutable during an active change. This operation refuses replacement; revise requirements and design tests in a new change.',
     { expectedVersion, reason, assets: testAssets },
     ['expectedVersion', 'reason', 'assets'],
   ),

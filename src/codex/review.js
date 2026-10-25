@@ -6,6 +6,7 @@ import { canonicalJson, hashValue } from './events.js';
 import { loadProjectReadiness, PROJECT_PROFILE_PATH } from './project-state.js';
 import { computeArchivePreview } from './release.js';
 import { assessVerification } from './verification.js';
+import { commitPolicyViolations } from './core/task-policy.js';
 
 const SOURCE_ROOT = path.resolve(fileURLToPath(new URL('../..', import.meta.url)));
 const MODES = Object.freeze(['lenient', 'standard', 'strict']);
@@ -398,6 +399,32 @@ export function createReviewService({
     return { ...quality, body };
   }
 
+  function validateCommitPolicy(checked, integration, head, diff) {
+    if (checked.readOnly)
+      return failure('LEGACY_PLAN_READ_ONLY', 'Historical plans cannot authorize Review');
+    const violations = commitPolicyViolations({
+      graph: checked.plan.graph,
+      role: null,
+      entries: diff.files.map((entry) => ({ path: entry.path, status: entry.change })),
+      readContent: (file) =>
+        execFileSync('git', ['show', `${head}:${file}`], {
+          cwd: integration.path,
+          windowsHide: true,
+          stdio: ['ignore', 'pipe', 'pipe'],
+          maxBuffer: 8 * 1024 * 1024,
+        }),
+    });
+    return violations.length
+      ? failure(
+          violations.some((entry) => entry.code === 'DEPENDENCY_APPROVAL_REQUIRED')
+            ? 'DEPENDENCY_APPROVAL_REQUIRED'
+            : 'ROLE_POLICY_VIOLATION',
+          'The reviewed commit violates its frozen file or dependency policy',
+          { violations },
+        )
+      : { ok: true };
+  }
+
   function buildVerificationAssessment({ plan, quality, integrationCommit, mode }) {
     let environmentFingerprint = digest({
       qualityHash: quality.hash,
@@ -476,6 +503,8 @@ export function createReviewService({
     const integrationCommit = git(integration.path, ['rev-parse', 'HEAD']);
     const review = alignReviewWorktree(development, integrationCommit);
     const diff = parseDiff(integration.path, development.freezeCommit, integrationCommit);
+    const policy = validateCommitPolicy(checked, integration, integrationCommit, diff);
+    if (!policy.ok) return policy;
     const signals = riskSignals(diff, quality.body);
     const recommended = selectReviewMode(signals, diff);
     const mode = args.mode || recommended;
@@ -525,6 +554,8 @@ export function createReviewService({
       const integrationCommit = git(integration.path, ['rev-parse', 'HEAD']);
       const review = alignReviewWorktree(development, integrationCommit);
       const diff = parseDiff(integration.path, development.freezeCommit, integrationCommit);
+      const policy = validateCommitPolicy(checked, integration, integrationCommit, diff);
+      if (!policy.ok) return policy;
       const signals = riskSignals(diff, quality.body);
       const recommended = selectReviewMode(signals, diff);
       const mode = args.mode || recommended;

@@ -57,6 +57,21 @@ const sensitive = (value) =>
     JSON.stringify(value),
   );
 
+export function observableAcceptanceCriterion(value) {
+  if (!object(value) || !id(value.id) || !nonEmpty(value.text, 16000) || !value.text.trim())
+    return false;
+  if (
+    value.verification !== undefined &&
+    (!nonEmpty(value.verification, 2000) || !value.verification.trim())
+  )
+    return false;
+  const vague =
+    /^(?:功能可用|正常工作|符合预期|功能正常|works|it works|works as expected|feature works)[。.!！]?$/iu.test(
+      value.text.trim(),
+    );
+  return !vague || !!value.verification;
+}
+
 function command(value) {
   return (
     exactKeys(

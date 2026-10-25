@@ -1,3 +1,4 @@
+import { terminateProcessTree } from './core/process-termination.js';
 import fs from 'node:fs';
 import path from 'node:path';
 import { spawn, execFileSync } from 'node:child_process';
@@ -7,9 +8,13 @@ import { canonicalJson, hashValue } from './events.js';
 import { verifyProject } from './verify.js';
 import { validateAdoptedVerification, verifyAdoptedProject } from './adopted-verification.js';
 import { loadProjectReadiness } from './project-state.js';
+import { commandsFor, projectEnvironmentFingerprint } from './baseline.js';
 import { VERIFY_STAGES } from './core/java/verify-evidence.js';
 import { commandSpec } from './core/java/verify-evidence.js';
 import { reconcileCoverage } from './core/java/coverage-evidence.js';
+import { prepareFreshReport } from './core/report-output.js';
+import { withOperationLease } from './core/operation-lease.js';
+import { hasSensitiveInput, redactSensitiveText } from './core/sensitive-input.js';
 
 const SOURCE_ROOT = path.resolve(fileURLToPath(new URL('../..', import.meta.url)));
 const EXPECTED_STAGES = Object.freeze([...VERIFY_STAGES, 'frontend-runtime']);
@@ -23,6 +28,50 @@ const failure = (code, message, extra = {}) => ({ ok: false, code, message, ...e
 const fail = (code, message) => {
   throw Object.assign(new Error(message), { code });
 };
+
+function validateStrictAdopted(value, profile, baseline, commit) {
+  const validated = validateAdoptedVerification(value);
+  const report = value?.report;
+  const configured = commandsFor(profile);
+  const complete =
+    validated.ok &&
+    report.status === 'passed' &&
+    report.knownFailures.length === 0 &&
+    report.commit === commit &&
+    report.projectId === profile.projectId &&
+    report.baselineId === baseline.baselineId &&
+    report.environmentFingerprint === projectEnvironmentFingerprint(profile) &&
+    ['build', 'test', 'lint', 'format', 'runtime'].every(
+      (kind) => profile.commands[kind]?.length > 0,
+    ) &&
+    report.commands.length === configured.length &&
+    configured.every((command) => {
+      const matches = report.commands.filter(
+        (result) => result.id === command.id && result.kind === command.kind,
+      );
+      const result = matches[0];
+      return (
+        matches.length === 1 &&
+        result.status === 'passed' &&
+        result.exitCode === 0 &&
+        result.cwd === command.cwd &&
+        Array.isArray(result.argv) &&
+        canonicalJson(result.argv) === canonicalJson(command.argv) &&
+        Number.isFinite(Date.parse(result.startedAt)) &&
+        Number.isFinite(Date.parse(result.finishedAt)) &&
+        Date.parse(result.finishedAt) >= Date.parse(result.startedAt) &&
+        typeof result.stdout === 'string' &&
+        typeof result.stderr === 'string'
+      );
+    });
+  return complete
+    ? validated
+    : failure(
+        'VERIFY_EVIDENCE_INCOMPLETE',
+        'All configured project commands and runtime evidence must pass on the fixed commit',
+        { report: report || null },
+      );
+}
 
 function inside(parent, target) {
   const relative = path.relative(parent, target);
@@ -48,12 +97,7 @@ function safeRelative(relative) {
 }
 
 function redact(value) {
-  return String(value ?? '')
-    .replace(
-      /\b(password|passwd|secret|token|authorization|api[_-]?key)(\s*[:=]\s*)[^\s,;]+/gi,
-      '$1$2[REDACTED]',
-    )
-    .slice(0, MAX_LOG_BYTES);
+  return redactSensitiveText(value, MAX_LOG_BYTES);
 }
 
 function errorText(error) {
@@ -106,6 +150,8 @@ function readFile(root, relative, maximum = 8 * 1024 * 1024) {
 }
 
 function writeEvidence(root, relative, content) {
+  if (hasSensitiveInput(content))
+    fail('SENSITIVE_EVIDENCE', 'Apparent credentials cannot be persisted in quality evidence');
   if (!safeRelative(relative) || Buffer.byteLength(content) > MAX_LOG_BYTES * 2)
     fail('UNSAFE_PATH', 'Quality evidence path or content is unsafe');
   const target = path.resolve(root, relative);
@@ -134,28 +180,7 @@ function writeEvidence(root, relative, content) {
   if (failure.code !== 'EEXIST') throw failure;
 }
 
-function terminate(child) {
-  if (!child || child.exitCode !== null || child.signalCode !== null) return;
-  if (process.platform === 'win32') {
-    const killer = spawn('taskkill', ['/pid', String(child.pid), '/T', '/F'], {
-      stdio: 'ignore',
-      windowsHide: true,
-    });
-    killer.on('error', () => {
-      try {
-        child.kill();
-      } catch {
-        // The process already exited.
-      }
-    });
-  } else {
-    try {
-      child.kill('SIGTERM');
-    } catch {
-      // The process already exited.
-    }
-  }
-}
+const terminate = terminateProcessTree;
 
 function runCommand(specification, { signal, timeoutMs }) {
   return new Promise((resolve) => {
@@ -197,6 +222,7 @@ function runCommand(specification, { signal, timeoutMs }) {
       shell: false,
       windowsHide: true,
       windowsVerbatimArguments: command.windowsVerbatimArguments,
+      detached: process.platform !== 'win32',
       stdio: ['ignore', 'pipe', 'pipe'],
     });
     let stdout = '';
@@ -218,7 +244,8 @@ function runCommand(specification, { signal, timeoutMs }) {
       });
     };
     const stop = (code) => {
-      if (!reason) reason = code;
+      if (reason) return;
+      reason = code;
       terminate(child);
     };
     const abort = () => stop('CANCELLED');
@@ -719,6 +746,17 @@ export function createQualityService({
       code: result.code || 'FROZEN_CASE_RECONCILIATION_FAILED',
       message: result.message || 'Frozen tests did not all pass',
       owners: [...owners],
+      caseIds: (report?.cases || [])
+        .filter((entry) => entry.status !== 'pass')
+        .map((entry) => entry.id),
+      acIds: [
+        ...new Set(
+          (report?.cases || [])
+            .filter((entry) => entry.status !== 'pass')
+            .flatMap((entry) => entry.acIds || []),
+        ),
+      ],
+      command: result.command || null,
     };
   }
 
@@ -784,9 +822,23 @@ export function createQualityService({
   }
 
   async function run(args = {}, { signal } = {}) {
+    const loaded = await current(args, ['TESTING']);
+    if (!loaded.ok) return loaded;
+    if (signal?.aborted)
+      return failure('CANCELLED', 'Quality verification was cancelled before execution', {
+        status: 'cancelled',
+      });
+    return protect(() => withOperationLease(root, () => runUnlocked(args, { signal })));
+  }
+
+  async function runUnlocked(args = {}, { signal } = {}) {
     return protect(async () => {
       const loaded = await current(args, ['TESTING']);
       if (!loaded.ok) return loaded;
+      if (signal?.aborted)
+        return failure('CANCELLED', 'Quality verification was cancelled before execution', {
+          status: 'cancelled',
+        });
       if (typeof testRunner !== 'function')
         return failure(
           'TEST_RUNNER_UNAVAILABLE',
@@ -794,6 +846,11 @@ export function createQualityService({
         );
       const checked = await planService.inspect();
       if (!checked.ok) return checked;
+      if (checked.readOnly)
+        return failure(
+          'LEGACY_PLAN_READ_ONLY',
+          'Historical plans cannot authorize quality execution',
+        );
       const development = loaded.state.context?.development;
       if (!object(development))
         return failure('DEVELOPMENT_REQUIRED', 'Development evidence is missing');
@@ -857,6 +914,7 @@ export function createQualityService({
           `The Test role changed production files: ${policyViolations.join(', ')}`,
           { violations: policyViolations, quality: runEvidence },
         );
+      prepareFreshReport(test.path, specification.reportPath);
       const command = await runCommand(specification, { signal, timeoutMs });
       const stdoutPath = `${runEvidence.directory}/stdout.log`;
       const stderrPath = `${runEvidence.directory}/stderr.log`;
@@ -882,6 +940,7 @@ export function createQualityService({
       runEvidence.stdoutLog = stdoutPath;
       runEvidence.stderrLog = stderrPath;
       runEvidence.command = {
+        source: 'frozen-tests-runner',
         command: specification.command,
         args: specification.args,
         cwd: path.relative(root, specification.cwd).replace(/\\/g, '/') || '.',
@@ -901,77 +960,71 @@ export function createQualityService({
           { violations: productionAfterCommand, quality: runEvidence },
         );
       let checkedCases;
+      let reportError;
       try {
         checkedCases = validateCaseReport(
           test.path,
           specification.reportPath,
           manifest.cases,
-          signal?.aborted ? 'any' : 'pass',
+          'any',
         );
       } catch (error) {
-        const result = {
-          runId: runEvidence.runId,
-          code: signal?.aborted ? 'CANCELLED' : error.code || 'FROZEN_CASE_REPORT_INVALID',
-          message: signal?.aborted ? 'Quality verification was cancelled' : error.message,
-        };
-        runEvidence.cases = [];
-        return finishFailure({
-          development,
-          run: runEvidence,
-          code: result.code,
-          message: result.message,
-          defects: [defectForRunner(result)],
-          retryable: !signal?.aborted,
-        });
+        reportError = error;
       }
-      runEvidence.cases = checkedCases.cases;
+      const observed = (value) =>
+        value === undefined
+          ? null
+          : typeof value === 'string'
+            ? redactSensitiveText(value, 2048)
+            : typeof value === 'object' && value !== null
+              ? redactSensitiveText(JSON.stringify(value), 2048)
+              : value;
+      runEvidence.cases = (checkedCases?.cases || []).map((entry) => ({
+        id: entry.id,
+        status: entry.status,
+        acIds: manifest.cases.find((frozen) => frozen.id === entry.id)?.acIds || [],
+        file: typeof entry.file === 'string' ? redactSensitiveText(entry.file, 1024) : null,
+        line: Number.isSafeInteger(entry.line) ? entry.line : null,
+        expected: entry.expected === undefined ? 'pass' : observed(entry.expected),
+        actual: entry.actual === undefined ? entry.status : observed(entry.actual),
+        message: observed(entry.message),
+      }));
+      const failedRun = (code, message, retryable = true) =>
+        finishFailure({
+          development,
+          run: runEvidence,
+          code,
+          message,
+          retryable,
+          defects: [
+            defectForRunner(
+              { runId: runEvidence.runId, code, message, command: runEvidence.command },
+              { cases: runEvidence.cases },
+            ),
+          ],
+        });
       if (signal?.aborted)
-        return finishFailure({
-          development,
-          run: runEvidence,
-          code: 'CANCELLED',
-          message: 'Quality verification was cancelled',
-          defects: [],
-          retryable: false,
-        });
+        return failedRun('CANCELLED', 'Quality verification was cancelled', false);
       if (command.code === 'COMMAND_TIMEOUT')
-        return finishFailure({
-          development,
-          run: runEvidence,
-          code: 'TEST_COMMAND_TIMEOUT',
-          message: 'The frozen test command exceeded its time limit',
-          defects: [
-            {
-              id: `QUALITY-${runEvidence.runId}`,
-              severity: 'P1',
-              stage: 'frozen-cases',
-              code: 'TEST_COMMAND_TIMEOUT',
-              message: 'The frozen test command timed out',
-              owners: [],
-            },
-          ],
-        });
+        return failedRun('TEST_COMMAND_TIMEOUT', 'The frozen test command exceeded its time limit');
       if (!command.ok || command.exitCode !== 0)
-        return finishFailure({
-          development,
-          run: runEvidence,
-          code: command.code || 'TEST_COMMAND_FAILED',
-          message: command.message || `Frozen tests exited with ${command.exitCode}`,
-          defects: [
-            {
-              id: `QUALITY-${runEvidence.runId}`,
-              severity: 'P1',
-              stage: 'frozen-cases',
-              code: command.code || 'TEST_COMMAND_FAILED',
-              message: command.message || `Frozen tests exited with ${command.exitCode}`,
-              owners: [],
-            },
-          ],
-        });
+        return failedRun(
+          command.code || 'TEST_COMMAND_FAILED',
+          command.message || 'Frozen tests exited with ' + command.exitCode,
+        );
+      if (reportError)
+        return failedRun(reportError.code || 'FROZEN_CASE_REPORT_INVALID', reportError.message);
+      if (runEvidence.cases.some((entry) => entry.status !== 'pass'))
+        return failedRun(
+          'FROZEN_CASE_RECONCILIATION_FAILED',
+          'Every frozen case must pass without skips',
+        );
       let verified;
       if (typeof verifier === 'function') {
+        runEvidence.verificationSource = 'server-owned-verifier';
         prepareVerificationMetadata(test.path);
-        verified = validateVerification(await verifier({ root: test.path }, { signal, timeoutMs }));
+        const observed = await verifier({ root: test.path }, { signal, timeoutMs });
+        verified = { ...validateVerification(observed), report: observed?.report || null };
       } else {
         const readiness = loadProjectReadiness({ projectRoot: root });
         if (!readiness.ok)
@@ -983,6 +1036,8 @@ export function createQualityService({
             defects: [],
           });
         if (readiness.profile.mode === 'adopted') {
+          runEvidence.verificationSource = 'ProjectProfile.commands';
+          runEvidence.projectCommandsHash = digest(readiness.profile.commands);
           const adopted = await adoptedVerifier({
             profile: readiness.profile,
             baseline: readiness.baseline,
@@ -992,18 +1047,55 @@ export function createQualityService({
           });
           verified =
             adopted.ok === true
-              ? validateAdoptedVerification(adopted)
+              ? validateStrictAdopted(
+                  adopted,
+                  readiness.profile,
+                  readiness.baseline,
+                  integrationCommit,
+                )
               : {
                   ...adopted,
                   report: adopted.report || null,
                 };
         } else {
+          runEvidence.verificationSource = 'generated-project-verifier';
           prepareVerificationMetadata(test.path);
-          verified = validateVerification(
-            await verifyProject({ root: test.path }, { signal, timeoutMs }),
-          );
+          const observed = await verifyProject({ root: test.path }, { signal, timeoutMs });
+          verified = { ...validateVerification(observed), report: observed?.report || null };
         }
       }
+      const observations = Array.isArray(verified.report?.commands)
+        ? verified.report.commands
+        : Array.isArray(verified.report?.stages)
+          ? verified.report.stages
+          : [];
+      runEvidence.verificationResults = observations.filter(object).map((command) => ({
+        id: String(command.id || command.name || 'unidentified'),
+        kind: String(command.kind || command.name || 'verification'),
+        argv: Array.isArray(command.argv)
+          ? command.argv
+          : [String(command.command || ''), ...(Array.isArray(command.args) ? command.args : [])],
+        cwd: String(command.cwd || '.'),
+        status:
+          typeof command.status === 'number'
+            ? command.status === 0
+              ? 'passed'
+              : 'failed'
+            : String(command.status || 'not-run'),
+        exitCode: Number.isSafeInteger(command.exitCode)
+          ? command.exitCode
+          : Number.isSafeInteger(command.status)
+            ? command.status
+            : null,
+        startedAt: command.startedAt || null,
+        finishedAt: command.finishedAt || null,
+        durationMs: Number.isSafeInteger(command.durationMs) ? command.durationMs : 0,
+        evidence: String(command.evidence || command.log || 'NOT_RECORDED'),
+        stdout: redact(
+          command.stdout || (Array.isArray(command.tail) ? command.tail.join('\n') : ''),
+        ),
+        stderr: redact(command.stderr || command.error || command.reason || ''),
+      }));
       if (!verified.ok)
         return finishFailure({
           development,
@@ -1115,6 +1207,41 @@ export function createQualityService({
       };
       const latest = await store.inspect();
       if (!latest.ok) return latest;
+      if (git(integration.path, ['rev-parse', 'HEAD']) !== integrationCommit)
+        return finishFailure({
+          development,
+          run: runEvidence,
+          code: 'INTEGRATION_COMMIT_CHANGED',
+          message: 'Integration HEAD moved during quality verification',
+          defects: [
+            {
+              id: `QUALITY-${runEvidence.runId}`,
+              severity: 'P1',
+              message: 'Quality evidence belongs to a different integration commit',
+              owners: [],
+            },
+          ],
+        });
+      const intact = await planService.inspect();
+      if (
+        !intact.ok ||
+        intact.ref.hash !== checked.ref.hash ||
+        intact.ref.tests.hash !== checked.ref.tests.hash
+      )
+        return finishFailure({
+          development,
+          run: runEvidence,
+          code: intact.code || 'QUALITY_INPUT_CHANGED',
+          message: 'Frozen quality inputs changed during execution',
+          defects: [
+            {
+              id: `QUALITY-${runEvidence.runId}`,
+              severity: 'P1',
+              message: 'Frozen quality inputs changed',
+              owners: [],
+            },
+          ],
+        });
       if (latest.state.phase !== 'TESTING')
         return failure('CANCELLED', 'Quality verification stopped before publishing a pass', {
           state: latest.state,
@@ -1158,6 +1285,15 @@ export function createQualityService({
       const report = JSON.parse(readFile(root, quality.reportPath));
       if (digest(report) !== quality.hash)
         return failure('QUALITY_EVIDENCE_CHANGED', 'Quality evidence was modified');
+      const integration = loaded.state.context?.development?.worktrees?.integration;
+      if (
+        !integration?.path ||
+        report.integrationCommit !== git(integration.path, ['rev-parse', 'HEAD'])
+      )
+        return failure(
+          'QUALITY_COMMIT_MISMATCH',
+          'Quality evidence belongs to a different integration commit',
+        );
       return { ok: true, state: loaded.state, quality: report };
     });
   }

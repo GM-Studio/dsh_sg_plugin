@@ -354,6 +354,75 @@ test('draft revisions preserve history and label inferred content as model propo
   assert.equal(state.context.changeAdd.revisions[1].source, 'model-proposal');
 });
 
+test('duplicate or empty criteria and vague acceptance without a verification method cannot form a proposal', async () => {
+  const f = fixture({ input: true });
+  await start(f);
+  for (const proposed of [
+    [{ ...requirements[0], acceptanceCriteria: [] }],
+    [requirements[0], requirements[0]],
+    [
+      {
+        ...requirements[0],
+        acceptanceCriteria: [
+          requirements[0].acceptanceCriteria[0],
+          requirements[0].acceptanceCriteria[0],
+        ],
+      },
+    ],
+    [{ ...requirements[0], acceptanceCriteria: [{ id: 'AC-1', text: '功能可用' }] }],
+  ]) {
+    const before = (await f.store.inspect()).state.version;
+    const result = await f.service.propose({
+      expectedVersion: before,
+      requirements: proposed,
+      assumptions: [],
+      openIssues: [],
+    });
+    assert.equal(result.code, 'REQUIREMENTS_INVALID');
+    assert.equal((await f.store.inspect()).state.version, before);
+  }
+  await draft(f, {
+    requirements: [
+      {
+        ...requirements[0],
+        acceptanceCriteria: [
+          {
+            id: 'AC-1',
+            text: '功能可用',
+            verification: 'HTTP GET /tasks returns status 200 and a JSON list.',
+          },
+        ],
+      },
+    ],
+  });
+});
+
+test('dependency file and hash proposals are visible in the H1 document and bound to the approved snapshot', async () => {
+  const f = fixture({ input: true, native: true });
+  await start(f);
+  const dependencyChanges = [
+    {
+      path: 'backend/pom.xml',
+      sha256: 'a'.repeat(64),
+      acIds: ['AC-1'],
+      reason: 'Add the XML dependency required to query tasks.',
+    },
+  ];
+  await draft(f, { dependencyChanges });
+  const state = (await f.store.inspect()).state;
+  const reviewed = await f.service.critique({ expectedVersion: state.version, report: critique });
+  assert.equal(reviewed.ok, true, JSON.stringify(reviewed));
+  const document = fs.readFileSync(reviewed.document.absolutePath, 'utf8');
+  assert.match(document, /backend\/pom.xml/);
+  assert.match(document, /a{64}/);
+  const frozen = await f.service.requestH1({ expectedVersion: reviewed.state.version });
+  assert.equal(frozen.ok, true, JSON.stringify(frozen));
+  const body = JSON.parse(
+    fs.readFileSync(path.join(f.root, frozen.state.context.changeAdd.frozen.path), 'utf8'),
+  );
+  assert.deepEqual(body.dependencyChanges, dependencyChanges);
+});
+
 test('clarification enforces three rounds and five questions and records only trusted-provider answers', async () => {
   const f = fixture({ input: true });
   await start(f);

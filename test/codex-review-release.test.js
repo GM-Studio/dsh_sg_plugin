@@ -15,6 +15,7 @@ import {
   validateReviewReport,
 } from '../src/codex/review.js';
 import { createStateStore } from '../src/codex/state-machine.js';
+import { buildTaskGraph } from '../src/codex/plan.js';
 
 function git(cwd, args) {
   return execFileSync('git', args, {
@@ -179,9 +180,18 @@ async function fixture({ mutateAfterRequest = false } = {}) {
     assert.equal(moved.ok, true, JSON.stringify(moved));
   }
   const plan = {
-    graph: {
-      acs: [{ id: 'AC-1', caseId: 'CASE-AC-1', requirementId: 'REQ-1', text: 'Works' }],
-    },
+    schemaVersion: 2,
+    graph: buildTaskGraph({
+      requirements: [
+        {
+          id: 'REQ-1',
+          text: 'Review the changed API.',
+          acceptanceCriteria: [
+            { id: 'AC-1', text: 'The changed API returns the expected result.' },
+          ],
+        },
+      ],
+    }).graph,
   };
   const planService = {
     inspect: async () => {
@@ -227,6 +237,31 @@ function passingProvider(context) {
     };
   };
 }
+
+test('unapproved dependency files block Review before any report or reviewer execution', async () => {
+  const context = await fixture();
+  fs.writeFileSync(
+    path.join(context.integrationPath, 'backend/pom.xml'),
+    '<project>unapproved dependency</project>\n',
+  );
+  commitAll(context.integrationPath, 'unapproved dependency');
+  let called = false;
+  const service = createReviewService({
+    projectRoot: context.root,
+    store: context.store,
+    planService: context.planService,
+    roleProvider: async () => {
+      called = true;
+      return passingProvider(context)('review', {});
+    },
+    approvalAuthority: context.authority,
+  });
+  const result = await service.run({ expectedVersion: await context.version() });
+  assert.equal(result.code, 'DEPENDENCY_APPROVAL_REQUIRED', JSON.stringify(result));
+  assert.equal(called, false);
+  assert.ok(result.violations.some((entry) => entry.path === 'backend/pom.xml'));
+  assert.equal((await context.store.inspect()).state.phase, 'REVIEWING');
+});
 
 test('risk selection escalates public contracts and Review enters H3 only on a valid pass', async () => {
   const context = await fixture();

@@ -4,6 +4,11 @@ import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { canonicalJson, hashValue, verifyEventChain } from './events.js';
 import { readProjectConventions } from './project-conventions.js';
+import {
+  validTaskBoundary,
+  validDependencyChanges,
+  PROTECTED_TEST_RULES,
+} from './core/task-policy.js';
 
 const SOURCE_ROOT = path.resolve(fileURLToPath(new URL('../..', import.meta.url)));
 const object = (value) => value !== null && typeof value === 'object' && !Array.isArray(value);
@@ -140,7 +145,7 @@ function acList(snapshot) {
   return result;
 }
 
-function validateGraph(graph) {
+function validateGraph(graph, { allowLegacy = false } = {}) {
   const invalid = () =>
     failure(
       'PLAN_GRAPH_INVALID',
@@ -148,6 +153,7 @@ function validateGraph(graph) {
     );
   if (
     !object(graph) ||
+    (graph.schemaVersion !== 2 && !(allowLegacy && graph.schemaVersion === 1)) ||
     graph.maxParallelDevelopment !== 1 ||
     !Array.isArray(graph.acs) ||
     !graph.acs.length ||
@@ -169,6 +175,11 @@ function validateGraph(graph) {
   )
     return invalid();
   const tasks = new Map();
+  if (
+    graph.schemaVersion === 2 &&
+    !validDependencyChanges(graph.dependencyChanges, [...acs.keys()])
+  )
+    return invalid();
   const coverage = Object.fromEntries(kinds.map((kind) => [kind, new Set()]));
   for (const task of graph.tasks) {
     if (
@@ -197,6 +208,7 @@ function validateGraph(graph) {
       task.acIds.some((acId) => !task.caseIds.includes(acs.get(acId).caseId))
     )
       return invalid();
+    if (graph.schemaVersion === 2 && !validTaskBoundary(task, acs)) return invalid();
     tasks.set(task.id, task);
     for (const ac of task.acIds) coverage[task.kind].add(ac);
   }
@@ -238,15 +250,15 @@ function validateGraph(graph) {
   return { ok: true };
 }
 
-export function validateTaskGraph(graph) {
+export function validateTaskGraph(graph, options) {
   try {
-    return validateGraph(graph);
+    return validateGraph(graph, options);
   } catch {
     return failure('PLAN_GRAPH_INVALID', 'Task graph is malformed');
   }
 }
 
-export function buildTaskGraph(snapshot) {
+export function buildTaskGraph(snapshot, { taskPolicies = {} } = {}) {
   try {
     const acs = acList(snapshot);
     const tasks = [];
@@ -254,9 +266,24 @@ export function buildTaskGraph(snapshot) {
       id,
       kind,
       role,
+      requirementIds: [...new Set(selected.map((ac) => ac.requirementId))],
       acIds: selected.map((ac) => ac.id),
       caseIds: selected.map((ac) => ac.caseId),
       deps,
+      dependencies: [...deps],
+      allowedFiles:
+        role === 'frontend'
+          ? ['frontend/**']
+          : role === 'backend'
+            ? ['backend/**']
+            : kind === 'test'
+              ? ['specgate-tests/**', 'specgate-tests.json']
+              : kind === 'docs'
+                ? ['docs/**']
+                : ['frontend/**', 'backend/**'],
+      forbiddenFiles:
+        kind === 'test' ? ['backend/**', 'frontend/**', '.specgate/**'] : [...PROTECTED_TEST_RULES],
+      verification: ['frozen-tests'],
       acceptance,
     });
     tasks.push(
@@ -345,7 +372,32 @@ export function buildTaskGraph(snapshot) {
         'Reconcile frozen assets, quality commands and acceptance evidence before Review.',
       ]),
     );
-    const graph = { schemaVersion: 1, maxParallelDevelopment: 1, acs, tasks };
+    if (
+      !object(taskPolicies) ||
+      Object.keys(taskPolicies).some((id) => !tasks.some((task) => task.id === id))
+    )
+      return failure('PLAN_GRAPH_INVALID', 'Task policy names must reference generated tasks');
+    for (const task of tasks) {
+      const policy = taskPolicies[task.id];
+      if (policy === undefined) continue;
+      if (
+        !object(policy) ||
+        Object.keys(policy).some((key) => !['allowedFiles', 'forbiddenFiles'].includes(key))
+      )
+        return failure('PLAN_GRAPH_INVALID', 'Task policies only declare file boundaries');
+      task.allowedFiles = policy.allowedFiles;
+      task.forbiddenFiles = [
+        ...task.forbiddenFiles,
+        ...(policy.forbiddenFiles || []).filter((rule) => !task.forbiddenFiles.includes(rule)),
+      ];
+    }
+    const graph = {
+      schemaVersion: 2,
+      maxParallelDevelopment: 1,
+      acs,
+      tasks,
+      dependencyChanges: snapshot.dependencyChanges || [],
+    };
     const checked = validateTaskGraph(graph);
     return checked.ok ? { ok: true, graph } : checked;
   } catch (error) {
@@ -560,6 +612,11 @@ export function createPlanService({ projectRoot, store, roleProvider, testDesign
         'INVALID_TRANSITION',
         'This phase cannot perform the requested plan operation',
       );
+    if (loaded.state.context?.plan && verifyRef(loaded.state.context.plan).schemaVersion !== 2)
+      return failure(
+        'LEGACY_PLAN_READ_ONLY',
+        'Historical plans remain readable; create a newly approved change before execution',
+      );
     return loaded;
   }
   async function inspect() {
@@ -575,8 +632,21 @@ export function createPlanService({ projectRoot, store, roleProvider, testDesign
     const ref = state.context.plan;
     if (!ref) return failure('PLAN_REQUIRED', 'Generate a plan before freezing downstream assets');
     const plan = verifyRef(ref);
-    if (plan.requirementsHash !== requirements.locator.hash || !validateTaskGraph(plan.graph).ok)
+    if (
+      plan.requirementsHash !== requirements.locator.hash ||
+      !validateTaskGraph(plan.graph, { allowLegacy: true }).ok
+    )
       fail('PLAN_ARTIFACT_CHANGED', 'Plan is no longer bound to the frozen requirements');
+    if (
+      plan.schemaVersion === 2 &&
+      (plan.dependencyApproval?.requirementsHash !== requirements.locator.hash ||
+        canonicalJson(plan.graph.dependencyChanges) !==
+          canonicalJson(requirements.snapshot.dependencyChanges || []))
+    )
+      fail(
+        'PLAN_ARTIFACT_CHANGED',
+        'Dependency permissions no longer match the consumed H1 snapshot',
+      );
     for (const kind of ['contract', 'model']) {
       if (!ref[kind]) continue;
       const body = verifyRef(ref[kind]);
@@ -600,7 +670,7 @@ export function createPlanService({ projectRoot, store, roleProvider, testDesign
         if (digest(read(ref.tests.directory + '/' + relative)) !== hash)
           fail('PLAN_ARTIFACT_CHANGED', 'Frozen executable test or fixture content changed');
     }
-    return { ok: true, state, plan, ref };
+    return { ok: true, state, plan, ref, readOnly: plan.schemaVersion !== 2 };
   }
   const update = (state, ref) =>
     store.update({ expectedVersion: state.version, patch: { context: { plan: ref } } });
@@ -783,16 +853,21 @@ export function createPlanService({ projectRoot, store, roleProvider, testDesign
     inspect: () => protect(inspect),
     generate: (args = {}) =>
       protect(async () => {
-        const loaded = await current(args, ['REQ_FROZEN']);
+        const loaded = await current(args, ['REQ_FROZEN'], ['expectedVersion', 'taskPolicies']);
         if (!loaded.ok) return loaded;
         const frozen = await frozenRequirements(loaded.state);
-        const built = buildTaskGraph(frozen.snapshot);
+        const built = buildTaskGraph(frozen.snapshot, { taskPolicies: args.taskPolicies });
         if (!built.ok) return built;
         const plan = {
-          schemaVersion: 1,
+          schemaVersion: 2,
           version: 1,
           changeId: loaded.state.changeId,
           requirementsHash: frozen.locator.hash,
+          dependencyApproval: {
+            requirementsHash: frozen.locator.hash,
+            actor: frozen.approval.actor,
+            consumedAt: frozen.approval.consumedAt,
+          },
           approvalSource: frozen.approval.actor.source,
           runtimeApprovalAttested: false,
           graph: built.graph,
@@ -816,6 +891,10 @@ export function createPlanService({ projectRoot, store, roleProvider, testDesign
           if (
             !object(args[kind]) ||
             args[kind].version !== 1 ||
+            !Array.isArray(args[kind].acIds) ||
+            !args[kind].acIds.length ||
+            new Set(args[kind].acIds).size !== args[kind].acIds.length ||
+            args[kind].acIds.some((id) => !checked.plan.graph.acs.some((ac) => ac.id === id)) ||
             !(
               text(args[kind].content) ||
               (object(args[kind].content) && Object.keys(args[kind].content).length)
@@ -833,6 +912,7 @@ export function createPlanService({ projectRoot, store, roleProvider, testDesign
             version: 1,
             requirementsHash: checked.plan.requirementsHash,
             planHash: ref.hash,
+            acIds: args[kind].acIds,
             content: args[kind].content,
           });
         const saved = await update(loaded.state, ref);
@@ -1011,105 +1091,13 @@ export function createPlanService({ projectRoot, store, roleProvider, testDesign
           },
         });
       }),
-    replaceTests: (args = {}) =>
-      protect(async () => {
-        const loaded = await current(args, ['TESTING'], ['expectedVersion', 'assets', 'reason']);
-        if (!loaded.ok) return loaded;
-        const checked = await inspect();
-        if (!checked.ok) return checked;
-        if (typeof args.reason !== 'string' || !args.reason.trim() || args.reason.length > 2048)
-          return failure('INVALID_ARGUMENT', 'A bounded Test Agent replacement reason is required');
-        if (!validateAssets(args.assets, checked.plan.graph))
-          return failure(
-            'TEST_ASSETS_INVALID',
-            'Replacement test assets need valid AC mappings, code, fixtures and coverage',
-          );
-        const version = checked.ref.tests.version + 1;
-        const files = {
-          ...args.assets.code,
-          ...args.assets.fixtures,
-          'cases.json': canonicalJson(args.assets.cases) + '\n',
-          'cases.md':
-            '# Frozen test cases\n\n' +
-            args.assets.cases
-              .map(
-                (entry) =>
-                  `## ${entry.id}\n\n${entry.description}\n\nAC: ${entry.acIds.join(', ')}\nCode: ${entry.codeFiles.join(', ')}\n`,
-              )
-              .join('\n'),
-        };
-        if (
-          ['cases.json', 'cases.md'].some(
-            (relative) =>
-              Object.hasOwn(args.assets.code, relative) ||
-              Object.hasOwn(args.assets.fixtures, relative),
-          )
-        )
-          return failure(
-            'TEST_ASSETS_INVALID',
-            'cases.json and cases.md are reserved for the frozen case index',
-          );
-        const body = {
-          schemaVersion: 1,
-          kind: 'tests',
-          version,
-          requirementsHash: checked.plan.requirementsHash,
-          planHash: checked.ref.hash,
-          contractHash: checked.ref.contract.hash,
-          modelHash: checked.ref.model.hash,
-          role: 'test',
-          coverage: args.assets.coverage,
-          cases: args.assets.cases,
-          replacement: {
-            reason: args.reason.trim(),
-            previousHash: checked.ref.tests.hash,
-            previousPath: checked.ref.tests.path,
-            requestedAt: new Date().toISOString(),
-          },
-          files: Object.fromEntries(
-            Object.entries(files).map(([relative, content]) => [relative, digest(content)]),
-          ),
-        };
-        const directory = `.specgate/codex/changes/${loaded.state.changeId}/tests/v${version}-${hashValue(body)}`;
-        for (const [relative, content] of Object.entries(files))
-          immutable(directory + '/' + relative, content);
-        const tests = { ...freeze(directory, 'manifest', body), directory };
-        const development = object(loaded.state.context?.development)
-          ? {
-              ...loaded.state.context.development,
-              testsHash: tests.hash,
-              controlledReplacements: [
-                ...(loaded.state.context.development.controlledReplacements || []),
-                {
-                  previousHash: checked.ref.tests.hash,
-                  hash: tests.hash,
-                  reason: args.reason.trim(),
-                  at: new Date().toISOString(),
-                },
-              ],
-            }
-          : loaded.state.context?.development;
-        const saved = await store.update({
-          expectedVersion: loaded.state.version,
-          patch: {
-            context: {
-              plan: { ...checked.ref, tests },
-              ...(development ? { development } : {}),
-            },
-          },
-        });
-        if (!saved.ok) return saved;
-        const event = await store.recordEvent({
-          expectedVersion: saved.state.version,
-          type: 'test.assets.replaced',
-          payload: {
-            previousHash: checked.ref.tests.hash,
-            hash: tests.hash,
-            reason: args.reason.trim(),
-          },
-        });
-        return event.ok ? { ...event, tests: body } : event;
-      }),
+    replaceTests: () =>
+      Promise.resolve(
+        failure(
+          'FROZEN_TESTS_IMMUTABLE',
+          'Frozen tests cannot be replaced during an active change; revise the requirements and design new tests in a new change',
+        ),
+      ),
     checkDevelopmentReady: () =>
       protect(async () => {
         const checked = await inspect();

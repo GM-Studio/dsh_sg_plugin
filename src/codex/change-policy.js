@@ -1,4 +1,4 @@
-import { validateChangeContract } from './project-model.js';
+import { validateChangeContract, observableAcceptanceCriterion } from './project-model.js';
 
 const TYPES = new Set(['feature', 'modify', 'fix']);
 const DETAIL_KEYS = new Set([
@@ -92,11 +92,15 @@ export function buildChangeContract({
   if (
     !Array.isArray(requirements) ||
     requirements.length === 0 ||
+    new Set(requirements.map((requirement) => requirement?.id)).size !== requirements.length ||
     requirements.some(
       (requirement) =>
         typeof requirement?.id !== 'string' ||
         !Array.isArray(requirement.acceptanceCriteria) ||
-        requirement.acceptanceCriteria.length === 0,
+        requirement.acceptanceCriteria.length === 0 ||
+        requirement.acceptanceCriteria.some(
+          (criterion) => !observableAcceptanceCriterion(criterion),
+        ),
     )
   )
     return failure('CHANGE_CONTRACT_INVALID', 'Requirements with acceptance criteria are required');

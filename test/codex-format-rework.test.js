@@ -10,6 +10,7 @@ import {
 } from '../src/codex/development.js';
 import { createFormatService } from '../src/codex/format.js';
 import { createStateStore } from '../src/codex/state-machine.js';
+import { buildTaskGraph } from '../src/codex/plan.js';
 
 function git(cwd, args) {
   return execFileSync('git', args, {
@@ -122,7 +123,20 @@ async function fixture({ through = 'FORMATTING' } = {}) {
       return {
         ok: true,
         state: (await store.inspect()).state,
-        plan: { graph: { acs: [] } },
+        plan: {
+          schemaVersion: 2,
+          graph: buildTaskGraph({
+            requirements: [
+              {
+                id: 'REQ-1',
+                text: 'Format the implemented feature.',
+                acceptanceCriteria: [
+                  { id: 'AC-1', text: 'The implemented feature passes after formatting.' },
+                ],
+              },
+            ],
+          }).graph,
+        },
         ref: {
           contract: { path: '.specgate/contract.json', hash: 'sha256:' + '1'.repeat(64) },
           model: { path: '.specgate/model.json', hash: 'sha256:' + '2'.repeat(64) },
@@ -181,7 +195,11 @@ test('failed quality returns defects to a new development round', async () => {
   assert.equal(repaired.ok, true, JSON.stringify(repaired));
   assert.equal(repaired.state.phase, 'DEVELOPING');
   assert.equal(repaired.repair.findings[0].id, 'QUALITY-1');
-  assert.match(repaired.repair.worktrees.frontend.path.replace(/\\/g, '/'), /round-1\/frontend/);
+  assert.match(
+    repaired.repair.worktrees.frontend.path.replace(/\\/g, '/'),
+    /round-1\/implementation/,
+  );
+  assert.equal(repaired.repair.worktrees.frontend.path, repaired.repair.worktrees.backend.path);
   fs.writeFileSync(
     path.join(repaired.repair.worktrees.frontend.path, 'frontend/src/App.ts'),
     'export const n = 2;\n',

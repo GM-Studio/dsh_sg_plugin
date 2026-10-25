@@ -130,6 +130,7 @@ export async function verifyAdoptedProject({
   const results = [];
   for (const command of configured) {
     if (signal?.aborted) return failure('BASELINE_CANCELLED', 'Adopted verification was cancelled');
+    const commandStartedAt = new Date().toISOString();
     let raw;
     try {
       raw = await runner({
@@ -167,6 +168,8 @@ export async function verifyAdoptedProject({
       status: raw.status,
       exitCode: raw.exitCode,
       durationMs: raw.durationMs || 0,
+      startedAt: commandStartedAt,
+      finishedAt: new Date().toISOString(),
       stdout: String(raw.stdout || '').slice(-4000),
       stderr: String(raw.stderr || '').slice(-4000),
       evidence,

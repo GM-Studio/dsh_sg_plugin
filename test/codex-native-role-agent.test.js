@@ -119,9 +119,64 @@ test('native role prompt carries role boundaries without relying on undocumented
     },
   });
   assert.match(prompt, /You are the assigned SpecGate Frontend Agent/);
-  assert.match(prompt, /Change only files below frontend\//);
+  assert.match(prompt, /Change only files permitted by the frozen task whitelist/);
+  assert.match(prompt, /frontend-1/);
   assert.match(prompt, /git|commit/i);
   assert.match(prompt, /Only change frontend files/);
+});
+
+test('native Implementer stdin carries concrete repair evidence and the frozen task whitelist', () => {
+  const prompt = buildNativeRolePrompt({
+    projectRoot: path.resolve('project'),
+    role: 'backend',
+    agentConfig: {
+      agent: { name: 'specgate_backend', title: 'SpecGate Implementer' },
+      instructions: 'Obey frozen task boundaries.',
+    },
+    challenge: {
+      operation: 'repair',
+      changeId: 'change-1',
+      worktree: path.resolve('project/worktree'),
+      branch: 'sg/change-1/backend',
+      allowedFiles: ['src/orders/**'],
+      forbiddenFiles: ['tests/**'],
+      graph: {
+        tasks: [
+          {
+            id: 'backend-1',
+            kind: 'backend',
+            allowedFiles: ['src/orders/**'],
+            forbiddenFiles: ['tests/**'],
+          },
+        ],
+      },
+      repairContext: {
+        source: 'quality',
+        command: { command: 'node', args: ['tests.mjs'], exitCode: 1 },
+        findings: [
+          {
+            id: 'FAIL-1',
+            file: 'src/orders/order.js',
+            line: 12,
+            acIds: ['AC-1'],
+            evidence: 'Expected total 3, observed 2.',
+            suggestion: 'Include the final item.',
+          },
+        ],
+        cases: [{ id: 'CASE-1', expected: '3', actual: '2' }],
+        logSummary: 'Assertion failed: 2 !== 3',
+      },
+    },
+  });
+  const assignment = JSON.parse(
+    prompt.split('<specgate_assignment>\n')[1].split('\n</specgate_assignment>')[0],
+  );
+  assert.equal(assignment.repairContext.findings[0].id, 'FAIL-1');
+  assert.equal(assignment.repairContext.command.exitCode, 1);
+  assert.equal(assignment.repairContext.cases[0].expected, '3');
+  assert.deepEqual(assignment.allowedFiles, ['src/orders/**']);
+  assert.deepEqual(assignment.forbiddenFiles, ['tests/**']);
+  assert.doesNotMatch(prompt, /Change only files below backend\//);
 });
 
 test('native role provider fails closed when the process produces no machine events', async () => {

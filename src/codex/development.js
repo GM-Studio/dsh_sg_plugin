@@ -1,3 +1,4 @@
+import { terminateProcessTree } from './core/process-termination.js';
 import fs from 'node:fs';
 import path from 'node:path';
 import { spawn, execFileSync } from 'node:child_process';
@@ -5,6 +6,12 @@ import { randomUUID } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { canonicalJson, hashValue } from './events.js';
 import { frontendFrameworkViolation, readProjectConventions } from './project-conventions.js';
+import { commitPolicyViolations, isProtectedTestFile } from './core/task-policy.js';
+import { prepareFreshReport } from './core/report-output.js';
+import { withOperationLease } from './core/operation-lease.js';
+import { failureContext } from './core/failure-context.js';
+import { MAX_AUTOMATIC_RETRIES } from './checkpoints.js';
+import { hasSensitiveInput, redactSensitiveText } from './core/sensitive-input.js';
 
 const SOURCE_ROOT = path.resolve(fileURLToPath(new URL('../..', import.meta.url)));
 const ROLES = Object.freeze(['frontend', 'backend', 'integration', 'test', 'review', 'format']);
@@ -48,12 +55,7 @@ function bounded(value, maximum = 4096) {
 }
 
 function redact(value) {
-  return String(value ?? '')
-    .replace(
-      /\b(password|passwd|secret|token|authorization|api[_-]?key)(\s*[:=]\s*)[^\s,;]+/gi,
-      '$1$2[REDACTED]',
-    )
-    .slice(0, MAX_OUTPUT_BYTES);
+  return redactSensitiveText(value, MAX_OUTPUT_BYTES);
 }
 
 function errorText(error) {
@@ -128,6 +130,8 @@ function readJson(root, relative) {
 }
 
 function writeEvidence(root, relative, content) {
+  if (hasSensitiveInput(content))
+    fail('SENSITIVE_EVIDENCE', 'Apparent credentials cannot be persisted in development evidence');
   if (!safeRelative(relative) || Buffer.byteLength(content) > MAX_OUTPUT_BYTES)
     fail('UNSAFE_PATH', 'A development evidence path or payload is unsafe');
   const target = path.resolve(root, relative);
@@ -158,28 +162,7 @@ function writeEvidence(root, relative, content) {
   return target;
 }
 
-function terminate(child) {
-  if (!child || child.exitCode !== null || child.signalCode !== null) return;
-  if (process.platform === 'win32') {
-    const killer = spawn('taskkill', ['/pid', String(child.pid), '/T', '/F'], {
-      stdio: 'ignore',
-      windowsHide: true,
-    });
-    killer.on('error', () => {
-      try {
-        child.kill();
-      } catch {
-        // The process already exited.
-      }
-    });
-  } else {
-    try {
-      child.kill('SIGTERM');
-    } catch {
-      // The process already exited.
-    }
-  }
-}
+const terminate = terminateProcessTree;
 
 function runProcess(specification, { signal, timeoutMs = COMMAND_TIMEOUT_MS } = {}) {
   return new Promise((resolve) => {
@@ -192,6 +175,7 @@ function runProcess(specification, { signal, timeoutMs = COMMAND_TIMEOUT_MS } = 
       env: { ...process.env, ...(specification.env || {}) },
       shell: false,
       windowsHide: true,
+      detached: process.platform !== 'win32',
       stdio: ['ignore', 'pipe', 'pipe'],
     });
     let stdout = '';
@@ -206,7 +190,8 @@ function runProcess(specification, { signal, timeoutMs = COMMAND_TIMEOUT_MS } = 
       resolve({ ...result, stdout: redact(stdout), stderr: redact(stderr) });
     };
     const stop = (code) => {
-      if (!reason) reason = code;
+      if (reason) return;
+      reason = code;
       terminate(child);
     };
     const abort = () => stop('CANCELLED');
@@ -282,7 +267,12 @@ function parseChangedFiles(root, base, head) {
   if (!output) return [];
   return output.split('\n').map((line) => {
     const [status, ...parts] = line.split('\t');
-    return { status, path: parts.at(-1) };
+    const file = parts.at(-1);
+    return {
+      status,
+      path: file,
+      mode: status === 'D' ? null : runGit(root, ['ls-tree', head, '--', file]).split(/\s+/)[0],
+    };
   });
 }
 
@@ -295,13 +285,7 @@ function isTestPath(filePath) {
 }
 
 function defaultRolePolicy(role, filePath) {
-  const prefix = role === 'frontend' ? 'frontend/' : role === 'backend' ? 'backend/' : null;
-  if (!prefix || !filePath.startsWith(prefix))
-    return {
-      ok: false,
-      reason: `${role} may only change files below ${prefix}`,
-    };
-  if (isTestPath(filePath))
+  if (isProtectedTestFile(filePath))
     return { ok: false, reason: `${role} cannot change frozen or product test files` };
   return { ok: true };
 }
@@ -325,9 +309,11 @@ function worktreeList(root) {
 }
 
 function createWorktree(root, changeId, role, freezeCommit, round = null) {
+  const shared = DEVELOPMENT_ROLES.includes(role);
+  const directoryRole = shared ? 'implementation' : role;
   const relative = round
-    ? `.specgate/codex/worktrees/${changeId}/round-${round}/${role}`
-    : `.specgate/codex/worktrees/${changeId}/${role}`;
+    ? `.specgate/codex/worktrees/${changeId}/round-${round}/${directoryRole}`
+    : `.specgate/codex/worktrees/${changeId}/${directoryRole}`;
   const target = path.join(root, relative);
   const branch = round
     ? `sg/codex/${changeId}/round-${round}/${role}`
@@ -342,10 +328,35 @@ function createWorktree(root, changeId, role, freezeCommit, round = null) {
     }
   });
   if (existing) {
+    if (shared) {
+      cleanWorktree(target, 'The shared implementation worktree');
+      const prefix = round ? `sg/codex/${changeId}/round-${round}/` : `sg/codex/${changeId}/`;
+      if (
+        !DEVELOPMENT_ROLES.some((entry) => existing.branch === `refs/heads/${prefix}${entry}`) ||
+        runGit(target, ['rev-parse', 'HEAD']) !== freezeCommit
+      )
+        fail(
+          'WORKTREE_BROKEN',
+          'The shared implementation worktree changed its frozen base or branch',
+        );
+      let found = false;
+      try {
+        runGit(root, ['show-ref', '--verify', '--quiet', `refs/heads/${branch}`]);
+        found = true;
+      } catch {
+        /* A new logical role branch is created at the same frozen commit. */
+      }
+      if (!found) runGit(root, ['branch', branch, freezeCommit]);
+      if (runGit(root, ['rev-parse', branch]) !== freezeCommit)
+        fail('WORKTREE_BROKEN', 'A reused implementation branch changed its frozen base');
+      return { role, path: target, branch, reused: true, shared: true };
+    }
     if (existing.branch !== `refs/heads/${branch}`)
       fail('WORKTREE_BROKEN', 'A registered worktree is attached to the wrong branch');
     if (runGit(target, ['rev-parse', '--abbrev-ref', 'HEAD']) !== branch)
       fail('WORKTREE_BROKEN', 'A registered worktree branch cannot be verified');
+    if (runGit(target, ['rev-parse', 'HEAD']) !== freezeCommit)
+      fail('WORKTREE_BROKEN', 'A reused worktree no longer matches its frozen base');
     return { role, path: target, branch, reused: true };
   }
   if (fs.existsSync(target))
@@ -364,7 +375,7 @@ function createWorktree(root, changeId, role, freezeCommit, round = null) {
   }
   if (runGit(target, ['rev-parse', 'HEAD']) !== freezeCommit)
     fail('WORKTREE_BROKEN', 'A new role worktree did not start from the freeze commit');
-  return { role, path: target, branch, reused: false };
+  return { role, path: target, branch, reused: false, ...(shared ? { shared: true } : {}) };
 }
 
 export function createPrecompletedRoleProvider() {
@@ -469,6 +480,7 @@ async function redBaseline({ root, checked, redRunner, signal, timeoutMs }) {
   } catch (error) {
     return failure(error.code || 'RED_RUNNER_INVALID', error.message);
   }
+  prepareFreshReport(root, specification.reportPath);
   const run = await runProcess(specification, { signal, timeoutMs });
   if (!run.ok && run.code === 'CANCELLED')
     return failure('CANCELLED', 'Red baseline execution was cancelled');
@@ -582,6 +594,8 @@ export function createDevelopmentService({
   async function checkedPlan() {
     const checked = await planService.inspect();
     if (!checked.ok) return checked;
+    if (checked.readOnly || checked.plan.schemaVersion !== 2)
+      return failure('LEGACY_PLAN_READ_ONLY', 'Historical plans cannot authorize implementation');
     if (!checked.ref.contract || !checked.ref.model || !checked.ref.tests)
       return failure(
         'TEST_FREEZE_REQUIRED',
@@ -617,13 +631,22 @@ export function createDevelopmentService({
   }
 
   async function prepare(args = {}, { signal } = {}) {
+    const loaded = await current(args, ['TEST_CASES_FROZEN']);
+    if (!loaded.ok) return loaded;
+    return protect(() => withOperationLease(root, () => prepareUnlocked(args, { signal })));
+  }
+
+  async function prepareUnlocked(args = {}, { signal } = {}) {
     return protect(async () => {
       const loaded = await current(args, ['TEST_CASES_FROZEN']);
       if (!loaded.ok) return loaded;
       const checked = await checkedPlan();
       if (!checked.ok) return checked;
+      cleanWorktree(root, 'The main worktree');
       const red = await redBaseline({ root, checked, redRunner, signal, timeoutMs });
       if (!red.ok) return red;
+      const intact = await checkedPlan();
+      if (!intact.ok) return intact;
       const afterRed = await store.inspect();
       if (!afterRed.ok) return afterRed;
       if (
@@ -688,6 +711,16 @@ export function createDevelopmentService({
     if (!fs.existsSync(worktree))
       return failure('WORKTREE_MISSING', 'The role worktree no longer exists');
     cleanWorktree(worktree, `${role} worktree`);
+    if (development.worktrees[role].shared === true) {
+      const attached = runGit(worktree, ['rev-parse', '--abbrev-ref', 'HEAD']);
+      const allowed = DEVELOPMENT_ROLES.some(
+        (entry) =>
+          development.worktrees[entry]?.path === worktree &&
+          development.worktrees[entry]?.branch === attached,
+      );
+      if (!allowed) return failure('WORKTREE_BROKEN', 'The implementation worktree changed branch');
+      if (attached !== record.branch) runGit(worktree, ['checkout', record.branch]);
+    }
     if (runGit(worktree, ['rev-parse', '--abbrev-ref', 'HEAD']) !== record.branch)
       return failure('WORKTREE_BROKEN', 'The role worktree is on the wrong branch');
     const previousHead = runGit(worktree, ['rev-parse', 'HEAD']);
@@ -717,6 +750,21 @@ export function createDevelopmentService({
             hash: development.testsHash,
             cases: challenge.tests.cases,
           },
+          allowedFiles: [
+            ...new Set(
+              challenge.graph.tasks
+                .filter((task) => task.kind === role)
+                .flatMap((task) => task.allowedFiles),
+            ),
+          ],
+          forbiddenFiles: [
+            ...new Set(
+              challenge.graph.tasks
+                .filter((task) => task.kind === role)
+                .flatMap((task) => task.forbiddenFiles),
+            ),
+          ],
+          repairContext: challenge.repairContext || null,
           ...(challenge.conflictPaths ? { conflictPaths: challenge.conflictPaths } : {}),
           ...(challenge.integrationBranch
             ? {
@@ -756,6 +804,21 @@ export function createDevelopmentService({
     if (!entries.length)
       return failure('NO_CHANGES', 'The role branch has no change against the freeze commit');
     const violations = [];
+    violations.push(
+      ...commitPolicyViolations({
+        graph: challenge.graph,
+        role,
+        entries,
+        worktree,
+        readContent: (file) =>
+          execFileSync('git', ['show', `${head}:${file}`], {
+            cwd: worktree,
+            windowsHide: true,
+            stdio: ['ignore', 'pipe', 'pipe'],
+            maxBuffer: 8 * 1024 * 1024,
+          }),
+      }),
+    );
     const conventions = readProjectConventions({ projectRoot: root });
     const backendSourcePrefix =
       conventions.backendPackage && role === 'backend'
@@ -806,7 +869,9 @@ export function createDevelopmentService({
     }
     if (violations.length)
       return failure(
-        'ROLE_POLICY_VIOLATION',
+        violations.some((entry) => entry.code === 'DEPENDENCY_APPROVAL_REQUIRED')
+          ? 'DEPENDENCY_APPROVAL_REQUIRED'
+          : 'ROLE_POLICY_VIOLATION',
         violations.map((entry) => `${entry.path}: ${entry.reason}`).join('; '),
         { violations },
       );
@@ -880,7 +945,7 @@ export function createDevelopmentService({
   }
 
   async function mergeRole(development, role, challenge, { signal } = {}) {
-    for (let retry = 0; retry < 4; retry++) {
+    for (let retry = 0; ; retry++) {
       const merged = await mergeOnce(development, role);
       if (merged.ok) {
         const record = {
@@ -966,13 +1031,19 @@ export function createDevelopmentService({
       if (!saved.ok) return saved;
       development = saved.development;
     }
-    return failure('WORKFLOW_BLOCKED', 'Integration conflict retry loop exhausted');
   }
 
   async function run(args = {}, { signal } = {}) {
+    const loaded = await current(args, ['DEVELOPING']);
+    if (!loaded.ok) return loaded;
+    return protect(() => withOperationLease(root, () => runUnlocked(args, { signal })));
+  }
+
+  async function runUnlocked(args = {}, { signal } = {}) {
     return protect(async () => {
       const loaded = await current(args, ['DEVELOPING']);
       if (!loaded.ok) return loaded;
+      cleanWorktree(root, 'The main worktree');
       let development = loaded.state.context?.development;
       if (!object(development) || !object(development.worktrees))
         return failure('DEVELOPMENT_REQUIRED', 'Prepare fixed role worktrees first');
@@ -982,11 +1053,26 @@ export function createDevelopmentService({
       if (!checked.ok) return checked;
       const details = artifactDetails(root, checked);
       const challenge = {
+        operation:
+          development.repairSource === 'review'
+            ? 'rework'
+            : development.repairSource
+              ? 'repair'
+              : 'implement',
         graph: checked.plan.graph,
         contract: details.contract,
         model: details.model,
         tests: details.tests,
         conventions: readProjectConventions({ projectRoot: root }),
+        repairContext: development.repairSource
+          ? failureContext({
+              root,
+              source: development.repairSource,
+              findings: development.repairFindings || [],
+              quality: loaded.state.context.quality,
+              review: loaded.state.context.review,
+            })
+          : null,
       };
       let pending = DEVELOPMENT_ROLES.filter(
         (role) => development.roles?.[role]?.status !== 'skipped',
@@ -1046,6 +1132,7 @@ export function createDevelopmentService({
                   code: result.code || null,
                   commit: result.commit || null,
                   files: result.files || [],
+                  violations: result.violations || [],
                 })),
               },
             ],
@@ -1112,7 +1199,13 @@ export function createDevelopmentService({
     });
   }
 
-  async function prepareRound(
+  async function prepareRound(args, options) {
+    const loaded = await current(args, [options.phase]);
+    if (!loaded.ok) return loaded;
+    return protect(() => withOperationLease(root, () => prepareRoundUnlocked(args, options)));
+  }
+
+  async function prepareRoundUnlocked(
     args,
     { phase, findings, source, eventKey, activeRoles = DEVELOPMENT_ROLES },
   ) {
@@ -1134,6 +1227,19 @@ export function createDevelopmentService({
         return failure('WORKTREE_BROKEN', 'The integration worktree changed branch');
       const repairBaseCommit = runGit(integration.path, ['rev-parse', 'HEAD']);
       const round = (Number.isInteger(previous.reworkRound) ? previous.reworkRound : 0) + 1;
+      if (round > MAX_AUTOMATIC_RETRIES) {
+        const blocked = await store.block({
+          expectedVersion: loaded.state.version,
+          reason:
+            'Two automatic repair rounds have already failed; further implementation requires user intervention',
+        });
+        return blocked.ok
+          ? failure('WORKFLOW_BLOCKED', 'Automatic repair rounds exhausted', {
+              state: blocked.state,
+              retryAllowed: false,
+            })
+          : blocked;
+      }
       const worktrees = { ...previous.worktrees };
       const history = Array.isArray(previous.history) ? [...previous.history] : [];
       history.push({
@@ -1145,7 +1251,7 @@ export function createDevelopmentService({
         findings,
         recordedAt: new Date().toISOString(),
       });
-      const rolesToCreate = [...new Set([...activeRoles, 'format'])];
+      const rolesToCreate = [...DEVELOPMENT_ROLES, 'format'];
       for (const role of rolesToCreate)
         worktrees[role] = createWorktree(
           root,
@@ -1168,6 +1274,7 @@ export function createDevelopmentService({
             : {
                 ...(previous.roles?.[role] || {}),
                 status: 'skipped',
+                commit: repairBaseCommit,
                 worktree: worktrees[role]?.path || null,
                 branch: worktrees[role]?.branch || null,
               },
@@ -1185,6 +1292,7 @@ export function createDevelopmentService({
           repairBaseCommit,
           reworkBaseCommit: repairBaseCommit,
           repairFindings: findings,
+          repairSource: source,
           reworkFindings: findings,
           history,
         }),
@@ -1285,11 +1393,20 @@ export function createDevelopmentService({
         const head = runGit(entry.path, ['rev-parse', 'HEAD']);
         const detachedAtIntegration =
           (role === 'test' || role === 'review') && branch === 'HEAD' && head === integrationCommit;
-        if (branch !== entry.branch && !detachedAtIntegration)
+        const sharedImplementation =
+          entry.shared === true &&
+          DEVELOPMENT_ROLES.includes(role) &&
+          DEVELOPMENT_ROLES.some(
+            (candidate) =>
+              development.worktrees[candidate]?.path === entry.path &&
+              development.worktrees[candidate]?.branch === branch,
+          );
+        if (branch !== entry.branch && !detachedAtIntegration && !sharedImplementation)
           return failure('WORKTREE_BROKEN', `The ${role} worktree branch changed`);
         worktrees[role] = {
           ...entry,
-          head,
+          head: sharedImplementation ? runGit(root, ['rev-parse', entry.branch]) : head,
+          attachedBranch: branch,
           clean:
             runGit(entry.path, ['status', '--porcelain', '--untracked-files=all']).length === 0,
         };

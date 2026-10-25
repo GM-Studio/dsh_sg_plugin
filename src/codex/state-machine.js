@@ -487,6 +487,23 @@ export function createStateStore({ projectRoot, authorizeGate, lockTimeoutMs } =
           payload: { from, checkpoint: state.checkpoint.id },
         };
       }),
+    block: (args) =>
+      mutate(args, (state) => {
+        if (
+          !writable(state) ||
+          typeof args.reason !== 'string' ||
+          !args.reason.trim() ||
+          args.reason.length > 2048
+        )
+          return errorResult(
+            'INVALID_ARGUMENT',
+            'An active workflow and bounded blocking reason are required',
+          );
+        const from = state.phase;
+        state.resumePhase = from;
+        state.phase = 'BLOCKED';
+        return { ok: true, type: 'workflow.blocked', payload: { from, reason: args.reason } };
+      }),
     cancel: (args) =>
       mutate(args, (state) => {
         if (!active(state))

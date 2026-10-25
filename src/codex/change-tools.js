@@ -47,12 +47,37 @@ const category = {
   description:
     'Requirement or clarification topic; use explicit categories to reveal missing coverage.',
 };
-const criterion = objectSchema({
-  id: identifier('Acceptance criterion ID; unique across the proposed requirements.'),
-  text: string(
-    'Concrete observable acceptance behavior, including relevant failure or boundary behavior.',
-  ),
-});
+const criterion = objectSchema(
+  {
+    id: identifier('Acceptance criterion ID; unique across the proposed requirements.'),
+    text: string(
+      'Concrete observable acceptance behavior, including relevant failure or boundary behavior.',
+    ),
+    verification: string(
+      'Concrete test command or manual observation proving this criterion; required for otherwise vague acceptance text.',
+      2000,
+    ),
+  },
+  ['id', 'text'],
+);
+const dependencyChanges = array(
+  objectSchema({
+    path: string('Exact project-relative dependency or lockfile path.', 1024),
+    sha256: {
+      type: 'string',
+      pattern: '^[a-f0-9]{64}$',
+      description: 'SHA-256 of the exact proposed dependency file bytes.',
+    },
+    acIds: array(
+      identifier('Existing acceptance criterion approving this dependency change.'),
+      1,
+      100,
+    ),
+    reason: string('Reason presented to the user before H1 approval.', 2048),
+  }),
+  0,
+  100,
+);
 const requirement = objectSchema({
   id: identifier(
     'Requirement ID; unique within this revision and referenced by critique findings.',
@@ -248,12 +273,16 @@ export const CHANGE_TOOLS = [
   definition(
     'sg_change_propose',
     'Record an explicit requirements revision with acceptance criteria, assumptions, risks and unresolved issues. Preserve prior revisions and invalidate the previous critique and H1 candidate. All content is recorded as a model proposal.',
-    objectSchema({
-      expectedVersion: version,
-      requirements: array(requirement, 1, 200),
-      assumptions: array(assumption),
-      openIssues: array(openIssue),
-    }),
+    objectSchema(
+      {
+        expectedVersion: version,
+        requirements: array(requirement, 1, 200),
+        assumptions: array(assumption),
+        openIssues: array(openIssue),
+        dependencyChanges,
+      },
+      ['expectedVersion', 'requirements', 'assumptions', 'openIssues'],
+    ),
   ),
   definition(
     'sg_change_questions',

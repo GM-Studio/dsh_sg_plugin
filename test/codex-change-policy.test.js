@@ -116,3 +116,37 @@ test('builds a contract from confirmed requirement acceptance IDs', () => {
   assert.deepEqual(result.contract.nonGoals, ['Do not change ordering']);
   assert.equal(result.contract.type, 'modify');
 });
+
+test('contracts cannot hide duplicate requirements or vague acceptance behind otherwise valid IDs', () => {
+  const input = {
+    changeId: 'change-1',
+    type: 'feature',
+    request: 'Add task search.',
+    details: { scope: ['Task search'] },
+    baselineId: 'baseline-1',
+  };
+  const requirement = {
+    id: 'REQ-1',
+    acceptanceCriteria: [{ id: 'AC-1', text: 'GET /tasks returns JSON.' }],
+  };
+  assert.equal(
+    buildChangeContract({
+      ...input,
+      requirements: [
+        requirement,
+        {
+          ...requirement,
+          acceptanceCriteria: [{ id: 'AC-2', text: 'GET /tasks rejects invalid filters.' }],
+        },
+      ],
+    }).ok,
+    false,
+  );
+  assert.equal(
+    buildChangeContract({
+      ...input,
+      requirements: [{ ...requirement, acceptanceCriteria: [{ id: 'AC-1', text: '功能可用' }] }],
+    }).ok,
+    false,
+  );
+});
