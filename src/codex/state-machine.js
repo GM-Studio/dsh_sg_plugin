@@ -1,8 +1,28 @@
 import { createStorage } from './storage.js';
 import { canonicalJson, createEvent } from './events.js';
 import { makeCheckpoint, countFailure, RETRY_CATEGORIES } from './checkpoints.js';
+import { hasSensitiveInput } from './core/sensitive-input.js';
+import { randomUUID } from 'node:crypto';
+import { createArtifactStore } from './core/artifact-store.js';
 
 export const MAIN_PHASES = Object.freeze([
+  'CLARIFYING',
+  'H1_PENDING',
+  'PLANNED',
+  'TEST_DESIGNING',
+  'TESTS_FROZEN',
+  'IMPLEMENTING',
+  'VERIFYING',
+  'REVIEWING',
+  'H3_PENDING',
+  'DELIVERED',
+]);
+export const SIDE_PHASES = Object.freeze(['BLOCKED', 'PAUSED', 'CANCELLED']);
+export const PHASES = Object.freeze([...MAIN_PHASES, ...SIDE_PHASES]);
+
+// Existing WAL records retain their original execution steps and hashes. These
+// steps are an internal protocol, not additional public business phases.
+export const INTERNAL_MAIN_PHASES = Object.freeze([
   'REQ_INTAKE',
   'REQ_CLARIFYING',
   'REQ_CRITIQUE',
@@ -20,7 +40,7 @@ export const MAIN_PHASES = Object.freeze([
   'ARCHIVING',
   'ARCHIVED',
 ]);
-export const SIDE_PHASES = Object.freeze([
+export const INTERNAL_SIDE_PHASES = Object.freeze([
   'BLOCKED',
   'PAUSED',
   'CANCELLED',
@@ -28,12 +48,80 @@ export const SIDE_PHASES = Object.freeze([
   'ARCHIVED_NOT_PUSHED',
   'ROLLBACKING',
 ]);
-export const PHASES = Object.freeze([...MAIN_PHASES, ...SIDE_PHASES]);
+export const INTERNAL_PHASES = Object.freeze([...INTERNAL_MAIN_PHASES, ...INTERNAL_SIDE_PHASES]);
+
+const legacyPhase = Object.freeze({
+  REQ_INTAKE: 'CLARIFYING',
+  REQ_CLARIFYING: 'CLARIFYING',
+  REQ_CRITIQUE: 'CLARIFYING',
+  H1_PENDING: 'H1_PENDING',
+  REQ_FROZEN: 'PLANNED',
+  PLANNING: 'PLANNED',
+  TEST_DESIGN: 'TEST_DESIGNING',
+  TEST_CASES_FROZEN: 'TESTS_FROZEN',
+  DEVELOPING: 'IMPLEMENTING',
+  INTEGRATING: 'IMPLEMENTING',
+  TESTING: 'VERIFYING',
+  FORMATTING: 'VERIFYING',
+  REVIEWING: 'REVIEWING',
+  H3_PENDING: 'H3_PENDING',
+  // Approval consumption precedes delivery generation. Only a completed archive
+  // may be represented as DELIVERED under the v1.0 contract.
+  ARCHIVING: 'H3_PENDING',
+  ARCHIVED: 'DELIVERED',
+  BLOCKED: 'BLOCKED',
+  PAUSED: 'PAUSED',
+  CANCELLED: 'CANCELLED',
+  PUSH_FAILED: 'BLOCKED',
+  ARCHIVED_NOT_PUSHED: 'DELIVERED',
+  ROLLBACKING: 'BLOCKED',
+});
+
+function businessPhase(phase) {
+  if (phase === null || phase === undefined) return phase;
+  if (Object.hasOwn(legacyPhase, phase)) return legacyPhase[phase];
+  if (PHASES.includes(phase)) return phase;
+  throw Object.assign(new Error('Workflow phase has no supported business-state view'), {
+    code: 'INVALID_STATE',
+  });
+}
+
+export function publicWorkflowState(state) {
+  const viewed = clone(state);
+  viewed.phase = businessPhase(state.phase);
+  if (state.checkpoint) {
+    viewed.checkpoint.phase = businessPhase(state.checkpoint.phase);
+    if (state.checkpoint.label === state.checkpoint.phase)
+      viewed.checkpoint.label = viewed.checkpoint.phase;
+  }
+  if (state.resumePhase !== undefined) viewed.resumePhase = businessPhase(state.resumePhase);
+  if (state.phase === 'ARCHIVING') viewed.deliveryPending = true;
+  return viewed;
+}
+
+// Tool results expose a derived view, while an event hash always refers to the
+// untouched WAL body. Return its locator instead of transforming signed content.
+export function publicWorkflowResult(data) {
+  const viewed = { ...data };
+  if (data.state) viewed.state = publicWorkflowState(data.state);
+  if (data.workflow) {
+    viewed.workflow = { ...data.workflow };
+    if (data.workflow.state) viewed.workflow.state = publicWorkflowState(data.workflow.state);
+    if (Object.hasOwn(data.workflow, 'phase'))
+      viewed.workflow.phase = businessPhase(data.workflow.phase);
+  }
+  if (data.event?.state) {
+    const { hash, sequence, type, timestamp, changeId } = data.event;
+    viewed.event = { hash, sequence, type, timestamp, changeId };
+  }
+  return viewed;
+}
+
 const TERMINAL = new Set(['ARCHIVED', 'ARCHIVED_NOT_PUSHED', 'CANCELLED']);
 const table = Object.fromEntries(
-  MAIN_PHASES.map((phase, index) => [
+  INTERNAL_MAIN_PHASES.map((phase, index) => [
     phase,
-    MAIN_PHASES[index + 1] ? [MAIN_PHASES[index + 1]] : [],
+    INTERNAL_MAIN_PHASES[index + 1] ? [INTERNAL_MAIN_PHASES[index + 1]] : [],
   ]),
 );
 table.H1_PENDING.push('REQ_CLARIFYING');
@@ -43,8 +131,22 @@ table.TESTING.push('DEVELOPING');
 table.ARCHIVING.push('ARCHIVED_NOT_PUSHED', 'PUSH_FAILED', 'ROLLBACKING');
 table.PUSH_FAILED = ['ROLLBACKING'];
 table.ROLLBACKING = ['CANCELLED'];
-export const TRANSITIONS = Object.freeze(
+export const INTERNAL_TRANSITIONS = Object.freeze(
   Object.fromEntries(Object.entries(table).map(([key, value]) => [key, Object.freeze(value)])),
+);
+export const TRANSITIONS = Object.freeze(
+  Object.fromEntries(
+    PHASES.map((phase) => [
+      phase,
+      Object.freeze([
+        ...new Set(
+          Object.entries(INTERNAL_TRANSITIONS)
+            .filter(([from]) => businessPhase(from) === phase)
+            .flatMap(([, targets]) => targets.map(businessPhase)),
+        ),
+      ]),
+    ]),
+  ),
 );
 
 const object = (value) => value !== null && typeof value === 'object' && !Array.isArray(value);
@@ -70,7 +172,13 @@ export function createStateStore({ projectRoot, authorizeGate, lockTimeoutMs } =
     try {
       return await operation();
     } catch (error) {
-      const known = new Set(['AUDIT_CORRUPT', 'SNAPSHOT_AHEAD', 'STORE_BUSY', 'UNSAFE_PATH']);
+      const known = new Set([
+        'AUDIT_CORRUPT',
+        'SNAPSHOT_AHEAD',
+        'STORE_BUSY',
+        'UNSAFE_PATH',
+        'SENSITIVE_INPUT',
+      ]);
       return errorResult(
         known.has(error.code) ? error.code : 'STORAGE_ERROR',
         known.has(error.code) ? error.message : 'Cannot safely access state storage',
@@ -84,7 +192,7 @@ export function createStateStore({ projectRoot, authorizeGate, lockTimeoutMs } =
   };
 
   function validateState(state) {
-    if (state.version > 0 && (!validId(state.changeId) || !PHASES.includes(state.phase)))
+    if (state.version > 0 && (!validId(state.changeId) || !INTERNAL_PHASES.includes(state.phase)))
       throw Object.assign(new Error('Committed workflow state is invalid'), {
         code: 'AUDIT_CORRUPT',
       });
@@ -95,6 +203,11 @@ export function createStateStore({ projectRoot, authorizeGate, lockTimeoutMs } =
       return errorResult(
         'INVALID_ARGUMENT',
         'expectedVersion is required and must be a nonnegative integer',
+      );
+    if (hasSensitiveInput(args))
+      return errorResult(
+        'SENSITIVE_INPUT',
+        'Remove apparent credentials before writing workflow state',
       );
     return protect(() =>
       storage.withLock(async () => {
@@ -191,8 +304,31 @@ export function createStateStore({ projectRoot, authorizeGate, lockTimeoutMs } =
             'INVALID_ARGUMENT',
             'A bounded changeId and JSON context object are required',
           );
-        if (active(state))
-          return errorResult('ACTIVE_CHANGE', 'Only one active change is permitted');
+        if (active(state)) {
+          // A refusal is evidence of an attempted operation, not a committed
+          // state mutation. Keep its immutable receipt outside the state WAL so
+          // the existing state version and its CAS meaning remain unchanged.
+          const receipt = createArtifactStore({ projectRoot }).writeJson(
+            `.specgate/codex/refusals/${randomUUID()}.json`,
+            {
+              schemaVersion: 1,
+              type: 'change.creation_rejected',
+              activeChangeId: state.changeId,
+              requestedChangeId: args.changeId,
+              stateVersion: state.version,
+              recordedAt: new Date().toISOString(),
+              code: 'ACTIVE_CHANGE',
+            },
+          );
+          if (!receipt.ok)
+            return errorResult(
+              'REFUSAL_AUDIT_FAILED',
+              'The active-change refusal could not be safely recorded',
+            );
+          return errorResult('ACTIVE_CHANGE', 'Only one active change is permitted', {
+            refusalEvidence: { path: receipt.path, hash: receipt.hash },
+          });
+        }
         if (
           events.some(
             (event) => event.type === 'change.created' && event.changeId === args.changeId,
@@ -235,9 +371,9 @@ export function createStateStore({ projectRoot, authorizeGate, lockTimeoutMs } =
       }),
     transition: (args) =>
       mutate(args, async (state, transactionalAudit) => {
-        if (!PHASES.includes(args.to))
+        if (!INTERNAL_PHASES.includes(args.to))
           return errorResult('INVALID_ARGUMENT', 'Unknown workflow phase');
-        if (!(TRANSITIONS[state.phase] ?? []).includes(args.to))
+        if (!(INTERNAL_TRANSITIONS[state.phase] ?? []).includes(args.to))
           return errorResult(
             'INVALID_TRANSITION',
             'The requested workflow transition is not permitted',
@@ -336,7 +472,7 @@ export function createStateStore({ projectRoot, authorizeGate, lockTimeoutMs } =
         if (
           !['PAUSED', 'BLOCKED'].includes(state.phase) ||
           !state.checkpoint ||
-          !PHASES.includes(state.checkpoint.phase)
+          !INTERNAL_PHASES.includes(state.checkpoint.phase)
         )
           return errorResult(
             'INVALID_TRANSITION',

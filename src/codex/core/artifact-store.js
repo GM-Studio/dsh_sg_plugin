@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { createHash, randomUUID } from 'node:crypto';
+import { hasSensitiveInput } from './sensitive-input.js';
 
 const failure = (code, message) => ({ ok: false, code, message });
 const hash = (value) => createHash('sha256').update(value).digest('hex');
@@ -108,6 +109,11 @@ export function createArtifactStore({ projectRoot, maximumBytes = 8 * 1024 * 102
     const checked = resolve(relative);
     if (!checked.ok) return checked;
     if (typeof content !== 'string') return failure(invalidCode, invalidMessage);
+    if (hasSensitiveInput(content))
+      return failure(
+        'SENSITIVE_ARTIFACT',
+        'Remove apparent credentials before persisting artifacts',
+      );
     const bytes = Buffer.byteLength(content, 'utf8');
     if (bytes > maximumBytes) return failure('ARTIFACT_TOO_LARGE', 'Artifact exceeds its limit');
     const digest = hash(content);

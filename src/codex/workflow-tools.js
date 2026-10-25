@@ -3,7 +3,7 @@ import fs from 'node:fs';
 import { randomUUID } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { TOOLS as DIAGNOSTICS, callDiagnostic } from './tools.js';
-import { createStateStore } from './state-machine.js';
+import { createStateStore, publicWorkflowResult } from './state-machine.js';
 import { createApprovalAuthority } from './approvals.js';
 import { createArtifactStore } from './core/artifact-store.js';
 import { canonicalJson, hashValue } from './events.js';
@@ -304,11 +304,14 @@ export function validArguments(schema, value) {
   }
 }
 
-const result = (data) => ({
-  isError: data.ok === false,
-  content: [{ type: 'text', text: JSON.stringify(data) }],
-  structuredContent: data,
-});
+const result = (data) => {
+  const viewed = publicWorkflowResult(data);
+  return {
+    isError: viewed.ok === false,
+    content: [{ type: 'text', text: JSON.stringify(viewed) }],
+    structuredContent: viewed,
+  };
+};
 
 function createBoundToolRegistry({
   projectRoot,

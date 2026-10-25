@@ -3,6 +3,7 @@ import path from 'node:path';
 import { randomUUID } from 'node:crypto';
 import { setTimeout as delay } from 'node:timers/promises';
 import { canonicalJson, verifyEventChain } from './events.js';
+import { hasSensitiveInput } from './core/sensitive-input.js';
 
 const failure = (code, message) => Object.assign(new Error(message), { code });
 const exists = (target) => {
@@ -232,6 +233,11 @@ export function createStorage(projectRoot, { lockTimeoutMs = 5000 } = {}) {
   }
 
   function append(event) {
+    if (hasSensitiveInput(event))
+      throw failure(
+        'SENSITIVE_INPUT',
+        'Apparent credentials cannot be persisted in workflow history',
+      );
     checkPath(eventsPath);
     const first = !exists(eventsPath);
     const fd = fs.openSync(eventsPath, 'a', 0o600);

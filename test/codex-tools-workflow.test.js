@@ -58,7 +58,8 @@ test('MCP lifecycle controls preserve worktrees and evidence and enforce CAS', a
   );
   assert.equal(conflict.code, 'VERSION_CONFLICT');
   const resumed = data(await registry.call('sg_resume', { expectedVersion: paused.state.version }));
-  assert.equal(resumed.state.phase, 'REQ_INTAKE');
+  assert.equal(resumed.state.phase, 'CLARIFYING');
+  assert.equal((await store.inspect()).state.phase, 'REQ_INTAKE');
   const cancelled = data(
     await registry.call('sg_cancel', {
       expectedVersion: resumed.state.version,

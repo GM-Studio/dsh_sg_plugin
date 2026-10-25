@@ -11,6 +11,25 @@ function temp(t) {
   return root;
 }
 
+test('JSON and text evidence containing apparent credentials are refused before creating files', (t) => {
+  const root = temp(t);
+  const store = createArtifactStore({ projectRoot: root });
+  assert.equal(
+    store.writeJson('evidence/result.json', { api_key: 'obvious-test-credential' }).code,
+    'SENSITIVE_ARTIFACT',
+  );
+  assert.equal(
+    store.writeText('evidence/result.txt', 'Authorization: Bearer obvious-test-credential').code,
+    'SENSITIVE_ARTIFACT',
+  );
+  assert.equal(
+    store.writeText('evidence/key.txt', '-----BEGIN PRIVATE KEY-----').code,
+    'SENSITIVE_ARTIFACT',
+  );
+  assert.deepEqual(fs.readdirSync(root), []);
+  assert.equal(store.writeText('evidence/result.txt', 'password=[REDACTED]').ok, true);
+});
+
 test('immutable JSON writes are path-bounded and idempotent for identical content', (t) => {
   const root = temp(t);
   const store = createArtifactStore({ projectRoot: root });
