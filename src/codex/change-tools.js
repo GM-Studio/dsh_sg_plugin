@@ -53,14 +53,26 @@ const criterion = objectSchema({
     'Concrete observable acceptance behavior, including relevant failure or boundary behavior.',
   ),
 });
-const requirement = objectSchema({
-  id: identifier(
-    'Requirement ID; unique within this revision and referenced by critique findings.',
-  ),
-  category,
-  text: string('Proposed requirement text. The service records this as a model proposal.'),
-  acceptanceCriteria: array(criterion, 1, 100),
-});
+const requirement = objectSchema(
+  {
+    id: identifier(
+      'Requirement ID; unique within this revision and referenced by critique findings.',
+    ),
+    category,
+    text: string('Proposed requirement text. The service records this as a model proposal.'),
+    acceptanceCriteria: array(criterion, 1, 100),
+    dependencyChanges: array(
+      objectSchema({
+        file: string('Dependency manifest relative path', 1024),
+        hash: { type: 'string', pattern: '^sha256:[a-f0-9]{64}$' },
+        acIds: array(identifier('Acceptance criterion approving this dependency change'), 1, 100),
+      }),
+      0,
+      100,
+    ),
+  },
+  ['id', 'category', 'text', 'acceptanceCriteria'],
+);
 const assumption = objectSchema({
   id: identifier('Assumption ID referenced by a nonblocking unresolved issue.'),
   text: string('Explicit proposed assumption; never silently treat it as a user answer.'),

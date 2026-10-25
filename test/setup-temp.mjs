@@ -101,6 +101,7 @@ process.env.TMP = runRoot;
 process.env.TMPDIR = runRoot;
 process.env.npm_config_cache = path.join(runRoot, 'npm-cache');
 process.env.NPM_CONFIG_CACHE = process.env.npm_config_cache;
+process.env.SPECGATE_ANCHOR_ROOT ||= path.join(runRoot, 'anchors');
 
 let cleaned = false;
 function cleanup() {

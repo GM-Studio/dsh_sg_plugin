@@ -9,6 +9,91 @@ import { verifyEventChain } from '../src/codex/events.js';
 
 const HASH = `sha256:${'a'.repeat(64)}`;
 
+test('a sync fault after a complete audit append cannot reuse its sequence', async () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'sg-audit-sync-fault-'));
+  const store = createStateStore({
+    projectRoot: root,
+    authorizeGate: async ({ audit }) => {
+      try {
+        await audit({ type: 'approval.consumed', fixture: true });
+      } catch {
+        await audit({ type: 'approval.failed', fixture: true });
+      }
+      return { ok: false, code: 'APPROVAL_AUDIT_FAILED' };
+    },
+  });
+  await store.create({ expectedVersion: 0, changeId: 'sync-fault' });
+  for (const to of ['REQ_CLARIFYING', 'REQ_CRITIQUE', 'H1_PENDING'])
+    await store.transition({ expectedVersion: (await store.inspect()).state.version, to });
+  const write = fs.writeFileSync;
+  const sync = fs.fsyncSync;
+  let faultFd;
+  let injected = false;
+  fs.writeFileSync = (fd, bytes, ...rest) => {
+    const result = write(fd, bytes, ...rest);
+    if (typeof fd === 'number' && String(bytes).includes('"type":"approval.consumed"'))
+      faultFd = fd;
+    return result;
+  };
+  fs.fsyncSync = (fd) => {
+    if (fd === faultFd && !injected) {
+      injected = true;
+      throw Object.assign(new Error('Injected sync fault'), { code: 'EIO' });
+    }
+    return sync(fd);
+  };
+  try {
+    assert.equal(
+      (
+        await store.transition({
+          expectedVersion: (await store.inspect()).state.version,
+          to: 'REQ_FROZEN',
+        })
+      ).code,
+      'APPROVAL_AUDIT_FAILED',
+    );
+  } finally {
+    fs.writeFileSync = write;
+    fs.fsyncSync = sync;
+  }
+  const checked = verifyEventChain(
+    fs.readFileSync(path.join(root, '.specgate/codex/events.jsonl'), 'utf8'),
+  );
+  assert.equal(injected, true);
+  assert.equal(checked.ok, true);
+  assert.equal(new Set(checked.events.map((event) => event.sequence)).size, checked.events.length);
+  assert.equal((await store.load()).ok, true);
+});
+
+test('pending authorization releases the writer lock and expires without a residual reservation', async () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'sg-gate-reservation-'));
+  let entered;
+  const pending = new Promise((resolve) => {
+    entered = resolve;
+  });
+  const store = createStateStore({
+    projectRoot: root,
+    approvalTimeoutMs: 80,
+    authorizeGate: async () => {
+      entered();
+      await new Promise(() => {});
+    },
+  });
+  await store.create({ expectedVersion: 0, changeId: 'pending' });
+  for (const to of ['REQ_CLARIFYING', 'REQ_CRITIQUE', 'H1_PENDING'])
+    await store.transition({ expectedVersion: (await store.inspect()).state.version, to });
+  const version = (await store.inspect()).state.version;
+  const transition = store.transition({ expectedVersion: version, to: 'REQ_FROZEN' });
+  await pending;
+  assert.equal((await store.load()).ok, true);
+  assert.equal(
+    (await store.update({ expectedVersion: version, patch: { context: {} } })).code,
+    'APPROVAL_IN_PROGRESS',
+  );
+  assert.equal((await transition).code, 'APPROVAL_TIMEOUT');
+  assert.equal((await store.update({ expectedVersion: version, patch: { context: {} } })).ok, true);
+});
+
 async function fixture() {
   const projectRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'sg-codex-approval-state-'));
   let store;

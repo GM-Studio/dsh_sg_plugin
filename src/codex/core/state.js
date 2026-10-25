@@ -1,5 +1,6 @@
 import path from 'node:path';
-import { atomicWrite, ensureDir, exists, readText } from './util/fsx.js';
+import { exists, readText } from './util/fsx.js';
+import { readProjectFacts } from '../state-machine.js';
 
 export const SCHEMA_VERSION = 3;
 
@@ -134,6 +135,25 @@ export function validateState(state) {
 export function load(root) {
   const file = statePath(root);
   if (!exists(file)) {
+    try {
+      const facts = readProjectFacts(root);
+      if (facts) return { ok: true, state: emptyState(facts) };
+      const report = path.join(root, '.specgate', 'init-report.json');
+      if (exists(report)) {
+        const initial = JSON.parse(readText(report));
+        return {
+          ok: true,
+          state: emptyState({
+            initialization: initial.initialization || {
+              phase: initial.phase,
+              initializationComplete: initial.initializationComplete === true,
+            },
+          }),
+        };
+      }
+    } catch (error) {
+      return { ok: false, code: error.code || 'STATE_INVALID', message: error.message };
+    }
     return {
       ok: false,
       code: 'STATE_MISSING',
@@ -175,59 +195,10 @@ export function load(root) {
       fix: '修复或删除 .specgate/state.json 后重新初始化',
     };
   }
-  return { ok: true, state };
-}
-
-export function save(root, state) {
-  const validation = validateState(state);
-  if (!validation.ok) {
-    return {
-      ok: false,
-      code: 'STATE_INVALID',
-      message: validation.errors.join('; '),
-      fix: '构造合法状态后重试',
-    };
-  }
-  const next = { ...state, updatedAt: nowIso() };
   try {
-    ensureDir(path.dirname(statePath(root)));
-    atomicWrite(statePath(root), `${JSON.stringify(next, null, 2)}\n`);
+    const facts = readProjectFacts(root);
+    return { ok: true, state: { ...state, ...(facts || {}) } };
   } catch (error) {
-    return {
-      ok: false,
-      code: 'STATE_WRITE_FAILED',
-      message: `写入状态失败：${error.message}`,
-      fix: '检查 .specgate 目录权限或其他进程占用',
-    };
+    return { ok: false, code: error.code || 'STATE_INVALID', message: error.message };
   }
-  return { ok: true, state: next };
-}
-
-export function init(root, patch = {}) {
-  const file = statePath(root);
-  if (exists(file)) {
-    const loaded = load(root);
-    if (!loaded.ok) return loaded;
-    return { ok: true, state: loaded.state, reused: true };
-  }
-  const state = emptyState(patch);
-  const saved = save(root, state);
-  if (!saved.ok) return saved;
-  return { ok: true, state: saved.state, reused: false };
-}
-
-export function patchState(root, mutator) {
-  const loaded = load(root);
-  if (!loaded.ok) return loaded;
-  const draft = structuredClone(loaded.state);
-  const result = mutator(draft);
-  if (result === false) {
-    return {
-      ok: false,
-      code: 'PATCH_ABORTED',
-      message: '状态修改被取消',
-      fix: '检查调用方逻辑',
-    };
-  }
-  return save(root, draft);
 }

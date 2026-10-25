@@ -376,6 +376,12 @@ test('quality passes only with frozen green cases, real logs, both coverage side
     testRunner: runnerProvider(),
     verifier: coverageVerifier(),
   });
+  const beforeInvalid = await context.version();
+  assert.equal(
+    (await service.run({ expectedVersion: beforeInvalid, command: 'unregistered-command' })).code,
+    'INVALID_ARGUMENT',
+  );
+  assert.equal(await context.version(), beforeInvalid);
   const result = await service.run({ expectedVersion: await context.version() });
   assert.equal(result.ok, true, JSON.stringify(result));
   assert.equal(result.state.phase, 'FORMATTING');
@@ -384,6 +390,12 @@ test('quality passes only with frozen green cases, real logs, both coverage side
   assert.equal(Number.isFinite(Date.parse(result.quality.command.startedAt)), true);
   assert.equal(Number.isFinite(Date.parse(result.quality.command.finishedAt)), true);
   assert.equal(result.quality.command.durationMs >= 0, true);
+  assert.equal(result.quality.command.source.kind, 'server-provider');
+  assert.ok(
+    result.quality.verification.stages.every(
+      (stage) => stage.source.ref && stage.source.id === stage.name,
+    ),
+  );
   assert.equal(fs.existsSync(generatedTest), false);
   for (const relative of [
     result.quality.testLog,
@@ -503,6 +515,11 @@ test('adopted quality verification uses ProjectProfile commands and Baseline Del
   assert.equal(result.quality.projectMode, 'adopted');
   assert.equal(result.quality.baselineDelta.knownFailures.length, 1);
   assert.equal(result.quality.baselineDelta.newFailures.length, 0);
+  assert.ok(
+    result.quality.verification.commands.every(
+      (command) => command.source.kind === 'project-profile' && command.source.id === command.id,
+    ),
+  );
 });
 
 test('skipped frozen cases become P1 defects and the third failed attempt blocks without deleting evidence', async () => {

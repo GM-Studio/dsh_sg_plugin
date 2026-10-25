@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
+import { createHash } from 'node:crypto';
 import os from 'node:os';
 import path from 'node:path';
 import { execFileSync } from 'node:child_process';
@@ -65,7 +66,7 @@ const assets = () => ({
   coverage: { lines: 80, branches: 70 },
 });
 
-async function fixture({ redPasses = false } = {}) {
+async function fixture({ redPasses = false, filePolicies, dependencyChanges } = {}) {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'sg-codex-development-'));
   git(root, ['init', '-q']);
   git(root, ['config', 'user.email', 'test@example.com']);
@@ -88,7 +89,9 @@ async function fixture({ redPasses = false } = {}) {
     schemaVersion: 1,
     changeId: 'example',
     revision: 1,
-    requirements: requirements(),
+    requirements: requirements().map((req) =>
+      dependencyChanges ? { ...req, dependencyChanges } : req,
+    ),
     fixture: 'synthetic-unit-test-not-runtime',
   };
   fs.mkdirSync(path.dirname(path.join(root, relative)), { recursive: true });
@@ -162,7 +165,12 @@ async function fixture({ redPasses = false } = {}) {
     roleProvider: async () => assets(),
   });
   assert.equal(
-    (await planService.generate({ expectedVersion: (await store.inspect()).state.version })).ok,
+    (
+      await planService.generate({
+        expectedVersion: (await store.inspect()).state.version,
+        filePolicies,
+      })
+    ).ok,
     true,
   );
   assert.equal(
@@ -396,7 +404,14 @@ test('cross-role or test-file changes fail closed, exhaust the shared retry ceil
 });
 
 test('merge conflicts return to the owning role with conflict paths before integration continues', async () => {
-  const context = await fixture();
+  const context = await fixture({
+    filePolicies: Object.fromEntries(
+      ['frontend', 'backend'].map((role) => [
+        role,
+        { allowedFiles: [`${role}/**`, 'shared/**'], forbiddenFiles: [] },
+      ]),
+    ),
+  });
   const resolveCalls = [];
   const sharedProvider = async (role, challenge) => {
     if (challenge.operation === 'resolve-conflict') {
@@ -444,4 +459,85 @@ test('merge conflicts return to the owning role with conflict paths before integ
     ),
     { owner: 'merged' },
   );
+});
+
+test('same-role changes outside task allowlists and inside forbiddenFiles are blocked', async () => {
+  for (const forbidden of [false, true]) {
+    const context = await fixture({
+      filePolicies: {
+        backend: {
+          allowedFiles: [forbidden ? 'backend/**' : 'backend/src/Allowed.java'],
+          forbiddenFiles: forbidden ? ['backend/src/TaskApi.java'] : [],
+        },
+      },
+    });
+    let attempt = 0;
+    const service = createDevelopmentService({
+      projectRoot: context.root,
+      store: context.store,
+      planService: context.planService,
+      redRunner: context.redRunner,
+      roleProvider: roleProvider({
+        backend: async (challenge) => {
+          fs.writeFileSync(
+            path.join(challenge.worktree, 'backend/src/TaskApi.java'),
+            'final class TaskApi { int n=' + ++attempt + '; }\n',
+          );
+          commitAll(challenge.worktree, 'outside policy');
+          return { ok: true };
+        },
+      }),
+    });
+    const prepared = await service.prepare({ expectedVersion: await context.version() });
+    const result = await service.run({ expectedVersion: prepared.state.version });
+    assert.equal(result.code, 'WORKFLOW_BLOCKED');
+    assert.equal(result.errors.backend.code, 'ROLE_POLICY_VIOLATION');
+    assert.equal(result.errors.backend.violations[0].path, 'backend/src/TaskApi.java');
+  }
+});
+
+test('dependency manifests require the exact H1-approved content hash and AC', async () => {
+  const content = '<project>approved dependency</project>\n';
+  const hash = 'sha256:' + createHash('sha256').update(content).digest('hex');
+  const context = await fixture({
+    dependencyChanges: [{ file: 'backend/pom.xml', hash, acIds: ['AC-1'] }],
+  });
+  const service = createDevelopmentService({
+    projectRoot: context.root,
+    store: context.store,
+    planService: context.planService,
+    redRunner: context.redRunner,
+    roleProvider: roleProvider({
+      backend: async (challenge) => {
+        fs.writeFileSync(path.join(challenge.worktree, 'backend/pom.xml'), content);
+        commitAll(challenge.worktree, 'approved dependency');
+        return { ok: true };
+      },
+    }),
+  });
+  const prepared = await service.prepare({ expectedVersion: await context.version() });
+  assert.equal((await service.run({ expectedVersion: prepared.state.version })).ok, true);
+  const denied = await fixture();
+  let attempt = 0;
+  const unapproved = createDevelopmentService({
+    projectRoot: denied.root,
+    store: denied.store,
+    planService: denied.planService,
+    redRunner: denied.redRunner,
+    roleProvider: roleProvider({
+      backend: async (challenge) => {
+        fs.writeFileSync(
+          path.join(challenge.worktree, 'backend/package-lock.json'),
+          JSON.stringify({ version: ++attempt }),
+        );
+        commitAll(challenge.worktree, 'unapproved lock change');
+        return { ok: true };
+      },
+    }),
+  });
+  const ready = await unapproved.prepare({ expectedVersion: await denied.version() });
+  const result = await unapproved.run({ expectedVersion: ready.state.version });
+  assert.equal(result.code, 'WORKFLOW_BLOCKED');
+  assert.equal(result.errors.backend.code, 'DEPENDENCY_APPROVAL_REQUIRED');
+  assert.deepEqual(result.errors.backend.pendingDependencies, ['backend/package-lock.json']);
 });

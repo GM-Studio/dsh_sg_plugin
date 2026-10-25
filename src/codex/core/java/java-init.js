@@ -10,7 +10,7 @@ import { initProject, patchConfigRequirements } from '../change.js';
 import { gitSafeDirectory } from '../../git-path.js';
 import { resolveGitIdentity } from '../git-identity.js';
 import { writeRequirementsBaseline, answerOf } from '../requirements.js';
-import { patchState } from '../state.js';
+
 import { removeTemporaryDirectory } from '../temp.js';
 
 const NL = String.fromCharCode(10);
@@ -469,21 +469,18 @@ export async function startJavaInit({
         2,
       ) + NL,
     );
-    const initializedState = patchState(workRoot, (draft) => {
-      draft.initialization = {
-        kind: 'java-vue',
-        phase: 'GENERATED_ONLY',
-        goldenId: preset.id,
-        jdk: preset.jdk,
-        bootVersion: preset.bootVersion,
-        templateHash: hash,
-        templateVerified: golden.verified,
-        goldenVerifiedAt: golden.record?.verifiedAt || null,
-        pendingPlatforms: golden.pendingPlatforms || [],
-        initializationComplete: false,
-      };
-    });
-    if (!initializedState.ok) throw new Error(initializedState.message);
+    report.initialization = {
+      kind: 'java-vue',
+      phase: 'GENERATED_ONLY',
+      goldenId: preset.id,
+      jdk: preset.jdk,
+      bootVersion: preset.bootVersion,
+      templateHash: hash,
+      templateVerified: golden.verified,
+      goldenVerifiedAt: golden.record?.verifiedAt || null,
+      pendingPlatforms: golden.pendingPlatforms || [],
+      initializationComplete: false,
+    };
     fs.writeFileSync(
       path.join(workRoot, '.specgate/init-report.json'),
       JSON.stringify(report, null, 2) + NL,

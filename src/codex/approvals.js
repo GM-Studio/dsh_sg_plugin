@@ -117,9 +117,12 @@ export function createApprovalAuthority({
   ttlMs = APPROVAL_TTL_MS,
   requestTimeoutMs = REQUEST_TIMEOUT_MS,
   nonceFactory = () => randomBytes(32).toString('hex'),
-  resolveGateArtifact = ({ gate, state }) => ({
+  resolveGateArtifact = ({ gate, state, to }) => ({
     scope: state?.changeId,
-    artifactHash: state?.context?.artifacts?.[gate === 'H1' ? 'requirements' : 'review']?.hash,
+    artifactHash:
+      state?.context?.artifacts?.[
+        to === 'TEST_DESIGN' ? 'testReplacement' : gate === 'H1' ? 'requirements' : 'review'
+      ]?.hash,
   }),
 } = {}) {
   for (const [name, value] of Object.entries({ ttlMs, requestTimeoutMs })) {
@@ -368,15 +371,15 @@ export function createApprovalAuthority({
 
   const consumeApproval = (challenge) => consume(challenge);
 
-  // The state store supplies a durable append callback while it holds its write
-  // lock. It is a server-owned closure, never a model/tool argument, and avoids
-  // recursively acquiring that same lock through the constructor audit callback.
+  // The state store supplies a reserved server-owned audit closure. Each append
+  // takes a short write lock; asynchronous authorization itself holds no lock.
+  // This closure is never accepted from model/tool arguments.
   async function authorizeGate({ gate, state, to, approval, audit: transactionAudit } = {}) {
     if (transactionAudit !== undefined && typeof transactionAudit !== 'function')
       return reject('APPROVAL_AUDIT_FAILED', '缺少服务端事务审计回调');
     const sink = transactionAudit ?? audit;
     if (
-      (gate === 'H1' && to !== 'REQ_FROZEN') ||
+      (gate === 'H1' && !['REQ_FROZEN', 'TEST_DESIGN'].includes(to)) ||
       (gate === 'H3' && to !== 'ARCHIVING') ||
       !gates.has(gate)
     )

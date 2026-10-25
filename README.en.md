@@ -193,11 +193,22 @@ point or compatibility directories.
 
 ## Verification
 
-MySQL integration tests are mandatory rather than silently skipped. Point
-`SPECGATE_MYSQL_TEST_CONFIG` to a local connection JSON file, or place the same
-configuration in the ignored `.runtime/mysql-test/config.json`. Missing real
-MySQL fails the suite explicitly. The test account should only create and drop
-random `sg_*` databases and must never target a production database.
+Core v1 uses local files, Git and the event chain; its installation and tarball
+neither install nor bundle `mysql2`. Remote authentication, database persistence,
+workers and backup/restore are historical extensions outside Core v1.
+
+`npm test` runs the database-independent regressions. The complete MySQL suite
+remains available through `npm run test:mysql`; `npm run test:all` includes both
+groups. No failing database test is converted into a skip. Other historical
+regressions that need no external service remain in the default suite; this
+separation does not claim completion of the full M5 product-surface isolation.
+
+Only maintainers explicitly testing the historical integration should install
+`mysql2@3.24.6` with `npm install --no-save --package-lock=false --ignore-scripts mysql2@3.24.6`,
+then point `SPECGATE_MYSQL_TEST_CONFIG` to a local connection JSON file, or use
+the ignored `.runtime/mysql-test/config.json` file. Run `npm run test:mysql` after
+that preparation. Missing drivers or unavailable databases fail explicitly.
+Use an account restricted to randomly named `sg_*` test databases, never production.
 
 ```powershell
 npm test

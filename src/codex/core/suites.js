@@ -14,7 +14,7 @@ import { resolveGradle } from './env/gradle.js';
 import { collectJavaReports, findJacocoFiles } from './java-reports.js';
 import { mergeCoverage, parseJacocoXml } from './coverage/jacoco.js';
 import { detectJavaProject } from './java-detect.js';
-import { patchState } from './state.js';
+import { patchState } from './project-facts.js';
 
 /** Frozen suites from state; falls back to the legacy single-command shape. */
 export function suitesFromState(state, fallbackCommand) {

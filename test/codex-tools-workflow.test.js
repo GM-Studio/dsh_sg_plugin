@@ -58,7 +58,7 @@ test('MCP lifecycle controls preserve worktrees and evidence and enforce CAS', a
   );
   assert.equal(conflict.code, 'VERSION_CONFLICT');
   const resumed = data(await registry.call('sg_resume', { expectedVersion: paused.state.version }));
-  assert.equal(resumed.state.phase, 'REQ_INTAKE');
+  assert.equal(resumed.state.phase, 'CLARIFYING');
   const cancelled = data(
     await registry.call('sg_cancel', {
       expectedVersion: resumed.state.version,
@@ -208,6 +208,13 @@ test('plan and development tools expose only versions and frozen content, never 
       expectedVersion: 0,
       reason: 'Format the frozen test source without changing behavior.',
       assets: replacementAssets,
+    }),
+    false,
+  );
+  assert.equal(
+    registry.validate('sg_test_replace_assets', {
+      expectedVersion: 0,
+      reason: 'Reopen with trusted H1 approval and redesign tests.',
     }),
     true,
   );

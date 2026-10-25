@@ -2,7 +2,8 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { randomUUID } from 'node:crypto';
 import { setTimeout as delay } from 'node:timers/promises';
-import { canonicalJson, verifyEventChain } from './events.js';
+import { canonicalJson, verifyEventChain, hashValue } from './events.js';
+import { createAuditAnchor } from './core/audit-anchor.js';
 
 const failure = (code, message) => Object.assign(new Error(message), { code });
 const exists = (target) => {
@@ -14,7 +15,7 @@ const exists = (target) => {
   }
 };
 
-export function createStorage(projectRoot, { lockTimeoutMs = 5000 } = {}) {
+export function createStorage(projectRoot, { lockTimeoutMs = 5000, anchorRoot } = {}) {
   if (typeof projectRoot !== 'string' || !projectRoot)
     throw new TypeError('projectRoot is required');
   if (!Number.isSafeInteger(lockTimeoutMs) || lockTimeoutMs < 0 || lockTimeoutMs > 60000)
@@ -25,6 +26,13 @@ export function createStorage(projectRoot, { lockTimeoutMs = 5000 } = {}) {
   const snapshotPath = path.join(directory, 'state.json');
   const lockPath = path.join(directory, 'write.lock');
   const guardPath = path.join(directory, 'acquisition.lock');
+  const approvalPath = path.join(directory, 'approval.lock');
+  const anchor = createAuditAnchor(root, anchorRoot);
+  const legacyFingerprint = () => {
+    const file = path.join(root, '.specgate', 'state.json');
+    checkPath(file);
+    return exists(file) ? hashValue(fs.readFileSync(file, 'utf8')) : null;
+  };
 
   function checkPath(target, kind = 'file') {
     const stat = exists(target);
@@ -91,14 +99,21 @@ export function createStorage(projectRoot, { lockTimeoutMs = 5000 } = {}) {
   }
 
   function read(initialState, { recover = false } = {}) {
-    if (!inspectDirectories())
+    if (!inspectDirectories()) {
+      anchor.verify([]);
       return { state: initialState(), headHash: null, events: [], recovered: false };
+    }
     checkPath(eventsPath);
     checkPath(snapshotPath);
     const verified = verifyEventChain(
       exists(eventsPath) ? fs.readFileSync(eventsPath, 'utf8') : '',
     );
     if (!verified.ok) throw failure(verified.code, verified.message);
+    if (verified.events.length && verified.events[0].payload.legacyHash !== legacyFingerprint())
+      throw failure(
+        'LEGACY_STATE_CHANGED',
+        'The read-only legacy state changed after authoritative initialization',
+      );
     let snapshot = null;
     if (exists(snapshotPath)) {
       try {
@@ -117,6 +132,7 @@ export function createStorage(projectRoot, { lockTimeoutMs = 5000 } = {}) {
       )
         throw failure('AUDIT_CORRUPT', 'Snapshot differs from its committed audit event');
     }
+    anchor.verify(verified.events);
     const state = verified.events.at(-1)?.state ?? initialState();
     const needsRecovery = state.version > (snapshot?.state?.version ?? 0);
     let snapshotPending = false;
@@ -137,8 +153,7 @@ export function createStorage(projectRoot, { lockTimeoutMs = 5000 } = {}) {
   }
 
   function inspect(initialState) {
-    if (!inspectDirectories())
-      return { state: initialState(), headHash: null, events: [], recovered: false };
+    if (!inspectDirectories()) return read(initialState);
     const fingerprint = () =>
       [eventsPath, snapshotPath].map((target) => {
         const stat = checkPath(target);
@@ -231,17 +246,57 @@ export function createStorage(projectRoot, { lockTimeoutMs = 5000 } = {}) {
     }
   }
 
+  function withLockSync(operation) {
+    inspectDirectories(true);
+    const token = randomUUID();
+    try {
+      claim(lockPath, token);
+    } catch (error) {
+      if (error.code === 'EEXIST') throw failure('STORE_BUSY', 'State writer is busy');
+      throw error;
+    }
+    try {
+      return operation();
+    } finally {
+      release(lockPath, token);
+    }
+  }
+
+  function approvalPending() {
+    checkPath(approvalPath, 'directory');
+    if (!exists(approvalPath)) return false;
+    const previous = owner(approvalPath);
+    if (previous && definitelyDead(previous.pid)) {
+      release(approvalPath, previous.token);
+      return false;
+    }
+    return true;
+  }
+  function reserveApproval(token) {
+    if (approvalPending())
+      throw failure('APPROVAL_IN_PROGRESS', 'An approval is already in progress');
+    claim(approvalPath, token);
+  }
+  const releaseApproval = (token) => release(approvalPath, token);
+  const approvalOwnedBy = (token) => Boolean(token && owner(approvalPath)?.token === token);
+
   function append(event) {
     checkPath(eventsPath);
     const first = !exists(eventsPath);
     const fd = fs.openSync(eventsPath, 'a', 0o600);
+    let written = false;
     try {
       fs.writeFileSync(fd, canonicalJson(event) + '\n');
+      written = true;
       fs.fsyncSync(fd);
+    } catch (error) {
+      if (written) anchor.append(event);
+      throw error;
     } finally {
       fs.closeSync(fd);
     }
     if (first) syncDirectory();
+    anchor.append(event);
     // The durable WAL record is the commit point. A failed snapshot must never
     // turn an already committed operation into an apparent retryable failure.
     try {
@@ -252,5 +307,17 @@ export function createStorage(projectRoot, { lockTimeoutMs = 5000 } = {}) {
     }
   }
 
-  return { read, inspect, withLock, append, inspectDirectories };
+  return {
+    read,
+    inspect,
+    withLock,
+    withLockSync,
+    append,
+    inspectDirectories,
+    legacyFingerprint,
+    approvalPending,
+    reserveApproval,
+    releaseApproval,
+    approvalOwnedBy,
+  };
 }

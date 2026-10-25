@@ -1,7 +1,6 @@
 import { createHash } from 'node:crypto';
 
-// Hashes detect damaged or locally edited history. A local writer who can replace
-// the entire store can also rebuild this chain; there is no external trust anchor.
+// The storage layer additionally checks an external monotonic audit anchor.
 export function canonicalJson(value) {
   if (value === null || typeof value === 'string' || typeof value === 'boolean')
     return JSON.stringify(value);
@@ -52,7 +51,7 @@ export function verifyEventChain(content) {
         event.state?.version !== event.sequence ||
         event.state?.schemaVersion !== 1 ||
         event.changeId !== event.state?.changeId ||
-        typeof event.changeId !== 'string' ||
+        (typeof event.changeId !== 'string' && event.changeId !== null) ||
         typeof event.type !== 'string' ||
         !Number.isFinite(Date.parse(event.timestamp)) ||
         event.previousHash !== previousHash ||

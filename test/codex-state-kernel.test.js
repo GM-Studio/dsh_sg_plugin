@@ -7,6 +7,43 @@ import { spawn } from 'node:child_process';
 import { pathToFileURL } from 'node:url';
 import { createStateStore } from '../src/codex/state-machine.js';
 import { verifyEventChain } from '../src/codex/events.js';
+import * as kernel from '../src/codex/state-machine.js';
+import * as legacy from '../src/codex/core/state.js';
+import { patchState as patchFacts } from '../src/codex/core/project-facts.js';
+
+test('project facts share the authoritative WAL and cannot mutate a legacy phase', async () => {
+  const { projectRoot, store } = fixture();
+  const saved = patchFacts(projectRoot, (draft) => {
+    draft.runtime.suites.example = { status: 'not-run' };
+  });
+  assert.equal(saved.ok, true);
+  assert.equal(fs.existsSync(path.join(projectRoot, '.specgate/state.json')), false);
+  const state = (await store.inspect()).state;
+  assert.equal(state.phase, null);
+  assert.equal(state.context.projectFacts.runtime.suites.example.status, 'not-run');
+  const refused = patchFacts(projectRoot, (draft) => {
+    draft.phase = 'H1_PENDING';
+  });
+  assert.equal(refused.code, 'LEGACY_WORKFLOW_READ_ONLY');
+  assert.equal((await store.inspect()).state.version, state.version);
+});
+
+test('public phases cover every internal value and legacy state has no writer exports', () => {
+  assert.equal(typeof kernel.publicPhaseOf, 'function');
+  assert.deepEqual(Object.keys(kernel.PUBLIC_PHASE_MAP).sort(), [...kernel.PHASES].sort());
+  assert.equal(new Set(Object.values(kernel.PUBLIC_PHASE_MAP)).size, 13);
+  assert.equal(kernel.publicPhaseOf('ARCHIVED_NOT_PUSHED'), 'DELIVERED');
+  assert.equal(kernel.publicPhaseOf('PUSH_FAILED'), 'BLOCKED');
+  assert.throws(() => kernel.publicPhaseOf('made-up'), /Unknown/);
+  for (const name of ['save', 'init', 'patchState']) assert.equal(legacy[name], undefined);
+});
+
+test('legacy state edits after the first authoritative write fail closed', async () => {
+  const { projectRoot, store } = fixture();
+  await start(store);
+  fs.writeFileSync(path.join(projectRoot, '.specgate/state.json'), '{"phase":"H1_PENDING"}');
+  assert.equal((await store.inspect()).code, 'LEGACY_STATE_CHANGED');
+});
 
 function fixture(options = {}) {
   const projectRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'sg-codex-state-中文 space-'));
@@ -351,6 +388,21 @@ test('development, test and review tasks share the two-retry ceiling and preserv
     );
     assert.equal((await store.resume({ expectedVersion: 4 })).state.phase, 'REQ_INTAKE');
   }
+});
+
+test('a Change cannot multiply its automatic repair budget by changing task categories', async () => {
+  const { store } = fixture();
+  await start(store);
+  for (const [index, category] of ['development', 'test', 'review'].entries()) {
+    const result = await store.retry({
+      expectedVersion: (await store.inspect()).state.version,
+      taskId: `task-${category}`,
+      category,
+      error: 'failed',
+    });
+    assert.equal(result.retryAllowed, index < 2);
+  }
+  assert.equal((await store.inspect()).state.phase, 'BLOCKED');
 });
 
 test('live lock is bounded and symlink storage cannot write outside the bound project', async (t) => {

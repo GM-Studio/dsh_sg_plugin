@@ -8,6 +8,7 @@ import { createStateStore } from '../src/codex/state-machine.js';
 import { createApprovalAuthority } from '../src/codex/approvals.js';
 import { canonicalJson, hashValue } from '../src/codex/events.js';
 import { buildTaskGraph, validateTaskGraph, createPlanService } from '../src/codex/plan.js';
+import { createDevelopmentService } from '../src/codex/development.js';
 
 function requirements(count = 1) {
   return Array.from({ length: count }, (_, index) => ({
@@ -17,6 +18,19 @@ function requirements(count = 1) {
     acceptanceCriteria: [{ id: `AC-${index + 1}`, text: `Observable condition ${index + 1}` }],
   }));
 }
+
+test('plan boundaries are mandatory and unsafe file globs are rejected', () => {
+  const built = buildTaskGraph({ requirements: requirements() });
+  assert.equal(built.ok, true);
+  for (const field of ['allowedFiles', 'forbiddenFiles']) {
+    const graph = structuredClone(built.graph);
+    delete graph.tasks.find((task) => task.kind === 'backend')[field];
+    assert.equal(validateTaskGraph(graph).ok, false, field);
+  }
+  const graph = structuredClone(built.graph);
+  graph.tasks.find((task) => task.kind === 'backend').allowedFiles = ['../escaped/**'];
+  assert.equal(validateTaskGraph(graph).ok, false);
+});
 
 async function fixture({ count = 1, forged = false, roleProvider, testDesignerRunner } = {}) {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'sg-codex-plan-'));
@@ -99,6 +113,7 @@ async function fixture({ count = 1, forged = false, roleProvider, testDesignerRu
     store,
     roleProvider,
     testDesignerRunner,
+    approvalAuthority: authority,
   });
   const version = async () => (await store.inspect()).state.version;
   return { root, store, service, version, relative, snapshot };
@@ -342,48 +357,87 @@ test('frozen contract, model and executable test content are rehashed on every i
   }
 });
 
-test('controlled test replacement preserves v1 and records a hash-bound v2 manifest', async () => {
-  const context = await fixture({ roleProvider: async () => assets() });
+test('frozen test replacement requires H1 reopening, refreeze and a new real red baseline', async () => {
+  let revised = assets();
+  const context = await fixture({ roleProvider: async () => revised });
   await context.service.generate({ expectedVersion: await context.version() });
-  await context.service.freezeContracts({
-    expectedVersion: await context.version(),
-    ...contracts,
-  });
+  await context.service.freezeContracts({ expectedVersion: await context.version(), ...contracts });
   await context.service.freezeTests({ expectedVersion: await context.version() });
-  for (const to of ['DEVELOPING', 'INTEGRATING', 'TESTING']) {
-    const current = await context.store.inspect();
-    const moved = await context.store.transition({
-      expectedVersion: current.state.version,
-      to,
-    });
-    assert.equal(moved.ok, true, JSON.stringify(moved));
-  }
-  const before = (await context.store.inspect()).state;
-  const oldPath = before.context.plan.tests.path;
-  const replacement = assets();
-  replacement.cases[0].description = 'Corrected frozen case description.';
-  const replaced = await context.service.replaceTests({
-    expectedVersion: before.version,
-    assets: replacement,
-    reason: 'Correct a frozen test asset defect without changing AC behavior.',
+  assert.equal(
+    (
+      await context.service.reopenTests({
+        expectedVersion: await context.version(),
+        reason: 'No red baseline yet',
+      })
+    ).code,
+    'RED_EVIDENCE_REQUIRED',
+  );
+  git(context.root, ['init', '-q']);
+  git(context.root, ['config', 'user.name', 'test']);
+  git(context.root, ['config', 'user.email', 'test@example.com']);
+  fs.writeFileSync(path.join(context.root, '.gitignore'), '.specgate/\n');
+  fs.writeFileSync(path.join(context.root, 'app.txt'), 'baseline');
+  commitAll(context.root, 'baseline');
+  const reportPath = '.specgate/replacement-red.json';
+  const redRunner = () => ({
+    command: process.execPath,
+    args: [
+      '-e',
+      'require("node:fs").writeFileSync(process.argv[1], JSON.stringify({cases:[{id:"CASE-AC-1",status:"fail"}]}));process.exit(1)',
+      path.join(context.root, reportPath),
+    ],
+    cwd: context.root,
+    reportPath,
   });
+  const development = createDevelopmentService({
+    projectRoot: context.root,
+    store: context.store,
+    planService: context.service,
+    redRunner,
+  });
+  const prepared = await development.prepare({ expectedVersion: await context.version() });
+  assert.equal(prepared.ok, true, JSON.stringify(prepared));
+  for (const to of ['INTEGRATING', 'TESTING'])
+    assert.equal(
+      (await context.store.transition({ expectedVersion: await context.version(), to })).ok,
+      true,
+    );
+  const before = (await context.store.inspect()).state;
+  assert.equal(
+    (
+      await context.service.replaceTests({
+        expectedVersion: before.version,
+        assets: assets(),
+        reason: 'unapproved',
+      })
+    ).code,
+    'FROZEN_TEST_REPLACEMENT_FORBIDDEN',
+  );
+  assert.equal((await context.service.inspect()).ref.tests.hash, before.context.plan.tests.hash);
+  const reopened = await context.service.reopenTests({
+    expectedVersion: await context.version(),
+    reason: 'Correct frozen test asset defect',
+  });
+  assert.equal(reopened.ok, true, JSON.stringify(reopened));
+  assert.equal(reopened.state.phase, 'TEST_DESIGN');
+  assert.equal(reopened.state.context.development, null);
+  revised = assets();
+  revised.cases[0].description = 'Revised case';
+  const replaced = await context.service.freezeTests({ expectedVersion: await context.version() });
   assert.equal(replaced.ok, true, JSON.stringify(replaced));
   assert.equal(replaced.tests.version, 2);
-  assert.equal(replaced.state.phase, 'TESTING');
-  assert.match(replaced.state.context.plan.tests.directory, /\/v2-/);
-  assert.notEqual(replaced.state.context.plan.tests.hash, before.context.plan.tests.hash);
-  assert.equal(fs.existsSync(path.join(context.root, oldPath)), true);
-  assert.equal((await context.service.inspect()).ok, true);
-  const event = JSON.parse(
-    fs
-      .readFileSync(path.join(context.root, '.specgate/codex/events.jsonl'), 'utf8')
-      .trim()
-      .split('\n')
-      .at(-1),
+  assert.equal(replaced.state.phase, 'TEST_CASES_FROZEN');
+  assert.equal(replaced.tests.replacement.previousHash, before.context.plan.tests.hash);
+  assert.ok(replaced.tests.replacement.approval.consumedAt);
+  assert.ok(fs.existsSync(path.join(context.root, before.context.plan.tests.path)));
+  const next = await development.prepare({ expectedVersion: await context.version() });
+  assert.equal(next.ok, true, JSON.stringify(next));
+  assert.notEqual(next.development.red.hash, before.context.development.red.hash);
+  assert.notEqual(
+    next.development.worktrees.backend.path,
+    before.context.development.worktrees.backend.path,
   );
-  assert.equal(event.type, 'test.assets.replaced');
-  assert.equal(event.payload.previousHash, before.context.plan.tests.hash);
-  assert.equal(event.payload.hash, replaced.state.context.plan.tests.hash);
+  assert.equal(next.development.testsHash, replaced.state.context.plan.tests.hash);
 });
 
 test('native Test Designer freezes only committed specgate test assets from its worktree', async () => {

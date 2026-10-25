@@ -9,6 +9,23 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 const root = fileURLToPath(new URL('../', import.meta.url));
 const readJson = (file) => JSON.parse(fs.readFileSync(file, 'utf8'));
 
+test('Core v1 installation and lockfile have no MySQL driver dependency', () => {
+  const manifest = readJson(path.join(root, 'package.json'));
+  for (const field of [
+    'dependencies',
+    'devDependencies',
+    'optionalDependencies',
+    'peerDependencies',
+  ])
+    assert.equal(Object.hasOwn(manifest[field] || {}, 'mysql2'), false, field);
+  assert.equal((manifest.bundledDependencies || []).includes('mysql2'), false);
+  const lock = readJson(path.join(root, 'package-lock.json'));
+  assert.equal(
+    Object.keys(lock.packages).some((entry) => /(?:^|\/)node_modules\/mysql2$/.test(entry)),
+    false,
+  );
+});
+
 test('Codex manifest and MCP entry stay contained in the shipped plugin', () => {
   const manifest = readJson(path.join(root, '.codex-plugin/plugin.json'));
   assert.equal(manifest.name, 'specgate-codex');
@@ -92,6 +109,11 @@ test(
     const [packed] = JSON.parse(
       npm(['pack', '--json', '--ignore-scripts', '--pack-destination', fixture], root),
     );
+    assert.deepEqual(packed.bundled || [], []);
+    assert.equal(
+      packed.files.some((entry) => entry.path.includes('node_modules/mysql2/')),
+      false,
+    );
     for (const file of [
       '.agents/plugins/marketplace.json',
       '.codex-plugin/plugin.json',
@@ -137,7 +159,15 @@ test(
       [
         '--input-type=module',
         '-e',
-        'const m = await import(process.argv[1]); const p = m.createMysqlPool({database:"offline"}); await p.end();',
+        [
+          'const {createRequire} = await import("node:module");',
+          'const require = createRequire(process.argv[1]);',
+          'try { require.resolve("mysql2/promise"); throw Error("Core package must not install mysql2"); }',
+          'catch (error) { if (error.code !== "MODULE_NOT_FOUND") throw error; }',
+          'const m = await import(process.argv[1]);',
+          'try { m.createMysqlPool({database:"offline"}); throw Error("Missing driver must be explicit"); }',
+          'catch (error) { if (error.code !== "MYSQL_DRIVER_NOT_INSTALLED") throw error; }',
+        ].join('\n'),
         pathToFileURL(
           path.join(pluginRoot, 'src/codex/core/control/persistence/mysql-repository.js'),
         ).href,

@@ -1,4 +1,4 @@
-import mysql from 'mysql2/promise';
+import { createRequire } from 'node:module';
 import { randomUUID } from 'node:crypto';
 import { applyMigrations } from './migrations.js';
 import { applyDecisionToWorkItem, WORK_ITEM_STATES, ATTENTION_STATES } from './state-machine.js';
@@ -37,11 +37,26 @@ const policyColumns = [
   'audit_retention_days',
 ];
 
+const require = createRequire(import.meta.url);
+function mysqlDriver() {
+  try {
+    return require('mysql2/promise');
+  } catch (error) {
+    if (error.code !== 'MODULE_NOT_FOUND') throw error;
+    throw Object.assign(
+      new Error(
+        'MySQL is outside Core v1. Install mysql2 explicitly before using the historical control-plane integration.',
+      ),
+      { code: 'MYSQL_DRIVER_NOT_INSTALLED' },
+    );
+  }
+}
+
 // Callers keep credentials in local configuration; errors never echo SQL or credentials.
 export function createMysqlPool(options) {
   if (!options || typeof options !== 'object' || !nonEmpty(options.database, 64))
     throw new TypeError('MySQL connection options with a database are required');
-  return mysql.createPool({
+  return mysqlDriver().createPool({
     ...options,
     timezone: 'Z',
     dateStrings: true,

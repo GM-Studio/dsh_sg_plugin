@@ -1,0 +1,15 @@
+✔ native runner receives the manifest test root instead of its frozen snapshot parent (0.5478ms)
+✔ state inspection is read-only and mutation schemas require a current version (3.5122ms)
+✔ MCP lifecycle controls preserve worktrees and evidence and enforce CAS (63.2371ms)
+✔ init preview is read-only; nonempty initialization cannot manufacture approval (158.9957ms)
+✔ the public tool set cannot import approvals or arbitrarily change phases (1.4043ms)
+✔ plan and development tools expose only versions and frozen content, never roles or commands (1.228ms)
+✔ nested change schemas reject forged answers and credentials before touching storage (0.6126ms)
+ℹ tests 7
+ℹ suites 0
+ℹ pass 7
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 340.1435

@@ -109,6 +109,8 @@ test('native role prompt carries role boundaries without relying on undocumented
       model: { content: { entities: ['Task'] } },
       tests: { cases: [{ id: 'CASE-AC-1' }] },
       conventions: { frontendFramework: 'vue' },
+      filePolicy: [{ allowedFiles: ['src/client/**'], forbiddenFiles: ['tests/**'] }],
+      findings: [{ id: 'F-REPAIR-1', expected: 'new payload', actual: 'old payload' }],
     },
     agentConfig: {
       agent: {
@@ -119,7 +121,10 @@ test('native role prompt carries role boundaries without relying on undocumented
     },
   });
   assert.match(prompt, /You are the assigned SpecGate Frontend Agent/);
-  assert.match(prompt, /Change only files below frontend\//);
+  assert.match(prompt, /frozen filePolicy/);
+  assert.match(prompt, /src\/client\/\*\*/);
+  assert.match(prompt, /forbiddenFiles/);
+  assert.match(prompt, /F-REPAIR-1/);
   assert.match(prompt, /git|commit/i);
   assert.match(prompt, /Only change frontend files/);
 });

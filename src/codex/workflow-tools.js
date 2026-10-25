@@ -3,7 +3,7 @@ import fs from 'node:fs';
 import { randomUUID } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { TOOLS as DIAGNOSTICS, callDiagnostic } from './tools.js';
-import { createStateStore } from './state-machine.js';
+import { createStateStore, publicWorkflowView } from './state-machine.js';
 import { createApprovalAuthority } from './approvals.js';
 import { createArtifactStore } from './core/artifact-store.js';
 import { canonicalJson, hashValue } from './events.js';
@@ -304,11 +304,14 @@ export function validArguments(schema, value) {
   }
 }
 
-const result = (data) => ({
-  isError: data.ok === false,
-  content: [{ type: 'text', text: JSON.stringify(data) }],
-  structuredContent: data,
-});
+const result = (input) => {
+  const data = publicWorkflowView(input);
+  return {
+    isError: data.ok === false,
+    content: [{ type: 'text', text: JSON.stringify(data) }],
+    structuredContent: data,
+  };
+};
 
 function createBoundToolRegistry({
   projectRoot,
@@ -413,12 +416,14 @@ function createBoundToolRegistry({
     : createApprovalAuthority({
         request: requestPeer,
         trustedPeerIdentity: trustedUserIdentity,
-        resolveGateArtifact: ({ gate, state }) => ({
+        resolveGateArtifact: ({ gate, state, to }) => ({
           scope: state?.changeId,
           artifactHash:
-            gate === 'H1'
-              ? state?.context?.artifacts?.requirements?.hash
-              : state?.context?.artifacts?.h3?.hash,
+            to === 'TEST_DESIGN'
+              ? state?.context?.artifacts?.testReplacement?.hash
+              : gate === 'H1'
+                ? state?.context?.artifacts?.requirements?.hash
+                : state?.context?.artifacts?.h3?.hash,
         }),
         audit: async (event) => {
           const loaded = await stateStore().load();
@@ -550,6 +555,7 @@ function createBoundToolRegistry({
       projectRoot: root,
       store: stateStore(),
       roleProvider: planRoleProvider,
+      approvalAuthority: authority,
       testDesignerRunner: effectiveTestDesignerRunner,
     }));
   let developmentService;

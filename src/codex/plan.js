@@ -4,6 +4,7 @@ import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { canonicalJson, hashValue, verifyEventChain } from './events.js';
 import { readProjectConventions } from './project-conventions.js';
+import { validFilePatterns, validDependencyChanges } from './core/task-policy.js';
 
 const SOURCE_ROOT = path.resolve(fileURLToPath(new URL('../..', import.meta.url)));
 const object = (value) => value !== null && typeof value === 'object' && !Array.isArray(value);
@@ -130,6 +131,16 @@ function acList(snapshot) {
         'Requirements and acceptance criteria must have unique identifiers',
       );
     reqIds.add(req.id);
+    if (
+      !validDependencyChanges(
+        req.dependencyChanges,
+        req.acceptanceCriteria.map((ac) => ac?.id),
+      )
+    )
+      fail(
+        'REQUIREMENTS_INVALID',
+        'Dependency declarations must bind a file hash and acceptance criteria',
+      );
     for (const ac of req.acceptanceCriteria) {
       if (!identifier(ac.id) || acIds.has(ac.id) || !text(ac.text))
         fail('REQUIREMENTS_INVALID', 'Acceptance criteria must have unique identifiers and text');
@@ -172,6 +183,14 @@ function validateGraph(graph) {
   const coverage = Object.fromEntries(kinds.map((kind) => [kind, new Set()]));
   for (const task of graph.tasks) {
     if (
+      object(task) &&
+      (!validFilePatterns(task.allowedFiles, true) || !validFilePatterns(task.forbiddenFiles))
+    )
+      return failure(
+        'PLAN_CONTRACT_INVALID',
+        'Each task needs nonempty allowedFiles and explicit forbiddenFiles',
+      );
+    if (
       !object(task) ||
       !identifier(task.id) ||
       tasks.has(task.id) ||
@@ -185,7 +204,14 @@ function validateGraph(graph) {
       !Array.isArray(task.deps) ||
       !Array.isArray(task.acceptance) ||
       !task.acceptance.length ||
-      !task.acceptance.every(text)
+      !task.acceptance.every(text) ||
+      !validFilePatterns(task.allowedFiles, true) ||
+      !validFilePatterns(task.forbiddenFiles) ||
+      !Array.isArray(task.requirementIds) ||
+      !task.requirementIds.length ||
+      !Array.isArray(task.verification) ||
+      !task.verification.length ||
+      !validDependencyChanges(task.dependencyChanges, task.acIds)
     )
       return invalid();
     if (
@@ -194,7 +220,11 @@ function validateGraph(graph) {
       new Set(task.deps).size !== task.deps.length ||
       task.acIds.some((ac) => !acs.has(ac)) ||
       task.caseIds.some((caseId) => !task.acIds.some((acId) => acs.get(acId).caseId === caseId)) ||
-      task.acIds.some((acId) => !task.caseIds.includes(acs.get(acId).caseId))
+      task.acIds.some((acId) => !task.caseIds.includes(acs.get(acId).caseId)) ||
+      canonicalJson([...new Set(task.acIds.map((acId) => acs.get(acId).requirementId))].sort()) !==
+        canonicalJson([...task.requirementIds].sort()) ||
+      canonicalJson(task.dependencies) !== canonicalJson(task.deps) ||
+      canonicalJson([...task.verification].sort()) !== canonicalJson([...task.caseIds].sort())
     )
       return invalid();
     tasks.set(task.id, task);
@@ -246,7 +276,7 @@ export function validateTaskGraph(graph) {
   }
 }
 
-export function buildTaskGraph(snapshot) {
+export function buildTaskGraph(snapshot, filePolicies = {}) {
   try {
     const acs = acList(snapshot);
     const tasks = [];
@@ -257,7 +287,32 @@ export function buildTaskGraph(snapshot) {
       acIds: selected.map((ac) => ac.id),
       caseIds: selected.map((ac) => ac.caseId),
       deps,
+      dependencies: [...deps],
       acceptance,
+      requirementIds: [...new Set(selected.map((ac) => ac.requirementId))],
+      verification: selected.map((ac) => ac.caseId),
+      allowedFiles:
+        filePolicies[kind]?.allowedFiles ||
+        (['backend', 'frontend'].includes(kind)
+          ? [`${kind}/**`]
+          : kind === 'test'
+            ? ['specgate-tests/**', 'specgate-tests.json']
+            : ['docs/**']),
+      forbiddenFiles: filePolicies[kind]?.forbiddenFiles || [
+        '.specgate/**',
+        '**/tests/**',
+        '**/test/**',
+        '**/acceptance/**',
+        '**/*.test.*',
+        '**/*.spec.*',
+      ],
+      dependencyChanges: snapshot.requirements
+        .flatMap((req) => req.dependencyChanges || [])
+        .filter((entry) => entry.acIds.some((ac) => selected.some((item) => item.id === ac)))
+        .map((entry) => ({
+          ...entry,
+          acIds: entry.acIds.filter((ac) => selected.some((item) => item.id === ac)),
+        })),
     });
     tasks.push(
       task(
@@ -368,7 +423,13 @@ function safeRelative(relative) {
   );
 }
 
-export function createPlanService({ projectRoot, store, roleProvider, testDesignerRunner } = {}) {
+export function createPlanService({
+  projectRoot,
+  store,
+  roleProvider,
+  testDesignerRunner,
+  approvalAuthority,
+} = {}) {
   const root = fs.realpathSync(projectRoot);
   if (!store || typeof store.inspect !== 'function')
     throw new TypeError('A server state store is required');
@@ -691,7 +752,7 @@ export function createPlanService({ projectRoot, store, roleProvider, testDesign
     const body = {
       schemaVersion: 1,
       kind: 'tests',
-      version: 1,
+      version: checked.ref.tests ? checked.ref.tests.version + 1 : 1,
       requirementsHash: checked.plan.requirementsHash,
       planHash: checked.ref.hash,
       contractHash: checked.ref.contract.hash,
@@ -702,9 +763,12 @@ export function createPlanService({ projectRoot, store, roleProvider, testDesign
       files: Object.fromEntries(
         Object.entries(files).map(([relative, content]) => [relative, digest(content)]),
       ),
+      ...(checked.state.context.testReplacement
+        ? { replacement: checked.state.context.testReplacement }
+        : {}),
       ...extra,
     };
-    const directory = `.specgate/codex/changes/${loaded.state.changeId}/tests/v1-${hashValue(body)}`;
+    const directory = `.specgate/codex/changes/${loaded.state.changeId}/tests/v${body.version}-${hashValue(body)}`;
     for (const [relative, content] of Object.entries(files))
       immutable(directory + '/' + relative, content);
     const tests = { ...freeze(directory, 'manifest', body), directory };
@@ -714,6 +778,20 @@ export function createPlanService({ projectRoot, store, roleProvider, testDesign
       expectedVersion: saved.state.version,
       to: 'TEST_CASES_FROZEN',
     });
+    if (!moved.ok) return moved;
+    if (body.replacement) {
+      const event = await store.recordEvent({
+        expectedVersion: moved.state.version,
+        type: 'test.assets.replaced',
+        payload: {
+          previousHash: body.replacement.previousHash,
+          hash: tests.hash,
+          reason: body.replacement.reason,
+          approval: body.replacement.approval,
+        },
+      });
+      return { ...event, tests: body };
+    }
     return { ...moved, tests: body };
   }
 
@@ -783,10 +861,10 @@ export function createPlanService({ projectRoot, store, roleProvider, testDesign
     inspect: () => protect(inspect),
     generate: (args = {}) =>
       protect(async () => {
-        const loaded = await current(args, ['REQ_FROZEN']);
+        const loaded = await current(args, ['REQ_FROZEN'], ['expectedVersion', 'filePolicies']);
         if (!loaded.ok) return loaded;
         const frozen = await frozenRequirements(loaded.state);
-        const built = buildTaskGraph(frozen.snapshot);
+        const built = buildTaskGraph(frozen.snapshot, args.filePolicies);
         if (!built.ok) return built;
         const plan = {
           schemaVersion: 1,
@@ -881,8 +959,9 @@ export function createPlanService({ projectRoot, store, roleProvider, testDesign
         if (git(root, ['status', '--porcelain', '--untracked-files=all']))
           return failure('GIT_NOT_CLEAN', 'The main worktree must be clean before test design');
         const baseCommit = git(root, ['rev-parse', 'HEAD']);
-        const relative = `.specgate/codex/worktrees/${loaded.state.changeId}/test-design`;
-        const branch = `sg/codex/${loaded.state.changeId}/test-design`;
+        const revision = checked.ref.tests ? checked.ref.tests.version + 1 : 1;
+        const relative = `.specgate/codex/worktrees/${loaded.state.changeId}/test-design-${revision}`;
+        const branch = `sg/codex/${loaded.state.changeId}/test-design-${revision}`;
         let worktree;
         try {
           worktree = createRegisteredWorktree(root, relative, branch, baseCommit);
@@ -1011,104 +1090,103 @@ export function createPlanService({ projectRoot, store, roleProvider, testDesign
           },
         });
       }),
-    replaceTests: (args = {}) =>
+    replaceTests: async () =>
+      failure(
+        'FROZEN_TEST_REPLACEMENT_FORBIDDEN',
+        'Frozen tests cannot be replaced directly; request H1 reopening, redesign and rerun the red baseline',
+      ),
+    reopenTests: (args = {}) =>
       protect(async () => {
-        const loaded = await current(args, ['TESTING'], ['expectedVersion', 'assets', 'reason']);
+        const loaded = await current(
+          args,
+          ['DEVELOPING', 'TESTING', 'REVIEWING', 'TEST_CASES_FROZEN'],
+          ['expectedVersion', 'reason'],
+        );
         if (!loaded.ok) return loaded;
+        if (!text(args.reason) || args.reason.length > 2048)
+          return failure('INVALID_ARGUMENT', 'A bounded replacement reason is required');
         const checked = await inspect();
         if (!checked.ok) return checked;
-        if (typeof args.reason !== 'string' || !args.reason.trim() || args.reason.length > 2048)
-          return failure('INVALID_ARGUMENT', 'A bounded Test Agent replacement reason is required');
-        if (!validateAssets(args.assets, checked.plan.graph))
-          return failure(
-            'TEST_ASSETS_INVALID',
-            'Replacement test assets need valid AC mappings, code, fixtures and coverage',
-          );
-        const version = checked.ref.tests.version + 1;
-        const files = {
-          ...args.assets.code,
-          ...args.assets.fixtures,
-          'cases.json': canonicalJson(args.assets.cases) + '\n',
-          'cases.md':
-            '# Frozen test cases\n\n' +
-            args.assets.cases
-              .map(
-                (entry) =>
-                  `## ${entry.id}\n\n${entry.description}\n\nAC: ${entry.acIds.join(', ')}\nCode: ${entry.codeFiles.join(', ')}\n`,
-              )
-              .join('\n'),
-        };
+        const red = loaded.state.context.development?.red;
         if (
-          ['cases.json', 'cases.md'].some(
-            (relative) =>
-              Object.hasOwn(args.assets.code, relative) ||
-              Object.hasOwn(args.assets.fixtures, relative),
-          )
+          !red?.path ||
+          digest(json(red.path)) !== red.hash ||
+          json(red.path).testsHash !== checked.ref.tests?.hash ||
+          json(red.path).exitCode === 0
         )
           return failure(
-            'TEST_ASSETS_INVALID',
-            'cases.json and cases.md are reserved for the frozen case index',
+            'RED_EVIDENCE_REQUIRED',
+            'Reopening requires the previous real red-baseline evidence',
           );
-        const body = {
-          schemaVersion: 1,
-          kind: 'tests',
-          version,
-          requirementsHash: checked.plan.requirementsHash,
-          planHash: checked.ref.hash,
-          contractHash: checked.ref.contract.hash,
-          modelHash: checked.ref.model.hash,
-          role: 'test',
-          coverage: args.assets.coverage,
-          cases: args.assets.cases,
-          replacement: {
-            reason: args.reason.trim(),
-            previousHash: checked.ref.tests.hash,
-            previousPath: checked.ref.tests.path,
-            requestedAt: new Date().toISOString(),
-          },
-          files: Object.fromEntries(
-            Object.entries(files).map(([relative, content]) => [relative, digest(content)]),
-          ),
+        if (!approvalAuthority?.requestApproval)
+          return failure(
+            'APPROVAL_REQUIRED',
+            'A server-owned H1 authority must approve test reopening',
+          );
+        const preview = {
+          previousHash: checked.ref.tests.hash,
+          previousPath: checked.ref.tests.path,
+          reason: args.reason.trim(),
+          redHash: red.hash,
+          requestedAt: new Date().toISOString(),
         };
-        const directory = `.specgate/codex/changes/${loaded.state.changeId}/tests/v${version}-${hashValue(body)}`;
-        for (const [relative, content] of Object.entries(files))
-          immutable(directory + '/' + relative, content);
-        const tests = { ...freeze(directory, 'manifest', body), directory };
-        const development = object(loaded.state.context?.development)
-          ? {
-              ...loaded.state.context.development,
-              testsHash: tests.hash,
-              controlledReplacements: [
-                ...(loaded.state.context.development.controlledReplacements || []),
-                {
-                  previousHash: checked.ref.tests.hash,
-                  hash: tests.hash,
-                  reason: args.reason.trim(),
-                  at: new Date().toISOString(),
-                },
-              ],
-            }
-          : loaded.state.context?.development;
+        const artifact = freeze(
+          '.specgate/codex/changes/' + loaded.state.changeId + '/test-replacement',
+          'preview',
+          preview,
+        );
         const saved = await store.update({
           expectedVersion: loaded.state.version,
           patch: {
             context: {
-              plan: { ...checked.ref, tests },
-              ...(development ? { development } : {}),
+              artifacts: { ...loaded.state.context.artifacts, testReplacement: artifact },
             },
           },
         });
         if (!saved.ok) return saved;
-        const event = await store.recordEvent({
-          expectedVersion: saved.state.version,
-          type: 'test.assets.replaced',
-          payload: {
-            previousHash: checked.ref.tests.hash,
-            hash: tests.hash,
-            reason: args.reason.trim(),
+        const requested = await approvalAuthority.requestApproval({
+          gate: 'H1',
+          scope: loaded.state.changeId,
+          artifactHash: artifact.hash,
+          readArtifactHash: async () => digest(json(artifact.path)),
+          summary:
+            'Reopen frozen tests and discard prior red/quality/review applicability. New tests must be frozen and run red again.\n' +
+            canonicalJson(preview),
+        });
+        if (!requested.ok) return requested;
+        const latest = await store.inspect();
+        if (!latest.ok) return latest;
+        const moved = await store.transition({
+          expectedVersion: latest.state.version,
+          to: 'TEST_DESIGN',
+          approval: requested.approval,
+        });
+        if (!moved.ok) return moved;
+        const replacement = {
+          ...preview,
+          approval: moved.event.payload.approval,
+          artifactHash: artifact.hash,
+        };
+        const ref = { ...checked.ref };
+        delete ref.testDesign;
+        const reset = await store.update({
+          expectedVersion: moved.state.version,
+          patch: {
+            context: {
+              plan: ref,
+              testReplacement: replacement,
+              testReplacementHistory: [
+                ...(loaded.state.context.testReplacementHistory || []),
+                { ...replacement, development: loaded.state.context.development },
+              ],
+              development: null,
+              quality: null,
+              format: null,
+              review: null,
+            },
           },
         });
-        return event.ok ? { ...event, tests: body } : event;
+        return reset;
       }),
     checkDevelopmentReady: () =>
       protect(async () => {

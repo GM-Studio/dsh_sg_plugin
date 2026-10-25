@@ -2,7 +2,8 @@ import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { gitSafeDirectory } from '../git-path.js';
 import { ensureDir, exists, readText, writeText } from './util/fsx.js';
-import { init as initState, load as loadState, patchState } from './state.js';
+import { load as loadState } from './state.js';
+import { init as initState, patchState } from './project-facts.js';
 import { REQ_VERSION, isRequirementsFrozen } from './requirements.js';
 import { loadTemplateStyle } from './template-style.js';
 

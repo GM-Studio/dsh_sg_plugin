@@ -179,10 +179,7 @@ test('generated baseline tracks stable configuration while runtime state stays i
     assert.equal(git(['ls-files', '--', relative]), relative);
   assert.equal(git(['rev-parse', 'init-baseline']), generated.report.gitBaseline.commit);
   const stateFile = path.join(root, '.specgate/state.json');
-  fs.writeFileSync(
-    stateFile,
-    JSON.stringify({ ...JSON.parse(fs.readFileSync(stateFile)), changed: true }),
-  );
+  fs.writeFileSync(stateFile, JSON.stringify({ historical: true, changed: true }));
   const reportFile = path.join(root, '.specgate/init-report.json');
   fs.writeFileSync(
     reportFile,

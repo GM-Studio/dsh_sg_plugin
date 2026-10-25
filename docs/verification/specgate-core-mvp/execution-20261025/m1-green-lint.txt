@@ -1,0 +1,4 @@
+
+> specgate-codex@0.3.4 lint
+> eslint .
+

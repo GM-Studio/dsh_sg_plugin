@@ -1,0 +1,1136 @@
+{
+  "date": "2026-10-25",
+  "baseCommit": "2df0832134e570eda4908929dc7c646fed784d53",
+  "milestone": "M1-M3",
+  "focused": {
+    "m3": 41,
+    "m2": 75,
+    "m1": 102
+  },
+  "full": {
+    "m3": 711,
+    "m2": 708,
+    "m1": 704
+  },
+  "failed": 0,
+  "skipped": 0,
+  "cancelled": 0,
+  "files": [
+    {
+      "path": "package-lock.json",
+      "sha256": "F7AFC8CDFA6D7D51874AF44C1D2DC2E5D883E469AE448893C92BA16D722DC2B0"
+    },
+    {
+      "path": "package.json",
+      "sha256": "36E7DD2A99B8819883B13F4DBBB3BD6BC2683636C36F163128EF27AEF011354E"
+    },
+    {
+      "path": "scripts\\codex-delivery-pilot.mjs",
+      "sha256": "9DA8AE9E3954CAA1312BB622E72B000CFC05138A7C1564DFB37098A1941D2703"
+    },
+    {
+      "path": "scripts\\codex-plugin-smoke.mjs",
+      "sha256": "D05E2923D73E2605C3203095BE4C54BE0379519E409E46AC36EDED4EF79DA3F5"
+    },
+    {
+      "path": "scripts\\codex-source-setup.mjs",
+      "sha256": "815799914A091D348586E365B4E9A035E4A386400140AB18C4CCFE897120CA18"
+    },
+    {
+      "path": "scripts\\git-hooks\\pre-commit",
+      "sha256": "AADF4BE90C3885E05E662A79C54E2672B7F972811609933FA6AADC910A47A099"
+    },
+    {
+      "path": "scripts\\git-hooks\\pre-push",
+      "sha256": "3F3C9927D2F7314D1EB41E700E8EC6BE33F2424D9BEFC021C76EEA4BC051E79C"
+    },
+    {
+      "path": "scripts\\install-env.mjs",
+      "sha256": "95BD52E374032730A8110DF30F5C1C74F6BC818744D48E864F7ACB5D7DE5D99F"
+    },
+    {
+      "path": "scripts\\install-env.ps1",
+      "sha256": "62543A8ED83B4C735CEE146B55DAD89841D28A611DF9FDBD6A9699136857E0A2"
+    },
+    {
+      "path": "scripts\\install-env.sh",
+      "sha256": "20570A14412CBCE2041A25DEA1676C206DE2A4D2BEA23DC131105B2581F3268D"
+    },
+    {
+      "path": "scripts\\run-tests.mjs",
+      "sha256": "6B1FFCA04CDDBBB87BC90EDF34F123D22C7D8FC15E2B07754D237646C7FA11C2"
+    },
+    {
+      "path": "scripts\\specgate-control.mjs",
+      "sha256": "CB7E51309A3B67636ADEF9203D7D3CF7F24A6D645D61E328928DF43F2EED4060"
+    },
+    {
+      "path": "scripts\\specgate-release-check.mjs",
+      "sha256": "51D6FEEDA42D00C1D00E31ACFB15287641E4A5723840BEB61323DC36FA10F6B1"
+    },
+    {
+      "path": "scripts\\specgate-worker.mjs",
+      "sha256": "769BC9EF8E04EBCEDB9413FEB4844C81C7FB8C709B609F50A86714FB7B2C8B6F"
+    },
+    {
+      "path": "scripts\\verify-adopted-pilot.mjs",
+      "sha256": "BC49C25600A97C40C4E03509A6F972723A4099DB5B2C8D12AD828FD32FCD0F3C"
+    },
+    {
+      "path": "scripts\\verify-codex-environment.mjs",
+      "sha256": "A1FC94981135624180B61C938787E9949960BDC878CD00CB5AA6C7DE906D8E64"
+    },
+    {
+      "path": "scripts\\verify-codex-matrix.mjs",
+      "sha256": "D9CE57E79D9AB46636DFBA704EAB21E78F65024F9C4975FB15FA0247FE6218B6"
+    },
+    {
+      "path": "scripts\\verify-project-pilot.mjs",
+      "sha256": "7A8469DAC91D0D346F3CFAE3914E131D900A8F1CFDF9DC2C95B2D48A4374EBA5"
+    },
+    {
+      "path": "src/codex\\adopted-verification.js",
+      "sha256": "BC63816DA49E553E05E737605903033A86DCF98976B98736484A79DB478CF190"
+    },
+    {
+      "path": "src/codex\\approvals.js",
+      "sha256": "AB9101D6C0F5080D41A9111A7A2E5EA1EC57794EAA8B5B7B7C82FFC99CE56EBC"
+    },
+    {
+      "path": "src/codex\\baseline-job.js",
+      "sha256": "618381A8AB6DD3CE457F03DAED7B9597A11E03BEC673582524B681FE272952C1"
+    },
+    {
+      "path": "src/codex\\baseline-worker.mjs",
+      "sha256": "9CC735AF614CDAAD41D70C40E46C8C53B0A0CB13D75FE3A9891FFE14DD546267"
+    },
+    {
+      "path": "src/codex\\baseline.js",
+      "sha256": "A18F4DD659F0099F3DB95A6DDFD11ABB3AACD3CAF723804DE62C869977FF7719"
+    },
+    {
+      "path": "src/codex\\change-add.js",
+      "sha256": "E18FE3547B050BC487A714F458445AFB098AF9CB223CBDC8C84B9DE68A7400DE"
+    },
+    {
+      "path": "src/codex\\change-policy.js",
+      "sha256": "EA55CE83796BDEAB5B83807838BFBA6D13CD718B716010FB422A090276F0BC22"
+    },
+    {
+      "path": "src/codex\\change-tools.js",
+      "sha256": "06EFAFA123A09EF645E7CAE9983F1AB7E1BB71DF153410BB0E01B45A20811B3C"
+    },
+    {
+      "path": "src/codex\\channels\\adapter.js",
+      "sha256": "9D2902A408EF1B099532D9A2388BDD2C570C19B705D42B2A9611CBEAD6938EBD"
+    },
+    {
+      "path": "src/codex\\channels\\dingtalk.js",
+      "sha256": "017D389AE53B49B15C00CAE3E344885268A07761D28140BF7381F737BAA36635"
+    },
+    {
+      "path": "src/codex\\channels\\fanout.js",
+      "sha256": "098D1801BD4D79F25E1A42B19F7750142A26C7E8394421CF0F8735F1E85DBC0D"
+    },
+    {
+      "path": "src/codex\\channels\\feishu.js",
+      "sha256": "E8255CADFB85A388CB632435E8D0520C33213C9040FE1EBE29DC82FEC69EBE17"
+    },
+    {
+      "path": "src/codex\\channels\\outbox.js",
+      "sha256": "1EF6ACD659D1D18557E2A7A1EE0D1BDEDA15345761E9C18F8BFFEC0ADC4C86A8"
+    },
+    {
+      "path": "src/codex\\checkpoints.js",
+      "sha256": "431B9C87F89622BA197BA8E73E1C575083DA3F6587A49A0E03EBE325794FD2E6"
+    },
+    {
+      "path": "src/codex\\cleanup.js",
+      "sha256": "0278F1DD7FEED13E982A7C56F3D15ED5319E8302F0D702D6CCC186A42563C321"
+    },
+    {
+      "path": "src/codex\\control\\approval-bridge.js",
+      "sha256": "46FC94546EC363ECC01F7906027D091DE2E866A40EE7447C5DC2BB87740B7DBD"
+    },
+    {
+      "path": "src/codex\\control\\attention-lifecycle.js",
+      "sha256": "7158BD080F5760A414CF8A38BA599225DEFE7C4000D7ED9E99144C7305AF3DFB"
+    },
+    {
+      "path": "src/codex\\control\\audit-query.js",
+      "sha256": "1CDDCB49AA2A0D48EAD3619461686EA9803FFFD467AE13F97418CB3F8B7405E6"
+    },
+    {
+      "path": "src/codex\\control\\auth-runtime.js",
+      "sha256": "7F5882DB30F68CFC3DDF7039DA72796A7D24BC21997D45E1186F936CB1F0345B"
+    },
+    {
+      "path": "src/codex\\control\\capabilities.js",
+      "sha256": "F9A66ABF9BEBBB87FCF83986777E6EAB5FB8EF4FE03A9044336F19AB2C75AC40"
+    },
+    {
+      "path": "src/codex\\control\\codex-execution-adapter.js",
+      "sha256": "0A6B2188B97BC24FCF27F50F6BD7877BF33938E10E948AB26CE59DDF12883D29"
+    },
+    {
+      "path": "src/codex\\control\\config.js",
+      "sha256": "535E84251316EBC9186ED0AE02617E615DE0B54A6044CFC6FC8D9CB6A65D298D"
+    },
+    {
+      "path": "src/codex\\control\\daemon-worker.mjs",
+      "sha256": "B796375E74B9FE190ACD873E2272D104083A73DAB2E5B7BE3CC93004882C6C44"
+    },
+    {
+      "path": "src/codex\\control\\daemon.js",
+      "sha256": "FA2F5002C95F47EB210907F1A0AEF778ADF23532B464CAA28C70C5DF910A4C44"
+    },
+    {
+      "path": "src/codex\\control\\delivery-assurance.js",
+      "sha256": "E6031A351FC9BE551A402CA95D25AD10E824D617BFAD8B3A233A14D5B20421FC"
+    },
+    {
+      "path": "src/codex\\control\\delivery-controlled.js",
+      "sha256": "62630849DF78016C77BA48D62F554C862082BE7D307BE016F643E819780EBD05"
+    },
+    {
+      "path": "src/codex\\control\\deployment-assurance.js",
+      "sha256": "1F76B0548B4F3997EEB9BF3E76D196F99386D58B3DAA7DC3D4DB95AE761948A5"
+    },
+    {
+      "path": "src/codex\\control\\evidence-timeline.js",
+      "sha256": "F30C2F42772D7501CD207996FDDD52CC882CF7FFA64869EAE1C7D89BEEB9D71A"
+    },
+    {
+      "path": "src/codex\\control\\exception-inbox.js",
+      "sha256": "BAA5318E3479CF06F9E4DFB27B5A8564F74F778E7C246DD8BF3F3EC30305481C"
+    },
+    {
+      "path": "src/codex\\control\\management-services.js",
+      "sha256": "65F29EE12D941C29634E8601366F48F0ACE1594666A126AC7ED859E2872788C5"
+    },
+    {
+      "path": "src/codex\\control\\outbound-worker.js",
+      "sha256": "9AF7AE1EDDC69826902A057E0F94886C69B44DAD9AFB652243C4B0B0A4FE536C"
+    },
+    {
+      "path": "src/codex\\control\\outcome.js",
+      "sha256": "C0F9BA067BDD781F03F827457E5BC066819BBDAA8F1BC28F95C2D02D20730D84"
+    },
+    {
+      "path": "src/codex\\control\\projects.js",
+      "sha256": "E8C1F56745352174172BFB7FAAEC96033E6CBF92A6D3487CDD7CCF91710E8003"
+    },
+    {
+      "path": "src/codex\\control\\remote-worker-supervisor.js",
+      "sha256": "EBFE8912253BDE1866D02209AD9F2391421086B1CFEF9C9DEA078EA924344B6A"
+    },
+    {
+      "path": "src/codex\\control\\runtime.js",
+      "sha256": "5A5FF9AFE1DADB93DF68569CA2ADBBA4B4C24A23719250051C2CC8DA2FB351D0"
+    },
+    {
+      "path": "src/codex\\control\\service.js",
+      "sha256": "3EA577D3A27052F2AFC187E04CA382C04D4E473E9A977A8902664D5203F0E019"
+    },
+    {
+      "path": "src/codex\\control\\sse-hub.js",
+      "sha256": "28FE992B6ECFBD8355C2315D46D1A673276CA521AEC21BE3550BD57F7D0C6E30"
+    },
+    {
+      "path": "src/codex\\control\\step-up.js",
+      "sha256": "E3D39E91A269A91B31C01829AA35606D04DA374333983CA9264A1793E687C905"
+    },
+    {
+      "path": "src/codex\\control\\store-audit-adapter.js",
+      "sha256": "B017A7B24C7BA070279FAA46E65C91231EBC116B45CFC6B55B0DD8A936CB7F55"
+    },
+    {
+      "path": "src/codex\\control\\store.js",
+      "sha256": "05FB2C75CBBB9654EF4399C2412AF60A734BEF4B8820FA24FEF64A7764AA18A2"
+    },
+    {
+      "path": "src/codex\\control\\supervisor.js",
+      "sha256": "E7B1A34FAE9CA027AC08AB3DDAE6CC283EDB618C93907E7B10E789DCABC3E794"
+    },
+    {
+      "path": "src/codex\\control\\tools.js",
+      "sha256": "E11904EF5B1ACBB93959D20F2F8DF6D53DE1533D43A25266DF9F98AC62469A09"
+    },
+    {
+      "path": "src/codex\\control\\worker-runtime.js",
+      "sha256": "651A2B4A8911EAE27B30EFBEC996D9304882B96D3A538064451BB8F4B6D15948"
+    },
+    {
+      "path": "src/codex\\core\\artifact-store.js",
+      "sha256": "2E6705F41E875BFC2D7135865D978130F5771C9A98D603CFB2A25E2D3D0A1A83"
+    },
+    {
+      "path": "src/codex\\core\\audit-anchor.js",
+      "sha256": "2DDE08FBD3E88EA9FA72DDAAD28BE10B2FB210A746896EE59ECF1F0A79666FB6"
+    },
+    {
+      "path": "src/codex\\core\\change.js",
+      "sha256": "A4A6EED57FF4E80462A547A658C3131424E778750FD983029DC632A28E98DDB4"
+    },
+    {
+      "path": "src/codex\\core\\control\\auth\\auth-service.js",
+      "sha256": "28ACEBB07DA35E19FDAA1EB69A8FE780AE98A3A191EF4FA286C03CB62C4490E7"
+    },
+    {
+      "path": "src/codex\\core\\control\\auth\\memory-auth-store.js",
+      "sha256": "6F0C35A6497D2A8C24D5E310C20F1C838FCA65281FBDEFD958BA88C962D5051B"
+    },
+    {
+      "path": "src/codex\\core\\control\\auth\\mysql-auth-store.js",
+      "sha256": "F5B6AC5B6C04E2DBEF8317385E2431DBC40A542768A68B9DDC27EA1C39040825"
+    },
+    {
+      "path": "src/codex\\core\\control\\auth\\password.js",
+      "sha256": "1F7B57D85EB2FE0A7B1FFE2A8D791C41CD1A70AA36D26F88B07F22A50AB6ED7E"
+    },
+    {
+      "path": "src/codex\\core\\control\\auth\\policy.js",
+      "sha256": "1EB01847D920031DC8E20D21C80357B36A70E5E8BE745497D69F19D4C4717B31"
+    },
+    {
+      "path": "src/codex\\core\\control\\auth\\secret-box.js",
+      "sha256": "E0ED5732926D14B7C437AE6E5A58A19035FBBCE7EA6665988A34B394276B888D"
+    },
+    {
+      "path": "src/codex\\core\\control\\auth\\store-contract.js",
+      "sha256": "5194A55D6D6A0BEBA83BB3285982811C6E76CEB26341D1AA721D9850C1815776"
+    },
+    {
+      "path": "src/codex\\core\\control\\domain.js",
+      "sha256": "29E877E7E28D88B1D16BFEA5C65FB06EBF54BD5C764FC1053B04F64F34C4A865"
+    },
+    {
+      "path": "src/codex\\core\\control\\persistence\\memory-repository.js",
+      "sha256": "3D0A695F9ED9B4658D115771E44FB45B134955E914B5130BE2A51F4224D7305B"
+    },
+    {
+      "path": "src/codex\\core\\control\\persistence\\migrations.js",
+      "sha256": "C86A2BDBE2C8C9CA22A623BB1ABCC7295EBDD1443B662D51B13D69648A6D7C19"
+    },
+    {
+      "path": "src/codex\\core\\control\\persistence\\migrations\\001-initial.sql",
+      "sha256": "4F379795FF4B5920B4DA17F22DA012810ADEFEB363FC7F1A7E20A805E3247888"
+    },
+    {
+      "path": "src/codex\\core\\control\\persistence\\migrations\\002-repository-contract.sql",
+      "sha256": "80A236FA7B52CBFF739FEA314001BAE3574BECF985280FCF62758131A97C8093"
+    },
+    {
+      "path": "src/codex\\core\\control\\persistence\\migrations\\003-auth-hardening.sql",
+      "sha256": "1CDFD481E3D91AC6FF618D1440B59B2F81C67C8A5C5EE179EA4D28AD08AE7B7E"
+    },
+    {
+      "path": "src/codex\\core\\control\\persistence\\migrations\\004-worker-connections.sql",
+      "sha256": "FF266F46F561F39B10F355375ACC7C66F08D35B6B84F29B791006E1E357947AF"
+    },
+    {
+      "path": "src/codex\\core\\control\\persistence\\mysql-backup.js",
+      "sha256": "6370BFDBE8C5433E6C86C382C14831DF5ABE09836008F25A44AB2297F3D88FB1"
+    },
+    {
+      "path": "src/codex\\core\\control\\persistence\\mysql-repository.js",
+      "sha256": "9B0E629B9E72E910DC3CB22D775AF4F446FCFD8865C0A0D6E6456817E0897DD8"
+    },
+    {
+      "path": "src/codex\\core\\control\\persistence\\repository-contract.js",
+      "sha256": "F7D8D10D8BB5B32B10316C5267F791AD59FDE57C51D4F34B159EAA80BF2058C1"
+    },
+    {
+      "path": "src/codex\\core\\control\\persistence\\state-machine.js",
+      "sha256": "3395280E1A01111DB968557B34C02E538D5D067F396D459DECD8F6A7E631FFE6"
+    },
+    {
+      "path": "src/codex\\core\\control\\worker\\memory-worker-store.js",
+      "sha256": "2C973E0B0EA3C09799EBAEDC91FD7A52EACF1D6A297879BE31418B1DCAB88AF8"
+    },
+    {
+      "path": "src/codex\\core\\control\\worker\\mysql-worker-store.js",
+      "sha256": "BD98FCEE0A84CB8D085C5133F478EDB03A3EA93D3EA5150A01154FF0B989FF1B"
+    },
+    {
+      "path": "src/codex\\core\\control\\worker\\worker-contract.js",
+      "sha256": "5254B2AC6373BC690670D2316E5773CBC8C8AA4C5F91C5810C9CB1CCD04210AB"
+    },
+    {
+      "path": "src/codex\\core\\control\\worker\\worker-gateway.js",
+      "sha256": "669AA65ED17841BC6FE9FB3BB574B543E56137564B5C07F2D6F8C8F32951FC74"
+    },
+    {
+      "path": "src/codex\\core\\control\\worker\\worker-scheduler.js",
+      "sha256": "3A482A36280112E9342116305B9EBAAF237E44F34AE07FFCB64DBF44B6C2A15E"
+    },
+    {
+      "path": "src/codex\\core\\env\\gradle.js",
+      "sha256": "A521DB2EE846C94C773875BE06A63A328190F03C6F254C4BFDD352E16D210EED"
+    },
+    {
+      "path": "src/codex\\core\\env\\install.js",
+      "sha256": "8C9FB1698CBABEE408DA5DEDA66478B9896DD705644E119CC52B90C9A0949F9A"
+    },
+    {
+      "path": "src/codex\\core\\env\\java.js",
+      "sha256": "820A711DC4676B003881696970C9BEDC084E25A4788A3562946C60A47F855EA3"
+    },
+    {
+      "path": "src/codex\\core\\env\\maven.js",
+      "sha256": "CC681CB6569409B83A24A55F8DCA4AC68A2E34D3165F0EB9E4AEDC5C5F5526F2"
+    },
+    {
+      "path": "src/codex\\core\\env\\node.js",
+      "sha256": "6558E15117857537D463E4267C258ADD4553FDF9CB6B2CDDE8E37A99BFFDB8AA"
+    },
+    {
+      "path": "src/codex\\core\\env\\python.js",
+      "sha256": "02C0B60F788ABCA7412AA0ED0C6A6587A6B936FA1BA7BEC5F958472AEDEC88FC"
+    },
+    {
+      "path": "src/codex\\core\\environment-catalog.js",
+      "sha256": "A2910D887A4FD2F03B1648DCE993E9E260777C6296777C622D2DB86F346AF2B9"
+    },
+    {
+      "path": "src/codex\\core\\environment-install.js",
+      "sha256": "F531824E77EAEEA6CC3A9F428F44E1E3D670CEBAE81211E9D5D15A6EC41B3B39"
+    },
+    {
+      "path": "src/codex\\core\\environment-mirrors.js",
+      "sha256": "076547C77CC10697D6735FE281731DC445E5AAD4D702575CE5F00A62C8CA04C2"
+    },
+    {
+      "path": "src/codex\\core\\environment-process.js",
+      "sha256": "CBA3F57A98A8E6825AE0A651D1E19AEF10899C2F527581F59D4182CE28C6AAA0"
+    },
+    {
+      "path": "src/codex\\core\\environment.js",
+      "sha256": "7727A9F78383A1A28960DE0810116EC71974F79C2853291C5BCB880006D133EB"
+    },
+    {
+      "path": "src/codex\\core\\git-identity.js",
+      "sha256": "6A0F46E936C51DE7711C1377CAFF8A02A999C69A62DD7E4812F01D010F2634A0"
+    },
+    {
+      "path": "src/codex\\core\\java-detect.js",
+      "sha256": "025C864FA6E71FFEEF83023A0FB7989D914E617AF6EABD173EB7B744A31E5181"
+    },
+    {
+      "path": "src/codex\\core\\java-reports.js",
+      "sha256": "D1E511DDD5CD9140DDDC31AC6323268B6C0D0B46FDA5851FDBBFDFC6508BC484"
+    },
+    {
+      "path": "src/codex\\core\\java\\browser-e2e.js",
+      "sha256": "A8AA74AE31767E626CC9BC5C70E6422A1EA11F089E39F5A12F13A57ED87630C7"
+    },
+    {
+      "path": "src/codex\\core\\java\\coverage-evidence.js",
+      "sha256": "8E3C0314BDB478F5273DF3BDA15E19687C5C4A9D35407D3C9EBCE3B42FD6B5B2"
+    },
+    {
+      "path": "src/codex\\core\\java\\environment.js",
+      "sha256": "D2598DDC9C7F1C081B2A91DD9F4512567789CD61728DB19185AB465F8F950774"
+    },
+    {
+      "path": "src/codex\\core\\java\\java-env.js",
+      "sha256": "18131F494591E2D13C026E931294D8F3D1585871EC5166EDE89E0D22FF4E998A"
+    },
+    {
+      "path": "src/codex\\core\\java\\java-fullstack-template.js",
+      "sha256": "DA0B9D07462A0BFF68A983A55F715B85292E4B8E4E7D9E9D5C2CED3EA5882035"
+    },
+    {
+      "path": "src/codex\\core\\java\\java-init.js",
+      "sha256": "3C17551258FB5117F86FCC07425E5A0CE8F9FB9E7CC7445491D32A9FBAD9F772"
+    },
+    {
+      "path": "src/codex\\core\\java\\java-runtime.js",
+      "sha256": "3977FD63332FC652455319F8071997A6FE973DCEBB1138B648E2D8E7E50499A2"
+    },
+    {
+      "path": "src/codex\\core\\java\\java-verify.js",
+      "sha256": "C2B001373269E654C55B9F4AEB72CEE16A2F7A16B874E1954D48069B973E1DA0"
+    },
+    {
+      "path": "src/codex\\core\\java\\java-versions.js",
+      "sha256": "24058A50001920328940E2CA7AB7496706AC7CE0B9FAFB70C2614604AAFDDC97"
+    },
+    {
+      "path": "src/codex\\core\\java\\mirrors.js",
+      "sha256": "9967E352EAB0D2C1B5CB09A44C584BD10109F81BC85BC15AD957599751E30B06"
+    },
+    {
+      "path": "src/codex\\core\\java\\provision.js",
+      "sha256": "F75222D35F4C0312A679F4856B56F2ABCCE3BEDD63EDF72AAEEBDDE722937D78"
+    },
+    {
+      "path": "src/codex\\core\\java\\verify-evidence.js",
+      "sha256": "8D800641C28AF5324CC10D574ADA2E003B0F9C5078516F15B28747ED7A4B32C6"
+    },
+    {
+      "path": "src/codex\\core\\lock.js",
+      "sha256": "EF2EB60874D50782D64C2EFB10B61A6551CDF5D9DD14601C235EC02C52034A3E"
+    },
+    {
+      "path": "src/codex\\core\\project-facts.js",
+      "sha256": "52BD07B303ED196AE65B3728D6EEFAB9DA20F47246631760F048A786537DBAEF"
+    },
+    {
+      "path": "src/codex\\core\\project-path.js",
+      "sha256": "FE71159ED099CF21E675538D16425D737B2E203194A753F409ECDA96DF484788"
+    },
+    {
+      "path": "src/codex\\core\\repair-context.js",
+      "sha256": "3C3F7374D80BEFD49D6E02C33E42755F849102A6BC1A51CE872638A68BEE1837"
+    },
+    {
+      "path": "src/codex\\core\\report.js",
+      "sha256": "0D7FB21706D797BCF97685D82167A95540CA6E0E0035D08197C55E3CFED8E24C"
+    },
+    {
+      "path": "src/codex\\core\\requirements.js",
+      "sha256": "CF412518E27203A3A154E3E90F4089D68C6DBA26D5FDFF6172121296A8BF2A49"
+    },
+    {
+      "path": "src/codex\\core\\state.js",
+      "sha256": "DEA5BBF32CB6711D58F5553FF4D3A3A60DAACBE603F25CA5A3A1F4D39F38095D"
+    },
+    {
+      "path": "src/codex\\core\\suites.js",
+      "sha256": "88C4963C4FAC1A735B6DEB0CDE90F3D6771909214437B9AAB8088F769A8DD892"
+    },
+    {
+      "path": "src/codex\\core\\task-policy.js",
+      "sha256": "4CCEC4FF2BEBE7954D38B6911344B9829083776F184B5C54451BEE243CEA2909"
+    },
+    {
+      "path": "src/codex\\core\\temp.js",
+      "sha256": "C7948D3C57B7E8A9E861CA5B67E88883E1D433C1F341CD330DF3D9F43226AF2F"
+    },
+    {
+      "path": "src/codex\\core\\template-style.js",
+      "sha256": "09AB12EBE91264D247D518DC3FF945666E0C70A718381CF10E24ECE3A8F19F93"
+    },
+    {
+      "path": "src/codex\\core\\testrunner.js",
+      "sha256": "682BA313924A2B65122A01370D3C6022C41A6E632B522605558F72DF53ABA805"
+    },
+    {
+      "path": "src/codex\\core\\util\\fsx.js",
+      "sha256": "745F85B21BB4A3D65B68E470ACC35A3D5AB1D3CB8F8BD9A60CF66913DF6DDC70"
+    },
+    {
+      "path": "src/codex\\core\\util\\hash.js",
+      "sha256": "371523AFBA764AEB15E9C9C0E90CED176B959C1CE92B6341E572C497ACFFB699"
+    },
+    {
+      "path": "src/codex\\delivery.js",
+      "sha256": "17F376E80351808FF31B3A2B67DD5FE79C0A2585BCA54DBD3EB4D72194149D99"
+    },
+    {
+      "path": "src/codex\\development.js",
+      "sha256": "305555800A37A0AD39A220E6222EAFEB8DE78379DF327F05FC8BE6BE51EC4632"
+    },
+    {
+      "path": "src/codex\\environment-fingerprint.js",
+      "sha256": "993CEFB8C9492D46AFBE60815915B1062E52F7C46C8B66322A0843E06D91DCEC"
+    },
+    {
+      "path": "src/codex\\environment-tools.js",
+      "sha256": "49E4236386598599712CF264198DE3B5077333262268D1DA725DC5503ADF3BEC"
+    },
+    {
+      "path": "src/codex\\events.js",
+      "sha256": "DA51A83DBDF98BA28B980AB566CBD66A20F4D9CF253CBEEFE32C3D0B494ED92D"
+    },
+    {
+      "path": "src/codex\\format-tools.js",
+      "sha256": "B65B3690F8D183FC443B29B4FC3BF3D10D0A60DEB79481077F3985ACB59570DF"
+    },
+    {
+      "path": "src/codex\\format.js",
+      "sha256": "5B235D6FDFA9433667C2913DCAB0E77C8C63CF6DD8CADEB01EA1E30F9A97C3F6"
+    },
+    {
+      "path": "src/codex\\git-path.js",
+      "sha256": "A02BDF748F604DFB2CEF2BF65ADC3D137D6DA8F2CC9AD64AF4418D6E2635C7D6"
+    },
+    {
+      "path": "src/codex\\host-input.js",
+      "sha256": "09F41CD237414D382CD662886D0CD6E288CA91F2CA555815D6A8CAC9C97C3857"
+    },
+    {
+      "path": "src/codex\\incremental.js",
+      "sha256": "C19E4E6EF38672EF9A0E5094CA9D65106AE2573FFD1DE44724338A196C22794E"
+    },
+    {
+      "path": "src/codex\\init-consent.js",
+      "sha256": "F17321E03E4756FDDB2960EF5CA3D9B70F95642262DE33F813341CD8E63F9B73"
+    },
+    {
+      "path": "src/codex\\init-publication.js",
+      "sha256": "06FD3B06BADFA79AA81924808F88019DEA97566CB269E730307B5E4C8CC0CB0B"
+    },
+    {
+      "path": "src/codex\\init-worker.js",
+      "sha256": "88675486120079F2F4536ED9E77BABD70480CCC5473017EAE66FF6528F4D26C5"
+    },
+    {
+      "path": "src/codex\\init.js",
+      "sha256": "14A45C1BBAA1D8F587B52643E1FCEEDB10FB6A260601174BDADF94086D038855"
+    },
+    {
+      "path": "src/codex\\locale.js",
+      "sha256": "DA70C1117DFC2C2C3A05F17B4FB29452F731E1512E4BF37C866A8C94C3B65776"
+    },
+    {
+      "path": "src/codex\\management\\public\\app.js",
+      "sha256": "569B6A45D10C1871C847ACFC179DEAF93962C9A429971CFDD90377DF5E4F16C0"
+    },
+    {
+      "path": "src/codex\\management\\public\\index.html",
+      "sha256": "7FF1E121FB57817EDBD7BA43DC02C2F9C2F817D789C990C8B605E81C8AFA2643"
+    },
+    {
+      "path": "src/codex\\management\\public\\style.css",
+      "sha256": "04CE8597F21A8AF644F0A2D4BF8DC90A93FBABB51765030F610922B348BF9C3C"
+    },
+    {
+      "path": "src/codex\\management\\server.js",
+      "sha256": "BF2F346EC516AA8A1490628D38B8C416880DCC40B523A7B7CFD40DA92C8977C7"
+    },
+    {
+      "path": "src/codex\\native-role-agent.js",
+      "sha256": "8CEB62D6090424B4E9E3D2813B53FE6599819DEB8ED1E5E29B81159D1AD66059"
+    },
+    {
+      "path": "src/codex\\native-test-runner.mjs",
+      "sha256": "976CABA28BBEB57E7D557B7500DDB6452E3AC2B61F14064CD5049DB30608DE57"
+    },
+    {
+      "path": "src/codex\\onboarding.js",
+      "sha256": "ABE8EF5817825C36DE79151607EF55C735D13391B8588FBD3615A9054A392C9E"
+    },
+    {
+      "path": "src/codex\\peer.js",
+      "sha256": "207C7093C4CDE23288EB177B348481C909D9C55618707C92A88B63EAA43C712E"
+    },
+    {
+      "path": "src/codex\\plan-tools.js",
+      "sha256": "E9E8224502CA5E075A67C6E49C474535C6269E0513518C62F94F11B274806940"
+    },
+    {
+      "path": "src/codex\\plan.js",
+      "sha256": "3ABFF4CB69543D7CABA4685E9C21CEF9401FDA6F7C65070F4ACCF68FDFCA6718"
+    },
+    {
+      "path": "src/codex\\project-adopt.js",
+      "sha256": "C06BA6B56F79E85B00EC4913C796A25531F251D97B50F0AEB2575FDCF774CBDE"
+    },
+    {
+      "path": "src/codex\\project-conventions.js",
+      "sha256": "038947C61E68266D20123F2C683804A47FF31B75DF597310D5C5325DF1B0AD04"
+    },
+    {
+      "path": "src/codex\\project-detect.js",
+      "sha256": "0DEA2449CCA3C3D3D78A2E58B692960D4B24CB0DECEE17A49EA2F830B732344A"
+    },
+    {
+      "path": "src/codex\\project-model.js",
+      "sha256": "ED117099B251D7BCAE6D08EF6785D3DCF3F34772EEAB4E36DCB3FE75AAA0E720"
+    },
+    {
+      "path": "src/codex\\project-new.js",
+      "sha256": "F35F9BFB38BB1D693F1E1AFA694202F4E8AFDA1288AF394F98CBFA6514F9EFCE"
+    },
+    {
+      "path": "src/codex\\project-state.js",
+      "sha256": "477029BCDA9BE5A6A2C0308C57088E808A10557C3BEE3AA43E5D71647024BEB1"
+    },
+    {
+      "path": "src/codex\\project-status.js",
+      "sha256": "6D7598FF03CBAD98A19CA0878C1F040FDEF627A5E511715F30EAA47161C04E03"
+    },
+    {
+      "path": "src/codex\\project-tools.js",
+      "sha256": "0E58667B686A9E70A5120170609C64F65C168E0F092880CAF22A67FB22990C93"
+    },
+    {
+      "path": "src/codex\\protocol.js",
+      "sha256": "A9950A3D24363BAFF765391355423D4EC6562127C5B52C2DA46191DD90D3DB77"
+    },
+    {
+      "path": "src/codex\\quality-tools.js",
+      "sha256": "9B08300021F26900BB0E0E61D3B170976F442F919E2ECCE87595F81ECE822DA0"
+    },
+    {
+      "path": "src/codex\\quality.js",
+      "sha256": "324B171C62ABB3FB9FA83C08DC2C5D8F5FCA592EAA84879CED251F4073E9D2B2"
+    },
+    {
+      "path": "src/codex\\release-tools.js",
+      "sha256": "A63A6B32EE1400382572D856A28CB300BA9A5539518BA99AB9E9A76A557CB53A"
+    },
+    {
+      "path": "src/codex\\release.js",
+      "sha256": "72C178C1A9E98F32E841DE2CCA15EF28CE800EB8B96D993F782FAE3CF9EB670F"
+    },
+    {
+      "path": "src/codex\\review-tools.js",
+      "sha256": "E8A1C6859B25E18F6E98951A1B10E3ABC24C78DAABDC6D80FD953834E67D68DD"
+    },
+    {
+      "path": "src/codex\\review.js",
+      "sha256": "402C4AEEF67BECEC97CED0EA992F82A61FDED690063B91813290A1C64541D7B8"
+    },
+    {
+      "path": "src/codex\\server.js",
+      "sha256": "FB002219A56C5690E5692517C3A8D354622F0DC6571A5B6420892F6743277FC2"
+    },
+    {
+      "path": "src/codex\\skill-entries.js",
+      "sha256": "46D7CEDD06CD6A77E5ED8961CA68307CFDAC7E2A497DDDFBCEB7C071E5923515"
+    },
+    {
+      "path": "src/codex\\state-machine.js",
+      "sha256": "611D952FBB1AEF28FDBE6E3B3FC21ACAE4439C316550B1D39FF4A11CF52255AF"
+    },
+    {
+      "path": "src/codex\\storage.js",
+      "sha256": "04DC4D1CD6362C0AFA34ED29A56F9205E23A9EAEA72588094E741FE78C757E41"
+    },
+    {
+      "path": "src/codex\\tools.js",
+      "sha256": "FBBCEF21938B13F68620762133DE2E503C795084BE32559A67BAD8E630C2A483"
+    },
+    {
+      "path": "src/codex\\verification.js",
+      "sha256": "1AE78A0E938AE4CB3FDCE3A86A6F25C8AE8C470180F18A1855DD1F7A08FD0468"
+    },
+    {
+      "path": "src/codex\\verify.js",
+      "sha256": "44B87911779EA52402A4AE6E6EDFE6A8650962902C2E34A096BCC5BFA9280F27"
+    },
+    {
+      "path": "src/codex\\workflow-tools.js",
+      "sha256": "B2FD92A85AEE3BD8DA981A5EDCF08A5146067F467D8284BD44922D8F5CCCE7CC"
+    },
+    {
+      "path": "test\\codex-adopted-verification.test.js",
+      "sha256": "814198823B4B4392730C9AA64F9E6D320E3D84601F46CC34A47AF7E9B8C72F78"
+    },
+    {
+      "path": "test\\codex-approval-authority.test.js",
+      "sha256": "A5753604C87C10055C62C00045F24F41FE28B6422A566E6C4672DC192B018125"
+    },
+    {
+      "path": "test\\codex-approval-state.test.js",
+      "sha256": "6A7CDF5BCA74C5F63F96B592B081F28D5F1DF5577900F39E03FF78567C464786"
+    },
+    {
+      "path": "test\\codex-artifact-store.test.js",
+      "sha256": "B8E35B33CACD162A1ED46465A588E49D5290572D2C45FFF6687A0C20FA7A7F39"
+    },
+    {
+      "path": "test\\codex-baseline-job.test.js",
+      "sha256": "94AEC3864A4073832BB8FADA136FCACFE96A517ACA7ECC4D72FDD54BED38EF51"
+    },
+    {
+      "path": "test\\codex-baseline.test.js",
+      "sha256": "3690F59B00E520FD8607020F18360D413D343F9CC9683ADBC61C2D0E91D3A622"
+    },
+    {
+      "path": "test\\codex-change-add-flow.test.js",
+      "sha256": "A082DF1D41100ED0FEF6F100440E29C5E7DDC4F0E205DA1F10B86CA0795A2DE9"
+    },
+    {
+      "path": "test\\codex-change-policy.test.js",
+      "sha256": "FBD82841F953F934030800C31B512D575461C75819738E5F81415112FB154DF2"
+    },
+    {
+      "path": "test\\codex-change-tools.test.js",
+      "sha256": "E5F553D14DA074D8176250417178E7094D3E8BF8DFEFCE651E31E8AEC0C1D220"
+    },
+    {
+      "path": "test\\codex-cleanup.test.js",
+      "sha256": "B2057B8682051324431618966A0B6CCBB6856E0A9E3018702B16E8A2458F9B11"
+    },
+    {
+      "path": "test\\codex-control-approval-bridge.test.js",
+      "sha256": "EBAE73FE7BDED53550C2E941317640383AA12F4A95EFD4A0AE93275BB711C872"
+    },
+    {
+      "path": "test\\codex-control-auth-mysql.test.js",
+      "sha256": "CA8523ADC0BF81E01A4B50AE3748439DCA787D4277914C25E0886728C40420C0"
+    },
+    {
+      "path": "test\\codex-control-auth-runtime.test.js",
+      "sha256": "BD03D302FD3A50D9F3476EC204935EFFEC46A56539671F9EA6A82B1BB638183F"
+    },
+    {
+      "path": "test\\codex-control-auth-service.test.js",
+      "sha256": "6AEE0791B1BAE5766B3879C22E3B48FA77DAD48DC5D63103E5E6607FD02880A1"
+    },
+    {
+      "path": "test\\codex-control-capabilities.test.js",
+      "sha256": "C260145AB8EA73E4A685E283AED06BA6608A6662E470F9EB0666ECF859D1E9B5"
+    },
+    {
+      "path": "test\\codex-control-config.test.js",
+      "sha256": "0094D0158595EC91FC405BAE2EC99BE617F639E1ABF4D6F2B2977A02CF4E8091"
+    },
+    {
+      "path": "test\\codex-control-daemon.test.js",
+      "sha256": "FD9C197A7BA36D011C764A562277AC146A8ED76A8751167AE2CF59A0BFF0BF64"
+    },
+    {
+      "path": "test\\codex-control-domain.test.js",
+      "sha256": "2D147F301B7DFB3984451C2E80B9EE40C12ECEC80159D580717FB37A683D487A"
+    },
+    {
+      "path": "test\\codex-control-m10-integration.test.js",
+      "sha256": "5A930F8778ACAC20A1378BA262AAFD3DCD77653002A8CDCD9CED9739B95C2897"
+    },
+    {
+      "path": "test\\codex-control-m10-scheduler.test.js",
+      "sha256": "212B95F3A423AFEAA1CFFE24CE64346A093B78EFEB26C1DBF3A8D7919057F368"
+    },
+    {
+      "path": "test\\codex-control-m4-decision-application.test.js",
+      "sha256": "BAE8B8031BA5BE383184C4A285D72CF582A31F7CD7EC9485279D4B679D27A6D8"
+    },
+    {
+      "path": "test\\codex-control-m4-e2e.test.js",
+      "sha256": "312CE4738AE7FFCFEA9842C185DD7E09A18ED08DDF5C2A5E5AF93D38DCBF0DE4"
+    },
+    {
+      "path": "test\\codex-control-m5-notifications.test.js",
+      "sha256": "C19853AF3B1B858044AA113B4526972FF87AB96A1636AFFC0F9B30EB7C1AA9AA"
+    },
+    {
+      "path": "test\\codex-control-m6-timeline.test.js",
+      "sha256": "37AADB2761D78D62AEC7B8DCDA9696F33041F89ECACB60971547CACAAAF121B5"
+    },
+    {
+      "path": "test\\codex-control-m6-web.test.js",
+      "sha256": "146B015E8285342A284FE567EF801E31BCEDFC25EB93845368CA78E649E0E503"
+    },
+    {
+      "path": "test\\codex-control-m7-inbox.test.js",
+      "sha256": "A736F78B153E6E6D1DEAD9A478B22DA91C70C3FE963E4408F1BF641ADAEA2A28"
+    },
+    {
+      "path": "test\\codex-control-m7-web.test.js",
+      "sha256": "AA5325CA1191E33096BCEEF1C90DC2D3727B1B01156A518019D46F852CE65BF2"
+    },
+    {
+      "path": "test\\codex-control-m8-assurance.test.js",
+      "sha256": "FCCD4E497048636AE2F4D8357A2CB10651CDB7894D5FFDA139B5BF442DECEB48"
+    },
+    {
+      "path": "test\\codex-control-m9-deployment.test.js",
+      "sha256": "0F1FD76587444B09516FBEEABD2E17F3DE112440E2DD69BB600FC198FB451F28"
+    },
+    {
+      "path": "test\\codex-control-m9-web.test.js",
+      "sha256": "BB880D3456FF3D016D171996562FF1D8D1635759826A1FDA4E331026F589F4B5"
+    },
+    {
+      "path": "test\\codex-control-outbound-worker.test.js",
+      "sha256": "BAB03C31C51BB0A55251D598DA7EA9AC9414C12A781F3FA72A1F494E8A7B83AB"
+    },
+    {
+      "path": "test\\codex-control-persistence-audit-retention.test.js",
+      "sha256": "110D3A584EC25F9C729F8918DF2E010281CDEAB3A8CDBD98B7C6616BC30FCDE8"
+    },
+    {
+      "path": "test\\codex-control-persistence-migrations.test.js",
+      "sha256": "F13F436121372687C631B6C4AD42EE7CC7B503F6C35165F6E0B1D3BD0513DDE1"
+    },
+    {
+      "path": "test\\codex-control-persistence-mysql.test.js",
+      "sha256": "7175C323D1917FEFF42AF5B34B34B7AD2B228D34887643D331F7BEE33D25E7AF"
+    },
+    {
+      "path": "test\\codex-control-persistence-repository.test.js",
+      "sha256": "D5446DB70462C0B841F7A91B26AFB43C07F70C298A30D810B6442EB225ECB9E6"
+    },
+    {
+      "path": "test\\codex-control-persistence-schema.test.js",
+      "sha256": "137A7AAB4D3C0D468D5C3DCDE956C77C7A203F882897F7E88E217F79090AF89D"
+    },
+    {
+      "path": "test\\codex-control-persistence-state-machine.test.js",
+      "sha256": "ACF099CE2B4E3723071F6BA0E678519C429B1EFEC0C13067987849E0C088D743"
+    },
+    {
+      "path": "test\\codex-control-projects.test.js",
+      "sha256": "6982513D135F69D0AA19833EE9DCD0F0735980F5D9E09DBD42EF7CF11D15DCD7"
+    },
+    {
+      "path": "test\\codex-control-remote-worker.test.js",
+      "sha256": "3899205217B697AFE33C879912980A18B2A08B3922A692EEEBFB3C68815E492F"
+    },
+    {
+      "path": "test\\codex-control-resume-integration.test.js",
+      "sha256": "A39D28E2960382B241352103AFD2494052540CE7D5E316B638CCA29F3A720EB5"
+    },
+    {
+      "path": "test\\codex-control-service.test.js",
+      "sha256": "A8E221EBE557FDBB1E4EF864EE66448FE811B21DBDD4E743C306A810DF5D550D"
+    },
+    {
+      "path": "test\\codex-control-store.test.js",
+      "sha256": "A394DF9FF7C7711031FEE37BBD07BBFF45BB6154395D4A5CD1C08AF7206EA916"
+    },
+    {
+      "path": "test\\codex-control-supervisor.test.js",
+      "sha256": "CB13676AD21182C17F5F90E128C7B2388CF6DF1CE7BB32A285DE5F497B30D26C"
+    },
+    {
+      "path": "test\\codex-control-tools.test.js",
+      "sha256": "21AD1C38A6EAD261D37EF7D432EB07F4D127F1FA168C53A2933A2D52786E4339"
+    },
+    {
+      "path": "test\\codex-control-web-integration.test.js",
+      "sha256": "304784BB42479D3057CE06734BBBB3989F7BB5A9C27F3B57B0CA520FA5D727CB"
+    },
+    {
+      "path": "test\\codex-control-worker-e2e.test.js",
+      "sha256": "559B9B2EA251C69417573F560846C68DA0E6BE23568F42F0CC41402DF9A750A1"
+    },
+    {
+      "path": "test\\codex-control-worker-gateway.test.js",
+      "sha256": "598B15B6C822562F0DD311A3385D8370DA4AEFD419217D4FB4B366F2C40E2711"
+    },
+    {
+      "path": "test\\codex-control-worker-mysql.test.js",
+      "sha256": "0EDDE517DC60B7107CE88E6E6A68B93D7B61AD3B2E2312FEC79C9DC9ACC687AE"
+    },
+    {
+      "path": "test\\codex-control-worker-runtime.test.js",
+      "sha256": "C5706FF106A93C8FB434C876B3F61704EA26B5314B92229E29306C2BC099C68A"
+    },
+    {
+      "path": "test\\codex-core-anchor.test.js",
+      "sha256": "0830ED8E293FC72D96B871AB1C1A66D1E1634019C461B8FAA7857619B3AD9BE5"
+    },
+    {
+      "path": "test\\codex-delivery-record.test.js",
+      "sha256": "BC2CA187A384B05D733E131E0DCE7DCF74DFEDA18B495DC27E51FED0D20A83C4"
+    },
+    {
+      "path": "test\\codex-delivery-v3.test.js",
+      "sha256": "CE989FEE2D479343C043BB1C5E33F6F4A4B71A6C39D97E480F7F39E0FE0DF822"
+    },
+    {
+      "path": "test\\codex-dev-launcher.test.js",
+      "sha256": "29E3174F167DA2306B7C6DC271EB1FE61624AACB8A3F60E3D5883446458CA439"
+    },
+    {
+      "path": "test\\codex-development-flow.test.js",
+      "sha256": "5348C0616CFC3B440B8F74CE9D89FA131C2E3DBF5DB5016FEF81B559E2D24550"
+    },
+    {
+      "path": "test\\codex-environment-fingerprint.test.js",
+      "sha256": "8CB438975C4BE1C519C6FE4ED53A09315CB113BB58F0F0E17C7FD3C3113A2CBF"
+    },
+    {
+      "path": "test\\codex-environment.test.js",
+      "sha256": "8EC6AD28D6465E0793341B453CA8C66662D4A241C6A98C2CFA30CEDB170DEB2B"
+    },
+    {
+      "path": "test\\codex-execution-adapter.test.js",
+      "sha256": "1B6B74BDFE11020D8BA588AEBE618B35731D2CCE30D4C2FAF3FD9A9CE5E097C2"
+    },
+    {
+      "path": "test\\codex-feishu.test.js",
+      "sha256": "660F12B5E7CF9A40CCA908361DD3A20DDCF3E2762B71999D1F4DF59A2D29041E"
+    },
+    {
+      "path": "test\\codex-format-rework.test.js",
+      "sha256": "2BED67709AB8EF3035647E2C9670C1C67CFBBFA5279FB0E106663920EC9ECF8C"
+    },
+    {
+      "path": "test\\codex-git-path.test.js",
+      "sha256": "8C76087BCACA16B8435A7D0AF85AC674F0DD04531F44AE3C60D173E7D6BFCB00"
+    },
+    {
+      "path": "test\\codex-golden-matrix.test.js",
+      "sha256": "C50FAF3B6B5A99505CB2EACDF3BE1787A3E45E1A2F29F22707F549BAB95DA7A0"
+    },
+    {
+      "path": "test\\codex-host-input.test.js",
+      "sha256": "6D011719BBCE2474C5354FF232588420E973242027F1F6943656DB869A58A0E6"
+    },
+    {
+      "path": "test\\codex-incremental-delivery.test.js",
+      "sha256": "278DBEFA2B3DAFCEC4747FAC799E36EACCF0B0DCA8270377F988A41E6420A90B"
+    },
+    {
+      "path": "test\\codex-init-adapter.test.js",
+      "sha256": "1D1445C1E0A62246A066DB1AAB6F3D70D300844CA63642B965E862289019BE04"
+    },
+    {
+      "path": "test\\codex-init-publication.test.js",
+      "sha256": "608C107C555622B6F8F74E9C2A21E3132D32378BEEEF80167BD654E834F5BA65"
+    },
+    {
+      "path": "test\\codex-init-security.test.js",
+      "sha256": "95606B0559099EDBB6E374997B20832A183DC68556DA6A2082B05E74BBC6E851"
+    },
+    {
+      "path": "test\\codex-install-env.test.js",
+      "sha256": "2CFDD4CA105883A7DC5514C37470D4326397DA25110E49FA6A43C8D38F16547A"
+    },
+    {
+      "path": "test\\codex-management-api.test.js",
+      "sha256": "3A57D0C0C7A1D6CE154FFF2C65084E7CFFC4ECD6E9D60F2FCD8332D8E50A99E7"
+    },
+    {
+      "path": "test\\codex-management-auth-ui-contract.test.js",
+      "sha256": "9FBF12F1E3FAAE5BF133BD0CEED5243CE86BC379377764620702AB613DD56C30"
+    },
+    {
+      "path": "test\\codex-management-auth.test.js",
+      "sha256": "D15A85C10A4ACD821340489A78C318731F4791FAA5D17D64F2BA363C84945332"
+    },
+    {
+      "path": "test\\codex-management-remote-mode.test.js",
+      "sha256": "9401DCC76DFC990D572FABC0203A9DFBCE7AAB6ECC9973B64ECFFA36F150F155"
+    },
+    {
+      "path": "test\\codex-management-security.test.js",
+      "sha256": "E168E28E6E1C28F4B46490E6F3472975BAD84A62738BFB33F969342C02521BC0"
+    },
+    {
+      "path": "test\\codex-management-services.test.js",
+      "sha256": "6B6EC1782B7B65F65633CF0B7B4E8330C954DB279AE6A1B84F0B373C56B1B24B"
+    },
+    {
+      "path": "test\\codex-management-ui-contract.test.js",
+      "sha256": "712F083ED379D760F820EE686C3CBB0939F0D48320071AD41CCE7A0B9A512D56"
+    },
+    {
+      "path": "test\\codex-management-worker.test.js",
+      "sha256": "D31126A61450694593D6AC1D9484EB04A5123B5CF020C32EE565ECBD94C10A96"
+    },
+    {
+      "path": "test\\codex-native-role-agent.test.js",
+      "sha256": "406F7981A0DEAC5FD0B8EB249D9E735B56842612B3C7BE603CACA63D49B2BC44"
+    },
+    {
+      "path": "test\\codex-native-runner.test.js",
+      "sha256": "D289223951551FC1AE4C766F3A37A2CA5E1590D89D9FCCD1CA76C88F7B66923A"
+    },
+    {
+      "path": "test\\codex-notification-outbox.test.js",
+      "sha256": "BE2647101884E28D16D9380E872B6BEFE430549EBD51F891E21452285145FFC2"
+    },
+    {
+      "path": "test\\codex-onboarding.test.js",
+      "sha256": "71C881FFA90D7A2C0B67428ACF16F407BB33B525BF73A4CC89E99DCC4EDCC20F"
+    },
+    {
+      "path": "test\\codex-outcome-builder.test.js",
+      "sha256": "0020B1A9661EE7BB1A4B99D373154336C46794F487C92027E467B71F72639863"
+    },
+    {
+      "path": "test\\codex-peer-server.test.js",
+      "sha256": "5A4FC609422A9C5DC1E18FABFC4E165FA61EB974FC0F535360A031CED8583250"
+    },
+    {
+      "path": "test\\codex-peer-transport.test.js",
+      "sha256": "734088399C12689FFD0D76B59B90DE9EE90C433BAFB06488AF67D7025C19E2F3"
+    },
+    {
+      "path": "test\\codex-plan-core.test.js",
+      "sha256": "B06AB5F4B07D2BC1B5B782F23A9DE0686F5EC7FB7625C12EEEB684E109A24916"
+    },
+    {
+      "path": "test\\codex-plugin-package.test.js",
+      "sha256": "9F1EA32272E14FECDBABC25A4331AC5A6A0053DBB04BC1F696CF5576ADBFE2AA"
+    },
+    {
+      "path": "test\\codex-plugin-protocol.test.js",
+      "sha256": "0C22E9A604509C6FACF776C16D7C42BFED3F0581BEE312F761BF15AC7A427F21"
+    },
+    {
+      "path": "test\\codex-project-adopt.test.js",
+      "sha256": "4ABBDA6064C0F7EEA6F7C4B670AB6B7FB6AA4F1637449B81BECEFC5BB4FDEEED"
+    },
+    {
+      "path": "test\\codex-project-conventions.test.js",
+      "sha256": "CA798E5BEABD9DC824B1A9537579D5D0DDC456EC4A2D7DB13B4ED8BE4543EACB"
+    },
+    {
+      "path": "test\\codex-project-detect.test.js",
+      "sha256": "A0C594EE229EAA1698B8170DCB47F86764489FBE61E252CFC91F59E306943A16"
+    },
+    {
+      "path": "test\\codex-project-model.test.js",
+      "sha256": "4010B3A3A240ADD2137D89F153582954DE07E86B211057625EA489B8C1E7DDD1"
+    },
+    {
+      "path": "test\\codex-project-new.test.js",
+      "sha256": "90038C5015F7389DF2DC1F38D07B8B4FB74E7FFFD2229460C701BDE95A721715"
+    },
+    {
+      "path": "test\\codex-project-tools.test.js",
+      "sha256": "33466FEDB4DA0164CFB82C63DB6493733CAC74A21F48F7266220057C9FA53179"
+    },
+    {
+      "path": "test\\codex-quality-gate.test.js",
+      "sha256": "F046233580EB7A6A5098DB1531AE6253320A47888D4D898AFE904833280BC4F2"
+    },
+    {
+      "path": "test\\codex-review-release.test.js",
+      "sha256": "BB967349045BE196F47EDC7D0C253F2E52A61CD3116503F69F6B976380552274"
+    },
+    {
+      "path": "test\\codex-session-recovery.test.js",
+      "sha256": "3894099D13E0A5559780AC32A567A2C4CA78FFA205940EF879828BB40256B179"
+    },
+    {
+      "path": "test\\codex-source-setup.test.js",
+      "sha256": "1735DABFB055E8AAF2EFCBDAC49B20C65ADC325C986E0D92137CC006D944A2E7"
+    },
+    {
+      "path": "test\\codex-state-kernel.test.js",
+      "sha256": "C4542309F0A51008ACB78F71443A33CF2DD356827CC48ED1E75D42CCD5A8FBC8"
+    },
+    {
+      "path": "test\\codex-step-up.test.js",
+      "sha256": "019A2EB18634823B2CF8AF18D7BD38CF9A27ECF96D93012126DF51ABD00DCE48"
+    },
+    {
+      "path": "test\\codex-temp-lifecycle.test.js",
+      "sha256": "15C39EFFAB7B7A6F2B74A1E10FC329DF2328A3D3E09D796DE37BBBBC477D807F"
+    },
+    {
+      "path": "test\\codex-test-selection.test.js",
+      "sha256": "78327774CD163ED446A73F1B17A01A4F014062C2B084F217ADCEA183455F12C6"
+    },
+    {
+      "path": "test\\codex-tools-workflow.test.js",
+      "sha256": "AEADDE20A9500F9DB8852CCEB1657AAEA8015CF3658C16C77B095C074A9BD270"
+    },
+    {
+      "path": "test\\codex-verification.test.js",
+      "sha256": "6E7EC6AC1F1679F2FCEBCCF65A421F787EA5ACF2F7B6E4E86D42D32D479383F4"
+    },
+    {
+      "path": "test\\codex-verify-adapter.test.js",
+      "sha256": "97425E2A2645CD0C55764A95F2B6E38E0BDAF18F2789A5B92C6364EF6AE13997"
+    },
+    {
+      "path": "test\\mysql-test-config.mjs",
+      "sha256": "76CF51EB0C5F49EEEF05A44DA57B463288D3C172DDD162B9E6EC659E916D9F9D"
+    },
+    {
+      "path": "test\\setup-temp.mjs",
+      "sha256": "6ACC98809CB2858C82A8972001E65E58B1C5E8EE3FA1E014FACAE65BFD132088"
+    }
+  ]
+}

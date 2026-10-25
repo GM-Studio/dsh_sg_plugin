@@ -60,7 +60,6 @@ const ADAPTER_FILES = {
 const EXTRA_FILES = [
   ...Object.keys(ADAPTER_FILES),
   '.specgate/config.yaml',
-  '.specgate/state.json',
   '.specgate/monorepo.json',
   '.specgate/golden.json',
   '.specgate/init-report.json',

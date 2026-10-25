@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { randomUUID } from 'node:crypto';
 import { spawn, spawnSync } from 'node:child_process';
-import { patchState } from '../state.js';
+import { patchState } from '../project-facts.js';
 
 export const VERIFY_STAGES = [
   'backend-verify',

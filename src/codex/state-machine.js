@@ -1,6 +1,7 @@
 import { createStorage } from './storage.js';
 import { canonicalJson, createEvent } from './events.js';
 import { makeCheckpoint, countFailure, RETRY_CATEGORIES } from './checkpoints.js';
+import { randomUUID } from 'node:crypto';
 
 export const MAIN_PHASES = Object.freeze([
   'REQ_INTAKE',
@@ -29,6 +30,51 @@ export const SIDE_PHASES = Object.freeze([
   'ROLLBACKING',
 ]);
 export const PHASES = Object.freeze([...MAIN_PHASES, ...SIDE_PHASES]);
+export const PUBLIC_PHASE_MAP = Object.freeze({
+  REQ_INTAKE: 'CLARIFYING',
+  REQ_CLARIFYING: 'CLARIFYING',
+  REQ_CRITIQUE: 'CLARIFYING',
+  H1_PENDING: 'H1_PENDING',
+  REQ_FROZEN: 'PLANNED',
+  PLANNING: 'PLANNED',
+  TEST_DESIGN: 'TEST_DESIGNING',
+  TEST_CASES_FROZEN: 'TESTS_FROZEN',
+  DEVELOPING: 'IMPLEMENTING',
+  INTEGRATING: 'IMPLEMENTING',
+  TESTING: 'VERIFYING',
+  FORMATTING: 'VERIFYING',
+  REVIEWING: 'REVIEWING',
+  H3_PENDING: 'H3_PENDING',
+  ARCHIVING: 'DELIVERED',
+  ARCHIVED: 'DELIVERED',
+  BLOCKED: 'BLOCKED',
+  PAUSED: 'PAUSED',
+  CANCELLED: 'CANCELLED',
+  PUSH_FAILED: 'BLOCKED',
+  ARCHIVED_NOT_PUSHED: 'DELIVERED',
+  ROLLBACKING: 'BLOCKED',
+});
+export function publicPhaseOf(phase) {
+  if (phase === null) return null;
+  if (!Object.hasOwn(PUBLIC_PHASE_MAP, phase)) throw new TypeError('Unknown workflow phase');
+  return PUBLIC_PHASE_MAP[phase];
+}
+export function publicWorkflowView(value) {
+  if (Array.isArray(value)) return value.map(publicWorkflowView);
+  if (!value || typeof value !== 'object') return value;
+  return Object.fromEntries(
+    Object.entries(value).map(([key, item]) => [
+      key,
+      ['phase', 'resumePhase', 'from', 'to'].includes(key) &&
+      typeof item === 'string' &&
+      Object.hasOwn(PUBLIC_PHASE_MAP, item)
+        ? publicPhaseOf(item)
+        : publicWorkflowView(item),
+    ]),
+  );
+}
+const RESERVATION = Symbol('server approval reservation');
+const DECISION = Symbol('server approval decision');
 const TERMINAL = new Set(['ARCHIVED', 'ARCHIVED_NOT_PUSHED', 'CANCELLED']);
 const table = Object.fromEntries(
   MAIN_PHASES.map((phase, index) => [
@@ -40,6 +86,8 @@ table.H1_PENDING.push('REQ_CLARIFYING');
 table.H3_PENDING.push('REVIEWING');
 table.REVIEWING.push('DEVELOPING');
 table.TESTING.push('DEVELOPING');
+for (const phase of ['TEST_CASES_FROZEN', 'DEVELOPING', 'TESTING', 'REVIEWING'])
+  table[phase].push('TEST_DESIGN');
 table.ARCHIVING.push('ARCHIVED_NOT_PUSHED', 'PUSH_FAILED', 'ROLLBACKING');
 table.PUSH_FAILED = ['ROLLBACKING'];
 table.ROLLBACKING = ['CANCELLED'];
@@ -58,19 +106,43 @@ const initialState = () => ({
   context: {},
   checkpoint: null,
   retries: {},
+  automaticFailures: 0,
   resumePhase: null,
 });
 const validVersion = (value) => Number.isSafeInteger(value) && value >= 0;
 const validId = (value) =>
   typeof value === 'string' && /^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$/.test(value);
 
-export function createStateStore({ projectRoot, authorizeGate, lockTimeoutMs } = {}) {
-  const storage = createStorage(projectRoot, { lockTimeoutMs });
+export function createStateStore({
+  projectRoot,
+  authorizeGate,
+  lockTimeoutMs,
+  anchorRoot,
+  approvalTimeoutMs = 30000,
+} = {}) {
+  if (
+    !Number.isSafeInteger(approvalTimeoutMs) ||
+    approvalTimeoutMs < 1 ||
+    approvalTimeoutMs > 600000
+  )
+    throw new TypeError('approvalTimeoutMs must be bounded');
+  const storage = createStorage(projectRoot, { lockTimeoutMs, anchorRoot });
   const protect = async (operation) => {
     try {
       return await operation();
     } catch (error) {
-      const known = new Set(['AUDIT_CORRUPT', 'SNAPSHOT_AHEAD', 'STORE_BUSY', 'UNSAFE_PATH']);
+      const known = new Set([
+        'AUDIT_CORRUPT',
+        'SNAPSHOT_AHEAD',
+        'STORE_BUSY',
+        'UNSAFE_PATH',
+        'APPROVAL_IN_PROGRESS',
+        'ANCHOR_MISSING',
+        'ANCHOR_ROLLBACK',
+        'ANCHOR_INVALID',
+        'ANCHOR_BEHIND',
+        'LEGACY_STATE_CHANGED',
+      ]);
       return errorResult(
         known.has(error.code) ? error.code : 'STORAGE_ERROR',
         known.has(error.code) ? error.message : 'Cannot safely access state storage',
@@ -84,7 +156,11 @@ export function createStateStore({ projectRoot, authorizeGate, lockTimeoutMs } =
   };
 
   function validateState(state) {
-    if (state.version > 0 && (!validId(state.changeId) || !PHASES.includes(state.phase)))
+    if (
+      state.version > 0 &&
+      !(state.changeId === null && state.phase === null) &&
+      (!validId(state.changeId) || !PHASES.includes(state.phase))
+    )
       throw Object.assign(new Error('Committed workflow state is invalid'), {
         code: 'AUDIT_CORRUPT',
       });
@@ -98,6 +174,8 @@ export function createStateStore({ projectRoot, authorizeGate, lockTimeoutMs } =
       );
     return protect(() =>
       storage.withLock(async () => {
+        if (storage.approvalPending() && !storage.approvalOwnedBy(args[RESERVATION]))
+          return errorResult('APPROVAL_IN_PROGRESS', 'A trusted gate authorization is in progress');
         const loaded = storage.read(initialState, { recover: true });
         validateState(loaded.state);
         if (loaded.state.version !== args.expectedVersion)
@@ -110,29 +188,21 @@ export function createStateStore({ projectRoot, authorizeGate, lockTimeoutMs } =
         let headHash = loaded.headHash;
         let snapshotPending = false;
         const commit = (type, payload) => {
-          const event = createEvent({ state: clone(state), type, payload, previousHash: headHash });
+          const event = createEvent({
+            state: clone(state),
+            type,
+            payload: {
+              ...payload,
+              ...(state.version === 1 ? { legacyHash: storage.legacyFingerprint() } : {}),
+            },
+            previousHash: headHash,
+          });
           const persisted = storage.append(event);
           headHash = event.hash;
           snapshotPending = persisted.snapshotPending;
           return event;
         };
-        const transactionalAudit = async (entry) => {
-          if (
-            !object(entry) ||
-            typeof entry.type !== 'string' ||
-            !/^approval\.[a-z_]+$/.test(entry.type)
-          )
-            throw new TypeError('Only approval audit events belong in a gate transaction');
-          const { type, ...payload } = clone(entry);
-          state.version++;
-          try {
-            return commit(type, payload);
-          } catch (error) {
-            state.version--;
-            throw error;
-          }
-        };
-        const outcome = await action(state, transactionalAudit, loaded.events);
+        const outcome = await action(state, null, loaded.events);
         if (!outcome.ok)
           return {
             ...outcome,
@@ -165,7 +235,7 @@ export function createStateStore({ projectRoot, authorizeGate, lockTimeoutMs } =
     return active(state) && !['PAUSED', 'BLOCKED', 'PUSH_FAILED'].includes(state.phase);
   }
 
-  return {
+  const api = {
     inspect: () =>
       protect(() => {
         const { state, recovered } = storage.inspect(initialState);
@@ -174,8 +244,10 @@ export function createStateStore({ projectRoot, authorizeGate, lockTimeoutMs } =
       }),
     load: () =>
       protect(async () => {
-        if (!storage.inspectDirectories())
-          return { ok: true, state: initialState(), recovered: false };
+        if (!storage.inspectDirectories()) {
+          const { state } = storage.read(initialState);
+          return { ok: true, state, recovered: false };
+        }
         return storage.withLock(() => {
           const { state, recovered, snapshotPending } = storage.read(initialState, {
             recover: true,
@@ -205,7 +277,10 @@ export function createStateStore({ projectRoot, authorizeGate, lockTimeoutMs } =
             version: state.version,
             changeId: args.changeId,
             phase: 'REQ_INTAKE',
-            context,
+            context: {
+              ...(state.context.projectFacts ? { projectFacts: state.context.projectFacts } : {}),
+              ...context,
+            },
           });
         } catch {
           return errorResult('INVALID_ARGUMENT', 'context must contain only JSON values');
@@ -244,7 +319,9 @@ export function createStateStore({ projectRoot, authorizeGate, lockTimeoutMs } =
           );
         const from = state.phase;
         const gate =
-          from === 'H1_PENDING' && args.to === 'REQ_FROZEN'
+          (from === 'H1_PENDING' && args.to === 'REQ_FROZEN') ||
+          (['TEST_CASES_FROZEN', 'DEVELOPING', 'TESTING', 'REVIEWING'].includes(from) &&
+            args.to === 'TEST_DESIGN')
             ? 'H1'
             : from === 'H3_PENDING' && args.to === 'ARCHIVING'
               ? 'H3'
@@ -256,21 +333,7 @@ export function createStateStore({ projectRoot, authorizeGate, lockTimeoutMs } =
               'APPROVAL_REQUIRED',
               'A trusted server approval authority is required',
             );
-          let decision;
-          try {
-            decision = await authorizeGate({
-              gate,
-              state: clone(state),
-              to: args.to,
-              approval: args.approval,
-              audit: transactionalAudit,
-            });
-          } catch {
-            return errorResult(
-              'APPROVAL_REQUIRED',
-              'The approval authority rejected the transition',
-            );
-          }
+          const decision = args[DECISION];
           if (!object(decision) || decision.ok !== true)
             return errorResult(
               decision?.code ?? 'APPROVAL_REQUIRED',
@@ -388,7 +451,14 @@ export function createStateStore({ projectRoot, authorizeGate, lockTimeoutMs } =
           : null;
         if (previous && previous.category !== args.category)
           return errorResult('INVALID_ARGUMENT', 'A task cannot change retry categories');
-        const counted = countFailure(previous, args.category, args.error);
+        const counted = countFailure(
+          previous,
+          args.category,
+          args.error,
+          (state.automaticFailures ||
+            Object.values(state.retries).reduce((sum, entry) => sum + entry.failures, 0)) + 1,
+        );
+        state.automaticFailures = counted.totalFailures;
         Object.defineProperty(state.retries, args.taskId, {
           value: counted,
           enumerable: true,
@@ -426,4 +496,126 @@ export function createStateStore({ projectRoot, authorizeGate, lockTimeoutMs } =
         }
       }),
   };
+  const transition = api.transition;
+  api.transition = (args) =>
+    protect(async () => {
+      if (!object(args) || !validVersion(args.expectedVersion)) return transition(args);
+      const loaded = storage.inspect(initialState);
+      const gate =
+        (loaded.state.phase === 'H1_PENDING' && args.to === 'REQ_FROZEN') ||
+        (['TEST_CASES_FROZEN', 'DEVELOPING', 'TESTING', 'REVIEWING'].includes(loaded.state.phase) &&
+          args.to === 'TEST_DESIGN')
+          ? 'H1'
+          : loaded.state.phase === 'H3_PENDING' && args.to === 'ARCHIVING'
+            ? 'H3'
+            : null;
+      if (!gate) return transition(args);
+      if (typeof authorizeGate !== 'function')
+        return errorResult('APPROVAL_REQUIRED', 'A trusted server approval authority is required');
+      const token = randomUUID();
+      const reserved = await storage.withLock(() => {
+        const current = storage.read(initialState);
+        if (current.state.version !== args.expectedVersion)
+          return errorResult('VERSION_CONFLICT', 'State version changed', {
+            actualVersion: current.state.version,
+          });
+        storage.reserveApproval(token);
+        return { ok: true, state: current.state };
+      });
+      if (!reserved.ok) return reserved;
+      let active = true;
+      let timer;
+      try {
+        const audit = async (entry) => {
+          if (!active || !object(entry) || !/^approval\.[a-z_]+$/.test(entry.type))
+            throw new Error('Gate audit is no longer active or invalid');
+          const current = storage.inspect(initialState);
+          const { type, ...payload } = clone(entry);
+          const result = await mutate(
+            { expectedVersion: current.state.version, [RESERVATION]: token },
+            () =>
+              active
+                ? { ok: true, type, payload }
+                : errorResult('APPROVAL_TIMEOUT', 'Gate audit expired'),
+          );
+          if (!result.ok) throw Object.assign(new Error(result.message), { code: result.code });
+          return result.event;
+        };
+        const decision = await Promise.race([
+          Promise.resolve().then(() =>
+            authorizeGate({
+              gate,
+              state: clone(reserved.state),
+              to: args.to,
+              approval: args.approval,
+              audit,
+            }),
+          ),
+          new Promise((resolve) => {
+            timer = setTimeout(
+              () => resolve(errorResult('APPROVAL_TIMEOUT', 'Gate authorization timed out')),
+              approvalTimeoutMs,
+            );
+          }),
+        ]);
+        const current = storage.inspect(initialState);
+        if (!object(decision) || !decision.ok)
+          return {
+            ...errorResult(
+              decision?.code || 'APPROVAL_REQUIRED',
+              decision?.message || 'Trusted approval is required',
+            ),
+            ...(current.state.version !== args.expectedVersion
+              ? { actualVersion: current.state.version }
+              : {}),
+          };
+        return await transition({
+          ...args,
+          expectedVersion: current.state.version,
+          [RESERVATION]: token,
+          [DECISION]: decision,
+        });
+      } catch (error) {
+        if (typeof error.code === 'string') throw error;
+        return errorResult('APPROVAL_REQUIRED', 'The approval authority rejected the transition');
+      } finally {
+        active = false;
+        clearTimeout(timer);
+        storage.releaseApproval(token);
+      }
+    });
+  return api;
+}
+
+// Bootstrap and verification facts use the same WAL/lock/anchor as Change state.
+// They cannot mutate workflow phases, tasks or approvals through the legacy API.
+export function readProjectFacts(projectRoot) {
+  const storage = createStorage(projectRoot);
+  return storage.inspect(initialState).state.context.projectFacts || null;
+}
+export function updateProjectFacts(projectRoot, mutateFacts) {
+  try {
+    const storage = createStorage(projectRoot);
+    return storage.withLockSync(() => {
+      if (storage.approvalPending())
+        return errorResult('APPROVAL_IN_PROGRESS', 'Approval is in progress');
+      const loaded = storage.read(initialState);
+      const facts = clone(loaded.state.context.projectFacts || {});
+      if (mutateFacts(facts) === false)
+        return errorResult('PATCH_ABORTED', 'Project facts update was cancelled');
+      const state = clone(loaded.state);
+      state.context.projectFacts = facts;
+      state.version++;
+      const event = createEvent({
+        state,
+        type: 'project.facts.updated',
+        payload: state.version === 1 ? { legacyHash: storage.legacyFingerprint() } : {},
+        previousHash: loaded.headHash,
+      });
+      const persisted = storage.append(event);
+      return { ok: true, facts, ...persisted };
+    });
+  } catch (error) {
+    return errorResult(error.code || 'STORAGE_ERROR', error.message);
+  }
 }

@@ -10,6 +10,22 @@ import {
 } from '../src/codex/development.js';
 import { createFormatService } from '../src/codex/format.js';
 import { createStateStore } from '../src/codex/state-machine.js';
+import { buildRepairContext } from '../src/codex/core/repair-context.js';
+
+test('repair summaries are bounded, redact credentials and keep full-input hash references', () => {
+  const context = buildRepairContext({
+    source: 'quality',
+    quality: { command: { command: 'node', args: [], exitCode: 1 } },
+    findings: Array.from({ length: 200 }, (_, index) => ({
+      id: `F-${index}`,
+      message: 'access_token=synthetic-secret-value ' + 'x'.repeat(10000),
+    })),
+  });
+  assert.ok(context.omitted > 0);
+  assert.ok(Buffer.byteLength(JSON.stringify(context)) < 70 * 1024);
+  assert.match(context.findingsHash, /^sha256:/);
+  assert.doesNotMatch(JSON.stringify(context), /synthetic-secret-value/);
+});
 
 function git(cwd, args) {
   return execFileSync('git', args, {
@@ -122,7 +138,16 @@ async function fixture({ through = 'FORMATTING' } = {}) {
       return {
         ok: true,
         state: (await store.inspect()).state,
-        plan: { graph: { acs: [] } },
+        plan: {
+          graph: {
+            acs: [{ id: 'AC-1' }],
+            tasks: ['frontend', 'backend'].map((kind) => ({
+              kind,
+              allowedFiles: [`${kind}/**`],
+              forbiddenFiles: [],
+            })),
+          },
+        },
         ref: {
           contract: { path: '.specgate/contract.json', hash: 'sha256:' + '1'.repeat(64) },
           model: { path: '.specgate/model.json', hash: 'sha256:' + '2'.repeat(64) },
@@ -157,9 +182,19 @@ test('failed quality returns defects to a new development round', async () => {
         quality: {
           status: 'failed',
           code: 'VERIFY_FAILED',
+          command: {
+            command: 'node',
+            args: ['verify.mjs'],
+            exitCode: 1,
+            source: { kind: 'server-provider', ref: 'fixture#quality' },
+          },
           defects: [
             {
               id: 'QUALITY-1',
+              file: 'frontend/src/App.ts',
+              line: 1,
+              expected: 'new payload',
+              actual: 'old payload',
               severity: 'P1',
               stage: 'verification',
               message: 'Legacy frontend test expects the old payload.',
@@ -187,17 +222,28 @@ test('failed quality returns defects to a new development round', async () => {
     'export const n = 2;\n',
   );
   commit(repaired.repair.worktrees.frontend.path, 'repair frontend');
+  const assignments = [];
+  const completed = createPrecompletedRoleProvider();
   const repairedDevelopment = createDevelopmentService({
     projectRoot: context.root,
     store: context.store,
     planService: context.planService,
-    roleProvider: createPrecompletedRoleProvider(),
+    roleProvider: async (role, challenge, options) => {
+      assignments.push(challenge);
+      return completed(role, challenge, options);
+    },
   });
   const advanced = await repairedDevelopment.run({
     expectedVersion: repaired.state.version,
   });
   assert.equal(advanced.ok, true, JSON.stringify(advanced));
   assert.equal(advanced.state.phase, 'TESTING');
+  assert.equal(assignments[0].findings[0].id, 'QUALITY-1');
+  assert.equal(assignments[0].findings[0].file, 'frontend/src/App.ts');
+  assert.equal(assignments[0].findings[0].expected, 'new payload');
+  assert.equal(assignments[0].findings[0].actual, 'old payload');
+  assert.equal(assignments[0].findings[0].exitCode, 1);
+  assert.deepEqual(assignments[0].findings[0].command.argv, ['node', 'verify.mjs']);
 });
 
 test('Formatter runs only after tests, commits in its worktree and merges before Review', async () => {
@@ -271,6 +317,8 @@ test('blocking Review starts a new round with fresh frontend/backend/format work
           blocking: [
             {
               id: 'F-1',
+              acIds: ['AC-1'],
+              evidence: 'Fixed commit diff shows possible data loss',
               severity: 'P1',
               file: 'backend/src/App.java',
               line: 1,
@@ -294,4 +342,50 @@ test('blocking Review starts a new round with fresh frontend/backend/format work
   assert.equal(rework.rework.round, 1);
   for (const role of ['frontend', 'backend', 'format'])
     assert.match(rework.rework.worktrees[role].path, /round-1/);
+  const received = [];
+  const runner = createDevelopmentService({
+    projectRoot: context.root,
+    store: context.store,
+    planService: context.planService,
+    roleProvider: async (role, challenge) => {
+      received.push(challenge.findings);
+      const relative = role === 'backend' ? 'backend/src/App.java' : 'frontend/src/App.ts';
+      fs.writeFileSync(
+        path.join(challenge.worktree, relative),
+        role === 'backend' ? 'final class App { int n = 4; }\n' : 'export const n = 4;\n',
+      );
+      commit(challenge.worktree, 'review rework');
+      return { ok: true };
+    },
+  });
+  const fixed = await runner.run({ expectedVersion: await context.version() });
+  assert.equal(fixed.ok, true, JSON.stringify(fixed));
+  assert.ok(
+    received.every((findings) => findings[0].id === 'F-1' && findings[0].acIds.includes('AC-1')),
+  );
+});
+
+test('quality repair refuses to guess a missing failed command', async () => {
+  const context = await fixture({ through: 'TESTING' });
+  await context.store.update({
+    expectedVersion: await context.version(),
+    patch: {
+      context: {
+        quality: {
+          status: 'failed',
+          defects: [{ id: 'F-incomplete', message: 'No command evidence' }],
+        },
+      },
+    },
+  });
+  const service = createDevelopmentService({
+    projectRoot: context.root,
+    store: context.store,
+    planService: context.planService,
+  });
+  assert.equal(
+    (await service.prepareRepair({ expectedVersion: await context.version() })).code,
+    'REPAIR_CONTEXT_INCOMPLETE',
+  );
+  assert.equal((await context.store.inspect()).state.phase, 'TESTING');
 });

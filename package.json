@@ -65,7 +65,9 @@
     "codex:control": "node scripts/specgate-control.mjs",
     "codex:worker": "node scripts/specgate-worker.mjs",
     "codex:release-check": "node scripts/specgate-release-check.mjs",
-    "test": "node --import ./test/setup-temp.mjs --test --test-concurrency=2",
+    "test": "node scripts/run-tests.mjs core",
+    "test:mysql": "node scripts/run-tests.mjs mysql",
+    "test:all": "node scripts/run-tests.mjs all",
     "lint": "eslint .",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
@@ -77,11 +79,5 @@
     "eslint": "^10.13.0",
     "globals": "^17.13.0",
     "prettier": "^3.9.10"
-  },
-  "dependencies": {
-    "mysql2": "^3.24.6"
-  },
-  "bundledDependencies": [
-    "mysql2"
-  ]
+  }
 }

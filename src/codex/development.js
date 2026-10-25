@@ -5,6 +5,9 @@ import { randomUUID } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { canonicalJson, hashValue } from './events.js';
 import { frontendFrameworkViolation, readProjectConventions } from './project-conventions.js';
+import { taskFilePolicy, dependencyFile } from './core/task-policy.js';
+import { createHash } from 'node:crypto';
+import { buildRepairContext } from './core/repair-context.js';
 
 const SOURCE_ROOT = path.resolve(fileURLToPath(new URL('../..', import.meta.url)));
 const ROLES = Object.freeze(['frontend', 'backend', 'integration', 'test', 'review', 'format']);
@@ -289,18 +292,13 @@ function parseChangedFiles(root, base, head) {
 function isTestPath(filePath) {
   return (
     filePath.startsWith('.specgate/') ||
-    /(^|\/)(?:test|tests|__tests__)\//i.test(filePath) ||
+    /(^|\/)(?:test|tests|__tests__|acceptance|fixtures|specgate-tests)\//i.test(filePath) ||
+    filePath === 'specgate-tests.json' ||
     /\.(?:test|spec)\.[^/]+$/i.test(filePath)
   );
 }
 
 function defaultRolePolicy(role, filePath) {
-  const prefix = role === 'frontend' ? 'frontend/' : role === 'backend' ? 'backend/' : null;
-  if (!prefix || !filePath.startsWith(prefix))
-    return {
-      ok: false,
-      reason: `${role} may only change files below ${prefix}`,
-    };
   if (isTestPath(filePath))
     return { ok: false, reason: `${role} cannot change frozen or product test files` };
   return { ok: true };
@@ -637,7 +635,13 @@ export function createDevelopmentService({
       const freezeCommit = ensureFreezeCommit(root, checked, red);
       const worktrees = {};
       for (const role of ROLES)
-        worktrees[role] = createWorktree(root, checked.state.changeId, role, freezeCommit);
+        worktrees[role] = createWorktree(
+          root,
+          checked.state.changeId,
+          role,
+          freezeCommit,
+          checked.ref.tests.version > 1 ? `tests-${checked.ref.tests.version}` : null,
+        );
       const roles = Object.fromEntries(
         DEVELOPMENT_ROLES.map((role) => [
           role,
@@ -713,6 +717,9 @@ export function createDevelopmentService({
           contract: challenge.contract,
           model: challenge.model,
           conventions: challenge.conventions,
+          filePolicy: challenge.graph.tasks?.filter((task) => task.kind === role),
+          findings: challenge.findings || [],
+          repairContext: challenge.repairContext || null,
           tests: {
             hash: development.testsHash,
             cases: challenge.tests.cases,
@@ -762,6 +769,23 @@ export function createDevelopmentService({
         ? `backend/src/main/java/${conventions.backendPackage.replace(/\./g, '/')}/`
         : null;
     for (const entry of entries) {
+      const contentHash =
+        dependencyFile(entry.path) && entry.status !== 'D'
+          ? 'sha256:' +
+            createHash('sha256')
+              .update(
+                execFileSync('git', ['show', `${head}:${entry.path}`], {
+                  cwd: root,
+                  windowsHide: true,
+                }),
+              )
+              .digest('hex')
+          : null;
+      const boundary = taskFilePolicy(challenge.graph, role, entry.path, contentHash);
+      if (!boundary.ok) {
+        violations.push({ path: entry.path, reason: boundary.reason, code: boundary.code });
+        continue;
+      }
       if (isTestPath(entry.path)) {
         violations.push({ path: entry.path, reason: `${role} cannot change test assets` });
         continue;
@@ -806,9 +830,16 @@ export function createDevelopmentService({
     }
     if (violations.length)
       return failure(
-        'ROLE_POLICY_VIOLATION',
+        violations.some((entry) => entry.code === 'DEPENDENCY_APPROVAL_REQUIRED')
+          ? 'DEPENDENCY_APPROVAL_REQUIRED'
+          : 'ROLE_POLICY_VIOLATION',
         violations.map((entry) => `${entry.path}: ${entry.reason}`).join('; '),
-        { violations },
+        {
+          violations,
+          pendingDependencies: violations
+            .filter((entry) => entry.code === 'DEPENDENCY_APPROVAL_REQUIRED')
+            .map((entry) => entry.path),
+        },
       );
     return {
       ok: true,
@@ -880,7 +911,7 @@ export function createDevelopmentService({
   }
 
   async function mergeRole(development, role, challenge, { signal } = {}) {
-    for (let retry = 0; retry < 4; retry++) {
+    for (;;) {
       const merged = await mergeOnce(development, role);
       if (merged.ok) {
         const record = {
@@ -904,7 +935,7 @@ export function createDevelopmentService({
         role,
         paths: merged.conflictPaths,
         occurredAt: new Date().toISOString(),
-        retry: retry + 1,
+        retry: (development.roles[role].attempts || 0) + 1,
         message: bounded(merged.message, 4096),
       };
       const conflictPath = `.specgate/codex/changes/${development.changeId}/conflicts/${Date.now()}-${randomUUID()}.json`;
@@ -952,7 +983,7 @@ export function createDevelopmentService({
       const roleRecord = {
         ...development.roles[role],
         status: 'resolved',
-        attempts: (development.roles[role].attempts || 0) + retry + 1,
+        attempts: (development.roles[role].attempts || 0) + 1,
         commit: resolved.commit,
         summary: resolved.summary,
       };
@@ -966,7 +997,6 @@ export function createDevelopmentService({
       if (!saved.ok) return saved;
       development = saved.development;
     }
-    return failure('WORKFLOW_BLOCKED', 'Integration conflict retry loop exhausted');
   }
 
   async function run(args = {}, { signal } = {}) {
@@ -982,12 +1012,21 @@ export function createDevelopmentService({
       if (!checked.ok) return checked;
       const details = artifactDetails(root, checked);
       const challenge = {
+        operation: development.repairContext
+          ? development.repairContext.source === 'review'
+            ? 'rework'
+            : 'repair'
+          : 'implement',
+        findings: development.repairContext?.findings || [],
+        repairContext: development.repairContext || null,
         graph: checked.plan.graph,
         contract: details.contract,
         model: details.model,
         tests: details.tests,
         conventions: readProjectConventions({ projectRoot: root }),
       };
+      if (development.reworkRound && !challenge.findings.length)
+        return failure('REPAIR_CONTEXT_INCOMPLETE', 'The stored repair findings are missing');
       let pending = DEVELOPMENT_ROLES.filter(
         (role) => development.roles?.[role]?.status !== 'skipped',
       );
@@ -1123,6 +1162,25 @@ export function createDevelopmentService({
       if (!checked.ok) return checked;
       if (!Array.isArray(findings) || !findings.length)
         return failure('REPAIR_NOT_REQUIRED', `${source} has no blocking findings`);
+      const repairContext = buildRepairContext({
+        findings,
+        source,
+        quality: loaded.state.context.quality || {},
+        review: loaded.state.context.review || {},
+        graph: checked.plan.graph,
+      });
+      findings = repairContext.findings;
+      if (
+        !findings.length ||
+        (source === 'quality' &&
+          findings.some(
+            (finding) => !finding.command?.argv?.[0] || !Number.isInteger(finding.exitCode),
+          ))
+      )
+        return failure(
+          'REPAIR_CONTEXT_INCOMPLETE',
+          'Quality repair requires the failed command and concrete findings',
+        );
       const previous = loaded.state.context?.development;
       if (!object(previous) || !object(previous.worktrees))
         return failure('DEVELOPMENT_REQUIRED', 'Development worktrees are unavailable');
@@ -1185,6 +1243,7 @@ export function createDevelopmentService({
           repairBaseCommit,
           reworkBaseCommit: repairBaseCommit,
           repairFindings: findings,
+          repairContext,
           reworkFindings: findings,
           history,
         }),

@@ -503,6 +503,66 @@ test('critique requires structured categories and valid requirement references',
   );
 });
 
+test('duplicate IDs, incomplete restatements and unmapped dependencies are rejected before H1', async () => {
+  const f = fixture({ input: true });
+  const state = await start(f);
+  for (const proposed of [
+    [requirements[0], requirements[0]],
+    [requirements[0], { ...requirements[0], id: 'REQ-2' }],
+  ]) {
+    assert.equal(
+      (
+        await f.service.propose({
+          expectedVersion: state.version,
+          requirements: proposed,
+          assumptions: [],
+          openIssues: [],
+        })
+      ).code,
+      'REQUIREMENTS_INVALID',
+    );
+  }
+  const hash = 'sha256:' + 'a'.repeat(64);
+  const dependency = { file: 'backend/pom.xml', hash, acIds: ['AC-missing'] };
+  assert.equal(
+    (
+      await f.service.propose({
+        expectedVersion: state.version,
+        requirements: [{ ...requirements[0], dependencyChanges: [dependency] }],
+        assumptions: [],
+        openIssues: [],
+      })
+    ).code,
+    'REQUIREMENTS_INVALID',
+  );
+  dependency.acIds = ['AC-1'];
+  const proposed = await f.service.propose({
+    expectedVersion: state.version,
+    requirements: [{ ...requirements[0], dependencyChanges: [dependency] }],
+    assumptions: [],
+    openIssues: [],
+  });
+  assert.equal(proposed.ok, true);
+  assert.equal(
+    (
+      await f.service.critique({
+        expectedVersion: proposed.state.version,
+        report: { ...critique, restatement: [] },
+      })
+    ).code,
+    'CRITIQUE_INVALID',
+  );
+  const reviewed = await f.service.critique({
+    expectedVersion: proposed.state.version,
+    report: critique,
+  });
+  assert.equal(reviewed.ok, true);
+  const document = reviewed.state.context.changeAdd.document;
+  const markdown = fs.readFileSync(path.join(f.root, document.path), 'utf8');
+  assert.ok(markdown.includes(hash));
+  assert.ok(markdown.includes('backend/pom.xml'));
+});
+
 test('blocking issues or critique findings cannot freeze at H1', async () => {
   for (const mode of ['issue', 'critique']) {
     const f = fixture({ input: true, native: true });

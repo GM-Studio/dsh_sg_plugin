@@ -78,7 +78,7 @@ function roleTask(role, challenge) {
   }
   return [
     `Execute the complete ${role} implementation task now. Do not return a plan, acknowledgement or empty summary.`,
-    `Change only files below ${role}/ and obey the frozen contract, model, tests and project conventions.`,
+    `For ${role}, change only files allowed by the frozen filePolicy; forbiddenFiles take precedence. Obey the frozen contract, model, tests and project conventions.`,
     'Do not modify frozen test assets or implementation owned by another role.',
     'Run focused checks that are available in the worktree.',
     `Commit the complete implementation on the assigned ${role} branch and leave the worktree clean.`,
@@ -104,6 +104,9 @@ export function buildNativeRolePrompt({ projectRoot, role, challenge, agentConfi
     model: challenge.model || null,
     tests: challenge.tests || null,
     conventions: challenge.conventions || null,
+    filePolicy: challenge.filePolicy || null,
+    findings: challenge.findings || [],
+    repairContext: challenge.repairContext || null,
     testDesign:
       challenge.testDesign || challenge.manifest
         ? {

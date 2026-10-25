@@ -11,13 +11,14 @@ export function makeCheckpoint(state, label = state.phase) {
   };
 }
 
-export function countFailure(previous, category, error) {
+export function countFailure(previous, category, error, totalFailures) {
   const failures = (previous?.failures ?? 0) + 1;
   return {
     category,
     failures,
     automaticRetries: Math.min(failures, MAX_AUTOMATIC_RETRIES),
     lastError: error,
-    retryAllowed: failures <= MAX_AUTOMATIC_RETRIES,
+    totalFailures: totalFailures ?? failures,
+    retryAllowed: (totalFailures ?? failures) <= MAX_AUTOMATIC_RETRIES,
   };
 }

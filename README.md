@@ -5,6 +5,10 @@ worktrees 和机器可审计证据完成项目接入、异步交付、独立验�
 
 [English](README.en.md) · [Windows / Linux 安装配置指南](docs/install-config-codex.zh.md) · [源码加载 Quickstart](docs/quickstart-codex-source.zh.md)
 
+当前 Core v1 使用本地文件、Git 和事件链，不需要 MySQL。默认安装和发行包不安装、
+不捆绑 `mysql2`。下文控制面远程认证、数据库持久化、Worker 与备份恢复属于历史扩展，
+不属于 Core v1 交付范围；其源码保留，不能据此声称当前版本已验证这些能力。
+
 ## 能力
 
 - 新建 Java/Vue 项目可生成并建立可靠 Baseline。
@@ -202,9 +206,17 @@ test/codex-*.test.js                   focused Codex regressions
 
 ## 验证
 
-MySQL 集成测试不再静默跳过。请通过 `SPECGATE_MYSQL_TEST_CONFIG` 指向本地连接
-JSON，或把同一配置放在忽略目录 `.runtime/mysql-test/config.json`；缺少真实数据库时
-测试会显式失败。测试账号只应能创建/删除随机 `sg_*` 测试库，不得复用生产库。
+`npm test` 运行不依赖 MySQL 的回归集。数据库集成测试完整保留，由 `npm run test:mysql`
+显式运行；`npm run test:all` 包含两组。分组不把失败改为 skip，新增数据库测试必须
+显式登记，避免悄悄进入默认回归。源码仍保留其他非 MVP 能力的无外部服务回归；
+此次数据库分流不代表完整 M5 产品面隔离已经完成。
+
+只有维护历史数据库扩展时，才在源码目录显式执行
+`npm install --no-save --package-lock=false --ignore-scripts mysql2@3.24.6`，并通过
+`SPECGATE_MYSQL_TEST_CONFIG` 指向本地连接 JSON，或使用忽略目录
+`.runtime/mysql-test/config.json`。然后执行 `npm run test:mysql`。驱动缺失或数据库
+不可用会明确失败；测试账号只应能创建/删除随机 `sg_*` 测试库，不得复用生产库。
+以上安装不属于 Core v1 安装步骤，本次没有执行。
 
 ```powershell
 npm test

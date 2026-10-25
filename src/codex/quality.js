@@ -527,7 +527,10 @@ export function computeChangedCoverage({ root, base, head }) {
 
 function validateVerification(result) {
   if (!object(result) || result.ok !== true)
-    return failure(result?.code || 'VERIFY_FAILED', result?.message || 'Verification failed');
+    return {
+      ...failure(result?.code || 'VERIFY_FAILED', result?.message || 'Verification failed'),
+      report: result?.report || null,
+    };
   const report = result.report;
   if (
     !object(report) ||
@@ -713,6 +716,13 @@ export function createQualityService({
       else if (file.startsWith('backend/')) owners.add('backend');
     }
     return {
+      caseId: report?.cases?.find((entry) => entry.status !== 'pass')?.id || null,
+      file: report?.cases?.find((entry) => entry.status !== 'pass')?.file || null,
+      expected: 'All frozen cases pass',
+      actual:
+        report?.cases
+          ?.filter((entry) => entry.status !== 'pass')
+          .map((entry) => ({ id: entry.id, status: entry.status })) || result.message,
       id: `QUALITY-${result.runId}`,
       severity: 'P1',
       stage: 'frozen-cases',
@@ -882,6 +892,11 @@ export function createQualityService({
       runEvidence.stdoutLog = stdoutPath;
       runEvidence.stderrLog = stderrPath;
       runEvidence.command = {
+        source: {
+          kind: 'server-provider',
+          ref: 'src/codex/quality.js#createQualityService.testRunner',
+          testsHash: checked.ref.tests.hash,
+        },
         command: specification.command,
         args: specification.args,
         cwd: path.relative(root, specification.cwd).replace(/\\/g, '/') || '.',
@@ -920,7 +935,23 @@ export function createQualityService({
           run: runEvidence,
           code: result.code,
           message: result.message,
-          defects: [defectForRunner(result)],
+          defects: [
+            defectForRunner(
+              result,
+              (() => {
+                try {
+                  return validateCaseReport(
+                    test.path,
+                    specification.reportPath,
+                    manifest.cases,
+                    'any',
+                  );
+                } catch {
+                  return null;
+                }
+              })(),
+            ),
+          ],
           retryable: !signal?.aborted,
         });
       }
@@ -969,7 +1000,12 @@ export function createQualityService({
           ],
         });
       let verified;
+      let verificationSource = { kind: 'builtin', ref: 'src/codex/verify.js#verifyProject' };
       if (typeof verifier === 'function') {
+        verificationSource = {
+          kind: 'server-provider',
+          ref: 'src/codex/quality.js#createQualityService.verifier',
+        };
         prepareVerificationMetadata(test.path);
         verified = validateVerification(await verifier({ root: test.path }, { signal, timeoutMs }));
       } else {
@@ -983,6 +1019,11 @@ export function createQualityService({
             defects: [],
           });
         if (readiness.profile.mode === 'adopted') {
+          verificationSource = {
+            kind: 'project-profile',
+            ref: '.specgate/codex/project.json#commands',
+            profileHash: digest(readiness.profile),
+          };
           const adopted = await adoptedVerifier({
             profile: readiness.profile,
             baseline: readiness.baseline,
@@ -1003,6 +1044,28 @@ export function createQualityService({
             await verifyProject({ root: test.path }, { signal, timeoutMs }),
           );
         }
+      }
+      if (verified.report) {
+        verified.report = {
+          ...verified.report,
+          ...(verified.report.stages
+            ? {
+                stages: verified.report.stages.map((stage) => ({
+                  ...stage,
+                  source: { ...verificationSource, id: stage.name },
+                })),
+              }
+            : {}),
+          ...(verified.report.commands
+            ? {
+                commands: verified.report.commands.map((command) => ({
+                  ...command,
+                  source: { ...verificationSource, id: command.id },
+                })),
+              }
+            : {}),
+        };
+        runEvidence.verification = verified.report;
       }
       if (!verified.ok)
         return finishFailure({

@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import { validDependencyChanges } from './core/task-policy.js';
 import { createHash } from 'node:crypto';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { spawnSync } from 'node:child_process';
@@ -328,7 +329,7 @@ function validDraft(args) {
   const acIds = new Set();
   for (const req of args.requirements) {
     if (
-      !keys(req, ['id', 'category', 'text', 'acceptanceCriteria']) ||
+      !keys(req, ['id', 'category', 'text', 'acceptanceCriteria', 'dependencyChanges']) ||
       !id(req.id) ||
       reqIds.has(req.id) ||
       !CATEGORIES.has(req.category) ||
@@ -339,6 +340,13 @@ function validDraft(args) {
     )
       return false;
     reqIds.add(req.id);
+    if (
+      !validDependencyChanges(
+        req.dependencyChanges,
+        req.acceptanceCriteria.map((ac) => ac?.id),
+      )
+    )
+      return false;
     for (const ac of req.acceptanceCriteria) {
       if (!keys(ac, ['id', 'text']) || !id(ac.id) || acIds.has(ac.id) || !text(ac.text))
         return false;
@@ -452,6 +460,11 @@ function renderRequirements(candidate, legacyRequest = false) {
       requirement.text,
     );
     for (const ac of requirement.acceptanceCriteria) lines.push(`- ${ac.id}：${ac.text}`);
+    if (requirement.dependencyChanges?.length)
+      lines.push(
+        '\n依赖变更（批准绑定文件内容 hash 与 AC）：',
+        renderChineseData(requirement.dependencyChanges),
+      );
   }
   lines.push('\n## 待用户确认的假设与风险');
   for (const assumption of candidate.assumptions)

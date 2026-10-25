@@ -11,7 +11,7 @@ import { javaFullstackFiles } from './core/java/java-fullstack-template.js';
 import { normalizeJavaPreset } from './core/java/java-versions.js';
 import { mavenRoots } from './core/java/java-env.js';
 import { projectSourceHash } from './core/template-style.js';
-import { patchState } from './core/state.js';
+import { patchState } from './core/project-facts.js';
 
 const SOURCE_ROOT = path.resolve(fileURLToPath(new URL('../..', import.meta.url)));
 const EXPECTED_STAGES = [...VERIFY_STAGES, 'frontend-runtime'];
@@ -268,7 +268,6 @@ function inspectProject(input) {
       }),
     ),
     '.specgate/config.yaml',
-    '.specgate/state.json',
     '.specgate/init-report.json',
     '.specgate/golden.json',
     'openspec/REQ.md',

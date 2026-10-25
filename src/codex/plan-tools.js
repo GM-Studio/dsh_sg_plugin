@@ -31,27 +31,6 @@ const artifact = {
   required: ['version', 'content'],
   additionalProperties: false,
 };
-const contentMap = {
-  type: 'object',
-  minProperties: 1,
-  additionalProperties: {
-    type: 'string',
-    minLength: 1,
-    maxLength: 1024 * 1024,
-  },
-};
-const testAssets = {
-  type: 'object',
-  properties: {
-    role: { type: 'string', const: 'test' },
-    cases: { type: 'array', items: { type: 'object', additionalProperties: true } },
-    code: contentMap,
-    fixtures: contentMap,
-    coverage: { type: 'object', additionalProperties: true },
-  },
-  required: ['role', 'cases', 'code', 'fixtures', 'coverage'],
-  additionalProperties: false,
-};
 const definition = (name, description, properties = {}, required = [], readOnly = false) => ({
   name,
   description,
@@ -75,7 +54,21 @@ export const PLAN_TOOLS = Object.freeze([
   definition(
     'sg_plan_generate',
     'Generate a dynamic AC task graph from frozen requirements and enter planning. Requires a consumed H1 approval and intact P4 snapshot.',
-    { expectedVersion },
+    {
+      expectedVersion,
+      filePolicies: {
+        type: 'object',
+        additionalProperties: {
+          type: 'object',
+          properties: {
+            allowedFiles: { type: 'array', items: { type: 'string' }, minItems: 1 },
+            forbiddenFiles: { type: 'array', items: { type: 'string' } },
+          },
+          required: ['allowedFiles', 'forbiddenFiles'],
+          additionalProperties: false,
+        },
+      },
+    },
     ['expectedVersion'],
   ),
   definition(
@@ -104,9 +97,9 @@ export const PLAN_TOOLS = Object.freeze([
   ),
   definition(
     'sg_test_replace_assets',
-    'Replace frozen executable tests after a Test Designer revision, preserving the prior manifest and recording the bounded reason.',
-    { expectedVersion, reason, assets: testAssets },
-    ['expectedVersion', 'reason', 'assets'],
+    'Request trusted H1 reopening before replacing frozen tests. Preserves old hashes and returns to test design; refreeze and a new real red baseline are mandatory.',
+    { expectedVersion, reason },
+    ['expectedVersion', 'reason'],
   ),
   definition(
     'sg_development_inspect',
@@ -157,7 +150,7 @@ export async function callPlanTool(services, name, args = {}, { signal } = {}) {
     case 'sg_test_design_freeze':
       return plans.testDesignFreeze(args);
     case 'sg_test_replace_assets':
-      return plans.replaceTests(args);
+      return plans.reopenTests(args);
     case 'sg_development_inspect':
       return development.inspect();
     case 'sg_development_prepare':

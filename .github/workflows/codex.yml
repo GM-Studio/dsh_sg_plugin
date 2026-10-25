@@ -15,7 +15,8 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
-      - run: npm test
+      - name: Core regressions (no MySQL service or driver)
+        run: npm test
       - run: npm run lint
       - run: npm run format:check
       - run: npm run pack:check
