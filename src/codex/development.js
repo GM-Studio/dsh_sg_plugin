@@ -15,6 +15,7 @@ const DEVELOPMENT_ROLES = Object.freeze(['frontend', 'backend']);
 const MAX_OUTPUT_BYTES = 4 * 1024 * 1024;
 const COMMAND_TIMEOUT_MS = 10 * 60 * 1000;
 const object = (value) => value !== null && typeof value === 'object' && !Array.isArray(value);
+const text = (value) => typeof value === 'string' && value.trim().length > 0;
 const identifier = (value) =>
   typeof value === 'string' && /^[A-Za-z0-9][A-Za-z0-9._-]{0,191}$/.test(value);
 const digest = (value) => 'sha256:' + hashValue(value);
@@ -393,7 +394,7 @@ function ensureFreezeCommit(root, checked, redEvidence) {
   return runGit(root, ['commit-tree', `${head}^{tree}`, '-p', head, '-m', message], COMMIT_ENV);
 }
 
-function validateRedReport(root, specification, cases) {
+function validateRedReport(root, specification, cases, baseline = {}) {
   if (!safeRelative(specification.reportPath))
     fail('RED_RUNNER_INVALID', 'The red baseline must declare a safe JSON report path');
   let report;
@@ -418,16 +419,47 @@ function validateRedReport(root, specification, cases) {
       fail('RED_REPORT_INVALID', 'The red baseline report contains unknown or duplicate cases');
     seen.set(result.id, result.status);
   }
-  if (seen.size !== expected.size || [...expected.keys()].some((id) => seen.get(id) !== 'fail'))
+  if (Array.isArray(report.errors) && report.errors.length)
+    fail('RED_REPORT_INVALID', 'The red baseline contains infrastructure errors');
+  if (
+    report.verification?.stages?.some(
+      (stage) => stage?.status !== 0 && stage?.failureKind === 'infrastructure',
+    )
+  )
+    fail('RED_REPORT_INVALID', 'The red baseline contains infrastructure stage failures');
+  const atLeastOneFailure =
+    /at least one/i.test(String(baseline.expectedCaseResults || '')) ||
+    (object(report.verification) && Array.isArray(report.errors));
+  const failures = [...seen.values()].filter((status) => status === 'fail').length;
+  if (
+    seen.size !== expected.size ||
+    [...seen.values()].some((status) => status === 'skip') ||
+    (atLeastOneFailure ? failures === 0 : failures !== expected.size)
+  )
     fail(
       'RED_REPORT_INVALID',
-      'Every frozen case must be observed as failing before development starts',
+      atLeastOneFailure
+        ? 'At least one frozen case must produce a real business failure without skips'
+        : 'Every frozen case must be observed as failing before development starts',
     );
   return report;
 }
 
 function artifactDetails(root, checked) {
-  const tests = readJson(root, checked.ref.tests.path);
+  let tests = readJson(root, checked.ref.tests.path);
+  if (!object(tests.baseline)) {
+    try {
+      const design = checked.state.context?.plan?.testDesign;
+      const relative =
+        design && text(design.relative)
+          ? `${design.relative}/specgate-tests.json`
+          : `${checked.ref.tests.directory}/specgate-tests.json`;
+      const source = JSON.parse(readFile(root, relative));
+      if (object(source?.baseline)) tests = { ...tests, baseline: source.baseline };
+    } catch {
+      // Older frozen tests may not have a source manifest; retain their policy.
+    }
+  }
   if (
     !Array.isArray(tests.cases) ||
     !tests.cases.length ||
@@ -486,7 +518,7 @@ async function redBaseline({ root, checked, redRunner, signal, timeoutMs }) {
     );
   let report;
   try {
-    report = validateRedReport(root, specification, details.tests.cases);
+    report = validateRedReport(root, specification, details.tests.cases, details.tests.baseline);
   } catch (error) {
     return failure(error.code || 'RED_REPORT_INVALID', error.message);
   }
@@ -1309,7 +1341,7 @@ export function createDevelopmentService({
           ? ['backend']
           : [...DEVELOPMENT_ROLES];
     return prepareRound(args, {
-      phase: 'TESTING',
+      phase: loaded.state.phase === 'FORMATTING' ? 'FORMATTING' : 'TESTING',
       findings: defects,
       source: 'quality',
       eventKey: 'repair',

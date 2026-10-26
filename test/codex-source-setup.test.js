@@ -48,7 +48,7 @@ test('portable plugin manifests expose the bundled stdio MCP server and setup sk
 test('source setup installs six project agents and preserves unrelated AGENTS content', () => {
   const project = gitProject('sg-codex-project-setup-');
   fs.writeFileSync(path.join(project, 'AGENTS.md'), '# Existing rules\n\nKeep this line.\n');
-  const first = setupProject({ project });
+  const first = setupProject({ project, optionalModules: true });
   assert.equal(first.ok, true);
   assert.deepEqual(first.agents, [
     'specgate_backend',
@@ -78,7 +78,7 @@ test('source setup installs six project agents and preserves unrelated AGENTS co
   assert.match(exclude, /^\/AGENTS\.md$/m);
   assert.equal(git(project, ['status', '--porcelain', '--untracked-files=all']), '');
 
-  const second = setupProject({ project, check: true });
+  const second = setupProject({ project, check: true, optionalModules: true });
   assert.deepEqual(second.changed, []);
   const replaced = mergeAgentsDocument(agents, managedAgentsBlock());
   assert.equal(replaced, agents.replace(/\r\n/g, '\n'));
@@ -116,7 +116,7 @@ test('source setup refuses to overwrite conflicting project agents', () => {
   fs.mkdirSync(agents, { recursive: true });
   fs.writeFileSync(path.join(agents, 'specgate_frontend.toml'), 'name = "custom"\n');
   assert.throws(
-    () => setupProject({ project }),
+    () => setupProject({ project, optionalModules: true }),
     (error) =>
       error.code === 'AGENT_CONFLICT' &&
       error.message.includes('.codex/agents/specgate_frontend.toml'),
@@ -152,4 +152,21 @@ test('setup leaves project-level skills to the global plugin and preserves legac
     result.changed.some((entry) => entry.startsWith('.agents/')),
     false,
   );
+});
+
+test('default source setup installs exactly the three Core roles and deterministic formatting instructions', () => {
+  const project = gitProject('sg-core-role-setup-');
+  const result = setupProject({ project });
+  assert.deepEqual(result.agents, [
+    'specgate_implementer',
+    'specgate_reviewer',
+    'specgate_test_designer',
+  ]);
+  const instructions = fs.readFileSync(path.join(project, 'AGENTS.md'), 'utf8');
+  assert.match(instructions, /specgate_implementer/);
+  assert.doesNotMatch(
+    instructions,
+    /specgate_(formatter|tester|frontend|backend)|sg_init|sg_project_finalize_new/,
+  );
+  assert.deepEqual(setupProject({ project, check: true }).changed, []);
 });

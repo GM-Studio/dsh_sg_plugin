@@ -1,0 +1,14 @@
+{
+  "hostCallId": "request_user_input_async/call_f2f51627c2d94076836639414a583e99",
+  "response": {
+    "action": "accept",
+    "content": {
+      "Q-INTAKE-1": "按照你的方案来",
+      "Q-INTAKE-2": "按照你的方案来",
+      "Q-INTAKE-3": "按照你的方案来",
+      "Q-INTAKE-4": "按照你的方案来",
+      "Q-INTAKE-5": "按照你的来"
+    }
+  },
+  "receivedAt": "2026-10-26T01:07:44.751Z"
+}

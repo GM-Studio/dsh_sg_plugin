@@ -1,0 +1,5 @@
+
+> specgate-codex@0.3.4 test:mysql
+> node scripts/run-tests.mjs mysql
+
+MYSQL_DRIVER_NOT_INSTALLED: MySQL integration is outside Core v1; explicitly install the historical driver before running this suite.

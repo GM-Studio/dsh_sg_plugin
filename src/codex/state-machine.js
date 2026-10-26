@@ -86,6 +86,7 @@ table.H1_PENDING.push('REQ_CLARIFYING');
 table.H3_PENDING.push('REVIEWING');
 table.REVIEWING.push('DEVELOPING');
 table.TESTING.push('DEVELOPING');
+table.FORMATTING.push('DEVELOPING');
 for (const phase of ['TEST_CASES_FROZEN', 'DEVELOPING', 'TESTING', 'REVIEWING'])
   table[phase].push('TEST_DESIGN');
 table.ARCHIVING.push('ARCHIVED_NOT_PUSHED', 'PUSH_FAILED', 'ROLLBACKING');
@@ -317,6 +318,21 @@ export function createStateStore({
             'INVALID_TRANSITION',
             'The requested workflow transition is not permitted',
           );
+        if (state.phase === 'FORMATTING' && args.to === 'REVIEWING' && state.context.format) {
+          const format = state.context.format;
+          const quality = state.context.quality;
+          if (
+            format.status !== 'passed' ||
+            quality?.status !== 'passed' ||
+            quality.integrationCommit !== format.integrationAfter ||
+            !quality.runId ||
+            quality.runId === format.preQualityRunId
+          )
+            return errorResult(
+              'POST_FORMAT_QUALITY_REQUIRED',
+              'Review requires a fresh quality pass at the formatted integration commit',
+            );
+        }
         const from = state.phase;
         const gate =
           (from === 'H1_PENDING' && args.to === 'REQ_FROZEN') ||

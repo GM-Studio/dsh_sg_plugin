@@ -1,0 +1,119 @@
+✔ explicit startup binding wins over workspace roots and environment (2.7679ms)
+✔ plugin cache fallback stays unbound instead of becoming the business project (1.292ms)
+✔ binding switches every subsequent project tool without writing either tree (37.5362ms)
+✔ new project requires explicit stack and missing form support never writes (3.7726ms)
+✖ native creation form preserves selected React stack, user identity, auto setup and project binding (5756.4294ms)
+✔ cancelled project form is attempted again instead of degrading to text (86.4863ms)
+✔ project verification alias remains equivalent to sg_verify (11.9399ms)
+✔ identity resolver reuses explicit Git author environment and never supplies a fake identity (1.186ms)
+✔ missing identity stops initialization before any target files or commit are created (98.9675ms)
+✔ H1 document shows requirements, acceptance criteria, user answers, critique and pending risks (0.5351ms)
+✔ default MCP static import graph excludes optional control, notification and installer code (17.0936ms)
+✔ Core v1 installation and lockfile have no MySQL driver dependency (0.7294ms)
+✔ Codex manifest and MCP entry stay contained in the shipped plugin (18.1047ms)
+✔ offline tarball install launches the packaged entry from a different project cwd (2365.439ms)
+✔ smoke evidence rejects stdout pollution after the final reply (100.7904ms)
+✔ MCP roots bind tools to the target project instead of the plugin cache (6.1162ms)
+✔ session cwd wins over ambient roots and environment variables (2.2456ms)
+✔ plugin-cache sessions use one unambiguous business root or stay unbound (8.8388ms)
+✔ stdio handshake and diagnostic tools leave a nonempty project unchanged (106.6147ms)
+✔ unknown versions negotiate the supported version; invalid initialize can be corrected (99.8546ms)
+✔ source-only optional mode explicitly adds the historical tool entries (1.7056ms)
+✔ lifecycle rejects calls before handshake and repeated initialization (102.9898ms)
+✔ malformed JSON, batch messages and invalid envelopes do not terminate the server (94.5158ms)
+✔ tools reject forged approvals, arguments and unknown methods; notifications get no reply (96.1234ms)
+✔ large and truncated frames fail closed; an empty EOF exits cleanly (281.4722ms)
+✔ project root comes from startup options; invalid options cannot start a workflow (186.6008ms)
+✔ project tools expose only bounded project operations and read-only previews (0.8135ms)
+✔ adoption preview, baseline apply and project status use server-owned runner results (1196.7849ms)
+✔ failed background baseline remains observable and never creates readiness (539.621ms)
+✔ dirty adoption commit calls only the server-owned approval provider (707.0984ms)
+✔ unknown tools, extra credentials and unavailable providers fail closed (269.9976ms)
+✔ portable plugin manifests expose the bundled stdio MCP server and setup skill (1.0364ms)
+✔ source setup installs six project agents and preserves unrelated AGENTS content (347.2757ms)
+✔ source setup reports a tracked AGENTS file instead of hiding its required commit (283.4157ms)
+✔ source setup creates a missing Git info directory before writing local excludes (201.954ms)
+✔ source setup refuses to overwrite conflicting project agents (2.0848ms)
+✔ source setup refuses an unmanaged project MCP conflict (1.4227ms)
+✔ setup leaves project-level skills to the global plugin and preserves legacy copies (185.5516ms)
+✔ default source setup installs exactly the three Core roles and deterministic formatting instructions (250.7503ms)
+✔ core and explicit MySQL suites partition every regression without dropping tests (16.3957ms)
+✔ a new database-dependent test requires an explicit suite decision (5.2991ms)
+✔ unbound Core diagnostics only recommend tools in the public Core registry (1.9999ms)
+✔ native runner receives the manifest test root instead of its frozen snapshot parent (0.221ms)
+✔ state inspection is read-only and mutation schemas require a current version (3.456ms)
+✔ MCP lifecycle controls preserve worktrees and evidence and enforce CAS (94.9973ms)
+✔ init preview is read-only; nonempty initialization cannot manufacture approval (190.2654ms)
+✔ the public tool set cannot import approvals or arbitrarily change phases (2.1318ms)
+✔ plan and development tools expose only versions and frozen content, never roles or commands (1.9638ms)
+✔ nested change schemas reject forged answers and credentials before touching storage (0.8434ms)
+ℹ tests 49
+ℹ suites 0
+ℹ pass 48
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 6126.2477
+
+✖ failing tests:
+
+test at test\codex-onboarding.test.js:86:1
+✖ native creation form preserves selected React stack, user identity, auto setup and project binding (5756.4294ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + 'M .specgate/examples/java-react-admin-1/backend/src/main/java/com/acme/hotel/common/ApiErrorHandler.java\n' +
+  +   ' M .specgate/examples/java-react-admin-1/backend/src/main/java/com/acme/hotel/common/BusinessException.java\n' +
+  +   ' M .specgate/examples/java-react-admin-1/backend/src/main/java/com/acme/hotel/controller/ApiFallbackController.java\n' +
+  +   ' M .specgate/examples/java-react-admin-1/backend/src/main/java/com/acme/hotel/controller/AuthController.java\n' +
+  +   ' M .specgate/examples/java-react-admin-1/backend/src/main/java/com/acme/hotel/security/LocalAccounts.java\n' +
+  +   ' M .specgate/examples/java-react-admin-1/backend/src/main/java/com/acme/hotel/security/SecurityConfig.java\n' +
+  +   ' M .specgate/examples/java-react-admin-1/backend/src/main/java/com/acme/hotel/sys/controller/SysAuditLogController.java\n' +
+  +   ' M .specgate/examples/java-react-admin-1/backend/src/main/java/com/acme/hotel/sys/controller/SysDashboardController.java\n' +
+  +   ' M .specgate/examples/java-react-admin-1/backend/src/main/java/com/acme/hotel/sys/controller/SysDepartmentController.java\n' +
+  +   ' M .specgate/examples/java-react-admin-1/backend/src/main/java/com/acme/hotel/sys/controller/SysMenuController.java\n' +
+  +   ' M .specgate/examples/java-react-admin-1/backend/src/main/java/com/acme/hotel/sys/controller/SysRoleController.java\n' +
+  +   ' M .specgate/examples/java-react-admin-1/backend/src/main/java/com/acme/hotel/sys/controller/SysUserController.java\n' +
+  +   ' M .specgate/examples/java-react-admin-1/backend/src/main/java/com/acme/hotel/sys/dto/SysDepartmentRequest.java\n' +
+  +   ' M .specgate/examples/java-react-admin-1/backend/src/main/java/com/acme/hotel/sys/dto/SysDepartmentUpdateRequest.java\n' +
+  +   ' M .specgate/examples/java-react-admin-1/backend/src/main/java/com/acme/hotel/sys/dto/SysMenuRequest.java\n' +
+  +   ' M .specgate/examples/java-react-admin-1/backend/src/main/java/com/acme/hotel/sys/dto/SysMenuUpdateRequest.java\n' +
+  +   ' M .specgate/examples/java-react-admin-1/backend/src/main/java/com/acme/hotel/sys/dto/SysRoleRequest.java\n' +
+  +   ' M .specgate/examples/java-react-admin-1/backend/src/main/java/com/acme/hotel/sys/dto/SysRoleUpdateRequest.java\n' +
+  +   ' M .specgate/examples/java-react-admin-1/backend/src/main/java/com/acme/hotel/sys/dto/SysUserRequest.java\n' +
+  +   ' M .specgate/examples/java-react-admin-1/backend/src/main/java/com/acme/hotel/sys/dto/SysUserUpdateRequest.java\n' +
+  +   ' M .specgate/examples/java-react-admin-1/backend/src/main/java/com/acme/hotel/sys/entity/SysAuditLog.java\n' +
+  +   ' M .specgate/examples/java-react-admin-1/backend/src/main/java/com/acme/hotel/sys/entity/SysDepartment.java\n' +
+  +   ' M .specgate/examples/java-react-admin-1/backend/src/main/java/com/acme/hotel/sys/repository/SysAuditLogRepository.java\n' +
+  +   ' M .specgate/examples/java-react-admin-1/backend/src/main/java/com/acme/hotel/sys/repository/SysDepartmentRepository.java\n' +
+  +   ' M .specgate/examples/java-react-admin-1/backend/src/main/java/com/acme/hotel/sys/repository/SysMenuRepository.java\n' +
+  +   ' M .specgate/examples/java-react-admin-1/backend/src/main/java/com/acme/hotel/sys/repository/SysRoleRepository.java\n' +
+  +   ' M .specgate/examples/java-react-admin-1/backend/src/main/java/com/acme/hotel/sys/repository/SysUserRepository.java\n' +
+  +   ' M .specgate/examples/java-react-admin-1/backend/src/main/java/com/acme/hotel/sys/service/SysAuditLogService.java\n' +
+  +   ' M .specgate/examples/java-react-admin-1/backend/src/main/java/com/acme/hotel/sys/service/SysDashboardService.java\n' +
+  +   ' M .specgate/examples/java-react-admin-1/backend/src/main/java/com/acme/hotel/sys/service/SysDepartmentService.java\n' +
+  +   ' M .specgate/examples/java-react-admin-1/backend/src/main/java/com/acme/hotel/sys/service/SysMenuService.java\n' +
+  +   ' M .specgate/examples/java-react-admin-1/backend/src/main/java/com/acme/hotel/sys/service/SysRoleCsvService.java\n' +
+  +   ' M .specgate/examples/java-react-admin-1/backend/src/main/java/com/acme/hotel/sys/service/SysRoleService.java\n' +
+  +   ' M .specgate/examples/java-react-admin-1/backend/src/main/java/com/acme/hotel/sys/service/SysUserCsvService.java\n' +
+  +   ' M .specgate/examples/java-react-admin-1/backend/src/main/java/com/acme/hotel/sys/service/SysUserService.java\n' +
+  +   ' M .specgate/examples/java-react-admin-1/backend/src/main/java/com/acme/hotel/sys/vo/SysDepartmentVO.java\n' +
+  +   ' M .specgate/examples/java-react-admin-1/backend/src/test/java/com/acme/hotel/common/ApiErrorHandlerTest.java\n' +
+  +   ' M .specgate/examples/java-react-admin-1/backend/src/test/java/com/acme/hotel/security/LocalAccountsTest.java\n' +
+  +   ' M .specgate/examples/java-react-admin-1/backend/src/test/java/com/acme/hotel/sys/SysAuditLogApiTest.java\n' +
+  +   ' M .specgate/examples/java-react-admin-1/backend/src/test/java/com/acme/hotel/sys/SysDashboardApiTest.java\n' +
+  +   ' M .specgate/examples/java-react-admin-1/backend/src/test/java/com/acme/hotel/sys/SysDepartmentApiTest.java'
+  - ''
+  
+      at TestContext.<anonymous> (file:///E:/ai_workflow/specgate/test/codex-onboarding.test.js:134:10)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1125:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:787:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'M .specgate/examples/java-react-admin-1/backend/src/main/java/com/acme/hotel/common/ApiErrorHandler.java\n M .specgate/examples/java-react-admin-1/backend/src/main/java/com/acme/hotel/common/BusinessException.java\n M .specgate/examples/java-react-admin-1/backend/src/main/java/com/acme/hotel/controller/ApiFallbackController.java\n M .specgate/examples/java-react-admin-1/backend/src/main/java/com/acme/hotel/controller/AuthController.java\n M .specgate/examples/java-react-admin-1/backend/src/main/java/com/acme/hotel/security/LocalAccounts.java\n M .specgate/examples/java-react-admin-1/backend/src/main/java/com/acme/hotel/security/SecurityConfig.java\n M .specgate/examples/java-react-admin-1/backend/src/main/java/com/acme/hotel/sys/controller/SysAuditLogController.java\n M .specgate/examples/java-react-admin-1/backend/src/main/java/com/acme/hotel/sys/controller/SysDashboardController.java\n M .specgate/examples/java-react-admin-1/backend/src/main/java/com/acme/hotel/sys/controller/SysDepartmentController.java\n M .specgate/examples/java-react-admin-1/backend/src/main/java/com/acme/hotel/sys/controller/SysMenuController.java\n M .specgate/examples/java-react-admin-1/backend/src/main/java/com/acme/hotel/sys/controller/SysRoleController.java\n M .specgate/examples/java-react-admin-1/backend/src/main/java/com/acme/hotel/sys/controller/SysUserController.java\n M .specgate/examples/java-react-admin-1/backend/src/main/java/com/acme/hotel/sys/dto/SysDepartmentRequest.java\n M .specgate/examples/java-react-admin-1/backend/src/main/java/com/acme/hotel/sys/dto/SysDepartmentUpdateRequest.java\n M .specgate/examples/java-react-admin-1/backend/src/main/java/com/acme/hotel/sys/dto/SysMenuRequest.java\n M .specgate/examples/java-react-admin-1/backend/src/main/java/com/acme/hotel/sys/dto/SysMenuUpdateRequest.java\n M .specgate/examples/java-react-admin-1/backend/src/main/java/com/acme/hotel/sys/dto/SysRoleRequest.java\n M .specgate/examples/java-react-admin-1/backend/src/main/java/com/acme/hotel/sys/dto/SysRoleUpdateRequest.java\n M .specgate/examples/java-react-admin-1/backend/src/main/java/com/acme/hotel/sys/dto/SysUserRequest.java\n M .specgate/examples/java-react-admin-1/backend/src/main/java/com/acme/hotel/sys/dto/SysUserUpdateRequest.java\n M .specgate/examples/java-react-admin-1/backend/src/main/java/com/acme/hotel/sys/entity/SysAuditLog.java\n M .specgate/examples/java-react-admin-1/backend/src/main/java/com/acme/hotel/sys/entity/SysDepartment.java\n M .specgate/examples/java-react-admin-1/backend/src/main/java/com/acme/hotel/sys/repository/SysAuditLogRepository.java\n M .specgate/examples/java-react-admin-1/backend/src/main/java/com/acme/hotel/sys/repository/SysDepartmentRepository.java\n M .specgate/examples/java-react-admin-1/backend/src/main/java/com/acme/hotel/sys/repository/SysMenuRepository.java\n M .specgate/examples/java-react-admin-1/backend/src/main/java/com/acme/hotel/sys/repository/SysRoleRepository.java\n M .specgate/examples/java-react-admin-1/backend/src/main/java/com/acme/hotel/sys/repository/SysUserRepository.java\n M .specgate/examples/java-react-admin-1/backend/src/main/java/com/acme/hotel/sys/service/SysAuditLogService.java\n M .specgate/examples/java-react-admin-1/backend/src/main/java/com/acme/hotel/sys/service/SysDashboardService.java\n M .specgate/examples/java-react-admin-1/backend/src/main/java/com/acme/hotel/sys/service/SysDepartmentService.java\n M .specgate/examples/java-react-admin-1/backend/src/main/java/com/acme/hotel/sys/service/SysMenuService.java\n M .specgate/examples/java-react-admin-1/backend/src/main/java/com/acme/hotel/sys/service/SysRoleCsvService.java\n M .specgate/examples/java-react-admin-1/backend/src/main/java/com/acme/hotel/sys/service/SysRoleService.java\n M .specgate/examples/java-react-admin-1/backend/src/main/java/com/acme/hotel/sys/service/SysUserCsvService.java\n M .specgate/examples/java-react-admin-1/backend/src/main/java/com/acme/hotel/sys/service/SysUserService.java\n M .specgate/examples/java-react-admin-1/backend/src/main/java/com/acme/hotel/sys/vo/SysDepartmentVO.java\n M .specgate/examples/java-react-admin-1/backend/src/test/java/com/acme/hotel/common/ApiErrorHandlerTest.java\n M .specgate/examples/java-react-admin-1/backend/src/test/java/com/acme/hotel/security/LocalAccountsTest.java\n M .specgate/examples/java-react-admin-1/backend/src/test/java/com/acme/hotel/sys/SysAuditLogApiTest.java\n M .specgate/examples/java-react-admin-1/backend/src/test/java/com/acme/hotel/sys/SysDashboardApiTest.java\n M .specgate/examples/java-react-admin-1/backend/src/test/java/com/acme/hotel/sys/SysDepartmentApiTest.java',
+    expected: '',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

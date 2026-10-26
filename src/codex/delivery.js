@@ -8,7 +8,7 @@ import { gitSafeDirectory } from './git-path.js';
 import { resolveGitIdentity } from './core/git-identity.js';
 import { validateDeliveryRecord } from './project-model.js';
 import { checkedProjectRoot } from './project-state.js';
-import { validateDeliveryRecordV3 } from './control/delivery-controlled.js';
+import { validateDeliveryRecordV3 } from './core/delivery-record.js';
 
 const failure = (code, message) => ({ ok: false, code, message });
 const object = (value) => value !== null && typeof value === 'object' && !Array.isArray(value);
@@ -118,7 +118,10 @@ export function renderCustomerPack({ delivery, customer = {} } = {}) {
     list((customer.verification || []).map(redact)),
     '',
     '## Known issues',
-    list((customer.knownIssues || delivery.knownIssues).map(redact)),
+    list(delivery.knownIssues.map(redact)),
+    ...(Array.isArray(delivery.risks) && delivery.risks.length
+      ? ['', '## Open risks', list(delivery.risks.map(redact))]
+      : []),
     '',
     '## Upgrade',
     redact(customer.upgrade || 'Apply the accepted delivery commit.'),

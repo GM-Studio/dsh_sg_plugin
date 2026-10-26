@@ -1,0 +1,24 @@
+✔ portable plugin manifests expose the bundled stdio MCP server and setup skill (1.0025ms)
+✔ source setup installs six project agents and preserves unrelated AGENTS content (257.6105ms)
+✔ source setup reports a tracked AGENTS file instead of hiding its required commit (259.7238ms)
+✔ source setup creates a missing Git info directory before writing local excludes (182.0644ms)
+✔ source setup refuses to overwrite conflicting project agents (1.9221ms)
+✔ source setup refuses an unmanaged project MCP conflict (1.0259ms)
+✔ setup leaves project-level skills to the global plugin and preserves legacy copies (161.2247ms)
+✔ default source setup installs exactly the three Core roles and deterministic formatting instructions (228.5802ms)
+✔ unbound Core diagnostics only recommend tools in the public Core registry (1.544ms)
+✔ native runner receives the manifest test root instead of its frozen snapshot parent (0.1719ms)
+✔ state inspection is read-only and mutation schemas require a current version (2.9288ms)
+✔ MCP lifecycle controls preserve worktrees and evidence and enforce CAS (83.1652ms)
+✔ init preview is read-only; nonempty initialization cannot manufacture approval (155.0467ms)
+✔ the public tool set cannot import approvals or arbitrarily change phases (1.5705ms)
+✔ plan and development tools expose only versions and frozen content, never roles or commands (1.4511ms)
+✔ nested change schemas reject forged answers and credentials before touching storage (0.6697ms)
+ℹ tests 16
+ℹ suites 0
+ℹ pass 16
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1164.9096

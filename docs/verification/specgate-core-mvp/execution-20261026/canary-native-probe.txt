@@ -1,0 +1,9 @@
+2026-10-26T01:00:07.947293Z  WARN codex_skills::interface: ignoring interface.icon_small: icon path with '..' must resolve under plugin assets/
+2026-10-26T01:00:07.947350Z  WARN codex_skills::interface: ignoring interface.icon_large: icon path with '..' must resolve under plugin assets/
+2026-10-26T01:00:07.953106Z  WARN codex_core::shell_snapshot: Failed to create shell snapshot for powershell: Shell snapshot not supported yet for PowerShell
+{"type":"thread.started","thread_id":"01a175b8-cd6e-7630-9d09-b5f0c7ff11b6"}
+2026-10-26T01:00:08.459561Z  WARN codex_skills::interface: ignoring interface.icon_small: icon path with '..' must resolve under plugin assets/
+2026-10-26T01:00:08.459582Z  WARN codex_skills::interface: ignoring interface.icon_large: icon path with '..' must resolve under plugin assets/
+{"type":"turn.started"}
+{"type":"item.completed","item":{"id":"item_0","type":"agent_message","text":"CANARY_NATIVE_READY"}}
+{"type":"turn.completed","usage":{"input_tokens":17421,"cached_input_tokens":13440,"cache_write_input_tokens":0,"output_tokens":8,"reasoning_output_tokens":0}}

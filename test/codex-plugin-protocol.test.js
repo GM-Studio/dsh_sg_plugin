@@ -6,6 +6,7 @@ import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { resolveProjectRoot } from '../src/codex/server.js';
+import { createToolRegistry } from '../src/codex/workflow-tools.js';
 
 const root = fileURLToPath(new URL('../', import.meta.url));
 const server = path.join(root, 'src/codex/server.js');
@@ -150,15 +151,10 @@ test('stdio handshake and diagnostic tools leave a nonempty project unchanged', 
       'sg_pause',
       'sg_resume',
       'sg_cancel',
-      'sg_init_preview',
-      'sg_init',
-      'sg_verify',
-      'sg_project_verify',
       'sg_project_status',
       'sg_adopt_preview',
       'sg_adopt_commit_dirty',
       'sg_adopt_apply',
-      'sg_project_finalize_new',
       'sg_change_preflight',
       'sg_change_add',
       'sg_change',
@@ -188,14 +184,8 @@ test('stdio handshake and diagnostic tools leave a nonempty project unchanged', 
       'sg_review_request_h3',
       'sg_release_preview',
       'sg_release_archive',
-      'sg_work_item_create',
-      'sg_work_item_status',
-      'sg_work_item_wait',
       'sg_project_bind',
-      'sg_project_setup',
-      'sg_project_create',
       'sg_env_check',
-      'sg_env_prepare',
       'sg_status',
     ],
   );
@@ -263,6 +253,36 @@ test('unknown versions negotiate the supported version; invalid initialize can b
   );
 });
 
+test('source-only optional mode explicitly adds the historical tool entries', () => {
+  const projectRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'sg-optional-tools-'));
+  const core = createToolRegistry({ projectRoot, optionalModules: false });
+  const optional = createToolRegistry({ projectRoot, optionalModules: true });
+  const coreNames = core.definitions.map((entry) => entry.name);
+  const optionalNames = optional.definitions.map((entry) => entry.name);
+  assert.deepEqual(
+    optionalNames.filter((name) => !coreNames.includes(name)),
+    [
+      'sg_init_preview',
+      'sg_init',
+      'sg_verify',
+      'sg_project_verify',
+      'sg_project_finalize_new',
+      'sg_work_item_create',
+      'sg_work_item_status',
+      'sg_work_item_wait',
+      'sg_project_setup',
+      'sg_project_create',
+      'sg_env_prepare',
+    ],
+  );
+  assert.equal(
+    coreNames.some((name) => /work_item|worker|decision|totp|deploy/i.test(name)),
+    false,
+  );
+  assert.equal(core.validate('sg_work_item_status', {}), false);
+  assert.equal(optional.validate('sg_work_item_status', {}), true);
+});
+
 test('lifecycle rejects calls before handshake and repeated initialization', () => {
   const result = exchange([
     request(1, 'tools/list'),
@@ -276,7 +296,7 @@ test('lifecycle rejects calls before handshake and repeated initialization', () 
   assert.equal(result.messages[0].error.code, -32002);
   assert.equal(result.messages[2].error.code, -32002);
   assert.equal(result.messages[3].error.code, -32600);
-  assert.equal(result.messages[4].result.tools.length, 54);
+  assert.equal(result.messages[4].result.tools.length, 43);
 });
 
 test('malformed JSON, batch messages and invalid envelopes do not terminate the server', () => {

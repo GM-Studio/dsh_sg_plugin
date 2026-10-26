@@ -1,0 +1,186 @@
+
+> skillhub-frontend@0.1.0 test
+> vitest run
+
+
+ RUN  v3.2.4 E:/ai_workflow/specgate-canary-skill-hub-stable/frontend
+
+ ✓ src/api/http.test.ts (3 tests) 2ms
+ ✓ src/composables/useAuth.test.ts (5 tests) 3ms
+stderr | src/views/HomePage.test.ts > HomePage > fetches skills and tags on mount
+[Vue Router warn]: No match found for location with path "/about"
+
+stderr | src/views/HomePage.test.ts > HomePage > debounces search input by 500ms
+[Vue Router warn]: No match found for location with path "/about"
+
+stderr | src/views/HomePage.test.ts > HomePage > shows empty state when no skills found
+[Vue Router warn]: No match found for location with path "/about"
+
+stderr | src/views/HomePage.test.ts > HomePage > renders tag filter chips and toggles selection
+[Vue Router warn]: No match found for location with path "/about"
+
+stderr | src/views/HomePage.test.ts > HomePage > sends sort parameters in API call
+[Vue Router warn]: No match found for location with path "/about"
+
+ ✓ src/views/RepositoriesPage.test.ts (6 tests) 99ms
+ ✓ src/views/HomePage.test.ts (5 tests) 106ms
+ ❯ src/views/SkillDetailPage.test.ts (14 tests | 2 failed) 118ms
+   ✓ SkillDetailPage > fetches and displays skill detail on mount 24ms
+   ✓ SkillDetailPage > renders tags as chips 6ms
+   ✓ SkillDetailPage > renders skill group link 8ms
+   ✓ SkillDetailPage > renders GitHub repo as external link 7ms
+   ✓ SkillDetailPage > renders README content as HTML via v-html 11ms
+   ✓ SkillDetailPage > shows loading state initially 2ms
+   ✓ SkillDetailPage > shows error state when skill not found (404) 4ms
+   ✓ SkillDetailPage > shows generic error state on network failure 4ms
+   × SkillDetailPage > displays download command generated from skill metadata 16ms
+     → expected '返回列表 My Agent SkillA powerful agent s…' to contain 'git clone --filter=blob:none --sparse…'
+   × SkillDetailPage > copies download command and shows 已复制 feedback 14ms
+     → expected "spy" to be called with arguments: [ Array(1) ]
+
+Received: 
+
+  1st spy call:
+
+  [
+-   "git clone --filter=blob:none --sparse --depth=1 https://github.com/testuser/my-repo && cd my-repo && git sparse-checkout set skills/my-agent-skill",
++   "git clone --filter=blob:none --no-checkout --depth=1 https://github.com/testuser/my-repo && cd my-repo && git sparse-checkout init --no-cone && git sparse-checkout set skills/my-agent-skill && git checkout",
+  ]
+
+
+Number of calls: 1
+
+   ✓ SkillDetailPage > calls copy-event API when copy button is clicked 8ms
+   ✓ SkillDetailPage > fetches and renders SKILL.md content as raw text when skillMdUrl is present 5ms
+   ✓ SkillDetailPage > does not fetch SKILL.md when skillMdUrl is null 4ms
+   ✓ SkillDetailPage > falls back gracefully when SKILL.md fetch fails 5ms
+ ❯ src/views/SkillGroupDetailPage.test.ts (19 tests | 2 failed) 187ms
+   ✓ SkillGroupDetailPage > fetches and displays group detail on mount 34ms
+   × SkillGroupDetailPage > displays batch download command for all ACTIVE skills 20ms
+     → expected '返回列表 my-repoA collection of agent ski…' to contain 'git clone --filter=blob:none --sparse…'
+   ✓ SkillGroupDetailPage > displays individual skill download commands for ACTIVE skills 9ms
+   ✓ SkillGroupDetailPage > shows REMOVED badge for removed skills 10ms
+   ✓ SkillGroupDetailPage > copies batch command and shows 已复制 feedback 17ms
+   ✓ SkillGroupDetailPage > calls skill-groups copy-event API when batch copy is clicked 11ms
+   × SkillGroupDetailPage > copies individual skill command and calls skill copy-event API 12ms
+     → expected "spy" to be called with arguments: [ Array(1) ]
+
+Received: 
+
+  1st spy call:
+
+  [
+-   "git clone --filter=blob:none --sparse --depth=1 https://github.com/testuser/my-repo && cd my-repo && git sparse-checkout set skills/skill-a",
++   "git clone --filter=blob:none --no-checkout --depth=1 https://github.com/testuser/my-repo && cd my-repo && git sparse-checkout init --no-cone && git sparse-checkout set skills/skill-a && git checkout",
+  ]
+
+
+Number of calls: 1
+
+   ✓ SkillGroupDetailPage > shows loading state initially 2ms
+   ✓ SkillGroupDetailPage > shows error state when group not found (404) 3ms
+   ✓ SkillGroupDetailPage > renders GitHub repo as external link 6ms
+   ✓ SkillGroupDetailPage > renders skill links to detail pages 6ms
+   ✓ SkillGroupDetailPage > does not show edit button when user is not logged in 6ms
+   ✓ SkillGroupDetailPage > does not show edit button when logged-in user is not the owner 4ms
+   ✓ SkillGroupDetailPage > shows edit button when logged-in user is the owner 4ms
+   ✓ SkillGroupDetailPage > enters edit mode with pre-filled values when edit button is clicked 7ms
+   ✓ SkillGroupDetailPage > cancels editing and returns to view mode 6ms
+   ✓ SkillGroupDetailPage > saves edited name and description via PATCH API 11ms
+   ✓ SkillGroupDetailPage > shows error message on 409 conflict when saving 12ms
+   ✓ SkillGroupDetailPage > shows generic error message on non-409 save failure 4ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/views/SkillDetailPage.test.ts > SkillDetailPage > displays download command generated from skill metadata
+AssertionError: expected '返回列表 My Agent SkillA powerful agent s…' to contain 'git clone --filter=blob:none --sparse…'
+
+- Expected
++ Received
+
+- git clone --filter=blob:none --sparse --depth=1 https://github.com/testuser/my-repo && cd my-repo && git sparse-checkout set skills/my-agent-skill
++ 返回列表 My Agent SkillA powerful agent skill for NLP tasks作者:testuser所属组:my-repoStar:128Fork:15仓库:https://github.com/testuser/my-repo 下载命令git clone --filter=blob:none --no-checkout --depth=1 https://github.com/testuser/my-repo && cd my-repo && git sparse-checkout init --no-cone && git sparse-checkout set skills/my-agent-skill && git checkout复制标签nlpchatagentREADME# Hello
++ This is a readme
+
+ ❯ src/views/SkillDetailPage.test.ts:192:28
+    190| 
+    191|     const expectedCmd = 'git clone --filter=blob:none --sparse --depth…
+    192|     expect(wrapper.text()).toContain(expectedCmd)
+       |                            ^
+    193|     expect(wrapper.text()).toContain('下载命令')
+    194|   })
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  src/views/SkillDetailPage.test.ts > SkillDetailPage > copies download command and shows 已复制 feedback
+AssertionError: expected "spy" to be called with arguments: [ Array(1) ]
+
+Received: 
+
+  1st spy call:
+
+  [
+-   "git clone --filter=blob:none --sparse --depth=1 https://github.com/testuser/my-repo && cd my-repo && git sparse-checkout set skills/my-agent-skill",
++   "git clone --filter=blob:none --no-checkout --depth=1 https://github.com/testuser/my-repo && cd my-repo && git sparse-checkout init --no-cone && git sparse-checkout set skills/my-agent-skill && git checkout",
+  ]
+
+
+Number of calls: 1
+
+ ❯ src/views/SkillDetailPage.test.ts:216:27
+    214|     await flushPromises()
+    215| 
+    216|     expect(writeTextMock).toHaveBeenCalledWith(
+       |                           ^
+    217|       'git clone --filter=blob:none --sparse --depth=1 https://github.…
+    218|     )
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  src/views/SkillGroupDetailPage.test.ts > SkillGroupDetailPage > displays batch download command for all ACTIVE skills
+AssertionError: expected '返回列表 my-repoA collection of agent ski…' to contain 'git clone --filter=blob:none --sparse…'
+
+Expected: "git clone --filter=blob:none --sparse --depth=1 https://github.com/testuser/my-repo && cd my-repo && git sparse-checkout set skills/skill-a skills/skill-b"
+Received: "返回列表 my-repoA collection of agent skills作者:testuser总下载次数:55Skills 数量:2仓库:https://github.com/testuser/my-repo 批量下载命令git clone --filter=blob:none --no-checkout --depth=1 https://github.com/testuser/my-repo && cd my-repo && git sparse-checkout init --no-cone && git sparse-checkout set skills/skill-a skills/skill-b && git checkout复制包含的 Skillsskill-a下载 30First skillgit clone --filter=blob:none --no-checkout --depth=1 https://github.com/testuser/my-repo && cd my-repo && git sparse-checkout init --no-cone && git sparse-checkout set skills/skill-a && git checkout复制skill-b下载 25Second skillgit clone --filter=blob:none --no-checkout --depth=1 https://github.com/testuser/my-repo && cd my-repo && git sparse-checkout init --no-cone && git sparse-checkout set skills/skill-b && git checkout复制skill-c 已移除 下载 0Removed skill"
+
+ ❯ src/views/SkillGroupDetailPage.test.ts:98:28
+     96| 
+     97|     const expectedCmd = 'git clone --filter=blob:none --sparse --depth…
+     98|     expect(wrapper.text()).toContain(expectedCmd)
+       |                            ^
+     99|     // Should NOT include removed skill path
+    100|     expect(wrapper.text()).not.toContain('git sparse-checkout set skil…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  src/views/SkillGroupDetailPage.test.ts > SkillGroupDetailPage > copies individual skill command and calls skill copy-event API
+AssertionError: expected "spy" to be called with arguments: [ Array(1) ]
+
+Received: 
+
+  1st spy call:
+
+  [
+-   "git clone --filter=blob:none --sparse --depth=1 https://github.com/testuser/my-repo && cd my-repo && git sparse-checkout set skills/skill-a",
++   "git clone --filter=blob:none --no-checkout --depth=1 https://github.com/testuser/my-repo && cd my-repo && git sparse-checkout init --no-cone && git sparse-checkout set skills/skill-a && git checkout",
+  ]
+
+
+Number of calls: 1
+
+ ❯ src/views/SkillGroupDetailPage.test.ts:194:27
+    192|     await flushPromises()
+    193| 
+    194|     expect(writeTextMock).toHaveBeenCalledWith(
+       |                           ^
+    195|       'git clone --filter=blob:none --sparse --depth=1 https://github.…
+    196|     )
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+ Test Files  2 failed | 4 passed (6)
+      Tests  4 failed | 48 passed (52)
+   Start at  08:35:34
+   Duration  1.09s (transform 412ms, setup 0ms, collect 1.01s, tests 515ms, environment 1.89s, prepare 1.23s)
+

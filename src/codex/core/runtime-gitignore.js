@@ -1,0 +1,37 @@
+const RUNTIME_NAMES = [
+  'state.json',
+  'init-report.json',
+  'init-result.json',
+  'codex/state.json',
+  'codex/events.jsonl',
+  'codex/write.lock',
+  'codex/worktrees/',
+  'codex/evidence/',
+  'codex/runs/',
+  'codex/baseline-runs/',
+  'codex/archive/',
+  'codex/*-report.json',
+  'codex/changes/*/evidence/',
+  'codex/changes/*/red/',
+  'codex/changes/*/quality/',
+  'codex/changes/*/format/',
+  'codex/changes/*/review/',
+  'codex/changes/*/tests/',
+  'codex-verify*',
+  'verify-*',
+  'verify.lock',
+  'toolchain-paths.json',
+  'toolchains/',
+  'env.json',
+  'env-report.md',
+  'run.lock',
+  'worktrees/',
+  'evidence/',
+  'backups/',
+  'gates/',
+  'runs/',
+];
+export const SPECGATE_GITIGNORE =
+  '# Local SpecGate runtime state and evidence; stable configuration remains tracked.\n' +
+  RUNTIME_NAMES.map((name) => '/' + name).join('\n') +
+  '\n';

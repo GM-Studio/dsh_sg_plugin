@@ -8,9 +8,48 @@ import {
   createDevelopmentService,
   createPrecompletedRoleProvider,
 } from '../src/codex/development.js';
-import { createFormatService } from '../src/codex/format.js';
+import { createFormatService, createNativeFormatter } from '../src/codex/format.js';
 import { createStateStore } from '../src/codex/state-machine.js';
 import { buildRepairContext } from '../src/codex/core/repair-context.js';
+
+test('native formatter executes the project package manager from a real worktree', async () => {
+  const worktree = fs.mkdtempSync(path.join(os.tmpdir(), 'sg-native-format-command-'));
+  const frontend = path.join(worktree, 'frontend');
+  fs.mkdirSync(path.join(frontend, 'node_modules'), { recursive: true });
+  fs.writeFileSync(
+    path.join(frontend, 'package.json'),
+    JSON.stringify({
+      name: 'format-command-fixture',
+      private: true,
+      scripts: { format: 'node -e "console.log(12345)"' },
+    }),
+  );
+  const result = await createNativeFormatter()({ worktree });
+  assert.equal(result.ok, true, JSON.stringify(result));
+  assert.match(result.commands.at(-1).stdout, /12345/);
+});
+
+test('native formatter uses a declared Maven formatter without requiring a wrapper', async () => {
+  const worktree = fs.mkdtempSync(path.join(os.tmpdir(), 'sg-declared-maven-format-'));
+  fs.mkdirSync(path.join(worktree, 'backend'));
+  fs.writeFileSync(
+    path.join(worktree, 'backend/pom.xml'),
+    '<project><build><plugins><plugin><artifactId>spotless-maven-plugin</artifactId></plugin></plugins></build></project>',
+  );
+  const calls = [];
+  const formatter = createNativeFormatter({
+    run: (specification) => {
+      calls.push(specification);
+      return { ok: true, exitCode: 0, fixture: true };
+    },
+  });
+  const result = await formatter({ worktree });
+  assert.equal(result.ok, true, JSON.stringify(result));
+  assert.deepEqual(
+    calls.map((entry) => entry.args),
+    [['spotless:apply']],
+  );
+});
 
 test('repair summaries are bounded, redact credentials and keep full-input hash references', () => {
   const context = buildRepairContext({
@@ -172,6 +211,33 @@ async function fixture({ through = 'FORMATTING' } = {}) {
   };
 }
 
+function fixturePostFormatQuality(context) {
+  return {
+    run: async ({ expectedVersion }, { postFormat }) => {
+      assert.equal(postFormat, true);
+      const loaded = await context.store.inspect();
+      assert.equal(expectedVersion, loaded.state.version);
+      const integrationCommit = git(context.integrationPath, ['rev-parse', 'HEAD']);
+      const quality = {
+        status: 'passed',
+        integrationCommit,
+        runId: 'fixture-post-format-quality',
+        hash: 'sha256:' + 'a'.repeat(64),
+      };
+      const saved = await context.store.update({
+        expectedVersion,
+        patch: { context: { quality } },
+      });
+      assert.equal(saved.ok, true, JSON.stringify(saved));
+      const moved = await context.store.transition({
+        expectedVersion: saved.state.version,
+        to: 'REVIEWING',
+      });
+      return { ...moved, quality };
+    },
+  };
+}
+
 test('failed quality returns defects to a new development round', async () => {
   const context = await fixture({ through: 'TESTING' });
   const current = await context.store.inspect();
@@ -252,6 +318,7 @@ test('Formatter runs only after tests, commits in its worktree and merges before
     projectRoot: context.root,
     store: context.store,
     planService: context.planService,
+    qualityService: fixturePostFormatQuality(context),
     formatter: async ({ worktree }) => {
       fs.writeFileSync(
         path.join(worktree, 'backend/src/App.java'),
@@ -277,6 +344,7 @@ test('Formatter cannot modify tests or files outside the development delta', asy
     projectRoot: context.root,
     store: context.store,
     planService: context.planService,
+    qualityService: fixturePostFormatQuality(context),
     formatter: async ({ worktree }) => {
       fs.writeFileSync(path.join(worktree, 'backend/src/App.java'), 'final class App {}\n');
       fs.mkdirSync(path.join(worktree, 'backend/src/test'), { recursive: true });
@@ -296,6 +364,7 @@ test('blocking Review starts a new round with fresh frontend/backend/format work
     projectRoot: context.root,
     store: context.store,
     planService: context.planService,
+    qualityService: fixturePostFormatQuality(context),
     formatter: async ({ worktree }) => {
       fs.writeFileSync(
         path.join(worktree, 'backend/src/App.java'),

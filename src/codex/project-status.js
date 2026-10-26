@@ -3,9 +3,6 @@ import path from 'node:path';
 import { createStateStore } from './state-machine.js';
 import { loadProjectReadiness } from './project-state.js';
 import { projectEnvironmentSelection, readEnvironmentJson } from './core/environment.js';
-import { readControlStore } from './control/store.js';
-import { resolveControlRoot } from './control/config.js';
-import { sameProject, workItemProjectRoot } from './core/project-path.js';
 
 // 不构造 supervisor/runtime/projection；它们的构造过程可能初始化状态目录。
 export async function inspectProjectStatus({ root, environment, env = process.env } = {}) {
@@ -14,10 +11,20 @@ export async function inspectProjectStatus({ root, environment, env = process.en
   const workflow = await createStateStore({ projectRoot: root }).inspect();
   const state = workflow.ok ? workflow.state : null;
   const verified = readEnvironmentJson(path.join(root, '.specgate/codex-verify-report.json'));
-  const control = readControlStore(resolveControlRoot({ env }));
-  const items = Object.values(control.state?.workItems || {}).filter((item) =>
-    sameProject(workItemProjectRoot(item), root),
-  );
+  let control = { ok: false, code: 'OPTIONAL_MODULE_DISABLED' };
+  let items = [];
+  if (env.SPECGATE_OPTIONAL_MODULES === '1') {
+    const [{ readControlStore }, { resolveControlRoot }, { sameProject, workItemProjectRoot }] =
+      await Promise.all([
+        import('./control/store.js'),
+        import('./control/config.js'),
+        import('./core/project-path.js'),
+      ]);
+    control = readControlStore(resolveControlRoot({ env }));
+    items = Object.values(control.state?.workItems || {}).filter((item) =>
+      sameProject(workItemProjectRoot(item), root),
+    );
+  }
   const pendingApproval = ['H1_PENDING', 'H3_PENDING'].includes(state?.phase) ? state.phase : null;
   return {
     ok: true,

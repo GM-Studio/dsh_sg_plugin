@@ -1,0 +1,50 @@
+SpecGate Core MVP final revalidation
+Date: 2026-10-26 (Asia/Shanghai)
+Workspace: E:\ai_workflow\specgate
+Test temp: C:\sg-core-test-temp (short path required on Windows)
+
+Focused delivery regression
+$ node --import ./test/setup-temp.mjs --test
+    test/codex-state-kernel.test.js
+    test/codex-approval-state.test.js
+    test/codex-plan-core.test.js
+    test/codex-development-flow.test.js
+    test/codex-quality-gate.test.js
+    test/codex-format-rework.test.js
+    test/codex-review-release.test.js
+    test/codex-delivery-record.test.js
+    test/codex-plugin-protocol.test.js
+    test/codex-plugin-package.test.js
+    test/codex-tools-workflow.test.js
+    test/codex-native-role-agent.test.js
+    test/codex-baseline.test.js
+tests 130; pass 130; fail 0; skipped 0; cancelled 0
+exitCode 0
+
+Full core regression
+$ npm test
+tests 744; pass 744; fail 0; skipped 0; cancelled 0
+exitCode 0
+
+Static and release checks
+$ npm run lint
+exitCode 0
+$ npm run format:check
+exitCode 0
+$ npm run pack:check
+exitCode 0; total files 123; no mysql2 dependency
+$ npm run codex:smoke
+exitCode 0; stdio handshake passed; 43 core tools listed
+$ git diff --check
+exitCode 0
+
+Review identity regression
+The focused set includes:
+- server Reviewer must record its execution identity and assignment hash
+- Review reports cannot come from public arguments and missing provider is unavailable
+- Review Agent writes are rejected and no passed report is recorded
+
+M6 boundary
+The real GitHub canary was intentionally not continued through Test Designer,
+Implementer, Reviewer and H3 in this run. M6 therefore remains unaccepted; fixture
+and synthetic lifecycle evidence are not claimed as real business delivery.

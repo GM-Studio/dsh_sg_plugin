@@ -1,0 +1,1143 @@
+
+> specgate-codex@0.3.4 test
+> node scripts/run-tests.mjs core
+
+SpecGate core: 97 test files; MySQL integration is an explicit separate suite.
+✔ adopted verification preserves unchanged known failures and reports no pass claim (2.2507ms)
+✔ adopted verification blocks new failures, missing commands and environment drift (0.4833ms)
+✔ new failures include bounded command evidence and never become passed artifacts (0.2966ms)
+✔ known failure signatures ignore timestamps, process ids and worktree paths (0.3004ms)
+✔ adopted verification executes real ProjectProfile commands in the fixed worktree (53.3031ms)
+✔ legacy baselines rebuild stable signatures from retained command evidence (1.8824ms)
+✔ approval fails closed without request, native user identity, or durable audit callback (1.229ms)
+✔ H1 approval probes the host channel even when elicitation is unadvertised (0.6736ms)
+✔ only peer elicitation response issues an approval with actor, timestamps, and an opaque handle (0.7038ms)
+✔ a record, nonce, cloned handle, and forged decision cannot authorize a gate (0.4238ms)
+✔ single use survives concurrent consumption and changes to public records (0.3639ms)
+✔ modify, reject and cancel decisions are audited and never return an authorizing handle (1.1204ms)
+✔ malformed or model-like responses cannot sign approvals (0.4199ms)
+✔ H1 confirm submits an empty native form and issues approval (0.2313ms)
+✔ H3 keeps an explicit decision field with an optional comment (0.1834ms)
+✔ unsupported, failed, timed out and cancelled native requests fail closed (15.6028ms)
+✔ approval expires and a late peer response never creates a handle (0.3993ms)
+✔ content changes before request, while awaiting the user, or before consumption invalidate approval (0.2481ms)
+✔ wrong gate, scope, and supplied hash cannot consume a bound approval (0.2326ms)
+✔ artifact reader failures and missing reader fail closed (0.1034ms)
+✔ nonce reuse and cross-authority handles cannot replay an approval (0.1538ms)
+✔ audit failures cannot issue or reuse approvals (0.2003ms)
+✔ state gate authorization binds the active change and current artifact hash (0.3641ms)
+✔ server transaction audit override avoids reacquiring the state lock (0.2078ms)
+✔ a sync fault after a complete audit append cannot reuse its sequence (85.8172ms)
+✔ pending authorization releases the writer lock and expires without a residual reservation (167.5077ms)
+✔ a real state transaction durably audits and consumes the opaque handle without recursive locking (130.6502ms)
+✔ forged handles are rejected with durable failure evidence and a fresh actual version (111.4674ms)
+✔ failed consumption audit denies transition and permanently invalidates its handle (110.9601ms)
+✔ a state WAL failure after approval consumption keeps the phase pending and rejects reuse (138.7909ms)
+✔ immutable JSON writes are path-bounded and idempotent for identical content (4.1292ms)
+✔ existing artifact content cannot be overwritten (1.5842ms)
+✔ absolute paths, traversal, control characters and filesystem root are rejected (0.6421ms)
+✔ symlink parents and symlink artifacts are rejected without writing outside (1.6224ms)
+✔ hardlinked artifacts are rejected and external content remains unchanged (1.7309ms)
+✔ oversized and non-JSON artifacts fail closed (1.8881ms)
+✔ immutable text artifacts are readable, hashed and conflict-protected (1.7837ms)
+✔ detached baseline worker survives the starter and persists readiness (1023.4534ms)
+✔ all passing baseline commands produce a valid green adopted baseline (285.8648ms)
+✔ pre-existing failing commands become stable known failures (259.8412ms)
+✔ no discovered commands produce a partial baseline with unverified risk (313.0809ms)
+✔ cancelled or malformed baseline runs fail without fabricating a green baseline (278.6103ms)
+✔ bounded baseline commands use argv arrays and classify observed failure (104.3185ms)
+✔ stable names support multilingual requests and explicit valid names (1.1152ms)
+✔ synthetic prerequisite fixture permits intake but real default verifier rejects it (411.5827ms)
+✔ generated-only initialization, dirty tracked files, and untracked files refuse intake without state writes (562.2909ms)
+✔ only one active change can be created and model text cannot forge user provenance (280.4296ms)
+✔ draft revisions preserve history and label inferred content as model proposals (355.4362ms)
+✔ clarification enforces three rounds and five questions and records only trusted-provider answers (369.9194ms)
+✔ without a trusted input source, the pending intake is preserved and tool answers are refused (243.5405ms)
+✔ choice answers preserve arrays and reject unavailable options before recording user input (319.2166ms)
+✔ critique requires structured categories and valid requirement references (307.5507ms)
+✔ duplicate IDs, incomplete restatements and unmapped dependencies are rejected before H1 (351.593ms)
+✔ blocking issues or critique findings cannot freeze at H1 (707.5272ms)
+✔ actual default approval remains unavailable and never freezes requirements (395.1723ms)
+✔ critique writes a reviewable requirements document before any approval and unified entry can request H1 (436.2704ms)
+✔ H1 opens immediately for an existing pending change without a review document (473.2766ms)
+✔ H1 form contains a bounded change summary rather than the full requirements document (362.1318ms)
+✔ closing H1 keeps the change pending and rejecting it returns to clarification (753.7324ms)
+✔ H1 upgrades an untouched old renderer document and preserves edited legacy documents (719.414ms)
+✔ editing a review document prevents approval until a new proposal and critique are written (473.259ms)
+✔ simulated native H1 approval creates a versioned immutable snapshot bound to the approval hash (369.9054ms)
+✔ revised requirements invalidate the old candidate and require a fresh critique (448.3287ms)
+✔ CAS conflicts, invalid schema and apparent secrets refuse modification (250.5151ms)
+✔ native modify and cancel decisions control H1 without freezing a snapshot (788.2828ms)
+✔ a failed automatic clarification resumes the same round without accepting tool answers (251.9153ms)
+✔ the final snapshot is rehashed during gate consumption and tampering refuses freeze (448.8866ms)
+✔ source repository guard is read-only and refuses to create an active product change (1.2821ms)
+✔ explicit assumptions are required for nonblocking unresolved issues (277.7476ms)
+✔ concurrent intake creates one active change without queueing another (310.5009ms)
+✔ tampered immutable candidates fail closed instead of overwriting a revision (406.7558ms)
+✔ native answers containing apparent credentials are never persisted (282.2104ms)
+✔ null schema entries return structured refusals instead of throwing (259.8038ms)
+✔ aborting native clarification retains the pending round and discards late provider answers (323.3057ms)
+✔ aborting H1 terminates an unresponsive native peer and cannot apply a late approval (435.9371ms)
+✔ an already aborted server context creates no clarification round or H1 artifact (351.5724ms)
+✔ a parent change without impact still validates the parent before requiring impact (641.8578ms)
+✔ a parent change with a valid impact persists an auditable incremental plan (551.7619ms)
+✔ unknown acceptance criteria and inconsistent reuse are rejected with the library codes (585.1781ms)
+✔ impact is strictly validated and cannot be smuggled to the sg_change_add alias (536.3445ms)
+✔ a change without a parent is unaffected and carries no incremental plan (1101.7577ms)
+✔ normalizes a feature alias and validates feature input (1.0783ms)
+✔ fix requires observed and expected behavior while retaining optional evidence (0.1209ms)
+✔ modify requires the current behavior, target change and compatibility statement (0.0734ms)
+✔ unsupported types, unknown fields and apparent credentials fail closed (0.0793ms)
+✔ builds a contract from confirmed requirement acceptance IDs (0.3475ms)
+✔ tool schemas declare strict nested structures and guarded versioned mutations (1.533ms)
+✔ declared examples dispatch through the actual controlled service and fail closed at default H1 (450.6641ms)
+✔ tool wrappers refuse unknown fields and never accept approval or user provenance (308.7165ms)
+✔ dispatch neither constructs a service nor invokes inherited or unavailable methods (0.3845ms)
+✔ server cancellation context is forwarded separately and cannot be submitted as a tool argument (0.2044ms)
+✔ unified sg_change accepts feature, modify and fix while rejecting invalid details (321.1818ms)
+✔ unified H1 entry is advertised, schema-validated and cannot mix intake or approval arguments (334.6084ms)
+✔ successful cleanup removes archived worktrees, temporary files and role branches only (401.7847ms)
+✔ unsafe change ids and source repository cleanup fail closed (95.0495ms)
+✔ cleanup is idempotent when no temporary workspace exists (219.7847ms)
+✔ H1 control bridge waits without holding an approval and later authorizes once (53.2039ms)
+✔ changed artifact and missing step-up cannot reach the native gate (7.3141ms)
+✔ password hashes use a bounded scrypt format and reject malformed records (95.1503ms)
+✔ AES-256-GCM secret box requires an explicit key and authenticates context (1.9427ms)
+✔ owner initialization seals TOTP at rest and login stores only token hashes (5.5408ms)
+✔ login and TOTP limits are atomic and TOTP replay is rejected (2.3552ms)
+✔ concurrent TOTP logins consume a counter exactly once (1.1407ms)
+✔ step-up challenges and proofs are one-time and strictly bound (2.6527ms)
+✔ concurrent proof consumption succeeds only once (0.918ms)
+✔ device revocation requires bound step-up proof and cascades sessions (8.0914ms)
+✔ attention nonces are single-use, expire, and never establish a session (1.244ms)
+✔ central auth policy maps sensitive mutations to step-up (0.1663ms)
+✔ audit records include security events without credential material (2.1942ms)
+✔ detectCapabilities reports available for every capability a host advertises (1.8328ms)
+✔ each capability is reported missing independently when its probe is absent (0.7568ms)
+✔ an existing subcommand that does not advertise its feature is reported missing (0.2575ms)
+✔ inconclusive probes are reported not-probed and never assumed available (0.294ms)
+✔ detectCapabilities never touches the host when no runner is injected (0.1823ms)
+✔ an unavailable host command is reported missing rather than guessed (0.2361ms)
+✔ capability probes are read-only help surfaces that never mutate the host (0.171ms)
+✔ a hanging probe is bounded by the timeout and reported not-probed (32.1184ms)
+✔ the bounded runner ignores stdin and terminates a hung probe (30.3772ms)
+✔ the bounded runner reports capabilities observed from a read-only probe (0.7856ms)
+✔ a fully capable host runs natively with no degradation (0.5272ms)
+✔ a missing plugin degrades to the project-level MCP + skill path (0.2105ms)
+✔ a missing exec --json degrades to the project-level MCP + skill path (0.1568ms)
+✔ missing native agents block subagent dispatch without changing the execution mode (0.1255ms)
+✔ missing elicitation keeps interactive gates pending (0.1463ms)
+✔ an unprobed capability degrades conservatively and is never assumed available (0.135ms)
+✔ describeDegradation tolerates an empty or malformed report (0.1679ms)
+✔ versionGateHint gives upgrade guidance when a required capability is absent (0.1524ms)
+✔ doctor surfaces the capability report, degradation mode and blocked capabilities (3.223ms)
+✔ doctor does not fail when a capability probe is not-probed (1.9515ms)
+✔ control execution receives only portable runtime variables and no control secrets (0.8895ms)
+✔ control configuration exposes portable Codex command and home overrides (0.4712ms)
+✔ remote management deployment requires an explicit HTTPS proxy boundary (1.0371ms)
+✔ management deployment mode fails closed on an unknown value (0.3543ms)
+✔ device confirmation input is hashed before it enters deployment config (0.3301ms)
+✔ control mode defaults to aggregate and fails closed on an invalid value (0.1904ms)
+✔ resolveControlEnvironment shares one home in aggregate and isolates per project (0.8414ms)
+✔ control daemon starts management independently and stops without deleting state (141.0208ms)
+✔ remote management daemon refuses incomplete deployment configuration before startup (2.4116ms)
+✔ remote management daemon starts only behind a configured HTTPS proxy boundary (70.1398ms)
+✔ control CLI exposes help and generates MFA material without writing config (0.3835ms)
+✔ control CLI doctor reports portable launch readiness without leaking secrets (1.5261ms)
+✔ control CLI create uses the project bound by the running daemon (1.1348ms)
+✔ control CLI uses SPECGATE_PROJECT_ROOT when no daemon binding is active (0.925ms)
+✔ control CLI refuses to silently rebind an already running daemon project (1.0667ms)
+✔ daemon fans out AttentionRequest through Feishu and DingTalk without blocking state (239.0542ms)
+✔ daemon background loop claims queued WorkItems without an external tick (128.8728ms)
+✔ file-based stop request shuts down without relying on Unix signals (46.3749ms)
+✔ a second project registers without clobbering the first and re-registration is idempotent (28.0581ms)
+✔ aggregate mode serves several registered projects under one global concurrency limit (145.1064ms)
+✔ isolated mode derives its own control home and port without moving aggregate state (13.8705ms)
+✔ an invalid control mode or project root fails closed (2.0143ms)
+✔ control CLI --mode isolated selects the per-project control home (2.3173ms)
+✔ an isolated daemon registers and writes into its per-project control home (59.4297ms)
+✔ control state starts empty and schema-bounded (0.6821ms)
+✔ WorkItem input is bounded and cannot inject identity or arbitrary state (0.391ms)
+✔ AttentionRequest requires a decision shape and stable revision context (0.4448ms)
+✔ Decision validation rejects arbitrary actions and untrusted auth fields (0.16ms)
+✔ user-visible projection never reports OFFLINE as running (0.1441ms)
+✔ HOST_HEALTH is the frozen host-health enum and includes SUSPECT (0.0696ms)
+✔ a suspect host is projected as SUSPECT and never as running (0.0594ms)
+✔ scheduler integration keeps one lease and hands the next claim to another worker (63.2608ms)
+✔ gateway persists bounded multi-worker capabilities and rejects unsafe declarations (1.5782ms)
+✔ scheduler capability match is the exact WorkItem leased by the control plane (34.2141ms)
+✔ two workers cannot claim the same project WorkItem (7.9927ms)
+✔ equal projects rotate by least recent project assignment (0.5728ms)
+✔ business priority beats project fairness (0.3136ms)
+✔ toolchain and strict region requirements exclude incompatible workers (0.835ms)
+✔ expired lease takeover increments fencing and rejects the old token (0.3844ms)
+✔ disconnect and reconnect replay ordered events without duplicate application (1.2056ms)
+✔ revoked worker cannot reconnect, claim, or reuse a lease (0.3533ms)
+✔ cross-project claim is denied and audited (0.2058ms)
+✔ callback, URL, and shell fields are denied and audited (0.2531ms)
+✔ 100 workers and 1000 queued items remain bounded and singly assigned (652.6331ms)
+✔ Decision application is pending, single-owner and completes exactly once (66.1555ms)
+✔ a cancelled Decision applies without an original session and never resumes (46.2186ms)
+✔ a missing original session blocks application without losing resume context (37.0428ms)
+✔ a pending application failure is explicit and never becomes completion (57.6053ms)
+✔ request_changes payload is carried into the resume prompt (45.0902ms)
+✔ native H1 and H3 gate application may complete without a resume session (62.9944ms)
+✔ M4 remote waiting, Decision apply and original-session resume close the loop (1149.0029ms)
+✔ cancel Decision is applied by an online Worker without resuming Codex (1099.2038ms)
+✔ channel contracts require known outbound HTTPS adapters and reject inbound options (0.8395ms)
+✔ Feishu and DingTalk adapters normalize receipts and DingTalk never sends a duplicate key (3.0861ms)
+✔ fanout isolates one failed channel from another and deduplicates per channel (2.2822ms)
+✔ object-shaped channel configuration preserves independent notifier identities (1.6214ms)
+✔ all-channel outage is contained and delivery exceeds neither maxAttempts nor one send per event (1.3516ms)
+✔ notification redaction is bounded, fail-closed for forbidden fields, and repeated before send (1.032ms)
+✔ Attention lifecycle emits bounded reminders, escalates once, and expires independently of channels (0.7196ms)
+✔ lifecycle always expires locally even when every notification method fails (0.2914ms)
+✔ lifecycle notifier creates an Attention-only short-lived link for outcome and decision messages (0.4522ms)
+✔ timeline orders, filters and bounds discrete events with defensive copies (8.203ms)
+✔ timeline supports every allowed type and deterministic JSONL/JSON export (1.5224ms)
+✔ timeline rejects unknown types and missing required fields without persistence (0.2121ms)
+✔ timeline redacts paths, credentials and customer names before persistence (0.2638ms)
+✔ timeline fails closed for chain-of-thought, token streams, raw logs and diffs (0.1849ms)
+✔ timeline adapter persists sanitized evidence and rejects replay conflicts (0.873ms)
+✔ decision timeline preserves artifact version, action and stale/rejected status (0.3006ms)
+✔ audit query trims owner and non-owner access by project scope (1.0647ms)
+✔ audit query verifies the chain first and fails closed on corruption or absence (0.1591ms)
+✔ audit query redacts paths and secrets and rejects raw logs (0.3878ms)
+✔ audit query returns ordered defensive copies and deterministic bounded export (0.5751ms)
+✔ timeline and audit queries require an authenticated session (27.4474ms)
+✔ timeline and audit APIs support bounded query and export (10.8389ms)
+✔ Decision mutations append a discrete timeline event (5.1426ms)
+✔ management UI renders discrete timeline events and export without payload dumps (0.4325ms)
+✔ control event history is queryable through the audit-chain adapter (11.2959ms)
+✔ exception inbox orders human-action items by risk and urgency only (2.7081ms)
+✔ expired Attentions and failed notifications remain visible with bounded metadata (0.4396ms)
+✔ project filters cannot cross project boundaries (5.9424ms)
+✔ non-owner roles never receive a broader project or action scope (0.4045ms)
+✔ pagination is deterministic, bounded and advances a monotonic version (1.112ms)
+✔ inbox tolerates missing, failed and malformed projection methods (0.2031ms)
+✔ SSE frames are bounded, sanitized, replayable and expose polling fallback (0.6676ms)
+✔ SSE backpressure drops queued frames and signals a reconnect reset (0.1582ms)
+✔ SSE fails closed for credentials, local paths, logs, CoT, customer names and diffs (0.1575ms)
+✔ SSE replay rejects expired cursors and heartbeat/unsubscribe release clients (0.2517ms)
+✔ exception inbox API is authenticated, ranked and filterable by project (30.079ms)
+✔ SSE endpoint emits a bounded state-change frame for its project (11.5625ms)
+✔ management UI uses inbox plus EventSource and retains polling fallback (0.4536ms)
+✔ freezeTests stores deterministic immutable hashes without absolute paths (12.3019ms)
+✔ freezeTests rejects traversal, binary and oversized test files (3.5473ms)
+✔ prepareRepair enforces round and usage budgets with an explicit Attention action (0.6466ms)
+✔ verify requires a server runner and produces fresh artifact-bound evidence (10.3313ms)
+✔ verify fails closed on test mutation, stale evidence and non-pass statuses (10.6728ms)
+✔ verify rejects AI signers, tampered evidence and changes made during the run (9.3982ms)
+✔ package is immutable and identical package identities cannot be overwritten (12.5986ms)
+✔ redeliver requires an accepted parent, new artifact and affected AC references (16.2538ms)
+✔ deployment manifest accepts a secure remote boundary without echoing secrets (1.5414ms)
+✔ deployment manifest accepts explicit nested deployment, database and release fields (0.281ms)
+✔ deployment manifest fails closed for insecure or incomplete values (0.6291ms)
+✔ release check reaches PASS only with fresh real evidence and measured targets (0.7768ms)
+✔ release check remains PARTIAL when external cloud and pilot evidence is absent (0.163ms)
+✔ release check blocks failed or untruthful evidence and RPO/RTO excess (0.2488ms)
+✔ release check rejects stale evidence and requires unexecuted checks to be listed (0.2497ms)
+✔ release check cannot pass when a required external check remains NOT_RUN (0.226ms)
+✔ metrics snapshot exposes only bounded operational fields and redacts sensitive service data (0.4225ms)
+✔ metrics snapshot fails soft without exposing a raw exception (0.7181ms)
+✔ systemd and Caddy templates enforce the single-host deployment boundary (0.3751ms)
+✔ backup and restore scripts enforce strict mode, checksums and metadata contracts (0.246ms)
+✔ release-check CLI is read-only and reports missing evidence as machine-readable blockers (46.9359ms)
+✔ release-check CLI fails closed when the manifest is missing or insecure (45.1017ms)
+✔ authenticated metrics endpoint exposes only bounded operational data (27.5957ms)
+✔ base URL validation allows loopback HTTP and rejects unsafe remote targets (0.9835ms)
+✔ all public requests use only fixed HTTPS routes and a bearer header (5.0443ms)
+✔ start reconnects with bounded jittered backoff and stops on token revocation (0.7687ms)
+✔ request timeout is bounded and stop aborts an in-flight request (14.7197ms)
+✔ start never creates concurrent poll loops (0.2903ms)
+✔ duplicate command replay invokes the handler once and acks after reporting (1.7422ms)
+✔ handler failure is reported without an ack and is not rerun in the same process (0.8394ms)
+✔ unknown and shell-like commands are reported but never passed to the handler (0.7692ms)
+✔ all canonical worker-contract command kinds reach the handler without shell access (1.6963ms)
+✔ event uploads are chunked to the bounded batch size (0.8841ms)
+✔ M4 request methods reject unbounded payloads before any network request (0.1265ms)
+✔ static transport contract has no listener or arbitrary URL callback parameter (1.6337ms)
+✔ audit chain detects tampering and returns defensive copies (1.2954ms)
+✔ audit rejects unknown actions and actors (0.128ms)
+✔ project retention defaults are 7/30/365/365 and can be configured (0.3321ms)
+✔ retention purge audits before deleting and never removes audit entries (0.6691ms)
+✔ expired evidence and notifications can be purged with an append-only audit receipt (0.3082ms)
+✔ decision purge derives project through the WorkItem rather than trusting Decision input (0.286ms)
+✔ manifest is deterministic and detects changed migration bytes (4.4884ms)
+✔ empty database plans all migrations and repeated plan applies none (1.2023ms)
+✔ migration checksums survive Windows and POSIX checkouts (1.0766ms)
+✔ checksum mismatch and unknown applied migrations fail closed (0.7199ms)
+✔ applyMigrations applies pending entries in order in one transaction (1.5019ms)
+✔ partial failure requests rollback and reports that DDL may have partially applied (1.1823ms)
+✔ duplicate migration ids fail closed before any database write (1.1319ms)
+✔ applyMigrations refuses checksum drift before writing (0.6964ms)
+✔ migration files must be numbered sql files (0.5479ms)
+✔ Project responses keep configuration and optimistic version separate (1.0892ms)
+✔ WorkItem CAS rejects stale revisions, revision gaps and identity changes (0.2148ms)
+✔ WorkItem save cannot overwrite an existing aggregate (0.1012ms)
+✔ Decision replay is idempotent and conflicting replay fails closed (0.5269ms)
+✔ Decision is bound to its WorkItem and project (0.2277ms)
+✔ Decision application rejects stale artifacts without partial mutation (0.2434ms)
+✔ Evidence dedupe distinguishes identical replay from conflicting identity reuse (0.1914ms)
+✔ Notification persists only recipientHash and enforces project identity (0.313ms)
+✔ Audit entries are validated, immutable to callers and chain-verifiable (0.2859ms)
+✔ project retention is configurable and evidence/notification/decision purge is audited (0.4839ms)
+✔ audit expiry fails closed until archival is implemented (0.5388ms)
+✔ schema state constraints include every reducer state (0.8621ms)
+✔ schema avoids reserved and stale table references (0.2081ms)
+✔ schema enforces concurrency and idempotency primitives (0.0864ms)
+✔ Decision timestamps distinguish recording from consumption (0.0712ms)
+✔ frozen persistence state enums match the approved product states (0.742ms)
+✔ WorkItem transitions require evidence and cancellation is terminal (0.1853ms)
+✔ Attention lifecycle is independent from delivery channels and supports escalation (0.1452ms)
+✔ Decision distinguishes recorded, pending, applying and applied (0.0938ms)
+✔ decision application updates WorkItem and Decision only after validation (0.1801ms)
+✔ old WorkItem revisions and old artifacts fail closed without mutation (0.0943ms)
+✔ Decision application accepts only pending states and maps terminal actions (0.1283ms)
+✔ registry and aggregate projections tolerate an empty or partial state (1.0772ms)
+✔ projectRegistry summarizes a single project from mixed WorkItem states (0.39ms)
+✔ projectRegistry reports an idle project from its own updatedAt (0.1243ms)
+✔ projectRegistry keeps per-project counts, a stable order and ignores orphans (5.294ms)
+✔ aggregatePortfolio orders open attention by severity then oldest by default (0.2364ms)
+✔ aggregatePortfolio honours a supplied attention comparator or ranker (0.1904ms)
+✔ aggregatePortfolio queues queued/running items in claimNext order (0.2336ms)
+✔ selectControlMode derives aggregate by default and isolated per project (0.4129ms)
+✔ modeConfig shares one control home in aggregate and isolates per project (0.3684ms)
+✔ resolveGlobalConcurrency clamps to configured bounds and reports the effective value (0.1825ms)
+✔ aggregate projections never throw on malformed entries and do not mutate state (0.1396ms)
+✔ registry rows report the effective mode from the project row or the control home (0.1345ms)
+✔ aggregatePortfolio reports the global concurrency clamp it enforces (0.0884ms)
+✔ waiting marker completes the Decision, reports Attention and never completes the Run (5.1993ms)
+✔ request_changes resumes the exact session with its payload in the prompt (1.3813ms)
+✔ a Decision without its original session blocks without starting a replacement (1.6682ms)
+✔ an adapter resume failure is reported as a failed Decision apply without fallback (1.0843ms)
+✔ a pending cancel Decision is completed without invoking Codex (1.4032ms)
+✔ idle claims never finish a Run and retain the sync cursor (0.7781ms)
+✔ heartbeats are serialized with session state and stop after execution cleanup (45.2804ms)
+✔ unknown projects fail closed even when the cloud claims an absolute path (1.9357ms)
+✔ projectRoots reject relative and nonexistent local directories at startup (0.8012ms)
+✔ waiting checkpoint persists Codex session and resumes it after H1 Decision (114.3489ms)
+✔ Decision requires H1 step-up, exact revision and artifact binding (30.7058ms)
+✔ duplicate Decision callback is idempotent and does not resume twice (27.6436ms)
+✔ stale and cross-work Decisions fail closed (52.8692ms)
+✔ heartbeat and offline reconciliation are explicit (35.6589ms)
+✔ claimNext only leases within the server-provided project whitelist (34.2997ms)
+✔ a stale heartbeat marks the host SUSPECT before it goes OFFLINE (30.8819ms)
+✔ management actions are idempotent for retried client requests (20.2158ms)
+✔ direct cancel closes the open AttentionRequest (19.9711ms)
+✔ direct request changes closes the open AttentionRequest and queues work (25.171ms)
+✔ a BUDGET resume Decision must increase the budget before work is queued (27.5857ms)
+✔ Decision preview validates the same revision and artifact binding without writing (21.0936ms)
+✔ expired AttentionRequest becomes explicit and can no longer be decided (37.1018ms)
+✔ control store persists immutable state and rejects version conflicts (11.5526ms)
+✔ event chain tampering fails closed without replacing evidence (8.1976ms)
+✔ a lagging snapshot is recoverable from the complete event chain (14.9467ms)
+✔ a concurrent snapshot advance cannot make a consistent read look corrupt (16.0481ms)
+✔ Attention revisions are unique and stale revisions cannot remain open (21.9029ms)
+✔ a decided Attention key can reopen with a monotonically new revision (36.3268ms)
+✔ project lease prevents concurrent WorkItems in one project (32.0799ms)
+✔ supervisor claims, heartbeats and finishes a completed execution (1.5627ms)
+✔ supervisor passes the daemon control root to the project-bound execution (0.2497ms)
+✔ supervisor does not offer customer acceptance without a DeliveryRecord (0.6439ms)
+✔ supervisor uses resume prompt after a consumed Decision (0.3467ms)
+✔ approved WorkItem without a prior session starts a new run with Decision context (0.2144ms)
+✔ supervisor turns a waiting marker into AttentionRequest and does not finish the run (0.2778ms)
+✔ supervisor creates a failed AttentionRequest after unrecoverable execution failure (0.2493ms)
+✔ supervisor stops at a hard tool-call budget and creates a budget decision (0.2234ms)
+✔ control MCP tools create and inspect a WorkItem without trusting actor input (10.3674ms)
+✔ wait tool creates one durable AttentionRequest and never approves it (16.3892ms)
+✔ status and wait only expose WorkItems owned by the bound project (16.5814ms)
+✔ wait tool retries bounded WorkItem heartbeat version conflicts (0.4673ms)
+✔ control tool definitions expose no arbitrary shell or approval injection (0.1994ms)
+✔ Web step-up Decision consumes one AttentionRequest and queues automatic resume (53.7329ms)
+✔ Web customer acceptance atomically links a DeliveryRecord receipt and Control Decision (66.5635ms)
+✔ outbound Worker e2e enforces identity, whitelist, leases, replay and revocation (112.7702ms)
+✔ worker registration stores only hashes and rotation/revocation invalidate access (2.9683ms)
+✔ memory store exposes both common token and audit contract aliases (0.7895ms)
+✔ claims use only the server whitelist and ignore idle as completion (1.7026ms)
+✔ claim begins the pending resume decision and returns its application context (0.4308ms)
+✔ claim releases the remote lease when decision application cannot begin (0.5255ms)
+✔ two workers receive only one lease and a disconnected worker is not completed (0.722ms)
+✔ heartbeat renews an owned run and release never reports completion (0.9591ms)
+✔ waiting records the session, creates Attention and releases the owned lease (0.8472ms)
+✔ waiting without a Codex session fails closed and keeps the execution lease (0.9273ms)
+✔ failed finish creates a FAILED Attention and never reports completion (0.8908ms)
+✔ worker events are idempotent, conflict-aware, project-scoped and fail closed (1.1172ms)
+✔ typed command outbox deduplicates, rejects shell payloads and acknowledges replay (0.8423ms)
+✔ pending decisions are bounded and isolated to the worker project whitelist (5.6457ms)
+✔ CONSUMED resume decisions expose bounded metadata and cancel applies without a run (0.5839ms)
+✔ decision apply failure creates a FAILED Attention and remains an explicit failure (0.4316ms)
+✔ M4 worker inputs reject callback and shell fields before any control action (0.1793ms)
+✔ connection inputs reject callback URLs and no inbound endpoint is accepted (0.1273ms)
+✔ external anchor detects simultaneous snapshot and event rollback and missing anchor (41.2043ms)
+✔ creates and validates accepted delivery records with stable local tag names (1.4767ms)
+✔ invalid acceptance, rollback, push and credentials fail closed (0.2498ms)
+✔ persists immutable delivery artifacts and creates a local annotated tag (242.0833ms)
+✔ customer packs never expose absolute paths or apparent credentials (0.3087ms)
+✔ customer summary preserves every known issue from the immutable DeliveryRecord (0.1893ms)
+✔ schema 3 DeliveryRecord keeps release approval separate from customer acceptance (1.5487ms)
+✔ schema 3 rejects missing verification, H3 and risks when evidence is incomplete (0.2289ms)
+✔ customer acceptance is explicit and append-only (0.1267ms)
+✔ persisted release approval remains separate until a trusted acceptance receipt (9.0386ms)
+✔ identical persisted customer acceptance is idempotent and returns the original receipt (7.1348ms)
+✔ latest validated schema 3 delivery can be discovered without a local record path (7.3001ms)
+✔ customer acceptance checks the linked record hash before writing a receipt (3.4421ms)
+✔ root dev launches only the frontend with an invalid JAVA_HOME and no account configuration (100.6735ms)
+✔ local configuration creates known demo accounts once and preserves existing user settings (3.2441ms)
+✔ red baseline requires a real failing command mapped to every frozen case before worktrees (1988.8919ms)
+✔ frontend and backend run serially in isolated worktrees and merge only through integration (3520.2906ms)
+✔ server accepts native-role precompleted commits only when they descend from freeze (2670.7725ms)
+✔ cross-role or test-file changes fail closed, exhaust the shared retry ceiling and preserve branches (2692.6346ms)
+✔ merge conflicts return to the owning role with conflict paths before integration continues (2869.6822ms)
+✔ same-role changes outside task allowlists and inside forbiddenFiles are blocked (5212.5746ms)
+✔ dependency manifests require the exact H1-approved content hash and AC (5059.6453ms)
+✔ environment fingerprints record versions but no secret values or absolute installation paths (1.3458ms)
+✔ major Java or Node changes require evidence reassessment (0.3035ms)
+✔ matching fingerprints are reusable and malformed fingerprints fail closed (0.1799ms)
+✖ initialization checks the selected environment before creating project files (91.7672ms)
+✔ read-only control status verifies the snapshot without repairing corrupt history (15.2692ms)
+✔ only marked staging owned by an exited process is recovered (51.9925ms)
+✔ temporary mirrors are scoped to the callback and removed on failure (2.0104ms)
+✔ planning requires a selected stack and installs only selected missing tools (0.4832ms)
+✔ check is read-only and stack changes invalidate readiness (0.9443ms)
+✔ install has no approval argument and needs trusted installation consent (1.2208ms)
+✔ installation probes again and rerun reuses tools without asking or installing (1.0731ms)
+✔ an installer success without real discovered binaries stays blocked (1.1215ms)
+✔ archive integrity rejects corrupted downloads before publication (3.2936ms)
+✔ aggregated status on a bare project never creates files or starts control runtime (3.6426ms)
+✔ all task Skills and generated project copies are declared (0.391ms)
+✔ a corrupt download is cleaned and an existing installation remains untouched (9.92ms)
+✔ workflow execution remains blocked without creating runtime state (14.3416ms)
+✔ status in supervisor mode does not create the control home (2.4378ms)
+✔ Codex adapter starts exec with JSON events and extracts session id (2.333ms)
+✔ Codex adapter uses only an explicitly configured sandbox mode (0.966ms)
+✔ Codex adapter isolates host MCP and injects the bound SpecGate server (0.3056ms)
+✔ Codex adapter resumes an exact session with a follow-up prompt (0.7656ms)
+✔ session extraction only accepts explicit session or thread identifiers (0.1095ms)
+✔ Codex adapter fails closed for invalid session and non-JSON output (0.9795ms)
+✔ Feishu webhook requires HTTPS without embedded credentials (0.4847ms)
+✔ Feishu notifier sends an interactive card and classifies API errors (0.8884ms)
+✔ Feishu card redacts internal paths and credentials and only opens the management URL (0.2503ms)
+✔ Feishu renders a non-actionable resolution follow-up after a Decision (0.1124ms)
+✔ Feishu notifier has bounded timeout and never leaks the webhook on failure (20.781ms)
+✔ repair summaries are bounded, redact credentials and keep full-input hash references (7.6299ms)
+✔ failed quality returns defects to a new development round (1588.2936ms)
+✔ Formatter runs only after tests, commits in its worktree and merges before Review (1223.6978ms)
+✔ Formatter cannot modify tests or files outside the development delta (1004.4993ms)
+✔ blocking Review starts a new round with fresh frontend/backend/format worktrees (3007.5756ms)
+✔ quality repair refuses to guess a missing failed command (658.4898ms)
+✔ Git safe.directory paths use forward slashes on Windows (0.4362ms)
+✔ Git safe.directory paths preserve absolute POSIX roots (0.0855ms)
+✔ both required platforms passed reports verified and matrixComplete (1.3982ms)
+✔ one platform passed and one not-run is not verified and lists the pending platform (0.4934ms)
+✔ hash mismatch is not verified and the reason names the changed template (0.8721ms)
+✔ current frontend-specific template revisions are pending rather than mismatched (59.2881ms)
+✔ the helper records a real pass and a not-run platform in one shape (0.2912ms)
+✔ the helper refuses to record a fabricated pass (0.4161ms)
+✔ the source manifest never claims verified without both platforms passing (0.2062ms)
+✔ interactive approval identity is server-derived only when explicitly enabled (0.7415ms)
+✔ MCP elicitation probes the real channel and supplies clarification answers (0.2714ms)
+✔ clarification fails closed when the real channel rejects or cancels (0.2838ms)
+✔ clarification renders single choice, multiple choice and text as distinct native controls (0.162ms)
+✔ incremental plans are bound to the accepted parent delivery (0.9349ms)
+✔ cross-project, unaccepted, unknown AC and missing parent references fail (0.113ms)
+✔ reused and affected AC sets must remain consistent (0.0713ms)
+✔ sg_change wires an optional impact object with strict nested fields (0.1293ms)
+✔ callChangeTool dispatches impact to sg_change and still refuses it for the sg_change_add alias (0.1982ms)
+✖ preview scans all categories and remains read-only for missing and nonempty targets (156.1651ms)
+✖ four presets generate unchanged templates, complete metadata and real isolated Git baselines (146.9934ms)
+✖ nonempty target requires an injected trusted provider, ignoring forged approvals in input (145.1584ms)
+✔ denied, unbound and incomplete conflict approvals perform zero target writes (471.8683ms)
+✖ approved keep-missing preserves business files and only commits generated files (184.3241ms)
+✖ preview drift before or during approval fails closed without generated files (347.7313ms)
+✔ existing .specgate and unsupported overwrite strategy reject before writes (3.0264ms)
+✔ path traversal, filesystem root and plugin source targets are rejected (0.5384ms)
+✔ symlink targets and symlink entries are rejected without following them (2.3469ms)
+✔ file-directory collisions refuse to claim a workable missing-only plan (18.4899ms)
+✔ existing Git status is read-only and execution preserves its history without writing (266.3382ms)
+✔ native form submission confirms initialization only inside its bound scope (0.643ms)
+✔ publication rolls back created files and managed edits without deleting retained user files (5.1794ms)
+✖ nonempty initialization uses system staging and preserves unrelated projects and runtime data (161.2527ms)
+✖ initialization reclaims a lock left by a dead process and removes staging (146.4343ms)
+✔ blank path initializes the bound Git repository once while retaining staged user changes (6605.4666ms)
+✔ failed creation retains stack including JDK8 and does not reopen the form on retry (44.0475ms)
+✔ a separate plugin source checkout cannot become a default business target (1.3126ms)
+✖ isolated generation ignores inherited Git locations, config injection, global templates and hooks (248.2745ms)
+✔ targets inside an enclosing repository are previewed accurately and never create nested baselines (706.7037ms)
+✖ an already cancelled initialization creates no target, lock or staging directory (145.0755ms)
+✖ generated baseline tracks stable configuration while runtime state stays ignored and business changes stay visible (141.8882ms)
+✖ delivery configuration and accepted records stay visible while runtime evidence remains ignored (141.1926ms)
+SpecGate 环境一键安装
+用法：node scripts/install-env.mjs [选项]
+  --check               只发现并报告，不安装
+  --only=git,node,...   仅处理指定工具（git、node、jdk8、jdk17、jdk21、maven）
+  --reinstall           忽略已发现的安装，重新执行安装链路
+  --method=<方式>       auto|winget|choco|apt-get|dnf|pacman|portable
+  --toolchain-dir=<目录> 便携安装目录（默认 ~/.specgate/toolchains；JDK 默认 ~/.jdks）
+  --no-env-write        不写入用户环境变量/配置文件（沙箱测试用）
+  --json                输出机器可读 JSON 报告
+Windows 依次尝试 winget → choco → 便携归档；Linux 依次尝试 apt/dnf/pacman → 便携归档。
+每步安装后都会真实重新探测；报告只反映实际探测结果。
+✔ version gates match the sg_verify toolchain requirements (0.5988ms)
+✔ plan reuses discovered tools and only reinstalls on request (0.4893ms)
+✔ windows chain prefers winget then choco then portable, git has no portable fallback (0.1695ms)
+✔ linux chain uses the package manager only with privileges and falls back to portable (0.1269ms)
+✔ portable urls target Adoptium, Apache CDN with archive fallback, and nodejs.org (0.2462ms)
+✔ portable targets keep the default jdk dir discoverable and sandbox custom dirs (0.2417ms)
+✔ portable env augment exposes maven and node through existing discovery keys (0.1545ms)
+✔ env block rendering and replacement stay inside managed markers (0.2581ms)
+✔ argument parsing validates tools, methods and absolute toolchain dirs (0.4406ms)
+✔ unknown tools verify as not ok without touching the system (0.2008ms)
+✔ help exits successfully and runs no discovery or install (0.4922ms)
+✔ discovery reports real facts for the current machine without writing (5376.6633ms)
+✔ package manifest does not ship superseded external installer prototypes (0.3302ms)
+✔ all management query routes are available through GET (33.03ms)
+✔ management shell is served without exposing API data (8.0977ms)
+✔ H1 attention documents open as authenticated escaped HTML pages (3.7669ms)
+✔ all management mutations use POST and route to the shared Decision service (8.3707ms)
+✔ wrong methods and malformed bodies return JSON (4.9799ms)
+✔ query and mutation routes keep working after a restart with a durable store (5.0406ms)
+✔ existing query routes serve the cross-project portfolio and attention data (3.7461ms)
+✔ management UI discovers account and pairing modes before opening a session (0.8117ms)
+✔ account login sends an opaque persistent device identity and new-device confirmation (0.3124ms)
+✔ attention nonces are redeemed after login and never create or persist a session (0.4934ms)
+✔ high-risk account mutations exchange TOTP for a one-time step-up proof (0.4956ms)
+✔ authenticated security view lists devices and provides proof-based revoke and logout (0.7313ms)
+✔ account mode advertises password and TOTP login and disables pairing sessions (28.8851ms)
+✔ high-risk mutations require a CSRF-bound, action-bound, one-time TOTP proof (13.8584ms)
+✔ device listing and revocation use an authenticated session and bound proof (6.1648ms)
+✔ attention nonces require login and only redeem the target without creating a session (4.7724ms)
+✔ remote mode refuses incomplete deployment configuration (0.9682ms)
+✔ remote mode rejects forged Host, Origin and untrusted proxy metadata (19.4004ms)
+✔ remote mode accepts trusted HTTPS proxy traffic and emits a Secure cookie (4.3674ms)
+✔ remote mode rejects a direct client that is not a configured proxy (1.9802ms)
+✔ pairing token is one-time and yields HttpOnly session plus CSRF token (26.3696ms)
+✔ attention links can use independently expiring one-time pairing tokens (9.7009ms)
+✔ queries require a session and never invoke mutation services (5.799ms)
+✔ mutations require CSRF and pass the session actor instead of body identity (5.0585ms)
+✔ step-up and security headers fail closed (3.5038ms)
+✔ expired sessions and unsafe static paths fail without filesystem escape (3.8167ms)
+✔ management requests have a bounded per-client rate limit (3.0024ms)
+✔ HTTPS deployment mode marks the session cookie Secure (2.6237ms)
+✔ a session survives a control-plane restart through the injected store (4.6904ms)
+✔ an expired session is dropped on load and does not survive a restart (3.732ms)
+✔ a pairing token still works exactly once across a restart (3.1903ms)
+✔ the durable store never persists raw tokens or credentials (2.0155ms)
+✔ without a store a restart loses the session, preserving in-memory behaviour (2.9358ms)
+✔ management services derive auth level from server-owned step-up verification (0.6346ms)
+✔ cancel requires step-up while pause is a normal authenticated action (0.1736ms)
+✔ forged system source is rejected from the web management wrapper (0.0827ms)
+✔ customer acceptance writes the linked DeliveryRecord before consuming the Control Decision (0.5798ms)
+✔ customer acceptance refuses a missing or changed DeliveryRecord before writing (0.1287ms)
+✔ generic Decision API cannot bypass the DeliveryRecord acceptance endpoint (0.0961ms)
+✔ changed DeliveryRecord hash refuses acceptance before Control Decision consumption (0.5296ms)
+✔ Web WorkItem creation cannot select an arbitrary local project path (0.1197ms)
+✔ management UI exposes attention, monitoring, evidence and controlled actions (1.0043ms)
+✔ management UI exposes the cross-project portfolio aggregate view (0.4743ms)
+✔ management UI renders a cross-project attention home ordered by severity (0.2989ms)
+✔ management UI stays read-only plus the allow-listed mutation routes (0.9163ms)
+✔ management UI contains no arbitrary shell, file picker or approval bypass (0.8817ms)
+✔ worker administration requires a trusted session, CSRF and step-up (30.7691ms)
+✔ worker management rotates, updates and revokes without leaking tokens (10.1906ms)
+✔ worker API uses independent bearer auth without cookies or CSRF (11.7699ms)
+✔ worker API rejects unknown routes and malformed command cursors (4.6476ms)
+✔ remote worker requests keep HTTPS/Host boundaries without browser Origin (4.0601ms)
+✔ native role assignment is delivered through stdin with the complete worktree task (3.8983ms)
+✔ native role prompt carries role boundaries without relying on undocumented subagent summaries (0.2017ms)
+✔ native role provider fails closed when the process produces no machine events (2.0064ms)
+✔ native Reviewer runs read only and must return a structured machine report (2.4682ms)
+✔ native runner adapter retries the legacy snapshot argument only when canonical mode writes no report (140.2244ms)
+✔ native runner adapter never retries a runner that produced an explicit failing report (95.4747ms)
+✔ native runner adapter retries an explicit setup failure caused by the duplicated test root (138.0706ms)
+✔ Outbox deduplicates Attention notifications and sends once (2.1889ms)
+✔ Outbox failure does not block and schedules exponential retry (0.4376ms)
+✔ a new Outbox instance can continue pending delivery after restart (0.3059ms)
+✔ Attention notifier builds a stable secure management link (0.3211ms)
+✔ Attention resolution uses a stable dedupe key and resolution card payload (0.1991ms)
+✔ account-mode attention links carry a short-lived nonce instead of a pairing token (0.1624ms)
+✔ explicit startup binding wins over workspace roots and environment (1.9875ms)
+✔ plugin cache fallback stays unbound instead of becoming the business project (1.279ms)
+✔ binding switches every subsequent project tool without writing either tree (41.1643ms)
+✔ new project requires explicit stack and missing form support never writes (2.5208ms)
+✖ native creation form preserves selected React stack, user identity, auto setup and project binding (117.1893ms)
+✔ cancelled project form is attempted again instead of degrading to text (86.3535ms)
+✔ project verification alias remains equivalent to sg_verify (2.0195ms)
+✔ identity resolver reuses explicit Git author environment and never supplies a fake identity (1.5803ms)
+✖ missing identity stops initialization before any target files or commit are created (65.4827ms)
+✔ H1 document shows requirements, acceptance criteria, user answers, critique and pending risks (0.3777ms)
+✔ Outcome is generated from structured verification facts (0.6437ms)
+✔ Outcome cannot turn insufficient evidence into a completion (0.1131ms)
+✔ Model summary claims are retained only as rendering metadata (0.2312ms)
+✔ real stdio can receive a simulated peer response while a tool waits for elicitation (90.5701ms)
+✔ stdio cancellation bypasses the tool queue and aborts an outstanding peer request (88.1845ms)
+✔ ping remains responsive while an interactive tool waits (88.5175ms)
+✔ duplicate in-flight tool ids cannot replace the original cancellation controller (88.1079ms)
+✔ empty native H1 confirm and dialog cancel both complete over real stdio (179.738ms)
+✔ server-initiated responses are correlated privately and cannot be supplied as tool arguments (1.0887ms)
+✔ unsupported elicitation and arbitrary server methods fail before sending (0.3349ms)
+✔ a bounded form-first request can probe a host that omitted the capability flag (0.1318ms)
+✔ timeouts, aborts, peer errors and disconnects reject pending requests (33.93ms)
+✔ an already aborted request and a send failure leave no pending approval (0.2349ms)
+✔ plan boundaries are mandatory and unsafe file globs are rejected (1.9724ms)
+✔ dynamic AC task graph includes every required role, mapping and ordering without a fixed task count (0.9923ms)
+✔ DAG validation rejects cycles, dangling dependencies, invalid AC references and development gate removal (0.6528ms)
+✔ plan generation requires an actual audited H1 consumption and intact P4 frozen locator (318.0683ms)
+✔ contracts and Test-provider assets freeze before development; a boolean red flag can never advance (250.8334ms)
+✔ tool parameters cannot assume the Test role and invalid asset mappings perform no asset writes (805.9773ms)
+✔ plan inspection is read-only and stale CAS cannot write new frozen artifacts (141.3538ms)
+✔ frozen contract, model and executable test content are rehashed on every inspection (684.6527ms)
+✔ frozen test replacement requires H1 reopening, refreeze and a new real red baseline (2411.0972ms)
+✔ native Test Designer freezes only committed specgate test assets from its worktree (769.9383ms)
+✔ test design preparation assigns and runs the real designer before reporting completion (794.6471ms)
+✔ default MCP static import graph excludes optional control, notification and installer code (15.1941ms)
+✔ Core v1 installation and lockfile have no MySQL driver dependency (1.1487ms)
+✔ Codex manifest and MCP entry stay contained in the shipped plugin (11.9421ms)
+✔ offline tarball install launches the packaged entry from a different project cwd (2470.1883ms)
+✔ smoke evidence rejects stdout pollution after the final reply (94.0252ms)
+✔ MCP roots bind tools to the target project instead of the plugin cache (4.099ms)
+✔ session cwd wins over ambient roots and environment variables (1.1529ms)
+✔ plugin-cache sessions use one unambiguous business root or stay unbound (3.9734ms)
+✔ stdio handshake and diagnostic tools leave a nonempty project unchanged (92.4705ms)
+✔ unknown versions negotiate the supported version; invalid initialize can be corrected (87.7192ms)
+✔ source-only optional mode explicitly adds the historical tool entries (1.5394ms)
+✔ lifecycle rejects calls before handshake and repeated initialization (87.5629ms)
+✔ malformed JSON, batch messages and invalid envelopes do not terminate the server (87.0803ms)
+✔ tools reject forged approvals, arguments and unknown methods; notifications get no reply (88.1022ms)
+✔ large and truncated frames fail closed; an empty EOF exits cleanly (268.8955ms)
+✔ project root comes from startup options; invalid options cannot start a workflow (173.7376ms)
+✔ adoption preview is read-only for clean and dirty Java/Vue projects (644.4631ms)
+✔ approved dirty-baseline commit stages only the exact approved file set (775.235ms)
+✔ dirty commit fails closed for missing approval, changed preview, incomplete paths and secrets (851.0705ms)
+✔ applies an adopted profile and baseline only after a clean preview (685.3072ms)
+✔ custom company and business names produce the required Java namespace (12.3259ms)
+✔ project conventions expose the selected frontend framework and Java preset (2.5555ms)
+✔ a React project rejects Vue single-file components but a Vue project accepts them (0.1194ms)
+✔ initialization preview records the selected frontend and rejects unknown ones (154.486ms)
+✔ all generated source files contain Chinese comments and i18n defaults to Chinese (8.9084ms)
+✔ template identity is stable across namespaces and invalid package names fail closed (15.3952ms)
+✖ initialization writes the configured namespace and no old example source tree (147.7407ms)
+✔ the vue frontend stays the default and keeps its recorded template identity (20.2305ms)
+✔ an unknown frontend fails closed instead of defaulting to vue (0.1863ms)
+✔ requesting the react frontend without its template tree fails closed (0.2311ms)
+✔ the react frontend replaces the vue tree and keeps shared files identical (23.6146ms)
+✔ the react frontend emits a .tsx entry with Chinese notes and no .vue files (8.6112ms)
+✔ detects a Java/Vue monorepo and derives argv-only commands without writes (261.8058ms)
+✔ detects the frontend framework from package dependencies (234.1522ms)
+✔ reports dirty files and package-manager choice without committing or staging (281.4878ms)
+✔ rejects unsupported stacks and source repository targets without writes (23.4263ms)
+✔ symlinked project entries are rejected before command discovery (160.103ms)
+✔ discovers hyphenated front-end roots and multiple frontend applications (416.8361ms)
+✔ discovers package-manager-specific install commands before build (50.0187ms)
+✔ ProjectProfile accepts new and adopted Java/Vue modes and rejects unsafe configuration (1.7894ms)
+✔ ProjectProfile no longer carries the dead pushApproved field (0.1255ms)
+✔ ProjectProfile accepts an optional frontend framework and Java preset and rejects invalid ones (0.1567ms)
+✔ ProjectBaseline permits adopted known failures but never allows an unknown start (0.29ms)
+✔ canStartChange requires a valid matching profile and a non-unknown baseline (0.1958ms)
+✔ ChangeContract allows only feature, modify and fix with observable acceptance IDs (0.3936ms)
+✔ Evidence cannot convert skipped, not-run, timeout or cancelled into passed (0.3053ms)
+✔ VerificationAssessment requires sufficient current evidence before H3 (0.2001ms)
+✔ VerificationAssessment records not-run, flaky and unresolved risk without claiming a pass (0.1126ms)
+✔ DeliveryRecord state never conflates verification, acceptance, push and deployment (0.2993ms)
+✔ Delivery state transitions are append-only and require acceptance before push (0.1196ms)
+✔ records a green new-project baseline only after complete verification (539.558ms)
+✔ generation-only and incomplete verification never create project readiness (136.0704ms)
+✔ failed or cancelled verification and source hash drift fail closed (508.6712ms)
+✔ a second new-project finalization cannot overwrite an existing profile (390.5177ms)
+✔ project tools expose only bounded project operations and read-only previews (0.8057ms)
+✔ adoption preview, baseline apply and project status use server-owned runner results (1097.7261ms)
+✔ failed background baseline remains observable and never creates readiness (468.3682ms)
+✔ dirty adoption commit calls only the server-owned approval provider (650.6134ms)
+✔ unknown tools, extra credentials and unavailable providers fail closed (224.4202ms)
+✔ quality passes only with frozen green cases, real logs, both coverage sides and changed-line coverage (2785.2392ms)
+✔ formatter reruns the server quality gate against the formatted integration commit (3583.4842ms)
+✔ a failed post-format quality run keeps Review closed and records repair evidence (3463.7744ms)
+✔ adopted quality verification uses ProjectProfile commands and Baseline Delta (3281.2315ms)
+✔ skipped frozen cases become P1 defects and the third failed attempt blocks without deleting evidence (3515.6724ms)
+✔ a Test role writing production code fails closed before quality commands run (2533.3545ms)
+✔ insufficient changed-line coverage cannot advance even when aggregate coverage thresholds pass (2963.4299ms)
+✔ a declaration-only Java interface does not become unavailable changed coverage (374.4774ms)
+✔ a Java class without JaCoCo evidence remains unavailable changed coverage (425.3431ms)
+✔ aggregate coverage below either side threshold blocks Review (2968.3473ms)
+✔ missing Test runner or failed real verification never records a quality pass (2680.6727ms)
+✔ risk selection escalates public contracts and Review enters H3 only on a valid pass (965.467ms)
+✔ Review and H3 reject quality evidence from another integration commit (751.7836ms)
+✔ H3 refuses a quality report replaced after Review with a stale commit (978.7739ms)
+✔ Review reports cannot come from public arguments and missing provider is unavailable (657.283ms)
+✔ server Reviewer receives a read-only challenge and submits a validated report (1064.6579ms)
+✔ severity thresholds differ across lenient, standard and strict modes (0.3201ms)
+✔ a Review finding must cite evidence on its reported file and line (0.1838ms)
+✔ Review Agent writes are rejected and no passed report is recorded (873.0379ms)
+✔ strict mode blocks P3 findings and preserves the failed report (931.1807ms)
+✔ H3 preview changes invalidate approval and H3 cannot be bypassed for archive (2065.1834ms)
+✔ H3-approved archive without a remote becomes ARCHIVED_NOT_PUSHED and says not pushed (2276.7307ms)
+✔ push failure records PUSH_FAILED without retry while a configured remote archives (4684.6848ms)
+✔ a configured remote is not pushed unless push=true is explicit (2160.0866ms)
+✔ project-backed archive creates a DeliveryRecord, local tag and separate packs (3013.2135ms)
+✔ an unbound environment check accepts an explicit business path and binds subsequent tools (91.2755ms)
+✔ project status exposes the pending change version and H1 fallback without changing state (116.4002ms)
+✔ portable plugin manifests expose the bundled stdio MCP server and setup skill (1.1785ms)
+✔ source setup installs six project agents and preserves unrelated AGENTS content (339.4675ms)
+✔ source setup reports a tracked AGENTS file instead of hiding its required commit (338.0229ms)
+✔ source setup creates a missing Git info directory before writing local excludes (193.9904ms)
+✔ source setup refuses to overwrite conflicting project agents (1.9554ms)
+✔ source setup refuses an unmanaged project MCP conflict (1.0788ms)
+✔ setup leaves project-level skills to the global plugin and preserves legacy copies (165.3116ms)
+✔ project facts share the authoritative WAL and cannot mutate a legacy phase (27.6192ms)
+✔ public phases cover every internal value and legacy state has no writer exports (0.6993ms)
+✔ legacy state edits after the first authoritative write fail closed (22.6191ms)
+✔ fresh load is read-only, isolated from legacy state, and mutations require CAS (28.5946ms)
+✔ inspect validates and rebuilds only in memory without creating locks or repairing files (46.7727ms)
+✔ legal migrations and opaque server gate hook protect H1 and H3 (320.0609ms)
+✔ concurrent clients and distinct processes cannot overwrite the same state version (150.7734ms)
+✔ every committed write is append-only and verifies as a hash chain (53.8243ms)
+✔ audit tampering, incomplete writes and tail truncation fail closed without replacing evidence (86.6655ms)
+✔ crashed process after durable WAL commit is recovered and its stale lock is reclaimed (110.4989ms)
+✔ snapshot write failure returns the committed version and never repeats the WAL operation (101.5238ms)
+✔ snapshot ahead of audit and rewritten snapshot state are rejected (14.5428ms)
+✔ pause, stable checkpoint resume and cancellation preserve worktree and evidence references (99.1473ms)
+✔ development, test and review tasks share the two-retry ceiling and preserve failure evidence (234.4777ms)
+✔ a Change cannot multiply its automatic repair budget by changing task categories (64.2529ms)
+✔ live lock is bounded and symlink storage cannot write outside the bound project (118.5554ms)
+✔ base32 and TOTP produce deterministic valid codes (1.1151ms)
+✔ step-up verification accepts a bounded clock window only (0.5589ms)
+✔ managed temporary directory is removed after success (1.9105ms)
+✔ managed temporary directory is removed after callback failure (1.2501ms)
+✔ atomic write removes its temporary sibling when writing fails (1.314ms)
+✔ test command report workspace is removed after success and failure (59.7795ms)
+✔ managed cleanup is idempotent and targets only its created directory (1.2864ms)
+✔ test bootstrap scavenges only stale marked runs and removes its own run (126.3222ms)
+✔ matrix workspace is removed after a completed run (3.5436ms)
+✔ matrix workspace is removed when orchestration throws (4.6305ms)
+✔ delivery pilot workspace is removed after success and failure (4.2652ms)
+✔ core and explicit MySQL suites partition every regression without dropping tests (17.9298ms)
+✔ a new database-dependent test requires an explicit suite decision (1.3978ms)
+✔ native runner receives the manifest test root instead of its frozen snapshot parent (0.5553ms)
+✔ state inspection is read-only and mutation schemas require a current version (5.0235ms)
+✔ MCP lifecycle controls preserve worktrees and evidence and enforce CAS (86.2855ms)
+✖ init preview is read-only; nonempty initialization cannot manufacture approval (174.8228ms)
+✔ the public tool set cannot import approvals or arbitrarily change phases (3.8261ms)
+✔ plan and development tools expose only versions and frozen content, never roles or commands (1.5542ms)
+✔ nested change schemas reject forged answers and credentials before touching storage (0.7262ms)
+✔ green verification requires fresh passing evidence for every AC (1.2639ms)
+✔ unrelated evidence, skipped evidence and missing evidence cannot prove an AC (0.2675ms)
+✔ stale commits and mismatched environments block verification (0.1659ms)
+✔ red verification requires a fixed-commit full review and can remain blocked by risk (0.1672ms)
+✔ self-report cannot satisfy independent verification (0.0963ms)
+✔ uninitialized, partial and source-tree projects reject verification without writes (14.6292ms)
+✔ public input cannot enable downloads, inject commands or bypass path binding (0.5584ms)
+✖ missing toolchains never download and invalidate stale passed reports with all stages not-run (170.8195ms)
+✖ cancelled verification records a new incomplete run and executes no quality commands (150.6634ms)
+✖ symlinked source entries are refused before verification writes (145.02ms)
+✖ hardlinked source and verification storage files reject before modifying external files (149.3087ms)
+✔ frontend smoke records actual fixture process, HTTP responses, hashes and logs without claiming Java verification (177.1496ms)
+✔ frontend timeout, active cancellation and spawn failure have bounded observed process cleanup (608.9847ms)
+✖ failed compatibility-state persistence revokes stale success and retains a recovery lock (146.7632ms)
+✔ frontend smoke fails for broken assets, failed startup and cancellation using real child processes (398.3289ms)
+✔ IDE Maven candidates are bounded and discovered from install roots without machine paths (1.9828ms)
+✖ read-only evidence validation rejects missing, forged, fixture and stale reports (143.4703ms)
+ℹ tests 721
+ℹ suites 0
+ℹ pass 699
+ℹ fail 22
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 80998.8304
+
+✖ failing tests:
+
+test at test\codex-environment.test.js:28:1
+✖ initialization checks the selected environment before creating project files (91.7672ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + 'INIT_EXISTING_GIT_UNSUPPORTED'
+  - 'ENV_NOT_READY'
+  
+      at TestContext.<anonymous> (file:///E:/ai_workflow/specgate/test/codex-environment.test.js:43:10)
+      at async Test.run (node:internal/test_runner/test:1125:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:358:3) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'INIT_EXISTING_GIT_UNSUPPORTED',
+    expected: 'ENV_NOT_READY',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at test\codex-init-adapter.test.js:33:1
+✖ preview scans all categories and remains read-only for missing and nonempty targets (156.1651ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  true !== false
+  
+      at TestContext.<anonymous> (file:///E:/ai_workflow/specgate/test/codex-init-adapter.test.js:58:10)
+      at Test.runInAsyncScope (node:async_hooks:228:14)
+      at Test.run (node:internal/test_runner/test:1118:25)
+      at Test.start (node:internal/test_runner/test:1015:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:358:17) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: true,
+    expected: false,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at test\codex-init-adapter.test.js:64:1
+✖ four presets generate unchanged templates, complete metadata and real isolated Git baselines (146.9934ms)
+  AssertionError [ERR_ASSERTION]: {"ok":false,"code":"INIT_EXISTING_GIT_UNSUPPORTED","message":"已有 Git 仓库的基线迁入尚未支持；未修改文件、索引或历史"}
+  
+  false !== true
+  
+      at TestContext.<anonymous> (file:///E:/ai_workflow/specgate/test/codex-init-adapter.test.js:71:12)
+      at async Test.run (node:internal/test_runner/test:1125:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:787:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at test\codex-init-adapter.test.js:108:1
+✖ nonempty target requires an injected trusted provider, ignoring forged approvals in input (145.1584ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + 'INIT_EXISTING_GIT_UNSUPPORTED'
+  - 'TRUSTED_APPROVAL_UNAVAILABLE'
+  
+      at TestContext.<anonymous> (file:///E:/ai_workflow/specgate/test/codex-init-adapter.test.js:118:10)
+      at async Test.run (node:internal/test_runner/test:1125:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:787:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'INIT_EXISTING_GIT_UNSUPPORTED',
+    expected: 'TRUSTED_APPROVAL_UNAVAILABLE',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at test\codex-init-adapter.test.js:149:1
+✖ approved keep-missing preserves business files and only commits generated files (184.3241ms)
+  AssertionError [ERR_ASSERTION]: {"ok":false,"code":"INIT_EXISTING_GIT_UNSUPPORTED","message":"已有 Git 仓库的基线迁入尚未支持；未修改文件、索引或历史"}
+  
+  false !== true
+  
+      at TestContext.<anonymous> (file:///E:/ai_workflow/specgate/test/codex-init-adapter.test.js:158:10)
+      at async Test.run (node:internal/test_runner/test:1125:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:787:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at test\codex-init-adapter.test.js:168:1
+✖ preview drift before or during approval fails closed without generated files (347.7313ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + 'INIT_EXISTING_GIT_UNSUPPORTED'
+  - 'INIT_PREVIEW_STALE'
+          ^
+  
+      at TestContext.<anonymous> (file:///E:/ai_workflow/specgate/test/codex-init-adapter.test.js:184:12)
+      at async Test.run (node:internal/test_runner/test:1125:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:787:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'INIT_EXISTING_GIT_UNSUPPORTED',
+    expected: 'INIT_PREVIEW_STALE',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at test\codex-init-publication.test.js:113:1
+✖ nonempty initialization uses system staging and preserves unrelated projects and runtime data (161.2527ms)
+  AssertionError [ERR_ASSERTION]: {"ok":false,"code":"INIT_EXISTING_GIT_UNSUPPORTED","message":"已有 Git 仓库的基线迁入尚未支持；未修改文件、索引或历史"}
+  
+  false !== true
+  
+      at TestContext.<anonymous> (file:///E:/ai_workflow/specgate/test/codex-init-publication.test.js:149:10)
+      at async Test.run (node:internal/test_runner/test:1125:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:787:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at test\codex-init-publication.test.js:156:1
+✖ initialization reclaims a lock left by a dead process and removes staging (146.4343ms)
+  AssertionError [ERR_ASSERTION]: {"ok":false,"code":"INIT_EXISTING_GIT_UNSUPPORTED","message":"已有 Git 仓库的基线迁入尚未支持；未修改文件、索引或历史"}
+  
+  false !== true
+  
+      at TestContext.<anonymous> (file:///E:/ai_workflow/specgate/test/codex-init-publication.test.js:183:10)
+      at async Test.run (node:internal/test_runner/test:1125:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:787:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at test\codex-init-security.test.js:67:1
+✖ isolated generation ignores inherited Git locations, config injection, global templates and hooks (248.2745ms)
+  AssertionError [ERR_ASSERTION]: {"ok":false,"code":"INIT_EXISTING_GIT_UNSUPPORTED","message":"已有 Git 仓库的基线迁入尚未支持；未修改文件、索引或历史"}
+  
+  false !== true
+  
+      at TestContext.<anonymous> (file:///E:/ai_workflow/specgate/test/codex-init-security.test.js:111:10)
+      at Test.runInAsyncScope (node:async_hooks:228:14)
+      at Test.run (node:internal/test_runner/test:1118:25)
+      at Test.start (node:internal/test_runner/test:1015:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:358:17) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at test\codex-init-security.test.js:140:1
+✖ an already cancelled initialization creates no target, lock or staging directory (145.0755ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + 'INIT_EXISTING_GIT_UNSUPPORTED'
+  - 'INIT_CANCELLED'
+          ^
+  
+      at TestContext.<anonymous> (file:///E:/ai_workflow/specgate/test/codex-init-security.test.js:150:10)
+      at async Test.run (node:internal/test_runner/test:1125:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:787:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'INIT_EXISTING_GIT_UNSUPPORTED',
+    expected: 'INIT_CANCELLED',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at test\codex-init-security.test.js:154:1
+✖ generated baseline tracks stable configuration while runtime state stays ignored and business changes stay visible (141.8882ms)
+  AssertionError [ERR_ASSERTION]: {"ok":false,"code":"INIT_EXISTING_GIT_UNSUPPORTED","message":"已有 Git 仓库的基线迁入尚未支持；未修改文件、索引或历史"}
+  
+  false !== true
+  
+      at TestContext.<anonymous> (file:///E:/ai_workflow/specgate/test/codex-init-security.test.js:159:10)
+      at async Test.run (node:internal/test_runner/test:1125:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:787:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at test\codex-init-security.test.js:204:1
+✖ delivery configuration and accepted records stay visible while runtime evidence remains ignored (141.1926ms)
+  AssertionError [ERR_ASSERTION]: {"ok":false,"code":"INIT_EXISTING_GIT_UNSUPPORTED","message":"已有 Git 仓库的基线迁入尚未支持；未修改文件、索引或历史"}
+  
+  false !== true
+  
+      at TestContext.<anonymous> (file:///E:/ai_workflow/specgate/test/codex-init-security.test.js:208:10)
+      at async Test.run (node:internal/test_runner/test:1125:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:787:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at test\codex-onboarding.test.js:82:1
+✖ native creation form preserves selected React stack, user identity, auto setup and project binding (117.1893ms)
+  AssertionError [ERR_ASSERTION]: {"ok":false,"code":"INIT_EXISTING_GIT_UNSUPPORTED","message":"已有 Git 仓库的基线迁入尚未支持；未修改文件、索引或历史 已保留技术栈选择，修正目录或权限后重试，不会再次弹出整张表单。","selectionRetained":true}
+  
+  false !== true
+  
+      at TestContext.<anonymous> (file:///E:/ai_workflow/specgate/test/codex-onboarding.test.js:111:10)
+      at async Test.run (node:internal/test_runner/test:1125:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:787:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at test\codex-onboarding.test.js:194:1
+✖ missing identity stops initialization before any target files or commit are created (65.4827ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + 'INIT_EXISTING_GIT_UNSUPPORTED'
+  - 'GIT_IDENTITY_REQUIRED'
+  
+      at TestContext.<anonymous> (file:///E:/ai_workflow/specgate/test/codex-onboarding.test.js:200:10)
+      at async Test.run (node:internal/test_runner/test:1125:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:787:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'INIT_EXISTING_GIT_UNSUPPORTED',
+    expected: 'GIT_IDENTITY_REQUIRED',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at test\codex-project-conventions.test.js:176:1
+✖ initialization writes the configured namespace and no old example source tree (147.7407ms)
+  AssertionError [ERR_ASSERTION]: {"ok":false,"code":"INIT_EXISTING_GIT_UNSUPPORTED","message":"已有 Git 仓库的基线迁入尚未支持；未修改文件、索引或历史"}
+  
+  false !== true
+  
+      at TestContext.<anonymous> (file:///E:/ai_workflow/specgate/test/codex-project-conventions.test.js:199:10)
+      at async Test.run (node:internal/test_runner/test:1125:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:787:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at test\codex-tools-workflow.test.js:73:1
+✖ init preview is read-only; nonempty initialization cannot manufacture approval (174.8228ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /APPROVAL/. Input:
+  
+  'INIT_EXISTING_GIT_UNSUPPORTED'
+  
+      at TestContext.<anonymous> (file:///E:/ai_workflow/specgate/test/codex-tools-workflow.test.js:97:10)
+      at async Test.run (node:internal/test_runner/test:1125:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:787:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'INIT_EXISTING_GIT_UNSUPPORTED',
+    expected: /APPROVAL/,
+    operator: 'match',
+    diff: 'simple'
+  }
+
+test at test\codex-verify-adapter.test.js:95:1
+✖ missing toolchains never download and invalidate stale passed reports with all stages not-run (170.8195ms)
+  AssertionError [ERR_ASSERTION]: {"ok":false,"code":"INIT_EXISTING_GIT_UNSUPPORTED","message":"已有 Git 仓库的基线迁入尚未支持；未修改文件、索引或历史"}
+  
+  false !== true
+  
+      at initialized (file:///E:/ai_workflow/specgate/test/codex-verify-adapter.test.js:26:10)
+      at async TestContext.<anonymous> (file:///E:/ai_workflow/specgate/test/codex-verify-adapter.test.js:96:16)
+      at async Test.run (node:internal/test_runner/test:1125:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:787:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at test\codex-verify-adapter.test.js:132:1
+✖ cancelled verification records a new incomplete run and executes no quality commands (150.6634ms)
+  AssertionError [ERR_ASSERTION]: {"ok":false,"code":"INIT_EXISTING_GIT_UNSUPPORTED","message":"已有 Git 仓库的基线迁入尚未支持；未修改文件、索引或历史"}
+  
+  false !== true
+  
+      at initialized (file:///E:/ai_workflow/specgate/test/codex-verify-adapter.test.js:26:10)
+      at async TestContext.<anonymous> (file:///E:/ai_workflow/specgate/test/codex-verify-adapter.test.js:133:16)
+      at async Test.run (node:internal/test_runner/test:1125:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:787:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at test\codex-verify-adapter.test.js:148:1
+✖ symlinked source entries are refused before verification writes (145.02ms)
+  AssertionError [ERR_ASSERTION]: {"ok":false,"code":"INIT_EXISTING_GIT_UNSUPPORTED","message":"已有 Git 仓库的基线迁入尚未支持；未修改文件、索引或历史"}
+  
+  false !== true
+  
+      at initialized (file:///E:/ai_workflow/specgate/test/codex-verify-adapter.test.js:26:10)
+      at async TestContext.<anonymous> (file:///E:/ai_workflow/specgate/test/codex-verify-adapter.test.js:149:16)
+      at async Test.run (node:internal/test_runner/test:1125:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:787:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at test\codex-verify-adapter.test.js:159:1
+✖ hardlinked source and verification storage files reject before modifying external files (149.3087ms)
+  AssertionError [ERR_ASSERTION]: {"ok":false,"code":"INIT_EXISTING_GIT_UNSUPPORTED","message":"已有 Git 仓库的基线迁入尚未支持；未修改文件、索引或历史"}
+  
+  false !== true
+  
+      at initialized (file:///E:/ai_workflow/specgate/test/codex-verify-adapter.test.js:26:10)
+      at async TestContext.<anonymous> (file:///E:/ai_workflow/specgate/test/codex-verify-adapter.test.js:160:16)
+      at async Test.run (node:internal/test_runner/test:1125:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:787:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at test\codex-verify-adapter.test.js:237:1
+✖ failed compatibility-state persistence revokes stale success and retains a recovery lock (146.7632ms)
+  AssertionError [ERR_ASSERTION]: {"ok":false,"code":"INIT_EXISTING_GIT_UNSUPPORTED","message":"已有 Git 仓库的基线迁入尚未支持；未修改文件、索引或历史"}
+  
+  false !== true
+  
+      at initialized (file:///E:/ai_workflow/specgate/test/codex-verify-adapter.test.js:26:10)
+      at async TestContext.<anonymous> (file:///E:/ai_workflow/specgate/test/codex-verify-adapter.test.js:238:16)
+      at async Test.run (node:internal/test_runner/test:1125:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:787:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at test\codex-verify-adapter.test.js:293:1
+✖ read-only evidence validation rejects missing, forged, fixture and stale reports (143.4703ms)
+  AssertionError [ERR_ASSERTION]: {"ok":false,"code":"INIT_EXISTING_GIT_UNSUPPORTED","message":"已有 Git 仓库的基线迁入尚未支持；未修改文件、索引或历史"}
+  
+  false !== true
+  
+      at initialized (file:///E:/ai_workflow/specgate/test/codex-verify-adapter.test.js:26:10)
+      at async TestContext.<anonymous> (file:///E:/ai_workflow/specgate/test/codex-verify-adapter.test.js:294:16)
+      at async Test.run (node:internal/test_runner/test:1125:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:787:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

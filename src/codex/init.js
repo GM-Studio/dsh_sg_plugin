@@ -17,43 +17,8 @@ import { insideSpecGateSource } from './core/project-path.js';
 import { removeTemporaryDirectory } from './core/temp.js';
 
 const SOURCE_ROOT = path.resolve(fileURLToPath(new URL('../..', import.meta.url)));
-const RUNTIME_NAMES = [
-  'state.json',
-  'init-report.json',
-  'init-result.json',
-  'codex/state.json',
-  'codex/events.jsonl',
-  'codex/write.lock',
-  'codex/worktrees/',
-  'codex/evidence/',
-  'codex/runs/',
-  'codex/baseline-runs/',
-  'codex/archive/',
-  'codex/*-report.json',
-  'codex/changes/*/evidence/',
-  'codex/changes/*/red/',
-  'codex/changes/*/quality/',
-  'codex/changes/*/format/',
-  'codex/changes/*/review/',
-  'codex/changes/*/tests/',
-  'codex-verify*',
-  'verify-*',
-  'verify.lock',
-  'toolchain-paths.json',
-  'toolchains/',
-  'env.json',
-  'env-report.md',
-  'run.lock',
-  'worktrees/',
-  'evidence/',
-  'backups/',
-  'gates/',
-  'runs/',
-];
-export const SPECGATE_GITIGNORE =
-  '# Local SpecGate runtime state and evidence; stable configuration remains tracked.\n' +
-  RUNTIME_NAMES.map((name) => '/' + name).join('\n') +
-  '\n';
+import { SPECGATE_GITIGNORE } from './core/runtime-gitignore.js';
+export { SPECGATE_GITIGNORE } from './core/runtime-gitignore.js';
 const ADAPTER_FILES = {
   '.specgate/.gitignore': SPECGATE_GITIGNORE,
 };
@@ -571,7 +536,7 @@ function baseline(root, created, report, templateDirectory, identity, bindingPro
   git(['init', '-q', '--template=' + templateDirectory]);
   git(['config', 'user.name', identity.name]);
   git(['config', 'user.email', identity.email]);
-  report.projectSetup = setupProject({ project: root, bindingProject });
+  report.projectSetup = setupProject({ project: root, bindingProject, optionalModules: true });
   // Explicit paths preserve preexisting business files without staging or committing them.
   const tracked = created.filter(
     (relative) => !['.specgate/state.json', '.specgate/init-report.json'].includes(relative),

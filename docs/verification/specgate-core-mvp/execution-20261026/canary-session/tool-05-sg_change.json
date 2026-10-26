@@ -1,0 +1,18 @@
+{
+  "tool": "sg_change",
+  "args": {
+    "type": "fix",
+    "request": "修复 GitHub SkillHub 金丝雀在固定初始提交上的 GitHub 登录跳转、前端生产构建，并补齐可真实执行的 lint、format check、覆盖率与 HTTP 运行验证；保留全部既有测试，按 11-canary-proposal.md 完成真实本地交付，不推送、不部署。",
+    "details": {
+      "observed": "真实基线后端119项有1项OAuth跳转失败，前端49项测试通过但生产构建TypeScript配置失败，项目尚无声明的lint、format及runtime质量脚本。",
+      "expected": "后端119项与前端49项全部通过，生产构建、静态检查、确定性格式化检查、双端及变更覆盖率、真实HTTP运行验证全部通过，同一固定提交通过独立Review与H3后本地交付。"
+    },
+    "expectedVersion": 0
+  },
+  "result": {
+    "ok": false,
+    "code": "INVALID_ARGUMENT",
+    "message": "工具参数不符合声明的格式。"
+  },
+  "observedAt": "2026-10-26T01:05:30.526Z"
+}

@@ -1,0 +1,91 @@
+✖ native role assignment is delivered through stdin with the complete worktree task (3.9703ms)
+✖ frontend changed coverage measures changed unique lines rather than old statements: true (366.4195ms)
+✖ frontend changed coverage measures changed unique lines rather than old statements: false (305.5378ms)
+ℹ tests 3
+ℹ suites 0
+ℹ pass 0
+ℹ fail 3
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 757.8282
+
+✖ failing tests:
+
+test at test\codex-native-role-agent.test.js:69:1
+✖ native role assignment is delivered through stdin with the complete worktree task (3.9703ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /status must be exactly pass, fail or skip/. Input:
+  
+  'You are the assigned SpecGate Test Designer. This is a real, bounded task assignment from SpecGate.\n' +
+    'The assignment below contains the task identifiers and frozen inputs. Work only in the assigned worktree.\n' +
+    '\n' +
+    '<specgate_assignment>\n' +
+    '{"agent":"specgate_test_designer","branch":"sg/codex/change-1/test-design","changeId":"change-1","conflictPaths":null,"contract":{"content":{"path":"/api/example"}},"conventions":null,"filePolicy":null,"findings":[],"freezeCommit":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","graph":{"acs":[{"id":"AC-1"}],"tasks":[]},"kind":"specgate-native-role-assignment","model":{"content":{"entities":["Example"]}},"operation":"design-executable-tests","previousCommit":null,"projectRoot":"C:\\\\sg-core-test-temp\\\\specgate-codex-tests\\\\run-26204-Dhhr3J\\\\sg-native-role-IRAYqV","repairContext":null,"review":null,"role":"test-designer","schemaVersion":1,"testDesign":{"manifest":"specgate-tests.json","testRoot":"specgate-tests/"},"tests":null,"worktree":"C:\\\\sg-core-test-temp\\\\specgate-codex-tests\\\\run-26204-Dhhr3J\\\\sg-native-role-IRAYqV\\\\.specgate\\\\codex\\\\worktrees\\\\change-1\\\\test-design"}\n' +
+    '</specgate_assignment>\n' +
+    '\n' +
+    '<agent_configuration>\n' +
+    'name = "specgate_test_designer"\n' +
+    'developer_instructions = "Work only in the assigned worktree and commit."\n' +
+    '\n' +
+    '</agent_configuration>\n' +
+    '\n' +
+    'Required execution:\n' +
+    '- Execute the complete test-design task now. Do not return a plan, acknowledgement or empty summary.\n' +
+    '- Create specgate-tests.json at the assigned worktree root and all executable test assets under specgate-tests/.\n' +
+    '- The runner must be specgate-tests/runner.mjs, map every acceptance criterion to at least one case, and emit the required JSON report.\n' +
+    '- Run the repository formatter, lint and applicable checks on generated test sources.\n' +
+    '- Only specgate-tests.json and files under specgate-tests/ may be changed.\n' +
+    '- Commit every test asset in the assigned worktree. Return the exact commit, test counts, AC coverage and unresolved test risks.\n' +
+    '\n' +
+    'A completion without a new commit will be rejected by SpecGate. Do not claim completion before committing.'
+  
+      at TestContext.<anonymous> (file:///E:/ai_workflow/specgate/test/codex-native-role-agent.test.js:113:10)
+      at async Test.run (node:internal/test_runner/test:1125:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:358:3) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'You are the assigned SpecGate Test Designer. This is a real, bounded task assignment from SpecGate.\nThe assignment below contains the task identifiers and frozen inputs. Work only in the assigned worktree.\n\n<specgate_assignment>\n{"agent":"specgate_test_designer","branch":"sg/codex/change-1/test-design","changeId":"change-1","conflictPaths":null,"contract":{"content":{"path":"/api/example"}},"conventions":null,"filePolicy":null,"findings":[],"freezeCommit":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","graph":{"acs":[{"id":"AC-1"}],"tasks":[]},"kind":"specgate-native-role-assignment","model":{"content":{"entities":["Example"]}},"operation":"design-executable-tests","previousCommit":null,"projectRoot":"C:\\\\sg-core-test-temp\\\\specgate-codex-tests\\\\run-26204-Dhhr3J\\\\sg-native-role-IRAYqV","repairContext":null,"review":null,"role":"test-designer","schemaVersion":1,"testDesign":{"manifest":"specgate-tests.json","testRoot":"specgate-tests/"},"tests":null,"worktree":"C:\\\\sg-core-test-temp\\\\specgate-codex-tests\\\\run-26204-Dhhr3J\\\\sg-native-role-IRAYqV\\\\.specgate\\\\codex\\\\worktrees\\\\change-1\\\\test-design"}\n</specgate_assignment>\n\n<agent_configuration>\nname = "specgate_test_designer"\ndeveloper_instructions = "Work only in the assigned worktree and commit."\n\n</agent_configuration>\n\nRequired execution:\n- Execute the complete test-design task now. Do not return a plan, acknowledgement or empty summary.\n- Create specgate-tests.json at the assigned worktree root and all executable test assets under specgate-tests/.\n- The runner must be specgate-tests/runner.mjs, map every acceptance criterion to at least one case, and emit the required JSON report.\n- Run the repository formatter, lint and applicable checks on generated test sources.\n- Only specgate-tests.json and files under specgate-tests/ may be changed.\n- Commit every test asset in the assigned worktree. Return the exact commit, test counts, AC coverage and unresolved test risks.\n\nA completion without a new commit will be rejected by SpecGate. Do not claim completion before committing.',
+    expected: /status must be exactly pass, fail or skip/,
+    operator: 'match',
+    diff: 'simple'
+  }
+
+test at test\codex-quality-gate.test.js:920:3
+✖ frontend changed coverage measures changed unique lines rather than old statements: true (366.4195ms)
+  AssertionError [ERR_ASSERTION]: {"ok":false,"covered":1,"executable":3,"unavailable":0,"rate":0.3333333333333333,"threshold":0.9,"sides":{"backend":{"executable":0,"covered":0,"unavailable":0,"changed":1},"frontend":{"executable":3,"covered":1,"unavailable":0,"changed":1}},"code":"CHANGED_COVERAGE_BELOW_THRESHOLD","message":"Changed-line coverage 33.3% is below 90%"}
+  
+  false !== true
+  
+      at TestContext.<anonymous> (file:///E:/ai_workflow/specgate/test/codex-quality-gate.test.js:939:12)
+      at Test.runInAsyncScope (node:async_hooks:228:14)
+      at Test.run (node:internal/test_runner/test:1118:25)
+      at Test.start (node:internal/test_runner/test:1015:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:358:17) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at test\codex-quality-gate.test.js:920:3
+✖ frontend changed coverage measures changed unique lines rather than old statements: false (305.5378ms)
+  AssertionError [ERR_ASSERTION]: {"ok":false,"covered":1,"executable":3,"unavailable":0,"rate":0.3333333333333333,"threshold":0.9,"sides":{"backend":{"executable":0,"covered":0,"unavailable":0,"changed":1},"frontend":{"executable":3,"covered":1,"unavailable":0,"changed":1}},"code":"CHANGED_COVERAGE_BELOW_THRESHOLD","message":"Changed-line coverage 33.3% is below 90%"}
+  
+  3 !== 1
+  
+      at TestContext.<anonymous> (file:///E:/ai_workflow/specgate/test/codex-quality-gate.test.js:940:12)
+      at Test.runInAsyncScope (node:async_hooks:228:14)
+      at Test.run (node:internal/test_runner/test:1118:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:787:18)
+      at Test.postRun (node:internal/test_runner/test:1247:19)
+      at Test.run (node:internal/test_runner/test:1175:12)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:358:3) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 3,
+    expected: 1,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

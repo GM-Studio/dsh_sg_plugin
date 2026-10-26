@@ -1,0 +1,51 @@
+{
+  "method": "elicitation/create",
+  "params": {
+    "message": "SpecGate github-skillhub-lint-format-check-http-b3f525860fd4：第 1 轮需求澄清，请填写以下 5 个问题。回答仅代表澄清，最终需求文档仍须 H1 人工审批。",
+    "requestedSchema": {
+      "type": "object",
+      "properties": {
+        "Q-INTAKE-1": {
+          "type": "string",
+          "title": "[功能需求] 这个变更要解决的核心问题是什么？目标用户和期望结果是什么？",
+          "minLength": 1,
+          "maxLength": 8000
+        },
+        "Q-INTAKE-2": {
+          "type": "string",
+          "title": "[约束] 哪些内容明确在范围内，哪些明确不在范围内？",
+          "minLength": 1,
+          "maxLength": 8000
+        },
+        "Q-INTAKE-3": {
+          "type": "string",
+          "title": "[验收标准] 完成后有哪些可观察、可验证的验收标准？",
+          "minLength": 1,
+          "maxLength": 8000
+        },
+        "Q-INTAKE-4": {
+          "type": "string",
+          "title": "[失败场景] 需要覆盖哪些失败、边界或兼容场景？",
+          "minLength": 1,
+          "maxLength": 8000
+        },
+        "Q-INTAKE-5": {
+          "type": "string",
+          "title": "[安全] 有哪些安全、性能或并发约束？",
+          "minLength": 1,
+          "maxLength": 8000
+        }
+      },
+      "required": [
+        "Q-INTAKE-1",
+        "Q-INTAKE-2",
+        "Q-INTAKE-3",
+        "Q-INTAKE-4",
+        "Q-INTAKE-5"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "requestedAt": "2026-10-26T01:05:49.602Z",
+  "bridge": "Codex native user-input form; answers must be forwarded verbatim from the real user"
+}

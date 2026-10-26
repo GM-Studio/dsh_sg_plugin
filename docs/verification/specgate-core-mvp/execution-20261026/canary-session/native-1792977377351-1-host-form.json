@@ -1,0 +1,12 @@
+{
+  "hostCallId": "request_user_input_async/call_914134ca2aad42a49cd48e646f082024",
+  "nativeRequestId": "native-1792977377351-1",
+  "question": "H1 需求审批：是否批准并冻结文档哈希 dab0f30a6e6c5be166961d1c2f126916c63c021ab5e366233b58e21008a076ee 的真实金丝雀需求？",
+  "answer": "确认：批准并冻结这份 H1 需求",
+  "forwardedResponse": {
+    "action": "accept",
+    "content": {}
+  },
+  "scope": "only the reviewed canary requirements; no push or deployment",
+  "recordedAt": "2026-10-26T01:18:33.247Z"
+}

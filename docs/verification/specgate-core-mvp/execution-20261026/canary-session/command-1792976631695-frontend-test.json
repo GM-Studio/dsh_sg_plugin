@@ -1,0 +1,22 @@
+{
+  "command": {
+    "id": "frontend-test",
+    "cwd": "frontend",
+    "argv": [
+      "npm",
+      "run",
+      "test"
+    ],
+    "kind": "test"
+  },
+  "result": {
+    "commandId": "frontend-test",
+    "status": "passed",
+    "exitCode": 0,
+    "stdout": "\n> agent-skills-sharing-frontend@0.1.0 test\n> vitest run\n\n\n RUN  v3.2.4 E:/ai_workflow/specgate-canary-skill-hub-initial/frontend\n\n ✓ src/composables/useAuth.test.ts (5 tests) 3ms\n ✓ src/api/http.test.ts (3 tests) 2ms\n ✓ src/views/HomePage.test.ts (5 tests) 51ms\n ✓ src/views/RepositoriesPage.test.ts (6 tests) 58ms\n ✓ src/views/SkillDetailPage.test.ts (11 tests) 63ms\n ✓ src/views/SkillGroupDetailPage.test.ts (19 tests) 108ms\n\n Test Files  6 passed (6)\n      Tests  49 passed (49)\n   Start at  09:03:50\n   Duration  956ms (transform 504ms, setup 0ms, collect 992ms, tests 284ms, environment 1.77s, prepare 1.22s)\n\n",
+    "stderr": "",
+    "durationMs": 1585,
+    "startedAt": "2026-10-26T01:03:50.110Z",
+    "finishedAt": "2026-10-26T01:03:51.695Z"
+  }
+}

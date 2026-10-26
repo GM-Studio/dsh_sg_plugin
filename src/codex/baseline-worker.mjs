@@ -78,6 +78,8 @@ function recordEvidence(projectRoot, baselineRun, run) {
       status: result.status,
       exitCode: result.exitCode,
       durationMs: result.durationMs,
+      startedAt: result.startedAt || null,
+      finishedAt: result.finishedAt || null,
       stdout: result.stdout,
       stderr: result.stderr,
     })),

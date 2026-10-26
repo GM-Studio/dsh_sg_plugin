@@ -1,0 +1,52 @@
+✖ synthetic local delivery smoke crosses all gates and archives the formatted commit without pushing (5760.6728ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 0
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 5845.7075
+
+✖ failing tests:
+
+test at test\codex-quality-gate.test.js:26:1
+✖ synthetic local delivery smoke crosses all gates and archives the formatted commit without pushing (5760.6728ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /real business project and native approvals are not verified/. Input:
+  
+  '# example\n' +
+    '\n' +
+    'Accepted delivery delivery-9bfae37ead0ebe54.\n' +
+    '\n' +
+    '## Included\n' +
+    '- AC-1\n' +
+    '\n' +
+    '## Verification\n' +
+    '- 2026-10-26T00-52-01-177Z-e03d38fb\n' +
+    '- sha256:6e75532bdd334b372e974fa79bacf9fd79ef034f0856c35711ee2c8c2d8be521\n' +
+    '- sha256:a59564819167f689aea2af83878585e0d4aba167a3d43c4b47779d0a1ead77b4\n' +
+    '\n' +
+    '## Known issues\n' +
+    '- None\n' +
+    '\n' +
+    '## Upgrade\n' +
+    'Deploy commit 010eb020bab3b86167e172332f9ea5bf5e709206.\n' +
+    '\n' +
+    '## Rollback\n' +
+    'git revert 010eb020bab3b86167e172332f9ea5bf5e709206\n' +
+    '\n' +
+    'No automatic production data rollback was performed.\n' +
+    '\n' +
+    'Apply a new delivery from the accepted base.\n'
+  
+      at TestContext.<anonymous> (file:///E:/ai_workflow/specgate/test/codex-quality-gate.test.js:93:10)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1125:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:358:3) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: '# example\n\nAccepted delivery delivery-9bfae37ead0ebe54.\n\n## Included\n- AC-1\n\n## Verification\n- 2026-10-26T00-52-01-177Z-e03d38fb\n- sha256:6e75532bdd334b372e974fa79bacf9fd79ef034f0856c35711ee2c8c2d8be521\n- sha256:a59564819167f689aea2af83878585e0d4aba167a3d43c4b47779d0a1ead77b4\n\n## Known issues\n- None\n\n## Upgrade\nDeploy commit 010eb020bab3b86167e172332f9ea5bf5e709206.\n\n## Rollback\ngit revert 010eb020bab3b86167e172332f9ea5bf5e709206\n\nNo automatic production data rollback was performed.\n\nApply a new delivery from the accepted base.\n',
+    expected: /real business project and native approvals are not verified/,
+    operator: 'match',
+    diff: 'simple'
+  }

@@ -1,0 +1,18 @@
+{
+  "tool": "sg_adopt_apply",
+  "args": {
+    "previewHash": "02a199976fe5748fb322f178b73de8803a081c2e02a9d25aaa434c034d6fa251"
+  },
+  "result": {
+    "ok": true,
+    "runId": "baseline-run-57210db280d7ed28",
+    "status": "running",
+    "previewHash": "02a199976fe5748fb322f178b73de8803a081c2e02a9d25aaa434c034d6fa251",
+    "startedAt": "2026-10-26T01:03:26.650Z",
+    "finishedAt": null,
+    "totalCommands": 4,
+    "completedCommands": 0,
+    "currentCommand": null
+  },
+  "observedAt": "2026-10-26T01:03:26.653Z"
+}

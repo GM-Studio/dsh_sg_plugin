@@ -1,0 +1,153 @@
+{
+  "tool": "sg_project_status",
+  "args": {},
+  "result": {
+    "ok": true,
+    "projectReady": true,
+    "projectRoot": "E:\\ai_workflow\\specgate-canary-skill-hub-initial",
+    "nextAction": "WAIT_FOR_USER_REQUIREMENTS",
+    "message": "项目已就绪，等待用户提出业务需求。先澄清、反述、批判分析，再请求 H1 人工审批。",
+    "profile": {
+      "schemaVersion": 2,
+      "projectId": "project-3d2b3b864d29e724",
+      "mode": "adopted",
+      "stack": "java-vue",
+      "root": "E:\\ai_workflow\\specgate-canary-skill-hub-initial",
+      "targetBranch": "codex/core-canary-repair",
+      "remoteUrl": "https://github.com/ghdefe/skill-hub.git",
+      "backendPackage": "com.agentskills.sharing",
+      "frontendDefaultLocale": "zh-CN",
+      "frontendLocales": [
+        "zh-CN"
+      ],
+      "frontendFramework": "vue",
+      "commands": {
+        "install": [],
+        "build": [
+          {
+            "id": "backend-build",
+            "cwd": "backend",
+            "argv": [
+              "mvn",
+              "-B",
+              "-ntp",
+              "clean",
+              "verify"
+            ]
+          },
+          {
+            "id": "frontend-build",
+            "cwd": "frontend",
+            "argv": [
+              "npm",
+              "run",
+              "build"
+            ]
+          }
+        ],
+        "test": [
+          {
+            "id": "backend-test",
+            "cwd": "backend",
+            "argv": [
+              "mvn",
+              "-B",
+              "-ntp",
+              "test"
+            ]
+          },
+          {
+            "id": "frontend-test",
+            "cwd": "frontend",
+            "argv": [
+              "npm",
+              "run",
+              "test"
+            ]
+          }
+        ],
+        "lint": [],
+        "format": [],
+        "runtime": []
+      },
+      "protectedPaths": [],
+      "createdAt": "2026-10-26T01:03:51.697Z",
+      "updatedAt": "2026-10-26T01:03:51.697Z"
+    },
+    "baseline": {
+      "schemaVersion": 2,
+      "baselineId": "baseline-3f8381e9b38f8a0d",
+      "projectId": "project-3d2b3b864d29e724",
+      "commit": "81f84c0eb793c72675b3687fa7b991b6e4d659c7",
+      "status": "known-failures",
+      "knownFailures": [
+        {
+          "id": "known-2c87e66482127ffb",
+          "signature": "backend-build:failed:exit=1:d26048ec748c",
+          "commandId": "backend-build",
+          "scope": "build",
+          "evidence": "baseline-8650d1c83be6586c"
+        },
+        {
+          "id": "known-b89ea4e91beeb150",
+          "signature": "frontend-build:failed:exit=1:d5b0ba4baa31",
+          "commandId": "frontend-build",
+          "scope": "build",
+          "evidence": "baseline-44bd7d903badb8b8"
+        },
+        {
+          "id": "known-652d31dfde1f04cc",
+          "signature": "backend-test:failed:exit=1:d26048ec748c",
+          "commandId": "backend-test",
+          "scope": "test",
+          "evidence": "baseline-d9828db2016d5ffe"
+        }
+      ],
+      "unverifiedAreas": [],
+      "commands": [
+        "backend-build",
+        "frontend-build",
+        "backend-test",
+        "frontend-test"
+      ],
+      "evidence": [
+        "baseline-8650d1c83be6586c",
+        "baseline-44bd7d903badb8b8",
+        "baseline-d9828db2016d5ffe",
+        "baseline-87eae7a92ce9a288"
+      ],
+      "environmentFingerprint": "35d375169d144fc09999110af9771723cf3e542d4f46a4732da4b91d6e346ba7",
+      "createdAt": "2026-10-26T01:03:26.650Z"
+    },
+    "baselineRun": {
+      "runId": "baseline-run-57210db280d7ed28",
+      "status": "completed",
+      "previewHash": "02a199976fe5748fb322f178b73de8803a081c2e02a9d25aaa434c034d6fa251",
+      "startedAt": "2026-10-26T01:03:26.650Z",
+      "finishedAt": "2026-10-26T01:03:51.978Z",
+      "totalCommands": 4,
+      "completedCommands": 4,
+      "currentCommand": null,
+      "baselineStatus": "known-failures",
+      "baselineId": "baseline-3f8381e9b38f8a0d"
+    },
+    "verification": {
+      "status": "not-run",
+      "ok": false,
+      "runId": null,
+      "checkedAt": null,
+      "report": ".specgate/codex-verify-report.json",
+      "lock": null,
+      "nextAction": "RUN_SG_VERIFY",
+      "message": "尚未完成真实验证；执行 sg_project_verify（或 sg_verify）写入验证证据。"
+    },
+    "workflow": {
+      "ok": true,
+      "code": null,
+      "phase": null,
+      "version": 0,
+      "changeId": null
+    }
+  },
+  "observedAt": "2026-10-26T01:05:30.521Z"
+}

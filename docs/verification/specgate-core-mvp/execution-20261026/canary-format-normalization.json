@@ -1,0 +1,18 @@
+[
+  {
+    "file": "frontend/tsconfig.app.json",
+    "beforeHash": "098669211126184af6fd9cb696d42fa61ed14a08f3a9a1c566168061a9c16007",
+    "afterHash": "ba269ef2b7558d8168fe281e92b77a8e2408725654236189e196e2f0570a178d",
+    "semanticEqual": true,
+    "formatCheck": true,
+    "prettier": "3.9.10"
+  },
+  {
+    "file": "frontend/tsconfig.node.json",
+    "beforeHash": "88290bb651162b2645f6e8ff1e45c724df362ec1c7232cd8f72762e8389444de",
+    "afterHash": "28a84e81342a517a782b7772b21279260bfaf1075681c16c6f489b40dc8d4401",
+    "semanticEqual": true,
+    "formatCheck": true,
+    "prettier": "3.9.10"
+  }
+]

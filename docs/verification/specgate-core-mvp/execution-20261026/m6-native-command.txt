@@ -1,0 +1,13 @@
+✔ native role provider reuses an explicitly configured host Codex executable (3.478ms)
+✔ native role assignment is delivered through stdin with the complete worktree task (2.2983ms)
+✔ native role prompt carries role boundaries without relying on undocumented subagent summaries (0.2114ms)
+✔ native role provider fails closed when the process produces no machine events (1.9501ms)
+✔ native Reviewer runs read only and must return a structured machine report (2.4252ms)
+ℹ tests 5
+ℹ suites 0
+ℹ pass 5
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 73.5479

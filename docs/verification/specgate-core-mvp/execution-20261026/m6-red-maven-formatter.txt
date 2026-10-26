@@ -1,0 +1,28 @@
+✖ native formatter uses a declared Maven formatter without requiring a wrapper (1.6451ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 0
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 67.9864
+
+✖ failing tests:
+
+test at test\codex-format-rework.test.js:32:1
+✖ native formatter uses a declared Maven formatter without requiring a wrapper (1.6451ms)
+  AssertionError [ERR_ASSERTION]: {"ok":false,"code":"FORMAT_COMMAND_MISSING","message":"No project formatter command is configured"}
+  
+  false !== true
+  
+      at TestContext.<anonymous> (file:///E:/ai_workflow/specgate/test/codex-format-rework.test.js:42:10)
+      at async Test.run (node:internal/test_runner/test:1125:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:358:3) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

@@ -7,7 +7,6 @@ import { createStateStore, publicWorkflowView } from './state-machine.js';
 import { createApprovalAuthority } from './approvals.js';
 import { createArtifactStore } from './core/artifact-store.js';
 import { canonicalJson, hashValue } from './events.js';
-import { previewInit, executeInit } from './init.js';
 import { JAVA_PRESETS } from './core/java/java-versions.js';
 import { CHANGE_TOOLS, CHANGE_METHODS, callChangeTool } from './change-tools.js';
 import { createChangeAddService } from './change-add.js';
@@ -25,23 +24,30 @@ import { PROJECT_TOOLS, callProjectTool } from './project-tools.js';
 import { createPeerUserInputProvider } from './host-input.js';
 import { createFormatService, createNativeFormatter } from './format.js';
 import { FORMAT_TOOLS, callFormatTool } from './format-tools.js';
-import { CONTROL_TOOLS, callControlTool } from './control/tools.js';
-import { createControlApprovalAuthority } from './control/approval-bridge.js';
-import { createLocalControlRuntime } from './control/runtime.js';
+import { CONTROL_TOOLS } from './core/optional-tool-definitions.js';
 import { TOOL_DESCRIPTIONS } from './locale.js';
 import { ENVIRONMENT_TOOLS, environmentConsent } from './environment-tools.js';
 import { createEnvironmentService } from './core/environment.js';
 import { insideSpecGateSource } from './core/project-path.js';
 import { inspectProjectStatus } from './project-status.js';
-import {
-  ONBOARDING_TOOLS,
-  bindProject,
-  installProject,
-  createProjectInteractively,
-} from './onboarding.js';
+import { ONBOARDING_TOOLS } from './core/onboarding-tool-definitions.js';
+import { bindProject } from './core/project-binding.js';
 
 const object = (value) => value !== null && typeof value === 'object' && !Array.isArray(value);
+const OPTIONAL_TOOL_NAMES = new Set([
+  'sg_init_preview',
+  'sg_init',
+  'sg_verify',
+  'sg_project_verify',
+  'sg_project_finalize_new',
+  'sg_project_setup',
+  'sg_project_create',
+  'sg_env_prepare',
+  ...CONTROL_TOOLS.map((entry) => entry.name),
+]);
 const NATIVE_RUNNER_ADAPTER = fileURLToPath(new URL('./native-test-runner.mjs', import.meta.url));
+export const NATIVE_RED_REPORT_PATH = '.specgate/codex/runs/native-red-report.json';
+export const NATIVE_GREEN_REPORT_PATH = '.specgate/codex/runs/native-green-report.json';
 const version = {
   type: 'integer',
   minimum: 0,
@@ -335,12 +341,14 @@ function createBoundToolRegistry({
   dirtyApprovalProvider,
   controlService,
   environmentGate,
+  optionalModules = false,
 } = {}) {
   const root = path.resolve(projectRoot);
   const effectiveNativeRoleProvider =
     nativeRoleProvider ||
     (nativeAgents ? createNativeCodexRoleProvider({ projectRoot: root }) : undefined);
   const effectiveDevelopmentRoleProvider = developmentRoleProvider || effectiveNativeRoleProvider;
+  const effectiveReviewRoleProvider = reviewRoleProvider || effectiveNativeRoleProvider;
   const effectiveTestDesignerRunner = testDesignerRunner || effectiveNativeRoleProvider;
   const effectiveRedRunner =
     redRunner ||
@@ -349,7 +357,7 @@ function createBoundToolRegistry({
           const checked = await plans().inspect();
           if (!checked.ok) throw Object.assign(new Error(checked.message), { code: checked.code });
           const testsDirectory = path.join(root, checked.ref.tests.directory);
-          const reportPath = '.specgate/codex/native-red-report.json';
+          const reportPath = NATIVE_RED_REPORT_PATH;
           const specification = nativeTestRunnerSpec({
             mode: 'red',
             worktree: root,
@@ -370,7 +378,7 @@ function createBoundToolRegistry({
           const checked = await plans().inspect();
           if (!checked.ok) throw Object.assign(new Error(checked.message), { code: checked.code });
           const testsDirectory = path.join(root, checked.ref.tests.directory);
-          const reportPath = '.specgate/codex/native-green-report.json';
+          const reportPath = NATIVE_GREEN_REPORT_PATH;
           const specification = nativeTestRunnerSpec({
             mode: 'green',
             worktree,
@@ -389,30 +397,35 @@ function createBoundToolRegistry({
   const stateStore = () =>
     (store ||= createStateStore({ projectRoot: root, authorizeGate: authority.authorizeGate }));
   const controlWorkItemId =
-    process.env.SPECGATE_CONTROL_MODE === '1' ? process.env.SPECGATE_WORK_ITEM_ID : null;
-  const controlRuntime = controlWorkItemId
-    ? controlService
-      ? { service: controlService }
-      : {
-          get service() {
-            return (this.runtime ||= createLocalControlRuntime({ env: process.env })).service;
-          },
-        }
-    : null;
+    optionalModules && process.env.SPECGATE_CONTROL_MODE === '1'
+      ? process.env.SPECGATE_WORK_ITEM_ID
+      : null;
+  let controlAuthority;
+  const optionalAuthority = async () => {
+    if (controlAuthority) return controlAuthority;
+    const [{ createControlApprovalAuthority }, { createLocalControlRuntime }] = await Promise.all([
+      import('./control/approval-bridge.js'),
+      import('./control/runtime.js'),
+    ]);
+    controlAuthority = createControlApprovalAuthority({
+      service: controlService || createLocalControlRuntime({ env: process.env }).service,
+      workItemId: controlWorkItemId,
+    });
+    return controlAuthority;
+  };
   // Native approvals remain the default. In control mode, H1/H3 can only be
   // authorized by a previously consumed, step-up control Decision.
-  const authority = controlRuntime
-    ? createControlApprovalAuthority({
-        service: new Proxy(
-          {},
-          {
-            get(_target, method) {
-              return (...args) => controlRuntime.service[method](...args);
-            },
-          },
-        ),
-        workItemId: controlWorkItemId,
-      })
+  const authority = controlWorkItemId
+    ? {
+        availability: () => ({
+          available: true,
+          source: 'control-store',
+          workItemId: controlWorkItemId,
+        }),
+        requestApproval: async (...args) => (await optionalAuthority()).requestApproval(...args),
+        consumeApproval: async (...args) => (await optionalAuthority()).consumeApproval(...args),
+        authorizeGate: async (...args) => (await optionalAuthority()).authorizeGate(...args),
+      }
     : createApprovalAuthority({
         request: requestPeer,
         trustedPeerIdentity: trustedUserIdentity,
@@ -575,6 +588,7 @@ function createBoundToolRegistry({
       planService: plans(),
       testRunner: effectiveQualityTestRunner,
       verifier: qualityVerifier,
+      nativeVerification: nativeAgents,
       timeoutMs: qualityTimeoutMs,
     }));
   let reviewService;
@@ -583,7 +597,7 @@ function createBoundToolRegistry({
       projectRoot: root,
       store: stateStore(),
       planService: plans(),
-      roleProvider: reviewRoleProvider,
+      roleProvider: effectiveReviewRoleProvider,
       approvalAuthority: authority,
     }));
   let releaseService;
@@ -600,18 +614,19 @@ function createBoundToolRegistry({
       store: stateStore(),
       planService: plans(),
       formatter: effectiveFormatter,
+      qualityService: quality(),
     }));
   const definitions = [
     ...DIAGNOSTICS,
-    ...WORKFLOW_TOOLS,
-    ...PROJECT_TOOLS,
+    ...WORKFLOW_TOOLS.filter((entry) => optionalModules || !OPTIONAL_TOOL_NAMES.has(entry.name)),
+    ...PROJECT_TOOLS.filter((entry) => optionalModules || !OPTIONAL_TOOL_NAMES.has(entry.name)),
     ...CHANGE_TOOLS,
     ...PLAN_TOOLS,
     ...QUALITY_TOOLS,
     ...FORMAT_TOOLS,
     ...REVIEW_TOOLS,
     ...RELEASE_TOOLS,
-    ...CONTROL_TOOLS,
+    ...(optionalModules ? CONTROL_TOOLS : []),
   ];
   return {
     definitions,
@@ -653,7 +668,7 @@ function createBoundToolRegistry({
               elicitationSupported: peerCapabilities?.().elicitationSupported === true,
             };
             data.initialization = {
-              status: 'generation-available',
+              status: optionalModules ? 'generation-available' : 'non-default',
               nonemptyApproval: 'unavailable',
               existingGitExecution: 'unsupported',
             };
@@ -694,22 +709,21 @@ function createBoundToolRegistry({
             };
             data.review = {
               status:
-                typeof reviewRoleProvider === 'function' || nativeAgents
-                  ? 'available'
-                  : 'unavailable',
+                typeof effectiveReviewRoleProvider === 'function' ? 'available' : 'unavailable',
               reviewAgent:
-                typeof reviewRoleProvider === 'function'
+                typeof effectiveReviewRoleProvider === 'function'
                   ? 'server-provider'
-                  : nativeAgents
-                    ? 'native-report'
-                    : 'unavailable',
+                  : 'unavailable',
               h3Approval: available.available ? 'available' : 'unavailable',
             };
             data.release = {
               status: 'available',
               forcePush: 'forbidden',
             };
-            if (fs.existsSync(path.join(root, '.specgate/codex-verify-report.json'))) {
+            if (
+              optionalModules &&
+              fs.existsSync(path.join(root, '.specgate/codex-verify-report.json'))
+            ) {
               const { validateVerificationEvidence } = await import('./verify.js');
               const verified = validateVerificationEvidence({ root });
               data.verification = {
@@ -723,7 +737,8 @@ function createBoundToolRegistry({
           }
           return result(data);
         }
-        if (CONTROL_TOOLS.some((entry) => entry.name === name))
+        if (optionalModules && CONTROL_TOOLS.some((entry) => entry.name === name)) {
+          const { callControlTool } = await import('./control/tools.js');
           return result(
             await callControlTool(
               {
@@ -735,11 +750,13 @@ function createBoundToolRegistry({
               args,
             ),
           );
+        }
         if (PROJECT_TOOLS.some((entry) => entry.name === name))
           return result(
             await callProjectTool(
               {
                 projectRoot: root,
+                optionalModules,
                 ...(baselineRunner ? { baselineRunner } : {}),
                 dirtyApprovalProvider: effectiveDirtyApprovalProvider,
                 newProjectVerifier:
@@ -801,14 +818,19 @@ function createBoundToolRegistry({
             nextAction: verified.ok ? 'FINALIZE_BASELINE' : 'FIX_AND_RETRY_VERIFY',
           });
         }
-        if (name === 'sg_init_preview') return result(previewInit(input));
-        if (name === 'sg_init')
+        if (name === 'sg_init_preview') {
+          const { previewInit } = await import('./init.js');
+          return result(previewInit(input));
+        }
+        if (name === 'sg_init') {
+          const { executeInit } = await import('./init.js');
           return result(
             await executeInit(
               { ...input, previewHash: args.previewHash },
               { approvalProvider: effectiveInitializationApproval, signal, environmentGate },
             ),
           );
+        }
         return result({ ok: false, code: 'UNKNOWN_TOOL', message: 'Tool is not available' });
       } catch {
         return result({
@@ -823,7 +845,7 @@ function createBoundToolRegistry({
 
 const PROJECT_NOT_BOUND_MESSAGE =
   '当前会话尚未绑定业务项目；SpecGate 插件源码或缓存目录不能作为业务项目。' +
-  '请先调用 sg_project_bind 绑定用户给出的业务项目绝对路径，或调用 sg_project_create 新建项目。';
+  '请先调用 sg_project_bind 绑定用户给出的已有 Git 业务项目绝对路径。';
 
 const projectNotBound = (nextAction = 'BIND_PROJECT') => ({
   ok: false,
@@ -836,7 +858,7 @@ const projectNotBound = (nextAction = 'BIND_PROJECT') => ({
 });
 
 const unboundProjectStatus = () => ({
-  ...projectNotBound('BIND_OR_CREATE_PROJECT'),
+  ...projectNotBound('BIND_PROJECT'),
   ok: true,
   projectRoot: null,
   detection: null,
@@ -847,7 +869,7 @@ const unboundProjectStatus = () => ({
 });
 
 const unboundSessionStatus = () => ({
-  ...projectNotBound('BIND_OR_CREATE_PROJECT'),
+  ...projectNotBound('BIND_PROJECT'),
   ok: true,
   stage: 'P1',
   projectRoot: null,
@@ -865,6 +887,10 @@ const unboundSessionStatus = () => ({
 // Keep project selection at the session boundary so all lazily created services
 // are rebuilt together. A generated target becomes the active business project.
 export function createToolRegistry(options = {}) {
+  const optionalModules =
+    options.optionalModules === true ||
+    (options.optionalModules === undefined && process.env.SPECGATE_OPTIONAL_MODULES === '1');
+  const configured = { ...options, optionalModules };
   const initialRoot = path.resolve(options.projectRoot || process.cwd());
   let root = initialRoot;
   let projectBound =
@@ -884,19 +910,19 @@ export function createToolRegistry(options = {}) {
   };
   const environmentGate = ({ root: target, ...selection }) =>
     environmentFor(target).check(selection);
-  let bound = createBoundToolRegistry({ ...options, projectRoot: root, environmentGate });
+  let bound = createBoundToolRegistry({ ...configured, projectRoot: root, environmentGate });
   let environment = environmentFor(root);
   const onboardingDraft = {};
-  const definitions = [...bound.definitions, ...ONBOARDING_TOOLS, ...ENVIRONMENT_TOOLS].map(
-    (entry) => ({
+  const definitions = [...bound.definitions, ...ONBOARDING_TOOLS, ...ENVIRONMENT_TOOLS]
+    .filter((entry) => optionalModules || !OPTIONAL_TOOL_NAMES.has(entry.name))
+    .map((entry) => ({
       ...entry,
       description: TOOL_DESCRIPTIONS[entry.name] || entry.description,
-    }),
-  );
+    }));
   const bind = (selected) => {
     root = bindProject(selected);
     projectBound = true;
-    bound = createBoundToolRegistry({ ...options, projectRoot: root, environmentGate });
+    bound = createBoundToolRegistry({ ...configured, projectRoot: root, environmentGate });
     environment = environmentFor(root);
     return root;
   };
@@ -957,10 +983,12 @@ export function createToolRegistry(options = {}) {
           });
         if (name === 'sg_project_setup') {
           if (!projectBound && !args.path) return result(projectNotBound('BIND_OR_CREATE_PROJECT'));
+          const { installProject } = await import('./onboarding.js');
           const installed = installProject(args.path || root);
           return result({ ...installed, projectRoot: bind(installed.project) });
         }
         if (name === 'sg_project_create') {
+          const { createProjectInteractively } = await import('./onboarding.js');
           const created = await createProjectInteractively({
             ...options,
             projectRoot: projectBound ? root : null,

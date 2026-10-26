@@ -408,6 +408,32 @@ export function buildTaskGraph(snapshot, filePolicies = {}) {
   }
 }
 
+function upgradeLegacyTaskGraph(graph, snapshot) {
+  if (!object(graph) || !Array.isArray(graph.acs) || !Array.isArray(graph.tasks)) return null;
+  const rebuilt = buildTaskGraph(snapshot);
+  if (!rebuilt.ok || canonicalJson(rebuilt.graph.acs) !== canonicalJson(graph.acs)) return null;
+  const originalTasks = new Map(graph.tasks.map((task) => [task?.id, task]));
+  if (
+    originalTasks.size !== graph.tasks.length ||
+    originalTasks.size !== rebuilt.graph.tasks.length
+  )
+    return null;
+  for (const task of rebuilt.graph.tasks) {
+    const original = originalTasks.get(task.id);
+    if (
+      !object(original) ||
+      original.kind !== task.kind ||
+      original.role !== task.role ||
+      canonicalJson(original.acIds) !== canonicalJson(task.acIds) ||
+      canonicalJson(original.caseIds) !== canonicalJson(task.caseIds) ||
+      canonicalJson(original.deps) !== canonicalJson(task.deps) ||
+      canonicalJson(original.acceptance) !== canonicalJson(task.acceptance)
+    )
+      return null;
+  }
+  return rebuilt.graph;
+}
+
 function safeRelative(relative) {
   return (
     typeof relative === 'string' &&
@@ -635,7 +661,11 @@ export function createPlanService({
     const requirements = await frozenRequirements(state);
     const ref = state.context.plan;
     if (!ref) return failure('PLAN_REQUIRED', 'Generate a plan before freezing downstream assets');
-    const plan = verifyRef(ref);
+    let plan = verifyRef(ref);
+    if (plan.requirementsHash === requirements.locator.hash && !validateTaskGraph(plan.graph).ok) {
+      const upgraded = upgradeLegacyTaskGraph(plan.graph, requirements.snapshot);
+      if (upgraded) plan = { ...plan, graph: upgraded };
+    }
     if (plan.requirementsHash !== requirements.locator.hash || !validateTaskGraph(plan.graph).ok)
       fail('PLAN_ARTIFACT_CHANGED', 'Plan is no longer bound to the frozen requirements');
     for (const kind of ['contract', 'model']) {
@@ -760,6 +790,7 @@ export function createPlanService({
       role: 'test',
       coverage: assets.coverage,
       cases: assets.cases,
+      ...(object(assets.baseline) ? { baseline: assets.baseline } : {}),
       files: Object.fromEntries(
         Object.entries(files).map(([relative, content]) => [relative, digest(content)]),
       ),

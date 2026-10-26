@@ -1,0 +1,95 @@
+{
+  "tool": "sg_env_check",
+  "args": {},
+  "result": {
+    "ok": true,
+    "environmentReady": true,
+    "status": "ready",
+    "platform": "win32",
+    "arch": "x64",
+    "selection": {
+      "preset": "jdk17-boot3.5",
+      "frontend": "vue"
+    },
+    "required": [
+      "git",
+      "node",
+      "jdk17",
+      "maven"
+    ],
+    "missing": [],
+    "tools": {
+      "git": {
+        "version": "2.45.1.windows.1",
+        "path": "C:\\Program Files\\Git\\cmd\\git.exe"
+      },
+      "node": {
+        "node": "D:\\Program Files\\nodejs\\node.exe",
+        "npm": "D:\\Program Files\\nodejs\\npm.cmd",
+        "version": "24.14.0",
+        "npmVersion": "11.9.0"
+      },
+      "jdk17": {
+        "home": "D:\\Program Files\\Java\\Jdk17",
+        "java": "D:\\Program Files\\Java\\Jdk17\\bin\\java.exe",
+        "javac": "D:\\Program Files\\Java\\Jdk17\\bin\\javac.exe",
+        "version": "17.0.18",
+        "major": 17,
+        "source": "env:JAVA_HOME"
+      },
+      "maven": {
+        "path": "C:\\Users\\Administrator\\.m2\\wrapper\\dists\\apache-maven-3.9.11\\03d7e36a140982eea48e22c1dcac01d8862b2550b2939e09a0809bbc5182a5bc\\bin\\mvn.cmd",
+        "home": "C:\\Users\\Administrator\\.m2\\wrapper\\dists\\apache-maven-3.9.11\\03d7e36a140982eea48e22c1dcac01d8862b2550b2939e09a0809bbc5182a5bc",
+        "version": "3.9.11"
+      }
+    },
+    "fingerprint": "5c40f71155ee9025625e1325fbdb30a30426feec777a2c2b7b0d423c1cd2c40c",
+    "source": "domestic",
+    "plan": [
+      {
+        "id": "git",
+        "action": "reuse",
+        "current": {
+          "version": "2.45.1.windows.1",
+          "path": "C:\\Program Files\\Git\\cmd\\git.exe"
+        }
+      },
+      {
+        "id": "node",
+        "action": "reuse",
+        "current": {
+          "node": "D:\\Program Files\\nodejs\\node.exe",
+          "npm": "D:\\Program Files\\nodejs\\npm.cmd",
+          "version": "24.14.0",
+          "npmVersion": "11.9.0"
+        }
+      },
+      {
+        "id": "jdk17",
+        "action": "reuse",
+        "current": {
+          "home": "D:\\Program Files\\Java\\Jdk17",
+          "java": "D:\\Program Files\\Java\\Jdk17\\bin\\java.exe",
+          "javac": "D:\\Program Files\\Java\\Jdk17\\bin\\javac.exe",
+          "version": "17.0.18",
+          "major": 17,
+          "source": "env:JAVA_HOME"
+        }
+      },
+      {
+        "id": "maven",
+        "action": "reuse",
+        "current": {
+          "path": "C:\\Users\\Administrator\\.m2\\wrapper\\dists\\apache-maven-3.9.11\\03d7e36a140982eea48e22c1dcac01d8862b2550b2939e09a0809bbc5182a5bc\\bin\\mvn.cmd",
+          "home": "C:\\Users\\Administrator\\.m2\\wrapper\\dists\\apache-maven-3.9.11\\03d7e36a140982eea48e22c1dcac01d8862b2550b2939e09a0809bbc5182a5bc",
+          "version": "3.9.11"
+        }
+      }
+    ],
+    "message": "当前项目所需工具链真实版本探测通过。项目基线和业务验证需分别执行。",
+    "workflowVerification": "not-run",
+    "projectRoot": "E:\\ai_workflow\\specgate-canary-skill-hub-initial",
+    "checkedAt": "2026-10-26T01:02:53.463Z"
+  },
+  "observedAt": "2026-10-26T01:02:53.464Z"
+}

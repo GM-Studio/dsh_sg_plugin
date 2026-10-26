@@ -1,4 +1,4 @@
-import { spawn } from 'node:child_process';
+import { spawn, execFileSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -10,6 +10,43 @@ const MAX_CAPTURE_BYTES = 2 * 1024 * 1024;
 const DEFAULT_TIMEOUT_MS = 2 * 60 * 60 * 1000;
 const failure = (code, message, extra = {}) => ({ ok: false, code, message, ...extra });
 
+function writableGitDirectory(root, worktree, branch) {
+  if (!fs.existsSync(path.join(worktree, '.git'))) return null;
+  const git = (cwd, args) =>
+    execFileSync('git', args, {
+      cwd,
+      encoding: 'utf8',
+      windowsHide: true,
+      timeout: 10000,
+      stdio: ['ignore', 'pipe', 'pipe'],
+    }).trim();
+  const common = (cwd) =>
+    fs.realpathSync(git(cwd, ['rev-parse', '--path-format=absolute', '--git-common-dir']));
+  const directory = common(root);
+  if (
+    directory !== common(worktree) ||
+    fs.realpathSync(git(worktree, ['rev-parse', '--show-toplevel'])) !==
+      fs.realpathSync(worktree) ||
+    git(worktree, ['symbolic-ref', '--short', 'HEAD']) !== branch ||
+    !fs.lstatSync(directory).isDirectory() ||
+    (fs.existsSync(path.join(PLUGIN_ROOT, '.git')) &&
+      directory === fs.realpathSync(path.join(PLUGIN_ROOT, '.git')))
+  )
+    throw new Error('The assigned worktree must belong to the bound product Git repository');
+  const registered = git(root, ['worktree', 'list', '--porcelain'])
+    .split(/\r?\n/)
+    .some((line) => {
+      if (!line.startsWith('worktree ')) return false;
+      try {
+        return fs.realpathSync(line.slice(9)) === fs.realpathSync(worktree);
+      } catch {
+        return false;
+      }
+    });
+  if (!registered) throw new Error('The assigned worktree is not registered');
+  return directory;
+}
+
 const ROLE_AGENTS = Object.freeze({
   'test-designer': {
     name: 'specgate_test_designer',
@@ -17,14 +54,19 @@ const ROLE_AGENTS = Object.freeze({
     title: 'SpecGate Test Designer',
   },
   frontend: {
-    name: 'specgate_frontend',
-    file: 'specgate_frontend.toml',
-    title: 'SpecGate Frontend Agent',
+    name: 'specgate_implementer',
+    file: 'specgate_implementer.toml',
+    title: 'SpecGate Implementer',
   },
   backend: {
-    name: 'specgate_backend',
-    file: 'specgate_backend.toml',
-    title: 'SpecGate Backend Agent',
+    name: 'specgate_implementer',
+    file: 'specgate_implementer.toml',
+    title: 'SpecGate Implementer',
+  },
+  review: {
+    name: 'specgate_reviewer',
+    file: 'specgate_reviewer.toml',
+    title: 'SpecGate Reviewer',
   },
 });
 
@@ -66,11 +108,22 @@ function readAgentConfig(projectRoot, role) {
 }
 
 function roleTask(role, challenge) {
+  if (role === 'review')
+    return [
+      'Read the fixed integration commit, frozen acceptance criteria, diff and quality evidence without changing any files or Git references.',
+      'Return exactly one JSON object with mode, reviewedCommit, qualityHash, summary, verdict and findings.',
+      'Each finding must contain id, severity, file, changedLine, acIds, evidence from that line and recommendation.',
+      'severity must be exactly one of P0, P1, P2 or P3.',
+      'A blocker about frozen evidence may cite a .specgate/codex/** evidence file with changedLine 1 and quote evidence from that artifact.',
+      'Use verdict fail for blocking findings in the selected mode; do not claim independent verification that did not run.',
+    ];
   if (role === 'test-designer') {
     return [
       'Execute the complete test-design task now. Do not return a plan, acknowledgement or empty summary.',
       'Create specgate-tests.json at the assigned worktree root and all executable test assets under specgate-tests/.',
       'The runner must be specgate-tests/runner.mjs, map every acceptance criterion to at least one case, and emit the required JSON report.',
+      'The report must contain cases: [{id: exact frozen case ID, status: pass|fail|skip}]; status must be exactly pass, fail or skip. Both red and green use this schema, actual failures exit 1, infrastructure/setup errors must not masquerade as a red test failure.',
+      'Changed executable configuration files also require coverage evidence; do not restrict changed-line coverage to business source directories or discard changed build configuration. Coverage must come from actual instrumentation and reconcile all original business sources.',
       'Run the repository formatter, lint and applicable checks on generated test sources.',
       'Only specgate-tests.json and files under specgate-tests/ may be changed.',
       'Commit every test asset in the assigned worktree. Return the exact commit, test counts, AC coverage and unresolved test risks.',
@@ -96,7 +149,7 @@ export function buildNativeRolePrompt({ projectRoot, role, challenge, agentConfi
     operation: challenge.operation,
     changeId: challenge.changeId,
     worktree: challenge.worktree,
-    branch: challenge.branch,
+    branch: challenge.branch || null,
     freezeCommit: challenge.freezeCommit || challenge.baseCommit || null,
     previousCommit: challenge.previousCommit || null,
     graph: challenge.graph || challenge.plan || challenge.requirements || null,
@@ -115,6 +168,17 @@ export function buildNativeRolePrompt({ projectRoot, role, challenge, agentConfi
           }
         : null,
     conflictPaths: challenge.conflictPaths || null,
+    review:
+      role === 'review'
+        ? {
+            mode: challenge.mode || null,
+            integrationCommit: challenge.integrationCommit || null,
+            qualityHash: challenge.qualityHash || null,
+            quality: challenge.quality || null,
+            redEvidence: challenge.redEvidence || null,
+            diff: challenge.diff || null,
+          }
+        : null,
   };
   return [
     `You are the assigned ${agentConfig.agent.title}. This is a real, bounded task assignment from SpecGate.`,
@@ -131,7 +195,9 @@ export function buildNativeRolePrompt({ projectRoot, role, challenge, agentConfi
     'Required execution:',
     ...roleTask(role, challenge).map((line) => `- ${line}`),
     '',
-    'A completion without a new commit will be rejected by SpecGate. Do not claim completion before committing.',
+    role === 'review'
+      ? 'A completion without a parseable structured report will be rejected by SpecGate.'
+      : 'A completion without a new commit will be rejected by SpecGate. Do not claim completion before committing.',
   ].join('\n');
 }
 
@@ -194,7 +260,7 @@ function terminateProcessTree(child, platform = process.platform) {
  */
 export function createNativeCodexRoleProvider({
   projectRoot,
-  command = 'codex',
+  command,
   spawnImpl = spawn,
   terminate = terminateProcessTree,
   timeoutMs = DEFAULT_TIMEOUT_MS,
@@ -202,6 +268,7 @@ export function createNativeCodexRoleProvider({
   env = process.env,
   clock = Date.now,
 } = {}) {
+  command ||= env.SPECGATE_CODEX_COMMAND || 'codex';
   if (typeof projectRoot !== 'string' || !path.isAbsolute(projectRoot))
     throw new TypeError('An absolute project root is required');
   if (typeof command !== 'string' || !command) throw new TypeError('A Codex command is required');
@@ -216,7 +283,7 @@ export function createNativeCodexRoleProvider({
     if (
       !text(challenge.changeId) ||
       !text(challenge.worktree) ||
-      !text(challenge.branch) ||
+      (role !== 'review' && !text(challenge.branch)) ||
       !path.isAbsolute(challenge.worktree)
     )
       return failure(
@@ -232,6 +299,17 @@ export function createNativeCodexRoleProvider({
     if (signal?.aborted) return failure('CANCELLED', 'The role task was cancelled before start');
     const configured = readAgentConfig(root, role);
     if (!configured.ok) return configured;
+    let gitDirectory;
+    if (role !== 'review') {
+      try {
+        gitDirectory = writableGitDirectory(root, worktree, challenge.branch);
+      } catch {
+        return failure(
+          'ROLE_WORKTREE_GIT_INVALID',
+          'Cannot grant Git metadata access to an unregistered or foreign worktree',
+        );
+      }
+    }
     const prompt = buildNativeRolePrompt({
       projectRoot: root,
       role,
@@ -251,7 +329,8 @@ export function createNativeCodexRoleProvider({
       'never',
       '--ephemeral',
       '--sandbox',
-      'workspace-write',
+      role === 'review' ? 'read-only' : 'workspace-write',
+      ...(gitDirectory ? ['--add-dir', gitDirectory] : []),
       '--cd',
       worktree,
       '--config',
@@ -393,6 +472,23 @@ export function createNativeCodexRoleProvider({
             exitCode: code,
             signal: signalName,
           });
+          return;
+        }
+        if (role === 'review') {
+          let report;
+          try {
+            report = JSON.parse(agentMessage);
+            if (!report || typeof report !== 'object' || Array.isArray(report))
+              throw Error('Invalid report');
+          } catch {
+            finish({
+              ok: false,
+              code: 'REVIEW_REPORT_INVALID',
+              message: 'Reviewer did not return one JSON report',
+            });
+            return;
+          }
+          finish({ ...report, ok: true, exitCode: code, signal: signalName });
           return;
         }
         finish({

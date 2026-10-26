@@ -16,6 +16,12 @@ const BLOCKING = Object.freeze({
 });
 const object = (value) => value !== null && typeof value === 'object' && !Array.isArray(value);
 const text = (value) => typeof value === 'string' && value.trim().length > 0;
+const inputHash = (value) => typeof value === 'string' && /^(?:sha256:)?[a-f0-9]{64}$/i.test(value);
+const validReviewSource = (source) =>
+  object(source) &&
+  source.kind === 'server-provider' &&
+  text(source.agent) &&
+  inputHash(source.assignmentHash);
 const digest = (value) => 'sha256:' + hashValue(value);
 const failure = (code, message, extra = {}) => ({ ok: false, code, message, ...extra });
 const fail = (code, message) => {
@@ -137,25 +143,35 @@ function parseDiff(root, base, head) {
       })
     : [];
   const ranges = new Map();
+  const lineEvidence = new Map();
   let current = null;
+  let newLine = 0;
   for (const line of textDiff.split('\n')) {
     if (line.startsWith('+++ b/')) {
       current = line.slice(6);
       if (!ranges.has(current)) ranges.set(current, []);
+      if (!lineEvidence.has(current)) lineEvidence.set(current, new Map());
       continue;
     }
     if (!current) continue;
     const match = line.match(/^@@ -\d+(?:,\d+)? \+(\d+)(?:,(\d+))?\s+@@/);
-    if (!match) continue;
-    const start = Number(match[1]);
-    const count = match[2] === undefined ? 1 : Number(match[2]);
-    ranges.get(current).push({ start, end: start + Math.max(count, 1) - 1 });
+    if (match) {
+      const start = Number(match[1]);
+      const count = match[2] === undefined ? 1 : Number(match[2]);
+      ranges.get(current).push({ start, end: start + Math.max(count, 1) - 1 });
+      newLine = start;
+    } else if (line.startsWith('+') && !line.startsWith('+++')) {
+      lineEvidence.get(current).set(newLine++, line.slice(1));
+    } else if (line.startsWith(' ')) {
+      lineEvidence.get(current).set(newLine++, line.slice(1));
+    }
   }
   return {
     range,
     files,
     filePaths: files.map((entry) => entry.path),
     ranges,
+    lineEvidence,
     text: textDiff,
     bytes: Buffer.byteLength(textDiff, 'utf8'),
   };
@@ -287,9 +303,27 @@ export function validateReviewReport(report, { mode, diff, plan, integrity, qual
   if (!text(report.summary)) errors.push('Review summary is required');
   if (!['pass', 'fail'].includes(report.verdict)) errors.push('verdict must be pass or fail');
   if (!Array.isArray(report.findings)) errors.push('findings must be an array');
-  const findings = Array.isArray(report.findings) ? report.findings : [];
+  const findings = Array.isArray(report.findings)
+    ? report.findings.map((finding) =>
+        object(finding)
+          ? {
+              ...finding,
+              severity:
+                {
+                  critical: 'P0',
+                  blocking: 'P1',
+                  major: 'P1',
+                  minor: 'P2',
+                }[String(finding.severity || '').toLowerCase()] || finding.severity,
+              line: finding.line ?? finding.changedLine ?? finding['changed line'],
+              evidence: finding.evidence ?? finding['concrete evidence'],
+            }
+          : finding,
+      )
+    : [];
   const allowedAcs = validAcIds(plan);
   const evidenceText = normalize(`${diff.text}\n${JSON.stringify(quality)}`);
+  const artifactEvidence = normalize(JSON.stringify(diff.redEvidence || null));
   const ids = new Set();
   for (const [index, finding] of findings.entries()) {
     const label = `findings[${index}]`;
@@ -311,14 +345,30 @@ export function validateReviewReport(report, { mode, diff, plan, integrity, qual
       continue;
     }
     ids.add(finding.id);
-    if (!diff.ranges.has(finding.file)) errors.push(`${label}.file is not in the diff`);
+    const artifactFinding =
+      /^\.specgate\/codex\/[A-Za-z0-9._/-]+$/.test(finding.file) && finding.line === 1;
+    if (!artifactFinding && !diff.ranges.has(finding.file))
+      errors.push(`${label}.file is not in the diff`);
     else if (
+      !artifactFinding &&
       !diff.ranges
         .get(finding.file)
         .some((range) => finding.line >= range.start && finding.line <= range.end)
     )
       errors.push(`${label}.line is outside a changed hunk`);
-    if (!evidenceText.includes(normalize(finding.evidence)))
+    const localEvidence = diff.lineEvidence?.get(finding.file)?.get(finding.line);
+    if (artifactFinding) {
+      const quotedEvidence = [...finding.evidence.matchAll(/`([^`]+)`/g)].map((match) =>
+        normalize(match[1]),
+      );
+      if (
+        !artifactEvidence.includes(normalize(finding.evidence)) &&
+        !quotedEvidence.some((quote) => quote && artifactEvidence.includes(quote))
+      )
+        errors.push(`${label}.evidence does not match red evidence artifact`);
+    } else if (diff.lineEvidence && !normalize(localEvidence).includes(normalize(finding.evidence)))
+      errors.push(`${label}.evidence does not match the cited file and line`);
+    else if (!diff.lineEvidence && !evidenceText.includes(normalize(finding.evidence)))
       errors.push(`${label}.evidence does not match diff or quality evidence`);
   }
   const blocking = findings.filter((finding) => BLOCKING[mode]?.has(finding.severity));
@@ -366,13 +416,13 @@ export function createReviewService({
       );
     if (
       !object(args) ||
-      Object.keys(args).some((key) => !['expectedVersion', 'mode', 'report'].includes(key)) ||
+      Object.keys(args).some((key) => !['expectedVersion', 'mode'].includes(key)) ||
       !Number.isSafeInteger(args.expectedVersion) ||
       args.expectedVersion < 0
     )
       return failure(
         'INVALID_ARGUMENT',
-        'Only expectedVersion, mode and a structured Review report are accepted',
+        'Only expectedVersion and mode are accepted; Review reports come from a server-owned provider',
       );
     if (args.mode !== undefined && !MODES.includes(args.mode))
       return failure('INVALID_ARGUMENT', 'mode must be lenient, standard or strict');
@@ -388,13 +438,24 @@ export function createReviewService({
     return loaded;
   }
 
-  function currentQuality(state) {
+  function currentQuality(state, integrationCommit) {
     const quality = state.context?.quality;
     if (!object(quality) || !safeRelative(quality.reportPath))
       fail('QUALITY_REQUIRED', 'A passed P7 quality report is required');
     const body = readJson(root, quality.reportPath);
     if (body.status !== 'passed' || digest(body) !== quality.hash)
       fail('QUALITY_EVIDENCE_CHANGED', 'Quality evidence is not current');
+    if (
+      body.integrationCommit !== integrationCommit ||
+      quality.integrationCommit !== integrationCommit
+    )
+      fail('QUALITY_COMMIT_MISMATCH', 'Quality evidence does not match the integration commit');
+    if (
+      state.context?.format &&
+      (state.context.format.integrationAfter !== integrationCommit ||
+        state.context.format.preQualityRunId === quality.runId)
+    )
+      fail('POST_FORMAT_QUALITY_REQUIRED', 'Review requires a new quality run after formatting');
     return { ...quality, body };
   }
 
@@ -468,14 +529,17 @@ export function createReviewService({
     if (!loaded.ok) return loaded;
     const checked = await planService.inspect();
     if (!checked.ok) return checked;
-    const quality = currentQuality(loaded.state);
     const development = loaded.state.context?.development;
     const integration = development?.worktrees?.integration;
     if (!object(integration) || !fs.existsSync(integration.path))
       return failure('INTEGRATION_WORKTREE_MISSING', 'Integration worktree is unavailable');
     const integrationCommit = git(integration.path, ['rev-parse', 'HEAD']);
+    const quality = currentQuality(loaded.state, integrationCommit);
     const review = alignReviewWorktree(development, integrationCommit);
-    const diff = parseDiff(integration.path, development.freezeCommit, integrationCommit);
+    const diff = {
+      ...parseDiff(integration.path, development.freezeCommit, integrationCommit),
+      redEvidence: readJson(root, development.red.path),
+    };
     const signals = riskSignals(diff, quality.body);
     const recommended = selectReviewMode(signals, diff);
     const mode = args.mode || recommended;
@@ -514,17 +578,19 @@ export function createReviewService({
     return protect(async () => {
       const loaded = await current(args, ['REVIEWING']);
       if (!loaded.ok) return loaded;
-      const suppliedReport = args.report;
-      if (typeof roleProvider !== 'function' && !object(suppliedReport))
+      if (typeof roleProvider !== 'function')
         return failure('REVIEW_PROVIDER_UNAVAILABLE', 'A server-owned Review Agent is required');
       const checked = await planService.inspect();
       if (!checked.ok) return checked;
-      const quality = currentQuality(loaded.state);
       const development = loaded.state.context?.development;
       const integration = development?.worktrees?.integration;
       const integrationCommit = git(integration.path, ['rev-parse', 'HEAD']);
+      const quality = currentQuality(loaded.state, integrationCommit);
       const review = alignReviewWorktree(development, integrationCommit);
-      const diff = parseDiff(integration.path, development.freezeCommit, integrationCommit);
+      const diff = {
+        ...parseDiff(integration.path, development.freezeCommit, integrationCommit),
+        redEvidence: readJson(root, development.red.path),
+      };
       const signals = riskSignals(diff, quality.body);
       const recommended = selectReviewMode(signals, diff);
       const mode = args.mode || recommended;
@@ -537,30 +603,38 @@ export function createReviewService({
       const beforeMain = status(root);
       let report;
       try {
-        report =
-          suppliedReport ||
-          (await roleProvider('review', {
-            operation: 'review',
-            changeId: loaded.state.changeId,
-            mode,
-            recommendedMode: recommended,
-            risks: signals,
-            worktree: review.path,
-            integrationCommit,
-            freezeCommit: development.freezeCommit,
-            quality: quality.body,
-            qualityHash: quality.hash,
-            plan: checked.plan,
-            contract: checked.ref.contract,
-            model: checked.ref.model,
-            diff,
-            requirements: checked.plan.graph.acs,
-            signal,
-          }));
+        report = await roleProvider('review', {
+          operation: 'review',
+          changeId: loaded.state.changeId,
+          mode,
+          recommendedMode: recommended,
+          risks: signals,
+          worktree: review.path,
+          integrationCommit,
+          freezeCommit: development.freezeCommit,
+          quality: quality.body,
+          qualityHash: quality.hash,
+          plan: checked.plan,
+          contract: checked.ref.contract,
+          model: checked.ref.model,
+          diff,
+          requirements: checked.plan.graph.acs,
+          signal,
+        });
       } catch (error) {
         return failure(error.code || 'REVIEW_PROVIDER_FAILED', error.message);
       }
       if (signal?.aborted) return failure('CANCELLED', 'Review was cancelled');
+      if (report?.ok === false)
+        return failure(
+          report.code || 'REVIEW_PROVIDER_FAILED',
+          report.message || 'Review provider failed',
+        );
+      if (!text(report.agent) || !inputHash(report.assignmentHash))
+        return failure(
+          'REVIEW_IDENTITY_REQUIRED',
+          'Review evidence requires a server provider identity and assignment hash',
+        );
       if (status(review.path) !== beforeReview || status(root) !== beforeMain)
         return failure('REVIEW_NOT_READ_ONLY', 'Review Agent modified a worktree');
       if (git(integration.path, ['rev-parse', 'HEAD']) !== integrationCommit)
@@ -580,8 +654,14 @@ export function createReviewService({
         riskSignals: signals,
         reviewedCommit: integrationCommit,
         qualityHash: quality.hash,
+        source: {
+          kind: 'server-provider',
+          agent: report.agent || null,
+          sessionId: report.sessionId || null,
+          assignmentHash: report.assignmentHash || null,
+        },
         createdAt: new Date().toISOString(),
-        report,
+        report: { ...report, findings: checkedReport.findings },
         valid: checkedReport.ok,
         errors: checkedReport.errors,
         blocking: checkedReport.blocking || [],
@@ -670,6 +750,21 @@ export function createReviewService({
       const reviewBody = readJson(root, review.path);
       if (digest(reviewBody) !== review.hash)
         return failure('REVIEW_EVIDENCE_CHANGED', 'Review report hash changed');
+      if (!validReviewSource(reviewBody.source))
+        return failure(
+          'REVIEW_IDENTITY_REQUIRED',
+          'Review report lacks its server provider identity or assignment hash',
+        );
+      const integrationCommit = git(loaded.state.context.development.worktrees.integration.path, [
+        'rev-parse',
+        'HEAD',
+      ]);
+      currentQuality(loaded.state, integrationCommit);
+      if (reviewBody.reviewedCommit !== integrationCommit)
+        return failure(
+          'REVIEW_COMMIT_MISMATCH',
+          'Review report does not match the integration commit',
+        );
       const checked = await planService.inspect();
       if (!checked.ok) return checked;
       const computed = computeArchivePreview({
@@ -774,6 +869,11 @@ export function createReviewService({
       const body = readJson(root, review.reportPath);
       if (digest(body) !== review.hash)
         return failure('REVIEW_EVIDENCE_CHANGED', 'Review report was modified');
+      if (!validReviewSource(body.source))
+        return failure(
+          'REVIEW_IDENTITY_REQUIRED',
+          'Review report lacks its server provider identity or assignment hash',
+        );
       return { ok: true, state: loaded.state, review: body, summary: review };
     });
   }

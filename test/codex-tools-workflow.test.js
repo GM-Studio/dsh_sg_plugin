@@ -4,10 +4,28 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { createStateStore } from '../src/codex/state-machine.js';
-import { createToolRegistry, nativeTestRunnerSpec } from '../src/codex/workflow-tools.js';
+import {
+  createToolRegistry,
+  nativeTestRunnerSpec,
+  NATIVE_GREEN_REPORT_PATH,
+  NATIVE_RED_REPORT_PATH,
+} from '../src/codex/workflow-tools.js';
 
 const temp = () => fs.mkdtempSync(path.join(os.tmpdir(), 'sg-codex-tools-'));
 const data = (result) => result.structuredContent;
+
+test('unbound Core diagnostics only recommend tools in the public Core registry', async () => {
+  const registry = createToolRegistry({ projectRoot: temp(), projectBound: false });
+  for (const name of ['status', 'sg_status', 'sg_project_status']) {
+    const status = data(await registry.call(name));
+    assert.equal(status.nextAction, 'BIND_PROJECT');
+    assert.equal(
+      registry.definitions.some((tool) => tool.name === status.nextTool),
+      true,
+    );
+    assert.doesNotMatch(status.message, /sg_project_create/);
+  }
+});
 
 test('native runner receives the manifest test root instead of its frozen snapshot parent', () => {
   const worktree = path.resolve('/project/.specgate/worktrees/example/test');
@@ -28,6 +46,13 @@ test('native runner receives the manifest test root instead of its frozen snapsh
   assert.equal(spec.args[spec.args.indexOf('--snapshot') + 1], testsDirectory);
   assert.equal(spec.cwd, worktree);
   assert.equal(spec.args[spec.args.indexOf('--report') + 1], path.join(worktree, reportPath));
+});
+
+test('native red and green reports stay under ignored runtime evidence', () => {
+  for (const reportPath of [NATIVE_RED_REPORT_PATH, NATIVE_GREEN_REPORT_PATH]) {
+    assert.match(reportPath, /^\.specgate\/codex\/runs\/native-(red|green)-report\.json$/);
+    assert.equal(reportPath.startsWith('.specgate/codex/runs/'), true);
+  }
 });
 
 test('state inspection is read-only and mutation schemas require a current version', async () => {
@@ -73,7 +98,7 @@ test('MCP lifecycle controls preserve worktrees and evidence and enforce CAS', a
 test('init preview is read-only; nonempty initialization cannot manufacture approval', async () => {
   const projectRoot = temp();
   fs.writeFileSync(path.join(projectRoot, 'README.md'), 'user content');
-  const registry = createToolRegistry({ projectRoot });
+  const registry = createToolRegistry({ projectRoot, optionalModules: true });
   const preview = data(
     await registry.call('sg_init_preview', {
       company: 'acme',
@@ -130,8 +155,6 @@ test('the public tool set cannot import approvals or arbitrarily change phases',
     'sg_adopt_preview',
     'sg_adopt_commit_dirty',
     'sg_adopt_apply',
-    'sg_project_finalize_new',
-    'sg_project_verify',
     'sg_change',
     'sg_plan_inspect',
     'sg_plan_generate',

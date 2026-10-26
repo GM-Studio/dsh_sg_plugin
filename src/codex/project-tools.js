@@ -1,3 +1,4 @@
+import { verificationSnapshot } from './core/verification-status.js';
 import { getAdoptionBaselineRun, startAdoptionBaseline } from './baseline.js';
 import { getBaselineJob, startBaselineJob } from './baseline-job.js';
 import { createArtifactStore } from './core/artifact-store.js';
@@ -115,7 +116,6 @@ export async function callProjectTool(services, name, args = {}, { signal } = {}
     return { ok: false, code: 'INVALID_ARGUMENT', message: 'Project tool arguments are invalid' };
   const root = services?.projectRoot;
   if (name === 'sg_project_status') {
-    const { verificationSnapshot } = await import('./verify.js');
     const verification = verificationSnapshot({ root });
     const readiness = loadProjectReadiness({ projectRoot: root });
     const inspected = await createStateStore({ projectRoot: root }).inspect();
@@ -177,8 +177,11 @@ export async function callProjectTool(services, name, args = {}, { signal } = {}
       ...(initialization
         ? {
             nextAction: 'VERIFY_PROJECT_THEN_WAIT_FOR_USER_REQUIREMENTS',
-            nextTool: verification.nextAction === 'RUN_SG_VERIFY' ? 'sg_project_verify' : undefined,
-            verificationTools: ['sg_project_verify', 'sg_verify'],
+            nextTool:
+              services.optionalModules && verification.nextAction === 'RUN_SG_VERIFY'
+                ? 'sg_project_verify'
+                : undefined,
+            verificationTools: services.optionalModules ? ['sg_project_verify', 'sg_verify'] : [],
             message:
               '项目已经生成，继续验证并建立基线，无需再次填写创建表单。' +
               (verification.message ? ' ' + verification.message : ''),
@@ -241,6 +244,8 @@ export async function callProjectTool(services, name, args = {}, { signal } = {}
             status: result.status,
             exitCode: result.exitCode,
             durationMs: result.durationMs,
+            startedAt: result.startedAt || null,
+            finishedAt: result.finishedAt || null,
             stdout: result.stdout,
             stderr: result.stderr,
           })),

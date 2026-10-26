@@ -6,7 +6,7 @@ import { fileURLToPath } from 'node:url';
 import { createArtifactStore } from './core/artifact-store.js';
 import { hashValue } from './events.js';
 import { gitSafeDirectory } from './git-path.js';
-import { SPECGATE_GITIGNORE } from './init.js';
+import { SPECGATE_GITIGNORE } from './core/runtime-gitignore.js';
 import { resolveGitIdentity } from './core/git-identity.js';
 import { insideSpecGateSource } from './core/project-path.js';
 import {

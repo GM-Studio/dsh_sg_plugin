@@ -13,7 +13,6 @@ import {
   probeTool,
 } from './java/java-env.js';
 import { componentArchive } from './environment-catalog.js';
-import { installEnvironmentComponent } from './environment-install.js';
 
 export const environmentCacheRoot = (env = process.env) =>
   path.join(env.USERPROFILE || env.HOME || os.homedir(), '.specgate', 'toolchains');
@@ -196,7 +195,7 @@ export function createEnvironmentService({
   platform = process.platform,
   arch = process.arch,
   discover = discoverEnvironment,
-  install = installEnvironmentComponent,
+  install,
   consent,
   cacheRoot = environmentCacheRoot(env),
 } = {}) {
@@ -240,7 +239,9 @@ export function createEnvironmentService({
             throw Object.assign(new Error('环境准备已取消'), { code: 'CANCELLED' });
           const current = await check(input);
           if (!current.missing.includes(id)) continue;
-          const result = await install(id, {
+          const installer =
+            install || (await import('./environment-install.js')).installEnvironmentComponent;
+          const result = await installer(id, {
             cacheRoot,
             env,
             platform,

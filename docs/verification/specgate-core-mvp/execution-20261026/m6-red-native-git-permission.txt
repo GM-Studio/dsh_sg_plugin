@@ -1,0 +1,31 @@
+Preparing worktree (new branch 'test-design')
+✖ native writer grants only the registered project Git metadata and Reviewer grants none (175.052ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 0
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 240.2587
+
+✖ failing tests:
+
+test at test\codex-native-role-agent.test.js:70:1
+✖ native writer grants only the registered project Git metadata and Reviewer grants none (175.052ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + 'exec'
+  - 'C:\\sg-core-test-temp\\specgate-codex-tests\\run-3424-e5qlN4\\sg-native-role-185FAt\\.git'
+  
+      at TestContext.<anonymous> (file:///E:/ai_workflow/specgate/test/codex-native-role-agent.test.js:83:10)
+      at async Test.run (node:internal/test_runner/test:1125:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:358:3) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'exec',
+    expected: 'C:\\sg-core-test-temp\\specgate-codex-tests\\run-3424-e5qlN4\\sg-native-role-185FAt\\.git',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

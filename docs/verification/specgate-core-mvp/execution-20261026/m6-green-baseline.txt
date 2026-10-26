@@ -1,0 +1,20 @@
+✔ adopted verification preserves unchanged known failures and reports no pass claim (2.3459ms)
+✔ adopted verification blocks new failures, missing commands and environment drift (0.9484ms)
+✔ new failures include bounded command evidence and never become passed artifacts (0.3066ms)
+✔ known failure signatures ignore timestamps, process ids and worktree paths (0.3041ms)
+✔ adopted verification executes real ProjectProfile commands in the fixed worktree (51.2587ms)
+✔ legacy baselines rebuild stable signatures from retained command evidence (1.9991ms)
+✔ baseline executes the declared package manager with real timestamps and no shell interpolation (212.1417ms)
+✔ all passing baseline commands produce a valid green adopted baseline (221.2479ms)
+✔ pre-existing failing commands become stable known failures (219.4746ms)
+✔ no discovered commands produce a partial baseline with unverified risk (230.7617ms)
+✔ cancelled or malformed baseline runs fail without fabricating a green baseline (227.3198ms)
+✔ bounded baseline commands use argv arrays and classify observed failure (96.039ms)
+ℹ tests 12
+ℹ suites 0
+ℹ pass 12
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1276.5589

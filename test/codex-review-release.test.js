@@ -31,7 +31,7 @@ function commitAll(cwd, message) {
   return git(cwd, ['rev-parse', 'HEAD']);
 }
 
-async function fixture({ mutateAfterRequest = false } = {}) {
+async function fixture({ mutateAfterRequest = false, projectBacked = false } = {}) {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'sg-codex-review-'));
   git(root, ['init', '-q', '-b', 'main']);
   git(root, ['config', 'user.email', 'test@example.com']);
@@ -41,7 +41,43 @@ async function fixture({ mutateAfterRequest = false } = {}) {
   fs.writeFileSync(path.join(root, 'backend/src/main/java/App.java'), 'class App {}\n');
   fs.mkdirSync(path.join(root, 'frontend/src/api'), { recursive: true });
   fs.writeFileSync(path.join(root, 'frontend/src/api/types.ts'), 'export type A = 1;\n');
-  const freezeCommit = commitAll(root, 'initial');
+  commitAll(root, 'initial');
+  if (projectBacked) {
+    const now = '2026-10-22T10:00:00.000Z';
+    const projectProfile = {
+      schemaVersion: 2,
+      projectId: 'project-release',
+      mode: 'new',
+      stack: 'java-vue',
+      root: root,
+      targetBranch: git(root, ['rev-parse', '--abbrev-ref', 'HEAD']),
+      remoteUrl: null,
+      commands: { install: [], build: [], test: [], lint: [], format: [], runtime: [] },
+      protectedPaths: [],
+      createdAt: now,
+      updatedAt: now,
+    };
+    const baseline = {
+      schemaVersion: 2,
+      baselineId: 'baseline-release',
+      projectId: 'project-release',
+      commit: git(root, ['rev-parse', 'HEAD']),
+      status: 'green',
+      knownFailures: [],
+      unverifiedAreas: [],
+      commands: [],
+      evidence: [],
+      environmentFingerprint: 'e'.repeat(64),
+      createdAt: now,
+    };
+    const readiness = persistProjectReadiness({
+      root: root,
+      profile: projectProfile,
+      baseline,
+    });
+    assert.equal(readiness.ok, true, JSON.stringify(readiness));
+  }
+  const freezeCommit = git(root, ['rev-parse', 'HEAD']);
 
   const integrationPath = path.join(root, '.specgate/codex/worktrees/change/integration');
   fs.mkdirSync(path.dirname(integrationPath), { recursive: true });
@@ -64,10 +100,17 @@ async function fixture({ mutateAfterRequest = false } = {}) {
   git(root, ['worktree', 'add', '--detach', reviewPath, integrationCommit]);
   const testPath = path.join(root, '.specgate/codex/worktrees/change/test');
   git(root, ['worktree', 'add', '--detach', testPath, integrationCommit]);
+  const redRelative = '.specgate/codex/changes/change/red/run-1/evidence.json';
+  fs.mkdirSync(path.dirname(path.join(root, redRelative)), { recursive: true });
+  fs.writeFileSync(
+    path.join(root, redRelative),
+    canonicalJson({ cases: [{ id: 'CASE-AC-1', status: 'fail' }] }) + '\n',
+  );
 
   const qualityBody = {
     schemaVersion: 1,
     status: 'passed',
+    integrationCommit,
     runId: 'quality-1',
     cases: [{ id: 'CASE-AC-1', status: 'pass' }],
     p0: 0,
@@ -151,6 +194,7 @@ async function fixture({ mutateAfterRequest = false } = {}) {
       quality,
       development: {
         freezeCommit,
+        red: { path: redRelative },
         merged: [{ integrationCommit }],
         worktrees: {
           integration: { path: integrationPath, branch: 'sg/codex/change/integration' },
@@ -218,6 +262,8 @@ function passingProvider(context) {
   return async (role, challenge) => {
     assert.equal(role, 'review');
     return {
+      agent: 'specgate_reviewer',
+      assignmentHash: 'a'.repeat(64),
       mode: challenge.mode,
       reviewedCommit: context.integrationCommit,
       qualityHash: context.quality.hash,
@@ -252,12 +298,113 @@ test('risk selection escalates public contracts and Review enters H3 only on a v
   );
 });
 
-test('native Reviewer receives a read-only challenge and submits a validated report', async () => {
+test('Review and H3 reject quality evidence from another integration commit', async () => {
+  const context = await fixture();
+  const staleBody = { ...context.quality, integrationCommit: context.freezeCommit };
+  delete staleBody.reportPath;
+  delete staleBody.hash;
+  fs.writeFileSync(
+    path.join(context.root, context.quality.reportPath),
+    canonicalJson(staleBody) + '\n',
+  );
+  const stale = {
+    ...staleBody,
+    reportPath: context.quality.reportPath,
+    hash: 'sha256:' + hashValue(staleBody),
+  };
+  let loaded = await context.store.inspect();
+  assert.equal(
+    (
+      await context.store.update({
+        expectedVersion: loaded.state.version,
+        patch: { context: { quality: stale } },
+      })
+    ).ok,
+    true,
+  );
+  const service = createReviewService({
+    projectRoot: context.root,
+    store: context.store,
+    planService: context.planService,
+    roleProvider: passingProvider(context),
+    approvalAuthority: context.authority,
+  });
+  assert.equal(
+    (await service.prepare({ expectedVersion: await context.version() })).code,
+    'QUALITY_COMMIT_MISMATCH',
+  );
+  assert.equal(
+    (await service.run({ expectedVersion: await context.version() })).code,
+    'QUALITY_COMMIT_MISMATCH',
+  );
+  assert.equal((await context.store.inspect()).state.phase, 'REVIEWING');
+});
+
+test('H3 refuses a quality report replaced after Review with a stale commit', async () => {
   const context = await fixture();
   const service = createReviewService({
     projectRoot: context.root,
     store: context.store,
     planService: context.planService,
+    roleProvider: passingProvider(context),
+    approvalAuthority: context.authority,
+  });
+  assert.equal((await service.run({ expectedVersion: await context.version() })).ok, true);
+  const staleBody = { ...context.quality, integrationCommit: context.freezeCommit };
+  delete staleBody.reportPath;
+  delete staleBody.hash;
+  fs.writeFileSync(
+    path.join(context.root, context.quality.reportPath),
+    canonicalJson(staleBody) + '\n',
+  );
+  const loaded = await context.store.inspect();
+  assert.equal(
+    (
+      await context.store.update({
+        expectedVersion: loaded.state.version,
+        patch: {
+          context: {
+            quality: {
+              ...staleBody,
+              reportPath: context.quality.reportPath,
+              hash: 'sha256:' + hashValue(staleBody),
+            },
+          },
+        },
+      })
+    ).ok,
+    true,
+  );
+  assert.equal(
+    (await service.requestH3({ expectedVersion: await context.version() })).code,
+    'QUALITY_COMMIT_MISMATCH',
+  );
+});
+
+test('Review reports cannot come from public arguments and missing provider is unavailable', async () => {
+  const context = await fixture();
+  const service = createReviewService({
+    projectRoot: context.root,
+    store: context.store,
+    planService: context.planService,
+  });
+  assert.equal(
+    (await service.run({ expectedVersion: await context.version(), report: {} })).code,
+    'INVALID_ARGUMENT',
+  );
+  assert.equal(
+    (await service.run({ expectedVersion: await context.version() })).code,
+    'REVIEW_PROVIDER_UNAVAILABLE',
+  );
+});
+
+test('server Reviewer receives a read-only challenge and submits a validated report', async () => {
+  const context = await fixture();
+  const service = createReviewService({
+    projectRoot: context.root,
+    store: context.store,
+    planService: context.planService,
+    roleProvider: passingProvider(context),
     approvalAuthority: context.authority,
   });
   const prepared = await service.prepare({ expectedVersion: await context.version() });
@@ -266,20 +413,33 @@ test('native Reviewer receives a read-only challenge and submits a validated rep
   assert.equal(prepared.challenge.integrationCommit, context.integrationCommit);
   assert.equal(prepared.challenge.qualityHash, context.quality.hash);
   assert.equal(prepared.challenge.mode, 'strict');
-  const result = await service.run({
-    expectedVersion: await context.version(),
-    report: {
-      mode: prepared.challenge.mode,
-      reviewedCommit: prepared.challenge.integrationCommit,
-      qualityHash: prepared.challenge.qualityHash,
-      summary: 'Native Reviewer inspected the fixed commit without writes.',
-      verdict: 'pass',
-      findings: [],
-    },
-  });
+  const injected = await service.run({ expectedVersion: await context.version(), report: {} });
+  assert.equal(injected.code, 'INVALID_ARGUMENT');
+  const result = await service.run({ expectedVersion: await context.version() });
   assert.equal(result.ok, true, JSON.stringify(result));
   assert.equal(result.state.phase, 'H3_PENDING');
   assert.equal((await service.inspect()).review.report.verdict, 'pass');
+});
+
+test('server Reviewer must record its execution identity and assignment hash', async () => {
+  const context = await fixture();
+  const service = createReviewService({
+    projectRoot: context.root,
+    store: context.store,
+    planService: context.planService,
+    roleProvider: async (role, challenge) => ({
+      mode: challenge.mode,
+      reviewedCommit: context.integrationCommit,
+      qualityHash: context.quality.hash,
+      summary: 'A report without provider identity must not be accepted.',
+      verdict: 'pass',
+      findings: [],
+    }),
+    approvalAuthority: context.authority,
+  });
+  const result = await service.run({ expectedVersion: await context.version() });
+  assert.equal(result.code, 'REVIEW_IDENTITY_REQUIRED');
+  assert.equal((await context.store.inspect()).state.phase, 'REVIEWING');
 });
 
 test('severity thresholds differ across lenient, standard and strict modes', () => {
@@ -340,6 +500,130 @@ test('severity thresholds differ across lenient, standard and strict modes', () 
   );
 });
 
+test('Review finding field aliases are normalized into the machine contract', () => {
+  const diff = {
+    text: '+unsafe operation',
+    ranges: new Map([['backend/Controller.java', [{ start: 1, end: 1 }]]]),
+    lineEvidence: new Map([['backend/Controller.java', new Map([[1, 'unsafe operation']])]]),
+  };
+  const checked = validateReviewReport(
+    {
+      mode: 'strict',
+      reviewedCommit: 'a'.repeat(40),
+      qualityHash: 'sha256:' + 'b'.repeat(64),
+      summary: 'Native reviewer used the prompt aliases.',
+      verdict: 'fail',
+      findings: [
+        {
+          id: 'F-1',
+          severity: 'blocking',
+          file: 'backend/Controller.java',
+          'changed line': 1,
+          acIds: ['AC-1'],
+          'concrete evidence': 'unsafe operation',
+          recommendation: 'Remove unsafe operation.',
+        },
+      ],
+    },
+    {
+      mode: 'strict',
+      diff,
+      plan: { graph: { acs: [{ id: 'AC-1' }] } },
+      integrity: { integrationCommit: 'a'.repeat(40) },
+      quality: { hash: 'sha256:' + 'b'.repeat(64) },
+    },
+  );
+  assert.equal(checked.ok, true, JSON.stringify(checked));
+  assert.equal(checked.findings[0].severity, 'P1');
+  assert.equal(checked.findings[0].line, 1);
+  assert.equal(checked.findings[0].evidence, 'unsafe operation');
+  assert.equal(checked.blocking.length, 1);
+});
+
+test('Review evidence blockers cite immutable red evidence instead of an invented diff line', () => {
+  const checked = validateReviewReport(
+    {
+      mode: 'strict',
+      reviewedCommit: 'a'.repeat(40),
+      qualityHash: 'sha256:' + 'b'.repeat(64),
+      summary: 'The red baseline contains an infrastructure failure.',
+      verdict: 'fail',
+      findings: [
+        {
+          id: 'F-RED-1',
+          severity: 'P1',
+          file: '.specgate/codex/changes/change-1/red/run-1/evidence.json',
+          line: 1,
+          acIds: ['AC-1'],
+          evidence:
+            'The artifact reports `Missing backend test report` and the backend command failed.',
+          recommendation: 'Provision Maven and rerun the red baseline.',
+        },
+      ],
+    },
+    {
+      mode: 'strict',
+      diff: {
+        text: '',
+        ranges: new Map(),
+        redEvidence: {
+          cases: [{ failures: [{ error: 'Missing backend test report' }] }],
+        },
+      },
+      plan: { graph: { acs: [{ id: 'AC-1' }] } },
+      integrity: { integrationCommit: 'a'.repeat(40) },
+      quality: { hash: 'sha256:' + 'b'.repeat(64) },
+    },
+  );
+  assert.equal(checked.ok, true, JSON.stringify(checked));
+  assert.equal(checked.blocking.length, 1);
+});
+
+test('a Review finding must cite evidence on its reported file and line', () => {
+  const diff = {
+    text: '+unsafe operation\n+safe operation',
+    ranges: new Map([['backend/Controller.java', [{ start: 1, end: 2 }]]]),
+    lineEvidence: new Map([
+      [
+        'backend/Controller.java',
+        new Map([
+          [1, 'unsafe operation'],
+          [2, 'safe operation'],
+        ]),
+      ],
+    ]),
+  };
+  const checked = validateReviewReport(
+    {
+      mode: 'strict',
+      reviewedCommit: 'a'.repeat(40),
+      qualityHash: 'sha256:' + 'b'.repeat(64),
+      summary: 'Finding has a misplaced quote.',
+      verdict: 'fail',
+      findings: [
+        {
+          id: 'F-1',
+          severity: 'P1',
+          file: 'backend/Controller.java',
+          line: 2,
+          acIds: ['AC-1'],
+          evidence: 'unsafe operation',
+          recommendation: 'Remove unsafe operation.',
+        },
+      ],
+    },
+    {
+      mode: 'strict',
+      diff,
+      plan: { graph: { acs: [{ id: 'AC-1' }] } },
+      integrity: { integrationCommit: 'a'.repeat(40) },
+      quality: { hash: 'sha256:' + 'b'.repeat(64) },
+    },
+  );
+  assert.equal(checked.ok, false);
+  assert.match(checked.errors.join(' '), /cited file and line/);
+});
+
 test('Review Agent writes are rejected and no passed report is recorded', async () => {
   const context = await fixture();
   const service = createReviewService({
@@ -365,6 +649,8 @@ test('strict mode blocks P3 findings and preserves the failed report', async () 
     store: context.store,
     planService: context.planService,
     roleProvider: async (role, challenge) => ({
+      agent: 'specgate_reviewer',
+      assignmentHash: 'b'.repeat(64),
       mode: challenge.mode,
       reviewedCommit: context.integrationCommit,
       qualityHash: context.quality.hash,
@@ -530,41 +816,35 @@ test('a configured remote is not pushed unless push=true is explicit', async () 
   assert.equal(archived.report.push, undefined);
 });
 
-test('project-backed archive creates a DeliveryRecord, local tag and separate packs', async () => {
+test('archive blocks a diverged target and preserves its unreviewed commit', async () => {
   const context = await fixture();
-  const now = '2026-10-22T10:00:00.000Z';
-  const projectProfile = {
-    schemaVersion: 2,
-    projectId: 'project-release',
-    mode: 'new',
-    stack: 'java-vue',
-    root: context.root,
-    targetBranch: git(context.root, ['rev-parse', '--abbrev-ref', 'HEAD']),
-    remoteUrl: null,
-    commands: { install: [], build: [], test: [], lint: [], format: [], runtime: [] },
-    protectedPaths: [],
-    createdAt: now,
-    updatedAt: now,
-  };
-  const baseline = {
-    schemaVersion: 2,
-    baselineId: 'baseline-release',
-    projectId: 'project-release',
-    commit: git(context.root, ['rev-parse', 'HEAD']),
-    status: 'green',
-    knownFailures: [],
-    unverifiedAreas: [],
-    commands: [],
-    evidence: [],
-    environmentFingerprint: 'e'.repeat(64),
-    createdAt: now,
-  };
-  const readiness = persistProjectReadiness({
-    root: context.root,
-    profile: projectProfile,
-    baseline,
+  fs.writeFileSync(path.join(context.root, 'target-only.txt'), 'unreviewed target change\n');
+  const targetCommit = commitAll(context.root, 'target advanced independently');
+  const review = createReviewService({
+    projectRoot: context.root,
+    store: context.store,
+    planService: context.planService,
+    roleProvider: passingProvider(context),
+    approvalAuthority: context.authority,
   });
-  assert.equal(readiness.ok, true, JSON.stringify(readiness));
+  assert.equal((await review.run({ expectedVersion: await context.version() })).ok, true);
+  assert.equal((await review.requestH3({ expectedVersion: await context.version() })).ok, true);
+  const release = createReleaseService({
+    projectRoot: context.root,
+    store: context.store,
+    planService: context.planService,
+  });
+  const result = await release.run({ expectedVersion: await context.version(), push: false });
+  assert.equal(result.code, 'ARCHIVE_TARGET_DIVERGED');
+  assert.equal(git(context.root, ['rev-parse', 'HEAD']), targetCommit);
+  assert.equal(
+    fs.readFileSync(path.join(context.root, 'target-only.txt'), 'utf8'),
+    'unreviewed target change\n',
+  );
+});
+
+test('project-backed archive creates a DeliveryRecord, local tag and separate packs', async () => {
+  const context = await fixture({ projectBacked: true });
   const review = createReviewService({
     projectRoot: context.root,
     store: context.store,

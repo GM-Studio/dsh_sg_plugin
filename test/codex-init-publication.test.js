@@ -204,6 +204,7 @@ test('blank path initializes the bound Git repository once while retaining stage
   git('add', 'business.txt');
   const requests = [];
   const registry = createToolRegistry({
+    optionalModules: true,
     projectRoot: root,
     trustedUserIdentity: identity,
     peerCapabilities: () => ({ elicitationSupported: true }),
@@ -244,6 +245,7 @@ test('failed creation retains stack including JDK8 and does not reopen the form 
   const host = temporary(t),
     requests = [];
   const registry = createToolRegistry({
+    optionalModules: true,
     projectRoot: host,
     trustedUserIdentity: identity,
     peerCapabilities: () => ({ elicitationSupported: true }),

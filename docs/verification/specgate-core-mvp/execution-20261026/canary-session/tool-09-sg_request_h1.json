@@ -1,0 +1,22 @@
+{
+  "tool": "sg_request_h1",
+  "args": {
+    "expectedVersion": 9
+  },
+  "result": {
+    "ok": true,
+    "snapshotPending": false,
+    "code": "H1_APPROVED",
+    "message": "H1 已批准，需求已冻结，可继续生成实现计划。",
+    "actualVersion": 14,
+    "state": {
+      "changeId": "github-skillhub-lint-format-check-http-b3f525860fd4",
+      "phase": "PLANNED",
+      "version": 14
+    },
+    "document": {
+      "path": ".specgate/codex/changes/github-skillhub-lint-format-check-http-b3f525860fd4/requirements/revision-1-ea68148eca78df03d79afe436a8a1a5e9ef26ed70a138cd783d6a1d10ade098c-review-v2.md"
+    }
+  },
+  "observedAt": "2026-10-26T01:18:31.692Z"
+}

@@ -215,10 +215,19 @@ export function mergeManagedToml(existing, block, { markerStart, markerEnd, labe
   return (text.trimEnd() ? text.trimEnd() + '\n\n' : '') + block + '\n';
 }
 
-function agentTemplates() {
+function agentTemplates(optionalModules = false) {
+  const core = new Set([
+    'specgate_test_designer.toml',
+    'specgate_implementer.toml',
+    'specgate_reviewer.toml',
+  ]);
   return fs
     .readdirSync(AGENT_ROOT)
-    .filter((name) => name.endsWith('.toml'))
+    .filter((name) =>
+      optionalModules
+        ? name.endsWith('.toml') && name !== 'specgate_implementer.toml'
+        : core.has(name),
+    )
     .sort()
     .map((name) => ({
       name,
@@ -232,6 +241,7 @@ export function setupProject({
   pluginRoot = SOURCE_ROOT,
   marketplace = 'specgate-source',
   bindingProject = project,
+  optionalModules = false,
 } = {}) {
   if (typeof project !== 'string' || !project)
     fail('INVALID_ARGUMENT', 'An absolute project path is required');
@@ -244,7 +254,7 @@ export function setupProject({
 
   const changes = [];
   const conflicts = [];
-  for (const template of agentTemplates()) {
+  for (const template of agentTemplates(optionalModules)) {
     const target = path.join(agents, template.name);
     const existing = ordinaryFile(target, `.codex/agents/${template.name}`);
     if (
@@ -290,7 +300,7 @@ export function setupProject({
     project: root,
     check,
     changed: changes.map((change) => path.relative(root, change.target).replace(/\\/g, '/')),
-    agents: agentTemplates().map((entry) => entry.name.replace(/\.toml$/, '')),
+    agents: agentTemplates(optionalModules).map((entry) => entry.name.replace(/\.toml$/, '')),
     mcpServer: 'specgate_project',
     skills: [],
     git: gitStatus,

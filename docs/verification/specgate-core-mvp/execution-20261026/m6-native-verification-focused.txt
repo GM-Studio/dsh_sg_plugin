@@ -1,0 +1,39 @@
+✔ native role provider reuses an explicitly configured host Codex executable (3.7285ms)
+✔ native role assignment is delivered through stdin with the complete worktree task (2.3035ms)
+✔ native role prompt carries role boundaries without relying on undocumented subagent summaries (0.2151ms)
+✔ native role provider fails closed when the process produces no machine events (1.7606ms)
+✔ native Reviewer runs read only and must return a structured machine report (2.2549ms)
+✔ synthetic local delivery smoke crosses all gates and archives the formatted commit without pushing (5974.878ms)
+✔ quality passes only with frozen green cases, real logs, both coverage sides and changed-line coverage (2716.0365ms)
+✔ native frozen verification preserves command logs and rejects invalid evidence: valid (2646.552ms)
+✔ native frozen verification preserves command logs and rejects invalid evidence: stale-commit (2519.3867ms)
+✔ native frozen verification preserves command logs and rejects invalid evidence: missing-log (2585.8105ms)
+✔ native frozen verification preserves command logs and rejects invalid evidence: stale-time (2570.3859ms)
+✔ formatter reruns the server quality gate against the formatted integration commit (3468.2667ms)
+✔ a failed post-format quality run keeps Review closed and records repair evidence (3148.7594ms)
+✔ adopted quality verification uses ProjectProfile commands and Baseline Delta (2937.2896ms)
+✔ skipped frozen cases become P1 defects and the third failed attempt blocks without deleting evidence (3153.8115ms)
+✔ a Test role writing production code fails closed before quality commands run (2365.7813ms)
+✔ insufficient changed-line coverage cannot advance even when aggregate coverage thresholds pass (2606.6559ms)
+✔ a declaration-only Java interface does not become unavailable changed coverage (354.1339ms)
+✔ frontend changed coverage measures changed unique lines rather than old statements: true (290.4815ms)
+✔ frontend changed coverage measures changed unique lines rather than old statements: false (302.1045ms)
+✔ a Java class without JaCoCo evidence remains unavailable changed coverage (341.2897ms)
+✔ aggregate coverage below either side threshold blocks Review (2599.6253ms)
+✔ missing Test runner or failed real verification never records a quality pass (2529.3024ms)
+✔ unbound Core diagnostics only recommend tools in the public Core registry (1.6071ms)
+✔ native runner receives the manifest test root instead of its frozen snapshot parent (0.3564ms)
+✔ state inspection is read-only and mutation schemas require a current version (2.4741ms)
+✔ MCP lifecycle controls preserve worktrees and evidence and enforce CAS (67.509ms)
+✔ init preview is read-only; nonempty initialization cannot manufacture approval (145.1354ms)
+✔ the public tool set cannot import approvals or arbitrarily change phases (1.1295ms)
+✔ plan and development tools expose only versions and frozen content, never roles or commands (1.1787ms)
+✔ nested change schemas reject forged answers and credentials before touching storage (0.6322ms)
+ℹ tests 31
+ℹ suites 0
+ℹ pass 31
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 43423.9825

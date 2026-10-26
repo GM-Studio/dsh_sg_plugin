@@ -4,7 +4,6 @@ import { spawn, execFileSync } from 'node:child_process';
 import { randomUUID } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { canonicalJson, hashValue } from './events.js';
-import { verifyProject } from './verify.js';
 import { validateAdoptedVerification, verifyAdoptedProject } from './adopted-verification.js';
 import { loadProjectReadiness } from './project-state.js';
 import { VERIFY_STAGES } from './core/java/verify-evidence.js';
@@ -350,7 +349,7 @@ function validateCaseReport(root, reportPath, frozenCases, expected = 'pass') {
   return { report, cases: [...seen.values()] };
 }
 
-function coverageFileEntries(root, changedFiles) {
+function coverageFileEntries(root, changedLines) {
   const file = path.join(root, 'frontend/coverage/coverage-final.json');
   if (!fs.existsSync(file))
     fail('CHANGED_COVERAGE_UNAVAILABLE', 'Frontend coverage-final.json is required');
@@ -361,8 +360,8 @@ function coverageFileEntries(root, changedFiles) {
     fail('CHANGED_COVERAGE_UNAVAILABLE', 'Frontend coverage-final.json is invalid');
   }
   const entries = Object.entries(coverage);
-  const changed = changedFiles.filter((filePath) =>
-    /^frontend\/.+\.(?:js|jsx|ts|tsx|vue)$/i.test(filePath),
+  const changed = [...changedLines.keys()].filter((filePath) =>
+    /^frontend\/src\/.+\.(?:js|jsx|ts|tsx|vue)$/i.test(filePath),
   );
   let executable = 0;
   let covered = 0;
@@ -378,11 +377,15 @@ function coverageFileEntries(root, changedFiles) {
       continue;
     }
     const [, data] = match;
+    const measured = new Map();
     for (const [id, statement] of Object.entries(data?.statementMap || {})) {
       const line = statement?.start?.line;
-      if (!Number.isSafeInteger(line)) continue;
+      if (!Number.isSafeInteger(line) || !changedLines.get(changedFile).has(line)) continue;
+      measured.set(line, (measured.get(line) || 0) + Number(data?.s?.[id] || 0));
+    }
+    for (const hits of measured.values()) {
       executable += 1;
-      if (Number(data?.s?.[id]) > 0) covered += 1;
+      if (hits > 0) covered += 1;
     }
   }
   return { executable, covered, unavailable, changed: changed.length };
@@ -488,7 +491,7 @@ export function computeChangedCoverage({ root, base, head }) {
   try {
     const changed = changedLineRanges(root, base, head);
     const backend = javaCoverage(root, changed);
-    const frontend = coverageFileEntries(root, [...changed.keys()]);
+    const frontend = coverageFileEntries(root, changed);
     const executable = backend.executable + frontend.executable;
     const covered = backend.covered + frontend.covered;
     const unavailable = backend.unavailable + frontend.unavailable;
@@ -575,6 +578,7 @@ export function createQualityService({
   planService,
   testRunner,
   verifier,
+  nativeVerification = false,
   adoptedVerifier = verifyAdoptedProject,
   timeoutMs = DEFAULT_TIMEOUT_MS,
 } = {}) {
@@ -715,19 +719,52 @@ export function createQualityService({
       if (file.startsWith('frontend/')) owners.add('frontend');
       else if (file.startsWith('backend/')) owners.add('backend');
     }
+    const verification =
+      report?.report?.verification ||
+      report?.verification ||
+      report?.report?.verification?.report ||
+      null;
+    const failedStages = (verification?.stages || []).filter(
+      (stage) => stage && stage.status !== 0 && stage.status !== 'passed',
+    );
+    for (const stage of failedStages) {
+      const name = String(stage.name || '');
+      if (name === 'runtime' || name.startsWith('backend-')) owners.add('backend');
+      else if (name.startsWith('frontend-')) owners.add('frontend');
+      else if (name === 'coverage') {
+        owners.add('frontend');
+        owners.add('backend');
+      }
+    }
+    const failedCases = (report?.cases || [])
+      .filter((entry) => entry.status !== 'pass')
+      .map((entry) => ({ id: entry.id, status: entry.status }));
+    const stageMessage = failedStages.length
+      ? `Failed verification stages: ${failedStages.map((stage) => stage.name).join(', ')}. `
+      : '';
     return {
       caseId: report?.cases?.find((entry) => entry.status !== 'pass')?.id || null,
       file: report?.cases?.find((entry) => entry.status !== 'pass')?.file || null,
-      expected: 'All frozen cases pass',
-      actual:
-        report?.cases
-          ?.filter((entry) => entry.status !== 'pass')
-          .map((entry) => ({ id: entry.id, status: entry.status })) || result.message,
+      expected: failedStages.length
+        ? 'All frozen cases and verification stages pass'
+        : 'All frozen cases pass',
+      actual: failedStages.length
+        ? {
+            cases: failedCases,
+            failedStages: failedStages.map((stage) => ({
+              name: stage.name,
+              status: stage.status,
+              error: stage.error || null,
+            })),
+          }
+        : failedCases.length
+          ? failedCases
+          : result.message,
       id: `QUALITY-${result.runId}`,
       severity: 'P1',
       stage: 'frozen-cases',
       code: result.code || 'FROZEN_CASE_RECONCILIATION_FAILED',
-      message: result.message || 'Frozen tests did not all pass',
+      message: `${stageMessage}${result.message || 'Frozen tests did not all pass'}`,
       owners: [...owners],
     };
   }
@@ -752,7 +789,7 @@ export function createQualityService({
       reportPath: summaryPath,
       hash: digest(body),
     };
-    if (current.state.phase !== 'TESTING')
+    if (!['TESTING', 'FORMATTING'].includes(current.state.phase))
       return failure('CANCELLED', 'Quality verification stopped before publishing its result', {
         state: current.state,
         quality,
@@ -793,9 +830,9 @@ export function createQualityService({
     });
   }
 
-  async function run(args = {}, { signal } = {}) {
+  async function run(args = {}, { signal, postFormat = false } = {}) {
     return protect(async () => {
-      const loaded = await current(args, ['TESTING']);
+      const loaded = await current(args, [postFormat ? 'FORMATTING' : 'TESTING']);
       if (!loaded.ok) return loaded;
       if (typeof testRunner !== 'function')
         return failure(
@@ -809,6 +846,11 @@ export function createQualityService({
         return failure('DEVELOPMENT_REQUIRED', 'Development evidence is missing');
       const { test, integration } = testWorktree(development);
       const integrationCommit = git(integration.path, ['rev-parse', 'HEAD']);
+      if (postFormat && loaded.state.context?.format?.integrationAfter !== integrationCommit)
+        return failure(
+          'FORMAT_EVIDENCE_STALE',
+          'Format report does not bind the current integration commit',
+        );
       const lastMerge = development.merged?.at(-1)?.integrationCommit;
       if (!lastMerge || lastMerge !== integrationCommit)
         return failure(
@@ -1001,7 +1043,87 @@ export function createQualityService({
         });
       let verified;
       let verificationSource = { kind: 'builtin', ref: 'src/codex/verify.js#verifyProject' };
-      if (typeof verifier === 'function') {
+      if (nativeVerification && checkedCases.report.verification !== undefined) {
+        const report = checkedCases.report.verification;
+        verified = validateVerification({ ok: true, report });
+        verificationSource = {
+          kind: 'frozen-runner',
+          ref: specification.reportPath,
+          testsHash: checked.ref.tests.hash,
+          sourceCommit: manifest.source?.commit || null,
+        };
+        if (verified.ok) {
+          try {
+            if (report.commit !== integrationCommit)
+              fail('VERIFY_COMMIT_MISMATCH', 'Frozen verification belongs to another commit');
+            if (
+              report.reconciliation.expected !== EXPECTED_STAGES.length ||
+              report.reconciliation.executed !== EXPECTED_STAGES.length ||
+              report.reconciliation.passed !== EXPECTED_STAGES.length
+            )
+              fail(
+                'VERIFY_EVIDENCE_INCOMPLETE',
+                'Frozen verification stage counts do not reconcile',
+              );
+            for (const stage of report.stages) {
+              const started = Date.parse(stage.startedAt);
+              const finished = Date.parse(stage.finishedAt);
+              if (
+                !EXPECTED_STAGES.includes(stage.name) ||
+                !Number.isFinite(started) ||
+                !Number.isFinite(finished) ||
+                started < Date.parse(command.startedAt) ||
+                finished < started ||
+                finished > Date.parse(command.finishedAt) ||
+                typeof stage.command !== 'string' ||
+                !stage.command ||
+                !Array.isArray(stage.args)
+              )
+                fail('VERIFY_EVIDENCE_INCOMPLETE', `Invalid command evidence: ${stage.name}`);
+              const logPath =
+                typeof stage.log === 'string' && path.isAbsolute(stage.log)
+                  ? path.relative(test.path, stage.log).replace(/\\/g, '/')
+                  : stage.log;
+              const log = readFile(test.path, logPath);
+              if (!log.trim() || Buffer.byteLength(log) > MAX_LOG_BYTES)
+                fail(
+                  'VERIFY_EVIDENCE_INCOMPLETE',
+                  `Missing or oversized command log: ${stage.name}`,
+                );
+              const reference = `${runEvidence.directory}/verified-${stage.name}.log`;
+              writeEvidence(root, reference, log);
+              stage.log = reference;
+              stage.logHash = digest(log);
+            }
+            const runtime = report.stages.find((stage) => stage.name === 'runtime');
+            const frontend = report.stages.find((stage) => stage.name === 'frontend-runtime');
+            const http = frontend.http || frontend;
+            if (
+              !Number.isSafeInteger(runtime.pid) ||
+              runtime.pid < 1 ||
+              (runtime.terminated ?? runtime.termination?.terminated) !== true ||
+              !Number.isSafeInteger(frontend.pid) ||
+              frontend.pid < 1 ||
+              (frontend.terminated ?? frontend.termination?.terminated) !== true ||
+              http.html?.status !== 200 ||
+              !Array.isArray(http.assets) ||
+              !http.assets.length ||
+              http.assets.some(
+                (asset) =>
+                  asset.status !== 200 ||
+                  !(asset.bytes > 0) ||
+                  !/^[a-f0-9]{64}$/.test(asset.sha256),
+              )
+            )
+              fail('VERIFY_EVIDENCE_INCOMPLETE', 'Frozen runtime evidence is incomplete');
+          } catch (error) {
+            verified = {
+              ...failure(error.code || 'VERIFY_EVIDENCE_INCOMPLETE', errorText(error)),
+              report,
+            };
+          }
+        }
+      } else if (typeof verifier === 'function') {
         verificationSource = {
           kind: 'server-provider',
           ref: 'src/codex/quality.js#createQualityService.verifier',
@@ -1041,7 +1163,9 @@ export function createQualityService({
         } else {
           prepareVerificationMetadata(test.path);
           verified = validateVerification(
-            await verifyProject({ root: test.path }, { signal, timeoutMs }),
+            await (
+              await import('./verify.js')
+            ).verifyProject({ root: test.path }, { signal, timeoutMs }),
           );
         }
       }
@@ -1178,7 +1302,7 @@ export function createQualityService({
       };
       const latest = await store.inspect();
       if (!latest.ok) return latest;
-      if (latest.state.phase !== 'TESTING')
+      if (latest.state.phase !== (postFormat ? 'FORMATTING' : 'TESTING'))
         return failure('CANCELLED', 'Quality verification stopped before publishing a pass', {
           state: latest.state,
           quality: body,
@@ -1198,7 +1322,7 @@ export function createQualityService({
       if (!saved.ok) return saved;
       const reviewing = await store.transition({
         expectedVersion: saved.state.version,
-        to: 'FORMATTING',
+        to: postFormat ? 'REVIEWING' : 'FORMATTING',
       });
       return reviewing.ok ? { ...reviewing, quality } : reviewing;
     });

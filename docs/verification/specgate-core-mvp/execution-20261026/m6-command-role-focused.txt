@@ -1,0 +1,27 @@
+✔ baseline executes the declared package manager with real timestamps and no shell interpolation (202.2901ms)
+✔ all passing baseline commands produce a valid green adopted baseline (219.8856ms)
+✔ pre-existing failing commands become stable known failures (217.9899ms)
+✔ no discovered commands produce a partial baseline with unverified risk (236.9094ms)
+✔ cancelled or malformed baseline runs fail without fabricating a green baseline (218.2769ms)
+✔ bounded baseline commands use argv arrays and classify observed failure (93.9788ms)
+✔ native formatter executes the project package manager from a real worktree (545.4597ms)
+✔ native formatter uses a declared Maven formatter without requiring a wrapper (1.1867ms)
+✔ repair summaries are bounded, redact credentials and keep full-input hash references (7.3274ms)
+✔ failed quality returns defects to a new development round (1491.1082ms)
+✔ Formatter runs only after tests, commits in its worktree and merges before Review (1112.7014ms)
+✔ Formatter cannot modify tests or files outside the development delta (763.7114ms)
+✔ blocking Review starts a new round with fresh frontend/backend/format worktrees (2208.4135ms)
+✔ quality repair refuses to guess a missing failed command (570.1894ms)
+✔ native role provider reuses an explicitly configured host Codex executable (3.1885ms)
+✔ native role assignment is delivered through stdin with the complete worktree task (2.1604ms)
+✔ native role prompt carries role boundaries without relying on undocumented subagent summaries (0.2477ms)
+✔ native role provider fails closed when the process produces no machine events (1.8308ms)
+✔ native Reviewer runs read only and must return a structured machine report (2.4215ms)
+ℹ tests 19
+ℹ suites 0
+ℹ pass 19
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 6849.804

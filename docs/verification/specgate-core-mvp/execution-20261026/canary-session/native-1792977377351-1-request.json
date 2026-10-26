@@ -1,0 +1,13 @@
+{
+  "method": "elicitation/create",
+  "params": {
+    "message": "SpecGate H1 需求审批\n变更类型：修复问题 · github-skillhub-lint-format-check-http-b3f52586…\n变更目标：修复 GitHub SkillHub 金丝雀的登录跳转与生产构建，补齐 lint、format check、覆盖率和真实 HT…\n涉及功能：\n- 修复既有 GitHub 登录跳转，不再绑定开发机 localhost:18123；只修改 backend/src/main/j…\n- 修复 Vue 3 生产构建，测试 mock 类型不进入生产应用检查，但原前端49项测试仍独立完整运行。使用已审阅候选配置：.s…\n验收标准：3 项\n需求文档：[打开完整文档](file:///E:/ai_workflow/specgate-canary-skill-hub-initial/.specgate/codex/changes/github-skillhub-lint-format-check-http-b3f525860fd4/requirements/revision-1-ea68148eca78df03d79afe436a8a1a5e9ef26ed70a138cd783d6a1d10ade098c-review-v2.md)\n\n点击“确认”批准本次需求；点击“拒绝”返回修改；关闭表单保留待审批。",
+    "requestedSchema": {
+      "type": "object",
+      "properties": {},
+      "additionalProperties": false
+    }
+  },
+  "requestedAt": "2026-10-26T01:16:17.351Z",
+  "bridge": "Codex native user-input form; answers must be forwarded verbatim from the real user"
+}

@@ -4,15 +4,99 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { execFileSync } from 'node:child_process';
-import { createApprovalAuthority } from '../src/codex/approvals.js';
-import { createDevelopmentService } from '../src/codex/development.js';
-import { canonicalJson, hashValue } from '../src/codex/events.js';
-import { createPlanService } from '../src/codex/plan.js';
-import { computeChangedCoverage, createQualityService } from '../src/codex/quality.js';
-import { projectEnvironmentFingerprint } from '../src/codex/baseline.js';
-import { persistProjectReadiness } from '../src/codex/project-state.js';
-import { createStateStore } from '../src/codex/state-machine.js';
-import { VERIFY_STAGES } from '../src/codex/core/java/verify-evidence.js';
+import { pathToFileURL } from 'node:url';
+const runtimeRoot = process.env.SPECGATE_PACKAGE_SMOKE_ROOT
+  ? pathToFileURL(path.join(process.env.SPECGATE_PACKAGE_SMOKE_ROOT, 'src/codex/'))
+  : new URL('../src/codex/', import.meta.url);
+const runtime = (relative) => import(new URL(relative, runtimeRoot).href);
+const { createApprovalAuthority } = await runtime('approvals.js');
+const { createDevelopmentService } = await runtime('development.js');
+const { createFormatService } = await runtime('format.js');
+const { canonicalJson, hashValue } = await runtime('events.js');
+const { createPlanService } = await runtime('plan.js');
+const { computeChangedCoverage, createQualityService } = await runtime('quality.js');
+const { projectEnvironmentFingerprint } = await runtime('baseline.js');
+const { persistProjectReadiness } = await runtime('project-state.js');
+const { createStateStore } = await runtime('state-machine.js');
+const { VERIFY_STAGES } = await runtime('core/java/verify-evidence.js');
+const { createReviewService } = await runtime('review.js');
+const { createReleaseService } = await runtime('release.js');
+const { readDeliveryRecord } = await runtime('delivery.js');
+
+test('synthetic local delivery smoke crosses all gates and archives the formatted commit without pushing', async () => {
+  const context = await fixture({ projectBacked: true });
+  const quality = createQualityService({
+    projectRoot: context.root,
+    store: context.store,
+    planService: context.planService,
+    testRunner: runnerProvider(),
+    verifier: coverageVerifier(),
+  });
+  const before = await quality.run({ expectedVersion: await context.version() });
+  assert.equal(before.ok, true, JSON.stringify(before));
+  const formatter = createFormatService({
+    projectRoot: context.root,
+    store: context.store,
+    planService: context.planService,
+    qualityService: quality,
+    formatter: async ({ worktree }) => {
+      const file = path.join(worktree, 'backend/src/TaskApi.java');
+      fs.appendFileSync(file, '// deterministic fixture formatting\n');
+      return { ok: true };
+    },
+  });
+  const formatted = await formatter.run({ expectedVersion: await context.version() });
+  assert.equal(formatted.ok, true, JSON.stringify(formatted));
+  const current = (await context.store.inspect()).state;
+  assert.equal(current.phase, 'REVIEWING');
+  assert.notEqual(current.context.quality.runId, before.quality.runId);
+  assert.notEqual(current.context.quality.integrationCommit, before.quality.integrationCommit);
+  const fixedCommit = current.context.quality.integrationCommit;
+  const review = createReviewService({
+    projectRoot: context.root,
+    store: context.store,
+    planService: context.planService,
+    approvalAuthority: context.authority,
+    roleProvider: async (_role, challenge) => ({
+      agent: 'specgate_reviewer',
+      assignmentHash: 'a'.repeat(64),
+      mode: challenge.mode,
+      reviewedCommit: challenge.integrationCommit,
+      qualityHash: challenge.qualityHash,
+      verdict: 'pass',
+      findings: [],
+      summary: 'Synthetic read-only reviewer; no native AI session is claimed.',
+    }),
+  });
+  const reviewed = await review.run({ expectedVersion: await context.version() });
+  assert.equal(reviewed.ok, true, JSON.stringify(reviewed));
+  const release = createReleaseService({
+    projectRoot: context.root,
+    store: context.store,
+    planService: context.planService,
+  });
+  assert.equal(
+    (await release.run({ expectedVersion: await context.version() })).code,
+    'H3_REQUIRED',
+  );
+  const h3 = await review.requestH3({ expectedVersion: await context.version() });
+  assert.equal(h3.ok, true, JSON.stringify(h3));
+  const delivered = await release.run({ expectedVersion: await context.version(), push: false });
+  assert.equal(delivered.ok, true, JSON.stringify(delivered));
+  assert.equal(delivered.pushed, false);
+  const record = readDeliveryRecord({
+    projectRoot: context.root,
+    deliveryId: delivered.report.delivery.deliveryId,
+  });
+  assert.equal(record.ok, true, JSON.stringify(record));
+  assert.equal(record.delivery.deliveryCommit, fixedCommit);
+  assert.equal(git(context.root, ['rev-parse', 'HEAD']), fixedCommit);
+  const summary = fs.readFileSync(
+    path.join(context.root, `.specgate/codex/deliveries/${record.delivery.deliveryId}/customer.md`),
+    'utf8',
+  );
+  assert.match(summary, /real business project and native approvals are not verified/);
+});
 
 function git(cwd, args) {
   return execFileSync('git', args, {
@@ -118,7 +202,7 @@ function verificationReport(root) {
   };
 }
 
-async function fixture() {
+async function fixture({ projectBacked = false } = {}) {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'sg-codex-quality-'));
   git(root, ['init', '-q']);
   git(root, ['config', 'user.email', 'test@example.com']);
@@ -135,6 +219,45 @@ async function fixture() {
   );
   fs.writeFileSync(path.join(root, 'frontend', 'src', 'App.ts'), "export const title = 'base';\n");
   commitAll(root, 'initial product');
+  if (projectBacked) {
+    const now = new Date().toISOString();
+    const profile = {
+      schemaVersion: 2,
+      projectId: 'project-core-smoke',
+      mode: 'adopted',
+      stack: 'java-vue',
+      root: root,
+      targetBranch: git(root, ['branch', '--show-current']),
+      remoteUrl: null,
+      commands: { install: [], build: [], test: [], lint: [], format: [], runtime: [] },
+      protectedPaths: [],
+      createdAt: now,
+      updatedAt: now,
+    };
+    const baseline = {
+      schemaVersion: 2,
+      baselineId: 'baseline-core-smoke',
+      projectId: profile.projectId,
+      commit: git(root, ['rev-parse', 'HEAD']),
+      status: 'green',
+      knownFailures: [],
+      unverifiedAreas: [
+        {
+          id: 'native-canary',
+          description:
+            'Synthetic smoke only; real business project and native approvals are not verified.',
+          risk: 'yellow',
+        },
+      ],
+      commands: [],
+      evidence: [],
+      environmentFingerprint: projectEnvironmentFingerprint(profile),
+      createdAt: now,
+    };
+    const readiness = persistProjectReadiness({ root: root, profile, baseline });
+    assert.equal(readiness.ok, true, JSON.stringify(readiness));
+  }
+
   fs.mkdirSync(path.join(root, '.specgate'), { recursive: true });
   fs.writeFileSync(
     path.join(root, '.specgate', 'state.json'),
@@ -167,6 +290,13 @@ async function fixture() {
       kind: 'user',
       source: 'synthetic-unit-test-not-runtime',
     },
+    resolveGateArtifact: ({ gate, state }) => ({
+      scope: state?.changeId,
+      artifactHash:
+        gate === 'H1'
+          ? state?.context?.artifacts?.requirements?.hash
+          : state?.context?.artifacts?.h3?.hash,
+    }),
     audit: async (entry) => {
       const current = await store.inspect();
       const result = await store.recordEvent({
@@ -275,6 +405,7 @@ async function fixture() {
     store,
     planService,
     development: developed.development,
+    authority,
     version: async () => (await store.inspect()).state.version,
   };
 }
@@ -413,6 +544,197 @@ test('quality passes only with frozen green cases, real logs, both coverage side
   assert.equal(inspected.quality.status, 'passed');
 });
 
+for (const scenario of ['valid', 'stale-commit', 'missing-log', 'stale-time']) {
+  test(`native frozen verification preserves command logs and rejects invalid evidence: ${scenario}`, async () => {
+    const context = await fixture();
+    const service = createQualityService({
+      projectRoot: context.root,
+      store: context.store,
+      planService: context.planService,
+      nativeVerification: true,
+      testRunner: async (challenge) => {
+        fs.mkdirSync(path.join(challenge.worktree, '.specgate'), { recursive: true });
+        for (const file of ['state.json', 'init-report.json'])
+          fs.writeFileSync(path.join(challenge.worktree, '.specgate', file), '{}');
+        const { report: verification } = await coverageVerifier()({ root: challenge.worktree });
+        verification.commit =
+          scenario === 'stale-commit'
+            ? '0'.repeat(40)
+            : git(challenge.worktree, ['rev-parse', 'HEAD']);
+        verification.stages.find((stage) => stage.name === 'runtime').pid = 1;
+        verification.stages.find((stage) => stage.name === 'runtime').terminated = true;
+        const runner = path.join(challenge.worktree, '.specgate', 'native-evidence-fixture.mjs');
+        fs.writeFileSync(
+          runner,
+          [
+            "import fs from 'node:fs';",
+            `const verification = ${JSON.stringify(verification)};`,
+            'for (const stage of verification.stages) {',
+            `stage.startedAt = ${scenario === 'stale-time' ? "'2000-01-01T00:00:00Z'" : 'new Date().toISOString()'};`,
+            'stage.finishedAt = new Date().toISOString();',
+            ...(scenario === 'missing-log'
+              ? []
+              : ["fs.writeFileSync(stage.log, 'Explicit synthetic fixture command output\\n');"]),
+            '}',
+            "fs.writeFileSync('.specgate/quality-report.json', JSON.stringify({cases:[{id:'CASE-AC-1',status:'pass'}],verification}));",
+          ].join('\n'),
+        );
+        return {
+          command: process.execPath,
+          args: [runner],
+          cwd: challenge.worktree,
+          reportPath: '.specgate/quality-report.json',
+        };
+      },
+      verifier: () => {
+        throw new Error('Frozen verification must not rerun a different provider');
+      },
+    });
+    const result = await service.run({ expectedVersion: await context.version() });
+    if (scenario === 'valid') {
+      assert.equal(result.ok, true, JSON.stringify(result));
+      for (const stage of result.quality.verification.stages) {
+        assert.equal(stage.source.kind, 'frozen-runner');
+        assert.match(stage.source.testsHash, /^sha256:[a-f0-9]{64}$/);
+        assert.match(stage.logHash, /^sha256:[a-f0-9]{64}$/);
+        assert.match(
+          fs.readFileSync(path.join(context.root, stage.log), 'utf8'),
+          /Explicit synthetic fixture/,
+        );
+      }
+    } else {
+      assert.equal(result.ok, false);
+      assert.notEqual(result.state?.phase, 'FORMATTING');
+      assert.equal(
+        result.code,
+        scenario === 'stale-commit'
+          ? 'VERIFY_COMMIT_MISMATCH'
+          : scenario === 'missing-log'
+            ? 'ENOENT'
+            : 'VERIFY_EVIDENCE_INCOMPLETE',
+      );
+    }
+  });
+}
+
+test('formatter reruns the server quality gate against the formatted integration commit', async () => {
+  const context = await fixture();
+  let runnerCalls = 0;
+  let verifierCalls = 0;
+  const runner = runnerProvider();
+  const verifier = coverageVerifier();
+  const quality = createQualityService({
+    projectRoot: context.root,
+    store: context.store,
+    planService: context.planService,
+    testRunner: async (challenge) => {
+      runnerCalls += 1;
+      return runner(challenge);
+    },
+    verifier: async (challenge) => {
+      verifierCalls += 1;
+      return verifier(challenge);
+    },
+  });
+  const first = await quality.run({ expectedVersion: await context.version() });
+  assert.equal(first.ok, true, JSON.stringify(first));
+  const firstCommit = first.quality.integrationCommit;
+  const format = createFormatService({
+    projectRoot: context.root,
+    store: context.store,
+    planService: context.planService,
+    qualityService: quality,
+    formatter: async ({ worktree }) => {
+      fs.writeFileSync(
+        path.join(worktree, 'frontend/src/App.ts'),
+        'export const title = "integrated title";\n',
+      );
+      return { ok: true, commands: [{ command: 'fixture-format', exitCode: 0 }] };
+    },
+  });
+  const result = await format.run({ expectedVersion: await context.version() });
+  assert.equal(result.ok, true, JSON.stringify(result));
+  assert.equal(result.state.phase, 'REVIEWING');
+  assert.equal(runnerCalls, 2);
+  assert.equal(verifierCalls, 2);
+  assert.notEqual(result.quality.runId, first.quality.runId);
+  assert.notEqual(result.quality.integrationCommit, firstCommit);
+  assert.equal(result.quality.integrationCommit, result.format.integrationAfter);
+  assert.equal(result.format.preQualityRunId, first.quality.runId);
+});
+
+test('an idempotent formatter passes when only checkout line endings changed', async () => {
+  const context = await fixture();
+  const quality = createQualityService({
+    projectRoot: context.root,
+    store: context.store,
+    planService: context.planService,
+    testRunner: runnerProvider(),
+    verifier: coverageVerifier(),
+  });
+  const first = await quality.run({ expectedVersion: await context.version() });
+  assert.equal(first.ok, true, JSON.stringify(first));
+
+  git(context.root, ['config', 'core.autocrlf', 'true']);
+  const format = createFormatService({
+    projectRoot: context.root,
+    store: context.store,
+    planService: context.planService,
+    qualityService: quality,
+    formatter: async ({ worktree }) => {
+      const file = path.join(worktree, 'backend/src/TaskApi.java');
+      const text = fs.readFileSync(file, 'utf8').replace(/\r\n/g, '\n');
+      fs.writeFileSync(file, text.replace(/\n/g, '\r\n'));
+      return { ok: true, commands: [{ command: 'fixture-format', exitCode: 0 }] };
+    },
+  });
+
+  const result = await format.run({ expectedVersion: await context.version() });
+  assert.equal(result.ok, true, JSON.stringify(result));
+  assert.equal(result.state.phase, 'REVIEWING');
+  assert.equal(result.format.formatCommit, null);
+  assert.equal(result.format.integrationBefore, result.format.integrationAfter);
+  assert.deepEqual(result.format.changedFiles, []);
+});
+
+test('a failed post-format quality run keeps Review closed and records repair evidence', async () => {
+  const context = await fixture();
+  let runnerCalls = 0;
+  const quality = createQualityService({
+    projectRoot: context.root,
+    store: context.store,
+    planService: context.planService,
+    testRunner: async (challenge) => {
+      runnerCalls += 1;
+      return runnerProvider({ status: runnerCalls === 1 ? 'pass' : 'fail' })(challenge);
+    },
+    verifier: coverageVerifier(),
+  });
+  assert.equal((await quality.run({ expectedVersion: await context.version() })).ok, true);
+  const format = createFormatService({
+    projectRoot: context.root,
+    store: context.store,
+    planService: context.planService,
+    qualityService: quality,
+    formatter: async () => ({ ok: true, commands: [] }),
+  });
+  const failed = await format.run({ expectedVersion: await context.version() });
+  assert.equal(failed.ok, false);
+  assert.equal(runnerCalls, 2);
+  const loaded = await context.store.inspect();
+  assert.equal(loaded.state.phase, 'FORMATTING');
+  assert.equal(loaded.state.context.quality.status, 'failed');
+  assert.equal(
+    loaded.state.context.quality.integrationCommit,
+    loaded.state.context.format.integrationAfter,
+  );
+  assert.equal(
+    (await context.store.transition({ expectedVersion: loaded.state.version, to: 'REVIEWING' }))
+      .code,
+    'POST_FORMAT_QUALITY_REQUIRED',
+  );
+});
+
 test('adopted quality verification uses ProjectProfile commands and Baseline Delta', async () => {
   const context = await fixture();
   const now = '2026-10-22T10:00:00.000Z';
@@ -545,6 +867,77 @@ test('skipped frozen cases become P1 defects and the third failed attempt blocks
   assert.equal(fs.existsSync(context.development.worktrees.test.path), true);
 });
 
+test('failed verification stages are attributed to the owning implementation role', async () => {
+  const context = await fixture();
+  const service = createQualityService({
+    projectRoot: context.root,
+    store: context.store,
+    planService: context.planService,
+    testRunner: async (challenge) => {
+      const runner = path.join(challenge.worktree, '.specgate', 'quality-runner.mjs');
+      const reportPath = '.specgate/quality-report.json';
+      fs.mkdirSync(path.dirname(runner), { recursive: true });
+      fs.writeFileSync(
+        runner,
+        [
+          "import fs from 'node:fs';",
+          `fs.writeFileSync(${JSON.stringify(reportPath)}, ${JSON.stringify(
+            JSON.stringify({
+              cases: [{ id: 'CASE-AC-1', status: 'fail' }],
+              verification: {
+                stages: [
+                  {
+                    name: 'backend-verify',
+                    status: 1,
+                    error: 'Spotless found a Java formatting violation',
+                  },
+                  { name: 'frontend-build', status: 0 },
+                  { name: 'frontend-runtime', status: 0 },
+                ],
+              },
+            }),
+          )});`,
+          'process.exit(1);',
+          '',
+        ].join('\n'),
+      );
+      return {
+        command: process.execPath,
+        args: [runner],
+        cwd: challenge.worktree,
+        reportPath,
+      };
+    },
+    verifier: coverageVerifier(),
+  });
+
+  const failed = await service.run({ expectedVersion: await context.version() });
+  assert.equal(failed.ok, false);
+  assert.equal(failed.code, 'FROZEN_CASE_RECONCILIATION_FAILED');
+  assert.deepEqual(failed.defects[0].owners, ['backend']);
+  assert.match(failed.defects[0].message, /backend-verify/);
+  assert.deepEqual(
+    failed.defects[0].actual.failedStages.map((stage) => stage.name),
+    ['backend-verify'],
+  );
+
+  const development = createDevelopmentService({
+    projectRoot: context.root,
+    store: context.store,
+    planService: context.planService,
+    roleProvider: async () => {
+      throw new Error('Repair preparation must not invoke an implementation role');
+    },
+  });
+  const repaired = await development.prepareRepair({
+    expectedVersion: (await context.store.inspect()).state.version,
+  });
+  assert.equal(repaired.ok, true, JSON.stringify(repaired));
+  assert.match(repaired.repair.worktrees.backend.path.replace(/\\/g, '/'), /round-1\/backend/);
+  assert.match(repaired.repair.worktrees.format.path.replace(/\\/g, '/'), /round-1\/format/);
+  assert.equal(repaired.state.context.development.roles.frontend.status, 'skipped');
+});
+
 test('a Test role writing production code fails closed before quality commands run', async () => {
   const context = await fixture();
   let verified = false;
@@ -628,6 +1021,78 @@ test('a declaration-only Java interface does not become unavailable changed cove
   assert.equal(coverage.sides.backend.unavailable, 0, JSON.stringify(coverage));
   assert.equal(coverage.executable, 1, JSON.stringify(coverage));
   assert.equal(coverage.covered, 1, JSON.stringify(coverage));
+});
+
+for (const changedCovered of [true, false]) {
+  test(`frontend changed coverage measures changed unique lines rather than old statements: ${changedCovered}`, () => {
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'sg-frontend-diff-'));
+    git(root, ['init', '-q']);
+    git(root, ['config', 'user.email', 'test@example.com']);
+    git(root, ['config', 'user.name', 'test']);
+    const source = path.join(root, 'frontend/src/App.ts');
+    fs.mkdirSync(path.dirname(source), { recursive: true });
+    fs.writeFileSync(source, 'export const old = 1;\nexport const changed = 1;\n');
+    const base = commitAll(root, 'base');
+    fs.writeFileSync(source, 'export const old = 1;\nexport const changed = 2;\n');
+    const head = commitAll(root, 'change line two');
+    fs.mkdirSync(path.join(root, 'frontend/coverage'), { recursive: true });
+    fs.mkdirSync(path.join(root, 'backend/target/site/jacoco'), { recursive: true });
+    fs.writeFileSync(path.join(root, 'backend/target/site/jacoco/jacoco.xml'), '<report/>');
+    fs.writeFileSync(
+      path.join(root, 'frontend/coverage/coverage-final.json'),
+      JSON.stringify({
+        [source]: {
+          statementMap: {
+            0: { start: { line: 1 } },
+            1: { start: { line: 2 } },
+            2: { start: { line: 2 } },
+          },
+          s: { 0: changedCovered ? 0 : 1, 1: changedCovered ? 1 : 0, 2: 0 },
+        },
+      }),
+    );
+    const result = computeChangedCoverage({ root, base, head });
+    assert.equal(result.ok, changedCovered, JSON.stringify(result));
+    assert.equal(result.executable, 1, JSON.stringify(result));
+    assert.equal(result.covered, changedCovered ? 1 : 0, JSON.stringify(result));
+  });
+}
+
+test('frontend changed coverage ignores build config outside the measured source tree', () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'sg-frontend-config-coverage-'));
+  git(root, ['init', '-q']);
+  git(root, ['config', 'user.email', 'test@example.com']);
+  git(root, ['config', 'user.name', 'test']);
+  const source = path.join(root, 'frontend/src/App.ts');
+  const config = path.join(root, 'frontend/vite.config.ts');
+  fs.mkdirSync(path.dirname(source), { recursive: true });
+  fs.writeFileSync(source, 'export const title = "base";\n');
+  fs.writeFileSync(config, 'export default { server: { port: 5173 } };\n');
+  const base = commitAll(root, 'base');
+
+  fs.writeFileSync(source, 'export const title = "covered";\n');
+  fs.writeFileSync(config, 'export default { server: { port: 4173 } };\n');
+  const head = commitAll(root, 'source and build config');
+  fs.mkdirSync(path.join(root, 'frontend/coverage'), { recursive: true });
+  fs.writeFileSync(
+    path.join(root, 'frontend/coverage/coverage-final.json'),
+    JSON.stringify({
+      [source]: {
+        statementMap: { 0: { start: { line: 1 } } },
+        s: { 0: 1 },
+        b: {},
+      },
+    }),
+  );
+  fs.mkdirSync(path.join(root, 'backend/target/site/jacoco'), { recursive: true });
+  fs.writeFileSync(path.join(root, 'backend/target/site/jacoco/jacoco.xml'), '<report/>');
+
+  const coverage = computeChangedCoverage({ root, base, head });
+  assert.equal(coverage.ok, true, JSON.stringify(coverage));
+  assert.equal(coverage.sides.frontend.changed, 1);
+  assert.equal(coverage.sides.frontend.unavailable, 0);
+  assert.equal(coverage.sides.frontend.executable, 1);
+  assert.equal(coverage.sides.frontend.covered, 1);
 });
 
 test('a Java class without JaCoCo evidence remains unavailable changed coverage', () => {

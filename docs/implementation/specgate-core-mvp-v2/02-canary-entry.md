@@ -168,3 +168,20 @@ AC-022-02 明确要求 JDK 17 + Spring Boot 3.5 + Vue 3。若要改用 `pilot-ja
 | 若没有真实项目，M6 保持 BLOCKED                      | **已判定 M6 BLOCKED**                  |
 
 **本任务以「无合格金丝雀，M6 置 BLOCKED」结案，未使用任何 fixture 冒充。**
+
+## 7. 2026-10-26 真实 GitHub 候选补充（保留上文历史结论）
+
+用户明确要求从 GitHub 获取符合技术栈的项目，并授权独立金丝雀仓库必要的本地提交。
+本轮获取 https://github.com/ghdefe/skill-hub，源码确认 JDK 17、Spring Boot 3.5.11、Vue 3.5。
+最新提交及两个真实历史提交的原始基线均已执行；日志保存在 execution-20261026/canary-*.txt。
+
+选定修复候选为 E:\ai_workflow\specgate-canary-skill-hub-initial，原始 commit
+81f84c0eb793c72675b3687fa7b991b6e4d659c7，分支 codex/core-canary-repair。
+已有后端 119 项中 1 失败、前端 49/49 通过、生产构建失败，均作为 known-failures
+真实保存，没有声称绿色。源码正式工具已接入并提交项目基线，之后通过原生用户问答完成
+澄清与 H1，冻结精确的验证依赖、白名单和契约。当前仍需测试设计、红色基线、实现、质量、
+格式化重验、独立 Review、H3 和 DeliveryRecord；不能因已下载或 H1 已批准就标记 M6 通过。
+
+候选范围与原始失败见 [真实金丝雀方案](11-canary-proposal.md)，命令和用户回执见
+../../verification/specgate-core-mvp/execution-20261026/canary-session/。
+未要求推送、部署、真实 GitHub OAuth 或生产 PostgreSQL 验收。

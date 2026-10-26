@@ -1,0 +1,10 @@
+✔ baseline executes the declared package manager with real timestamps and no shell interpolation (208.7691ms)
+✔ native formatter executes the project package manager from a real worktree (545.6453ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 2
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 640.6398

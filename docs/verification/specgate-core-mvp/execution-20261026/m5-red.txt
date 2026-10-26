@@ -1,0 +1,93 @@
+✔ portable plugin manifests expose the bundled stdio MCP server and setup skill (0.9905ms)
+✔ source setup installs six project agents and preserves unrelated AGENTS content (270.7431ms)
+✔ source setup reports a tracked AGENTS file instead of hiding its required commit (265.1194ms)
+✔ source setup creates a missing Git info directory before writing local excludes (201.1664ms)
+✔ source setup refuses to overwrite conflicting project agents (1.8502ms)
+✔ source setup refuses an unmanaged project MCP conflict (1.1228ms)
+✔ setup leaves project-level skills to the global plugin and preserves legacy copies (167.1332ms)
+✖ default source setup installs exactly the three Core roles and deterministic formatting instructions (189.9977ms)
+✖ unbound Core diagnostics only recommend tools in the public Core registry (2.0562ms)
+✔ native runner receives the manifest test root instead of its frozen snapshot parent (0.1871ms)
+✔ state inspection is read-only and mutation schemas require a current version (2.8888ms)
+✔ MCP lifecycle controls preserve worktrees and evidence and enforce CAS (70.2246ms)
+✖ init preview is read-only; nonempty initialization cannot manufacture approval (158.4762ms)
+✔ the public tool set cannot import approvals or arbitrarily change phases (1.4769ms)
+✔ plan and development tools expose only versions and frozen content, never roles or commands (1.532ms)
+✔ nested change schemas reject forged answers and credentials before touching storage (0.7188ms)
+ℹ tests 16
+ℹ suites 0
+ℹ pass 13
+ℹ fail 3
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1168.8789
+
+✖ failing tests:
+
+test at test\codex-source-setup.test.js:157:1
+✖ default source setup installs exactly the three Core roles and deterministic formatting instructions (189.9977ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+  
+    [
+  +   'specgate_backend',
+  +   'specgate_formatter',
+  +   'specgate_frontend',
+  -   'specgate_implementer',
+      'specgate_reviewer',
+      'specgate_test_designer',
+  +   'specgate_tester'
+    ]
+  
+      at TestContext.<anonymous> (file:///E:/ai_workflow/specgate/test/codex-source-setup.test.js:160:10)
+      at Test.runInAsyncScope (node:async_hooks:228:14)
+      at Test.run (node:internal/test_runner/test:1118:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:787:18)
+      at Test.postRun (node:internal/test_runner/test:1247:19)
+      at Test.run (node:internal/test_runner/test:1175:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:787:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: [ 'specgate_backend', 'specgate_formatter', 'specgate_frontend', 'specgate_reviewer', 'specgate_test_designer', 'specgate_tester' ],
+    expected: [ 'specgate_implementer', 'specgate_reviewer', 'specgate_test_designer' ],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+
+test at test\codex-tools-workflow.test.js:12:1
+✖ unbound Core diagnostics only recommend tools in the public Core registry (2.0562ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + 'BIND_OR_CREATE_PROJECT'
+  - 'BIND_PROJECT'
+          ^
+  
+      at TestContext.<anonymous> (file:///E:/ai_workflow/specgate/test/codex-tools-workflow.test.js:16:12)
+      at async Test.run (node:internal/test_runner/test:1125:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:358:3) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'BIND_OR_CREATE_PROJECT',
+    expected: 'BIND_PROJECT',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at test\codex-tools-workflow.test.js:83:1
+✖ init preview is read-only; nonempty initialization cannot manufacture approval (158.4762ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /APPROVAL/. Input:
+  
+  'INIT_EXISTING_GIT_UNSUPPORTED'
+  
+      at TestContext.<anonymous> (file:///E:/ai_workflow/specgate/test/codex-tools-workflow.test.js:107:10)
+      at async Test.run (node:internal/test_runner/test:1125:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:787:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'INIT_EXISTING_GIT_UNSUPPORTED',
+    expected: /APPROVAL/,
+    operator: 'match',
+    diff: 'simple'
+  }

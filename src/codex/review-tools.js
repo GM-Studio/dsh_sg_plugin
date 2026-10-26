@@ -14,13 +14,6 @@ const definition = (name, description, properties = {}, required = [], readOnly 
     openWorldHint: false,
   },
 });
-const reviewReport = {
-  type: 'object',
-  additionalProperties: true,
-  description:
-    'Structured report returned by the read-only Codex Reviewer; server validation binds it to the current diff and quality.',
-};
-
 export const REVIEW_TOOLS = Object.freeze([
   definition(
     'sg_review_inspect',
@@ -51,7 +44,6 @@ export const REVIEW_TOOLS = Object.freeze([
         enum: ['lenient', 'standard', 'strict'],
         description: 'Optional user override; otherwise selected from structured risk signals.',
       },
-      report: reviewReport,
     },
     ['expectedVersion'],
   ),

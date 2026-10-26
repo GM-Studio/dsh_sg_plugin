@@ -1,0 +1,2238 @@
+{
+  "tool": "sg_plan_generate",
+  "args": {
+    "expectedVersion": 14,
+    "filePolicies": {
+      "backend": {
+        "allowedFiles": [
+          "backend/pom.xml",
+          "backend/src/main/java/com/agentskills/sharing/controller/AuthController.java"
+        ],
+        "forbiddenFiles": [
+          "backend/src/test/**",
+          "specgate-tests/**",
+          "specgate-tests.json",
+          "frontend/**",
+          ".specgate/**"
+        ]
+      },
+      "frontend": {
+        "allowedFiles": [
+          "frontend/package.json",
+          "frontend/package-lock.json",
+          "frontend/vite.config.ts",
+          "frontend/tsconfig.app.json",
+          "frontend/tsconfig.node.json",
+          "frontend/.prettierrc.json"
+        ],
+        "forbiddenFiles": [
+          "frontend/src/**/*.test.*",
+          "frontend/src/**/*.spec.*",
+          "specgate-tests/**",
+          "specgate-tests.json",
+          "backend/**",
+          ".specgate/**"
+        ]
+      }
+    }
+  },
+  "result": {
+    "ok": true,
+    "state": {
+      "automaticFailures": 0,
+      "changeId": "github-skillhub-lint-format-check-http-b3f525860fd4",
+      "checkpoint": {
+        "id": "github-skillhub-lint-format-check-http-b3f525860fd4:16",
+        "label": "PLANNING",
+        "phase": "PLANNED",
+        "recordedAt": "2026-10-26T01:19:50.546Z",
+        "version": 16
+      },
+      "context": {
+        "artifacts": {
+          "requirements": {
+            "candidatePath": ".specgate/codex/changes/github-skillhub-lint-format-check-http-b3f525860fd4/requirements/candidate-ea68148eca78df03d79afe436a8a1a5e9ef26ed70a138cd783d6a1d10ade098c.json",
+            "documentHash": "sha256:dab0f30a6e6c5be166961d1c2f126916c63c021ab5e366233b58e21008a076ee",
+            "documentPath": ".specgate/codex/changes/github-skillhub-lint-format-check-http-b3f525860fd4/requirements/revision-1-ea68148eca78df03d79afe436a8a1a5e9ef26ed70a138cd783d6a1d10ade098c-review-v2.md",
+            "frozenPath": ".specgate/codex/changes/github-skillhub-lint-format-check-http-b3f525860fd4/requirements/revision-1-ea68148eca78df03d79afe436a8a1a5e9ef26ed70a138cd783d6a1d10ade098c.json",
+            "hash": "sha256:ea68148eca78df03d79afe436a8a1a5e9ef26ed70a138cd783d6a1d10ade098c",
+            "revision": 1
+          }
+        },
+        "changeAdd": {
+          "candidate": {
+            "hash": "sha256:ea68148eca78df03d79afe436a8a1a5e9ef26ed70a138cd783d6a1d10ade098c",
+            "snapshot": {
+              "assumptions": [],
+              "change": {
+                "baselineId": "baseline-3f8381e9b38f8a0d",
+                "details": {
+                  "actualBehavior": "固定初始提交的真实基线：后端119项中1项OAuth跳转失败；前端49项测试通过，但生产构建因TypeScript配置失败；项目缺少lint、format和runtime命令。",
+                  "expectedBehavior": "后端119项、前端49项全绿，生产构建、lint、格式检查、双端和变更覆盖率、真实HTTP运行均通过；H1、真实角色、固定提交Review及H3完成后生成本地DeliveryRecord。",
+                  "nonGoals": [
+                    "修改或弱化既有测试",
+                    "真实GitHub OAuth登录与生产数据库验收",
+                    "远程推送与部署"
+                  ],
+                  "scope": [
+                    "AuthController登录跳转修复",
+                    "前端Vite与TypeScript生产构建修复",
+                    "精确批准的构建、lint、格式和覆盖率配置及验证依赖"
+                  ]
+                },
+                "parentDeliveryId": null,
+                "type": "fix"
+              },
+              "changeContract": {
+                "acceptance": [
+                  "CANARY-AC-01",
+                  "CANARY-AC-02",
+                  "CANARY-AC-03"
+                ],
+                "assumptions": [],
+                "baselineId": "baseline-3f8381e9b38f8a0d",
+                "changeId": "github-skillhub-lint-format-check-http-b3f525860fd4",
+                "nonGoals": [
+                  "修改或弱化既有测试",
+                  "真实GitHub OAuth登录与生产数据库验收",
+                  "远程推送与部署"
+                ],
+                "parentDeliveryId": null,
+                "request": "修复 GitHub SkillHub 金丝雀的登录跳转与生产构建，补齐 lint、format check、覆盖率和真实 HTTP 验证；保留既有测试，完成本地交付，不推送、不部署。",
+                "risks": [],
+                "schemaVersion": 2,
+                "scope": [
+                  "AuthController登录跳转修复",
+                  "前端Vite与TypeScript生产构建修复",
+                  "精确批准的构建、lint、格式和覆盖率配置及验证依赖"
+                ],
+                "status": "H1_PENDING",
+                "type": "fix"
+              },
+              "changeId": "github-skillhub-lint-format-check-http-b3f525860fd4",
+              "clarifications": [
+                {
+                  "answers": [
+                    {
+                      "actor": {
+                        "id": "Administrator",
+                        "kind": "user",
+                        "source": "codex-mcp-os-user"
+                      },
+                      "answer": "按照你的方案来",
+                      "at": "2026-10-26T01:07:44.752Z",
+                      "questionId": "Q-INTAKE-1",
+                      "source": "native-user-provider"
+                    },
+                    {
+                      "actor": {
+                        "id": "Administrator",
+                        "kind": "user",
+                        "source": "codex-mcp-os-user"
+                      },
+                      "answer": "按照你的方案来",
+                      "at": "2026-10-26T01:07:44.752Z",
+                      "questionId": "Q-INTAKE-2",
+                      "source": "native-user-provider"
+                    },
+                    {
+                      "actor": {
+                        "id": "Administrator",
+                        "kind": "user",
+                        "source": "codex-mcp-os-user"
+                      },
+                      "answer": "按照你的方案来",
+                      "at": "2026-10-26T01:07:44.752Z",
+                      "questionId": "Q-INTAKE-3",
+                      "source": "native-user-provider"
+                    },
+                    {
+                      "actor": {
+                        "id": "Administrator",
+                        "kind": "user",
+                        "source": "codex-mcp-os-user"
+                      },
+                      "answer": "按照你的方案来",
+                      "at": "2026-10-26T01:07:44.752Z",
+                      "questionId": "Q-INTAKE-4",
+                      "source": "native-user-provider"
+                    },
+                    {
+                      "actor": {
+                        "id": "Administrator",
+                        "kind": "user",
+                        "source": "codex-mcp-os-user"
+                      },
+                      "answer": "按照你的来",
+                      "at": "2026-10-26T01:07:44.752Z",
+                      "questionId": "Q-INTAKE-5",
+                      "source": "native-user-provider"
+                    }
+                  ],
+                  "at": "2026-10-26T01:05:49.591Z",
+                  "questions": [
+                    {
+                      "category": "functional",
+                      "id": "Q-INTAKE-1",
+                      "text": "这个变更要解决的核心问题是什么？目标用户和期望结果是什么？"
+                    },
+                    {
+                      "category": "constraint",
+                      "id": "Q-INTAKE-2",
+                      "text": "哪些内容明确在范围内，哪些明确不在范围内？"
+                    },
+                    {
+                      "category": "acceptance",
+                      "id": "Q-INTAKE-3",
+                      "text": "完成后有哪些可观察、可验证的验收标准？"
+                    },
+                    {
+                      "category": "failure",
+                      "id": "Q-INTAKE-4",
+                      "text": "需要覆盖哪些失败、边界或兼容场景？"
+                    },
+                    {
+                      "category": "security",
+                      "id": "Q-INTAKE-5",
+                      "text": "有哪些安全、性能或并发约束？"
+                    }
+                  ],
+                  "round": 1,
+                  "source": "server-intake",
+                  "status": "answered"
+                }
+              ],
+              "critique": {
+                "at": "2026-10-26T01:15:28.076Z",
+                "report": {
+                  "ambiguities": [],
+                  "contradictions": [],
+                  "infeasibleItems": [],
+                  "nonFunctionalRisks": [
+                    {
+                      "id": "CANARY-RISK-01",
+                      "requirementIds": [
+                        "CANARY-REQ-03"
+                      ],
+                      "severity": "non-blocking",
+                      "suggestion": "Test Designer先检查现有业务模块与原测试，新增独立测试资产；冻结后只接受真实覆盖率证据，若仍无法满足则保持阻断。",
+                      "text": "原项目尚无完整覆盖率度量；首次真实测量可能低于阈值，必须由测试设计在冻结前补足用例，不能降低阈值或跳过。"
+                    }
+                  ],
+                  "restatement": [
+                    {
+                      "requirementId": "CANARY-REQ-01",
+                      "text": "保留现有登录API，修复OAuth跳转的本机地址硬编码，使既有后端用例全部通过；真实GitHub认证不在本次验收范围。"
+                    },
+                    {
+                      "requirementId": "CANARY-REQ-02",
+                      "text": "在不删改原Vue测试的前提下修复生产类型检查，并冻结精确的前端验证依赖与配置，使build、test、lint和format check真实通过。"
+                    },
+                    {
+                      "requirementId": "CANARY-REQ-03",
+                      "text": "独立测试角色提交可执行验收与覆盖率/HTTP运行器，实施角色仅在白名单内串行修改；对同一提交完成全部质量门、格式化后回归、只读Review、真人H3和本地归档。"
+                    }
+                  ],
+                  "securityPerformanceConcurrencyRisks": [
+                    {
+                      "id": "CANARY-RISK-02",
+                      "requirementIds": [
+                        "CANARY-REQ-01",
+                        "CANARY-REQ-03"
+                      ],
+                      "severity": "non-blocking",
+                      "suggestion": "只在回环地址启动服务，使用仓库测试资源，禁用真实外部认证；在交付记录明确列出这些未验证区域，不推送、不部署。",
+                      "text": "H2隔离运行与原生角色会话只证明本地验收，不证明生产PostgreSQL、真实GitHub OAuth或部署可用。"
+                    }
+                  ],
+                  "suggestedQuestions": [],
+                  "testBlindSpots": [
+                    {
+                      "id": "CANARY-RISK-03",
+                      "requirementIds": [
+                        "CANARY-REQ-03"
+                      ],
+                      "severity": "non-blocking",
+                      "suggestion": "保留Core AC-MVP-11至16与全部失败场景的真实回归记录，业务金丝雀则验证完整成功链及同一提交绑定，二者分别报告。",
+                      "text": "业务项目金丝雀不能单独证明所有审计篡改与并发反例；这些边界需要与Core冻结回归的独立证据同时复核。"
+                    }
+                  ]
+                },
+                "source": "model-proposal"
+              },
+              "openIssues": [],
+              "request": {
+                "at": "2026-10-26T01:05:49.566Z",
+                "source": "command-input",
+                "text": "修复 GitHub SkillHub 金丝雀的登录跳转与生产构建，补齐 lint、format check、覆盖率和真实 HTTP 验证；保留既有测试，完成本地交付，不推送、不部署。"
+              },
+              "requirements": [
+                {
+                  "acceptanceCriteria": [
+                    {
+                      "id": "CANARY-AC-01",
+                      "text": "GET /api/auth/github 返回可用于当前服务入口的 OAuth2 authorization 跳转；既有 AuthControllerTest.githubLogin_shouldRedirectToOAuth2Authorization 及全部后端119项测试真实通过，0 failed/skip/cancel。"
+                    }
+                  ],
+                  "category": "functional",
+                  "id": "CANARY-REQ-01",
+                  "text": "修复既有 GitHub 登录跳转，不再绑定开发机 localhost:18123；只修改 backend/src/main/java/com/agentskills/sharing/controller/AuthController.java 的相关逻辑，并遵循已声明 Spotless 格式。保留原有全部后端测试，不调用真实 GitHub OAuth 或生产服务。"
+                },
+                {
+                  "acceptanceCriteria": [
+                    {
+                      "id": "CANARY-AC-02",
+                      "text": "npm run build、npm test（原49项，0 failed/skip/cancel）、npm run lint、npm run format:check 均退出0；生产TypeScript类型检查继续执行，确定性format只处理本需求允许的配置文件。"
+                    }
+                  ],
+                  "category": "functional",
+                  "dependencyChanges": [
+                    {
+                      "acIds": [
+                        "CANARY-AC-02"
+                      ],
+                      "file": "frontend/package.json",
+                      "hash": "sha256:10bd9aa7a199a9f4ae67b8387caa12004d7dd5e8e2f16c7f39501bb9094725c3"
+                    },
+                    {
+                      "acIds": [
+                        "CANARY-AC-02"
+                      ],
+                      "file": "frontend/package-lock.json",
+                      "hash": "sha256:979e4f60d02cf847029e2e7faba1edc523cf5a011523603b922d54a5d181af5a"
+                    }
+                  ],
+                  "id": "CANARY-REQ-02",
+                  "text": "修复 Vue 3 生产构建，测试 mock 类型不进入生产应用检查，但原前端49项测试仍独立完整运行。使用已审阅候选配置：.specgate/codex/evidence/proposed-config/frontend/{package.json,package-lock.json,vite.config.ts,tsconfig.app.json,tsconfig.node.json,.prettierrc.json}。新增验证依赖仅为固定 @types/node 25.3.3、@vitest/coverage-v8 3.2.4 和 Prettier 3.9.10；不得修改或删减原测试与断言。"
+                },
+                {
+                  "acceptanceCriteria": [
+                    {
+                      "id": "CANARY-AC-03",
+                      "text": "同一固定提交上后端和前端真实覆盖率分别 lines>=80%、branches>=70%，变更行覆盖率>=90%；真实服务HTTP JSON查询、前端HTML/静态资源均200并记录PID及终止证据。格式化后全量重验、独立Review、H3和DeliveryRecord均绑定该提交；任何缺失/跳过/超时/失败、白名单或测试篡改、旧commit证据、无人工批准都阻断。"
+                    }
+                  ],
+                  "category": "acceptance",
+                  "dependencyChanges": [
+                    {
+                      "acIds": [
+                        "CANARY-AC-03"
+                      ],
+                      "file": "backend/pom.xml",
+                      "hash": "sha256:f3a3615e9d46f91256269464e8531bd4b325f2cbdf64d6f39e35ccbab0fac0f6"
+                    }
+                  ],
+                  "id": "CANARY-REQ-03",
+                  "text": "为本机隔离验收补齐真实验证证据。后端仅按已审阅 .specgate/codex/evidence/proposed-config/backend/pom.xml 使用 JaCoCo 0.8.13、Spotless Maven 2.44.0 / google-java-format 1.19.2；Spotless仅覆盖允许修改的 AuthController。独立 Test Designer 在 specgate-tests/ 冻结测试、补充覆盖率测试及真实命令/HTTP运行器；不得修改生产代码。Implementer仅复制获批配置并修复对应生产逻辑。Frozen runner 必须执行真实的完整 build/test/lint/format check/coverage/runtime，不得用固定JSON状态代替；以测试资源中的H2隔离配置启动真实后端，检查JSON API及前端页面和静态资源HTTP 200，禁止访问生产数据库或真实OAuth。每个冻结case必须先真实失败。格式化后全部门再次执行，Reviewer只读，H1/H3真人确认，归档同一受验commit；全Change串行写入、自动失败预算最多两轮、不推送不部署。"
+                }
+              ],
+              "revision": 1,
+              "schemaVersion": 1
+            }
+          },
+          "change": {
+            "baselineId": "baseline-3f8381e9b38f8a0d",
+            "details": {
+              "actualBehavior": "固定初始提交的真实基线：后端119项中1项OAuth跳转失败；前端49项测试通过，但生产构建因TypeScript配置失败；项目缺少lint、format和runtime命令。",
+              "expectedBehavior": "后端119项、前端49项全绿，生产构建、lint、格式检查、双端和变更覆盖率、真实HTTP运行均通过；H1、真实角色、固定提交Review及H3完成后生成本地DeliveryRecord。",
+              "nonGoals": [
+                "修改或弱化既有测试",
+                "真实GitHub OAuth登录与生产数据库验收",
+                "远程推送与部署"
+              ],
+              "scope": [
+                "AuthController登录跳转修复",
+                "前端Vite与TypeScript生产构建修复",
+                "精确批准的构建、lint、格式和覆盖率配置及验证依赖"
+              ]
+            },
+            "parentDeliveryId": null,
+            "type": "fix"
+          },
+          "changeContract": {
+            "acceptance": [
+              "CANARY-AC-01",
+              "CANARY-AC-02",
+              "CANARY-AC-03"
+            ],
+            "assumptions": [],
+            "baselineId": "baseline-3f8381e9b38f8a0d",
+            "changeId": "github-skillhub-lint-format-check-http-b3f525860fd4",
+            "nonGoals": [
+              "修改或弱化既有测试",
+              "真实GitHub OAuth登录与生产数据库验收",
+              "远程推送与部署"
+            ],
+            "parentDeliveryId": null,
+            "request": "修复 GitHub SkillHub 金丝雀的登录跳转与生产构建，补齐 lint、format check、覆盖率和真实 HTTP 验证；保留既有测试，完成本地交付，不推送、不部署。",
+            "risks": [],
+            "schemaVersion": 2,
+            "scope": [
+              "AuthController登录跳转修复",
+              "前端Vite与TypeScript生产构建修复",
+              "精确批准的构建、lint、格式和覆盖率配置及验证依赖"
+            ],
+            "status": "H1_PENDING",
+            "type": "fix"
+          },
+          "critique": {
+            "at": "2026-10-26T01:15:28.076Z",
+            "report": {
+              "ambiguities": [],
+              "contradictions": [],
+              "infeasibleItems": [],
+              "nonFunctionalRisks": [
+                {
+                  "id": "CANARY-RISK-01",
+                  "requirementIds": [
+                    "CANARY-REQ-03"
+                  ],
+                  "severity": "non-blocking",
+                  "suggestion": "Test Designer先检查现有业务模块与原测试，新增独立测试资产；冻结后只接受真实覆盖率证据，若仍无法满足则保持阻断。",
+                  "text": "原项目尚无完整覆盖率度量；首次真实测量可能低于阈值，必须由测试设计在冻结前补足用例，不能降低阈值或跳过。"
+                }
+              ],
+              "restatement": [
+                {
+                  "requirementId": "CANARY-REQ-01",
+                  "text": "保留现有登录API，修复OAuth跳转的本机地址硬编码，使既有后端用例全部通过；真实GitHub认证不在本次验收范围。"
+                },
+                {
+                  "requirementId": "CANARY-REQ-02",
+                  "text": "在不删改原Vue测试的前提下修复生产类型检查，并冻结精确的前端验证依赖与配置，使build、test、lint和format check真实通过。"
+                },
+                {
+                  "requirementId": "CANARY-REQ-03",
+                  "text": "独立测试角色提交可执行验收与覆盖率/HTTP运行器，实施角色仅在白名单内串行修改；对同一提交完成全部质量门、格式化后回归、只读Review、真人H3和本地归档。"
+                }
+              ],
+              "securityPerformanceConcurrencyRisks": [
+                {
+                  "id": "CANARY-RISK-02",
+                  "requirementIds": [
+                    "CANARY-REQ-01",
+                    "CANARY-REQ-03"
+                  ],
+                  "severity": "non-blocking",
+                  "suggestion": "只在回环地址启动服务，使用仓库测试资源，禁用真实外部认证；在交付记录明确列出这些未验证区域，不推送、不部署。",
+                  "text": "H2隔离运行与原生角色会话只证明本地验收，不证明生产PostgreSQL、真实GitHub OAuth或部署可用。"
+                }
+              ],
+              "suggestedQuestions": [],
+              "testBlindSpots": [
+                {
+                  "id": "CANARY-RISK-03",
+                  "requirementIds": [
+                    "CANARY-REQ-03"
+                  ],
+                  "severity": "non-blocking",
+                  "suggestion": "保留Core AC-MVP-11至16与全部失败场景的真实回归记录，业务金丝雀则验证完整成功链及同一提交绑定，二者分别报告。",
+                  "text": "业务项目金丝雀不能单独证明所有审计篡改与并发反例；这些边界需要与Core冻结回归的独立证据同时复核。"
+                }
+              ]
+            },
+            "source": "model-proposal"
+          },
+          "document": {
+            "candidateHash": "sha256:ea68148eca78df03d79afe436a8a1a5e9ef26ed70a138cd783d6a1d10ade098c",
+            "hash": "sha256:dab0f30a6e6c5be166961d1c2f126916c63c021ab5e366233b58e21008a076ee",
+            "path": ".specgate/codex/changes/github-skillhub-lint-format-check-http-b3f525860fd4/requirements/revision-1-ea68148eca78df03d79afe436a8a1a5e9ef26ed70a138cd783d6a1d10ade098c-review-v2.md",
+            "preparedAt": "2026-10-26T01:15:28.124Z",
+            "rendererVersion": 2
+          },
+          "frozen": {
+            "authority": "REQ_FROZEN-gate-transition",
+            "hash": "sha256:ea68148eca78df03d79afe436a8a1a5e9ef26ed70a138cd783d6a1d10ade098c",
+            "path": ".specgate/codex/changes/github-skillhub-lint-format-check-http-b3f525860fd4/requirements/revision-1-ea68148eca78df03d79afe436a8a1a5e9ef26ed70a138cd783d6a1d10ade098c.json",
+            "revision": 1
+          },
+          "incremental": null,
+          "request": {
+            "at": "2026-10-26T01:05:49.566Z",
+            "source": "command-input",
+            "text": "修复 GitHub SkillHub 金丝雀的登录跳转与生产构建，补齐 lint、format check、覆盖率和真实 HTTP 验证；保留既有测试，完成本地交付，不推送、不部署。"
+          },
+          "revisions": [
+            {
+              "assumptions": [],
+              "at": "2026-10-26T01:14:24.767Z",
+              "openIssues": [],
+              "requirements": [
+                {
+                  "acceptanceCriteria": [
+                    {
+                      "id": "CANARY-AC-01",
+                      "text": "GET /api/auth/github 返回可用于当前服务入口的 OAuth2 authorization 跳转；既有 AuthControllerTest.githubLogin_shouldRedirectToOAuth2Authorization 及全部后端119项测试真实通过，0 failed/skip/cancel。"
+                    }
+                  ],
+                  "category": "functional",
+                  "id": "CANARY-REQ-01",
+                  "text": "修复既有 GitHub 登录跳转，不再绑定开发机 localhost:18123；只修改 backend/src/main/java/com/agentskills/sharing/controller/AuthController.java 的相关逻辑，并遵循已声明 Spotless 格式。保留原有全部后端测试，不调用真实 GitHub OAuth 或生产服务。"
+                },
+                {
+                  "acceptanceCriteria": [
+                    {
+                      "id": "CANARY-AC-02",
+                      "text": "npm run build、npm test（原49项，0 failed/skip/cancel）、npm run lint、npm run format:check 均退出0；生产TypeScript类型检查继续执行，确定性format只处理本需求允许的配置文件。"
+                    }
+                  ],
+                  "category": "functional",
+                  "dependencyChanges": [
+                    {
+                      "acIds": [
+                        "CANARY-AC-02"
+                      ],
+                      "file": "frontend/package.json",
+                      "hash": "sha256:10bd9aa7a199a9f4ae67b8387caa12004d7dd5e8e2f16c7f39501bb9094725c3"
+                    },
+                    {
+                      "acIds": [
+                        "CANARY-AC-02"
+                      ],
+                      "file": "frontend/package-lock.json",
+                      "hash": "sha256:979e4f60d02cf847029e2e7faba1edc523cf5a011523603b922d54a5d181af5a"
+                    }
+                  ],
+                  "id": "CANARY-REQ-02",
+                  "text": "修复 Vue 3 生产构建，测试 mock 类型不进入生产应用检查，但原前端49项测试仍独立完整运行。使用已审阅候选配置：.specgate/codex/evidence/proposed-config/frontend/{package.json,package-lock.json,vite.config.ts,tsconfig.app.json,tsconfig.node.json,.prettierrc.json}。新增验证依赖仅为固定 @types/node 25.3.3、@vitest/coverage-v8 3.2.4 和 Prettier 3.9.10；不得修改或删减原测试与断言。"
+                },
+                {
+                  "acceptanceCriteria": [
+                    {
+                      "id": "CANARY-AC-03",
+                      "text": "同一固定提交上后端和前端真实覆盖率分别 lines>=80%、branches>=70%，变更行覆盖率>=90%；真实服务HTTP JSON查询、前端HTML/静态资源均200并记录PID及终止证据。格式化后全量重验、独立Review、H3和DeliveryRecord均绑定该提交；任何缺失/跳过/超时/失败、白名单或测试篡改、旧commit证据、无人工批准都阻断。"
+                    }
+                  ],
+                  "category": "acceptance",
+                  "dependencyChanges": [
+                    {
+                      "acIds": [
+                        "CANARY-AC-03"
+                      ],
+                      "file": "backend/pom.xml",
+                      "hash": "sha256:f3a3615e9d46f91256269464e8531bd4b325f2cbdf64d6f39e35ccbab0fac0f6"
+                    }
+                  ],
+                  "id": "CANARY-REQ-03",
+                  "text": "为本机隔离验收补齐真实验证证据。后端仅按已审阅 .specgate/codex/evidence/proposed-config/backend/pom.xml 使用 JaCoCo 0.8.13、Spotless Maven 2.44.0 / google-java-format 1.19.2；Spotless仅覆盖允许修改的 AuthController。独立 Test Designer 在 specgate-tests/ 冻结测试、补充覆盖率测试及真实命令/HTTP运行器；不得修改生产代码。Implementer仅复制获批配置并修复对应生产逻辑。Frozen runner 必须执行真实的完整 build/test/lint/format check/coverage/runtime，不得用固定JSON状态代替；以测试资源中的H2隔离配置启动真实后端，检查JSON API及前端页面和静态资源HTTP 200，禁止访问生产数据库或真实OAuth。每个冻结case必须先真实失败。格式化后全部门再次执行，Reviewer只读，H1/H3真人确认，归档同一受验commit；全Change串行写入、自动失败预算最多两轮、不推送不部署。"
+                }
+              ],
+              "revision": 1,
+              "source": "model-proposal"
+            }
+          ],
+          "rounds": [
+            {
+              "answers": [
+                {
+                  "actor": {
+                    "id": "Administrator",
+                    "kind": "user",
+                    "source": "codex-mcp-os-user"
+                  },
+                  "answer": "按照你的方案来",
+                  "at": "2026-10-26T01:07:44.752Z",
+                  "questionId": "Q-INTAKE-1",
+                  "source": "native-user-provider"
+                },
+                {
+                  "actor": {
+                    "id": "Administrator",
+                    "kind": "user",
+                    "source": "codex-mcp-os-user"
+                  },
+                  "answer": "按照你的方案来",
+                  "at": "2026-10-26T01:07:44.752Z",
+                  "questionId": "Q-INTAKE-2",
+                  "source": "native-user-provider"
+                },
+                {
+                  "actor": {
+                    "id": "Administrator",
+                    "kind": "user",
+                    "source": "codex-mcp-os-user"
+                  },
+                  "answer": "按照你的方案来",
+                  "at": "2026-10-26T01:07:44.752Z",
+                  "questionId": "Q-INTAKE-3",
+                  "source": "native-user-provider"
+                },
+                {
+                  "actor": {
+                    "id": "Administrator",
+                    "kind": "user",
+                    "source": "codex-mcp-os-user"
+                  },
+                  "answer": "按照你的方案来",
+                  "at": "2026-10-26T01:07:44.752Z",
+                  "questionId": "Q-INTAKE-4",
+                  "source": "native-user-provider"
+                },
+                {
+                  "actor": {
+                    "id": "Administrator",
+                    "kind": "user",
+                    "source": "codex-mcp-os-user"
+                  },
+                  "answer": "按照你的来",
+                  "at": "2026-10-26T01:07:44.752Z",
+                  "questionId": "Q-INTAKE-5",
+                  "source": "native-user-provider"
+                }
+              ],
+              "at": "2026-10-26T01:05:49.591Z",
+              "questions": [
+                {
+                  "category": "functional",
+                  "id": "Q-INTAKE-1",
+                  "text": "这个变更要解决的核心问题是什么？目标用户和期望结果是什么？"
+                },
+                {
+                  "category": "constraint",
+                  "id": "Q-INTAKE-2",
+                  "text": "哪些内容明确在范围内，哪些明确不在范围内？"
+                },
+                {
+                  "category": "acceptance",
+                  "id": "Q-INTAKE-3",
+                  "text": "完成后有哪些可观察、可验证的验收标准？"
+                },
+                {
+                  "category": "failure",
+                  "id": "Q-INTAKE-4",
+                  "text": "需要覆盖哪些失败、边界或兼容场景？"
+                },
+                {
+                  "category": "security",
+                  "id": "Q-INTAKE-5",
+                  "text": "有哪些安全、性能或并发约束？"
+                }
+              ],
+              "round": 1,
+              "source": "server-intake",
+              "status": "answered"
+            }
+          ]
+        },
+        "plan": {
+          "hash": "sha256:426fc067cae0a3e5c6df6f3664aabb8b452a47b20ee2adb92ddef725899da878",
+          "path": ".specgate/codex/changes/github-skillhub-lint-format-check-http-b3f525860fd4/plan/plan-426fc067cae0a3e5c6df6f3664aabb8b452a47b20ee2adb92ddef725899da878.json",
+          "version": 1
+        },
+        "prerequisiteVerification": null,
+        "project": {
+          "baselineId": "baseline-3f8381e9b38f8a0d",
+          "baselineStatus": "known-failures",
+          "environmentFingerprint": "35d375169d144fc09999110af9771723cf3e542d4f46a4732da4b91d6e346ba7",
+          "mode": "adopted",
+          "projectId": "project-3d2b3b864d29e724"
+        }
+      },
+      "phase": "PLANNED",
+      "resumePhase": null,
+      "retries": {},
+      "schemaVersion": 1,
+      "version": 16
+    },
+    "event": {
+      "changeId": "github-skillhub-lint-format-check-http-b3f525860fd4",
+      "hash": "1d1962bfcf6a866615e97f5e3461f498d12b379e12d2d645e4a81f32b88d1955",
+      "payload": {
+        "from": "PLANNED",
+        "to": "PLANNED"
+      },
+      "previousHash": "a5156b570d9d6f86cf729884b7b70ae45911960d92aedef69d3fdb297db4358c",
+      "schemaVersion": 1,
+      "sequence": 16,
+      "state": {
+        "automaticFailures": 0,
+        "changeId": "github-skillhub-lint-format-check-http-b3f525860fd4",
+        "checkpoint": {
+          "id": "github-skillhub-lint-format-check-http-b3f525860fd4:16",
+          "label": "PLANNING",
+          "phase": "PLANNED",
+          "recordedAt": "2026-10-26T01:19:50.546Z",
+          "version": 16
+        },
+        "context": {
+          "artifacts": {
+            "requirements": {
+              "candidatePath": ".specgate/codex/changes/github-skillhub-lint-format-check-http-b3f525860fd4/requirements/candidate-ea68148eca78df03d79afe436a8a1a5e9ef26ed70a138cd783d6a1d10ade098c.json",
+              "documentHash": "sha256:dab0f30a6e6c5be166961d1c2f126916c63c021ab5e366233b58e21008a076ee",
+              "documentPath": ".specgate/codex/changes/github-skillhub-lint-format-check-http-b3f525860fd4/requirements/revision-1-ea68148eca78df03d79afe436a8a1a5e9ef26ed70a138cd783d6a1d10ade098c-review-v2.md",
+              "frozenPath": ".specgate/codex/changes/github-skillhub-lint-format-check-http-b3f525860fd4/requirements/revision-1-ea68148eca78df03d79afe436a8a1a5e9ef26ed70a138cd783d6a1d10ade098c.json",
+              "hash": "sha256:ea68148eca78df03d79afe436a8a1a5e9ef26ed70a138cd783d6a1d10ade098c",
+              "revision": 1
+            }
+          },
+          "changeAdd": {
+            "candidate": {
+              "hash": "sha256:ea68148eca78df03d79afe436a8a1a5e9ef26ed70a138cd783d6a1d10ade098c",
+              "snapshot": {
+                "assumptions": [],
+                "change": {
+                  "baselineId": "baseline-3f8381e9b38f8a0d",
+                  "details": {
+                    "actualBehavior": "固定初始提交的真实基线：后端119项中1项OAuth跳转失败；前端49项测试通过，但生产构建因TypeScript配置失败；项目缺少lint、format和runtime命令。",
+                    "expectedBehavior": "后端119项、前端49项全绿，生产构建、lint、格式检查、双端和变更覆盖率、真实HTTP运行均通过；H1、真实角色、固定提交Review及H3完成后生成本地DeliveryRecord。",
+                    "nonGoals": [
+                      "修改或弱化既有测试",
+                      "真实GitHub OAuth登录与生产数据库验收",
+                      "远程推送与部署"
+                    ],
+                    "scope": [
+                      "AuthController登录跳转修复",
+                      "前端Vite与TypeScript生产构建修复",
+                      "精确批准的构建、lint、格式和覆盖率配置及验证依赖"
+                    ]
+                  },
+                  "parentDeliveryId": null,
+                  "type": "fix"
+                },
+                "changeContract": {
+                  "acceptance": [
+                    "CANARY-AC-01",
+                    "CANARY-AC-02",
+                    "CANARY-AC-03"
+                  ],
+                  "assumptions": [],
+                  "baselineId": "baseline-3f8381e9b38f8a0d",
+                  "changeId": "github-skillhub-lint-format-check-http-b3f525860fd4",
+                  "nonGoals": [
+                    "修改或弱化既有测试",
+                    "真实GitHub OAuth登录与生产数据库验收",
+                    "远程推送与部署"
+                  ],
+                  "parentDeliveryId": null,
+                  "request": "修复 GitHub SkillHub 金丝雀的登录跳转与生产构建，补齐 lint、format check、覆盖率和真实 HTTP 验证；保留既有测试，完成本地交付，不推送、不部署。",
+                  "risks": [],
+                  "schemaVersion": 2,
+                  "scope": [
+                    "AuthController登录跳转修复",
+                    "前端Vite与TypeScript生产构建修复",
+                    "精确批准的构建、lint、格式和覆盖率配置及验证依赖"
+                  ],
+                  "status": "H1_PENDING",
+                  "type": "fix"
+                },
+                "changeId": "github-skillhub-lint-format-check-http-b3f525860fd4",
+                "clarifications": [
+                  {
+                    "answers": [
+                      {
+                        "actor": {
+                          "id": "Administrator",
+                          "kind": "user",
+                          "source": "codex-mcp-os-user"
+                        },
+                        "answer": "按照你的方案来",
+                        "at": "2026-10-26T01:07:44.752Z",
+                        "questionId": "Q-INTAKE-1",
+                        "source": "native-user-provider"
+                      },
+                      {
+                        "actor": {
+                          "id": "Administrator",
+                          "kind": "user",
+                          "source": "codex-mcp-os-user"
+                        },
+                        "answer": "按照你的方案来",
+                        "at": "2026-10-26T01:07:44.752Z",
+                        "questionId": "Q-INTAKE-2",
+                        "source": "native-user-provider"
+                      },
+                      {
+                        "actor": {
+                          "id": "Administrator",
+                          "kind": "user",
+                          "source": "codex-mcp-os-user"
+                        },
+                        "answer": "按照你的方案来",
+                        "at": "2026-10-26T01:07:44.752Z",
+                        "questionId": "Q-INTAKE-3",
+                        "source": "native-user-provider"
+                      },
+                      {
+                        "actor": {
+                          "id": "Administrator",
+                          "kind": "user",
+                          "source": "codex-mcp-os-user"
+                        },
+                        "answer": "按照你的方案来",
+                        "at": "2026-10-26T01:07:44.752Z",
+                        "questionId": "Q-INTAKE-4",
+                        "source": "native-user-provider"
+                      },
+                      {
+                        "actor": {
+                          "id": "Administrator",
+                          "kind": "user",
+                          "source": "codex-mcp-os-user"
+                        },
+                        "answer": "按照你的来",
+                        "at": "2026-10-26T01:07:44.752Z",
+                        "questionId": "Q-INTAKE-5",
+                        "source": "native-user-provider"
+                      }
+                    ],
+                    "at": "2026-10-26T01:05:49.591Z",
+                    "questions": [
+                      {
+                        "category": "functional",
+                        "id": "Q-INTAKE-1",
+                        "text": "这个变更要解决的核心问题是什么？目标用户和期望结果是什么？"
+                      },
+                      {
+                        "category": "constraint",
+                        "id": "Q-INTAKE-2",
+                        "text": "哪些内容明确在范围内，哪些明确不在范围内？"
+                      },
+                      {
+                        "category": "acceptance",
+                        "id": "Q-INTAKE-3",
+                        "text": "完成后有哪些可观察、可验证的验收标准？"
+                      },
+                      {
+                        "category": "failure",
+                        "id": "Q-INTAKE-4",
+                        "text": "需要覆盖哪些失败、边界或兼容场景？"
+                      },
+                      {
+                        "category": "security",
+                        "id": "Q-INTAKE-5",
+                        "text": "有哪些安全、性能或并发约束？"
+                      }
+                    ],
+                    "round": 1,
+                    "source": "server-intake",
+                    "status": "answered"
+                  }
+                ],
+                "critique": {
+                  "at": "2026-10-26T01:15:28.076Z",
+                  "report": {
+                    "ambiguities": [],
+                    "contradictions": [],
+                    "infeasibleItems": [],
+                    "nonFunctionalRisks": [
+                      {
+                        "id": "CANARY-RISK-01",
+                        "requirementIds": [
+                          "CANARY-REQ-03"
+                        ],
+                        "severity": "non-blocking",
+                        "suggestion": "Test Designer先检查现有业务模块与原测试，新增独立测试资产；冻结后只接受真实覆盖率证据，若仍无法满足则保持阻断。",
+                        "text": "原项目尚无完整覆盖率度量；首次真实测量可能低于阈值，必须由测试设计在冻结前补足用例，不能降低阈值或跳过。"
+                      }
+                    ],
+                    "restatement": [
+                      {
+                        "requirementId": "CANARY-REQ-01",
+                        "text": "保留现有登录API，修复OAuth跳转的本机地址硬编码，使既有后端用例全部通过；真实GitHub认证不在本次验收范围。"
+                      },
+                      {
+                        "requirementId": "CANARY-REQ-02",
+                        "text": "在不删改原Vue测试的前提下修复生产类型检查，并冻结精确的前端验证依赖与配置，使build、test、lint和format check真实通过。"
+                      },
+                      {
+                        "requirementId": "CANARY-REQ-03",
+                        "text": "独立测试角色提交可执行验收与覆盖率/HTTP运行器，实施角色仅在白名单内串行修改；对同一提交完成全部质量门、格式化后回归、只读Review、真人H3和本地归档。"
+                      }
+                    ],
+                    "securityPerformanceConcurrencyRisks": [
+                      {
+                        "id": "CANARY-RISK-02",
+                        "requirementIds": [
+                          "CANARY-REQ-01",
+                          "CANARY-REQ-03"
+                        ],
+                        "severity": "non-blocking",
+                        "suggestion": "只在回环地址启动服务，使用仓库测试资源，禁用真实外部认证；在交付记录明确列出这些未验证区域，不推送、不部署。",
+                        "text": "H2隔离运行与原生角色会话只证明本地验收，不证明生产PostgreSQL、真实GitHub OAuth或部署可用。"
+                      }
+                    ],
+                    "suggestedQuestions": [],
+                    "testBlindSpots": [
+                      {
+                        "id": "CANARY-RISK-03",
+                        "requirementIds": [
+                          "CANARY-REQ-03"
+                        ],
+                        "severity": "non-blocking",
+                        "suggestion": "保留Core AC-MVP-11至16与全部失败场景的真实回归记录，业务金丝雀则验证完整成功链及同一提交绑定，二者分别报告。",
+                        "text": "业务项目金丝雀不能单独证明所有审计篡改与并发反例；这些边界需要与Core冻结回归的独立证据同时复核。"
+                      }
+                    ]
+                  },
+                  "source": "model-proposal"
+                },
+                "openIssues": [],
+                "request": {
+                  "at": "2026-10-26T01:05:49.566Z",
+                  "source": "command-input",
+                  "text": "修复 GitHub SkillHub 金丝雀的登录跳转与生产构建，补齐 lint、format check、覆盖率和真实 HTTP 验证；保留既有测试，完成本地交付，不推送、不部署。"
+                },
+                "requirements": [
+                  {
+                    "acceptanceCriteria": [
+                      {
+                        "id": "CANARY-AC-01",
+                        "text": "GET /api/auth/github 返回可用于当前服务入口的 OAuth2 authorization 跳转；既有 AuthControllerTest.githubLogin_shouldRedirectToOAuth2Authorization 及全部后端119项测试真实通过，0 failed/skip/cancel。"
+                      }
+                    ],
+                    "category": "functional",
+                    "id": "CANARY-REQ-01",
+                    "text": "修复既有 GitHub 登录跳转，不再绑定开发机 localhost:18123；只修改 backend/src/main/java/com/agentskills/sharing/controller/AuthController.java 的相关逻辑，并遵循已声明 Spotless 格式。保留原有全部后端测试，不调用真实 GitHub OAuth 或生产服务。"
+                  },
+                  {
+                    "acceptanceCriteria": [
+                      {
+                        "id": "CANARY-AC-02",
+                        "text": "npm run build、npm test（原49项，0 failed/skip/cancel）、npm run lint、npm run format:check 均退出0；生产TypeScript类型检查继续执行，确定性format只处理本需求允许的配置文件。"
+                      }
+                    ],
+                    "category": "functional",
+                    "dependencyChanges": [
+                      {
+                        "acIds": [
+                          "CANARY-AC-02"
+                        ],
+                        "file": "frontend/package.json",
+                        "hash": "sha256:10bd9aa7a199a9f4ae67b8387caa12004d7dd5e8e2f16c7f39501bb9094725c3"
+                      },
+                      {
+                        "acIds": [
+                          "CANARY-AC-02"
+                        ],
+                        "file": "frontend/package-lock.json",
+                        "hash": "sha256:979e4f60d02cf847029e2e7faba1edc523cf5a011523603b922d54a5d181af5a"
+                      }
+                    ],
+                    "id": "CANARY-REQ-02",
+                    "text": "修复 Vue 3 生产构建，测试 mock 类型不进入生产应用检查，但原前端49项测试仍独立完整运行。使用已审阅候选配置：.specgate/codex/evidence/proposed-config/frontend/{package.json,package-lock.json,vite.config.ts,tsconfig.app.json,tsconfig.node.json,.prettierrc.json}。新增验证依赖仅为固定 @types/node 25.3.3、@vitest/coverage-v8 3.2.4 和 Prettier 3.9.10；不得修改或删减原测试与断言。"
+                  },
+                  {
+                    "acceptanceCriteria": [
+                      {
+                        "id": "CANARY-AC-03",
+                        "text": "同一固定提交上后端和前端真实覆盖率分别 lines>=80%、branches>=70%，变更行覆盖率>=90%；真实服务HTTP JSON查询、前端HTML/静态资源均200并记录PID及终止证据。格式化后全量重验、独立Review、H3和DeliveryRecord均绑定该提交；任何缺失/跳过/超时/失败、白名单或测试篡改、旧commit证据、无人工批准都阻断。"
+                      }
+                    ],
+                    "category": "acceptance",
+                    "dependencyChanges": [
+                      {
+                        "acIds": [
+                          "CANARY-AC-03"
+                        ],
+                        "file": "backend/pom.xml",
+                        "hash": "sha256:f3a3615e9d46f91256269464e8531bd4b325f2cbdf64d6f39e35ccbab0fac0f6"
+                      }
+                    ],
+                    "id": "CANARY-REQ-03",
+                    "text": "为本机隔离验收补齐真实验证证据。后端仅按已审阅 .specgate/codex/evidence/proposed-config/backend/pom.xml 使用 JaCoCo 0.8.13、Spotless Maven 2.44.0 / google-java-format 1.19.2；Spotless仅覆盖允许修改的 AuthController。独立 Test Designer 在 specgate-tests/ 冻结测试、补充覆盖率测试及真实命令/HTTP运行器；不得修改生产代码。Implementer仅复制获批配置并修复对应生产逻辑。Frozen runner 必须执行真实的完整 build/test/lint/format check/coverage/runtime，不得用固定JSON状态代替；以测试资源中的H2隔离配置启动真实后端，检查JSON API及前端页面和静态资源HTTP 200，禁止访问生产数据库或真实OAuth。每个冻结case必须先真实失败。格式化后全部门再次执行，Reviewer只读，H1/H3真人确认，归档同一受验commit；全Change串行写入、自动失败预算最多两轮、不推送不部署。"
+                  }
+                ],
+                "revision": 1,
+                "schemaVersion": 1
+              }
+            },
+            "change": {
+              "baselineId": "baseline-3f8381e9b38f8a0d",
+              "details": {
+                "actualBehavior": "固定初始提交的真实基线：后端119项中1项OAuth跳转失败；前端49项测试通过，但生产构建因TypeScript配置失败；项目缺少lint、format和runtime命令。",
+                "expectedBehavior": "后端119项、前端49项全绿，生产构建、lint、格式检查、双端和变更覆盖率、真实HTTP运行均通过；H1、真实角色、固定提交Review及H3完成后生成本地DeliveryRecord。",
+                "nonGoals": [
+                  "修改或弱化既有测试",
+                  "真实GitHub OAuth登录与生产数据库验收",
+                  "远程推送与部署"
+                ],
+                "scope": [
+                  "AuthController登录跳转修复",
+                  "前端Vite与TypeScript生产构建修复",
+                  "精确批准的构建、lint、格式和覆盖率配置及验证依赖"
+                ]
+              },
+              "parentDeliveryId": null,
+              "type": "fix"
+            },
+            "changeContract": {
+              "acceptance": [
+                "CANARY-AC-01",
+                "CANARY-AC-02",
+                "CANARY-AC-03"
+              ],
+              "assumptions": [],
+              "baselineId": "baseline-3f8381e9b38f8a0d",
+              "changeId": "github-skillhub-lint-format-check-http-b3f525860fd4",
+              "nonGoals": [
+                "修改或弱化既有测试",
+                "真实GitHub OAuth登录与生产数据库验收",
+                "远程推送与部署"
+              ],
+              "parentDeliveryId": null,
+              "request": "修复 GitHub SkillHub 金丝雀的登录跳转与生产构建，补齐 lint、format check、覆盖率和真实 HTTP 验证；保留既有测试，完成本地交付，不推送、不部署。",
+              "risks": [],
+              "schemaVersion": 2,
+              "scope": [
+                "AuthController登录跳转修复",
+                "前端Vite与TypeScript生产构建修复",
+                "精确批准的构建、lint、格式和覆盖率配置及验证依赖"
+              ],
+              "status": "H1_PENDING",
+              "type": "fix"
+            },
+            "critique": {
+              "at": "2026-10-26T01:15:28.076Z",
+              "report": {
+                "ambiguities": [],
+                "contradictions": [],
+                "infeasibleItems": [],
+                "nonFunctionalRisks": [
+                  {
+                    "id": "CANARY-RISK-01",
+                    "requirementIds": [
+                      "CANARY-REQ-03"
+                    ],
+                    "severity": "non-blocking",
+                    "suggestion": "Test Designer先检查现有业务模块与原测试，新增独立测试资产；冻结后只接受真实覆盖率证据，若仍无法满足则保持阻断。",
+                    "text": "原项目尚无完整覆盖率度量；首次真实测量可能低于阈值，必须由测试设计在冻结前补足用例，不能降低阈值或跳过。"
+                  }
+                ],
+                "restatement": [
+                  {
+                    "requirementId": "CANARY-REQ-01",
+                    "text": "保留现有登录API，修复OAuth跳转的本机地址硬编码，使既有后端用例全部通过；真实GitHub认证不在本次验收范围。"
+                  },
+                  {
+                    "requirementId": "CANARY-REQ-02",
+                    "text": "在不删改原Vue测试的前提下修复生产类型检查，并冻结精确的前端验证依赖与配置，使build、test、lint和format check真实通过。"
+                  },
+                  {
+                    "requirementId": "CANARY-REQ-03",
+                    "text": "独立测试角色提交可执行验收与覆盖率/HTTP运行器，实施角色仅在白名单内串行修改；对同一提交完成全部质量门、格式化后回归、只读Review、真人H3和本地归档。"
+                  }
+                ],
+                "securityPerformanceConcurrencyRisks": [
+                  {
+                    "id": "CANARY-RISK-02",
+                    "requirementIds": [
+                      "CANARY-REQ-01",
+                      "CANARY-REQ-03"
+                    ],
+                    "severity": "non-blocking",
+                    "suggestion": "只在回环地址启动服务，使用仓库测试资源，禁用真实外部认证；在交付记录明确列出这些未验证区域，不推送、不部署。",
+                    "text": "H2隔离运行与原生角色会话只证明本地验收，不证明生产PostgreSQL、真实GitHub OAuth或部署可用。"
+                  }
+                ],
+                "suggestedQuestions": [],
+                "testBlindSpots": [
+                  {
+                    "id": "CANARY-RISK-03",
+                    "requirementIds": [
+                      "CANARY-REQ-03"
+                    ],
+                    "severity": "non-blocking",
+                    "suggestion": "保留Core AC-MVP-11至16与全部失败场景的真实回归记录，业务金丝雀则验证完整成功链及同一提交绑定，二者分别报告。",
+                    "text": "业务项目金丝雀不能单独证明所有审计篡改与并发反例；这些边界需要与Core冻结回归的独立证据同时复核。"
+                  }
+                ]
+              },
+              "source": "model-proposal"
+            },
+            "document": {
+              "candidateHash": "sha256:ea68148eca78df03d79afe436a8a1a5e9ef26ed70a138cd783d6a1d10ade098c",
+              "hash": "sha256:dab0f30a6e6c5be166961d1c2f126916c63c021ab5e366233b58e21008a076ee",
+              "path": ".specgate/codex/changes/github-skillhub-lint-format-check-http-b3f525860fd4/requirements/revision-1-ea68148eca78df03d79afe436a8a1a5e9ef26ed70a138cd783d6a1d10ade098c-review-v2.md",
+              "preparedAt": "2026-10-26T01:15:28.124Z",
+              "rendererVersion": 2
+            },
+            "frozen": {
+              "authority": "REQ_FROZEN-gate-transition",
+              "hash": "sha256:ea68148eca78df03d79afe436a8a1a5e9ef26ed70a138cd783d6a1d10ade098c",
+              "path": ".specgate/codex/changes/github-skillhub-lint-format-check-http-b3f525860fd4/requirements/revision-1-ea68148eca78df03d79afe436a8a1a5e9ef26ed70a138cd783d6a1d10ade098c.json",
+              "revision": 1
+            },
+            "incremental": null,
+            "request": {
+              "at": "2026-10-26T01:05:49.566Z",
+              "source": "command-input",
+              "text": "修复 GitHub SkillHub 金丝雀的登录跳转与生产构建，补齐 lint、format check、覆盖率和真实 HTTP 验证；保留既有测试，完成本地交付，不推送、不部署。"
+            },
+            "revisions": [
+              {
+                "assumptions": [],
+                "at": "2026-10-26T01:14:24.767Z",
+                "openIssues": [],
+                "requirements": [
+                  {
+                    "acceptanceCriteria": [
+                      {
+                        "id": "CANARY-AC-01",
+                        "text": "GET /api/auth/github 返回可用于当前服务入口的 OAuth2 authorization 跳转；既有 AuthControllerTest.githubLogin_shouldRedirectToOAuth2Authorization 及全部后端119项测试真实通过，0 failed/skip/cancel。"
+                      }
+                    ],
+                    "category": "functional",
+                    "id": "CANARY-REQ-01",
+                    "text": "修复既有 GitHub 登录跳转，不再绑定开发机 localhost:18123；只修改 backend/src/main/java/com/agentskills/sharing/controller/AuthController.java 的相关逻辑，并遵循已声明 Spotless 格式。保留原有全部后端测试，不调用真实 GitHub OAuth 或生产服务。"
+                  },
+                  {
+                    "acceptanceCriteria": [
+                      {
+                        "id": "CANARY-AC-02",
+                        "text": "npm run build、npm test（原49项，0 failed/skip/cancel）、npm run lint、npm run format:check 均退出0；生产TypeScript类型检查继续执行，确定性format只处理本需求允许的配置文件。"
+                      }
+                    ],
+                    "category": "functional",
+                    "dependencyChanges": [
+                      {
+                        "acIds": [
+                          "CANARY-AC-02"
+                        ],
+                        "file": "frontend/package.json",
+                        "hash": "sha256:10bd9aa7a199a9f4ae67b8387caa12004d7dd5e8e2f16c7f39501bb9094725c3"
+                      },
+                      {
+                        "acIds": [
+                          "CANARY-AC-02"
+                        ],
+                        "file": "frontend/package-lock.json",
+                        "hash": "sha256:979e4f60d02cf847029e2e7faba1edc523cf5a011523603b922d54a5d181af5a"
+                      }
+                    ],
+                    "id": "CANARY-REQ-02",
+                    "text": "修复 Vue 3 生产构建，测试 mock 类型不进入生产应用检查，但原前端49项测试仍独立完整运行。使用已审阅候选配置：.specgate/codex/evidence/proposed-config/frontend/{package.json,package-lock.json,vite.config.ts,tsconfig.app.json,tsconfig.node.json,.prettierrc.json}。新增验证依赖仅为固定 @types/node 25.3.3、@vitest/coverage-v8 3.2.4 和 Prettier 3.9.10；不得修改或删减原测试与断言。"
+                  },
+                  {
+                    "acceptanceCriteria": [
+                      {
+                        "id": "CANARY-AC-03",
+                        "text": "同一固定提交上后端和前端真实覆盖率分别 lines>=80%、branches>=70%，变更行覆盖率>=90%；真实服务HTTP JSON查询、前端HTML/静态资源均200并记录PID及终止证据。格式化后全量重验、独立Review、H3和DeliveryRecord均绑定该提交；任何缺失/跳过/超时/失败、白名单或测试篡改、旧commit证据、无人工批准都阻断。"
+                      }
+                    ],
+                    "category": "acceptance",
+                    "dependencyChanges": [
+                      {
+                        "acIds": [
+                          "CANARY-AC-03"
+                        ],
+                        "file": "backend/pom.xml",
+                        "hash": "sha256:f3a3615e9d46f91256269464e8531bd4b325f2cbdf64d6f39e35ccbab0fac0f6"
+                      }
+                    ],
+                    "id": "CANARY-REQ-03",
+                    "text": "为本机隔离验收补齐真实验证证据。后端仅按已审阅 .specgate/codex/evidence/proposed-config/backend/pom.xml 使用 JaCoCo 0.8.13、Spotless Maven 2.44.0 / google-java-format 1.19.2；Spotless仅覆盖允许修改的 AuthController。独立 Test Designer 在 specgate-tests/ 冻结测试、补充覆盖率测试及真实命令/HTTP运行器；不得修改生产代码。Implementer仅复制获批配置并修复对应生产逻辑。Frozen runner 必须执行真实的完整 build/test/lint/format check/coverage/runtime，不得用固定JSON状态代替；以测试资源中的H2隔离配置启动真实后端，检查JSON API及前端页面和静态资源HTTP 200，禁止访问生产数据库或真实OAuth。每个冻结case必须先真实失败。格式化后全部门再次执行，Reviewer只读，H1/H3真人确认，归档同一受验commit；全Change串行写入、自动失败预算最多两轮、不推送不部署。"
+                  }
+                ],
+                "revision": 1,
+                "source": "model-proposal"
+              }
+            ],
+            "rounds": [
+              {
+                "answers": [
+                  {
+                    "actor": {
+                      "id": "Administrator",
+                      "kind": "user",
+                      "source": "codex-mcp-os-user"
+                    },
+                    "answer": "按照你的方案来",
+                    "at": "2026-10-26T01:07:44.752Z",
+                    "questionId": "Q-INTAKE-1",
+                    "source": "native-user-provider"
+                  },
+                  {
+                    "actor": {
+                      "id": "Administrator",
+                      "kind": "user",
+                      "source": "codex-mcp-os-user"
+                    },
+                    "answer": "按照你的方案来",
+                    "at": "2026-10-26T01:07:44.752Z",
+                    "questionId": "Q-INTAKE-2",
+                    "source": "native-user-provider"
+                  },
+                  {
+                    "actor": {
+                      "id": "Administrator",
+                      "kind": "user",
+                      "source": "codex-mcp-os-user"
+                    },
+                    "answer": "按照你的方案来",
+                    "at": "2026-10-26T01:07:44.752Z",
+                    "questionId": "Q-INTAKE-3",
+                    "source": "native-user-provider"
+                  },
+                  {
+                    "actor": {
+                      "id": "Administrator",
+                      "kind": "user",
+                      "source": "codex-mcp-os-user"
+                    },
+                    "answer": "按照你的方案来",
+                    "at": "2026-10-26T01:07:44.752Z",
+                    "questionId": "Q-INTAKE-4",
+                    "source": "native-user-provider"
+                  },
+                  {
+                    "actor": {
+                      "id": "Administrator",
+                      "kind": "user",
+                      "source": "codex-mcp-os-user"
+                    },
+                    "answer": "按照你的来",
+                    "at": "2026-10-26T01:07:44.752Z",
+                    "questionId": "Q-INTAKE-5",
+                    "source": "native-user-provider"
+                  }
+                ],
+                "at": "2026-10-26T01:05:49.591Z",
+                "questions": [
+                  {
+                    "category": "functional",
+                    "id": "Q-INTAKE-1",
+                    "text": "这个变更要解决的核心问题是什么？目标用户和期望结果是什么？"
+                  },
+                  {
+                    "category": "constraint",
+                    "id": "Q-INTAKE-2",
+                    "text": "哪些内容明确在范围内，哪些明确不在范围内？"
+                  },
+                  {
+                    "category": "acceptance",
+                    "id": "Q-INTAKE-3",
+                    "text": "完成后有哪些可观察、可验证的验收标准？"
+                  },
+                  {
+                    "category": "failure",
+                    "id": "Q-INTAKE-4",
+                    "text": "需要覆盖哪些失败、边界或兼容场景？"
+                  },
+                  {
+                    "category": "security",
+                    "id": "Q-INTAKE-5",
+                    "text": "有哪些安全、性能或并发约束？"
+                  }
+                ],
+                "round": 1,
+                "source": "server-intake",
+                "status": "answered"
+              }
+            ]
+          },
+          "plan": {
+            "hash": "sha256:426fc067cae0a3e5c6df6f3664aabb8b452a47b20ee2adb92ddef725899da878",
+            "path": ".specgate/codex/changes/github-skillhub-lint-format-check-http-b3f525860fd4/plan/plan-426fc067cae0a3e5c6df6f3664aabb8b452a47b20ee2adb92ddef725899da878.json",
+            "version": 1
+          },
+          "prerequisiteVerification": null,
+          "project": {
+            "baselineId": "baseline-3f8381e9b38f8a0d",
+            "baselineStatus": "known-failures",
+            "environmentFingerprint": "35d375169d144fc09999110af9771723cf3e542d4f46a4732da4b91d6e346ba7",
+            "mode": "adopted",
+            "projectId": "project-3d2b3b864d29e724"
+          }
+        },
+        "phase": "PLANNED",
+        "resumePhase": null,
+        "retries": {},
+        "schemaVersion": 1,
+        "version": 16
+      },
+      "timestamp": "2026-10-26T01:19:50.546Z",
+      "type": "state.transitioned"
+    },
+    "snapshotPending": false,
+    "plan": {
+      "schemaVersion": 1,
+      "version": 1,
+      "changeId": "github-skillhub-lint-format-check-http-b3f525860fd4",
+      "requirementsHash": "sha256:ea68148eca78df03d79afe436a8a1a5e9ef26ed70a138cd783d6a1d10ade098c",
+      "approvalSource": "codex-mcp-os-user",
+      "runtimeApprovalAttested": false,
+      "graph": {
+        "schemaVersion": 1,
+        "maxParallelDevelopment": 1,
+        "acs": [
+          {
+            "id": "CANARY-AC-01",
+            "requirementId": "CANARY-REQ-01",
+            "text": "GET /api/auth/github 返回可用于当前服务入口的 OAuth2 authorization 跳转；既有 AuthControllerTest.githubLogin_shouldRedirectToOAuth2Authorization 及全部后端119项测试真实通过，0 failed/skip/cancel。",
+            "caseId": "CASE-CANARY-AC-01"
+          },
+          {
+            "id": "CANARY-AC-02",
+            "requirementId": "CANARY-REQ-02",
+            "text": "npm run build、npm test（原49项，0 failed/skip/cancel）、npm run lint、npm run format:check 均退出0；生产TypeScript类型检查继续执行，确定性format只处理本需求允许的配置文件。",
+            "caseId": "CASE-CANARY-AC-02"
+          },
+          {
+            "id": "CANARY-AC-03",
+            "requirementId": "CANARY-REQ-03",
+            "text": "同一固定提交上后端和前端真实覆盖率分别 lines>=80%、branches>=70%，变更行覆盖率>=90%；真实服务HTTP JSON查询、前端HTML/静态资源均200并记录PID及终止证据。格式化后全量重验、独立Review、H3和DeliveryRecord均绑定该提交；任何缺失/跳过/超时/失败、白名单或测试篡改、旧commit证据、无人工批准都阻断。",
+            "caseId": "CASE-CANARY-AC-03"
+          }
+        ],
+        "tasks": [
+          {
+            "id": "contract",
+            "kind": "contract",
+            "role": "backend",
+            "acIds": [
+              "CANARY-AC-01",
+              "CANARY-AC-02",
+              "CANARY-AC-03"
+            ],
+            "caseIds": [
+              "CASE-CANARY-AC-01",
+              "CASE-CANARY-AC-02",
+              "CASE-CANARY-AC-03"
+            ],
+            "deps": [],
+            "dependencies": [],
+            "acceptance": [
+              "Freeze the versioned API contract with every acceptance criterion mapped."
+            ],
+            "requirementIds": [
+              "CANARY-REQ-01",
+              "CANARY-REQ-02",
+              "CANARY-REQ-03"
+            ],
+            "verification": [
+              "CASE-CANARY-AC-01",
+              "CASE-CANARY-AC-02",
+              "CASE-CANARY-AC-03"
+            ],
+            "allowedFiles": [
+              "docs/**"
+            ],
+            "forbiddenFiles": [
+              ".specgate/**",
+              "**/tests/**",
+              "**/test/**",
+              "**/acceptance/**",
+              "**/*.test.*",
+              "**/*.spec.*"
+            ],
+            "dependencyChanges": [
+              {
+                "acIds": [
+                  "CANARY-AC-02"
+                ],
+                "file": "frontend/package.json",
+                "hash": "sha256:10bd9aa7a199a9f4ae67b8387caa12004d7dd5e8e2f16c7f39501bb9094725c3"
+              },
+              {
+                "acIds": [
+                  "CANARY-AC-02"
+                ],
+                "file": "frontend/package-lock.json",
+                "hash": "sha256:979e4f60d02cf847029e2e7faba1edc523cf5a011523603b922d54a5d181af5a"
+              },
+              {
+                "acIds": [
+                  "CANARY-AC-03"
+                ],
+                "file": "backend/pom.xml",
+                "hash": "sha256:f3a3615e9d46f91256269464e8531bd4b325f2cbdf64d6f39e35ccbab0fac0f6"
+              }
+            ]
+          },
+          {
+            "id": "model",
+            "kind": "model",
+            "role": "backend",
+            "acIds": [
+              "CANARY-AC-01",
+              "CANARY-AC-02",
+              "CANARY-AC-03"
+            ],
+            "caseIds": [
+              "CASE-CANARY-AC-01",
+              "CASE-CANARY-AC-02",
+              "CASE-CANARY-AC-03"
+            ],
+            "deps": [
+              "contract"
+            ],
+            "dependencies": [
+              "contract"
+            ],
+            "acceptance": [
+              "Freeze the versioned data model and its constraints."
+            ],
+            "requirementIds": [
+              "CANARY-REQ-01",
+              "CANARY-REQ-02",
+              "CANARY-REQ-03"
+            ],
+            "verification": [
+              "CASE-CANARY-AC-01",
+              "CASE-CANARY-AC-02",
+              "CASE-CANARY-AC-03"
+            ],
+            "allowedFiles": [
+              "docs/**"
+            ],
+            "forbiddenFiles": [
+              ".specgate/**",
+              "**/tests/**",
+              "**/test/**",
+              "**/acceptance/**",
+              "**/*.test.*",
+              "**/*.spec.*"
+            ],
+            "dependencyChanges": [
+              {
+                "acIds": [
+                  "CANARY-AC-02"
+                ],
+                "file": "frontend/package.json",
+                "hash": "sha256:10bd9aa7a199a9f4ae67b8387caa12004d7dd5e8e2f16c7f39501bb9094725c3"
+              },
+              {
+                "acIds": [
+                  "CANARY-AC-02"
+                ],
+                "file": "frontend/package-lock.json",
+                "hash": "sha256:979e4f60d02cf847029e2e7faba1edc523cf5a011523603b922d54a5d181af5a"
+              },
+              {
+                "acIds": [
+                  "CANARY-AC-03"
+                ],
+                "file": "backend/pom.xml",
+                "hash": "sha256:f3a3615e9d46f91256269464e8531bd4b325f2cbdf64d6f39e35ccbab0fac0f6"
+              }
+            ]
+          },
+          {
+            "id": "test-9a1266e28439d8ba",
+            "kind": "test",
+            "role": "test",
+            "acIds": [
+              "CANARY-AC-01"
+            ],
+            "caseIds": [
+              "CASE-CANARY-AC-01"
+            ],
+            "deps": [
+              "contract",
+              "model"
+            ],
+            "dependencies": [
+              "contract",
+              "model"
+            ],
+            "acceptance": [
+              "GET /api/auth/github 返回可用于当前服务入口的 OAuth2 authorization 跳转；既有 AuthControllerTest.githubLogin_shouldRedirectToOAuth2Authorization 及全部后端119项测试真实通过，0 failed/skip/cancel。",
+              "Freeze executable cases and fixtures; retain actual failing baseline evidence before development."
+            ],
+            "requirementIds": [
+              "CANARY-REQ-01"
+            ],
+            "verification": [
+              "CASE-CANARY-AC-01"
+            ],
+            "allowedFiles": [
+              "specgate-tests/**",
+              "specgate-tests.json"
+            ],
+            "forbiddenFiles": [
+              ".specgate/**",
+              "**/tests/**",
+              "**/test/**",
+              "**/acceptance/**",
+              "**/*.test.*",
+              "**/*.spec.*"
+            ],
+            "dependencyChanges": []
+          },
+          {
+            "id": "backend-9a1266e28439d8ba",
+            "kind": "backend",
+            "role": "backend",
+            "acIds": [
+              "CANARY-AC-01"
+            ],
+            "caseIds": [
+              "CASE-CANARY-AC-01"
+            ],
+            "deps": [
+              "contract",
+              "model",
+              "test-9a1266e28439d8ba"
+            ],
+            "dependencies": [
+              "contract",
+              "model",
+              "test-9a1266e28439d8ba"
+            ],
+            "acceptance": [
+              "GET /api/auth/github 返回可用于当前服务入口的 OAuth2 authorization 跳转；既有 AuthControllerTest.githubLogin_shouldRedirectToOAuth2Authorization 及全部后端119项测试真实通过，0 failed/skip/cancel。",
+              "Pass CASE-CANARY-AC-01 against the frozen contract and model."
+            ],
+            "requirementIds": [
+              "CANARY-REQ-01"
+            ],
+            "verification": [
+              "CASE-CANARY-AC-01"
+            ],
+            "allowedFiles": [
+              "backend/pom.xml",
+              "backend/src/main/java/com/agentskills/sharing/controller/AuthController.java"
+            ],
+            "forbiddenFiles": [
+              "backend/src/test/**",
+              "specgate-tests/**",
+              "specgate-tests.json",
+              "frontend/**",
+              ".specgate/**"
+            ],
+            "dependencyChanges": []
+          },
+          {
+            "id": "frontend-9a1266e28439d8ba",
+            "kind": "frontend",
+            "role": "frontend",
+            "acIds": [
+              "CANARY-AC-01"
+            ],
+            "caseIds": [
+              "CASE-CANARY-AC-01"
+            ],
+            "deps": [
+              "contract",
+              "model",
+              "test-9a1266e28439d8ba"
+            ],
+            "dependencies": [
+              "contract",
+              "model",
+              "test-9a1266e28439d8ba"
+            ],
+            "acceptance": [
+              "GET /api/auth/github 返回可用于当前服务入口的 OAuth2 authorization 跳转；既有 AuthControllerTest.githubLogin_shouldRedirectToOAuth2Authorization 及全部后端119项测试真实通过，0 failed/skip/cancel。",
+              "Pass CASE-CANARY-AC-01 against the frozen contract and model."
+            ],
+            "requirementIds": [
+              "CANARY-REQ-01"
+            ],
+            "verification": [
+              "CASE-CANARY-AC-01"
+            ],
+            "allowedFiles": [
+              "frontend/package.json",
+              "frontend/package-lock.json",
+              "frontend/vite.config.ts",
+              "frontend/tsconfig.app.json",
+              "frontend/tsconfig.node.json",
+              "frontend/.prettierrc.json"
+            ],
+            "forbiddenFiles": [
+              "frontend/src/**/*.test.*",
+              "frontend/src/**/*.spec.*",
+              "specgate-tests/**",
+              "specgate-tests.json",
+              "backend/**",
+              ".specgate/**"
+            ],
+            "dependencyChanges": []
+          },
+          {
+            "id": "test-f54a7c182e6eb17c",
+            "kind": "test",
+            "role": "test",
+            "acIds": [
+              "CANARY-AC-02"
+            ],
+            "caseIds": [
+              "CASE-CANARY-AC-02"
+            ],
+            "deps": [
+              "contract",
+              "model"
+            ],
+            "dependencies": [
+              "contract",
+              "model"
+            ],
+            "acceptance": [
+              "npm run build、npm test（原49项，0 failed/skip/cancel）、npm run lint、npm run format:check 均退出0；生产TypeScript类型检查继续执行，确定性format只处理本需求允许的配置文件。",
+              "Freeze executable cases and fixtures; retain actual failing baseline evidence before development."
+            ],
+            "requirementIds": [
+              "CANARY-REQ-02"
+            ],
+            "verification": [
+              "CASE-CANARY-AC-02"
+            ],
+            "allowedFiles": [
+              "specgate-tests/**",
+              "specgate-tests.json"
+            ],
+            "forbiddenFiles": [
+              ".specgate/**",
+              "**/tests/**",
+              "**/test/**",
+              "**/acceptance/**",
+              "**/*.test.*",
+              "**/*.spec.*"
+            ],
+            "dependencyChanges": [
+              {
+                "acIds": [
+                  "CANARY-AC-02"
+                ],
+                "file": "frontend/package.json",
+                "hash": "sha256:10bd9aa7a199a9f4ae67b8387caa12004d7dd5e8e2f16c7f39501bb9094725c3"
+              },
+              {
+                "acIds": [
+                  "CANARY-AC-02"
+                ],
+                "file": "frontend/package-lock.json",
+                "hash": "sha256:979e4f60d02cf847029e2e7faba1edc523cf5a011523603b922d54a5d181af5a"
+              }
+            ]
+          },
+          {
+            "id": "backend-f54a7c182e6eb17c",
+            "kind": "backend",
+            "role": "backend",
+            "acIds": [
+              "CANARY-AC-02"
+            ],
+            "caseIds": [
+              "CASE-CANARY-AC-02"
+            ],
+            "deps": [
+              "contract",
+              "model",
+              "test-f54a7c182e6eb17c"
+            ],
+            "dependencies": [
+              "contract",
+              "model",
+              "test-f54a7c182e6eb17c"
+            ],
+            "acceptance": [
+              "npm run build、npm test（原49项，0 failed/skip/cancel）、npm run lint、npm run format:check 均退出0；生产TypeScript类型检查继续执行，确定性format只处理本需求允许的配置文件。",
+              "Pass CASE-CANARY-AC-02 against the frozen contract and model."
+            ],
+            "requirementIds": [
+              "CANARY-REQ-02"
+            ],
+            "verification": [
+              "CASE-CANARY-AC-02"
+            ],
+            "allowedFiles": [
+              "backend/pom.xml",
+              "backend/src/main/java/com/agentskills/sharing/controller/AuthController.java"
+            ],
+            "forbiddenFiles": [
+              "backend/src/test/**",
+              "specgate-tests/**",
+              "specgate-tests.json",
+              "frontend/**",
+              ".specgate/**"
+            ],
+            "dependencyChanges": [
+              {
+                "acIds": [
+                  "CANARY-AC-02"
+                ],
+                "file": "frontend/package.json",
+                "hash": "sha256:10bd9aa7a199a9f4ae67b8387caa12004d7dd5e8e2f16c7f39501bb9094725c3"
+              },
+              {
+                "acIds": [
+                  "CANARY-AC-02"
+                ],
+                "file": "frontend/package-lock.json",
+                "hash": "sha256:979e4f60d02cf847029e2e7faba1edc523cf5a011523603b922d54a5d181af5a"
+              }
+            ]
+          },
+          {
+            "id": "frontend-f54a7c182e6eb17c",
+            "kind": "frontend",
+            "role": "frontend",
+            "acIds": [
+              "CANARY-AC-02"
+            ],
+            "caseIds": [
+              "CASE-CANARY-AC-02"
+            ],
+            "deps": [
+              "contract",
+              "model",
+              "test-f54a7c182e6eb17c"
+            ],
+            "dependencies": [
+              "contract",
+              "model",
+              "test-f54a7c182e6eb17c"
+            ],
+            "acceptance": [
+              "npm run build、npm test（原49项，0 failed/skip/cancel）、npm run lint、npm run format:check 均退出0；生产TypeScript类型检查继续执行，确定性format只处理本需求允许的配置文件。",
+              "Pass CASE-CANARY-AC-02 against the frozen contract and model."
+            ],
+            "requirementIds": [
+              "CANARY-REQ-02"
+            ],
+            "verification": [
+              "CASE-CANARY-AC-02"
+            ],
+            "allowedFiles": [
+              "frontend/package.json",
+              "frontend/package-lock.json",
+              "frontend/vite.config.ts",
+              "frontend/tsconfig.app.json",
+              "frontend/tsconfig.node.json",
+              "frontend/.prettierrc.json"
+            ],
+            "forbiddenFiles": [
+              "frontend/src/**/*.test.*",
+              "frontend/src/**/*.spec.*",
+              "specgate-tests/**",
+              "specgate-tests.json",
+              "backend/**",
+              ".specgate/**"
+            ],
+            "dependencyChanges": [
+              {
+                "acIds": [
+                  "CANARY-AC-02"
+                ],
+                "file": "frontend/package.json",
+                "hash": "sha256:10bd9aa7a199a9f4ae67b8387caa12004d7dd5e8e2f16c7f39501bb9094725c3"
+              },
+              {
+                "acIds": [
+                  "CANARY-AC-02"
+                ],
+                "file": "frontend/package-lock.json",
+                "hash": "sha256:979e4f60d02cf847029e2e7faba1edc523cf5a011523603b922d54a5d181af5a"
+              }
+            ]
+          },
+          {
+            "id": "test-0c147fcaf8abbd5b",
+            "kind": "test",
+            "role": "test",
+            "acIds": [
+              "CANARY-AC-03"
+            ],
+            "caseIds": [
+              "CASE-CANARY-AC-03"
+            ],
+            "deps": [
+              "contract",
+              "model"
+            ],
+            "dependencies": [
+              "contract",
+              "model"
+            ],
+            "acceptance": [
+              "同一固定提交上后端和前端真实覆盖率分别 lines>=80%、branches>=70%，变更行覆盖率>=90%；真实服务HTTP JSON查询、前端HTML/静态资源均200并记录PID及终止证据。格式化后全量重验、独立Review、H3和DeliveryRecord均绑定该提交；任何缺失/跳过/超时/失败、白名单或测试篡改、旧commit证据、无人工批准都阻断。",
+              "Freeze executable cases and fixtures; retain actual failing baseline evidence before development."
+            ],
+            "requirementIds": [
+              "CANARY-REQ-03"
+            ],
+            "verification": [
+              "CASE-CANARY-AC-03"
+            ],
+            "allowedFiles": [
+              "specgate-tests/**",
+              "specgate-tests.json"
+            ],
+            "forbiddenFiles": [
+              ".specgate/**",
+              "**/tests/**",
+              "**/test/**",
+              "**/acceptance/**",
+              "**/*.test.*",
+              "**/*.spec.*"
+            ],
+            "dependencyChanges": [
+              {
+                "acIds": [
+                  "CANARY-AC-03"
+                ],
+                "file": "backend/pom.xml",
+                "hash": "sha256:f3a3615e9d46f91256269464e8531bd4b325f2cbdf64d6f39e35ccbab0fac0f6"
+              }
+            ]
+          },
+          {
+            "id": "backend-0c147fcaf8abbd5b",
+            "kind": "backend",
+            "role": "backend",
+            "acIds": [
+              "CANARY-AC-03"
+            ],
+            "caseIds": [
+              "CASE-CANARY-AC-03"
+            ],
+            "deps": [
+              "contract",
+              "model",
+              "test-0c147fcaf8abbd5b"
+            ],
+            "dependencies": [
+              "contract",
+              "model",
+              "test-0c147fcaf8abbd5b"
+            ],
+            "acceptance": [
+              "同一固定提交上后端和前端真实覆盖率分别 lines>=80%、branches>=70%，变更行覆盖率>=90%；真实服务HTTP JSON查询、前端HTML/静态资源均200并记录PID及终止证据。格式化后全量重验、独立Review、H3和DeliveryRecord均绑定该提交；任何缺失/跳过/超时/失败、白名单或测试篡改、旧commit证据、无人工批准都阻断。",
+              "Pass CASE-CANARY-AC-03 against the frozen contract and model."
+            ],
+            "requirementIds": [
+              "CANARY-REQ-03"
+            ],
+            "verification": [
+              "CASE-CANARY-AC-03"
+            ],
+            "allowedFiles": [
+              "backend/pom.xml",
+              "backend/src/main/java/com/agentskills/sharing/controller/AuthController.java"
+            ],
+            "forbiddenFiles": [
+              "backend/src/test/**",
+              "specgate-tests/**",
+              "specgate-tests.json",
+              "frontend/**",
+              ".specgate/**"
+            ],
+            "dependencyChanges": [
+              {
+                "acIds": [
+                  "CANARY-AC-03"
+                ],
+                "file": "backend/pom.xml",
+                "hash": "sha256:f3a3615e9d46f91256269464e8531bd4b325f2cbdf64d6f39e35ccbab0fac0f6"
+              }
+            ]
+          },
+          {
+            "id": "frontend-0c147fcaf8abbd5b",
+            "kind": "frontend",
+            "role": "frontend",
+            "acIds": [
+              "CANARY-AC-03"
+            ],
+            "caseIds": [
+              "CASE-CANARY-AC-03"
+            ],
+            "deps": [
+              "contract",
+              "model",
+              "test-0c147fcaf8abbd5b"
+            ],
+            "dependencies": [
+              "contract",
+              "model",
+              "test-0c147fcaf8abbd5b"
+            ],
+            "acceptance": [
+              "同一固定提交上后端和前端真实覆盖率分别 lines>=80%、branches>=70%，变更行覆盖率>=90%；真实服务HTTP JSON查询、前端HTML/静态资源均200并记录PID及终止证据。格式化后全量重验、独立Review、H3和DeliveryRecord均绑定该提交；任何缺失/跳过/超时/失败、白名单或测试篡改、旧commit证据、无人工批准都阻断。",
+              "Pass CASE-CANARY-AC-03 against the frozen contract and model."
+            ],
+            "requirementIds": [
+              "CANARY-REQ-03"
+            ],
+            "verification": [
+              "CASE-CANARY-AC-03"
+            ],
+            "allowedFiles": [
+              "frontend/package.json",
+              "frontend/package-lock.json",
+              "frontend/vite.config.ts",
+              "frontend/tsconfig.app.json",
+              "frontend/tsconfig.node.json",
+              "frontend/.prettierrc.json"
+            ],
+            "forbiddenFiles": [
+              "frontend/src/**/*.test.*",
+              "frontend/src/**/*.spec.*",
+              "specgate-tests/**",
+              "specgate-tests.json",
+              "backend/**",
+              ".specgate/**"
+            ],
+            "dependencyChanges": [
+              {
+                "acIds": [
+                  "CANARY-AC-03"
+                ],
+                "file": "backend/pom.xml",
+                "hash": "sha256:f3a3615e9d46f91256269464e8531bd4b325f2cbdf64d6f39e35ccbab0fac0f6"
+              }
+            ]
+          },
+          {
+            "id": "integration-55f5396c309f76a4",
+            "kind": "integration",
+            "role": "integration",
+            "acIds": [
+              "CANARY-AC-01"
+            ],
+            "caseIds": [
+              "CASE-CANARY-AC-01"
+            ],
+            "deps": [
+              "backend-9a1266e28439d8ba",
+              "frontend-9a1266e28439d8ba"
+            ],
+            "dependencies": [
+              "backend-9a1266e28439d8ba",
+              "frontend-9a1266e28439d8ba"
+            ],
+            "acceptance": [
+              "修复既有 GitHub 登录跳转，不再绑定开发机 localhost:18123；只修改 backend/src/main/java/com/agentskills/sharing/controller/AuthController.java 的相关逻辑，并遵循已声明 Spotless 格式。保留原有全部后端测试，不调用真实 GitHub OAuth 或生产服务。",
+              "Reconcile integrated behavior with all mapped cases."
+            ],
+            "requirementIds": [
+              "CANARY-REQ-01"
+            ],
+            "verification": [
+              "CASE-CANARY-AC-01"
+            ],
+            "allowedFiles": [
+              "docs/**"
+            ],
+            "forbiddenFiles": [
+              ".specgate/**",
+              "**/tests/**",
+              "**/test/**",
+              "**/acceptance/**",
+              "**/*.test.*",
+              "**/*.spec.*"
+            ],
+            "dependencyChanges": []
+          },
+          {
+            "id": "docs-55f5396c309f76a4",
+            "kind": "docs",
+            "role": "docs",
+            "acIds": [
+              "CANARY-AC-01"
+            ],
+            "caseIds": [
+              "CASE-CANARY-AC-01"
+            ],
+            "deps": [
+              "integration-55f5396c309f76a4"
+            ],
+            "dependencies": [
+              "integration-55f5396c309f76a4"
+            ],
+            "acceptance": [
+              "Update documentation for the mapped acceptance criteria."
+            ],
+            "requirementIds": [
+              "CANARY-REQ-01"
+            ],
+            "verification": [
+              "CASE-CANARY-AC-01"
+            ],
+            "allowedFiles": [
+              "docs/**"
+            ],
+            "forbiddenFiles": [
+              ".specgate/**",
+              "**/tests/**",
+              "**/test/**",
+              "**/acceptance/**",
+              "**/*.test.*",
+              "**/*.spec.*"
+            ],
+            "dependencyChanges": []
+          },
+          {
+            "id": "integration-11edf4c07d4f21fb",
+            "kind": "integration",
+            "role": "integration",
+            "acIds": [
+              "CANARY-AC-02"
+            ],
+            "caseIds": [
+              "CASE-CANARY-AC-02"
+            ],
+            "deps": [
+              "backend-f54a7c182e6eb17c",
+              "frontend-f54a7c182e6eb17c"
+            ],
+            "dependencies": [
+              "backend-f54a7c182e6eb17c",
+              "frontend-f54a7c182e6eb17c"
+            ],
+            "acceptance": [
+              "修复 Vue 3 生产构建，测试 mock 类型不进入生产应用检查，但原前端49项测试仍独立完整运行。使用已审阅候选配置：.specgate/codex/evidence/proposed-config/frontend/{package.json,package-lock.json,vite.config.ts,tsconfig.app.json,tsconfig.node.json,.prettierrc.json}。新增验证依赖仅为固定 @types/node 25.3.3、@vitest/coverage-v8 3.2.4 和 Prettier 3.9.10；不得修改或删减原测试与断言。",
+              "Reconcile integrated behavior with all mapped cases."
+            ],
+            "requirementIds": [
+              "CANARY-REQ-02"
+            ],
+            "verification": [
+              "CASE-CANARY-AC-02"
+            ],
+            "allowedFiles": [
+              "docs/**"
+            ],
+            "forbiddenFiles": [
+              ".specgate/**",
+              "**/tests/**",
+              "**/test/**",
+              "**/acceptance/**",
+              "**/*.test.*",
+              "**/*.spec.*"
+            ],
+            "dependencyChanges": [
+              {
+                "acIds": [
+                  "CANARY-AC-02"
+                ],
+                "file": "frontend/package.json",
+                "hash": "sha256:10bd9aa7a199a9f4ae67b8387caa12004d7dd5e8e2f16c7f39501bb9094725c3"
+              },
+              {
+                "acIds": [
+                  "CANARY-AC-02"
+                ],
+                "file": "frontend/package-lock.json",
+                "hash": "sha256:979e4f60d02cf847029e2e7faba1edc523cf5a011523603b922d54a5d181af5a"
+              }
+            ]
+          },
+          {
+            "id": "docs-11edf4c07d4f21fb",
+            "kind": "docs",
+            "role": "docs",
+            "acIds": [
+              "CANARY-AC-02"
+            ],
+            "caseIds": [
+              "CASE-CANARY-AC-02"
+            ],
+            "deps": [
+              "integration-11edf4c07d4f21fb"
+            ],
+            "dependencies": [
+              "integration-11edf4c07d4f21fb"
+            ],
+            "acceptance": [
+              "Update documentation for the mapped acceptance criteria."
+            ],
+            "requirementIds": [
+              "CANARY-REQ-02"
+            ],
+            "verification": [
+              "CASE-CANARY-AC-02"
+            ],
+            "allowedFiles": [
+              "docs/**"
+            ],
+            "forbiddenFiles": [
+              ".specgate/**",
+              "**/tests/**",
+              "**/test/**",
+              "**/acceptance/**",
+              "**/*.test.*",
+              "**/*.spec.*"
+            ],
+            "dependencyChanges": [
+              {
+                "acIds": [
+                  "CANARY-AC-02"
+                ],
+                "file": "frontend/package.json",
+                "hash": "sha256:10bd9aa7a199a9f4ae67b8387caa12004d7dd5e8e2f16c7f39501bb9094725c3"
+              },
+              {
+                "acIds": [
+                  "CANARY-AC-02"
+                ],
+                "file": "frontend/package-lock.json",
+                "hash": "sha256:979e4f60d02cf847029e2e7faba1edc523cf5a011523603b922d54a5d181af5a"
+              }
+            ]
+          },
+          {
+            "id": "integration-b9cdaed79d51c032",
+            "kind": "integration",
+            "role": "integration",
+            "acIds": [
+              "CANARY-AC-03"
+            ],
+            "caseIds": [
+              "CASE-CANARY-AC-03"
+            ],
+            "deps": [
+              "backend-0c147fcaf8abbd5b",
+              "frontend-0c147fcaf8abbd5b"
+            ],
+            "dependencies": [
+              "backend-0c147fcaf8abbd5b",
+              "frontend-0c147fcaf8abbd5b"
+            ],
+            "acceptance": [
+              "为本机隔离验收补齐真实验证证据。后端仅按已审阅 .specgate/codex/evidence/proposed-config/backend/pom.xml 使用 JaCoCo 0.8.13、Spotless Maven 2.44.0 / google-java-format 1.19.2；Spotless仅覆盖允许修改的 AuthController。独立 Test Designer 在 specgate-tests/ 冻结测试、补充覆盖率测试及真实命令/HTTP运行器；不得修改生产代码。Implementer仅复制获批配置并修复对应生产逻辑。Frozen runner 必须执行真实的完整 build/test/lint/format check/coverage/runtime，不得用固定JSON状态代替；以测试资源中的H2隔离配置启动真实后端，检查JSON API及前端页面和静态资源HTTP 200，禁止访问生产数据库或真实OAuth。每个冻结case必须先真实失败。格式化后全部门再次执行，Reviewer只读，H1/H3真人确认，归档同一受验commit；全Change串行写入、自动失败预算最多两轮、不推送不部署。",
+              "Reconcile integrated behavior with all mapped cases."
+            ],
+            "requirementIds": [
+              "CANARY-REQ-03"
+            ],
+            "verification": [
+              "CASE-CANARY-AC-03"
+            ],
+            "allowedFiles": [
+              "docs/**"
+            ],
+            "forbiddenFiles": [
+              ".specgate/**",
+              "**/tests/**",
+              "**/test/**",
+              "**/acceptance/**",
+              "**/*.test.*",
+              "**/*.spec.*"
+            ],
+            "dependencyChanges": [
+              {
+                "acIds": [
+                  "CANARY-AC-03"
+                ],
+                "file": "backend/pom.xml",
+                "hash": "sha256:f3a3615e9d46f91256269464e8531bd4b325f2cbdf64d6f39e35ccbab0fac0f6"
+              }
+            ]
+          },
+          {
+            "id": "docs-b9cdaed79d51c032",
+            "kind": "docs",
+            "role": "docs",
+            "acIds": [
+              "CANARY-AC-03"
+            ],
+            "caseIds": [
+              "CASE-CANARY-AC-03"
+            ],
+            "deps": [
+              "integration-b9cdaed79d51c032"
+            ],
+            "dependencies": [
+              "integration-b9cdaed79d51c032"
+            ],
+            "acceptance": [
+              "Update documentation for the mapped acceptance criteria."
+            ],
+            "requirementIds": [
+              "CANARY-REQ-03"
+            ],
+            "verification": [
+              "CASE-CANARY-AC-03"
+            ],
+            "allowedFiles": [
+              "docs/**"
+            ],
+            "forbiddenFiles": [
+              ".specgate/**",
+              "**/tests/**",
+              "**/test/**",
+              "**/acceptance/**",
+              "**/*.test.*",
+              "**/*.spec.*"
+            ],
+            "dependencyChanges": [
+              {
+                "acIds": [
+                  "CANARY-AC-03"
+                ],
+                "file": "backend/pom.xml",
+                "hash": "sha256:f3a3615e9d46f91256269464e8531bd4b325f2cbdf64d6f39e35ccbab0fac0f6"
+              }
+            ]
+          },
+          {
+            "id": "review-precheck",
+            "kind": "review-precheck",
+            "role": "review",
+            "acIds": [
+              "CANARY-AC-01",
+              "CANARY-AC-02",
+              "CANARY-AC-03"
+            ],
+            "caseIds": [
+              "CASE-CANARY-AC-01",
+              "CASE-CANARY-AC-02",
+              "CASE-CANARY-AC-03"
+            ],
+            "deps": [
+              "integration-55f5396c309f76a4",
+              "integration-11edf4c07d4f21fb",
+              "integration-b9cdaed79d51c032"
+            ],
+            "dependencies": [
+              "integration-55f5396c309f76a4",
+              "integration-11edf4c07d4f21fb",
+              "integration-b9cdaed79d51c032"
+            ],
+            "acceptance": [
+              "Reconcile frozen assets, quality commands and acceptance evidence before Review."
+            ],
+            "requirementIds": [
+              "CANARY-REQ-01",
+              "CANARY-REQ-02",
+              "CANARY-REQ-03"
+            ],
+            "verification": [
+              "CASE-CANARY-AC-01",
+              "CASE-CANARY-AC-02",
+              "CASE-CANARY-AC-03"
+            ],
+            "allowedFiles": [
+              "docs/**"
+            ],
+            "forbiddenFiles": [
+              ".specgate/**",
+              "**/tests/**",
+              "**/test/**",
+              "**/acceptance/**",
+              "**/*.test.*",
+              "**/*.spec.*"
+            ],
+            "dependencyChanges": [
+              {
+                "acIds": [
+                  "CANARY-AC-02"
+                ],
+                "file": "frontend/package.json",
+                "hash": "sha256:10bd9aa7a199a9f4ae67b8387caa12004d7dd5e8e2f16c7f39501bb9094725c3"
+              },
+              {
+                "acIds": [
+                  "CANARY-AC-02"
+                ],
+                "file": "frontend/package-lock.json",
+                "hash": "sha256:979e4f60d02cf847029e2e7faba1edc523cf5a011523603b922d54a5d181af5a"
+              },
+              {
+                "acIds": [
+                  "CANARY-AC-03"
+                ],
+                "file": "backend/pom.xml",
+                "hash": "sha256:f3a3615e9d46f91256269464e8531bd4b325f2cbdf64d6f39e35ccbab0fac0f6"
+              }
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "observedAt": "2026-10-26T01:19:50.556Z"
+}

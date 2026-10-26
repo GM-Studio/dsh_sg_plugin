@@ -1,0 +1,26 @@
+{
+  "checkedAt": "2026-10-26T00:55:31.035Z",
+  "source": "https://github.com/ghdefe/skill-hub",
+  "realCanaryStatus": "BLOCKED",
+  "delivered": false,
+  "projects": [
+    {
+      "root": "E:/ai_workflow/specgate-canary-skill-hub",
+      "commit": "92b917c37e2f6209ac262ec3df60f35c1b842d41",
+      "branch": "main",
+      "status": ""
+    },
+    {
+      "root": "E:/ai_workflow/specgate-canary-skill-hub-stable",
+      "commit": "9c8838018930d13cb9471d105b6f78f4fa7e8310",
+      "branch": "",
+      "status": "?? frontend/tsconfig.app.tsbuildinfo\n?? frontend/tsconfig.node.tsbuildinfo"
+    },
+    {
+      "root": "E:/ai_workflow/specgate-canary-skill-hub-initial",
+      "commit": "81f84c0eb793c72675b3687fa7b991b6e4d659c7",
+      "branch": "",
+      "status": "?? frontend/tsconfig.app.tsbuildinfo\n?? frontend/tsconfig.node.tsbuildinfo"
+    }
+  ]
+}

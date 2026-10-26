@@ -167,6 +167,8 @@ export async function verifyAdoptedProject({
       status: raw.status,
       exitCode: raw.exitCode,
       durationMs: raw.durationMs || 0,
+      startedAt: raw.startedAt || null,
+      finishedAt: raw.finishedAt || null,
       stdout: String(raw.stdout || '').slice(-4000),
       stderr: String(raw.stderr || '').slice(-4000),
       evidence,

@@ -1,0 +1,95 @@
+{
+  "tool": "sg_adopt_preview",
+  "args": {},
+  "result": {
+    "ok": true,
+    "root": "E:\\ai_workflow\\specgate-canary-skill-hub-initial",
+    "stack": "java-vue",
+    "profile": {
+      "schemaVersion": 2,
+      "projectId": "project-3d2b3b864d29e724",
+      "mode": "adopted",
+      "stack": "java-vue",
+      "root": "E:\\ai_workflow\\specgate-canary-skill-hub-initial",
+      "targetBranch": "codex/core-canary-repair",
+      "remoteUrl": "https://github.com/ghdefe/skill-hub.git",
+      "backendPackage": "com.agentskills.sharing",
+      "frontendDefaultLocale": "zh-CN",
+      "frontendLocales": [
+        "zh-CN"
+      ],
+      "frontendFramework": "vue",
+      "commands": {
+        "install": [],
+        "build": [
+          {
+            "id": "backend-build",
+            "cwd": "backend",
+            "argv": [
+              "mvn",
+              "-B",
+              "-ntp",
+              "clean",
+              "verify"
+            ]
+          },
+          {
+            "id": "frontend-build",
+            "cwd": "frontend",
+            "argv": [
+              "npm",
+              "run",
+              "build"
+            ]
+          }
+        ],
+        "test": [
+          {
+            "id": "backend-test",
+            "cwd": "backend",
+            "argv": [
+              "mvn",
+              "-B",
+              "-ntp",
+              "test"
+            ]
+          },
+          {
+            "id": "frontend-test",
+            "cwd": "frontend",
+            "argv": [
+              "npm",
+              "run",
+              "test"
+            ]
+          }
+        ],
+        "lint": [],
+        "format": [],
+        "runtime": []
+      },
+      "protectedPaths": [],
+      "createdAt": "2026-10-26T01:02:53.466Z",
+      "updatedAt": "2026-10-26T01:02:53.466Z"
+    },
+    "previewHash": "02a199976fe5748fb322f178b73de8803a081c2e02a9d25aaa434c034d6fa251",
+    "git": {
+      "repository": true,
+      "branch": "codex/core-canary-repair",
+      "clean": true,
+      "dirtyFiles": [],
+      "remoteUrl": "https://github.com/ghdefe/skill-hub.git",
+      "commit": "81f84c0eb793c72675b3687fa7b991b6e4d659c7"
+    },
+    "needsBaselineCommit": false,
+    "dirty": {
+      "files": [],
+      "proposal": {
+        "message": "chore: establish adopted project baseline",
+        "paths": []
+      }
+    },
+    "risks": []
+  },
+  "observedAt": "2026-10-26T01:02:53.592Z"
+}

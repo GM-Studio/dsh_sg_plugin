@@ -1,0 +1,73 @@
+
+> skillhub-frontend@0.1.0 build
+> vue-tsc -b && vite build
+
+src/views/HomePage.test.ts(38,18): error TS2339: Property 'mockImplementation' does not exist on type '<T = any, R = AxiosResponse<T, any, {}>, D = any>(url: string, config?: AxiosRequestConfig<D> | undefined) => Promise<R>'.
+src/views/HomePage.test.ts(81,18): error TS2339: Property 'mockImplementation' does not exist on type '<T = any, R = AxiosResponse<T, any, {}>, D = any>(url: string, config?: AxiosRequestConfig<D> | undefined) => Promise<R>'.
+src/views/HomePage.test.ts(94,43): error TS2339: Property 'mock' does not exist on type '<T = any, R = AxiosResponse<T, any, {}>, D = any>(url: string, config?: AxiosRequestConfig<D> | undefined) => Promise<R>'.
+src/views/HomePage.test.ts(94,61): error TS7006: Parameter 'c' implicitly has an 'any' type.
+src/views/HomePage.test.ts(102,25): error TS2339: Property 'mock' does not exist on type '<T = any, R = AxiosResponse<T, any, {}>, D = any>(url: string, config?: AxiosRequestConfig<D> | undefined) => Promise<R>'.
+src/views/HomePage.test.ts(102,43): error TS7006: Parameter 'c' implicitly has an 'any' type.
+src/views/HomePage.test.ts(109,37): error TS2339: Property 'mock' does not exist on type '<T = any, R = AxiosResponse<T, any, {}>, D = any>(url: string, config?: AxiosRequestConfig<D> | undefined) => Promise<R>'.
+src/views/HomePage.test.ts(109,55): error TS7006: Parameter 'c' implicitly has an 'any' type.
+src/views/HomePage.test.ts(119,18): error TS2339: Property 'mockImplementation' does not exist on type '<T = any, R = AxiosResponse<T, any, {}>, D = any>(url: string, config?: AxiosRequestConfig<D> | undefined) => Promise<R>'.
+src/views/HomePage.test.ts(135,18): error TS2339: Property 'mockImplementation' does not exist on type '<T = any, R = AxiosResponse<T, any, {}>, D = any>(url: string, config?: AxiosRequestConfig<D> | undefined) => Promise<R>'.
+src/views/HomePage.test.ts(162,37): error TS2339: Property 'mock' does not exist on type '<T = any, R = AxiosResponse<T, any, {}>, D = any>(url: string, config?: AxiosRequestConfig<D> | undefined) => Promise<R>'.
+src/views/HomePage.test.ts(162,55): error TS7006: Parameter 'c' implicitly has an 'any' type.
+src/views/HomePage.test.ts(172,18): error TS2339: Property 'mockImplementation' does not exist on type '<T = any, R = AxiosResponse<T, any, {}>, D = any>(url: string, config?: AxiosRequestConfig<D> | undefined) => Promise<R>'.
+src/views/HomePage.test.ts(181,11): error TS6133: 'wrapper' is declared but its value is never read.
+src/views/HomePage.test.ts(185,39): error TS2339: Property 'mock' does not exist on type '<T = any, R = AxiosResponse<T, any, {}>, D = any>(url: string, config?: AxiosRequestConfig<D> | undefined) => Promise<R>'.
+src/views/HomePage.test.ts(185,57): error TS7006: Parameter 'c' implicitly has an 'any' type.
+src/views/RepositoriesPage.test.ts(31,18): error TS2339: Property 'mockResolvedValue' does not exist on type '<T = any, R = AxiosResponse<T, any, {}>, D = any>(url: string, config?: AxiosRequestConfig<D> | undefined) => Promise<R>'.
+src/views/RepositoriesPage.test.ts(49,19): error TS2339: Property 'mockResolvedValue' does not exist on type '<T = any, R = AxiosResponse<T, any, {}>, D = any>(url: string, data?: D | undefined, config?: AxiosRequestConfig<D> | undefined) => Promise<R>'.
+src/views/RepositoriesPage.test.ts(63,19): error TS2339: Property 'mockReturnValue' does not exist on type '<T = any, R = AxiosResponse<T, any, {}>, D = any>(url: string, data?: D | undefined, config?: AxiosRequestConfig<D> | undefined) => Promise<R>'.
+src/views/RepositoriesPage.test.ts(85,19): error TS2339: Property 'mockResolvedValue' does not exist on type '<T = any, R = AxiosResponse<T, any, {}>, D = any>(url: string, data?: D | undefined, config?: AxiosRequestConfig<D> | undefined) => Promise<R>'.
+src/views/RepositoriesPage.test.ts(100,19): error TS2339: Property 'mockRejectedValue' does not exist on type '<T = any, R = AxiosResponse<T, any, {}>, D = any>(url: string, data?: D | undefined, config?: AxiosRequestConfig<D> | undefined) => Promise<R>'.
+src/views/RepositoriesPage.test.ts(114,19): error TS2339: Property 'mockReturnValue' does not exist on type '<T = any, R = AxiosResponse<T, any, {}>, D = any>(url: string, data?: D | undefined, config?: AxiosRequestConfig<D> | undefined) => Promise<R>'.
+src/views/SkillDetailPage.test.ts(64,18): error TS2339: Property 'mockResolvedValue' does not exist on type '<T = any, R = AxiosResponse<T, any, {}>, D = any>(url: string, config?: AxiosRequestConfig<D> | undefined) => Promise<R>'.
+src/views/SkillDetailPage.test.ts(82,18): error TS2339: Property 'mockResolvedValue' does not exist on type '<T = any, R = AxiosResponse<T, any, {}>, D = any>(url: string, config?: AxiosRequestConfig<D> | undefined) => Promise<R>'.
+src/views/SkillDetailPage.test.ts(97,18): error TS2339: Property 'mockResolvedValue' does not exist on type '<T = any, R = AxiosResponse<T, any, {}>, D = any>(url: string, config?: AxiosRequestConfig<D> | undefined) => Promise<R>'.
+src/views/SkillDetailPage.test.ts(112,18): error TS2339: Property 'mockResolvedValue' does not exist on type '<T = any, R = AxiosResponse<T, any, {}>, D = any>(url: string, config?: AxiosRequestConfig<D> | undefined) => Promise<R>'.
+src/views/SkillDetailPage.test.ts(128,18): error TS2339: Property 'mockResolvedValue' does not exist on type '<T = any, R = AxiosResponse<T, any, {}>, D = any>(url: string, config?: AxiosRequestConfig<D> | undefined) => Promise<R>'.
+src/views/SkillDetailPage.test.ts(144,18): error TS2339: Property 'mockReturnValue' does not exist on type '<T = any, R = AxiosResponse<T, any, {}>, D = any>(url: string, config?: AxiosRequestConfig<D> | undefined) => Promise<R>'.
+src/views/SkillDetailPage.test.ts(156,18): error TS2339: Property 'mockRejectedValue' does not exist on type '<T = any, R = AxiosResponse<T, any, {}>, D = any>(url: string, config?: AxiosRequestConfig<D> | undefined) => Promise<R>'.
+src/views/SkillDetailPage.test.ts(169,18): error TS2339: Property 'mockRejectedValue' does not exist on type '<T = any, R = AxiosResponse<T, any, {}>, D = any>(url: string, config?: AxiosRequestConfig<D> | undefined) => Promise<R>'.
+src/views/SkillDetailPage.test.ts(182,18): error TS2339: Property 'mockResolvedValue' does not exist on type '<T = any, R = AxiosResponse<T, any, {}>, D = any>(url: string, config?: AxiosRequestConfig<D> | undefined) => Promise<R>'.
+src/views/SkillDetailPage.test.ts(197,18): error TS2339: Property 'mockResolvedValue' does not exist on type '<T = any, R = AxiosResponse<T, any, {}>, D = any>(url: string, config?: AxiosRequestConfig<D> | undefined) => Promise<R>'.
+src/views/SkillDetailPage.test.ts(198,19): error TS2339: Property 'mockResolvedValue' does not exist on type '<T = any, R = AxiosResponse<T, any, {}>, D = any>(url: string, data?: D | undefined, config?: AxiosRequestConfig<D> | undefined) => Promise<R>'.
+src/views/SkillDetailPage.test.ts(223,18): error TS2339: Property 'mockResolvedValue' does not exist on type '<T = any, R = AxiosResponse<T, any, {}>, D = any>(url: string, config?: AxiosRequestConfig<D> | undefined) => Promise<R>'.
+src/views/SkillDetailPage.test.ts(224,19): error TS2339: Property 'mockResolvedValue' does not exist on type '<T = any, R = AxiosResponse<T, any, {}>, D = any>(url: string, data?: D | undefined, config?: AxiosRequestConfig<D> | undefined) => Promise<R>'.
+src/views/SkillDetailPage.test.ts(244,18): error TS2339: Property 'mockResolvedValue' does not exist on type '<T = any, R = AxiosResponse<T, any, {}>, D = any>(url: string, config?: AxiosRequestConfig<D> | undefined) => Promise<R>'.
+src/views/SkillDetailPage.test.ts(267,18): error TS2339: Property 'mockResolvedValue' does not exist on type '<T = any, R = AxiosResponse<T, any, {}>, D = any>(url: string, config?: AxiosRequestConfig<D> | undefined) => Promise<R>'.
+src/views/SkillDetailPage.test.ts(282,18): error TS2339: Property 'mockResolvedValue' does not exist on type '<T = any, R = AxiosResponse<T, any, {}>, D = any>(url: string, config?: AxiosRequestConfig<D> | undefined) => Promise<R>'.
+src/views/SkillGroupDetailPage.test.ts(31,10): error TS2305: Module '"@/composables/useAuth"' has no exported member '__mockState'.
+src/views/SkillGroupDetailPage.test.ts(71,18): error TS2339: Property 'mockResolvedValue' does not exist on type '<T = any, R = AxiosResponse<T, any, {}>, D = any>(url: string, config?: AxiosRequestConfig<D> | undefined) => Promise<R>'.
+src/views/SkillGroupDetailPage.test.ts(88,18): error TS2339: Property 'mockResolvedValue' does not exist on type '<T = any, R = AxiosResponse<T, any, {}>, D = any>(url: string, config?: AxiosRequestConfig<D> | undefined) => Promise<R>'.
+src/views/SkillGroupDetailPage.test.ts(104,18): error TS2339: Property 'mockResolvedValue' does not exist on type '<T = any, R = AxiosResponse<T, any, {}>, D = any>(url: string, config?: AxiosRequestConfig<D> | undefined) => Promise<R>'.
+src/views/SkillGroupDetailPage.test.ts(118,18): error TS2339: Property 'mockResolvedValue' does not exist on type '<T = any, R = AxiosResponse<T, any, {}>, D = any>(url: string, config?: AxiosRequestConfig<D> | undefined) => Promise<R>'.
+src/views/SkillGroupDetailPage.test.ts(131,18): error TS2339: Property 'mockResolvedValue' does not exist on type '<T = any, R = AxiosResponse<T, any, {}>, D = any>(url: string, config?: AxiosRequestConfig<D> | undefined) => Promise<R>'.
+src/views/SkillGroupDetailPage.test.ts(132,19): error TS2339: Property 'mockResolvedValue' does not exist on type '<T = any, R = AxiosResponse<T, any, {}>, D = any>(url: string, data?: D | undefined, config?: AxiosRequestConfig<D> | undefined) => Promise<R>'.
+src/views/SkillGroupDetailPage.test.ts(156,18): error TS2339: Property 'mockResolvedValue' does not exist on type '<T = any, R = AxiosResponse<T, any, {}>, D = any>(url: string, config?: AxiosRequestConfig<D> | undefined) => Promise<R>'.
+src/views/SkillGroupDetailPage.test.ts(157,19): error TS2339: Property 'mockResolvedValue' does not exist on type '<T = any, R = AxiosResponse<T, any, {}>, D = any>(url: string, data?: D | undefined, config?: AxiosRequestConfig<D> | undefined) => Promise<R>'.
+src/views/SkillGroupDetailPage.test.ts(175,18): error TS2339: Property 'mockResolvedValue' does not exist on type '<T = any, R = AxiosResponse<T, any, {}>, D = any>(url: string, config?: AxiosRequestConfig<D> | undefined) => Promise<R>'.
+src/views/SkillGroupDetailPage.test.ts(176,19): error TS2339: Property 'mockResolvedValue' does not exist on type '<T = any, R = AxiosResponse<T, any, {}>, D = any>(url: string, data?: D | undefined, config?: AxiosRequestConfig<D> | undefined) => Promise<R>'.
+src/views/SkillGroupDetailPage.test.ts(202,18): error TS2339: Property 'mockReturnValue' does not exist on type '<T = any, R = AxiosResponse<T, any, {}>, D = any>(url: string, config?: AxiosRequestConfig<D> | undefined) => Promise<R>'.
+src/views/SkillGroupDetailPage.test.ts(214,18): error TS2339: Property 'mockRejectedValue' does not exist on type '<T = any, R = AxiosResponse<T, any, {}>, D = any>(url: string, config?: AxiosRequestConfig<D> | undefined) => Promise<R>'.
+src/views/SkillGroupDetailPage.test.ts(227,18): error TS2339: Property 'mockResolvedValue' does not exist on type '<T = any, R = AxiosResponse<T, any, {}>, D = any>(url: string, config?: AxiosRequestConfig<D> | undefined) => Promise<R>'.
+src/views/SkillGroupDetailPage.test.ts(242,18): error TS2339: Property 'mockResolvedValue' does not exist on type '<T = any, R = AxiosResponse<T, any, {}>, D = any>(url: string, config?: AxiosRequestConfig<D> | undefined) => Promise<R>'.
+src/views/SkillGroupDetailPage.test.ts(259,18): error TS2339: Property 'mockResolvedValue' does not exist on type '<T = any, R = AxiosResponse<T, any, {}>, D = any>(url: string, config?: AxiosRequestConfig<D> | undefined) => Promise<R>'.
+src/views/SkillGroupDetailPage.test.ts(274,18): error TS2339: Property 'mockResolvedValue' does not exist on type '<T = any, R = AxiosResponse<T, any, {}>, D = any>(url: string, config?: AxiosRequestConfig<D> | undefined) => Promise<R>'.
+src/views/SkillGroupDetailPage.test.ts(289,18): error TS2339: Property 'mockResolvedValue' does not exist on type '<T = any, R = AxiosResponse<T, any, {}>, D = any>(url: string, config?: AxiosRequestConfig<D> | undefined) => Promise<R>'.
+src/views/SkillGroupDetailPage.test.ts(304,18): error TS2339: Property 'mockResolvedValue' does not exist on type '<T = any, R = AxiosResponse<T, any, {}>, D = any>(url: string, config?: AxiosRequestConfig<D> | undefined) => Promise<R>'.
+src/views/SkillGroupDetailPage.test.ts(327,18): error TS2339: Property 'mockResolvedValue' does not exist on type '<T = any, R = AxiosResponse<T, any, {}>, D = any>(url: string, config?: AxiosRequestConfig<D> | undefined) => Promise<R>'.
+src/views/SkillGroupDetailPage.test.ts(350,18): error TS2339: Property 'mockResolvedValue' does not exist on type '<T = any, R = AxiosResponse<T, any, {}>, D = any>(url: string, config?: AxiosRequestConfig<D> | undefined) => Promise<R>'.
+src/views/SkillGroupDetailPage.test.ts(351,20): error TS2339: Property 'mockResolvedValue' does not exist on type '<T = any, R = AxiosResponse<T, any, {}>, D = any>(url: string, data?: D | undefined, config?: AxiosRequestConfig<D> | undefined) => Promise<R>'.
+src/views/SkillGroupDetailPage.test.ts(380,18): error TS2339: Property 'mockResolvedValue' does not exist on type '<T = any, R = AxiosResponse<T, any, {}>, D = any>(url: string, config?: AxiosRequestConfig<D> | undefined) => Promise<R>'.
+src/views/SkillGroupDetailPage.test.ts(381,20): error TS2339: Property 'mockRejectedValue' does not exist on type '<T = any, R = AxiosResponse<T, any, {}>, D = any>(url: string, data?: D | undefined, config?: AxiosRequestConfig<D> | undefined) => Promise<R>'.
+src/views/SkillGroupDetailPage.test.ts(405,18): error TS2339: Property 'mockResolvedValue' does not exist on type '<T = any, R = AxiosResponse<T, any, {}>, D = any>(url: string, config?: AxiosRequestConfig<D> | undefined) => Promise<R>'.
+src/views/SkillGroupDetailPage.test.ts(406,20): error TS2339: Property 'mockRejectedValue' does not exist on type '<T = any, R = AxiosResponse<T, any, {}>, D = any>(url: string, data?: D | undefined, config?: AxiosRequestConfig<D> | undefined) => Promise<R>'.
+vite.config.ts(3,25): error TS2307: Cannot find module 'path' or its corresponding type declarations.
+vite.config.ts(9,20): error TS2304: Cannot find name '__dirname'.
+vite.config.ts(28,3): error TS2769: No overload matches this call.
+  The last overload gave the following error.
+    Object literal may only specify known properties, and 'test' does not exist in type 'UserConfigExport'.

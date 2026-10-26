@@ -7,7 +7,7 @@ import { cleanupArchivedWorkspaces } from './cleanup.js';
 import { persistDelivery } from './delivery.js';
 import { gitSafeDirectory } from './git-path.js';
 import { loadProjectReadiness, PROJECT_PROFILE_PATH } from './project-state.js';
-import { createDeliveryRecordV3 } from './control/delivery-controlled.js';
+import { createDeliveryRecordV3 } from './core/delivery-record.js';
 
 const SOURCE_ROOT = path.resolve(fileURLToPath(new URL('../..', import.meta.url)));
 const object = (value) => value !== null && typeof value === 'object' && !Array.isArray(value);
@@ -15,12 +15,6 @@ const digest = (value) => 'sha256:' + hashValue(value);
 const failure = (code, message, extra = {}) => ({ ok: false, code, message, ...extra });
 const fail = (code, message) => {
   throw Object.assign(new Error(message), { code });
-};
-const GIT_ENV = {
-  GIT_AUTHOR_NAME: 'SpecGate Codex',
-  GIT_AUTHOR_EMAIL: 'specgate-codex@localhost',
-  GIT_COMMITTER_NAME: 'SpecGate Codex',
-  GIT_COMMITTER_EMAIL: 'specgate-codex@localhost',
 };
 
 function inside(parent, target) {
@@ -168,6 +162,16 @@ function previewBody(root, state) {
     );
   if (!object(review) || !object(quality))
     return failure('ARCHIVE_PREREQUISITE_MISSING', 'Review and quality evidence are required');
+  if (
+    quality.status !== 'passed' ||
+    quality.integrationCommit !== integrationCommit ||
+    state.context?.review?.reviewedCommit !== integrationCommit ||
+    state.context?.review?.status !== 'passed'
+  )
+    return failure(
+      'ARCHIVE_EVIDENCE_STALE',
+      'Review and quality must cover the current integration commit',
+    );
   const targetBranch = currentBranch(root);
   let project = null;
   let remoteUrl = null;
@@ -272,40 +276,20 @@ function verifyH3Event(root, state) {
 }
 
 function mergeIntegration(root, integration) {
-  const present = gitMaybe(root, ['merge-base', '--is-ancestor', integration.commit, 'HEAD']);
-  if (present !== null)
-    return { ok: true, skipped: true, commit: git(root, ['rev-parse', 'HEAD']) };
+  const currentCommit = git(root, ['rev-parse', 'HEAD']);
+  if (currentCommit === integration.commit)
+    return { ok: true, skipped: true, commit: currentCommit };
   const status = cleanStatus(root);
   if (!status.clean) return failure('MAIN_DIRTY', 'The target worktree must be clean before merge');
+  if (gitMaybe(root, ['merge-base', '--is-ancestor', currentCommit, integration.commit]) === null)
+    return failure(
+      'ARCHIVE_TARGET_DIVERGED',
+      'The target cannot fast-forward to the reviewed commit; preserve both branches and revalidate the integration.',
+    );
   try {
-    git(root, [
-      'merge',
-      '--no-ff',
-      '--no-commit',
-      '-m',
-      `merge ${integration.branch}`,
-      integration.branch,
-    ]);
+    git(root, ['merge', '--ff-only', integration.commit]);
   } catch (error) {
-    const conflicts = gitMaybe(root, ['diff', '--name-only', '--diff-filter=U']) || '';
-    try {
-      git(root, ['merge', '--abort']);
-    } catch {
-      // Preserve the original merge failure.
-    }
-    return failure('ARCHIVE_MERGE_CONFLICT', error.stderr || error.message, {
-      conflicts: conflicts.split('\n').filter(Boolean),
-    });
-  }
-  try {
-    git(root, ['commit', '-m', `merge ${integration.branch}`], GIT_ENV);
-  } catch (error) {
-    try {
-      git(root, ['merge', '--abort']);
-    } catch {
-      // Preserve the original commit failure.
-    }
-    return failure('ARCHIVE_COMMIT_FAILED', error.stderr || error.message);
+    return failure('ARCHIVE_MERGE_CONFLICT', error.stderr || error.message);
   }
   return { ok: true, skipped: false, commit: git(root, ['rev-parse', 'HEAD']) };
 }
@@ -455,8 +439,14 @@ export function createReleaseService({ projectRoot, store, planService } = {}) {
               : 'evidence');
         const knownIssues = [
           ...(assessment.openRisks || []).map((entry) => entry.text),
+          ...(assessment.acCoverage || [])
+            .filter((entry) => entry.sufficiency !== 'sufficient')
+            .map((entry) => `Unverified ${entry.acId}: ${entry.summary}`),
           ...(readiness.baseline.knownFailures || []).map(
             (entry) => `${entry.commandId}: ${entry.signature}`,
+          ),
+          ...(readiness.baseline.unverifiedAreas || []).map(
+            (entry) => `Unverified baseline ${entry.id}: ${entry.description} (${entry.risk})`,
           ),
         ].filter((entry, index, values) => values.indexOf(entry) === index);
         const assessmentHash = hashValue(assessment);
@@ -480,7 +470,7 @@ export function createReleaseService({ projectRoot, store, planService } = {}) {
           knownIssues,
           risks: (assessment.openRisks || []).map((entry) => entry.id),
           rollback: {
-            code: `git revert ${merge.commit}`,
+            code: `From a clean worktree, create a rollback branch, run git restore --source=${development.freezeCommit} --staged --worktree -- . , review the staged diff and commit the rollback. Preserve local delivery evidence.`,
             data: 'No automatic production data rollback was performed.',
             forwardFix: 'Apply a new delivery from the accepted base.',
           },
@@ -517,7 +507,7 @@ export function createReleaseService({ projectRoot, store, planService } = {}) {
             title: contract?.request || loaded.state.changeId,
             summary: `Accepted delivery ${created.delivery.deliveryId}.`,
             verification: evidence,
-            knownIssues: [],
+            knownIssues: created.delivery.knownIssues,
             upgrade: `Deploy commit ${merge.commit}.`,
             rollback: created.delivery.rollback,
           },

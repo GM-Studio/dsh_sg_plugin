@@ -2,6 +2,7 @@ import { spawn } from 'node:child_process';
 import path from 'node:path';
 import { hashValue } from './events.js';
 import { validateProjectBaseline } from './project-model.js';
+import { projectCommandSpec } from './core/project-command.js';
 
 const failure = (code, message) => ({ ok: false, code, message });
 const STATUSES = new Set(['passed', 'failed', 'skipped', 'not-run', 'timeout', 'cancelled']);
@@ -94,6 +95,7 @@ export function runBaselineCommand({ command, cwd, timeoutMs = 15 * 60 * 1000, s
       return;
     }
     const started = Date.now();
+    const startedAt = new Date(started).toISOString();
     let stdout = '';
     let stderr = '';
     let settled = false;
@@ -111,6 +113,8 @@ export function runBaselineCommand({ command, cwd, timeoutMs = 15 * 60 * 1000, s
         stdout,
         stderr,
         durationMs: Date.now() - started,
+        startedAt,
+        finishedAt: new Date().toISOString(),
       });
     };
     if (signal?.aborted) {
@@ -119,10 +123,12 @@ export function runBaselineCommand({ command, cwd, timeoutMs = 15 * 60 * 1000, s
     }
     let child;
     try {
-      child = spawn(command.argv[0], command.argv.slice(1), {
+      const resolved = projectCommandSpec(command.argv[0], command.argv.slice(1));
+      child = spawn(resolved.command, resolved.args, {
         cwd,
         shell: false,
         windowsHide: true,
+        windowsVerbatimArguments: resolved.windowsVerbatimArguments,
         detached: process.platform !== 'win32',
         stdio: ['ignore', 'pipe', 'pipe'],
       });

@@ -1,0 +1,37 @@
+[
+  {
+    "file": "backend/pom.xml",
+    "hash": "sha256:f3a3615e9d46f91256269464e8531bd4b325f2cbdf64d6f39e35ccbab0fac0f6",
+    "approvedInput": ".specgate/codex/evidence/proposed-config/backend/pom.xml"
+  },
+  {
+    "file": "frontend/package.json",
+    "hash": "sha256:10bd9aa7a199a9f4ae67b8387caa12004d7dd5e8e2f16c7f39501bb9094725c3",
+    "approvedInput": ".specgate/codex/evidence/proposed-config/frontend/package.json"
+  },
+  {
+    "file": "frontend/package-lock.json",
+    "hash": "sha256:979e4f60d02cf847029e2e7faba1edc523cf5a011523603b922d54a5d181af5a",
+    "approvedInput": ".specgate/codex/evidence/proposed-config/frontend/package-lock.json"
+  },
+  {
+    "file": "frontend/vite.config.ts",
+    "hash": "sha256:a4af37a0b4e7917e5fd9c27de0cc7727e3732d594ee6383f739feef908e922c7",
+    "approvedInput": ".specgate/codex/evidence/proposed-config/frontend/vite.config.ts"
+  },
+  {
+    "file": "frontend/tsconfig.app.json",
+    "hash": "sha256:098669211126184af6fd9cb696d42fa61ed14a08f3a9a1c566168061a9c16007",
+    "approvedInput": ".specgate/codex/evidence/proposed-config/frontend/tsconfig.app.json"
+  },
+  {
+    "file": "frontend/tsconfig.node.json",
+    "hash": "sha256:88290bb651162b2645f6e8ff1e45c724df362ec1c7232cd8f72762e8389444de",
+    "approvedInput": ".specgate/codex/evidence/proposed-config/frontend/tsconfig.node.json"
+  },
+  {
+    "file": "frontend/.prettierrc.json",
+    "hash": "sha256:d423a7296d893ac8a1b8eb49d11a7c12293c93b3fd534c9b16ba7af632ffb276",
+    "approvedInput": ".specgate/codex/evidence/proposed-config/frontend/.prettierrc.json"
+  }
+]

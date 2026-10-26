@@ -1,0 +1,31 @@
+✖ synthetic local delivery smoke crosses all gates and archives the formatted commit without pushing (5362.5121ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 0
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 5448.0859
+
+✖ failing tests:
+
+test at test\codex-quality-gate.test.js:26:1
+✖ synthetic local delivery smoke crosses all gates and archives the formatted commit without pushing (5362.5121ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + 'c49158fee976da9d3709476b26d19ea829d8ba4e'
+  - '67d3a9bcba18db22fcf0f7a84ae46f09a0e48a2a'
+  
+      at TestContext.<anonymous> (file:///E:/ai_workflow/specgate/test/codex-quality-gate.test.js:85:10)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1125:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:358:3) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'c49158fee976da9d3709476b26d19ea829d8ba4e',
+    expected: '67d3a9bcba18db22fcf0f7a84ae46f09a0e48a2a',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

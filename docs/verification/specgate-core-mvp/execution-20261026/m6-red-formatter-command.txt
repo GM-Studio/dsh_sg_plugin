@@ -1,0 +1,28 @@
+✖ native formatter executes the project package manager from a real worktree (107.9704ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 0
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 175.0031
+
+✖ failing tests:
+
+test at test\codex-format-rework.test.js:15:1
+✖ native formatter executes the project package manager from a real worktree (107.9704ms)
+  AssertionError [ERR_ASSERTION]: {"ok":false,"code":"FORMAT_COMMAND_FAILED","message":"Formatter failed","command":"npm.cmd","args":["run","format"],"cwd":"frontend","exitCode":1,"signal":null,"startedAt":"2026-10-26T01:09:06.104Z","finishedAt":"2026-10-26T01:09:06.210Z","durationMs":106,"stdout":"","stderr":"node:internal/modules/cjs/loader:1459\r\n  throw err;\r\n  ^\r\n\r\nError: Cannot find module 'C:\\Users\\Administrator\\AppData\\Local\\Temp\\specgate-codex-tests\\run-23468-Fjkn03\\sg-native-format-command-9CUSnx\\frontend\\node_modules\\npm\\bin\\npm-prefix.js'\r\n    at Module._resolveFilename (node:internal/modules/cjs/loader:1456:15)\r\n    at defaultResolveImpl (node:internal/modules/cjs/loader:1066:19)\r\n    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1071:22)\r\n    at Module._load (node:internal/modules/cjs/loader:1242:25)\r\n    at wrapModuleLoad (node:internal/modules/cjs/loader:255:19)\r\n    at Module.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:154:5)\r\n    at node:internal/main/run_main_module:33:47 {\r\n  code: 'MODULE_NOT_FOUND',\r\n  requireStack: []\r\n}\r\n\r\nNode.js v24.14.0\r\nnode:internal/modules/cjs/loader:1459\r\n  throw err;\r\n  ^\r\n\r\nError: Cannot find module 'C:\\Users\\Administrator\\AppData\\Local\\Temp\\specgate-codex-tests\\run-23468-Fjkn03\\sg-native-format-command-9CUSnx\\frontend\\node_modules\\npm\\bin\\npm-cli.js'\r\n    at Module._resolveFilename (node:internal/modules/cjs/loader:1456:15)\r\n    at defaultResolveImpl (node:internal/modules/cjs/loader:1066:19)\r\n    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1071:22)\r\n    at Module._load (node:internal/modules/cjs/loader:1242:25)\r\n    at wrapModuleLoad (node:internal/modules/cjs/loader:255:19)\r\n    at Module.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:154:5)\r\n    at node:internal/main/run_main_module:33:47 {\r\n  code: 'MODULE_NOT_FOUND',\r\n  requireStack: []\r\n}\r\n\r\nNode.js v24.14.0\r\n","commands":[{"ok":false,"code":"FORMAT_COMMAND_FAILED","message":"Formatter failed","command":"npm.cmd","args":["run","format"],"cwd":"frontend","exitCode":1,"signal":null,"startedAt":"2026-10-26T01:09:06.104Z","finishedAt":"2026-10-26T01:09:06.210Z","durationMs":106,"stdout":"","stderr":"node:internal/modules/cjs/loader:1459\r\n  throw err;\r\n  ^\r\n\r\nError: Cannot find module 'C:\\Users\\Administrator\\AppData\\Local\\Temp\\specgate-codex-tests\\run-23468-Fjkn03\\sg-native-format-command-9CUSnx\\frontend\\node_modules\\npm\\bin\\npm-prefix.js'\r\n    at Module._resolveFilename (node:internal/modules/cjs/loader:1456:15)\r\n    at defaultResolveImpl (node:internal/modules/cjs/loader:1066:19)\r\n    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1071:22)\r\n    at Module._load (node:internal/modules/cjs/loader:1242:25)\r\n    at wrapModuleLoad (node:internal/modules/cjs/loader:255:19)\r\n    at Module.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:154:5)\r\n    at node:internal/main/run_main_module:33:47 {\r\n  code: 'MODULE_NOT_FOUND',\r\n  requireStack: []\r\n}\r\n\r\nNode.js v24.14.0\r\nnode:internal/modules/cjs/loader:1459\r\n  throw err;\r\n  ^\r\n\r\nError: Cannot find module 'C:\\Users\\Administrator\\AppData\\Local\\Temp\\specgate-codex-tests\\run-23468-Fjkn03\\sg-native-format-command-9CUSnx\\frontend\\node_modules\\npm\\bin\\npm-cli.js'\r\n    at Module._resolveFilename (node:internal/modules/cjs/loader:1456:15)\r\n    at defaultResolveImpl (node:internal/modules/cjs/loader:1066:19)\r\n    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1071:22)\r\n    at Module._load (node:internal/modules/cjs/loader:1242:25)\r\n    at wrapModuleLoad (node:internal/modules/cjs/loader:255:19)\r\n    at Module.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:154:5)\r\n    at node:internal/main/run_main_module:33:47 {\r\n  code: 'MODULE_NOT_FOUND',\r\n  requireStack: []\r\n}\r\n\r\nNode.js v24.14.0\r\n"}]}
+  
+  false !== true
+  
+      at TestContext.<anonymous> (file:///E:/ai_workflow/specgate/test/codex-format-rework.test.js:24:10)
+      at async Test.run (node:internal/test_runner/test:1125:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:358:3) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

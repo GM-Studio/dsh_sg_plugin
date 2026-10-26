@@ -9,6 +9,36 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 const root = fileURLToPath(new URL('../', import.meta.url));
 const readJson = (file) => JSON.parse(fs.readFileSync(file, 'utf8'));
 
+test('default MCP static import graph excludes optional control, notification and installer code', () => {
+  const pending = [path.join(root, 'src/codex/server.js')];
+  const seen = new Set();
+  while (pending.length) {
+    const file = pending.pop();
+    if (seen.has(file)) continue;
+    seen.add(file);
+    const source = fs.readFileSync(file, 'utf8');
+    const imports = [
+      ...source.matchAll(/(?:^|\n)\s*import\s+(?:[^;]*?\s+from\s+)?['"](\.[^'"]+)['"]/gm),
+      ...source.matchAll(/(?:^|\n)\s*export\s+[^;]*?\s+from\s+['"](\.[^'"]+)['"]/gm),
+    ];
+    for (const match of imports) {
+      const target = path.resolve(path.dirname(file), match[1]);
+      assert.equal(fs.existsSync(target), true, `${file} -> ${match[1]}`);
+      pending.push(target);
+    }
+  }
+  const graph = [...seen].map((file) => path.relative(root, file).replace(/\\/g, '/'));
+  assert.ok(graph.length > 20, 'the assertion must traverse the real MCP graph');
+  assert.ok(
+    graph.every((file) => !/(?:^|\/)(?:control|management|channels)(?:\/|$)/.test(file)),
+    graph.join('\n'),
+  );
+  assert.ok(
+    graph.every((file) => !/environment-install|mysql-repository/.test(file)),
+    graph.join('\n'),
+  );
+});
+
 test('Core v1 installation and lockfile have no MySQL driver dependency', () => {
   const manifest = readJson(path.join(root, 'package.json'));
   for (const field of [
@@ -80,7 +110,7 @@ test('Codex manifest and MCP entry stay contained in the shipped plugin', () => 
 
 test(
   'offline tarball install launches the packaged entry from a different project cwd',
-  { timeout: 60000 },
+  { timeout: 180000 },
   async () => {
     const fixture = fs.mkdtempSync(path.join(os.tmpdir(), 'sg-codex-install space-'));
     const npmCli =
@@ -122,18 +152,22 @@ test(
       'mcp.json',
       'src/codex/server.js',
       'skills/sg-codex/SKILL.md',
-      'skills/setup/SKILL.md',
-      'assets/codex/agents/specgate_frontend.toml',
+      'skills/sg-codex-change/SKILL.md',
+      'assets/codex/agents/specgate_implementer.toml',
       'assets/codex/agents/specgate_reviewer.toml',
-      'assets/java-vue/template/backend/pom.xml.tpl',
       'src/codex/core/java/java-versions.js',
-      'scripts/codex-source-setup.mjs',
       'scripts/codex-plugin-smoke.mjs',
     ]) {
       assert.ok(
         packed.files.some((entry) => entry.path === file),
         `${file} missing from tarball`,
       );
+    }
+    for (const entry of packed.files) {
+      assert.doesNotMatch(entry.path, /^src\/codex\/(?:control|management|channels)\//);
+      assert.doesNotMatch(entry.path, /^src\/codex\/core\/control\//);
+      assert.doesNotMatch(entry.path, /^assets\/java-vue\//);
+      assert.doesNotMatch(entry.path, /(?:mysql-repository|environment-install|specgate-worker)/);
     }
     const installRoot = path.join(fixture, 'installation');
     fs.mkdirSync(installRoot);
@@ -154,28 +188,9 @@ test(
       installRoot,
     );
     const pluginRoot = path.join(installRoot, 'node_modules/specgate-codex');
-    const driverSmoke = spawnSync(
-      process.execPath,
-      [
-        '--input-type=module',
-        '-e',
-        [
-          'const {createRequire} = await import("node:module");',
-          'const require = createRequire(process.argv[1]);',
-          'try { require.resolve("mysql2/promise"); throw Error("Core package must not install mysql2"); }',
-          'catch (error) { if (error.code !== "MODULE_NOT_FOUND") throw error; }',
-          'const m = await import(process.argv[1]);',
-          'try { m.createMysqlPool({database:"offline"}); throw Error("Missing driver must be explicit"); }',
-          'catch (error) { if (error.code !== "MYSQL_DRIVER_NOT_INSTALLED") throw error; }',
-        ].join('\n'),
-        pathToFileURL(
-          path.join(pluginRoot, 'src/codex/core/control/persistence/mysql-repository.js'),
-        ).href,
-      ],
-      { cwd: installRoot, encoding: 'utf8', timeout: 10000, windowsHide: true },
-    );
-    assert.ifError(driverSmoke.error);
-    assert.equal(driverSmoke.status, 0, driverSmoke.stderr);
+    assert.equal(fs.existsSync(path.join(pluginRoot, 'src/codex/core/control')), false);
+    assert.equal(fs.existsSync(path.join(pluginRoot, 'assets/java-vue')), false);
+    assert.equal(fs.existsSync(path.join(pluginRoot, 'node_modules/mysql2')), false);
     const { smokePlugin } = await import('../scripts/codex-plugin-smoke.mjs');
     const projectRoot = path.join(fixture, 'project 中文');
     fs.mkdirSync(projectRoot);
@@ -188,8 +203,34 @@ test(
     assert.equal(evidence.projectStatus.verification.status, 'not-run');
     assert.equal(evidence.projectStatus.projectRoot, projectRoot);
     assert.deepEqual(fs.readdirSync(projectRoot), []);
+    const { createToolRegistry } = await import(
+      pathToFileURL(path.join(pluginRoot, 'src/codex/workflow-tools.js')).href
+    );
+    const registry = createToolRegistry({ projectRoot });
+    const projectStatus = (await registry.call('sg_project_status')).structuredContent;
+    assert.equal(projectStatus.ok, true, JSON.stringify(projectStatus));
+    assert.equal(projectStatus.projectRoot, projectRoot);
+    assert.deepEqual(fs.readdirSync(projectRoot), []);
     assert.equal(fs.existsSync(path.join(pluginRoot, 'index.js')), false);
     assert.deepEqual(fs.readdirSync(path.join(pluginRoot, 'src')), ['codex']);
+    const smokeEnvironment = { ...process.env, SPECGATE_PACKAGE_SMOKE_ROOT: pluginRoot };
+    delete smokeEnvironment.NODE_TEST_CONTEXT;
+    const deliverySmoke = spawnSync(
+      process.execPath,
+      ['--test', path.join(root, 'test/codex-quality-gate.test.js')],
+      {
+        cwd: projectRoot,
+        env: smokeEnvironment,
+        encoding: 'utf8',
+        windowsHide: true,
+        timeout: 120000,
+        maxBuffer: 4 * 1024 * 1024,
+      },
+    );
+    assert.ifError(deliverySmoke.error);
+    assert.equal(deliverySmoke.status, 0, deliverySmoke.stdout + deliverySmoke.stderr);
+    assert.match(deliverySmoke.stdout, /synthetic local delivery smoke/);
+    assert.match(deliverySmoke.stdout, /(?:fail 0|# fail 0)/);
   },
 );
 

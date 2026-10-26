@@ -1158,4 +1158,6 @@ baseline evidence 报告（NR-01…NR-08 回填结果）
 | M1    | 已验收：聚焦 102、全量 704，0 fail/skip/cancel，lint/format/pack/smoke 退出 0 | `docs/implementation/specgate-core-mvp-v2/05-m1-acceptance.md` |
 | M2    | 已验收：聚焦 75、全量 708，0 fail/skip/cancel，lint/format/pack/smoke 退出 0  | `docs/implementation/specgate-core-mvp-v2/06-m2-acceptance.md` |
 | M3    | 已验收：聚焦 41、全量 711，0 fail/skip/cancel，lint/format/pack/smoke 退出 0  | `docs/implementation/specgate-core-mvp-v2/07-m3-acceptance.md` |
-| M4–M6 | 尚未验收                                                                      | 必须逐阶段通过后再更新                                         |
+| M4    | 已验收：聚焦 57、全量 719，0 fail/skip/cancel，lint/format/pack 退出 0        | `docs/implementation/specgate-core-mvp-v2/08-m4-acceptance.md` |
+| M5 | 已验收：聚焦 49、全量 723，0 fail/skip/cancel；lint/format/pack/smoke 退出 0 | `docs/implementation/specgate-core-mvp-v2/09-m5-acceptance.md` |
+| M6 | 尚未验收；真实 GitHub 金丝雀基线核验进行中 | 不得以仓库 fixture 替代真实闭环 |

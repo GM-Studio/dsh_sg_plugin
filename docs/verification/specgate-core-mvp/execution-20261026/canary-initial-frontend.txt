@@ -1,0 +1,19 @@
+
+> agent-skills-sharing-frontend@0.1.0 test
+> vitest run
+
+
+ RUN  v3.2.4 E:/ai_workflow/specgate-canary-skill-hub-initial/frontend
+
+ ✓ src/api/http.test.ts (3 tests) 2ms
+ ✓ src/composables/useAuth.test.ts (5 tests) 4ms
+ ✓ src/views/HomePage.test.ts (5 tests) 47ms
+ ✓ src/views/RepositoriesPage.test.ts (6 tests) 54ms
+ ✓ src/views/SkillDetailPage.test.ts (11 tests) 61ms
+ ✓ src/views/SkillGroupDetailPage.test.ts (19 tests) 114ms
+
+ Test Files  6 passed (6)
+      Tests  49 passed (49)
+   Start at  08:40:24
+   Duration  997ms (transform 436ms, setup 0ms, collect 1.03s, tests 282ms, environment 1.85s, prepare 1.22s)
+

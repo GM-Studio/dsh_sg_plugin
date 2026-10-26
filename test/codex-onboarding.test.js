@@ -45,7 +45,11 @@ test('plugin cache fallback stays unbound instead of becoming the business proje
     await resolveProjectRoot(peer, process.cwd(), { env: { PLUGIN_ROOT: process.cwd() } }),
     null,
   );
-  const registry = createToolRegistry({ projectRoot: process.cwd(), projectBound: false });
+  const registry = createToolRegistry({
+    optionalModules: true,
+    projectRoot: process.cwd(),
+    projectBound: false,
+  });
   const status = data(await registry.call('sg_project_status'));
   assert.equal(status.ok, true);
   assert.equal(status.projectRoot, null);
@@ -56,7 +60,7 @@ test('plugin cache fallback stays unbound instead of becoming the business proje
 test('binding switches every subsequent project tool without writing either tree', async (t) => {
   const first = temporary(t),
     second = temporary(t);
-  const registry = createToolRegistry({ projectRoot: first });
+  const registry = createToolRegistry({ optionalModules: true, projectRoot: first });
   assert.equal(
     data(await registry.call('sg_project_bind', { path: second })).projectRoot,
     fs.realpathSync(second),
@@ -73,7 +77,7 @@ test('binding switches every subsequent project tool without writing either tree
 
 test('new project requires explicit stack and missing form support never writes', async (t) => {
   const root = temporary(t),
-    registry = createToolRegistry({ projectRoot: root });
+    registry = createToolRegistry({ optionalModules: true, projectRoot: root });
   assert.equal(registry.validate('sg_init_preview', { company: 'acme', business: 'hotel' }), false);
   assert.equal(data(await registry.call('sg_project_create')).code, 'PROJECT_FORM_UNAVAILABLE');
   assert.deepEqual(fs.readdirSync(root), []);
@@ -84,6 +88,7 @@ test('native creation form preserves selected React stack, user identity, auto s
     target = path.join(temporary(t), 'hotel');
   const requests = [];
   const registry = createToolRegistry({
+    optionalModules: true,
     projectRoot: host,
     trustedUserIdentity: { kind: 'user', id: 'fixture', source: 'test-native' },
     peerCapabilities: () => ({ elicitationSupported: true }),
@@ -145,6 +150,7 @@ test('cancelled project form is attempted again instead of degrading to text', a
   const root = temporary(t);
   let requests = 0;
   const registry = createToolRegistry({
+    optionalModules: true,
     projectRoot: root,
     trustedUserIdentity: { kind: 'user', id: 'fixture', source: 'test-native' },
     peerCapabilities: () => ({ elicitationSupported: true }),
@@ -163,7 +169,7 @@ test('cancelled project form is attempted again instead of degrading to text', a
 });
 
 test('project verification alias remains equivalent to sg_verify', async (t) => {
-  const registry = createToolRegistry({ projectRoot: temporary(t) });
+  const registry = createToolRegistry({ optionalModules: true, projectRoot: temporary(t) });
   const direct = data(await registry.call('sg_verify'));
   const project = data(await registry.call('sg_project_verify'));
   assert.equal(project.code, direct.code);

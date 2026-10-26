@@ -4,7 +4,7 @@ import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { canonicalJson, hashValue } from './events.js';
 import { gitSafeDirectory } from './git-path.js';
-import { commandSpec } from './core/java/verify-evidence.js';
+import { projectCommandSpec } from './core/project-command.js';
 
 const SOURCE_ROOT = path.resolve(fileURLToPath(new URL('../..', import.meta.url)));
 const object = (value) => value !== null && typeof value === 'object' && !Array.isArray(value);
@@ -126,7 +126,7 @@ function command(specification, worktree) {
   const started = Date.now();
   let resolved;
   try {
-    resolved = commandSpec(specification.command, specification.args);
+    resolved = projectCommandSpec(specification.command, specification.args);
   } catch (error) {
     return { ...failure('FORMAT_COMMAND_INVALID', error.message), startedAt, durationMs: 0 };
   }
@@ -160,7 +160,7 @@ function command(specification, worktree) {
       };
 }
 
-export function createNativeFormatter() {
+export function createNativeFormatter({ run = command } = {}) {
   return async ({ worktree }) => {
     const commands = [];
     const backend = path.join(worktree, 'backend');
@@ -174,6 +174,18 @@ export function createNativeFormatter() {
           args: process.platform === 'win32' ? ['spotless:apply'] : [wrapper, 'spotless:apply'],
           cwd: backend,
         });
+      } else {
+        const pom = path.join(backend, 'pom.xml');
+        if (
+          fs.statSync(pom).size <= 1024 * 1024 &&
+          /<artifactId>\s*spotless-maven-plugin\s*<\/artifactId>/.test(fs.readFileSync(pom, 'utf8'))
+        ) {
+          commands.push({
+            command: process.platform === 'win32' ? 'mvn.cmd' : 'mvn',
+            args: ['spotless:apply'],
+            cwd: backend,
+          });
+        }
       }
     }
     if (fs.existsSync(path.join(frontend, 'package.json'))) {
@@ -202,7 +214,7 @@ export function createNativeFormatter() {
       return failure('FORMAT_COMMAND_MISSING', 'No project formatter command is configured');
     const results = [];
     for (const entry of commands) {
-      const result = command(entry, worktree);
+      const result = run(entry, worktree);
       results.push(result);
       if (!result.ok) return { ...result, commands: results };
     }
@@ -210,7 +222,13 @@ export function createNativeFormatter() {
   };
 }
 
-export function createFormatService({ projectRoot, store, planService, formatter } = {}) {
+export function createFormatService({
+  projectRoot,
+  store,
+  planService,
+  formatter,
+  qualityService,
+} = {}) {
   if (typeof projectRoot !== 'string' || !projectRoot)
     throw new TypeError('projectRoot is required');
   if (!store || typeof store.inspect !== 'function')
@@ -280,6 +298,8 @@ export function createFormatService({ projectRoot, store, planService, formatter
       if (!loaded.ok) return loaded;
       if (typeof formatter !== 'function')
         return failure('FORMATTER_UNAVAILABLE', 'A server-owned Formatter is required');
+      if (!qualityService || typeof qualityService.run !== 'function')
+        return failure('QUALITY_GATE_UNAVAILABLE', 'Post-format quality verification is required');
       const checked = await planService.inspect();
       if (!checked.ok) return checked;
       const development = loaded.state.context?.development;
@@ -320,11 +340,11 @@ export function createFormatService({ projectRoot, store, planService, formatter
       }
       if (!object(result) || result.ok !== true)
         return failure(result?.code || 'FORMATTER_FAILED', result?.message || 'Formatter failed');
-      const changed = status(format.path)
+      const reportedChanged = status(format.path)
         .split('\n')
         .filter(Boolean)
         .map((line) => line.slice(3).replace(/\\/g, '/'));
-      const violations = changed.filter(
+      const violations = reportedChanged.filter(
         (relative) =>
           relative.startsWith('.specgate/') ||
           /(^|\/)(?:test|tests|__tests__|fixtures)\//i.test(relative) ||
@@ -337,9 +357,16 @@ export function createFormatService({ projectRoot, store, planService, formatter
           `Formatter changed files outside the development delta: ${violations.join(', ')}`,
           { violations },
         );
+      let changed = [];
+      if (reportedChanged.length) {
+        git(format.path, ['add', '-A']);
+        changed = git(format.path, ['diff', '--cached', '--name-only'])
+          .split('\n')
+          .filter(Boolean)
+          .map((relative) => relative.replace(/\\/g, '/'));
+      }
       let formatCommit = null;
       if (changed.length) {
-        git(format.path, ['add', '-A']);
         git(format.path, ['commit', '-q', '-m', `style: format change ${loaded.state.changeId}`], {
           GIT_AUTHOR_NAME: 'SpecGate Formatter',
           GIT_AUTHOR_EMAIL: 'specgate-formatter@localhost',
@@ -361,6 +388,7 @@ export function createFormatService({ projectRoot, store, planService, formatter
         status: 'passed',
         integrationBefore: integrationCommit,
         integrationAfter: formattedIntegration,
+        preQualityRunId: loaded.state.context?.quality?.runId || null,
         formatCommit,
         changedFiles: changed,
         commands: result.commands || [],
@@ -393,11 +421,11 @@ export function createFormatService({ projectRoot, store, planService, formatter
         },
       });
       if (!saved.ok) return saved;
-      const moved = await store.transition({
-        expectedVersion: saved.state.version,
-        to: 'REVIEWING',
-      });
-      return moved.ok ? { ...moved, format: { ...body, reportPath, hash } } : moved;
+      const verified = await qualityService.run(
+        { expectedVersion: saved.state.version },
+        { postFormat: true },
+      );
+      return verified.ok ? { ...verified, format: { ...body, reportPath, hash } } : verified;
     });
   }
 

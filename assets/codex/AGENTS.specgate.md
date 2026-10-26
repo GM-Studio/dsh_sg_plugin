@@ -1,43 +1,28 @@
-SpecGate 入口：$sg-codex 统一导航；$sg-codex-env 会话内预检、复用、按需安装与验证；$sg-codex-project 初始化或接入并建立基线；$sg-codex-change 需求开发、任务控制及验收交付；$sg-codex-status 只读状态。旧 $sg-codex-setup 仅转接准备能力。状态和帮助不能触发安装或恢复。先核对业务项目与技术栈，环境就绪后生成或开发；项目基线完成后等待真实需求，H1/H3 由用户批准。sg_project_setup 只配置 Agent/Skill/MCP，不等于工具链安装。
+SpecGate Core 入口：$sg-codex 统一导航；$sg-codex-env 只读探测与复用环境；$sg-codex-project 接入已有 Git 项目并建立真实基线；$sg-codex-change 需求、实现、验证与交付；$sg-codex-status 只读状态。状态和帮助不得触发安装、初始化或恢复。
 
-Managed by SpecGate for Codex. Use the `sg-codex` Skill for every project
-adoption or initialization, change, implementation, verification, DeliveryRecord
-and incremental redelivery phase.
+Managed by SpecGate Core for Codex. Establish a ProjectProfile and ProjectBaseline
+with `sg_adopt_preview` and `sg_adopt_apply` before creating a Change. An existing
+dirty worktree blocks adoption until the user explicitly resolves its changes.
+Do not automatically commit user files. Missing tools block execution; Core does
+not download or install toolchains.
 
-Codex MUST establish a ProjectProfile and ProjectBaseline before a change:
+Use exactly three delegated AI roles:
 
-1. Existing project: `sg_adopt_preview`, explicit dirty-file approval when
-   needed, then `sg_adopt_apply`.
-2. New project: `sg_init_preview` with explicit lowercase `company` and
-   `business`, `sg_init`, `sg_verify`, then
-   `sg_project_finalize_new`.
-3. Do not require `sg_init` for an existing project.
+1. `specgate_test_designer` creates and commits executable tests before implementation.
+2. `specgate_implementer` implements frozen tasks serially in isolated worktrees.
+3. `specgate_reviewer` reviews the fixed formatted commit in a read-only session.
 
-Codex MUST use real subagents for requested role work:
+Never substitute main-thread edits for a requested subagent result. Require every
+frozen case to fail in the real red baseline before implementation. Enforce the
+task allowedFiles and forbiddenFiles mechanically; frozen tests cannot be edited.
+Pass concrete findings to repairs and stop after the shared two-retry ceiling.
 
-1. Spawn `specgate_test_designer` before implementation.
-2. Spawn frontend and backend implementation sequentially, never concurrently.
-3. Let MCP validate role commits and integration.
-4. Spawn `specgate_tester` with a clean verification context.
-5. Spawn `specgate_formatter` after quality passes.
-6. Spawn `specgate_reviewer` against the fixed formatted commit.
-7. Return blocking findings to the owning implementation agent.
+Quality and formatting are deterministic commands from the project configuration.
+After formatting, run the complete quality gate again against the formatted commit,
+including when formatting makes no changes. Never claim an unexecuted command,
+approval or delivery passed. Bind Review and evidence to the same commit.
 
-Never substitute main-thread edits for a requested subagent result. Never claim
-an unexecuted command, approval or delivery passed. Push only with explicit
-`push: true` after H3.
-
-Use the ProjectProfile conventions as hard requirements:
-
-- New backend files belong under the configured
-  `com.<company>.<business>` package and matching source directory.
-- Do not put new code under `com.example.*`.
-- Follow `.specgate/template-style.json` and its frozen examples; the generated
-  project's `docs/style.md` is the enforceable review baseline.
-- The generated `sys` admin scaffold (users, roles, departments, menus, audits,
-  dashboard) lives under `com.<company>.<business>.sys`, is routed under
-  `/api/sys/**` and includes CSV import/export; extend it rather than starting a
-  parallel admin stack.
-- Add Chinese comments to generated Java, TypeScript and Vue source.
-- Frontend display text MUST use i18n keys. `zh-CN` is the default locale and
-  `en-US` must remain available.
+H1 and H3 require real trusted user approval. Generate the immutable DeliveryRecord
+only after H3, with all known issues, open risks, unverified areas and rollback
+instructions. Push only with explicit `push: true` after H3. Preserve existing
+project conventions, user changes and historical evidence.

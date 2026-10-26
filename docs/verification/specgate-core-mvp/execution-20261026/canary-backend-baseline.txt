@@ -1,0 +1,802 @@
+[INFO] Scanning for projects...
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/org/springframework/boot/spring-boot-starter-parent/3.5.11/spring-boot-starter-parent-3.5.11.pom
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/org/springframework/boot/spring-boot-starter-parent/3.5.11/spring-boot-starter-parent-3.5.11.pom (13 kB at 28 kB/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/org/springframework/boot/spring-boot-dependencies/3.5.11/spring-boot-dependencies-3.5.11.pom
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/org/springframework/boot/spring-boot-dependencies/3.5.11/spring-boot-dependencies-3.5.11.pom (96 kB at 298 kB/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/org/apache/groovy/groovy-bom/4.0.30/groovy-bom-4.0.30.pom
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/org/apache/groovy/groovy-bom/4.0.30/groovy-bom-4.0.30.pom (27 kB at 41 kB/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/org/eclipse/jetty/ee10/jetty-ee10-bom/12.0.32/jetty-ee10-bom-12.0.32.pom
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/org/eclipse/jetty/ee10/jetty-ee10-bom/12.0.32/jetty-ee10-bom-12.0.32.pom (9.6 kB at 30 kB/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/org/eclipse/jetty/jetty-bom/12.0.32/jetty-bom-12.0.32.pom
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/org/eclipse/jetty/jetty-bom/12.0.32/jetty-bom-12.0.32.pom (15 kB at 43 kB/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/io/micrometer/micrometer-bom/1.15.9/micrometer-bom-1.15.9.pom
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/io/micrometer/micrometer-bom/1.15.9/micrometer-bom-1.15.9.pom (8.6 kB at 26 kB/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/io/micrometer/micrometer-tracing-bom/1.5.9/micrometer-tracing-bom-1.5.9.pom
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/io/micrometer/micrometer-tracing-bom/1.5.9/micrometer-tracing-bom-1.5.9.pom (4.5 kB at 14 kB/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/io/netty/netty-bom/4.1.131.Final/netty-bom-4.1.131.Final.pom
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/io/netty/netty-bom/4.1.131.Final/netty-bom-4.1.131.Final.pom (15 kB at 44 kB/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/org/apache/pulsar/pulsar-bom/4.0.8/pulsar-bom-4.0.8.pom
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/org/apache/pulsar/pulsar-bom/4.0.8/pulsar-bom-4.0.8.pom (25 kB at 73 kB/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/io/projectreactor/reactor-bom/2024.0.15/reactor-bom-2024.0.15.pom
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/io/projectreactor/reactor-bom/2024.0.15/reactor-bom-2024.0.15.pom (4.8 kB at 16 kB/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/org/springframework/amqp/spring-amqp-bom/3.2.9/spring-amqp-bom-3.2.9.pom
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/org/springframework/amqp/spring-amqp-bom/3.2.9/spring-amqp-bom-3.2.9.pom (3.9 kB at 12 kB/s)
+[INFO] Artifact org.springframework.batch:spring-batch-bom:pom:5.2.4 is present in the local repository, but cached from a remote repository ID that is unavailable in current build context, verifying that is downloadable from [aliyun-public (https://maven.aliyun.com/repository/public, default, releases)]
+[INFO] Artifact org.springframework.batch:spring-batch-bom:pom:5.2.4 is present in the local repository, but cached from a remote repository ID that is unavailable in current build context, verifying that is downloadable from [aliyun-public (https://maven.aliyun.com/repository/public, default, releases)]
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/org/springframework/batch/spring-batch-bom/5.2.4/spring-batch-bom-5.2.4.pom
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/org/springframework/batch/spring-batch-bom/5.2.4/spring-batch-bom-5.2.4.pom (0 B at 0 B/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/org/springframework/data/spring-data-bom/2025.0.9/spring-data-bom-2025.0.9.pom
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/org/springframework/data/spring-data-bom/2025.0.9/spring-data-bom-2025.0.9.pom (5.5 kB at 18 kB/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/org/springframework/spring-framework-bom/6.2.16/spring-framework-bom-6.2.16.pom
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/org/springframework/spring-framework-bom/6.2.16/spring-framework-bom-6.2.16.pom (5.8 kB at 18 kB/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/org/springframework/integration/spring-integration-bom/6.5.7/spring-integration-bom-6.5.7.pom
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/org/springframework/integration/spring-integration-bom/6.5.7/spring-integration-bom-6.5.7.pom (10 kB at 15 kB/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/org/springframework/pulsar/spring-pulsar-bom/1.2.15/spring-pulsar-bom-1.2.15.pom
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/org/springframework/pulsar/spring-pulsar-bom/1.2.15/spring-pulsar-bom-1.2.15.pom (2.9 kB at 5.4 kB/s)
+[INFO] Artifact org.springframework.restdocs:spring-restdocs-bom:pom:3.0.5 is present in the local repository, but cached from a remote repository ID that is unavailable in current build context, verifying that is downloadable from [aliyun-public (https://maven.aliyun.com/repository/public, default, releases)]
+[INFO] Artifact org.springframework.restdocs:spring-restdocs-bom:pom:3.0.5 is present in the local repository, but cached from a remote repository ID that is unavailable in current build context, verifying that is downloadable from [aliyun-public (https://maven.aliyun.com/repository/public, default, releases)]
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/org/springframework/restdocs/spring-restdocs-bom/3.0.5/spring-restdocs-bom-3.0.5.pom
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/org/springframework/restdocs/spring-restdocs-bom/3.0.5/spring-restdocs-bom-3.0.5.pom (0 B at 0 B/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/org/springframework/security/spring-security-bom/6.5.8/spring-security-bom-6.5.8.pom
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/org/springframework/security/spring-security-bom/6.5.8/spring-security-bom-6.5.8.pom (5.3 kB at 15 kB/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/org/springframework/session/spring-session-bom/3.5.5/spring-session-bom-3.5.5.pom
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/org/springframework/session/spring-session-bom/3.5.5/spring-session-bom-3.5.5.pom (2.9 kB at 9.2 kB/s)
+[INFO] Artifact org.springframework.ws:spring-ws-bom:pom:4.1.2 is present in the local repository, but cached from a remote repository ID that is unavailable in current build context, verifying that is downloadable from [aliyun-public (https://maven.aliyun.com/repository/public, default, releases)]
+[INFO] Artifact org.springframework.ws:spring-ws-bom:pom:4.1.2 is present in the local repository, but cached from a remote repository ID that is unavailable in current build context, verifying that is downloadable from [aliyun-public (https://maven.aliyun.com/repository/public, default, releases)]
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/org/springframework/ws/spring-ws-bom/4.1.2/spring-ws-bom-4.1.2.pom
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/org/springframework/ws/spring-ws-bom/4.1.2/spring-ws-bom-4.1.2.pom (0 B at 0 B/s)
+[INFO] 
+[INFO] ----------------< com.agentskills:agent-skills-sharing >----------------
+[INFO] Building SkillHub 0.0.1-SNAPSHOT
+[INFO]   from pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/org/springframework/boot/spring-boot-maven-plugin/3.5.11/spring-boot-maven-plugin-3.5.11.pom
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/org/springframework/boot/spring-boot-maven-plugin/3.5.11/spring-boot-maven-plugin-3.5.11.pom (4.0 kB at 13 kB/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/org/springframework/boot/spring-boot-maven-plugin/3.5.11/spring-boot-maven-plugin-3.5.11.jar
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/org/springframework/boot/spring-boot-maven-plugin/3.5.11/spring-boot-maven-plugin-3.5.11.jar (138 kB at 422 kB/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/org/springframework/boot/spring-boot-starter-web/3.5.11/spring-boot-starter-web-3.5.11.pom
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/org/springframework/boot/spring-boot-starter-web/3.5.11/spring-boot-starter-web-3.5.11.pom (2.9 kB at 13 kB/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/org/springframework/boot/spring-boot-starter/3.5.11/spring-boot-starter-3.5.11.pom
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/org/springframework/boot/spring-boot-starter/3.5.11/spring-boot-starter-3.5.11.pom (3.0 kB at 9.1 kB/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/org/springframework/boot/spring-boot/3.5.11/spring-boot-3.5.11.pom
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/org/springframework/boot/spring-boot/3.5.11/spring-boot-3.5.11.pom (2.2 kB at 7.0 kB/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/org/springframework/spring-core/6.2.16/spring-core-6.2.16.pom
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/org/springframework/spring-core/6.2.16/spring-core-6.2.16.pom (2.0 kB at 6.7 kB/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/org/springframework/spring-jcl/6.2.16/spring-jcl-6.2.16.pom
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/org/springframework/spring-jcl/6.2.16/spring-jcl-6.2.16.pom (1.8 kB at 6.0 kB/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/org/springframework/spring-context/6.2.16/spring-context-6.2.16.pom
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/org/springframework/spring-context/6.2.16/spring-context-6.2.16.pom (2.8 kB at 9.4 kB/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/org/springframework/spring-aop/6.2.16/spring-aop-6.2.16.pom
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/org/springframework/spring-aop/6.2.16/spring-aop-6.2.16.pom (2.2 kB at 6.0 kB/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/org/springframework/spring-beans/6.2.16/spring-beans-6.2.16.pom
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/org/springframework/spring-beans/6.2.16/spring-beans-6.2.16.pom (2.0 kB at 6.5 kB/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/org/springframework/spring-expression/6.2.16/spring-expression-6.2.16.pom
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/org/springframework/spring-expression/6.2.16/spring-expression-6.2.16.pom (2.1 kB at 7.0 kB/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/io/micrometer/micrometer-observation/1.15.9/micrometer-observation-1.15.9.pom
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/io/micrometer/micrometer-observation/1.15.9/micrometer-observation-1.15.9.pom (3.8 kB at 11 kB/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/io/micrometer/micrometer-commons/1.15.9/micrometer-commons-1.15.9.pom
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/io/micrometer/micrometer-commons/1.15.9/micrometer-commons-1.15.9.pom (3.4 kB at 11 kB/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/org/springframework/boot/spring-boot-autoconfigure/3.5.11/spring-boot-autoconfigure-3.5.11.pom
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/org/springframework/boot/spring-boot-autoconfigure/3.5.11/spring-boot-autoconfigure-3.5.11.pom (2.1 kB at 5.3 kB/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/org/springframework/boot/spring-boot-starter-logging/3.5.11/spring-boot-starter-logging-3.5.11.pom
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/org/springframework/boot/spring-boot-starter-logging/3.5.11/spring-boot-starter-logging-3.5.11.pom (2.5 kB at 6.1 kB/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/ch/qos/logback/logback-classic/1.5.32/logback-classic-1.5.32.pom
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/ch/qos/logback/logback-classic/1.5.32/logback-classic-1.5.32.pom (16 kB at 52 kB/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/ch/qos/logback/logback-parent/1.5.32/logback-parent-1.5.32.pom
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/ch/qos/logback/logback-parent/1.5.32/logback-parent-1.5.32.pom (20 kB at 67 kB/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/ch/qos/logback/logback-core/1.5.32/logback-core-1.5.32.pom
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/ch/qos/logback/logback-core/1.5.32/logback-core-1.5.32.pom (9.4 kB at 30 kB/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/org/springframework/boot/spring-boot-starter-json/3.5.11/spring-boot-starter-json-3.5.11.pom
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/org/springframework/boot/spring-boot-starter-json/3.5.11/spring-boot-starter-json-3.5.11.pom (3.1 kB at 9.9 kB/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/org/springframework/spring-web/6.2.16/spring-web-6.2.16.pom
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/org/springframework/spring-web/6.2.16/spring-web-6.2.16.pom (2.4 kB at 6.9 kB/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/com/fasterxml/jackson/core/jackson-databind/2.19.4/jackson-databind-2.19.4.pom
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/com/fasterxml/jackson/core/jackson-databind/2.19.4/jackson-databind-2.19.4.pom (23 kB at 48 kB/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/com/fasterxml/jackson/jackson-base/2.19.4/jackson-base-2.19.4.pom
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/com/fasterxml/jackson/jackson-base/2.19.4/jackson-base-2.19.4.pom (12 kB at 39 kB/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/com/fasterxml/jackson/core/jackson-annotations/2.19.4/jackson-annotations-2.19.4.pom
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/com/fasterxml/jackson/core/jackson-annotations/2.19.4/jackson-annotations-2.19.4.pom (6.9 kB at 20 kB/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/com/fasterxml/jackson/core/jackson-core/2.19.4/jackson-core-2.19.4.pom
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/com/fasterxml/jackson/core/jackson-core/2.19.4/jackson-core-2.19.4.pom (9.4 kB at 28 kB/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/com/fasterxml/jackson/datatype/jackson-datatype-jdk8/2.19.4/jackson-datatype-jdk8-2.19.4.pom
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/com/fasterxml/jackson/datatype/jackson-datatype-jdk8/2.19.4/jackson-datatype-jdk8-2.19.4.pom (2.8 kB at 8.1 kB/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/com/fasterxml/jackson/module/jackson-modules-java8/2.19.4/jackson-modules-java8-2.19.4.pom
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/com/fasterxml/jackson/module/jackson-modules-java8/2.19.4/jackson-modules-java8-2.19.4.pom (3.1 kB at 9.1 kB/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/com/fasterxml/jackson/datatype/jackson-datatype-jsr310/2.19.4/jackson-datatype-jsr310-2.19.4.pom
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/com/fasterxml/jackson/datatype/jackson-datatype-jsr310/2.19.4/jackson-datatype-jsr310-2.19.4.pom (5.4 kB at 17 kB/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/com/fasterxml/jackson/module/jackson-module-parameter-names/2.19.4/jackson-module-parameter-names-2.19.4.pom
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/com/fasterxml/jackson/module/jackson-module-parameter-names/2.19.4/jackson-module-parameter-names-2.19.4.pom (4.4 kB at 14 kB/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/org/springframework/boot/spring-boot-starter-tomcat/3.5.11/spring-boot-starter-tomcat-3.5.11.pom
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/org/springframework/boot/spring-boot-starter-tomcat/3.5.11/spring-boot-starter-tomcat-3.5.11.pom (3.1 kB at 9.3 kB/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/org/apache/tomcat/embed/tomcat-embed-core/10.1.52/tomcat-embed-core-10.1.52.pom
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/org/apache/tomcat/embed/tomcat-embed-core/10.1.52/tomcat-embed-core-10.1.52.pom (1.7 kB at 5.1 kB/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/org/apache/tomcat/embed/tomcat-embed-el/10.1.52/tomcat-embed-el-10.1.52.pom
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/org/apache/tomcat/embed/tomcat-embed-el/10.1.52/tomcat-embed-el-10.1.52.pom (1.5 kB at 4.6 kB/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/org/apache/tomcat/embed/tomcat-embed-websocket/10.1.52/tomcat-embed-websocket-10.1.52.pom
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/org/apache/tomcat/embed/tomcat-embed-websocket/10.1.52/tomcat-embed-websocket-10.1.52.pom (1.7 kB at 5.5 kB/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/org/springframework/spring-webmvc/6.2.16/spring-webmvc-6.2.16.pom
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/org/springframework/spring-webmvc/6.2.16/spring-webmvc-6.2.16.pom (3.0 kB at 7.4 kB/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/org/springframework/boot/spring-boot-starter-data-jpa/3.5.11/spring-boot-starter-data-jpa-3.5.11.pom
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/org/springframework/boot/spring-boot-starter-data-jpa/3.5.11/spring-boot-starter-data-jpa-3.5.11.pom (2.9 kB at 5.5 kB/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/org/springframework/boot/spring-boot-starter-jdbc/3.5.11/spring-boot-starter-jdbc-3.5.11.pom
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/org/springframework/boot/spring-boot-starter-jdbc/3.5.11/spring-boot-starter-jdbc-3.5.11.pom (2.5 kB at 6.8 kB/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/org/springframework/spring-jdbc/6.2.16/spring-jdbc-6.2.16.pom
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/org/springframework/spring-jdbc/6.2.16/spring-jdbc-6.2.16.pom (2.4 kB at 8.0 kB/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/org/springframework/spring-tx/6.2.16/spring-tx-6.2.16.pom
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/org/springframework/spring-tx/6.2.16/spring-tx-6.2.16.pom (2.2 kB at 7.3 kB/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/org/hibernate/orm/hibernate-core/6.6.42.Final/hibernate-core-6.6.42.Final.pom
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/org/hibernate/orm/hibernate-core/6.6.42.Final/hibernate-core-6.6.42.Final.pom (5.8 kB at 8.3 kB/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/org/jboss/logging/jboss-logging/3.6.2.Final/jboss-logging-3.6.2.Final.pom
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/org/jboss/logging/jboss-logging/3.6.2.Final/jboss-logging-3.6.2.Final.pom (26 kB at 82 kB/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/org/jboss/jboss-parent/51/jboss-parent-51.pom
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/org/jboss/jboss-parent/51/jboss-parent-51.pom (104 kB at 323 kB/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/org/antlr/antlr4-runtime/4.13.0/antlr4-runtime-4.13.0.pom
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/org/antlr/antlr4-runtime/4.13.0/antlr4-runtime-4.13.0.pom (3.6 kB at 96 kB/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/org/antlr/antlr4-master/4.13.0/antlr4-master-4.13.0.pom
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/org/antlr/antlr4-master/4.13.0/antlr4-master-4.13.0.pom (4.8 kB at 241 kB/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/org/springframework/data/spring-data-jpa/3.5.9/spring-data-jpa-3.5.9.pom
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/org/springframework/data/spring-data-jpa/3.5.9/spring-data-jpa-3.5.9.pom (12 kB at 19 kB/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/org/springframework/data/spring-data-jpa-parent/3.5.9/spring-data-jpa-parent-3.5.9.pom
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/org/springframework/data/spring-data-jpa-parent/3.5.9/spring-data-jpa-parent-3.5.9.pom (5.2 kB at 8.2 kB/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/org/springframework/data/build/spring-data-parent/3.5.9/spring-data-parent-3.5.9.pom
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/org/springframework/data/build/spring-data-parent/3.5.9/spring-data-parent-3.5.9.pom (43 kB at 138 kB/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/org/springframework/data/build/spring-data-build/3.5.9/spring-data-build-3.5.9.pom
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/org/springframework/data/build/spring-data-build/3.5.9/spring-data-build-3.5.9.pom (7.2 kB at 22 kB/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/org/springframework/spring-framework-bom/6.2.15/spring-framework-bom-6.2.15.pom
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/org/springframework/spring-framework-bom/6.2.15/spring-framework-bom-6.2.15.pom (5.8 kB at 17 kB/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/org/springframework/data/spring-data-commons/3.5.9/spring-data-commons-3.5.9.pom
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/org/springframework/data/spring-data-commons/3.5.9/spring-data-commons-3.5.9.pom (10 kB at 26 kB/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/org/springframework/spring-orm/6.2.16/spring-orm-6.2.16.pom
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/org/springframework/spring-orm/6.2.16/spring-orm-6.2.16.pom (2.6 kB at 4.1 kB/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/org/springframework/spring-aspects/6.2.16/spring-aspects-6.2.16.pom
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/org/springframework/spring-aspects/6.2.16/spring-aspects-6.2.16.pom (2.0 kB at 1.9 kB/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/org/springframework/boot/spring-boot-starter-security/3.5.11/spring-boot-starter-security-3.5.11.pom
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/org/springframework/boot/spring-boot-starter-security/3.5.11/spring-boot-starter-security-3.5.11.pom (2.7 kB at 8.5 kB/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/org/springframework/security/spring-security-config/6.5.8/spring-security-config-6.5.8.pom
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/org/springframework/security/spring-security-config/6.5.8/spring-security-config-6.5.8.pom (2.8 kB at 8.8 kB/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/org/springframework/security/spring-security-core/6.5.8/spring-security-core-6.5.8.pom
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/org/springframework/security/spring-security-core/6.5.8/spring-security-core-6.5.8.pom (3.2 kB at 7.3 kB/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/org/springframework/security/spring-security-crypto/6.5.8/spring-security-crypto-6.5.8.pom
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/org/springframework/security/spring-security-crypto/6.5.8/spring-security-crypto-6.5.8.pom (1.9 kB at 5.2 kB/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/org/springframework/security/spring-security-web/6.5.8/spring-security-web-6.5.8.pom
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/org/springframework/security/spring-security-web/6.5.8/spring-security-web-6.5.8.pom (3.2 kB at 10 kB/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/org/springframework/boot/spring-boot-starter-oauth2-client/3.5.11/spring-boot-starter-oauth2-client-3.5.11.pom
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/org/springframework/boot/spring-boot-starter-oauth2-client/3.5.11/spring-boot-starter-oauth2-client-3.5.11.pom (3.0 kB at 3.1 kB/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/org/springframework/security/spring-security-oauth2-client/6.5.8/spring-security-oauth2-client-6.5.8.pom
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/org/springframework/security/spring-security-oauth2-client/6.5.8/spring-security-oauth2-client-6.5.8.pom (2.9 kB at 4.2 kB/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/org/springframework/security/spring-security-oauth2-core/6.5.8/spring-security-oauth2-core-6.5.8.pom
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/org/springframework/security/spring-security-oauth2-core/6.5.8/spring-security-oauth2-core-6.5.8.pom (2.5 kB at 3.6 kB/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/com/nimbusds/oauth2-oidc-sdk/9.43.6/oauth2-oidc-sdk-9.43.6.pom
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/com/nimbusds/oauth2-oidc-sdk/9.43.6/oauth2-oidc-sdk-9.43.6.pom (15 kB at 46 kB/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/com/github/stephenc/jcip/jcip-annotations/1.0-1/jcip-annotations-1.0-1.pom
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/com/github/stephenc/jcip/jcip-annotations/1.0-1/jcip-annotations-1.0-1.pom (5.4 kB at 247 kB/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/com/nimbusds/content-type/2.2/content-type-2.2.pom
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/com/nimbusds/content-type/2.2/content-type-2.2.pom (8.9 kB at 318 kB/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/com/nimbusds/lang-tag/1.7/lang-tag-1.7.pom
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/com/nimbusds/lang-tag/1.7/lang-tag-1.7.pom (9.2 kB at 383 kB/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/com/nimbusds/nimbus-jose-jwt/9.37.3/nimbus-jose-jwt-9.37.3.pom
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/com/nimbusds/nimbus-jose-jwt/9.37.3/nimbus-jose-jwt-9.37.3.pom (13 kB at 36 kB/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/org/springframework/security/spring-security-oauth2-jose/6.5.8/spring-security-oauth2-jose-6.5.8.pom
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/org/springframework/security/spring-security-oauth2-jose/6.5.8/spring-security-oauth2-jose-6.5.8.pom (2.7 kB at 3.9 kB/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/com/nimbusds/nimbus-jose-jwt/9.37.4/nimbus-jose-jwt-9.37.4.pom
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/com/nimbusds/nimbus-jose-jwt/9.37.4/nimbus-jose-jwt-9.37.4.pom (12 kB at 43 kB/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/org/springframework/boot/spring-boot-starter-validation/3.5.11/spring-boot-starter-validation-3.5.11.pom
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/org/springframework/boot/spring-boot-starter-validation/3.5.11/spring-boot-starter-validation-3.5.11.pom (2.5 kB at 12 kB/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/org/springframework/boot/spring-boot-starter-cache/3.5.11/spring-boot-starter-cache-3.5.11.pom
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/org/springframework/boot/spring-boot-starter-cache/3.5.11/spring-boot-starter-cache-3.5.11.pom (2.3 kB at 8.1 kB/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/org/springframework/spring-context-support/6.2.16/spring-context-support-6.2.16.pom
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/org/springframework/spring-context-support/6.2.16/spring-context-support-6.2.16.pom (2.4 kB at 8.9 kB/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/org/springframework/boot/spring-boot-starter-webflux/3.5.11/spring-boot-starter-webflux-3.5.11.pom
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/org/springframework/boot/spring-boot-starter-webflux/3.5.11/spring-boot-starter-webflux-3.5.11.pom (2.9 kB at 7.6 kB/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/org/springframework/boot/spring-boot-starter-reactor-netty/3.5.11/spring-boot-starter-reactor-netty-3.5.11.pom
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/org/springframework/boot/spring-boot-starter-reactor-netty/3.5.11/spring-boot-starter-reactor-netty-3.5.11.pom (2.1 kB at 6.8 kB/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/io/projectreactor/netty/reactor-netty-http/1.2.15/reactor-netty-http-1.2.15.pom
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/io/projectreactor/netty/reactor-netty-http/1.2.15/reactor-netty-http-1.2.15.pom (4.3 kB at 19 kB/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/io/netty/netty-codec-http/4.1.131.Final/netty-codec-http-4.1.131.Final.pom
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/io/netty/netty-codec-http/4.1.131.Final/netty-codec-http-4.1.131.Final.pom (5.0 kB at 15 kB/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/io/netty/netty-parent/4.1.131.Final/netty-parent-4.1.131.Final.pom
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/io/netty/netty-parent/4.1.131.Final/netty-parent-4.1.131.Final.pom (100 kB at 234 kB/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/io/netty/netty-common/4.1.131.Final/netty-common-4.1.131.Final.pom
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/io/netty/netty-common/4.1.131.Final/netty-common-4.1.131.Final.pom (10 kB at 36 kB/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/io/netty/netty-buffer/4.1.131.Final/netty-buffer-4.1.131.Final.pom
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/io/netty/netty-buffer/4.1.131.Final/netty-buffer-4.1.131.Final.pom (2.2 kB at 6.8 kB/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/io/netty/netty-transport/4.1.131.Final/netty-transport-4.1.131.Final.pom
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/io/netty/netty-transport/4.1.131.Final/netty-transport-4.1.131.Final.pom (2.9 kB at 12 kB/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/io/netty/netty-resolver/4.1.131.Final/netty-resolver-4.1.131.Final.pom
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/io/netty/netty-resolver/4.1.131.Final/netty-resolver-4.1.131.Final.pom (2.2 kB at 6.8 kB/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/io/netty/netty-codec/4.1.131.Final/netty-codec-4.1.131.Final.pom
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/io/netty/netty-codec/4.1.131.Final/netty-codec-4.1.131.Final.pom (6.1 kB at 20 kB/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/io/netty/netty-handler/4.1.131.Final/netty-handler-4.1.131.Final.pom
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/io/netty/netty-handler/4.1.131.Final/netty-handler-4.1.131.Final.pom (5.4 kB at 27 kB/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/io/netty/netty-transport-native-unix-common/4.1.131.Final/netty-transport-native-unix-common-4.1.131.Final.pom
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/io/netty/netty-transport-native-unix-common/4.1.131.Final/netty-transport-native-unix-common-4.1.131.Final.pom (34 kB at 158 kB/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/io/netty/netty-codec-http2/4.1.131.Final/netty-codec-http2-4.1.131.Final.pom
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/io/netty/netty-codec-http2/4.1.131.Final/netty-codec-http2-4.1.131.Final.pom (5.8 kB at 28 kB/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/io/netty/netty-resolver-dns/4.1.131.Final/netty-resolver-dns-4.1.131.Final.pom
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/io/netty/netty-resolver-dns/4.1.131.Final/netty-resolver-dns-4.1.131.Final.pom (3.8 kB at 12 kB/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/io/netty/netty-codec-dns/4.1.131.Final/netty-codec-dns-4.1.131.Final.pom
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/io/netty/netty-codec-dns/4.1.131.Final/netty-codec-dns-4.1.131.Final.pom (3.3 kB at 9.9 kB/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/io/netty/netty-resolver-dns-native-macos/4.1.131.Final/netty-resolver-dns-native-macos-4.1.131.Final.pom
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/io/netty/netty-resolver-dns-native-macos/4.1.131.Final/netty-resolver-dns-native-macos-4.1.131.Final.pom (22 kB at 64 kB/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/io/netty/netty-resolver-dns-classes-macos/4.1.131.Final/netty-resolver-dns-classes-macos-4.1.131.Final.pom
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/io/netty/netty-resolver-dns-classes-macos/4.1.131.Final/netty-resolver-dns-classes-macos-4.1.131.Final.pom (2.6 kB at 12 kB/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/io/netty/netty-transport-native-epoll/4.1.131.Final/netty-transport-native-epoll-4.1.131.Final.pom
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/io/netty/netty-transport-native-epoll/4.1.131.Final/netty-transport-native-epoll-4.1.131.Final.pom (30 kB at 101 kB/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/io/netty/netty-transport-classes-epoll/4.1.131.Final/netty-transport-classes-epoll-4.1.131.Final.pom
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/io/netty/netty-transport-classes-epoll/4.1.131.Final/netty-transport-classes-epoll-4.1.131.Final.pom (2.6 kB at 9.0 kB/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/io/projectreactor/netty/reactor-netty-core/1.2.15/reactor-netty-core-1.2.15.pom
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/io/projectreactor/netty/reactor-netty-core/1.2.15/reactor-netty-core-1.2.15.pom (3.9 kB at 18 kB/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/io/netty/netty-handler-proxy/4.1.131.Final/netty-handler-proxy-4.1.131.Final.pom
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/io/netty/netty-handler-proxy/4.1.131.Final/netty-handler-proxy-4.1.131.Final.pom (4.2 kB at 13 kB/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/io/netty/netty-codec-socks/4.1.131.Final/netty-codec-socks-4.1.131.Final.pom
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/io/netty/netty-codec-socks/4.1.131.Final/netty-codec-socks-4.1.131.Final.pom (3.1 kB at 5.5 kB/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/io/projectreactor/reactor-core/3.7.16/reactor-core-3.7.16.pom
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/io/projectreactor/reactor-core/3.7.16/reactor-core-3.7.16.pom (2.1 kB at 6.8 kB/s)
+[INFO] Artifact org.reactivestreams:reactive-streams:pom:1.0.4 is present in the local repository, but cached from a remote repository ID that is unavailable in current build context, verifying that is downloadable from [aliyun-public (https://maven.aliyun.com/repository/public, default, releases)]
+[INFO] Artifact org.reactivestreams:reactive-streams:pom:1.0.4 is present in the local repository, but cached from a remote repository ID that is unavailable in current build context, verifying that is downloadable from [aliyun-public (https://maven.aliyun.com/repository/public, default, releases)]
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/org/reactivestreams/reactive-streams/1.0.4/reactive-streams-1.0.4.pom
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/org/reactivestreams/reactive-streams/1.0.4/reactive-streams-1.0.4.pom (0 B at 0 B/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/org/springframework/spring-webflux/6.2.16/spring-webflux-6.2.16.pom
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/org/springframework/spring-webflux/6.2.16/spring-webflux-6.2.16.pom (2.6 kB at 7.8 kB/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/org/postgresql/postgresql/42.7.10/postgresql-42.7.10.pom
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/org/postgresql/postgresql/42.7.10/postgresql-42.7.10.pom (2.7 kB at 8.4 kB/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/org/checkerframework/checker-qual/3.52.0/checker-qual-3.52.0.pom
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/org/checkerframework/checker-qual/3.52.0/checker-qual-3.52.0.pom (2.1 kB at 6.4 kB/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/com/github/ben-manes/caffeine/caffeine/3.2.3/caffeine-3.2.3.pom
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/com/github/ben-manes/caffeine/caffeine/3.2.3/caffeine-3.2.3.pom (2.1 kB at 5.7 kB/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/com/google/errorprone/error_prone_annotations/2.43.0/error_prone_annotations-2.43.0.pom
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/com/google/errorprone/error_prone_annotations/2.43.0/error_prone_annotations-2.43.0.pom (4.3 kB at 11 kB/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/com/google/errorprone/error_prone_parent/2.43.0/error_prone_parent-2.43.0.pom
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/com/google/errorprone/error_prone_parent/2.43.0/error_prone_parent-2.43.0.pom (16 kB at 48 kB/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/io/jsonwebtoken/jjwt-api/0.12.6/jjwt-api-0.12.6.pom
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/io/jsonwebtoken/jjwt-api/0.12.6/jjwt-api-0.12.6.pom (1.8 kB at 8.4 kB/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/io/jsonwebtoken/jjwt-root/0.12.6/jjwt-root-0.12.6.pom
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/io/jsonwebtoken/jjwt-root/0.12.6/jjwt-root-0.12.6.pom (37 kB at 166 kB/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/io/jsonwebtoken/jjwt-impl/0.12.6/jjwt-impl-0.12.6.pom
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/io/jsonwebtoken/jjwt-impl/0.12.6/jjwt-impl-0.12.6.pom (2.5 kB at 7.6 kB/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/io/jsonwebtoken/jjwt-jackson/0.12.6/jjwt-jackson-0.12.6.pom
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/io/jsonwebtoken/jjwt-jackson/0.12.6/jjwt-jackson-0.12.6.pom (2.9 kB at 9.0 kB/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/com/fasterxml/jackson/dataformat/jackson-dataformat-yaml/2.19.4/jackson-dataformat-yaml-2.19.4.pom
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/com/fasterxml/jackson/dataformat/jackson-dataformat-yaml/2.19.4/jackson-dataformat-yaml-2.19.4.pom (3.0 kB at 10.0 kB/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/com/fasterxml/jackson/dataformat/jackson-dataformats-text/2.19.4/jackson-dataformats-text-2.19.4.pom
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/com/fasterxml/jackson/dataformat/jackson-dataformats-text/2.19.4/jackson-dataformats-text-2.19.4.pom (3.5 kB at 10 kB/s)
+[INFO] Artifact org.projectlombok:lombok:pom:1.18.42 is present in the local repository, but cached from a remote repository ID that is unavailable in current build context, verifying that is downloadable from [aliyun-public (https://maven.aliyun.com/repository/public, default, releases)]
+[INFO] Artifact org.projectlombok:lombok:pom:1.18.42 is present in the local repository, but cached from a remote repository ID that is unavailable in current build context, verifying that is downloadable from [aliyun-public (https://maven.aliyun.com/repository/public, default, releases)]
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/org/projectlombok/lombok/1.18.42/lombok-1.18.42.pom
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/org/projectlombok/lombok/1.18.42/lombok-1.18.42.pom (0 B at 0 B/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/org/springframework/boot/spring-boot-starter-test/3.5.11/spring-boot-starter-test-3.5.11.pom
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/org/springframework/boot/spring-boot-starter-test/3.5.11/spring-boot-starter-test-3.5.11.pom (4.9 kB at 24 kB/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/org/springframework/boot/spring-boot-test/3.5.11/spring-boot-test-3.5.11.pom
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/org/springframework/boot/spring-boot-test/3.5.11/spring-boot-test-3.5.11.pom (2.2 kB at 10.0 kB/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/org/springframework/spring-test/6.2.16/spring-test-6.2.16.pom
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/org/springframework/spring-test/6.2.16/spring-test-6.2.16.pom (2.1 kB at 10.0 kB/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/org/springframework/boot/spring-boot-test-autoconfigure/3.5.11/spring-boot-test-autoconfigure-3.5.11.pom
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/org/springframework/boot/spring-boot-test-autoconfigure/3.5.11/spring-boot-test-autoconfigure-3.5.11.pom (2.5 kB at 10 kB/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/org/springframework/security/spring-security-test/6.5.8/spring-security-test-6.5.8.pom
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/org/springframework/security/spring-security-test/6.5.8/spring-security-test-6.5.8.pom (2.7 kB at 3.8 kB/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/net/jqwik/jqwik/1.9.1/jqwik-1.9.1.pom
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/net/jqwik/jqwik/1.9.1/jqwik-1.9.1.pom (2.3 kB at 3.4 kB/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/net/jqwik/jqwik-api/1.9.1/jqwik-api-1.9.1.pom
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/net/jqwik/jqwik-api/1.9.1/jqwik-api-1.9.1.pom (2.0 kB at 2.7 kB/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/net/jqwik/jqwik-web/1.9.1/jqwik-web-1.9.1.pom
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/net/jqwik/jqwik-web/1.9.1/jqwik-web-1.9.1.pom (2.1 kB at 2.7 kB/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/net/jqwik/jqwik-time/1.9.1/jqwik-time-1.9.1.pom
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/net/jqwik/jqwik-time/1.9.1/jqwik-time-1.9.1.pom (2.1 kB at 3.8 kB/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/net/jqwik/jqwik-engine/1.9.1/jqwik-engine-1.9.1.pom
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/net/jqwik/jqwik-engine/1.9.1/jqwik-engine-1.9.1.pom (2.4 kB at 4.2 kB/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/com/squareup/okhttp3/mockwebserver/5.3.2/mockwebserver-5.3.2.pom
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/com/squareup/okhttp3/mockwebserver/5.3.2/mockwebserver-5.3.2.pom (2.2 kB at 3.2 kB/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/com/squareup/okhttp3/mockwebserver3/5.3.2/mockwebserver3-5.3.2.pom
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/com/squareup/okhttp3/mockwebserver3/5.3.2/mockwebserver3-5.3.2.pom (1.9 kB at 2.6 kB/s)
+[INFO] Artifact org.jetbrains.kotlin:kotlin-stdlib:pom:1.9.25 is present in the local repository, but cached from a remote repository ID that is unavailable in current build context, verifying that is downloadable from [aliyun-public (https://maven.aliyun.com/repository/public, default, releases)]
+[INFO] Artifact org.jetbrains.kotlin:kotlin-stdlib:pom:1.9.25 is present in the local repository, but cached from a remote repository ID that is unavailable in current build context, verifying that is downloadable from [aliyun-public (https://maven.aliyun.com/repository/public, default, releases)]
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/org/jetbrains/kotlin/kotlin-stdlib/1.9.25/kotlin-stdlib-1.9.25.pom
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/org/jetbrains/kotlin/kotlin-stdlib/1.9.25/kotlin-stdlib-1.9.25.pom (0 B at 0 B/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/com/squareup/okhttp3/okhttp-jvm/5.3.2/okhttp-jvm-5.3.2.pom
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/com/squareup/okhttp3/okhttp-jvm/5.3.2/okhttp-jvm-5.3.2.pom (1.9 kB at 5.1 kB/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/com/squareup/okio/okio-jvm/3.16.4/okio-jvm-3.16.4.pom
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/com/squareup/okio/okio-jvm/3.16.4/okio-jvm-3.16.4.pom (1.7 kB at 4.5 kB/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/junit/junit/4.13.2/junit-4.13.2.pom
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/junit/junit/4.13.2/junit-4.13.2.pom (27 kB at 1.5 MB/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/org/hamcrest/hamcrest-core/3.0/hamcrest-core-3.0.pom
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/org/hamcrest/hamcrest-core/3.0/hamcrest-core-3.0.pom (1.8 kB at 4.9 kB/s)
+[INFO] Artifact org.reactivestreams:reactive-streams:jar:1.0.4 is present in the local repository, but cached from a remote repository ID that is unavailable in current build context, verifying that is downloadable from [aliyun-public (https://maven.aliyun.com/repository/public, default, releases)]
+[INFO] Artifact org.projectlombok:lombok:jar:1.18.42 is present in the local repository, but cached from a remote repository ID that is unavailable in current build context, verifying that is downloadable from [aliyun-public (https://maven.aliyun.com/repository/public, default, releases)]
+[INFO] Artifact org.jetbrains.kotlin:kotlin-stdlib:jar:1.9.25 is present in the local repository, but cached from a remote repository ID that is unavailable in current build context, verifying that is downloadable from [aliyun-public (https://maven.aliyun.com/repository/public, default, releases)]
+[INFO] Artifact org.reactivestreams:reactive-streams:jar:1.0.4 is present in the local repository, but cached from a remote repository ID that is unavailable in current build context, verifying that is downloadable from [aliyun-public (https://maven.aliyun.com/repository/public, default, releases)]
+[INFO] Artifact org.projectlombok:lombok:jar:1.18.42 is present in the local repository, but cached from a remote repository ID that is unavailable in current build context, verifying that is downloadable from [aliyun-public (https://maven.aliyun.com/repository/public, default, releases)]
+[INFO] Artifact org.jetbrains.kotlin:kotlin-stdlib:jar:1.9.25 is present in the local repository, but cached from a remote repository ID that is unavailable in current build context, verifying that is downloadable from [aliyun-public (https://maven.aliyun.com/repository/public, default, releases)]
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/org/springframework/boot/spring-boot-starter-web/3.5.11/spring-boot-starter-web-3.5.11.jar
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/org/springframework/boot/spring-boot-starter-web/3.5.11/spring-boot-starter-web-3.5.11.jar (4.8 kB at 22 kB/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/org/springframework/boot/spring-boot-starter/3.5.11/spring-boot-starter-3.5.11.jar
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/org/springframework/boot/spring-boot/3.5.11/spring-boot-3.5.11.jar
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/org/springframework/boot/spring-boot-autoconfigure/3.5.11/spring-boot-autoconfigure-3.5.11.jar
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/org/springframework/boot/spring-boot-starter-logging/3.5.11/spring-boot-starter-logging-3.5.11.jar
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/ch/qos/logback/logback-classic/1.5.32/logback-classic-1.5.32.jar
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/org/springframework/boot/spring-boot-starter-logging/3.5.11/spring-boot-starter-logging-3.5.11.jar (4.8 kB at 15 kB/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/ch/qos/logback/logback-core/1.5.32/logback-core-1.5.32.jar
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/ch/qos/logback/logback-classic/1.5.32/logback-classic-1.5.32.jar (286 kB at 802 kB/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/org/springframework/boot/spring-boot-starter-json/3.5.11/spring-boot-starter-json-3.5.11.jar
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/org/springframework/boot/spring-boot/3.5.11/spring-boot-3.5.11.jar (1.9 MB at 5.2 MB/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/com/fasterxml/jackson/datatype/jackson-datatype-jdk8/2.19.4/jackson-datatype-jdk8-2.19.4.jar
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/org/springframework/boot/spring-boot-starter/3.5.11/spring-boot-starter-3.5.11.jar (4.8 kB at 12 kB/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/com/fasterxml/jackson/datatype/jackson-datatype-jsr310/2.19.4/jackson-datatype-jsr310-2.19.4.jar
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/org/springframework/boot/spring-boot-autoconfigure/3.5.11/spring-boot-autoconfigure-3.5.11.jar (2.1 MB at 5.0 MB/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/com/fasterxml/jackson/module/jackson-module-parameter-names/2.19.4/jackson-module-parameter-names-2.19.4.jar
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/com/fasterxml/jackson/datatype/jackson-datatype-jdk8/2.19.4/jackson-datatype-jdk8-2.19.4.jar (36 kB at 63 kB/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/org/springframework/boot/spring-boot-starter-tomcat/3.5.11/spring-boot-starter-tomcat-3.5.11.jar
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/org/springframework/boot/spring-boot-starter-json/3.5.11/spring-boot-starter-json-3.5.11.jar (4.7 kB at 7.0 kB/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/org/apache/tomcat/embed/tomcat-embed-core/10.1.52/tomcat-embed-core-10.1.52.jar
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/ch/qos/logback/logback-core/1.5.32/logback-core-1.5.32.jar (644 kB at 943 kB/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/org/apache/tomcat/embed/tomcat-embed-websocket/10.1.52/tomcat-embed-websocket-10.1.52.jar
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/com/fasterxml/jackson/datatype/jackson-datatype-jsr310/2.19.4/jackson-datatype-jsr310-2.19.4.jar (137 kB at 190 kB/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/org/springframework/spring-web/6.2.16/spring-web-6.2.16.jar
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/com/fasterxml/jackson/module/jackson-module-parameter-names/2.19.4/jackson-module-parameter-names-2.19.4.jar (10 kB at 14 kB/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/org/springframework/spring-beans/6.2.16/spring-beans-6.2.16.jar
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/org/springframework/boot/spring-boot-starter-tomcat/3.5.11/spring-boot-starter-tomcat-3.5.11.jar (4.8 kB at 5.4 kB/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/io/micrometer/micrometer-observation/1.15.9/micrometer-observation-1.15.9.jar
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/org/apache/tomcat/embed/tomcat-embed-websocket/10.1.52/tomcat-embed-websocket-10.1.52.jar (284 kB at 292 kB/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/io/micrometer/micrometer-commons/1.15.9/micrometer-commons-1.15.9.jar
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/org/apache/tomcat/embed/tomcat-embed-core/10.1.52/tomcat-embed-core-10.1.52.jar (3.7 MB at 3.5 MB/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/org/springframework/spring-webmvc/6.2.16/spring-webmvc-6.2.16.jar
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/org/springframework/spring-beans/6.2.16/spring-beans-6.2.16.jar (892 kB at 842 kB/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/org/springframework/spring-context/6.2.16/spring-context-6.2.16.jar
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/org/springframework/spring-web/6.2.16/spring-web-6.2.16.jar (2.1 MB at 2.0 MB/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/org/springframework/spring-expression/6.2.16/spring-expression-6.2.16.jar
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/io/micrometer/micrometer-commons/1.15.9/micrometer-commons-1.15.9.jar (49 kB at 39 kB/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/org/springframework/boot/spring-boot-starter-data-jpa/3.5.11/spring-boot-starter-data-jpa-3.5.11.jar
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/org/springframework/spring-webmvc/6.2.16/spring-webmvc-6.2.16.jar (1.1 MB at 800 kB/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/org/springframework/boot/spring-boot-starter-jdbc/3.5.11/spring-boot-starter-jdbc-3.5.11.jar
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/org/springframework/spring-context/6.2.16/spring-context-6.2.16.jar (1.4 MB at 987 kB/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/org/springframework/spring-jdbc/6.2.16/spring-jdbc-6.2.16.jar
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/org/springframework/spring-expression/6.2.16/spring-expression-6.2.16.jar (318 kB at 231 kB/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/org/hibernate/orm/hibernate-core/6.6.42.Final/hibernate-core-6.6.42.Final.jar
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/io/micrometer/micrometer-observation/1.15.9/micrometer-observation-1.15.9.jar (76 kB at 52 kB/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/org/jboss/logging/jboss-logging/3.6.2.Final/jboss-logging-3.6.2.Final.jar
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/org/springframework/boot/spring-boot-starter-jdbc/3.5.11/spring-boot-starter-jdbc-3.5.11.jar (4.8 kB at 3.1 kB/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/org/antlr/antlr4-runtime/4.13.0/antlr4-runtime-4.13.0.jar
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/org/antlr/antlr4-runtime/4.13.0/antlr4-runtime-4.13.0.jar (326 kB at 206 kB/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/org/springframework/data/spring-data-jpa/3.5.9/spring-data-jpa-3.5.9.jar
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/org/springframework/spring-jdbc/6.2.16/spring-jdbc-6.2.16.jar (476 kB at 277 kB/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/org/springframework/data/spring-data-commons/3.5.9/spring-data-commons-3.5.9.jar
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/org/jboss/logging/jboss-logging/3.6.2.Final/jboss-logging-3.6.2.Final.jar (63 kB at 35 kB/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/org/springframework/spring-orm/6.2.16/spring-orm-6.2.16.jar
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/org/springframework/boot/spring-boot-starter-data-jpa/3.5.11/spring-boot-starter-data-jpa-3.5.11.jar (4.8 kB at 2.3 kB/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/org/springframework/spring-tx/6.2.16/spring-tx-6.2.16.jar
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/org/springframework/data/spring-data-commons/3.5.9/spring-data-commons-3.5.9.jar (1.5 MB at 731 kB/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/org/springframework/spring-aspects/6.2.16/spring-aspects-6.2.16.jar
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/org/springframework/spring-tx/6.2.16/spring-tx-6.2.16.jar (290 kB at 122 kB/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/org/springframework/boot/spring-boot-starter-security/3.5.11/spring-boot-starter-security-3.5.11.jar
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/org/springframework/spring-orm/6.2.16/spring-orm-6.2.16.jar (235 kB at 95 kB/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/org/springframework/spring-aop/6.2.16/spring-aop-6.2.16.jar
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/org/springframework/data/spring-data-jpa/3.5.9/spring-data-jpa-3.5.9.jar (1.8 MB at 735 kB/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/org/springframework/security/spring-security-config/6.5.8/spring-security-config-6.5.8.jar
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/org/hibernate/orm/hibernate-core/6.6.42.Final/hibernate-core-6.6.42.Final.jar (12 MB at 4.8 MB/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/org/springframework/security/spring-security-web/6.5.8/spring-security-web-6.5.8.jar
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/org/springframework/spring-aop/6.2.16/spring-aop-6.2.16.jar (420 kB at 156 kB/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/org/springframework/boot/spring-boot-starter-oauth2-client/3.5.11/spring-boot-starter-oauth2-client-3.5.11.jar
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/org/springframework/boot/spring-boot-starter-security/3.5.11/spring-boot-starter-security-3.5.11.jar (4.7 kB at 1.7 kB/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/org/springframework/security/spring-security-core/6.5.8/spring-security-core-6.5.8.jar
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/org/springframework/spring-aspects/6.2.16/spring-aspects-6.2.16.jar (50 kB at 18 kB/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/org/springframework/security/spring-security-crypto/6.5.8/spring-security-crypto-6.5.8.jar
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/org/springframework/security/spring-security-config/6.5.8/spring-security-config-6.5.8.jar (2.1 MB at 745 kB/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/org/springframework/security/spring-security-oauth2-client/6.5.8/spring-security-oauth2-client-6.5.8.jar
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/org/springframework/security/spring-security-web/6.5.8/spring-security-web-6.5.8.jar (1.1 MB at 365 kB/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/org/springframework/security/spring-security-oauth2-core/6.5.8/spring-security-oauth2-core-6.5.8.jar
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/org/springframework/security/spring-security-crypto/6.5.8/spring-security-crypto-6.5.8.jar (105 kB at 36 kB/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/com/nimbusds/oauth2-oidc-sdk/9.43.6/oauth2-oidc-sdk-9.43.6.jar
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/org/springframework/security/spring-security-core/6.5.8/spring-security-core-6.5.8.jar (623 kB at 201 kB/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/com/github/stephenc/jcip/jcip-annotations/1.0-1/jcip-annotations-1.0-1.jar
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/com/github/stephenc/jcip/jcip-annotations/1.0-1/jcip-annotations-1.0-1.jar (4.7 kB at 1.5 kB/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/com/nimbusds/content-type/2.2/content-type-2.2.jar
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/com/nimbusds/content-type/2.2/content-type-2.2.jar (8.2 kB at 2.6 kB/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/com/nimbusds/lang-tag/1.7/lang-tag-1.7.jar
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/com/nimbusds/lang-tag/1.7/lang-tag-1.7.jar (11 kB at 3.5 kB/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/org/springframework/security/spring-security-oauth2-jose/6.5.8/spring-security-oauth2-jose-6.5.8.jar
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/org/springframework/boot/spring-boot-starter-oauth2-client/3.5.11/spring-boot-starter-oauth2-client-3.5.11.jar (4.8 kB at 1.5 kB/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/com/nimbusds/nimbus-jose-jwt/9.37.4/nimbus-jose-jwt-9.37.4.jar
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/org/springframework/security/spring-security-oauth2-core/6.5.8/spring-security-oauth2-core-6.5.8.jar (111 kB at 34 kB/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/org/springframework/boot/spring-boot-starter-validation/3.5.11/spring-boot-starter-validation-3.5.11.jar
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/com/nimbusds/oauth2-oidc-sdk/9.43.6/oauth2-oidc-sdk-9.43.6.jar (847 kB at 258 kB/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/org/apache/tomcat/embed/tomcat-embed-el/10.1.52/tomcat-embed-el-10.1.52.jar
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/org/springframework/boot/spring-boot-starter-validation/3.5.11/spring-boot-starter-validation-3.5.11.jar (4.8 kB at 1.3 kB/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/org/springframework/boot/spring-boot-starter-cache/3.5.11/spring-boot-starter-cache-3.5.11.jar
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/org/springframework/security/spring-security-oauth2-jose/6.5.8/spring-security-oauth2-jose-6.5.8.jar (127 kB at 35 kB/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/org/springframework/spring-context-support/6.2.16/spring-context-support-6.2.16.jar
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/org/apache/tomcat/embed/tomcat-embed-el/10.1.52/tomcat-embed-el-10.1.52.jar (264 kB at 73 kB/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/org/springframework/boot/spring-boot-starter-webflux/3.5.11/spring-boot-starter-webflux-3.5.11.jar
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/com/nimbusds/nimbus-jose-jwt/9.37.4/nimbus-jose-jwt-9.37.4.jar (788 kB at 218 kB/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/org/springframework/boot/spring-boot-starter-reactor-netty/3.5.11/spring-boot-starter-reactor-netty-3.5.11.jar
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/org/springframework/security/spring-security-oauth2-client/6.5.8/spring-security-oauth2-client-6.5.8.jar (457 kB at 120 kB/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/io/projectreactor/netty/reactor-netty-http/1.2.15/reactor-netty-http-1.2.15.jar
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/org/springframework/boot/spring-boot-starter-webflux/3.5.11/spring-boot-starter-webflux-3.5.11.jar (4.8 kB at 1.2 kB/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/io/netty/netty-codec-http/4.1.131.Final/netty-codec-http-4.1.131.Final.jar
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/org/springframework/spring-context-support/6.2.16/spring-context-support-6.2.16.jar (175 kB at 45 kB/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/io/netty/netty-common/4.1.131.Final/netty-common-4.1.131.Final.jar
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/org/springframework/boot/spring-boot-starter-reactor-netty/3.5.11/spring-boot-starter-reactor-netty-3.5.11.jar (4.8 kB at 1.2 kB/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/io/netty/netty-buffer/4.1.131.Final/netty-buffer-4.1.131.Final.jar
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/org/springframework/boot/spring-boot-starter-cache/3.5.11/spring-boot-starter-cache-3.5.11.jar (4.8 kB at 1.2 kB/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/io/netty/netty-transport/4.1.131.Final/netty-transport-4.1.131.Final.jar
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/io/projectreactor/netty/reactor-netty-http/1.2.15/reactor-netty-http-1.2.15.jar (620 kB at 149 kB/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/io/netty/netty-codec/4.1.131.Final/netty-codec-4.1.131.Final.jar
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/io/netty/netty-buffer/4.1.131.Final/netty-buffer-4.1.131.Final.jar (357 kB at 84 kB/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/io/netty/netty-handler/4.1.131.Final/netty-handler-4.1.131.Final.jar
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/io/netty/netty-common/4.1.131.Final/netty-common-4.1.131.Final.jar (738 kB at 175 kB/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/io/netty/netty-codec-http2/4.1.131.Final/netty-codec-http2-4.1.131.Final.jar
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/io/netty/netty-codec-http/4.1.131.Final/netty-codec-http-4.1.131.Final.jar (683 kB at 161 kB/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/io/netty/netty-resolver-dns/4.1.131.Final/netty-resolver-dns-4.1.131.Final.jar
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/io/netty/netty-transport/4.1.131.Final/netty-transport-4.1.131.Final.jar (522 kB at 122 kB/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/io/netty/netty-resolver/4.1.131.Final/netty-resolver-4.1.131.Final.jar
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/io/netty/netty-codec/4.1.131.Final/netty-codec-4.1.131.Final.jar (358 kB at 79 kB/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/io/netty/netty-codec-dns/4.1.131.Final/netty-codec-dns-4.1.131.Final.jar
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/io/netty/netty-handler/4.1.131.Final/netty-handler-4.1.131.Final.jar (582 kB at 128 kB/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/io/netty/netty-resolver-dns-native-macos/4.1.131.Final/netty-resolver-dns-native-macos-4.1.131.Final-osx-x86_64.jar
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/io/netty/netty-codec-http2/4.1.131.Final/netty-codec-http2-4.1.131.Final.jar (500 kB at 110 kB/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/io/netty/netty-resolver-dns-classes-macos/4.1.131.Final/netty-resolver-dns-classes-macos-4.1.131.Final.jar
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/io/netty/netty-resolver-dns/4.1.131.Final/netty-resolver-dns-4.1.131.Final.jar (188 kB at 41 kB/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/io/netty/netty-transport-native-epoll/4.1.131.Final/netty-transport-native-epoll-4.1.131.Final-linux-x86_64.jar
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/io/netty/netty-resolver/4.1.131.Final/netty-resolver-4.1.131.Final.jar (38 kB at 8.2 kB/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/io/netty/netty-transport-native-unix-common/4.1.131.Final/netty-transport-native-unix-common-4.1.131.Final.jar
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/io/netty/netty-resolver-dns-classes-macos/4.1.131.Final/netty-resolver-dns-classes-macos-4.1.131.Final.jar (9.2 kB at 1.9 kB/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/io/netty/netty-transport-classes-epoll/4.1.131.Final/netty-transport-classes-epoll-4.1.131.Final.jar
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/io/netty/netty-resolver-dns-native-macos/4.1.131.Final/netty-resolver-dns-native-macos-4.1.131.Final-osx-x86_64.jar (20 kB at 4.1 kB/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/io/projectreactor/netty/reactor-netty-core/1.2.15/reactor-netty-core-1.2.15.jar
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/io/netty/netty-codec-dns/4.1.131.Final/netty-codec-dns-4.1.131.Final.jar (68 kB at 14 kB/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/io/netty/netty-handler-proxy/4.1.131.Final/netty-handler-proxy-4.1.131.Final.jar
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/io/netty/netty-transport-native-epoll/4.1.131.Final/netty-transport-native-epoll-4.1.131.Final-linux-x86_64.jar (41 kB at 8.3 kB/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/io/netty/netty-codec-socks/4.1.131.Final/netty-codec-socks-4.1.131.Final.jar
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/io/netty/netty-transport-native-unix-common/4.1.131.Final/netty-transport-native-unix-common-4.1.131.Final.jar (44 kB at 8.9 kB/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/org/springframework/spring-webflux/6.2.16/spring-webflux-6.2.16.jar
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/io/projectreactor/netty/reactor-netty-core/1.2.15/reactor-netty-core-1.2.15.jar (537 kB at 107 kB/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/io/projectreactor/reactor-core/3.7.16/reactor-core-3.7.16.jar
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/io/netty/netty-transport-classes-epoll/4.1.131.Final/netty-transport-classes-epoll-4.1.131.Final.jar (148 kB at 29 kB/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/org/reactivestreams/reactive-streams/1.0.4/reactive-streams-1.0.4.jar
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/org/reactivestreams/reactive-streams/1.0.4/reactive-streams-1.0.4.jar (0 B at 0 B/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/org/postgresql/postgresql/42.7.10/postgresql-42.7.10.jar
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/io/netty/netty-codec-socks/4.1.131.Final/netty-codec-socks-4.1.131.Final.jar (121 kB at 24 kB/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/org/checkerframework/checker-qual/3.52.0/checker-qual-3.52.0.jar
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/io/netty/netty-handler-proxy/4.1.131.Final/netty-handler-proxy-4.1.131.Final.jar (26 kB at 4.9 kB/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/com/github/ben-manes/caffeine/caffeine/3.2.3/caffeine-3.2.3.jar
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/io/projectreactor/reactor-core/3.7.16/reactor-core-3.7.16.jar (1.9 MB at 362 kB/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/com/google/errorprone/error_prone_annotations/2.43.0/error_prone_annotations-2.43.0.jar
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/org/springframework/spring-webflux/6.2.16/spring-webflux-6.2.16.jar (1.0 MB at 193 kB/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/io/jsonwebtoken/jjwt-api/0.12.6/jjwt-api-0.12.6.jar
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/io/jsonwebtoken/jjwt-api/0.12.6/jjwt-api-0.12.6.jar (140 kB at 26 kB/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/io/jsonwebtoken/jjwt-impl/0.12.6/jjwt-impl-0.12.6.jar
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/io/jsonwebtoken/jjwt-impl/0.12.6/jjwt-impl-0.12.6.jar (473 kB at 89 kB/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/io/jsonwebtoken/jjwt-jackson/0.12.6/jjwt-jackson-0.12.6.jar
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/io/jsonwebtoken/jjwt-jackson/0.12.6/jjwt-jackson-0.12.6.jar (9.4 kB at 1.8 kB/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/com/fasterxml/jackson/core/jackson-databind/2.19.4/jackson-databind-2.19.4.jar
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/com/github/ben-manes/caffeine/caffeine/3.2.3/caffeine-3.2.3.jar (1.0 MB at 188 kB/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/com/fasterxml/jackson/core/jackson-annotations/2.19.4/jackson-annotations-2.19.4.jar
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/org/postgresql/postgresql/42.7.10/postgresql-42.7.10.jar (1.1 MB at 209 kB/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/com/fasterxml/jackson/dataformat/jackson-dataformat-yaml/2.19.4/jackson-dataformat-yaml-2.19.4.jar
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/org/checkerframework/checker-qual/3.52.0/checker-qual-3.52.0.jar (242 kB at 44 kB/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/com/fasterxml/jackson/core/jackson-core/2.19.4/jackson-core-2.19.4.jar
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/com/google/errorprone/error_prone_annotations/2.43.0/error_prone_annotations-2.43.0.jar (20 kB at 3.7 kB/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/org/projectlombok/lombok/1.18.42/lombok-1.18.42.jar
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/org/projectlombok/lombok/1.18.42/lombok-1.18.42.jar (0 B at 0 B/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/org/springframework/boot/spring-boot-starter-test/3.5.11/spring-boot-starter-test-3.5.11.jar
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/com/fasterxml/jackson/core/jackson-databind/2.19.4/jackson-databind-2.19.4.jar (1.7 MB at 298 kB/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/org/springframework/boot/spring-boot-test/3.5.11/spring-boot-test-3.5.11.jar
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/com/fasterxml/jackson/dataformat/jackson-dataformat-yaml/2.19.4/jackson-dataformat-yaml-2.19.4.jar (60 kB at 11 kB/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/org/springframework/boot/spring-boot-test-autoconfigure/3.5.11/spring-boot-test-autoconfigure-3.5.11.jar
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/com/fasterxml/jackson/core/jackson-core/2.19.4/jackson-core-2.19.4.jar (591 kB at 102 kB/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/org/springframework/spring-core/6.2.16/spring-core-6.2.16.jar
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/org/springframework/boot/spring-boot-test/3.5.11/spring-boot-test-3.5.11.jar (258 kB at 44 kB/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/org/springframework/spring-jcl/6.2.16/spring-jcl-6.2.16.jar
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/org/springframework/boot/spring-boot-starter-test/3.5.11/spring-boot-starter-test-3.5.11.jar (4.8 kB at 805 B/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/org/springframework/spring-test/6.2.16/spring-test-6.2.16.jar
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/org/springframework/boot/spring-boot-test-autoconfigure/3.5.11/spring-boot-test-autoconfigure-3.5.11.jar (230 kB at 38 kB/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/org/springframework/security/spring-security-test/6.5.8/spring-security-test-6.5.8.jar
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/com/fasterxml/jackson/core/jackson-annotations/2.19.4/jackson-annotations-2.19.4.jar (79 kB at 13 kB/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/net/jqwik/jqwik/1.9.1/jqwik-1.9.1.jar
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/org/springframework/spring-jcl/6.2.16/spring-jcl-6.2.16.jar (24 kB at 3.9 kB/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/net/jqwik/jqwik-api/1.9.1/jqwik-api-1.9.1.jar
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/org/springframework/spring-test/6.2.16/spring-test-6.2.16.jar (1.0 MB at 162 kB/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/net/jqwik/jqwik-web/1.9.1/jqwik-web-1.9.1.jar
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/net/jqwik/jqwik/1.9.1/jqwik-1.9.1.jar (521 B at 80 B/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/net/jqwik/jqwik-time/1.9.1/jqwik-time-1.9.1.jar
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/org/springframework/spring-core/6.2.16/spring-core-6.2.16.jar (2.0 MB at 305 kB/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/net/jqwik/jqwik-engine/1.9.1/jqwik-engine-1.9.1.jar
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/org/springframework/security/spring-security-test/6.5.8/spring-security-test-6.5.8.jar (136 kB at 20 kB/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/com/squareup/okhttp3/mockwebserver/5.3.2/mockwebserver-5.3.2.jar
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/net/jqwik/jqwik-api/1.9.1/jqwik-api-1.9.1.jar (272 kB at 39 kB/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/com/squareup/okhttp3/mockwebserver3/5.3.2/mockwebserver3-5.3.2.jar
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/net/jqwik/jqwik-web/1.9.1/jqwik-web-1.9.1.jar (13 kB at 1.9 kB/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/junit/junit/4.13.2/junit-4.13.2.jar
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/junit/junit/4.13.2/junit-4.13.2.jar (385 kB at 55 kB/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/org/hamcrest/hamcrest-core/3.0/hamcrest-core-3.0.jar
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/net/jqwik/jqwik-time/1.9.1/jqwik-time-1.9.1.jar (243 kB at 33 kB/s)
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/net/jqwik/jqwik-engine/1.9.1/jqwik-engine-1.9.1.jar (877 kB at 121 kB/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/org/jetbrains/kotlin/kotlin-stdlib/1.9.25/kotlin-stdlib-1.9.25.jar
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/com/squareup/okhttp3/okhttp-jvm/5.3.2/okhttp-jvm-5.3.2.jar
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/org/jetbrains/kotlin/kotlin-stdlib/1.9.25/kotlin-stdlib-1.9.25.jar (0 B at 0 B/s)
+[INFO] Downloading from aliyun-public: https://maven.aliyun.com/repository/public/com/squareup/okio/okio-jvm/3.16.4/okio-jvm-3.16.4.jar
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/com/squareup/okhttp3/mockwebserver/5.3.2/mockwebserver-5.3.2.jar (30 kB at 4.1 kB/s)
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/com/squareup/okhttp3/mockwebserver3/5.3.2/mockwebserver3-5.3.2.jar (73 kB at 9.9 kB/s)
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/org/hamcrest/hamcrest-core/3.0/hamcrest-core-3.0.jar (2.4 kB at 325 B/s)
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/com/squareup/okhttp3/okhttp-jvm/5.3.2/okhttp-jvm-5.3.2.jar (868 kB at 116 kB/s)
+[INFO] Downloaded from aliyun-public: https://maven.aliyun.com/repository/public/com/squareup/okio/okio-jvm/3.16.4/okio-jvm-3.16.4.jar (383 kB at 45 kB/s)
+[INFO] 
+[INFO] --- resources:3.3.1:resources (default-resources) @ agent-skills-sharing ---
+[INFO] Copying 1 resource from src\main\resources to target\classes
+[INFO] Copying 1 resource from src\main\resources to target\classes
+[INFO] 
+[INFO] --- compiler:3.14.1:compile (default-compile) @ agent-skills-sharing ---
+[INFO] Recompiling the module because of changed dependency.
+[INFO] Compiling 47 source files with javac [debug parameters release 17] to target\classes
+[INFO] 
+[INFO] --- resources:3.3.1:testResources (default-testResources) @ agent-skills-sharing ---
+[INFO] Copying 1 resource from src\test\resources to target\test-classes
+[INFO] 
+[INFO] --- compiler:3.14.1:testCompile (default-testCompile) @ agent-skills-sharing ---
+[INFO] Recompiling the module because of changed dependency.
+[INFO] Compiling 14 source files with javac [debug parameters release 17] to target\test-classes
+[INFO] -------------------------------------------------------------
+[ERROR] COMPILATION ERROR : 
+[INFO] -------------------------------------------------------------
+[ERROR] /E:/ai_workflow/specgate-canary-skill-hub/backend/src/test/java/com/agentskills/sharing/controller/RepositoryControllerTest.java:[100,23] 无法将记录 com.agentskills.sharing.dto.ImportRepositoryRequest中的构造器 ImportRepositoryRequest应用到给定类型;
+  需要: java.lang.String,java.lang.String,java.lang.String
+  找到:    java.lang.String
+  原因: 实际参数列表和形式参数列表长度不同
+[ERROR] /E:/ai_workflow/specgate-canary-skill-hub/backend/src/test/java/com/agentskills/sharing/controller/RepositoryControllerTest.java:[101,38] 无法将类 com.agentskills.sharing.service.RepositoryScannerService中的方法 importRepository应用到给定类型;
+  需要: java.lang.String,java.lang.String,java.lang.String,java.lang.String
+  找到:    java.lang.String,java.lang.String
+  原因: 实际参数列表和形式参数列表长度不同
+[ERROR] /E:/ai_workflow/specgate-canary-skill-hub/backend/src/test/java/com/agentskills/sharing/controller/RepositoryControllerTest.java:[126,23] 无法将记录 com.agentskills.sharing.dto.ImportRepositoryRequest中的构造器 ImportRepositoryRequest应用到给定类型;
+  需要: java.lang.String,java.lang.String,java.lang.String
+  找到:    java.lang.String
+  原因: 实际参数列表和形式参数列表长度不同
+[ERROR] /E:/ai_workflow/specgate-canary-skill-hub/backend/src/test/java/com/agentskills/sharing/controller/RepositoryControllerTest.java:[127,38] 无法将类 com.agentskills.sharing.service.RepositoryScannerService中的方法 importRepository应用到给定类型;
+  需要: java.lang.String,java.lang.String,java.lang.String,java.lang.String
+  找到:    java.lang.String,java.lang.String
+  原因: 实际参数列表和形式参数列表长度不同
+[ERROR] /E:/ai_workflow/specgate-canary-skill-hub/backend/src/test/java/com/agentskills/sharing/controller/RepositoryControllerTest.java:[210,38] 无法将类 com.agentskills.sharing.service.RepositoryScannerService中的方法 importRepository应用到给定类型;
+  需要: java.lang.String,java.lang.String,java.lang.String,java.lang.String
+  找到:    java.lang.String,java.lang.String
+  原因: 实际参数列表和形式参数列表长度不同
+[ERROR] /E:/ai_workflow/specgate-canary-skill-hub/backend/src/test/java/com/agentskills/sharing/controller/RepositoryControllerTest.java:[233,41] 无法将类 com.agentskills.sharing.service.RepositoryScannerService中的方法 importRepository应用到给定类型;
+  需要: java.lang.String,java.lang.String,java.lang.String,java.lang.String
+  找到:    java.lang.String,java.lang.String
+  原因: 实际参数列表和形式参数列表长度不同
+[ERROR] /E:/ai_workflow/specgate-canary-skill-hub/backend/src/test/java/com/agentskills/sharing/controller/RepositoryControllerTest.java:[268,38] 无法将类 com.agentskills.sharing.service.RepositoryScannerService中的方法 importRepository应用到给定类型;
+  需要: java.lang.String,java.lang.String,java.lang.String,java.lang.String
+  找到:    java.lang.String,java.lang.String
+  原因: 实际参数列表和形式参数列表长度不同
+[ERROR] /E:/ai_workflow/specgate-canary-skill-hub/backend/src/test/java/com/agentskills/sharing/controller/RepositoryControllerTest.java:[286,41] 无法将类 com.agentskills.sharing.service.RepositoryScannerService中的方法 importRepository应用到给定类型;
+  需要: java.lang.String,java.lang.String,java.lang.String,java.lang.String
+  找到:    java.lang.String,java.lang.String
+  原因: 实际参数列表和形式参数列表长度不同
+[ERROR] /E:/ai_workflow/specgate-canary-skill-hub/backend/src/test/java/com/agentskills/sharing/controller/SkillGroupControllerTest.java:[37,21] 无法将记录 com.agentskills.sharing.dto.SkillGroupListResponse中的构造器 SkillGroupListResponse应用到给定类型;
+  需要: java.lang.String,java.lang.String,java.lang.String,java.lang.String,int,int,int,int,java.lang.String,java.time.LocalDateTime
+  找到:    java.lang.String,java.lang.String,java.lang.String,java.lang.String,int,java.time.LocalDateTime
+  原因: 实际参数列表和形式参数列表长度不同
+[ERROR] /E:/ai_workflow/specgate-canary-skill-hub/backend/src/test/java/com/agentskills/sharing/controller/SkillGroupControllerTest.java:[38,26] 无法将类 com.agentskills.sharing.service.SkillService中的方法 listSkillGroups应用到给定类型;
+  需要: java.lang.String
+  找到:    没有参数
+  原因: 实际参数列表和形式参数列表长度不同
+[ERROR] /E:/ai_workflow/specgate-canary-skill-hub/backend/src/test/java/com/agentskills/sharing/controller/SkillGroupControllerTest.java:[40,42] 无法将类 com.agentskills.sharing.controller.SkillGroupController中的方法 listSkillGroups应用到给定类型;
+  需要: java.lang.String
+  找到:    没有参数
+  原因: 实际参数列表和形式参数列表长度不同
+[ERROR] /E:/ai_workflow/specgate-canary-skill-hub/backend/src/test/java/com/agentskills/sharing/controller/SkillGroupControllerTest.java:[49,26] 无法将类 com.agentskills.sharing.service.SkillService中的方法 listSkillGroups应用到给定类型;
+  需要: java.lang.String
+  找到:    没有参数
+  原因: 实际参数列表和形式参数列表长度不同
+[ERROR] /E:/ai_workflow/specgate-canary-skill-hub/backend/src/test/java/com/agentskills/sharing/controller/SkillGroupControllerTest.java:[51,42] 无法将类 com.agentskills.sharing.controller.SkillGroupController中的方法 listSkillGroups应用到给定类型;
+  需要: java.lang.String
+  找到:    没有参数
+  原因: 实际参数列表和形式参数列表长度不同
+[ERROR] /E:/ai_workflow/specgate-canary-skill-hub/backend/src/test/java/com/agentskills/sharing/service/RepositoryScannerServiceTest.java:[75,41] 无法将类 com.agentskills.sharing.service.RepositoryScannerService中的方法 importRepository应用到给定类型;
+  需要: java.lang.String,java.lang.String,java.lang.String,java.lang.String
+  找到:    java.lang.String,java.lang.String
+  原因: 实际参数列表和形式参数列表长度不同
+[ERROR] /E:/ai_workflow/specgate-canary-skill-hub/backend/src/test/java/com/agentskills/sharing/service/RepositoryScannerServiceTest.java:[82,41] 无法将类 com.agentskills.sharing.service.RepositoryScannerService中的方法 importRepository应用到给定类型;
+  需要: java.lang.String,java.lang.String,java.lang.String,java.lang.String
+  找到:    java.lang.String,java.lang.String
+  原因: 实际参数列表和形式参数列表长度不同
+[ERROR] /E:/ai_workflow/specgate-canary-skill-hub/backend/src/test/java/com/agentskills/sharing/service/RepositoryScannerServiceTest.java:[89,41] 无法将类 com.agentskills.sharing.service.RepositoryScannerService中的方法 importRepository应用到给定类型;
+  需要: java.lang.String,java.lang.String,java.lang.String,java.lang.String
+  找到:    java.lang.String,java.lang.String
+  原因: 实际参数列表和形式参数列表长度不同
+[ERROR] /E:/ai_workflow/specgate-canary-skill-hub/backend/src/test/java/com/agentskills/sharing/service/RepositoryScannerServiceTest.java:[96,41] 无法将类 com.agentskills.sharing.service.RepositoryScannerService中的方法 importRepository应用到给定类型;
+  需要: java.lang.String,java.lang.String,java.lang.String,java.lang.String
+  找到:    java.lang.String,java.lang.String
+  原因: 实际参数列表和形式参数列表长度不同
+[ERROR] /E:/ai_workflow/specgate-canary-skill-hub/backend/src/test/java/com/agentskills/sharing/service/RepositoryScannerServiceTest.java:[110,41] 无法将类 com.agentskills.sharing.service.RepositoryScannerService中的方法 importRepository应用到给定类型;
+  需要: java.lang.String,java.lang.String,java.lang.String,java.lang.String
+  找到:    java.lang.String,java.lang.String
+  原因: 实际参数列表和形式参数列表长度不同
+[ERROR] /E:/ai_workflow/specgate-canary-skill-hub/backend/src/test/java/com/agentskills/sharing/service/RepositoryScannerServiceTest.java:[122,41] 无法将类 com.agentskills.sharing.service.RepositoryScannerService中的方法 importRepository应用到给定类型;
+  需要: java.lang.String,java.lang.String,java.lang.String,java.lang.String
+  找到:    java.lang.String,java.lang.String
+  原因: 实际参数列表和形式参数列表长度不同
+[ERROR] /E:/ai_workflow/specgate-canary-skill-hub/backend/src/test/java/com/agentskills/sharing/service/RepositoryScannerServiceTest.java:[137,41] 无法将类 com.agentskills.sharing.service.RepositoryScannerService中的方法 importRepository应用到给定类型;
+  需要: java.lang.String,java.lang.String,java.lang.String,java.lang.String
+  找到:    java.lang.String,java.lang.String
+  原因: 实际参数列表和形式参数列表长度不同
+[ERROR] /E:/ai_workflow/specgate-canary-skill-hub/backend/src/test/java/com/agentskills/sharing/service/RepositoryScannerServiceTest.java:[196,36] 无法将类 com.agentskills.sharing.service.RepositoryScannerService中的方法 importRepository应用到给定类型;
+  需要: java.lang.String,java.lang.String,java.lang.String,java.lang.String
+  找到:    java.lang.String,java.lang.String
+  原因: 实际参数列表和形式参数列表长度不同
+[ERROR] /E:/ai_workflow/specgate-canary-skill-hub/backend/src/test/java/com/agentskills/sharing/service/RepositoryScannerServiceTest.java:[250,36] 无法将类 com.agentskills.sharing.service.RepositoryScannerService中的方法 importRepository应用到给定类型;
+  需要: java.lang.String,java.lang.String,java.lang.String,java.lang.String
+  找到:    java.lang.String,java.lang.String
+  原因: 实际参数列表和形式参数列表长度不同
+[ERROR] /E:/ai_workflow/specgate-canary-skill-hub/backend/src/test/java/com/agentskills/sharing/service/RepositoryScannerServiceTest.java:[291,36] 无法将类 com.agentskills.sharing.service.RepositoryScannerService中的方法 importRepository应用到给定类型;
+  需要: java.lang.String,java.lang.String,java.lang.String,java.lang.String
+  找到:    java.lang.String,java.lang.String
+  原因: 实际参数列表和形式参数列表长度不同
+[ERROR] /E:/ai_workflow/specgate-canary-skill-hub/backend/src/test/java/com/agentskills/sharing/service/RepositoryScannerServiceTest.java:[330,16] 无法将类 com.agentskills.sharing.service.RepositoryScannerService中的方法 importRepository应用到给定类型;
+  需要: java.lang.String,java.lang.String,java.lang.String,java.lang.String
+  找到:    java.lang.String,java.lang.String
+  原因: 实际参数列表和形式参数列表长度不同
+[ERROR] /E:/ai_workflow/specgate-canary-skill-hub/backend/src/test/java/com/agentskills/sharing/service/RepositoryScannerServiceTest.java:[398,16] 无法将类 com.agentskills.sharing.service.RepositoryScannerService中的方法 importRepository应用到给定类型;
+  需要: java.lang.String,java.lang.String,java.lang.String,java.lang.String
+  找到:    java.lang.String,java.lang.String
+  原因: 实际参数列表和形式参数列表长度不同
+[ERROR] /E:/ai_workflow/specgate-canary-skill-hub/backend/src/test/java/com/agentskills/sharing/service/RepositoryScannerServiceTest.java:[461,16] 无法将类 com.agentskills.sharing.service.RepositoryScannerService中的方法 importRepository应用到给定类型;
+  需要: java.lang.String,java.lang.String,java.lang.String,java.lang.String
+  找到:    java.lang.String,java.lang.String
+  原因: 实际参数列表和形式参数列表长度不同
+[ERROR] /E:/ai_workflow/specgate-canary-skill-hub/backend/src/test/java/com/agentskills/sharing/service/RepositoryScannerServiceTest.java:[524,41] 无法将类 com.agentskills.sharing.service.RepositoryScannerService中的方法 importRepository应用到给定类型;
+  需要: java.lang.String,java.lang.String,java.lang.String,java.lang.String
+  找到:    java.lang.String,java.lang.String
+  原因: 实际参数列表和形式参数列表长度不同
+[ERROR] /E:/ai_workflow/specgate-canary-skill-hub/backend/src/test/java/com/agentskills/sharing/service/SkillServiceTest.java:[240,59] 无法将类 com.agentskills.sharing.service.SkillService中的方法 listSkillGroups应用到给定类型;
+  需要: java.lang.String
+  找到:    没有参数
+  原因: 实际参数列表和形式参数列表长度不同
+[ERROR] /E:/ai_workflow/specgate-canary-skill-hub/backend/src/test/java/com/agentskills/sharing/service/WebhookServiceTest.java:[233,41] 无法将类 com.agentskills.sharing.service.RepositoryScannerService中的方法 importRepository应用到给定类型;
+  需要: java.lang.String,java.lang.String,java.lang.String,java.lang.String
+  找到:    java.lang.String,java.lang.String
+  原因: 实际参数列表和形式参数列表长度不同
+[ERROR] /E:/ai_workflow/specgate-canary-skill-hub/backend/src/test/java/com/agentskills/sharing/service/WebhookServiceTest.java:[311,48] 无法将类 com.agentskills.sharing.service.RepositoryScannerService中的方法 importRepository应用到给定类型;
+  需要: java.lang.String,java.lang.String,java.lang.String,java.lang.String
+  找到:    java.lang.String,java.lang.String
+  原因: 实际参数列表和形式参数列表长度不同
+[ERROR] /E:/ai_workflow/specgate-canary-skill-hub/backend/src/test/java/com/agentskills/sharing/service/WebhookServiceTest.java:[316,41] 无法将类 com.agentskills.sharing.service.RepositoryScannerService中的方法 importRepository应用到给定类型;
+  需要: java.lang.String,java.lang.String,java.lang.String,java.lang.String
+  找到:    java.lang.String,java.lang.String
+  原因: 实际参数列表和形式参数列表长度不同
+[INFO] 31 errors 
+[INFO] -------------------------------------------------------------
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD FAILURE
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  01:03 min
+[INFO] Finished at: 2026-10-26T08:33:11+08:00
+[INFO] ------------------------------------------------------------------------
+[ERROR] Failed to execute goal org.apache.maven.plugins:maven-compiler-plugin:3.14.1:testCompile (default-testCompile) on project agent-skills-sharing: Compilation failure: Compilation failure: 
+[ERROR] /E:/ai_workflow/specgate-canary-skill-hub/backend/src/test/java/com/agentskills/sharing/controller/RepositoryControllerTest.java:[100,23] 无法将记录 com.agentskills.sharing.dto.ImportRepositoryRequest中的构造器 ImportRepositoryRequest应用到给定类型;
+[ERROR]   需要: java.lang.String,java.lang.String,java.lang.String
+[ERROR]   找到:    java.lang.String
+[ERROR]   原因: 实际参数列表和形式参数列表长度不同
+[ERROR] /E:/ai_workflow/specgate-canary-skill-hub/backend/src/test/java/com/agentskills/sharing/controller/RepositoryControllerTest.java:[101,38] 无法将类 com.agentskills.sharing.service.RepositoryScannerService中的方法 importRepository应用到给定类型;
+[ERROR]   需要: java.lang.String,java.lang.String,java.lang.String,java.lang.String
+[ERROR]   找到:    java.lang.String,java.lang.String
+[ERROR]   原因: 实际参数列表和形式参数列表长度不同
+[ERROR] /E:/ai_workflow/specgate-canary-skill-hub/backend/src/test/java/com/agentskills/sharing/controller/RepositoryControllerTest.java:[126,23] 无法将记录 com.agentskills.sharing.dto.ImportRepositoryRequest中的构造器 ImportRepositoryRequest应用到给定类型;
+[ERROR]   需要: java.lang.String,java.lang.String,java.lang.String
+[ERROR]   找到:    java.lang.String
+[ERROR]   原因: 实际参数列表和形式参数列表长度不同
+[ERROR] /E:/ai_workflow/specgate-canary-skill-hub/backend/src/test/java/com/agentskills/sharing/controller/RepositoryControllerTest.java:[127,38] 无法将类 com.agentskills.sharing.service.RepositoryScannerService中的方法 importRepository应用到给定类型;
+[ERROR]   需要: java.lang.String,java.lang.String,java.lang.String,java.lang.String
+[ERROR]   找到:    java.lang.String,java.lang.String
+[ERROR]   原因: 实际参数列表和形式参数列表长度不同
+[ERROR] /E:/ai_workflow/specgate-canary-skill-hub/backend/src/test/java/com/agentskills/sharing/controller/RepositoryControllerTest.java:[210,38] 无法将类 com.agentskills.sharing.service.RepositoryScannerService中的方法 importRepository应用到给定类型;
+[ERROR]   需要: java.lang.String,java.lang.String,java.lang.String,java.lang.String
+[ERROR]   找到:    java.lang.String,java.lang.String
+[ERROR]   原因: 实际参数列表和形式参数列表长度不同
+[ERROR] /E:/ai_workflow/specgate-canary-skill-hub/backend/src/test/java/com/agentskills/sharing/controller/RepositoryControllerTest.java:[233,41] 无法将类 com.agentskills.sharing.service.RepositoryScannerService中的方法 importRepository应用到给定类型;
+[ERROR]   需要: java.lang.String,java.lang.String,java.lang.String,java.lang.String
+[ERROR]   找到:    java.lang.String,java.lang.String
+[ERROR]   原因: 实际参数列表和形式参数列表长度不同
+[ERROR] /E:/ai_workflow/specgate-canary-skill-hub/backend/src/test/java/com/agentskills/sharing/controller/RepositoryControllerTest.java:[268,38] 无法将类 com.agentskills.sharing.service.RepositoryScannerService中的方法 importRepository应用到给定类型;
+[ERROR]   需要: java.lang.String,java.lang.String,java.lang.String,java.lang.String
+[ERROR]   找到:    java.lang.String,java.lang.String
+[ERROR]   原因: 实际参数列表和形式参数列表长度不同
+[ERROR] /E:/ai_workflow/specgate-canary-skill-hub/backend/src/test/java/com/agentskills/sharing/controller/RepositoryControllerTest.java:[286,41] 无法将类 com.agentskills.sharing.service.RepositoryScannerService中的方法 importRepository应用到给定类型;
+[ERROR]   需要: java.lang.String,java.lang.String,java.lang.String,java.lang.String
+[ERROR]   找到:    java.lang.String,java.lang.String
+[ERROR]   原因: 实际参数列表和形式参数列表长度不同
+[ERROR] /E:/ai_workflow/specgate-canary-skill-hub/backend/src/test/java/com/agentskills/sharing/controller/SkillGroupControllerTest.java:[37,21] 无法将记录 com.agentskills.sharing.dto.SkillGroupListResponse中的构造器 SkillGroupListResponse应用到给定类型;
+[ERROR]   需要: java.lang.String,java.lang.String,java.lang.String,java.lang.String,int,int,int,int,java.lang.String,java.time.LocalDateTime
+[ERROR]   找到:    java.lang.String,java.lang.String,java.lang.String,java.lang.String,int,java.time.LocalDateTime
+[ERROR]   原因: 实际参数列表和形式参数列表长度不同
+[ERROR] /E:/ai_workflow/specgate-canary-skill-hub/backend/src/test/java/com/agentskills/sharing/controller/SkillGroupControllerTest.java:[38,26] 无法将类 com.agentskills.sharing.service.SkillService中的方法 listSkillGroups应用到给定类型;
+[ERROR]   需要: java.lang.String
+[ERROR]   找到:    没有参数
+[ERROR]   原因: 实际参数列表和形式参数列表长度不同
+[ERROR] /E:/ai_workflow/specgate-canary-skill-hub/backend/src/test/java/com/agentskills/sharing/controller/SkillGroupControllerTest.java:[40,42] 无法将类 com.agentskills.sharing.controller.SkillGroupController中的方法 listSkillGroups应用到给定类型;
+[ERROR]   需要: java.lang.String
+[ERROR]   找到:    没有参数
+[ERROR]   原因: 实际参数列表和形式参数列表长度不同
+[ERROR] /E:/ai_workflow/specgate-canary-skill-hub/backend/src/test/java/com/agentskills/sharing/controller/SkillGroupControllerTest.java:[49,26] 无法将类 com.agentskills.sharing.service.SkillService中的方法 listSkillGroups应用到给定类型;
+[ERROR]   需要: java.lang.String
+[ERROR]   找到:    没有参数
+[ERROR]   原因: 实际参数列表和形式参数列表长度不同
+[ERROR] /E:/ai_workflow/specgate-canary-skill-hub/backend/src/test/java/com/agentskills/sharing/controller/SkillGroupControllerTest.java:[51,42] 无法将类 com.agentskills.sharing.controller.SkillGroupController中的方法 listSkillGroups应用到给定类型;
+[ERROR]   需要: java.lang.String
+[ERROR]   找到:    没有参数
+[ERROR]   原因: 实际参数列表和形式参数列表长度不同
+[ERROR] /E:/ai_workflow/specgate-canary-skill-hub/backend/src/test/java/com/agentskills/sharing/service/RepositoryScannerServiceTest.java:[75,41] 无法将类 com.agentskills.sharing.service.RepositoryScannerService中的方法 importRepository应用到给定类型;
+[ERROR]   需要: java.lang.String,java.lang.String,java.lang.String,java.lang.String
+[ERROR]   找到:    java.lang.String,java.lang.String
+[ERROR]   原因: 实际参数列表和形式参数列表长度不同
+[ERROR] /E:/ai_workflow/specgate-canary-skill-hub/backend/src/test/java/com/agentskills/sharing/service/RepositoryScannerServiceTest.java:[82,41] 无法将类 com.agentskills.sharing.service.RepositoryScannerService中的方法 importRepository应用到给定类型;
+[ERROR]   需要: java.lang.String,java.lang.String,java.lang.String,java.lang.String
+[ERROR]   找到:    java.lang.String,java.lang.String
+[ERROR]   原因: 实际参数列表和形式参数列表长度不同
+[ERROR] /E:/ai_workflow/specgate-canary-skill-hub/backend/src/test/java/com/agentskills/sharing/service/RepositoryScannerServiceTest.java:[89,41] 无法将类 com.agentskills.sharing.service.RepositoryScannerService中的方法 importRepository应用到给定类型;
+[ERROR]   需要: java.lang.String,java.lang.String,java.lang.String,java.lang.String
+[ERROR]   找到:    java.lang.String,java.lang.String
+[ERROR]   原因: 实际参数列表和形式参数列表长度不同
+[ERROR] /E:/ai_workflow/specgate-canary-skill-hub/backend/src/test/java/com/agentskills/sharing/service/RepositoryScannerServiceTest.java:[96,41] 无法将类 com.agentskills.sharing.service.RepositoryScannerService中的方法 importRepository应用到给定类型;
+[ERROR]   需要: java.lang.String,java.lang.String,java.lang.String,java.lang.String
+[ERROR]   找到:    java.lang.String,java.lang.String
+[ERROR]   原因: 实际参数列表和形式参数列表长度不同
+[ERROR] /E:/ai_workflow/specgate-canary-skill-hub/backend/src/test/java/com/agentskills/sharing/service/RepositoryScannerServiceTest.java:[110,41] 无法将类 com.agentskills.sharing.service.RepositoryScannerService中的方法 importRepository应用到给定类型;
+[ERROR]   需要: java.lang.String,java.lang.String,java.lang.String,java.lang.String
+[ERROR]   找到:    java.lang.String,java.lang.String
+[ERROR]   原因: 实际参数列表和形式参数列表长度不同
+[ERROR] /E:/ai_workflow/specgate-canary-skill-hub/backend/src/test/java/com/agentskills/sharing/service/RepositoryScannerServiceTest.java:[122,41] 无法将类 com.agentskills.sharing.service.RepositoryScannerService中的方法 importRepository应用到给定类型;
+[ERROR]   需要: java.lang.String,java.lang.String,java.lang.String,java.lang.String
+[ERROR]   找到:    java.lang.String,java.lang.String
+[ERROR]   原因: 实际参数列表和形式参数列表长度不同
+[ERROR] /E:/ai_workflow/specgate-canary-skill-hub/backend/src/test/java/com/agentskills/sharing/service/RepositoryScannerServiceTest.java:[137,41] 无法将类 com.agentskills.sharing.service.RepositoryScannerService中的方法 importRepository应用到给定类型;
+[ERROR]   需要: java.lang.String,java.lang.String,java.lang.String,java.lang.String
+[ERROR]   找到:    java.lang.String,java.lang.String
+[ERROR]   原因: 实际参数列表和形式参数列表长度不同
+[ERROR] /E:/ai_workflow/specgate-canary-skill-hub/backend/src/test/java/com/agentskills/sharing/service/RepositoryScannerServiceTest.java:[196,36] 无法将类 com.agentskills.sharing.service.RepositoryScannerService中的方法 importRepository应用到给定类型;
+[ERROR]   需要: java.lang.String,java.lang.String,java.lang.String,java.lang.String
+[ERROR]   找到:    java.lang.String,java.lang.String
+[ERROR]   原因: 实际参数列表和形式参数列表长度不同
+[ERROR] /E:/ai_workflow/specgate-canary-skill-hub/backend/src/test/java/com/agentskills/sharing/service/RepositoryScannerServiceTest.java:[250,36] 无法将类 com.agentskills.sharing.service.RepositoryScannerService中的方法 importRepository应用到给定类型;
+[ERROR]   需要: java.lang.String,java.lang.String,java.lang.String,java.lang.String
+[ERROR]   找到:    java.lang.String,java.lang.String
+[ERROR]   原因: 实际参数列表和形式参数列表长度不同
+[ERROR] /E:/ai_workflow/specgate-canary-skill-hub/backend/src/test/java/com/agentskills/sharing/service/RepositoryScannerServiceTest.java:[291,36] 无法将类 com.agentskills.sharing.service.RepositoryScannerService中的方法 importRepository应用到给定类型;
+[ERROR]   需要: java.lang.String,java.lang.String,java.lang.String,java.lang.String
+[ERROR]   找到:    java.lang.String,java.lang.String
+[ERROR]   原因: 实际参数列表和形式参数列表长度不同
+[ERROR] /E:/ai_workflow/specgate-canary-skill-hub/backend/src/test/java/com/agentskills/sharing/service/RepositoryScannerServiceTest.java:[330,16] 无法将类 com.agentskills.sharing.service.RepositoryScannerService中的方法 importRepository应用到给定类型;
+[ERROR]   需要: java.lang.String,java.lang.String,java.lang.String,java.lang.String
+[ERROR]   找到:    java.lang.String,java.lang.String
+[ERROR]   原因: 实际参数列表和形式参数列表长度不同
+[ERROR] /E:/ai_workflow/specgate-canary-skill-hub/backend/src/test/java/com/agentskills/sharing/service/RepositoryScannerServiceTest.java:[398,16] 无法将类 com.agentskills.sharing.service.RepositoryScannerService中的方法 importRepository应用到给定类型;
+[ERROR]   需要: java.lang.String,java.lang.String,java.lang.String,java.lang.String
+[ERROR]   找到:    java.lang.String,java.lang.String
+[ERROR]   原因: 实际参数列表和形式参数列表长度不同
+[ERROR] /E:/ai_workflow/specgate-canary-skill-hub/backend/src/test/java/com/agentskills/sharing/service/RepositoryScannerServiceTest.java:[461,16] 无法将类 com.agentskills.sharing.service.RepositoryScannerService中的方法 importRepository应用到给定类型;
+[ERROR]   需要: java.lang.String,java.lang.String,java.lang.String,java.lang.String
+[ERROR]   找到:    java.lang.String,java.lang.String
+[ERROR]   原因: 实际参数列表和形式参数列表长度不同
+[ERROR] /E:/ai_workflow/specgate-canary-skill-hub/backend/src/test/java/com/agentskills/sharing/service/RepositoryScannerServiceTest.java:[524,41] 无法将类 com.agentskills.sharing.service.RepositoryScannerService中的方法 importRepository应用到给定类型;
+[ERROR]   需要: java.lang.String,java.lang.String,java.lang.String,java.lang.String
+[ERROR]   找到:    java.lang.String,java.lang.String
+[ERROR]   原因: 实际参数列表和形式参数列表长度不同
+[ERROR] /E:/ai_workflow/specgate-canary-skill-hub/backend/src/test/java/com/agentskills/sharing/service/SkillServiceTest.java:[240,59] 无法将类 com.agentskills.sharing.service.SkillService中的方法 listSkillGroups应用到给定类型;
+[ERROR]   需要: java.lang.String
+[ERROR]   找到:    没有参数
+[ERROR]   原因: 实际参数列表和形式参数列表长度不同
+[ERROR] /E:/ai_workflow/specgate-canary-skill-hub/backend/src/test/java/com/agentskills/sharing/service/WebhookServiceTest.java:[233,41] 无法将类 com.agentskills.sharing.service.RepositoryScannerService中的方法 importRepository应用到给定类型;
+[ERROR]   需要: java.lang.String,java.lang.String,java.lang.String,java.lang.String
+[ERROR]   找到:    java.lang.String,java.lang.String
+[ERROR]   原因: 实际参数列表和形式参数列表长度不同
+[ERROR] /E:/ai_workflow/specgate-canary-skill-hub/backend/src/test/java/com/agentskills/sharing/service/WebhookServiceTest.java:[311,48] 无法将类 com.agentskills.sharing.service.RepositoryScannerService中的方法 importRepository应用到给定类型;
+[ERROR]   需要: java.lang.String,java.lang.String,java.lang.String,java.lang.String
+[ERROR]   找到:    java.lang.String,java.lang.String
+[ERROR]   原因: 实际参数列表和形式参数列表长度不同
+[ERROR] /E:/ai_workflow/specgate-canary-skill-hub/backend/src/test/java/com/agentskills/sharing/service/WebhookServiceTest.java:[316,41] 无法将类 com.agentskills.sharing.service.RepositoryScannerService中的方法 importRepository应用到给定类型;
+[ERROR]   需要: java.lang.String,java.lang.String,java.lang.String,java.lang.String
+[ERROR]   找到:    java.lang.String,java.lang.String
+[ERROR]   原因: 实际参数列表和形式参数列表长度不同
+[ERROR] -> [Help 1]
+[ERROR] 
+[ERROR] To see the full stack trace of the errors, re-run Maven with the -e switch.
+[ERROR] Re-run Maven using the -X switch to enable full debug logging.
+[ERROR] 
+[ERROR] For more information about the errors and possible solutions, please read the following articles:
+[ERROR] [Help 1] http://cwiki.apache.org/confluence/display/MAVEN/MojoFailureException

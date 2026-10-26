@@ -8,6 +8,29 @@ import { previewAdoption } from '../src/codex/project-adopt.js';
 import { runAdoptionBaseline, runBaselineCommand } from '../src/codex/baseline.js';
 import { validateProjectBaseline } from '../src/codex/project-model.js';
 
+test('baseline executes the declared package manager with real timestamps and no shell interpolation', async (t) => {
+  const root = temp(t);
+  const result = await runBaselineCommand({
+    command: { id: 'package-manager-version', argv: ['npm', '--version'] },
+    cwd: root,
+    timeoutMs: 10000,
+  });
+  assert.equal(result.status, 'passed', JSON.stringify(result));
+  assert.match(result.stdout.trim(), /^\d+\.\d+\.\d+$/);
+  assert.ok(Number.isFinite(Date.parse(result.startedAt)));
+  assert.ok(Date.parse(result.finishedAt) >= Date.parse(result.startedAt));
+  if (process.platform === 'win32') {
+    const refused = await runBaselineCommand({
+      command: { id: 'unsafe-argument', argv: ['npm', '--version', '& echo injected'] },
+      cwd: root,
+      timeoutMs: 10000,
+    });
+    assert.equal(refused.status, 'failed');
+    assert.equal(refused.exitCode, null);
+    assert.match(refused.stderr, /Unsafe Windows command argument/);
+  }
+});
+
 function temp(t) {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'sg-baseline-'));
   t.after(() => fs.rmSync(root, { recursive: true, force: true }));

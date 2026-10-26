@@ -1,0 +1,33 @@
+✔ default MCP static import graph excludes optional control, notification and installer code (15.0529ms)
+✔ Core v1 installation and lockfile have no MySQL driver dependency (0.5507ms)
+✔ Codex manifest and MCP entry stay contained in the shipped plugin (11.6747ms)
+✖ offline tarball install launches the packaged entry from a different project cwd (2031.2251ms)
+✔ smoke evidence rejects stdout pollution after the final reply (108.7007ms)
+ℹ tests 5
+ℹ suites 0
+ℹ pass 4
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2261.7973
+
+✖ failing tests:
+
+test at test\codex-plugin-package.test.js:111:1
+✖ offline tarball install launches the packaged entry from a different project cwd (2031.2251ms)
+  AssertionError [ERR_ASSERTION]: {"ok":false,"code":"TOOL_FAILED","message":"The operation failed; no success was recorded"}
+  
+  false !== true
+  
+      at TestContext.<anonymous> (file:///E:/ai_workflow/specgate/test/codex-plugin-package.test.js:211:12)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1125:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:787:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

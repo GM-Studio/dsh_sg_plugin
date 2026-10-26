@@ -2,6 +2,17 @@
 
 ## Unreleased
 
+- Core v1 defaults to 43 local tools and three delegated roles, with optional
+  control, notification, installer and MySQL code isolated from the core package.
+- Run the complete quality gate after formatting; bind Review, H3, archive and
+  DeliveryRecord to the reviewed commit. Diverged targets block archive.
+- Preserve baseline unverified areas in customer summaries and execute Windows
+  project package-manager commands with bounded resolution and real timestamps.
+- Add offline package lifecycle regression coverage. Real GitHub canary acceptance
+  remains pending; synthetic providers do not establish native human approval.
+
+### Earlier changes, including optional capabilities outside Core v1
+
 - Fix `.mcp.json` disabling the Codex server and hiding planning tools such as
   `sg_test_design_prepare`; keep both portable MCP entry points equivalent.
 - Serve authenticated H1/H3 approval documents from the management page instead

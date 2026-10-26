@@ -9,6 +9,7 @@ import {
   createDeliveryRecord,
   persistDelivery,
   readDeliveryRecord,
+  renderCustomerPack,
 } from '../src/codex/delivery.js';
 import { validateDeliveryRecord } from '../src/codex/project-model.js';
 
@@ -164,4 +165,13 @@ test('customer packs never expose absolute paths or apparent credentials', () =>
   assert.equal(result.ok, true, JSON.stringify(result));
   assert.doesNotMatch(result.customer, /C:\\secret|\/tmp\/project|abcdefghijklmnop/);
   assert.match(result.internal, /C:\\\\secret/);
+});
+
+test('customer summary preserves every known issue from the immutable DeliveryRecord', () => {
+  const delivery = record({
+    knownIssues: ['Risk A remains.', 'Area B was not verified.'],
+  }).delivery;
+  const pack = renderCustomerPack({ delivery, customer: { knownIssues: [] } });
+  assert.match(pack, /Risk A remains/);
+  assert.match(pack, /Area B was not verified/);
 });

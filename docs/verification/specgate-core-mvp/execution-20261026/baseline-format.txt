@@ -1,0 +1,31 @@
+
+> specgate-codex@0.3.4 format:check
+> prettier --check .
+
+Checking formatting...
+[warn] .task-evidence/core-implementation-20261025/pack-debug/install/package.json
+[warn] docs/plans/2026-10-25-specgate-core-reliable-delivery-mvp-plan-v2.zh.md
+[warn] README.en.md
+[warn] README.md
+[warn] skills/sg-codex-change/SKILL.md
+[warn] skills/sg-codex-env/SKILL.md
+[warn] skills/sg-codex-project/SKILL.md
+[warn] skills/sg-codex-status/SKILL.md
+[warn] skills/sg-codex/SKILL.md
+[warn] src/codex/control/delivery-controlled.js
+[warn] src/codex/control/tools.js
+[warn] src/codex/core/delivery-record.js
+[warn] src/codex/core/environment.js
+[warn] src/codex/core/onboarding-tool-definitions.js
+[warn] src/codex/core/optional-tool-definitions.js
+[warn] src/codex/core/project-binding.js
+[warn] src/codex/core/runtime-gitignore.js
+[warn] src/codex/init.js
+[warn] src/codex/onboarding.js
+[warn] src/codex/quality.js
+[warn] src/codex/workflow-tools.js
+[warn] test/codex-init-publication.test.js
+[warn] test/codex-onboarding.test.js
+[warn] test/codex-plugin-package.test.js
+[warn] test/codex-plugin-protocol.test.js
+[warn] Code style issues found in 25 files. Run Prettier with --write to fix.

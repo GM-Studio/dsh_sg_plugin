@@ -1,0 +1,13 @@
+
+> specgate-codex@0.3.4 lint
+> eslint .
+
+
+E:\ai_workflow\specgate\src\codex\control\tools.js
+  6:10  error  'CONTROL_TOOLS' is defined but never used. Allowed unused vars must match /^_/u  no-unused-vars
+
+E:\ai_workflow\specgate\src\codex\onboarding.js
+  9:10  error  'ONBOARDING_TOOLS' is defined but never used. Allowed unused vars must match /^_/u  no-unused-vars
+
+✖ 2 problems (2 errors, 0 warnings)
+
