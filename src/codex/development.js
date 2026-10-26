@@ -8,6 +8,7 @@ import { frontendFrameworkViolation, readProjectConventions } from './project-co
 import { taskFilePolicy, dependencyFile } from './core/task-policy.js';
 import { createHash } from 'node:crypto';
 import { buildRepairContext } from './core/repair-context.js';
+import { resolveProfile, policyFor } from './core/validation-profile.js';
 
 const SOURCE_ROOT = path.resolve(fileURLToPath(new URL('../..', import.meta.url)));
 const ROLES = Object.freeze(['frontend', 'backend', 'integration', 'test', 'review', 'format']);
@@ -394,7 +395,10 @@ function ensureFreezeCommit(root, checked, redEvidence) {
   return runGit(root, ['commit-tree', `${head}^{tree}`, '-p', head, '-m', message], COMMIT_ENV);
 }
 
-function validateRedReport(root, specification, cases) {
+// policy.redBaseline 决定「实现前必须观察到什么」（M5 / SNA-0502，AC-19/AC-20）。
+// 默认 all-frozen-cases-red 与旧行为完全等价；其他策略由验证档案显式选择。
+function validateRedReport(root, specification, cases, policy = null) {
+  const redBaselinePolicy = policy?.redBaseline ?? 'all-frozen-cases-red';
   if (!safeRelative(specification.reportPath))
     fail('RED_RUNNER_INVALID', 'The red baseline must declare a safe JSON report path');
   let report;
@@ -430,14 +434,33 @@ function validateRedReport(root, specification, cases) {
     )
   )
     fail('RED_REPORT_INVALID', 'The red baseline contains infrastructure stage failures');
-  if (
-    seen.size !== expected.size ||
-    [...seen.values()].some((status) => status !== 'fail')
-  )
-    fail(
-      'RED_REPORT_INVALID',
-      'Every frozen case must be observed as failing before development starts',
-    );
+  if (seen.size !== expected.size)
+    fail('RED_REPORT_INVALID', 'The red baseline report must cover every frozen case');
+  const statuses = [...seen.values()];
+  const failing = statuses.filter((status) => status === 'fail').length;
+  const skippedCount = statuses.filter((status) => status === 'skip').length;
+
+  if (redBaselinePolicy === 'all-frozen-cases-red') {
+    // 旧行为（legacy 档案）：每一个冻结用例都必须真实失败。
+    if (failing !== statuses.length)
+      fail(
+        'RED_REPORT_INVALID',
+        'Every frozen case must be observed as failing before development starts',
+      );
+  } else if (redBaselinePolicy === 'target-only-red' || redBaselinePolicy === 'reproduce-red') {
+    // AC-20：只要目标用例真实失败且既有回归保持绿，就不因回归没失败而拒绝。
+    if (failing === 0)
+      fail(
+        'RED_REPORT_INVALID',
+        'The target case must be observed as failing before development starts',
+      );
+    if (skippedCount > 0) fail('RED_REPORT_INVALID', 'The red baseline must not skip frozen cases');
+  } else if (redBaselinePolicy === 'none') {
+    // 重构（AC-19）：不要求红基线；行为保持证据由后续阶段提供。
+    if (skippedCount > 0) fail('RED_REPORT_INVALID', 'The red baseline must not skip frozen cases');
+  } else {
+    fail('RED_REPORT_INVALID', 'Unknown red baseline policy: ' + String(redBaselinePolicy));
+  }
   return report;
 }
 
@@ -469,7 +492,7 @@ function artifactDetails(root, checked) {
   };
 }
 
-async function redBaseline({ root, checked, redRunner, signal, timeoutMs }) {
+async function redBaseline({ root, checked, redRunner, signal, timeoutMs, policy = null }) {
   if (typeof redRunner !== 'function')
     return failure(
       'RED_RUNNER_UNAVAILABLE',
@@ -507,14 +530,24 @@ async function redBaseline({ root, checked, redRunner, signal, timeoutMs }) {
     );
   if (!run.ok)
     return failure(run.code || 'RED_BASELINE_FAILED', run.message || 'Red baseline did not run');
-  if (run.exitCode === 0)
+  // policy === 'none'（重构）：不要求红基线，因此全绿也不阻断（AC-19）。
+  if (run.exitCode === 0 && (policy?.redBaseline ?? 'all-frozen-cases-red') !== 'none')
     return failure(
       'RED_BASELINE_NOT_FAILING',
       'The frozen tests passed before implementation; strict TDD requires an observed failure',
     );
+  if (run.exitCode === 0 && (policy?.redBaseline ?? 'all-frozen-cases-red') === 'none')
+    // 重构仍需一份可读报告作为行为保持基线，不能因为命令成功就跳过证据。
+    return {
+      ok: true,
+      policy: policy?.redBaseline ?? 'none',
+      observed: 'all-passing',
+      exitCode: 0,
+      evidence: { stdout: run.stdout, stderr: run.stderr, report: null },
+    };
   let report;
   try {
-    report = validateRedReport(root, specification, details.tests.cases);
+    report = validateRedReport(root, specification, details.tests.cases, policy);
   } catch (error) {
     return failure(error.code || 'RED_REPORT_INVALID', error.message);
   }
@@ -648,7 +681,21 @@ export function createDevelopmentService({
       if (!loaded.ok) return loaded;
       const checked = await checkedPlan();
       if (!checked.ok) return checked;
-      const red = await redBaseline({ root, checked, redRunner, signal, timeoutMs });
+      // 由验证档案决定红基线要求（M5 / SNA-0502）。旧状态解析为 legacy，
+      // 与既有「每个冻结用例必须真实失败」完全等价。
+      const resolvedProfile = resolveProfile(loaded.state);
+      if (!resolvedProfile.ok) return resolvedProfile;
+      const scenario = loaded.state.type || 'feature';
+      const policy = policyFor(resolvedProfile.profile, scenario);
+      if (!policy.ok) return policy;
+      const red = await redBaseline({
+        root,
+        checked,
+        redRunner,
+        signal,
+        timeoutMs,
+        policy,
+      });
       if (!red.ok) return red;
       const afterRed = await store.inspect();
       if (!afterRed.ok) return afterRed;

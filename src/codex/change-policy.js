@@ -12,6 +12,10 @@ const DETAIL_KEYS = new Set([
   'logs',
   'environment',
   'severity',
+  // refactor 专用（M5 / SNA-0501）：允许调整的内部结构、不变的对外行为、约束。
+  'internalStructure',
+  'preservedBehavior',
+  'constraints',
 ]);
 
 const failure = (code, message) => ({ ok: false, code, message });
@@ -69,6 +73,25 @@ export function validateChangeInput(value = {}) {
       return failure(
         'CHANGE_DETAILS_INVALID',
         'Modify changes require existingBehavior, desiredBehavior and compatibility',
+      );
+  }
+  if (value.type === 'refactor') {
+    // AC-19：重构必须声明「改哪些内部结构 / 哪些对外行为不变 / 受什么约束」，
+    // 而不是伪装成新增功能，也不要求人为制造全红。
+    if (
+      !text(details.internalStructure) ||
+      !text(details.preservedBehavior) ||
+      !text(details.constraints)
+    )
+      return failure(
+        'CHANGE_DETAILS_INVALID',
+        'Refactor changes require internalStructure, preservedBehavior and constraints',
+      );
+    // 重构不得同时声称要改变对外行为：那是 modify。
+    if (text(details.desiredBehavior))
+      return failure(
+        'CHANGE_DETAILS_INVALID',
+        'Refactor changes must not declare desiredBehavior; use modify instead',
       );
   }
   if (sensitive(value.details))

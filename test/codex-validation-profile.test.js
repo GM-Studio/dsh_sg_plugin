@@ -159,19 +159,24 @@ test('a corrupt stored profile object is rejected', () => {
   assert.equal(resolved.code, 'VALIDATION_PROFILE_INVALID');
 });
 
-test('M1 does not wire the profile into the execution path', async () => {
-  // 断言 SNA-0101 的范围：development/quality 尚未读取档案，
-  // 因此「每个冻结 case 必须真实失败」的既有行为保持不变（接线在 SNA-0502）。
+test('the profile is wired into development only, and only from M5 on', async () => {
+  // M1 的守卫断言（「development/quality 都不得引用档案」）已在 M5 / SNA-0502
+  // 按设计解除：development.js 现在按场景解析策略。
+  // 但 quality.js 仍不得引用——质量门不在本次接线范围。
   const fs = await import('node:fs');
   const path = await import('node:path');
   const { fileURLToPath } = await import('node:url');
   const root = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
-  for (const file of ['src/codex/development.js', 'src/codex/quality.js']) {
-    const source = fs.readFileSync(path.join(root, file), 'utf8');
-    assert.equal(
-      source.includes('validation-profile'),
-      false,
-      file + ' 不得在 M1 引用验证策略档案',
-    );
-  }
+  const development = fs.readFileSync(path.join(root, 'src/codex/development.js'), 'utf8');
+  assert.equal(
+    development.includes('validation-profile'),
+    true,
+    'M5 起 development.js 必须按档案解析验证策略',
+  );
+  const quality = fs.readFileSync(path.join(root, 'src/codex/quality.js'), 'utf8');
+  assert.equal(
+    quality.includes('validation-profile'),
+    false,
+    'quality.js 不在 SNA-0502 的接线范围',
+  );
 });

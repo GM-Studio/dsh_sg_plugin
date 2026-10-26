@@ -241,7 +241,14 @@ function validateGraph(graph) {
     tasks.set(task.id, task);
     for (const ac of task.acIds) coverage[task.kind].add(ac);
   }
-  if (kinds.some((kind) => !graph.tasks.some((task) => task.kind === kind))) return invalid();
+  // AC-22：实现角色（backend/frontend）按模块真实存在与否决定，
+  // 因此只要求「至少一个实现角色」，而不是要求两者都在。
+  // 其余 kind（contract/model/test/integration/review-precheck/docs）仍必须逐一存在。
+  const implementationKinds = ['backend', 'frontend'];
+  const structuralKinds = kinds.filter((kind) => !implementationKinds.includes(kind));
+  if (structuralKinds.some((kind) => !graph.tasks.some((task) => task.kind === kind)))
+    return invalid();
+  if (!graph.tasks.some((task) => implementationKinds.includes(task.kind))) return invalid();
   const visited = new Set();
   const visiting = new Set();
   function visit(id) {
@@ -274,8 +281,12 @@ function validateGraph(graph) {
     !tasks.get('model').deps.includes('contract')
   )
     return invalid();
-  for (const acId of acs.keys())
-    if (kinds.some((kind) => !coverage[kind].has(acId))) return invalid();
+  // 每条 AC 必须被每一个**结构性** kind 覆盖；实现 kind 只要求至少其一
+  // 覆盖（AC-22：纯模块变更不附加无关的前后端任务）。
+  for (const acId of acs.keys()) {
+    if (structuralKinds.some((kind) => !coverage[kind].has(acId))) return invalid();
+    if (!implementationKinds.some((kind) => coverage[kind].has(acId))) return invalid();
+  }
   return { ok: true };
 }
 
@@ -287,10 +298,30 @@ export function validateTaskGraph(graph) {
   }
 }
 
+// 由模块角色决定要生成哪些实现任务（M5 / SNA-0504，AC-22）。
+// 默认（无模块信息）保持 ['backend','frontend'] 以向后兼容既有计划；
+// 一旦提供了模块角色，就只生成真实存在的实现角色，不注入无关任务。
+export function implementationRolesFor(snapshot) {
+  const roles = snapshot?.moduleRoles;
+  if (!roles || typeof roles !== 'object') return ['backend', 'frontend'];
+  const derived = [];
+  // service/worker → backend 实现；ui → frontend 实现；cli/library 通常是单端。
+  if (Number(roles.service || 0) > 0 || Number(roles.worker || 0) > 0) derived.push('backend');
+  if (Number(roles.ui || 0) > 0) derived.push('frontend');
+  if (derived.length === 0) {
+    // 纯 CLI / 库 / 未知角色：只需一个实现角色，避免凭空多出一个前后端。
+    if (Number(roles.cli || 0) + Number(roles.library || 0) + Number(roles.other || 0) > 0)
+      derived.push('backend');
+  }
+  return derived.length > 0 ? derived : ['backend'];
+}
+
 export function buildTaskGraph(snapshot, filePolicies = {}) {
   try {
     const acs = acList(snapshot);
     const tasks = [];
+    // 一次决定实现角色，生成与集成依赖都据此计算，避免两处口径不一致。
+    const implementationRoles = implementationRolesFor(snapshot);
     const task = (id, kind, role, selected, deps, acceptance) => ({
       id,
       kind,
@@ -361,7 +392,7 @@ export function buildTaskGraph(snapshot, filePolicies = {}) {
           ],
         ),
       );
-      for (const role of ['backend', 'frontend'])
+      for (const role of implementationRoles)
         tasks.push(
           task(
             `${role}-${suffix}`,
@@ -388,7 +419,7 @@ export function buildTaskGraph(snapshot, filePolicies = {}) {
           tasks
             .filter(
               (entry) =>
-                ['frontend', 'backend'].includes(entry.kind) &&
+                implementationRoles.includes(entry.kind) &&
                 entry.acIds.some((acId) => selected.some((ac) => ac.id === acId)),
             )
             .map((entry) => entry.id),
