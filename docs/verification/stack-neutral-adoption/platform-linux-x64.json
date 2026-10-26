@@ -2,9 +2,9 @@
   "$schema": "https://specgate.dev/schemas/platform-evidence-v1.json",
   "platform": "linux",
   "arch": "x64",
-  "status": "failed",
-  "recordedAt": "2026-10-26T12:10:45.546Z",
-  "recordedBy": "manual ssh session against native VMware Ubuntu guest",
+  "status": "passed",
+  "recordedAt": "2026-10-26T12:29:13.570Z",
+  "recordedBy": "scripts/record-platform-evidence.mjs equivalent, run over ssh on native VMware guest",
   "node": "v22.22.1",
   "release": "Ubuntu 26.04.1 LTS, kernel 7.0.0-38-generic",
   "environment": {
@@ -17,32 +17,15 @@
     "memoryGb": 15
   },
   "source": {
-    "transfer": "git archive HEAD",
-    "commit": "1156f7023451a97db183d9ac441575c10deefa18"
+    "transfer": "git archive HEAD + follow-up fixes",
+    "commit": "15766e77c0e78608fddbc4a891742149f22fbfd0"
   },
   "checks": [
     {
       "name": "core-tests",
       "command": "npm test",
-      "exitCode": 1,
-      "summary": "tests 1109 / pass 1096 / fail 4 / cancelled 9",
-      "knownFailures": [
-        {
-          "count": 4,
-          "code": "REMOTE_MODE_CONFIG_INVALID",
-          "reason": "远程模式需要 MySQL 与加密 TOTP 种子；相关用例属 test:mysql 分类，本机未配置 MySQL",
-          "classification": "environment-missing",
-          "affectedBySnaChanges": false
-        },
-        {
-          "count": 9,
-          "code": "ERR_TEST_FAILURE",
-          "reason": "Promise resolution is still pending but the event loop has already resolved；createOutboundWorker 的 start() 返回 done promise 在测试结束前未收敛，Node 22 比 Node 24 更严格判定 cancelled",
-          "file": "test/codex-control-outbound-worker.test.js",
-          "classification": "cross-platform-test-cleanup",
-          "affectedBySnaChanges": false
-        }
-      ]
+      "exitCode": 0,
+      "summary": "tests 1109 / pass 1109 / fail 0 / cancelled 0 / skipped 0"
     },
     {
       "name": "lint",
@@ -64,6 +47,11 @@
       "command": "npm run codex:smoke",
       "exitCode": 0
     }
+  ],
+  "fixesRequiredForGreen": [
+    "配置 git user.name/user.email（环境前置，非代码）",
+    "outbound-worker.js 移除两处 timer.unref()：unref 后若定时器是唯一待处理任务，Node 判定事件循环已空，await 中的请求被判 cancelled",
+    "codex-management-remote-mode.test.js 与 codex-management-worker.test.js 的 mysqlConfigPath 由 Windows 字面量改为 path.resolve('/secure/mysql.json')"
   ],
   "coversOnlyOwnPlatform": true
 }

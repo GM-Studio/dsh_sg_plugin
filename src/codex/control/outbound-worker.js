@@ -402,8 +402,12 @@ async function defaultSleep(delayMs, { signal } = {}) {
       signal?.removeEventListener('abort', onAbort);
       resolve();
     };
+    // 不能 unref：这个定时器是当前唯一让事件循环存活的东西。
+    // unref 后若它是唯一待处理任务，Node 会认为事件循环已空，
+    // 从而把正在 await 的 Promise 判为「pending 但事件循环已结束」
+    // （Node 22 上是 ERR_TEST_FAILURE / cancelled）。
+    // 该定时器由 finish 或 onAbort 二选一清理，不会泄漏。
     const timer = setTimeout(finish, delayMs);
-    timer.unref?.();
     const onAbort = () => {
       clearTimeout(timer);
       signal?.removeEventListener('abort', onAbort);
@@ -506,11 +510,15 @@ export function createOutboundWorker({
       return failure('WORKER_ABORT_CONTROLLER_INVALID', error.message, { retryable: false });
     }
     let timedOut = false;
+    // 不能 unref：若 fetch 既不 resolve 也不 reject，这个超时定时器是
+    // 唯一能让事件循环继续、进而触发 abort 的东西。unref 之后 Node 会认为
+    // 事件循环已空，正在 await 的请求被判「pending 但事件循环已结束」
+    // （Node 22 上是 ERR_TEST_FAILURE / cancelled）。
+    // 定时器在 finally 里 clearTimeout，不会泄漏。
     const timer = setTimeout(() => {
       timedOut = true;
       controller.abort();
     }, requestTimeout);
-    timer.unref?.();
     activeControllers.add(controller);
     try {
       const response = await fetchImpl(endpoint(route), {

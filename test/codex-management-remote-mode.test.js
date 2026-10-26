@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import http from 'node:http';
 import { createHash } from 'node:crypto';
+import path from 'node:path';
 import { createManagementServer } from '../src/codex/management/server.js';
 
 function services() {
@@ -45,7 +46,9 @@ const remoteOptions = {
   allowedHosts: ['control.example.test'],
   allowedOrigins: ['https://control.example.test'],
   trustedProxies: ['127.0.0.1'],
-  mysqlConfigPath: 'C:\\secure\\mysql.json',
+  // 平台无关的绝对路径：Windows 的 C:\... 在 Linux 上不是绝对路径，
+  // 会让 path.isAbsolute 校验失败（SNA AC-16 在原生 Linux 上暴露）。
+  mysqlConfigPath: path.resolve('/secure/mysql.json'),
   authEncryptionKey: 'a'.repeat(64),
   authDeviceConfirmationCodeHash: 'b'.repeat(64),
 };

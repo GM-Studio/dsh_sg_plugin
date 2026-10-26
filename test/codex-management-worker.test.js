@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import http from 'node:http';
+import path from 'node:path';
 import { createManagementServer } from '../src/codex/management/server.js';
 
 const PAIRING = 'worker-management-pairing-token';
@@ -357,7 +358,9 @@ test('remote worker requests keep HTTPS/Host boundaries without browser Origin',
     allowedHosts: ['control.example.test'],
     allowedOrigins: ['https://control.example.test'],
     trustedProxies: ['127.0.0.1'],
-    mysqlConfigPath: 'C:\\secure\\mysql.json',
+    // 平台无关的绝对路径：Windows 的 C:\... 在 Linux 上不是绝对路径，
+    // 会让 server.js 的 path.isAbsolute 校验抛 REMOTE_MODE_CONFIG_INVALID。
+    mysqlConfigPath: path.resolve('/secure/mysql.json'),
     authEncryptionKey: 'a'.repeat(64),
     authDeviceConfirmationCodeHash: 'b'.repeat(64),
   });
