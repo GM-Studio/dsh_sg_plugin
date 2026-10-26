@@ -101,6 +101,45 @@ async function setup(t, injected = services()) {
   return { ...started, services: injected, cookie, csrfToken };
 }
 
+test('automatic management ports retry browser-blocked allocations before publishing a URL', async (t) => {
+  const management = createManagementServer({ services: services() });
+  t.after(() => management.close());
+  const actualAddress = management.server.address.bind(management.server);
+  let addressCalls = 0;
+  t.mock.method(management.server, 'address', () => {
+    const address = actualAddress();
+    return ++addressCalls === 1 ? { ...address, port: 6000 } : address;
+  });
+  const listen = t.mock.method(management.server, 'listen');
+  const started = await management.start();
+  assert.notEqual(started.port, 6000);
+  assert.equal(listen.mock.callCount(), 2);
+  assert.ok(listen.mock.calls.every(({ arguments: args }) => args[0] === 0));
+  const response = await fetch(`${started.baseUrl}/`);
+  assert.equal(response.status, 200);
+});
+
+test('an explicit browser-blocked management port is rejected without rebinding', async (t) => {
+  const management = createManagementServer({ services: services() });
+  t.after(() => management.close());
+  const listen = t.mock.method(management.server, 'listen', () => {
+    throw new Error('Blocked ports must be rejected before listening');
+  });
+  await assert.rejects(management.start({ port: 6000 }), { code: 'MANAGEMENT_PORT_BLOCKED' });
+  assert.equal(listen.mock.callCount(), 0);
+});
+
+test('repeated browser-blocked dynamic allocations fail within a bound and close the listener', async (t) => {
+  const management = createManagementServer({ services: services() });
+  t.after(() => management.close());
+  const actualAddress = management.server.address.bind(management.server);
+  t.mock.method(management.server, 'address', () => ({ ...actualAddress(), port: 6000 }));
+  const listen = t.mock.method(management.server, 'listen');
+  await assert.rejects(management.start(), { code: 'MANAGEMENT_PORT_UNAVAILABLE' });
+  assert.ok(listen.mock.callCount() > 1 && listen.mock.callCount() <= 16);
+  assert.equal(management.server.listening, false);
+});
+
 test('all management query routes are available through GET', async (t) => {
   const server = await setup(t);
   for (const [path, key] of [

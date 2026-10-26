@@ -32,6 +32,7 @@ import { insideSpecGateSource } from './core/project-path.js';
 import { inspectProjectStatus } from './project-status.js';
 import { ONBOARDING_TOOLS } from './core/onboarding-tool-definitions.js';
 import { bindProject } from './core/project-binding.js';
+import { prepareFrozenExecution } from './core/frozen-execution.js';
 
 const object = (value) => value !== null && typeof value === 'object' && !Array.isArray(value);
 const OPTIONAL_TOOL_NAMES = new Set([
@@ -106,8 +107,26 @@ const definition = (name, description, properties = {}, required = [], readOnly 
   },
 });
 
-export function nativeTestRunnerSpec({ mode, worktree, testsDirectory, reportPath }) {
-  const testRoot = path.join(testsDirectory, 'specgate-tests');
+export function nativeTestRunnerSpec({
+  mode,
+  worktree,
+  testsDirectory,
+  reportPath,
+  projectRoot,
+  manifestPath,
+  testsHash,
+  platform = process.platform,
+  temporaryRoot,
+}) {
+  const frozenExecution = prepareFrozenExecution({
+    projectRoot,
+    testsDirectory,
+    manifestPath,
+    testsHash,
+    platform,
+    temporaryRoot,
+  });
+  const testRoot = path.join(frozenExecution.directory, 'specgate-tests');
   const runner = path.join(testRoot, 'runner.mjs');
   return {
     command: process.execPath,
@@ -121,7 +140,7 @@ export function nativeTestRunnerSpec({ mode, worktree, testsDirectory, reportPat
       '--tests',
       testRoot,
       '--snapshot',
-      testsDirectory,
+      frozenExecution.directory,
       '--report',
       path.join(worktree, reportPath),
     ],
@@ -130,6 +149,7 @@ export function nativeTestRunnerSpec({ mode, worktree, testsDirectory, reportPat
     adapter: NATIVE_RUNNER_ADAPTER,
     runner,
     testRoot,
+    frozenExecution,
   };
 }
 
@@ -363,6 +383,9 @@ function createBoundToolRegistry({
             worktree: root,
             testsDirectory,
             reportPath,
+            projectRoot: root,
+            manifestPath: path.join(root, checked.ref.tests.path),
+            testsHash: checked.ref.tests.hash,
           });
           if (!fs.existsSync(specification.runner))
             throw Object.assign(new Error('Frozen native runner is unavailable'), {
@@ -384,6 +407,9 @@ function createBoundToolRegistry({
             worktree,
             testsDirectory,
             reportPath,
+            projectRoot: root,
+            manifestPath: path.join(root, checked.ref.tests.path),
+            testsHash: checked.ref.tests.hash,
           });
           if (!fs.existsSync(specification.runner))
             throw Object.assign(new Error('Frozen native runner is unavailable'), {

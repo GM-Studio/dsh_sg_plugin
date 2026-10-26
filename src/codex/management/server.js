@@ -8,6 +8,16 @@ import { metricsSnapshot } from '../control/deployment-assurance.js';
 
 const PUBLIC_ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), 'public');
 const MAX_BODY_BYTES = 256 * 1024;
+// https://fetch.spec.whatwg.org/#port-blocking — a listening socket on these
+// ports is still unusable by the browser UI and Node's fetch implementation.
+const FETCH_BLOCKED_PORTS = new Set([
+  0, 1, 7, 9, 11, 13, 15, 17, 19, 20, 21, 22, 23, 25, 37, 42, 43, 53, 69, 77, 79, 87, 95, 101, 102,
+  103, 104, 109, 110, 111, 113, 115, 117, 119, 123, 135, 137, 139, 143, 161, 179, 389, 427, 465,
+  512, 513, 514, 515, 526, 530, 531, 532, 540, 548, 554, 556, 563, 587, 601, 636, 989, 990, 993,
+  995, 1719, 1720, 1723, 2049, 3659, 4045, 4190, 5060, 5061, 6000, 6566, 6665, 6666, 6667, 6668,
+  6669, 6679, 6697, 10080,
+]);
+const MAX_PORT_ALLOCATION_ATTEMPTS = 16;
 const AUTH_CONFIRMATION_HASH = /^[a-f0-9]{64}$/;
 const AUTH_ENCRYPTION_KEY = /^(?:[a-f0-9]{64}|[A-Za-z0-9_-]{43})$/;
 const STATIC_FILES = new Map([
@@ -1425,26 +1435,47 @@ export function createManagementServer({
   server.maxHeadersCount = 100;
 
   async function start({ port: requestedPort = port, host: requestedHost = host } = {}) {
+    if (requestedPort !== 0 && FETCH_BLOCKED_PORTS.has(requestedPort)) {
+      const error = new TypeError('Management port is blocked by browser and Fetch clients');
+      error.code = 'MANAGEMENT_PORT_BLOCKED';
+      throw error;
+    }
     await hydrate();
-    return new Promise((resolve, reject) => {
-      const onError = (error) => {
-        server.off('listening', onListening);
-        reject(error);
+    for (let attempt = 0; attempt < MAX_PORT_ALLOCATION_ATTEMPTS; attempt++) {
+      const address = await new Promise((resolve, reject) => {
+        const onError = (error) => {
+          server.off('listening', onListening);
+          reject(error);
+        };
+        const onListening = () => {
+          server.off('error', onError);
+          resolve(server.address());
+        };
+        server.once('error', onError);
+        server.once('listening', onListening);
+        try {
+          server.listen(requestedPort, requestedHost);
+        } catch (error) {
+          server.off('error', onError);
+          onError(error);
+        }
+      });
+      if (requestedPort === 0 && FETCH_BLOCKED_PORTS.has(address.port)) {
+        await close();
+        continue;
+      }
+      return {
+        ok: true,
+        host: address.address,
+        port: address.port,
+        baseUrl: `http://${address.address}:${address.port}`,
       };
-      const onListening = () => {
-        server.off('error', onError);
-        const address = server.address();
-        resolve({
-          ok: true,
-          host: address.address,
-          port: address.port,
-          baseUrl: `http://${address.address}:${address.port}`,
-        });
-      };
-      server.once('error', onError);
-      server.once('listening', onListening);
-      server.listen(requestedPort, requestedHost);
-    });
+    }
+    const error = new Error(
+      'Could not allocate a management port accepted by browser and Fetch clients',
+    );
+    error.code = 'MANAGEMENT_PORT_UNAVAILABLE';
+    throw error;
   }
 
   function close() {

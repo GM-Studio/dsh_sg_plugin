@@ -8,6 +8,8 @@ export default [
       'dist/**',
       'coverage/**',
       '.specgate/**',
+      '.task-evidence/**',
+      '.npm-cache/**',
       '.sg-fixed-live-*/**',
       '*.tgz',
     ],
