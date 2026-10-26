@@ -158,3 +158,30 @@ test('an invalid root is refused instead of thrown', () => {
     assert.equal(result.code, 'MODULE_DISCOVERY_INVALID');
   }
 });
+
+test('a python project without pyproject.toml is still recognised', (t) => {
+  // 真实项目常只有 requirements.txt 或 setup.cfg（实测 pilot-py-api 即如此）。
+  const root = workspace(t);
+  write(root, 'requirements.txt', 'requests==2.31.0\n');
+  const result = discoverModules({ root, candidates: ['.'] });
+  assert.equal(result.ok, true);
+  assert.equal(result.modules.length, 1, 'requirements.txt 必须足以识别模块');
+  assert.equal(result.modules[0].buildSystem, 'python');
+
+  const root2 = workspace(t);
+  write(root2, 'setup.cfg', '[metadata]\nname = demo\n');
+  const result2 = discoverModules({ root: root2, candidates: ['.'] });
+  assert.equal(result2.modules.length, 1, 'setup.cfg 必须足以识别模块');
+});
+
+test('the stack detector agrees with module discovery on python build files', async (t) => {
+  const { detectStack } = await import('../src/codex/core/discovery/stack.js');
+  for (const marker of ['requirements.txt', 'setup.cfg', 'pyproject.toml', 'Pipfile']) {
+    const root = workspace(t);
+    write(root, marker, 'x');
+    const stack = detectStack({ root });
+    const modules = discoverModules({ root, candidates: ['.'] });
+    assert.ok(stack.buildSystems.includes('python'), marker + ' 未在 stack 中被识别');
+    assert.equal(modules.modules.length, 1, marker + ' 未在 modules 中被识别');
+  }
+});

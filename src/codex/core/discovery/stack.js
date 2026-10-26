@@ -42,6 +42,8 @@ const BUILD_MARKERS = Object.freeze([
   { file: 'package.json', buildSystem: 'npm', language: 'javascript' },
   { file: 'pyproject.toml', buildSystem: 'python', language: 'python' },
   { file: 'setup.py', buildSystem: 'python', language: 'python' },
+  { file: 'setup.cfg', buildSystem: 'python', language: 'python' },
+  { file: 'Pipfile', buildSystem: 'python', language: 'python' },
   { file: 'requirements.txt', buildSystem: 'python', language: 'python' },
   { file: 'go.mod', buildSystem: 'go', language: 'go' },
   { file: 'Cargo.toml', buildSystem: 'cargo', language: 'rust' },

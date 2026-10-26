@@ -26,6 +26,12 @@ const BUILD_FILES = Object.freeze({
   'package.json': 'npm',
   'pyproject.toml': 'python',
   'setup.py': 'python',
+  // 真实项目常只有 requirements.txt 或 setup.cfg（实测 pilot-py-api 两者皆无
+  // pyproject.toml，导致模块识别为空）。
+  'setup.cfg': 'python',
+  'requirements.txt': 'python',
+  Pipfile: 'python',
+  // Makefile 作为构建系统在对齐 stack.js 的同时，只在没有更具体构建文件时生效。
   'go.mod': 'go',
   'Cargo.toml': 'cargo',
   'composer.json': 'composer',
