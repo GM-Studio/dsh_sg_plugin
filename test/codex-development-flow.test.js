@@ -66,7 +66,14 @@ const assets = () => ({
   coverage: { lines: 80, branches: 70 },
 });
 
-async function fixture({ redPasses = false, filePolicies, dependencyChanges } = {}) {
+async function fixture({
+  redPasses = false,
+  filePolicies,
+  dependencyChanges,
+  testAssets,
+  redReport,
+  requirementList = requirements(),
+} = {}) {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'sg-codex-development-'));
   git(root, ['init', '-q']);
   git(root, ['config', 'user.email', 'test@example.com']);
@@ -89,7 +96,7 @@ async function fixture({ redPasses = false, filePolicies, dependencyChanges } = 
     schemaVersion: 1,
     changeId: 'example',
     revision: 1,
-    requirements: requirements().map((req) =>
+    requirements: requirementList.map((req) =>
       dependencyChanges ? { ...req, dependencyChanges } : req,
     ),
     fixture: 'synthetic-unit-test-not-runtime',
@@ -162,7 +169,7 @@ async function fixture({ redPasses = false, filePolicies, dependencyChanges } = 
   const planService = createPlanService({
     projectRoot: root,
     store,
-    roleProvider: async () => assets(),
+    roleProvider: async () => testAssets || assets(),
   });
   assert.equal(
     (
@@ -194,7 +201,7 @@ async function fixture({ redPasses = false, filePolicies, dependencyChanges } = 
     [
       "import fs from 'node:fs';",
       'const report = process.argv[2];',
-      "fs.writeFileSync(report, JSON.stringify({ cases: [{ id: 'CASE-AC-1', status: process.env.RED_STATUS }] }));",
+      "fs.writeFileSync(report, process.env.RED_REPORT || JSON.stringify({ cases: [{ id: 'CASE-AC-1', status: process.env.RED_STATUS }] }));",
       "process.exit(process.env.RED_EXIT === '0' ? 0 : 1);",
       '',
     ].join('\n'),
@@ -207,6 +214,7 @@ async function fixture({ redPasses = false, filePolicies, dependencyChanges } = 
     env: {
       RED_EXIT: redPasses ? '0' : '1',
       RED_STATUS: redPasses ? 'pass' : 'fail',
+      ...(redReport ? { RED_REPORT: JSON.stringify(redReport) } : {}),
     },
   });
   return {
@@ -265,6 +273,105 @@ test('red baseline requires a real failing command mapped to every frozen case b
     assert.equal(fs.existsSync(worktree.path), true);
     assert.equal(git(worktree.path, ['rev-parse', 'HEAD']), prepared.development.freezeCommit);
   }
+});
+
+test('red baseline cannot relax per-case failure or accept infrastructure failures', async (t) => {
+  const testAssets = assets();
+  testAssets.cases.push({
+    ...testAssets.cases[0],
+    id: 'CASE-AC-2',
+    acIds: ['AC-2'],
+    description: 'The persisted title also handles the boundary case.',
+  });
+  const requirementList = requirements();
+  requirementList[0].acceptanceCriteria.push({
+    id: 'AC-2',
+    text: 'The UI displays the persisted title at the boundary.',
+  });
+  const failedCases = testAssets.cases.map(({ id }) => ({ id, status: 'fail' }));
+  const partialCases = failedCases.map((entry, index) =>
+    index === 0 ? entry : { ...entry, status: 'pass' },
+  );
+  const scenarios = [
+    {
+      name: 'verification metadata cannot excuse a passing frozen case',
+      report: { cases: partialCases, verification: { stages: [] }, errors: [] },
+    },
+    {
+      name: 'a baseline hint cannot excuse a passing frozen case',
+      baseline: { expectedCaseResults: 'at least one frozen case fails' },
+      report: { cases: partialCases },
+    },
+    {
+      name: 'infrastructureErrors cannot stand in for failed assertions',
+      report: { cases: failedCases, infrastructureErrors: [{ message: 'Maven not found' }] },
+    },
+    {
+      name: 'an infrastructure stage cannot stand in for failed assertions',
+      report: {
+        cases: failedCases,
+        verification: { stages: [{ status: 1, failureKind: 'infrastructure' }] },
+        errors: [],
+      },
+    },
+    {
+      name: 'a skipped frozen case is never a red assertion',
+      report: {
+        cases: failedCases.map((entry, index) =>
+          index === 0 ? entry : { ...entry, status: 'skip' },
+        ),
+        verification: { stages: [] },
+        errors: [],
+      },
+    },
+  ];
+  for (const scenario of scenarios) {
+    await t.test(scenario.name, async () => {
+      const context = await fixture({
+        testAssets: {
+          ...testAssets,
+          ...(scenario.baseline ? { baseline: scenario.baseline } : {}),
+        },
+        redReport: scenario.report,
+        requirementList,
+      });
+      const service = createDevelopmentService({
+        projectRoot: context.root,
+        store: context.store,
+        planService: context.planService,
+        redRunner: context.redRunner,
+      });
+      const result = await service.prepare({ expectedVersion: await context.version() });
+      assert.equal(result.ok, false, result.code || result.state?.phase);
+      assert.equal(result.code, 'RED_REPORT_INVALID');
+      assert.equal((await context.store.inspect()).state.phase, 'TEST_CASES_FROZEN');
+      assert.equal(
+        fs.existsSync(path.join(context.root, '.specgate/codex/worktrees/example')),
+        false,
+      );
+    });
+  }
+  await t.test('every frozen case failing remains valid with verification metadata', async () => {
+    const context = await fixture({
+      testAssets,
+      requirementList,
+      redReport: {
+        cases: failedCases,
+        verification: { stages: [{ status: 1, failureKind: 'business' }] },
+        errors: [],
+        infrastructureErrors: [],
+      },
+    });
+    const service = createDevelopmentService({
+      projectRoot: context.root,
+      store: context.store,
+      planService: context.planService,
+      redRunner: context.redRunner,
+    });
+    const result = await service.prepare({ expectedVersion: await context.version() });
+    assert.equal(result.ok, true, result.code);
+    assert.deepEqual(result.development.red.cases, failedCases);
+  });
 });
 
 test('frontend and backend run serially in isolated worktrees and merge only through integration', async () => {

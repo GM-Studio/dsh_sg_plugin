@@ -394,7 +394,7 @@ function ensureFreezeCommit(root, checked, redEvidence) {
   return runGit(root, ['commit-tree', `${head}^{tree}`, '-p', head, '-m', message], COMMIT_ENV);
 }
 
-function validateRedReport(root, specification, cases, baseline = {}) {
+function validateRedReport(root, specification, cases) {
   if (!safeRelative(specification.reportPath))
     fail('RED_RUNNER_INVALID', 'The red baseline must declare a safe JSON report path');
   let report;
@@ -419,7 +419,10 @@ function validateRedReport(root, specification, cases, baseline = {}) {
       fail('RED_REPORT_INVALID', 'The red baseline report contains unknown or duplicate cases');
     seen.set(result.id, result.status);
   }
-  if (Array.isArray(report.errors) && report.errors.length)
+  if (
+    (Array.isArray(report.errors) && report.errors.length) ||
+    (Array.isArray(report.infrastructureErrors) && report.infrastructureErrors.length)
+  )
     fail('RED_REPORT_INVALID', 'The red baseline contains infrastructure errors');
   if (
     report.verification?.stages?.some(
@@ -427,20 +430,13 @@ function validateRedReport(root, specification, cases, baseline = {}) {
     )
   )
     fail('RED_REPORT_INVALID', 'The red baseline contains infrastructure stage failures');
-  const atLeastOneFailure =
-    /at least one/i.test(String(baseline.expectedCaseResults || '')) ||
-    (object(report.verification) && Array.isArray(report.errors));
-  const failures = [...seen.values()].filter((status) => status === 'fail').length;
   if (
     seen.size !== expected.size ||
-    [...seen.values()].some((status) => status === 'skip') ||
-    (atLeastOneFailure ? failures === 0 : failures !== expected.size)
+    [...seen.values()].some((status) => status !== 'fail')
   )
     fail(
       'RED_REPORT_INVALID',
-      atLeastOneFailure
-        ? 'At least one frozen case must produce a real business failure without skips'
-        : 'Every frozen case must be observed as failing before development starts',
+      'Every frozen case must be observed as failing before development starts',
     );
   return report;
 }
@@ -518,7 +514,7 @@ async function redBaseline({ root, checked, redRunner, signal, timeoutMs }) {
     );
   let report;
   try {
-    report = validateRedReport(root, specification, details.tests.cases, details.tests.baseline);
+    report = validateRedReport(root, specification, details.tests.cases);
   } catch (error) {
     return failure(error.code || 'RED_REPORT_INVALID', error.message);
   }
