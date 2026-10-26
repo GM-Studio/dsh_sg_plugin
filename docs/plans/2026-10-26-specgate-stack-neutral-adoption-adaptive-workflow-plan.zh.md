@@ -1540,3 +1540,75 @@ npm run codex:smoke
 2. M1 是硬门禁：未通过不得进入 M2。
 3. OI-01–OI-08 需在对应里程碑开工**之前**给出结论（见 §2.4）；未给结论时只能用标注为「待确认」的保守默认值，且不得据此宣称验收通过。
 4. 实施前需另行取得：需求批准、计划批准、安装批准、开发批准、交付批准（五类分离，AC-36）。
+
+---
+
+## 16. 执行记录（M0–M2）
+
+本节只追加真实验收后的事实，不改变已写的任务范围、覆盖关系或退出门。
+
+| 里程碑                      | 状态       | 提交      | 测试    | 证据                                                                                                                                             |
+| --------------------------- | ---------- | --------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| M0 基线取证与影响面测绘     | **已验收** | `0cb6b4c` | 768/768 | `docs/implementation/stack-neutral-adoption/00-baseline-evidence.md`、`01-binding-matrix.md`、`02-traceability.md`、`03-unwired-capabilities.md` |
+| M1 约束重基线门禁           | **已验收** | `9735d0e` | 800/800 | `04-rebaseline-record.md`                                                                                                                        |
+| M2 技术栈无关发现与候选基线 | **已验收** | `18ca929` | 872/872 | `05-m2-acceptance.md`                                                                                                                            |
+| M3–M8                       | 未开始     | —         | —       | —                                                                                                                                                |
+
+三个里程碑的执行门均为真实退出 0：`npm test`、`npm run lint`、`npm run format:check`、`npm run pack:check`、`npm run codex:smoke`。
+
+### 16.1 M0 记录要点
+
+- 基线取证时发现 45 个用例在 HEAD 上即失败，根因是系统临时目录根存在空 `.git` 目录（`C:/Users/Administrator/AppData/Local/Temp/.git`，0 条目），被 `src/codex/init.js:255-265` 的祖先探测误判为已有仓库。
+- 已排除代码嫌疑：在 `HEAD` 独立 worktree 复现同一失败；改用干净临时根后同一批用例全部通过。
+- 经用户确认删除该空目录后，`npm test` 得到 768/768。未修改 `init.js`，登记为观察项 OBS-01。
+
+### 16.2 M1 记录要点
+
+四条硬约束重基线化，每条给齐「旧 → 新 → 生效条件 → 回滚」：
+
+| 约束           | 旧                                                | 新                                                            |
+| -------------- | ------------------------------------------------- | ------------------------------------------------------------- |
+| 并发           | `maxParallelDevelopment !== 1` 直接拒绝           | 正整数且 ≤ 4；越界 `PLAN_PARALLEL_LIMIT_EXCEEDED`；默认仍为 1 |
+| 全红基线       | 全局要求每个冻结 case 真实失败                    | 版本化验证档案；旧状态解析为 legacy（语义等价）               |
+| 类型词表       | 三处各自维护（`feature/modify/fix` vs `+remove`） | 单一来源 `core/change-types.js`                               |
+| ProjectProfile | `stack !== 'java-vue'` 直接拒绝                   | v3 以 capabilities/modules 表达；v2 只读兼容；纯函数迁移器    |
+
+**反例门禁**：每条被解除的约束都有测试断言「旧写法仍被拒」或「新写法受上界约束」，且源码扫描断言禁止回退。
+
+**范围克制**：验证档案只定义结构，未接线到 `development.js`/`quality.js`（有断言守住），因此 AC-19/AC-20 仍为 `NOT_IMPLEMENTED`，接线在 M5。
+
+### 16.3 M2 记录要点
+
+| AC    | 实现入口                                | 关键反例断言                                                    |
+| ----- | --------------------------------------- | --------------------------------------------------------------- |
+| AC-01 | `core/discovery/stack.js`               | `PROJECT_STACK_UNSUPPORTED` 不再因技术栈出现                    |
+| AC-02 | `core/discovery/modules.js`             | 目录名像前后端但无构建文件 → 无模块                             |
+| AC-03 | `core/discovery/budget.js`              | 超时/超预算返回 `unscanned`，不抛出                             |
+| AC-04 | `core/discovery/candidates.js`          | 静态阶段请求 `user-confirmed` 被拒                              |
+| AC-05 | 同上                                    | 静态读测试文件 → `static-observed`，`runtimeVerified === false` |
+| AC-06 | `core/discovery/baseline-revision.js`   | 输入 revision 不可变；`actionId` 二次消费被拒                   |
+| AC-07 | `core/discovery/baseline-separation.js` | 生成文档不能证明执行；需求基线不能通过执行基线校验              |
+
+**设计修正（需评审知悉）**：初版把「内容命中凭据特征」的文件也移出 `scanned`，实测本仓库有 174 个文件命中（多为测试夹具与含检测正则自身的源码），连自身源码都无法分析。已改为：名称命中 → 跳过；内容命中 → 分析但标记 `redacted`。该语义由测试锁定。
+
+### 16.4 断言变更总账（M0–M2）
+
+| 里程碑 | 文件:行                            | 旧                                          | 新                                     | 依据              |
+| ------ | ---------------------------------- | ------------------------------------------- | -------------------------------------- | ----------------- |
+| M1     | `codex-plan-core.test.js:194`      | `maxParallelDevelopment = 3` → 拒绝         | `= 5` → 拒绝（专门错误码）；1–4 合法   | D08 上界为 4      |
+| M2     | `codex-project-detect.test.js:144` | 无 Maven/前端 → `PROJECT_STACK_UNSUPPORTED` | `ok === true`，不补造模块，`gaps` 非空 | AC-01/AC-02/AC-03 |
+
+**共改 2 条既有断言，均与 `01-binding-matrix.md` 预告一致；其余 11 个受影响测试文件断言未改。**
+
+### 16.5 M0–M2 结束时仍未完成的事项
+
+| 项                                                      | 状态                                             | 归属                    |
+| ------------------------------------------------------- | ------------------------------------------------ | ----------------------- |
+| AC-08 – AC-18（环境、受批安装、跨平台）                 | `NOT_IMPLEMENTED`                                | M3、M4                  |
+| AC-19 – AC-36（四类场景、动态并发、影响范围、审批分离） | `NOT_IMPLEMENTED`                                | M5–M7                   |
+| 验证档案接线到执行路径                                  | 未做（有意）                                     | M5 / SNA-0502           |
+| `refactor` 类型                                         | 未引入（有断言防提前放行）                       | M5 / SNA-0501           |
+| 删除 `modules.{backend,frontends}` 旧字段               | 未做（双写过渡）                                 | 最迟 M3 验收前          |
+| OI-01 扫描预算数值                                      | 待用户确认，当前标注 `pendingBudgetConfirmation` | 需用户决定              |
+| Linux 平台真实证据                                      | `NOT_RUN`                                        | M4 / SNA-0402           |
+| `npm run test:mysql`                                    | `NOT_RUN`                                        | M0–M2 未触及 MySQL 代码 |
