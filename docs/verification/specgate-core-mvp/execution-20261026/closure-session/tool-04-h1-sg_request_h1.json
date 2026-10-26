@@ -1,0 +1,22 @@
+{
+  "tool": "sg_request_h1",
+  "args": {
+    "expectedVersion": 299
+  },
+  "result": {
+    "ok": true,
+    "snapshotPending": false,
+    "code": "H1_APPROVED",
+    "message": "H1 已批准，需求已冻结，可继续生成实现计划。",
+    "actualVersion": 304,
+    "state": {
+      "changeId": "skillhub-canary-v1-9",
+      "phase": "PLANNED",
+      "version": 304
+    },
+    "document": {
+      "path": ".specgate/codex/changes/skillhub-canary-v1-9/requirements/revision-1-78df3135648cc8ef3181420b9c35f3df8ca2099cf83aa6ed0eb4c62e0fefde57-review-v2.md"
+    }
+  },
+  "observedAt": "2026-10-26T06:37:01.232Z"
+}

@@ -65,3 +65,31 @@
 真实项目来自 GitHub；先前所有失败日志保留。H1 已通过当前源码的审批权威正式消费，真实用户问答与原生输入转接记录保存在 canary-session；没有通过工具参数代填澄清或批准。
 
 当前仍在真实 Test Designer 阶段。CORE2-0603、AC-MVP-01、AC-022-02、真实 Reviewer 和 H3 未完成，不记 PASS。Core 用例成功不代替这些事实。最终只有全部退出门实际通过后才更新本记录与计划的 M6 状态。
+
+## 2026-10-26 后续接续与真实缺陷修正
+
+上文是早期执行快照。接续时读取权威状态发现项目实际已经推进至 `skillhub-canary-v1-8`、v289，已有真实 H1 和测试提交 `9dda824`，不能根据旧文档重建初版需求。独立审计确认：v1.6 的技术绿灯因 Review 发现无效红基线而未交付；v1.7 缺少精确依赖批准；v1.8 又把已满足的工具自检和历史保留建为业务 AC，无法诚实满足每个冻结 case 全红，且运行器曾存在硬编码红灯。上述历史均保留，不计作交付。
+
+本轮实际修复：
+
+1. `development.js` 恢复每个冻结 case 必须真实失败的门禁，删除由 `verification/errors` 元数据或 baseline 文本触发的“至少一个失败”捷径，并拒绝 `infrastructureErrors`；聚焦 14/14。真实 Test Designer 修复无业务失败也可返回红灯的运行器分支，13 项辅助自检通过；测试修正仅在业务仓库提交 `24d9865`。
+2. 全量回归实际命中 Fetch 的禁止端口，重现 `control-daemon` 的 `bad port`。自动端口有界重分配、显式禁用端口拒绝；四文件聚焦 44/44，保留修复前失败日志。
+3. ESLint 排除本地 `.task-evidence/` 与 `.npm-cache/`，避免扫描测试清理中的临时目录；生产源码仍完整检查。
+
+本轮 Core 最终全量为 **754/754、0 fail/skip/cancel**，lint、format check、pack check 和 MCP smoke 已真实退出 0。证据：`m6-closure-full-final.txt`、`m6-closure-lint-final.txt`、`m6-closure-format.txt`、`m6-closure-pack.txt`、`m6-closure-smoke.txt`。最初把临时业务 fixture 放到插件源码内导致目录门禁阻断的失败、以及修复前 750/751 的端口失败均保留，没有覆盖或伪称通过；最终使用仓库此前的独立短临时目录 `C:/sg-core-test-temp`。
+
+v1.8 已通过正式 `sg_cancel` 取消并保留。用户经真实宿主澄清确认[修正候选](13-canary-closure-correction.md)，随后批准 v1.9 H1，文档 SHA-256 为 `87e9e6a1ef275c6d618de5d62d9706501f691594fb6acf9977898a1c7313c988`。状态机消费后 v304；计划与契约冻结后 v308；获批需求和计划在独立业务仓库提交 `64c26ce`，工作树干净后准备独立测试设计，状态 v309。
+
+新会话“独立复核 M6 最终验收证据”（`01a176f0-433d-7dd3-9c7d-82c9a1ca8623`）只读复核；真实独立 Test Designer 由宿主子 agent 执行，服务端保留任务全文、assignment hash 和真实 host agent 引用。早期 CLI 角色连接失败保留为失败，不冒充完成。实际宿主回执、角色和工具结果位于 `execution-20261026/closure-session/`。
+
+截至本段记录，v1.9 测试设计正在运行，正式测试冻结、当前提交红基线、实现集成、质量门、格式化后全量、固定提交 Review、H3 与 DeliveryRecord 尚未完成，均不记 PASS。SpecGate 源码没有提交或推送；独立业务本地提交沿用上一会话真实授权。
+
+### v1.9 测试冻结与执行路径取证
+
+独立 Test Designer 已提交 `3a7f804b1a16ac928546ae19a81bc02db185689f`，29 份测试资产，工作树干净。诊断红基线实际运行后端 127 项（126 pass、1 个原 OAuth 业务失败、0 skip）与前端 69/69；原前端生产 build 实际出现 TS2339/TS2769。三个业务 case 均 fail，基础设施错误为 0；辅助自检 13/13。该诊断不代替正式红基线。
+
+`sg_test_design_freeze` 正式冻结测试，状态 v311，tests hash 为 `sha256:1175ddefde61d073f0f0c6633044909919df6ce853190c61c87ce4cb81b2f95a`。随后从规范冻结快照的正式运行暴露 Windows JVM 无法加载长路径 JaCoCo JAR，实际后端测试为 0；门禁返回 `RED_REPORT_INVALID`，状态未进入实现。失败见 `closure-session/red-rejected-long-jvm-path.json`。
+
+短执行副本的尝试随后遇到 E 盘空间耗尽，仍按基础设施失败拒绝，未计为红灯，见 `red-rejected-full-disk.json`。用户真实确认本轮三份可再生 Maven 缓存清理后，删除命令仍被策略拒绝，改用保留数据的跨盘迁移：缓存保存在 `C:/sg-core-test-temp/specgate-retained-cache-01a176af/{designer-m2,frozen-m2,partial-m2}`，源码、冻结测试、审批和全部报告未删除。E 盘恢复约 1.24 GiB 可用空间。
+
+当前正在把“逐文件验哈希、原字节短路径执行、按项目与冻结 hash 复用”的环境修复落实到 Core，完成后仍须从规范快照重新执行正式红基线，不以临时 driver 的运行冒充默认产品路径通过。M6 保持进行中。

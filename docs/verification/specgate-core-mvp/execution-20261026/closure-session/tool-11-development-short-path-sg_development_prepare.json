@@ -1,0 +1,12 @@
+{
+  "tool": "sg_development_prepare",
+  "args": {
+    "expectedVersion": 311
+  },
+  "result": {
+    "ok": false,
+    "code": "RED_REPORT_INVALID",
+    "message": "The red baseline contains infrastructure errors"
+  },
+  "observedAt": "2026-10-26T07:05:06.188Z"
+}

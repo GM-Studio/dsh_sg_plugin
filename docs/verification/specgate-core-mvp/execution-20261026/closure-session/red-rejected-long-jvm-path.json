@@ -1,0 +1,2922 @@
+{
+  "schemaVersion": 1,
+  "changeId": "skillhub-canary-v1-9",
+  "mode": "red",
+  "ok": false,
+  "status": "infrastructure-error",
+  "commit": "64c26ce65d79c53426ac3ac2fb41f2f973e51a5b",
+  "root": "E:\\ai_workflow\\specgate-canary-skill-hub-initial",
+  "tests": "E:\\ai_workflow\\specgate-canary-skill-hub-initial\\.specgate\\codex\\changes\\skillhub-canary-v1-9\\tests\\v1-1175ddefde61d073f0f0c6633044909919df6ce853190c61c87ce4cb81b2f95a\\specgate-tests",
+  "runId": "93e3680c-3b42-4843-90bc-7affdba03ff1",
+  "startedAt": "2026-10-26T06:59:16.854Z",
+  "finishedAt": "2026-10-26T06:59:39.586Z",
+  "cases": [
+    {
+      "id": "CASE-CANARY19-AC-01",
+      "status": "skip",
+      "reason": "Infrastructure constraints did not pass."
+    },
+    {
+      "id": "CASE-CANARY19-AC-02",
+      "status": "skip",
+      "reason": "Infrastructure constraints did not pass."
+    },
+    {
+      "id": "CASE-CANARY19-AC-03",
+      "status": "skip",
+      "reason": "Infrastructure constraints did not pass."
+    }
+  ],
+  "stages": [
+    {
+      "name": "selfcheck",
+      "startedAt": "2026-10-26T06:59:22.567Z",
+      "status": 0,
+      "commands": [
+        {
+          "stage": "selfcheck",
+          "command": "D:\\Program Files\\nodejs\\node.exe",
+          "args": [
+            "E:\\ai_workflow\\specgate-canary-skill-hub-initial\\.specgate\\codex\\changes\\skillhub-canary-v1-9\\tests\\v1-1175ddefde61d073f0f0c6633044909919df6ce853190c61c87ce4cb81b2f95a\\specgate-tests\\selfcheck.mjs"
+          ],
+          "cwd": "E:\\ai_workflow\\specgate-canary-skill-hub-initial",
+          "log": "E:\\ai_workflow\\specgate-canary-skill-hub-initial\\.specgate\\codex\\runs\\native-red-report.json.artifacts\\93e3680c-3b42-4843-90bc-7affdba03ff1\\0-selfcheck.log",
+          "invocation": {
+            "command": "D:\\Program Files\\nodejs\\node.exe",
+            "args": [
+              "E:\\ai_workflow\\specgate-canary-skill-hub-initial\\.specgate\\codex\\changes\\skillhub-canary-v1-9\\tests\\v1-1175ddefde61d073f0f0c6633044909919df6ce853190c61c87ce4cb81b2f95a\\specgate-tests\\selfcheck.mjs"
+            ]
+          },
+          "startedAt": "2026-10-26T06:59:22.568Z",
+          "pid": 21772,
+          "timeoutMs": 60000,
+          "status": 0,
+          "signal": null,
+          "finishedAt": "2026-10-26T06:59:22.992Z",
+          "durationMs": 424,
+          "cleanup": {
+            "stage": "selfcheck",
+            "pid": 21772,
+            "pids": [
+              21772
+            ],
+            "reason": "command-exit",
+            "timeoutMs": 60000,
+            "timedOut": false,
+            "startedAt": "2026-10-26T06:59:23.308Z",
+            "fallbackKills": [],
+            "remainingPids": [],
+            "terminated": true,
+            "terminationMethod": "natural-exit",
+            "finishedAt": "2026-10-26T06:59:23.308Z"
+          }
+        }
+      ],
+      "failureKind": null,
+      "listened": false,
+      "finishedAt": "2026-10-26T06:59:23.308Z",
+      "durationMs": 741,
+      "command": "D:\\Program Files\\nodejs\\node.exe",
+      "args": [
+        "E:\\ai_workflow\\specgate-canary-skill-hub-initial\\.specgate\\codex\\changes\\skillhub-canary-v1-9\\tests\\v1-1175ddefde61d073f0f0c6633044909919df6ce853190c61c87ce4cb81b2f95a\\specgate-tests\\selfcheck.mjs"
+      ],
+      "log": "E:\\ai_workflow\\specgate-canary-skill-hub-initial\\.specgate\\codex\\runs\\native-red-report.json.artifacts\\93e3680c-3b42-4843-90bc-7affdba03ff1\\stage-selfcheck.log"
+    },
+    {
+      "name": "backend-verify",
+      "startedAt": "2026-10-26T06:59:23.309Z",
+      "status": 1,
+      "commands": [
+        {
+          "stage": "backend-verify",
+          "command": "C:\\Users\\Administrator\\.m2\\wrapper\\dists\\apache-maven-3.9.11\\03d7e36a140982eea48e22c1dcac01d8862b2550b2939e09a0809bbc5182a5bc\\bin\\mvn.CMD",
+          "args": [
+            "-B",
+            "-ntp",
+            "-o",
+            "-s",
+            "E:\\ai_workflow\\specgate-canary-skill-hub-initial\\.specgate\\codex\\changes\\skillhub-canary-v1-9\\tests\\v1-1175ddefde61d073f0f0c6633044909919df6ce853190c61c87ce4cb81b2f95a\\specgate-tests\\fixtures\\maven-settings.xml",
+            "-Dmaven.repo.local=E:/ai_workflow/specgate-canary-skill-hub-initial/.specgate/codex/changes/skillhub-canary-v1-9/tests/v1-1175ddefde61d073f0f0c6633044909919df6ce853190c61c87ce4cb81b2f95a/specgate-tests/.cache/m2",
+            "-DargLine=-javaagent:../.specgate/codex/changes/skillhub-canary-v1-9/tests/v1-1175ddefde61d073f0f0c6633044909919df6ce853190c61c87ce4cb81b2f95a/specgate-tests/.cache/m2/org/jacoco/org.jacoco.agent/0.8.13/org.jacoco.agent-0.8.13-runtime.jar=destfile=target/jacoco.exec",
+            "clean",
+            "verify"
+          ],
+          "cwd": "E:\\ai_workflow\\specgate-canary-skill-hub-initial\\backend",
+          "log": "E:\\ai_workflow\\specgate-canary-skill-hub-initial\\.specgate\\codex\\runs\\native-red-report.json.artifacts\\93e3680c-3b42-4843-90bc-7affdba03ff1\\2-backend-verify.log",
+          "invocation": {
+            "command": "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe",
+            "args": [
+              "-NoProfile",
+              "-NonInteractive",
+              "-File",
+              "E:\\ai_workflow\\specgate-canary-skill-hub-initial\\.specgate\\codex\\changes\\skillhub-canary-v1-9\\tests\\v1-1175ddefde61d073f0f0c6633044909919df6ce853190c61c87ce4cb81b2f95a\\specgate-tests\\launch-command.ps1",
+              "-CommandPath",
+              "C:\\Users\\Administrator\\.m2\\wrapper\\dists\\apache-maven-3.9.11\\03d7e36a140982eea48e22c1dcac01d8862b2550b2939e09a0809bbc5182a5bc\\bin\\mvn.CMD",
+              "-ArgumentsBase64",
+              "WyItQiIsIi1udHAiLCItbyIsIi1zIiwiRTpcXGFpX3dvcmtmbG93XFxzcGVjZ2F0ZS1jYW5hcnktc2tpbGwtaHViLWluaXRpYWxcXC5zcGVjZ2F0ZVxcY29kZXhcXGNoYW5nZXNcXHNraWxsaHViLWNhbmFyeS12MS05XFx0ZXN0c1xcdjEtMTE3NWRkZWZkZTYxZDA3M2YwZjBjNjYzMzA0NDkwOTkxOWRmNmNlODUzMTkwYzYxYzg3Y2U0Y2I4MWIyZjk1YVxcc3BlY2dhdGUtdGVzdHNcXGZpeHR1cmVzXFxtYXZlbi1zZXR0aW5ncy54bWwiLCItRG1hdmVuLnJlcG8ubG9jYWw9RTovYWlfd29ya2Zsb3cvc3BlY2dhdGUtY2FuYXJ5LXNraWxsLWh1Yi1pbml0aWFsLy5zcGVjZ2F0ZS9jb2RleC9jaGFuZ2VzL3NraWxsaHViLWNhbmFyeS12MS05L3Rlc3RzL3YxLTExNzVkZGVmZGU2MWQwNzNmMGYwYzY2MzMwNDQ5MDk5MTlkZjZjZTg1MzE5MGM2MWM4N2NlNGNiODFiMmY5NWEvc3BlY2dhdGUtdGVzdHMvLmNhY2hlL20yIiwiLURhcmdMaW5lPS1qYXZhYWdlbnQ6Li4vLnNwZWNnYXRlL2NvZGV4L2NoYW5nZXMvc2tpbGxodWItY2FuYXJ5LXYxLTkvdGVzdHMvdjEtMTE3NWRkZWZkZTYxZDA3M2YwZjBjNjYzMzA0NDkwOTkxOWRmNmNlODUzMTkwYzYxYzg3Y2U0Y2I4MWIyZjk1YS9zcGVjZ2F0ZS10ZXN0cy8uY2FjaGUvbTIvb3JnL2phY29jby9vcmcuamFjb2NvLmFnZW50LzAuOC4xMy9vcmcuamFjb2NvLmFnZW50LTAuOC4xMy1ydW50aW1lLmphcj1kZXN0ZmlsZT10YXJnZXQvamFjb2NvLmV4ZWMiLCJjbGVhbiIsInZlcmlmeSJd"
+            ]
+          },
+          "startedAt": "2026-10-26T06:59:23.313Z",
+          "pid": 20564,
+          "timeoutMs": 600000,
+          "status": 1,
+          "signal": null,
+          "finishedAt": "2026-10-26T06:59:29.522Z",
+          "durationMs": 6209,
+          "cleanup": {
+            "stage": "backend-verify",
+            "pid": 20564,
+            "pids": [
+              20564,
+              34536,
+              23328
+            ],
+            "reason": "command-exit",
+            "timeoutMs": 600000,
+            "timedOut": false,
+            "startedAt": "2026-10-26T06:59:29.716Z",
+            "fallbackKills": [],
+            "remainingPids": [],
+            "terminated": true,
+            "terminationMethod": "natural-exit",
+            "finishedAt": "2026-10-26T06:59:29.716Z"
+          }
+        }
+      ],
+      "failureKind": "infrastructure",
+      "listened": false,
+      "tests": {
+        "total": 0,
+        "passed": 0,
+        "failed": 0,
+        "skipped": 0,
+        "originalTotal": 0,
+        "errors": [
+          "Missing original suite/case: com.agentskills.sharing.AgentSkillsSharingApplicationTests",
+          "Missing original suite/case: com.agentskills.sharing.controller.AuthControllerTest",
+          "Missing original suite/case: com.agentskills.sharing.controller.RepositoryControllerTest",
+          "Missing original suite/case: com.agentskills.sharing.controller.SkillControllerTest",
+          "Missing original suite/case: com.agentskills.sharing.controller.SkillGroupControllerTest",
+          "Missing original suite/case: com.agentskills.sharing.controller.TagControllerTest",
+          "Missing original suite/case: com.agentskills.sharing.controller.WebhookControllerTest",
+          "Missing original suite/case: com.agentskills.sharing.security.EncryptionUtilTest",
+          "Missing original suite/case: com.agentskills.sharing.security.JwtUtilTest",
+          "Missing original suite/case: com.agentskills.sharing.service.GitHubApiClientTest",
+          "Missing original suite/case: com.agentskills.sharing.service.RepositoryScannerServiceTest",
+          "Missing original suite/case: com.agentskills.sharing.service.ScheduledSyncServiceTest",
+          "Missing original suite/case: com.agentskills.sharing.service.SkillServiceTest",
+          "Missing original suite/case: com.agentskills.sharing.service.WebhookServiceTest",
+          "Original backend count must equal 119",
+          "All 8 frozen supplemental backend tests must run"
+        ],
+        "businessFailures": [],
+        "suites": []
+      },
+      "currentSurefire": true,
+      "oauthFailures": [],
+      "error": "Error: Surefire reconciliation failed: Missing original suite/case: com.agentskills.sharing.AgentSkillsSharingApplicationTests; Missing original suite/case: com.agentskills.sharing.controller.AuthControllerTest; Missing original suite/case: com.agentskills.sharing.controller.RepositoryControllerTest; Missing original suite/case: com.agentskills.sharing.controller.SkillControllerTest; Missing original suite/case: com.agentskills.sharing.controller.SkillGroupControllerTest; Missing original suite/case: com.agentskills.sharing.controller.TagControllerTest; Missing original suite/case: com.agentskills.sharing.controller.WebhookControllerTest; Missing original suite/case: com.agentskills.sharing.security.EncryptionUtilTest; Missing original suite/case: com.agentskills.sharing.security.JwtUtilTest; Missing original suite/case: com.agentskills.sharing.service.GitHubApiClientTest; Missing original suite/case: com.agentskills.sharing.service.RepositoryScannerServiceTest; Missing original suite/case: com.agentskills.sharing.service.ScheduledSyncServiceTest; Missing original suite/case: com.agentskills.sharing.service.SkillServiceTest; Missing original suite/case: com.agentskills.sharing.service.WebhookServiceTest; Original backend count must equal 119; All 8 frozen supplemental backend tests must run\n    at file:///E:/ai_workflow/specgate-canary-skill-hub-initial/.specgate/codex/changes/skillhub-canary-v1-9/tests/v1-1175ddefde61d073f0f0c6633044909919df6ce853190c61c87ce4cb81b2f95a/specgate-tests/execution.mjs:321:15\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async stage (file:///E:/ai_workflow/specgate-canary-skill-hub-initial/.specgate/codex/changes/skillhub-canary-v1-9/tests/v1-1175ddefde61d073f0f0c6633044909919df6ce853190c61c87ce4cb81b2f95a/specgate-tests/execution.mjs:604:5)\n    at async execute (file:///E:/ai_workflow/specgate-canary-skill-hub-initial/.specgate/codex/changes/skillhub-canary-v1-9/tests/v1-1175ddefde61d073f0f0c6633044909919df6ce853190c61c87ce4cb81b2f95a/specgate-tests/execution.mjs:282:26)\n    at async file:///E:/ai_workflow/specgate-canary-skill-hub-initial/.specgate/codex/changes/skillhub-canary-v1-9/tests/v1-1175ddefde61d073f0f0c6633044909919df6ce853190c61c87ce4cb81b2f95a/specgate-tests/execution.mjs:199:3",
+      "finishedAt": "2026-10-26T06:59:29.716Z",
+      "durationMs": 6407,
+      "command": "C:\\Users\\Administrator\\.m2\\wrapper\\dists\\apache-maven-3.9.11\\03d7e36a140982eea48e22c1dcac01d8862b2550b2939e09a0809bbc5182a5bc\\bin\\mvn.CMD",
+      "args": [
+        "-B",
+        "-ntp",
+        "-o",
+        "-s",
+        "E:\\ai_workflow\\specgate-canary-skill-hub-initial\\.specgate\\codex\\changes\\skillhub-canary-v1-9\\tests\\v1-1175ddefde61d073f0f0c6633044909919df6ce853190c61c87ce4cb81b2f95a\\specgate-tests\\fixtures\\maven-settings.xml",
+        "-Dmaven.repo.local=E:/ai_workflow/specgate-canary-skill-hub-initial/.specgate/codex/changes/skillhub-canary-v1-9/tests/v1-1175ddefde61d073f0f0c6633044909919df6ce853190c61c87ce4cb81b2f95a/specgate-tests/.cache/m2",
+        "-DargLine=-javaagent:../.specgate/codex/changes/skillhub-canary-v1-9/tests/v1-1175ddefde61d073f0f0c6633044909919df6ce853190c61c87ce4cb81b2f95a/specgate-tests/.cache/m2/org/jacoco/org.jacoco.agent/0.8.13/org.jacoco.agent-0.8.13-runtime.jar=destfile=target/jacoco.exec",
+        "clean",
+        "verify"
+      ],
+      "log": "E:\\ai_workflow\\specgate-canary-skill-hub-initial\\.specgate\\codex\\runs\\native-red-report.json.artifacts\\93e3680c-3b42-4843-90bc-7affdba03ff1\\stage-backend-verify.log"
+    },
+    {
+      "name": "frontend-install",
+      "startedAt": "2026-10-26T06:59:29.718Z",
+      "status": 0,
+      "commands": [
+        {
+          "stage": "frontend-install",
+          "command": "D:\\Program Files\\nodejs\\node.exe",
+          "args": [
+            "D:\\Program Files\\nodejs\\node_modules\\npm\\bin\\npm-cli.js",
+            "ci",
+            "--ignore-scripts",
+            "--no-audit",
+            "--no-fund",
+            "--offline",
+            "--cache=C:/Users/Administrator/AppData/Local/npm-cache",
+            "--logs-dir=E:\\ai_workflow\\specgate-canary-skill-hub-initial\\.specgate\\codex\\runs\\native-red-report.json.artifacts\\93e3680c-3b42-4843-90bc-7affdba03ff1\\tooling-npm-logs"
+          ],
+          "cwd": "E:\\ai_workflow\\specgate-canary-skill-hub-initial\\.specgate\\codex\\changes\\skillhub-canary-v1-9\\tests\\v1-1175ddefde61d073f0f0c6633044909919df6ce853190c61c87ce4cb81b2f95a\\specgate-tests\\.cache\\frontend-tools",
+          "log": "E:\\ai_workflow\\specgate-canary-skill-hub-initial\\.specgate\\codex\\runs\\native-red-report.json.artifacts\\93e3680c-3b42-4843-90bc-7affdba03ff1\\6-frontend-install.log",
+          "invocation": {
+            "command": "D:\\Program Files\\nodejs\\node.exe",
+            "args": [
+              "D:\\Program Files\\nodejs\\node_modules\\npm\\bin\\npm-cli.js",
+              "ci",
+              "--ignore-scripts",
+              "--no-audit",
+              "--no-fund",
+              "--offline",
+              "--cache=C:/Users/Administrator/AppData/Local/npm-cache",
+              "--logs-dir=E:\\ai_workflow\\specgate-canary-skill-hub-initial\\.specgate\\codex\\runs\\native-red-report.json.artifacts\\93e3680c-3b42-4843-90bc-7affdba03ff1\\tooling-npm-logs"
+            ]
+          },
+          "startedAt": "2026-10-26T06:59:29.718Z",
+          "pid": 21924,
+          "timeoutMs": 300000,
+          "status": 0,
+          "signal": null,
+          "finishedAt": "2026-10-26T06:59:31.775Z",
+          "durationMs": 2057,
+          "cleanup": {
+            "stage": "frontend-install",
+            "pid": 21924,
+            "pids": [
+              21924
+            ],
+            "reason": "command-exit",
+            "timeoutMs": 300000,
+            "timedOut": false,
+            "startedAt": "2026-10-26T06:59:31.968Z",
+            "fallbackKills": [],
+            "remainingPids": [],
+            "terminated": true,
+            "terminationMethod": "natural-exit",
+            "finishedAt": "2026-10-26T06:59:31.968Z"
+          }
+        },
+        {
+          "stage": "frontend-install",
+          "command": "D:\\Program Files\\nodejs\\node.exe",
+          "args": [
+            "D:\\Program Files\\nodejs\\node_modules\\npm\\bin\\npm-cli.js",
+            "ci",
+            "--ignore-scripts",
+            "--no-audit",
+            "--no-fund",
+            "--offline",
+            "--cache=C:/Users/Administrator/AppData/Local/npm-cache",
+            "--logs-dir=E:\\ai_workflow\\specgate-canary-skill-hub-initial\\.specgate\\codex\\runs\\native-red-report.json.artifacts\\93e3680c-3b42-4843-90bc-7affdba03ff1\\npm-logs"
+          ],
+          "cwd": "E:\\ai_workflow\\specgate-canary-skill-hub-initial\\frontend",
+          "log": "E:\\ai_workflow\\specgate-canary-skill-hub-initial\\.specgate\\codex\\runs\\native-red-report.json.artifacts\\93e3680c-3b42-4843-90bc-7affdba03ff1\\8-frontend-install.log",
+          "invocation": {
+            "command": "D:\\Program Files\\nodejs\\node.exe",
+            "args": [
+              "D:\\Program Files\\nodejs\\node_modules\\npm\\bin\\npm-cli.js",
+              "ci",
+              "--ignore-scripts",
+              "--no-audit",
+              "--no-fund",
+              "--offline",
+              "--cache=C:/Users/Administrator/AppData/Local/npm-cache",
+              "--logs-dir=E:\\ai_workflow\\specgate-canary-skill-hub-initial\\.specgate\\codex\\runs\\native-red-report.json.artifacts\\93e3680c-3b42-4843-90bc-7affdba03ff1\\npm-logs"
+            ]
+          },
+          "startedAt": "2026-10-26T06:59:31.968Z",
+          "pid": 24908,
+          "timeoutMs": 300000,
+          "status": 0,
+          "signal": null,
+          "finishedAt": "2026-10-26T06:59:33.888Z",
+          "durationMs": 1920,
+          "cleanup": {
+            "stage": "frontend-install",
+            "pid": 24908,
+            "pids": [
+              24908
+            ],
+            "reason": "command-exit",
+            "timeoutMs": 300000,
+            "timedOut": false,
+            "startedAt": "2026-10-26T06:59:34.078Z",
+            "fallbackKills": [],
+            "remainingPids": [],
+            "terminated": true,
+            "terminationMethod": "natural-exit",
+            "finishedAt": "2026-10-26T06:59:34.078Z"
+          }
+        }
+      ],
+      "failureKind": null,
+      "listened": false,
+      "finishedAt": "2026-10-26T06:59:34.078Z",
+      "durationMs": 4360,
+      "command": "D:\\Program Files\\nodejs\\node.exe",
+      "args": [
+        "D:\\Program Files\\nodejs\\node_modules\\npm\\bin\\npm-cli.js",
+        "ci",
+        "--ignore-scripts",
+        "--no-audit",
+        "--no-fund",
+        "--offline",
+        "--cache=C:/Users/Administrator/AppData/Local/npm-cache",
+        "--logs-dir=E:\\ai_workflow\\specgate-canary-skill-hub-initial\\.specgate\\codex\\runs\\native-red-report.json.artifacts\\93e3680c-3b42-4843-90bc-7affdba03ff1\\tooling-npm-logs"
+      ],
+      "log": "E:\\ai_workflow\\specgate-canary-skill-hub-initial\\.specgate\\codex\\runs\\native-red-report.json.artifacts\\93e3680c-3b42-4843-90bc-7affdba03ff1\\stage-frontend-install.log"
+    },
+    {
+      "name": "frontend-build",
+      "startedAt": "2026-10-26T06:59:34.623Z",
+      "status": 1,
+      "commands": [
+        {
+          "stage": "frontend-build",
+          "command": "D:\\Program Files\\nodejs\\node.exe",
+          "args": [
+            "D:\\Program Files\\nodejs\\node_modules\\npm\\bin\\npm-cli.js",
+            "run",
+            "build"
+          ],
+          "cwd": "E:\\ai_workflow\\specgate-canary-skill-hub-initial\\frontend",
+          "log": "E:\\ai_workflow\\specgate-canary-skill-hub-initial\\.specgate\\codex\\runs\\native-red-report.json.artifacts\\93e3680c-3b42-4843-90bc-7affdba03ff1\\10-frontend-build.log",
+          "invocation": {
+            "command": "D:\\Program Files\\nodejs\\node.exe",
+            "args": [
+              "D:\\Program Files\\nodejs\\node_modules\\npm\\bin\\npm-cli.js",
+              "run",
+              "build"
+            ]
+          },
+          "startedAt": "2026-10-26T06:59:34.623Z",
+          "pid": 11148,
+          "timeoutMs": 300000,
+          "status": 1,
+          "signal": null,
+          "finishedAt": "2026-10-26T06:59:36.075Z",
+          "durationMs": 1452,
+          "cleanup": {
+            "stage": "frontend-build",
+            "pid": 11148,
+            "pids": [
+              11148
+            ],
+            "reason": "command-exit",
+            "timeoutMs": 300000,
+            "timedOut": false,
+            "startedAt": "2026-10-26T06:59:36.261Z",
+            "fallbackKills": [],
+            "remainingPids": [],
+            "terminated": true,
+            "terminationMethod": "natural-exit",
+            "finishedAt": "2026-10-26T06:59:36.261Z"
+          }
+        }
+      ],
+      "failureKind": "business",
+      "listened": false,
+      "typescriptDiagnostics": [
+        "src/views/HomePage.test.ts(38,18): error TS2339: Property 'mockImplementation' does not exist on type '<T = any, R = AxiosResponse<T, any, {}>, D = any>(url: string, config?: AxiosRequestConfig<D> | undefined) => Promise<R>'.",
+        "src/views/HomePage.test.ts(81,18): error TS2339: Property 'mockImplementation' does not exist on type '<T = any, R = AxiosResponse<T, any, {}>, D = any>(url: string, config?: AxiosRequestConfig<D> | undefined) => Promise<R>'.",
+        "src/views/HomePage.test.ts(94,43): error TS2339: Property 'mock' does not exist on type '<T = any, R = AxiosResponse<T, any, {}>, D = any>(url: string, config?: AxiosRequestConfig<D> | undefined) => Promise<R>'.",
+        "src/views/HomePage.test.ts(94,61): error TS7006: Parameter 'c' implicitly has an 'any' type.",
+        "src/views/HomePage.test.ts(102,25): error TS2339: Property 'mock' does not exist on type '<T = any, R = AxiosResponse<T, any, {}>, D = any>(url: string, config?: AxiosRequestConfig<D> | undefined) => Promise<R>'.",
+        "src/views/HomePage.test.ts(102,43): error TS7006: Parameter 'c' implicitly has an 'any' type.",
+        "src/views/HomePage.test.ts(109,37): error TS2339: Property 'mock' does not exist on type '<T = any, R = AxiosResponse<T, any, {}>, D = any>(url: string, config?: AxiosRequestConfig<D> | undefined) => Promise<R>'.",
+        "src/views/HomePage.test.ts(109,55): error TS7006: Parameter 'c' implicitly has an 'any' type.",
+        "src/views/HomePage.test.ts(119,18): error TS2339: Property 'mockImplementation' does not exist on type '<T = any, R = AxiosResponse<T, any, {}>, D = any>(url: string, config?: AxiosRequestConfig<D> | undefined) => Promise<R>'.",
+        "src/views/HomePage.test.ts(135,18): error TS2339: Property 'mockImplementation' does not exist on type '<T = any, R = AxiosResponse<T, any, {}>, D = any>(url: string, config?: AxiosRequestConfig<D> | undefined) => Promise<R>'.",
+        "src/views/HomePage.test.ts(162,37): error TS2339: Property 'mock' does not exist on type '<T = any, R = AxiosResponse<T, any, {}>, D = any>(url: string, config?: AxiosRequestConfig<D> | undefined) => Promise<R>'.",
+        "src/views/HomePage.test.ts(162,55): error TS7006: Parameter 'c' implicitly has an 'any' type.",
+        "src/views/HomePage.test.ts(172,18): error TS2339: Property 'mockImplementation' does not exist on type '<T = any, R = AxiosResponse<T, any, {}>, D = any>(url: string, config?: AxiosRequestConfig<D> | undefined) => Promise<R>'.",
+        "src/views/HomePage.test.ts(181,11): error TS6133: 'wrapper' is declared but its value is never read.",
+        "src/views/HomePage.test.ts(185,39): error TS2339: Property 'mock' does not exist on type '<T = any, R = AxiosResponse<T, any, {}>, D = any>(url: string, config?: AxiosRequestConfig<D> | undefined) => Promise<R>'.",
+        "src/views/HomePage.test.ts(185,57): error TS7006: Parameter 'c' implicitly has an 'any' type.",
+        "src/views/RepositoriesPage.test.ts(31,18): error TS2339: Property 'mockResolvedValue' does not exist on type '<T = any, R = AxiosResponse<T, any, {}>, D = any>(url: string, config?: AxiosRequestConfig<D> | undefined) => Promise<R>'.",
+        "src/views/RepositoriesPage.test.ts(49,19): error TS2339: Property 'mockResolvedValue' does not exist on type '<T = any, R = AxiosResponse<T, any, {}>, D = any>(url: string, data?: D | undefined, config?: AxiosRequestConfig<D> | undefined) => Promise<R>'.",
+        "src/views/RepositoriesPage.test.ts(63,19): error TS2339: Property 'mockReturnValue' does not exist on type '<T = any, R = AxiosResponse<T, any, {}>, D = any>(url: string, data?: D | undefined, config?: AxiosRequestConfig<D> | undefined) => Promise<R>'.",
+        "src/views/RepositoriesPage.test.ts(85,19): error TS2339: Property 'mockResolvedValue' does not exist on type '<T = any, R = AxiosResponse<T, any, {}>, D = any>(url: string, data?: D | undefined, config?: AxiosRequestConfig<D> | undefined) => Promise<R>'.",
+        "src/views/RepositoriesPage.test.ts(100,19): error TS2339: Property 'mockRejectedValue' does not exist on type '<T = any, R = AxiosResponse<T, any, {}>, D = any>(url: string, data?: D | undefined, config?: AxiosRequestConfig<D> | undefined) => Promise<R>'.",
+        "src/views/RepositoriesPage.test.ts(114,19): error TS2339: Property 'mockReturnValue' does not exist on type '<T = any, R = AxiosResponse<T, any, {}>, D = any>(url: string, data?: D | undefined, config?: AxiosRequestConfig<D> | undefined) => Promise<R>'.",
+        "src/views/SkillDetailPage.test.ts(55,18): error TS2339: Property 'mockResolvedValue' does not exist on type '<T = any, R = AxiosResponse<T, any, {}>, D = any>(url: string, config?: AxiosRequestConfig<D> | undefined) => Promise<R>'.",
+        "src/views/SkillDetailPage.test.ts(73,18): error TS2339: Property 'mockResolvedValue' does not exist on type '<T = any, R = AxiosResponse<T, any, {}>, D = any>(url: string, config?: AxiosRequestConfig<D> | undefined) => Promise<R>'.",
+        "src/views/SkillDetailPage.test.ts(88,18): error TS2339: Property 'mockResolvedValue' does not exist on type '<T = any, R = AxiosResponse<T, any, {}>, D = any>(url: string, config?: AxiosRequestConfig<D> | undefined) => Promise<R>'.",
+        "src/views/SkillDetailPage.test.ts(103,18): error TS2339: Property 'mockResolvedValue' does not exist on type '<T = any, R = AxiosResponse<T, any, {}>, D = any>(url: string, config?: AxiosRequestConfig<D> | undefined) => Promise<R>'.",
+        "src/views/SkillDetailPage.test.ts(119,18): error TS2339: Property 'mockResolvedValue' does not exist on type '<T = any, R = AxiosResponse<T, any, {}>, D = any>(url: string, config?: AxiosRequestConfig<D> | undefined) => Promise<R>'.",
+        "src/views/SkillDetailPage.test.ts(135,18): error TS2339: Property 'mockReturnValue' does not exist on type '<T = any, R = AxiosResponse<T, any, {}>, D = any>(url: string, config?: AxiosRequestConfig<D> | undefined) => Promise<R>'.",
+        "src/views/SkillDetailPage.test.ts(147,18): error TS2339: Property 'mockRejectedValue' does not exist on type '<T = any, R = AxiosResponse<T, any, {}>, D = any>(url: string, config?: AxiosRequestConfig<D> | undefined) => Promise<R>'.",
+        "src/views/SkillDetailPage.test.ts(160,18): error TS2339: Property 'mockRejectedValue' does not exist on type '<T = any, R = AxiosResponse<T, any, {}>, D = any>(url: string, config?: AxiosRequestConfig<D> | undefined) => Promise<R>'.",
+        "src/views/SkillDetailPage.test.ts(173,18): error TS2339: Property 'mockResolvedValue' does not exist on type '<T = any, R = AxiosResponse<T, any, {}>, D = any>(url: string, config?: AxiosRequestConfig<D> | undefined) => Promise<R>'.",
+        "src/views/SkillDetailPage.test.ts(188,18): error TS2339: Property 'mockResolvedValue' does not exist on type '<T = any, R = AxiosResponse<T, any, {}>, D = any>(url: string, config?: AxiosRequestConfig<D> | undefined) => Promise<R>'.",
+        "src/views/SkillDetailPage.test.ts(189,19): error TS2339: Property 'mockResolvedValue' does not exist on type '<T = any, R = AxiosResponse<T, any, {}>, D = any>(url: string, data?: D | undefined, config?: AxiosRequestConfig<D> | undefined) => Promise<R>'.",
+        "src/views/SkillDetailPage.test.ts(214,18): error TS2339: Property 'mockResolvedValue' does not exist on type '<T = any, R = AxiosResponse<T, any, {}>, D = any>(url: string, config?: AxiosRequestConfig<D> | undefined) => Promise<R>'.",
+        "src/views/SkillDetailPage.test.ts(215,19): error TS2339: Property 'mockResolvedValue' does not exist on type '<T = any, R = AxiosResponse<T, any, {}>, D = any>(url: string, data?: D | undefined, config?: AxiosRequestConfig<D> | undefined) => Promise<R>'.",
+        "src/views/SkillGroupDetailPage.test.ts(31,10): error TS2305: Module '\"@/composables/useAuth\"' has no exported member '__mockState'.",
+        "src/views/SkillGroupDetailPage.test.ts(71,18): error TS2339: Property 'mockResolvedValue' does not exist on type '<T = any, R = AxiosResponse<T, any, {}>, D = any>(url: string, config?: AxiosRequestConfig<D> | undefined) => Promise<R>'.",
+        "src/views/SkillGroupDetailPage.test.ts(88,18): error TS2339: Property 'mockResolvedValue' does not exist on type '<T = any, R = AxiosResponse<T, any, {}>, D = any>(url: string, config?: AxiosRequestConfig<D> | undefined) => Promise<R>'.",
+        "src/views/SkillGroupDetailPage.test.ts(104,18): error TS2339: Property 'mockResolvedValue' does not exist on type '<T = any, R = AxiosResponse<T, any, {}>, D = any>(url: string, config?: AxiosRequestConfig<D> | undefined) => Promise<R>'.",
+        "src/views/SkillGroupDetailPage.test.ts(118,18): error TS2339: Property 'mockResolvedValue' does not exist on type '<T = any, R = AxiosResponse<T, any, {}>, D = any>(url: string, config?: AxiosRequestConfig<D> | undefined) => Promise<R>'.",
+        "src/views/SkillGroupDetailPage.test.ts(131,18): error TS2339: Property 'mockResolvedValue' does not exist on type '<T = any, R = AxiosResponse<T, any, {}>, D = any>(url: string, config?: AxiosRequestConfig<D> | undefined) => Promise<R>'.",
+        "src/views/SkillGroupDetailPage.test.ts(132,19): error TS2339: Property 'mockResolvedValue' does not exist on type '<T = any, R = AxiosResponse<T, any, {}>, D = any>(url: string, data?: D | undefined, config?: AxiosRequestConfig<D> | undefined) => Promise<R>'.",
+        "src/views/SkillGroupDetailPage.test.ts(156,18): error TS2339: Property 'mockResolvedValue' does not exist on type '<T = any, R = AxiosResponse<T, any, {}>, D = any>(url: string, config?: AxiosRequestConfig<D> | undefined) => Promise<R>'.",
+        "src/views/SkillGroupDetailPage.test.ts(157,19): error TS2339: Property 'mockResolvedValue' does not exist on type '<T = any, R = AxiosResponse<T, any, {}>, D = any>(url: string, data?: D | undefined, config?: AxiosRequestConfig<D> | undefined) => Promise<R>'.",
+        "src/views/SkillGroupDetailPage.test.ts(175,18): error TS2339: Property 'mockResolvedValue' does not exist on type '<T = any, R = AxiosResponse<T, any, {}>, D = any>(url: string, config?: AxiosRequestConfig<D> | undefined) => Promise<R>'.",
+        "src/views/SkillGroupDetailPage.test.ts(176,19): error TS2339: Property 'mockResolvedValue' does not exist on type '<T = any, R = AxiosResponse<T, any, {}>, D = any>(url: string, data?: D | undefined, config?: AxiosRequestConfig<D> | undefined) => Promise<R>'.",
+        "src/views/SkillGroupDetailPage.test.ts(202,18): error TS2339: Property 'mockReturnValue' does not exist on type '<T = any, R = AxiosResponse<T, any, {}>, D = any>(url: string, config?: AxiosRequestConfig<D> | undefined) => Promise<R>'.",
+        "src/views/SkillGroupDetailPage.test.ts(214,18): error TS2339: Property 'mockRejectedValue' does not exist on type '<T = any, R = AxiosResponse<T, any, {}>, D = any>(url: string, config?: AxiosRequestConfig<D> | undefined) => Promise<R>'.",
+        "src/views/SkillGroupDetailPage.test.ts(227,18): error TS2339: Property 'mockResolvedValue' does not exist on type '<T = any, R = AxiosResponse<T, any, {}>, D = any>(url: string, config?: AxiosRequestConfig<D> | undefined) => Promise<R>'.",
+        "src/views/SkillGroupDetailPage.test.ts(242,18): error TS2339: Property 'mockResolvedValue' does not exist on type '<T = any, R = AxiosResponse<T, any, {}>, D = any>(url: string, config?: AxiosRequestConfig<D> | undefined) => Promise<R>'.",
+        "src/views/SkillGroupDetailPage.test.ts(259,18): error TS2339: Property 'mockResolvedValue' does not exist on type '<T = any, R = AxiosResponse<T, any, {}>, D = any>(url: string, config?: AxiosRequestConfig<D> | undefined) => Promise<R>'.",
+        "src/views/SkillGroupDetailPage.test.ts(274,18): error TS2339: Property 'mockResolvedValue' does not exist on type '<T = any, R = AxiosResponse<T, any, {}>, D = any>(url: string, config?: AxiosRequestConfig<D> | undefined) => Promise<R>'.",
+        "src/views/SkillGroupDetailPage.test.ts(289,18): error TS2339: Property 'mockResolvedValue' does not exist on type '<T = any, R = AxiosResponse<T, any, {}>, D = any>(url: string, config?: AxiosRequestConfig<D> | undefined) => Promise<R>'.",
+        "src/views/SkillGroupDetailPage.test.ts(304,18): error TS2339: Property 'mockResolvedValue' does not exist on type '<T = any, R = AxiosResponse<T, any, {}>, D = any>(url: string, config?: AxiosRequestConfig<D> | undefined) => Promise<R>'.",
+        "src/views/SkillGroupDetailPage.test.ts(327,18): error TS2339: Property 'mockResolvedValue' does not exist on type '<T = any, R = AxiosResponse<T, any, {}>, D = any>(url: string, config?: AxiosRequestConfig<D> | undefined) => Promise<R>'.",
+        "src/views/SkillGroupDetailPage.test.ts(350,18): error TS2339: Property 'mockResolvedValue' does not exist on type '<T = any, R = AxiosResponse<T, any, {}>, D = any>(url: string, config?: AxiosRequestConfig<D> | undefined) => Promise<R>'.",
+        "src/views/SkillGroupDetailPage.test.ts(351,20): error TS2339: Property 'mockResolvedValue' does not exist on type '<T = any, R = AxiosResponse<T, any, {}>, D = any>(url: string, data?: D | undefined, config?: AxiosRequestConfig<D> | undefined) => Promise<R>'.",
+        "src/views/SkillGroupDetailPage.test.ts(380,18): error TS2339: Property 'mockResolvedValue' does not exist on type '<T = any, R = AxiosResponse<T, any, {}>, D = any>(url: string, config?: AxiosRequestConfig<D> | undefined) => Promise<R>'.",
+        "src/views/SkillGroupDetailPage.test.ts(381,20): error TS2339: Property 'mockRejectedValue' does not exist on type '<T = any, R = AxiosResponse<T, any, {}>, D = any>(url: string, data?: D | undefined, config?: AxiosRequestConfig<D> | undefined) => Promise<R>'.",
+        "src/views/SkillGroupDetailPage.test.ts(405,18): error TS2339: Property 'mockResolvedValue' does not exist on type '<T = any, R = AxiosResponse<T, any, {}>, D = any>(url: string, config?: AxiosRequestConfig<D> | undefined) => Promise<R>'.",
+        "src/views/SkillGroupDetailPage.test.ts(406,20): error TS2339: Property 'mockRejectedValue' does not exist on type '<T = any, R = AxiosResponse<T, any, {}>, D = any>(url: string, data?: D | undefined, config?: AxiosRequestConfig<D> | undefined) => Promise<R>'.",
+        "vite.config.ts(28,3): error TS2769: No overload matches this call."
+      ],
+      "error": "Error: D:\\Program Files\\nodejs\\node.exe exited 1; E:\\ai_workflow\\specgate-canary-skill-hub-initial\\.specgate\\codex\\runs\\native-red-report.json.artifacts\\93e3680c-3b42-4843-90bc-7affdba03ff1\\10-frontend-build.log\n    at command (file:///E:/ai_workflow/specgate-canary-skill-hub-initial/.specgate/codex/changes/skillhub-canary-v1-9/tests/v1-1175ddefde61d073f0f0c6633044909919df6ce853190c61c87ce4cb81b2f95a/specgate-tests/execution.mjs:867:11)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async file:///E:/ai_workflow/specgate-canary-skill-hub-initial/.specgate/codex/changes/skillhub-canary-v1-9/tests/v1-1175ddefde61d073f0f0c6633044909919df6ce853190c61c87ce4cb81b2f95a/specgate-tests/execution.mjs:417:9\n    at async stage (file:///E:/ai_workflow/specgate-canary-skill-hub-initial/.specgate/codex/changes/skillhub-canary-v1-9/tests/v1-1175ddefde61d073f0f0c6633044909919df6ce853190c61c87ce4cb81b2f95a/specgate-tests/execution.mjs:604:5)\n    at async execute (file:///E:/ai_workflow/specgate-canary-skill-hub-initial/.specgate/codex/changes/skillhub-canary-v1-9/tests/v1-1175ddefde61d073f0f0c6633044909919df6ce853190c61c87ce4cb81b2f95a/specgate-tests/execution.mjs:415:5)\n    at async file:///E:/ai_workflow/specgate-canary-skill-hub-initial/.specgate/codex/changes/skillhub-canary-v1-9/tests/v1-1175ddefde61d073f0f0c6633044909919df6ce853190c61c87ce4cb81b2f95a/specgate-tests/execution.mjs:199:3",
+      "finishedAt": "2026-10-26T06:59:36.262Z",
+      "durationMs": 1639,
+      "command": "D:\\Program Files\\nodejs\\node.exe",
+      "args": [
+        "D:\\Program Files\\nodejs\\node_modules\\npm\\bin\\npm-cli.js",
+        "run",
+        "build"
+      ],
+      "log": "E:\\ai_workflow\\specgate-canary-skill-hub-initial\\.specgate\\codex\\runs\\native-red-report.json.artifacts\\93e3680c-3b42-4843-90bc-7affdba03ff1\\stage-frontend-build.log"
+    },
+    {
+      "name": "frontend-test",
+      "startedAt": "2026-10-26T06:59:36.262Z",
+      "status": 0,
+      "commands": [
+        {
+          "stage": "frontend-test",
+          "command": "D:\\Program Files\\nodejs\\node.exe",
+          "args": [
+            "D:\\Program Files\\nodejs\\node_modules\\npm\\bin\\npm-cli.js",
+            "test",
+            "--",
+            "--coverage",
+            "--coverage.provider=v8",
+            "--coverage.include=src/**/*.{ts,vue}",
+            "--coverage.include=vite.config.ts",
+            "--coverage.exclude=src/**/*.{test,spec}.*",
+            "--coverage.reporter=json",
+            "--coverage.reporter=json-summary",
+            "--reporter=json",
+            "--outputFile=E:\\ai_workflow\\specgate-canary-skill-hub-initial\\.specgate\\codex\\runs\\native-red-report.json.artifacts\\93e3680c-3b42-4843-90bc-7affdba03ff1\\vitest.json"
+          ],
+          "cwd": "E:\\ai_workflow\\specgate-canary-skill-hub-initial\\frontend",
+          "log": "E:\\ai_workflow\\specgate-canary-skill-hub-initial\\.specgate\\codex\\runs\\native-red-report.json.artifacts\\93e3680c-3b42-4843-90bc-7affdba03ff1\\12-frontend-test.log",
+          "invocation": {
+            "command": "D:\\Program Files\\nodejs\\node.exe",
+            "args": [
+              "D:\\Program Files\\nodejs\\node_modules\\npm\\bin\\npm-cli.js",
+              "test",
+              "--",
+              "--coverage",
+              "--coverage.provider=v8",
+              "--coverage.include=src/**/*.{ts,vue}",
+              "--coverage.include=vite.config.ts",
+              "--coverage.exclude=src/**/*.{test,spec}.*",
+              "--coverage.reporter=json",
+              "--coverage.reporter=json-summary",
+              "--reporter=json",
+              "--outputFile=E:\\ai_workflow\\specgate-canary-skill-hub-initial\\.specgate\\codex\\runs\\native-red-report.json.artifacts\\93e3680c-3b42-4843-90bc-7affdba03ff1\\vitest.json"
+            ]
+          },
+          "startedAt": "2026-10-26T06:59:36.262Z",
+          "pid": 15952,
+          "timeoutMs": 300000,
+          "status": 0,
+          "signal": null,
+          "finishedAt": "2026-10-26T06:59:38.292Z",
+          "durationMs": 2030,
+          "cleanup": {
+            "stage": "frontend-test",
+            "pid": 15952,
+            "pids": [
+              15952
+            ],
+            "reason": "command-exit",
+            "timeoutMs": 300000,
+            "timedOut": false,
+            "startedAt": "2026-10-26T06:59:38.487Z",
+            "fallbackKills": [],
+            "remainingPids": [],
+            "terminated": true,
+            "terminationMethod": "natural-exit",
+            "finishedAt": "2026-10-26T06:59:38.487Z"
+          }
+        }
+      ],
+      "failureKind": null,
+      "listened": false,
+      "tests": {
+        "total": 69,
+        "passed": 69,
+        "failed": 0,
+        "skipped": 0,
+        "originalTotal": 49,
+        "errors": []
+      },
+      "currentVitest": true,
+      "finishedAt": "2026-10-26T06:59:38.489Z",
+      "durationMs": 2227,
+      "command": "D:\\Program Files\\nodejs\\node.exe",
+      "args": [
+        "D:\\Program Files\\nodejs\\node_modules\\npm\\bin\\npm-cli.js",
+        "test",
+        "--",
+        "--coverage",
+        "--coverage.provider=v8",
+        "--coverage.include=src/**/*.{ts,vue}",
+        "--coverage.include=vite.config.ts",
+        "--coverage.exclude=src/**/*.{test,spec}.*",
+        "--coverage.reporter=json",
+        "--coverage.reporter=json-summary",
+        "--reporter=json",
+        "--outputFile=E:\\ai_workflow\\specgate-canary-skill-hub-initial\\.specgate\\codex\\runs\\native-red-report.json.artifacts\\93e3680c-3b42-4843-90bc-7affdba03ff1\\vitest.json"
+      ],
+      "log": "E:\\ai_workflow\\specgate-canary-skill-hub-initial\\.specgate\\codex\\runs\\native-red-report.json.artifacts\\93e3680c-3b42-4843-90bc-7affdba03ff1\\stage-frontend-test.log"
+    },
+    {
+      "name": "frontend-lint",
+      "startedAt": "2026-10-26T06:59:38.489Z",
+      "status": 1,
+      "commands": [
+        {
+          "stage": "frontend-lint",
+          "command": "D:\\Program Files\\nodejs\\node.exe",
+          "args": [
+            "D:\\Program Files\\nodejs\\node_modules\\npm\\bin\\npm-cli.js",
+            "run",
+            "lint"
+          ],
+          "cwd": "E:\\ai_workflow\\specgate-canary-skill-hub-initial\\frontend",
+          "log": "E:\\ai_workflow\\specgate-canary-skill-hub-initial\\.specgate\\codex\\runs\\native-red-report.json.artifacts\\93e3680c-3b42-4843-90bc-7affdba03ff1\\14-frontend-lint.log",
+          "invocation": {
+            "command": "D:\\Program Files\\nodejs\\node.exe",
+            "args": [
+              "D:\\Program Files\\nodejs\\node_modules\\npm\\bin\\npm-cli.js",
+              "run",
+              "lint"
+            ]
+          },
+          "startedAt": "2026-10-26T06:59:38.489Z",
+          "pid": 17112,
+          "timeoutMs": 300000,
+          "status": 1,
+          "signal": null,
+          "finishedAt": "2026-10-26T06:59:38.733Z",
+          "durationMs": 244,
+          "cleanup": {
+            "stage": "frontend-lint",
+            "pid": 17112,
+            "pids": [
+              17112
+            ],
+            "reason": "command-exit",
+            "timeoutMs": 300000,
+            "timedOut": false,
+            "startedAt": "2026-10-26T06:59:38.919Z",
+            "fallbackKills": [],
+            "remainingPids": [],
+            "terminated": true,
+            "terminationMethod": "natural-exit",
+            "finishedAt": "2026-10-26T06:59:38.919Z"
+          }
+        }
+      ],
+      "failureKind": "business",
+      "listened": false,
+      "error": "Error: D:\\Program Files\\nodejs\\node.exe exited 1; E:\\ai_workflow\\specgate-canary-skill-hub-initial\\.specgate\\codex\\runs\\native-red-report.json.artifacts\\93e3680c-3b42-4843-90bc-7affdba03ff1\\14-frontend-lint.log\n    at command (file:///E:/ai_workflow/specgate-canary-skill-hub-initial/.specgate/codex/changes/skillhub-canary-v1-9/tests/v1-1175ddefde61d073f0f0c6633044909919df6ce853190c61c87ce4cb81b2f95a/specgate-tests/execution.mjs:867:11)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async file:///E:/ai_workflow/specgate-canary-skill-hub-initial/.specgate/codex/changes/skillhub-canary-v1-9/tests/v1-1175ddefde61d073f0f0c6633044909919df6ce853190c61c87ce4cb81b2f95a/specgate-tests/execution.mjs:469:7\n    at async stage (file:///E:/ai_workflow/specgate-canary-skill-hub-initial/.specgate/codex/changes/skillhub-canary-v1-9/tests/v1-1175ddefde61d073f0f0c6633044909919df6ce853190c61c87ce4cb81b2f95a/specgate-tests/execution.mjs:604:5)\n    at async execute (file:///E:/ai_workflow/specgate-canary-skill-hub-initial/.specgate/codex/changes/skillhub-canary-v1-9/tests/v1-1175ddefde61d073f0f0c6633044909919df6ce853190c61c87ce4cb81b2f95a/specgate-tests/execution.mjs:468:5)\n    at async file:///E:/ai_workflow/specgate-canary-skill-hub-initial/.specgate/codex/changes/skillhub-canary-v1-9/tests/v1-1175ddefde61d073f0f0c6633044909919df6ce853190c61c87ce4cb81b2f95a/specgate-tests/execution.mjs:199:3",
+      "finishedAt": "2026-10-26T06:59:38.919Z",
+      "durationMs": 430,
+      "command": "D:\\Program Files\\nodejs\\node.exe",
+      "args": [
+        "D:\\Program Files\\nodejs\\node_modules\\npm\\bin\\npm-cli.js",
+        "run",
+        "lint"
+      ],
+      "log": "E:\\ai_workflow\\specgate-canary-skill-hub-initial\\.specgate\\codex\\runs\\native-red-report.json.artifacts\\93e3680c-3b42-4843-90bc-7affdba03ff1\\stage-frontend-lint.log"
+    },
+    {
+      "name": "frontend-format",
+      "startedAt": "2026-10-26T06:59:38.920Z",
+      "status": 1,
+      "commands": [
+        {
+          "stage": "frontend-format",
+          "command": "D:\\Program Files\\nodejs\\node.exe",
+          "args": [
+            "D:\\Program Files\\nodejs\\node_modules\\npm\\bin\\npm-cli.js",
+            "run",
+            "format:check"
+          ],
+          "cwd": "E:\\ai_workflow\\specgate-canary-skill-hub-initial\\frontend",
+          "log": "E:\\ai_workflow\\specgate-canary-skill-hub-initial\\.specgate\\codex\\runs\\native-red-report.json.artifacts\\93e3680c-3b42-4843-90bc-7affdba03ff1\\16-frontend-format.log",
+          "invocation": {
+            "command": "D:\\Program Files\\nodejs\\node.exe",
+            "args": [
+              "D:\\Program Files\\nodejs\\node_modules\\npm\\bin\\npm-cli.js",
+              "run",
+              "format:check"
+            ]
+          },
+          "startedAt": "2026-10-26T06:59:38.920Z",
+          "pid": 20032,
+          "timeoutMs": 300000,
+          "status": 1,
+          "signal": null,
+          "finishedAt": "2026-10-26T06:59:39.033Z",
+          "durationMs": 113,
+          "cleanup": {
+            "stage": "frontend-format",
+            "pid": 20032,
+            "pids": [
+              20032
+            ],
+            "reason": "command-exit",
+            "timeoutMs": 300000,
+            "timedOut": false,
+            "startedAt": "2026-10-26T06:59:39.216Z",
+            "fallbackKills": [],
+            "remainingPids": [],
+            "terminated": true,
+            "terminationMethod": "natural-exit",
+            "finishedAt": "2026-10-26T06:59:39.216Z"
+          }
+        }
+      ],
+      "failureKind": "business",
+      "listened": false,
+      "error": "Error: D:\\Program Files\\nodejs\\node.exe exited 1; E:\\ai_workflow\\specgate-canary-skill-hub-initial\\.specgate\\codex\\runs\\native-red-report.json.artifacts\\93e3680c-3b42-4843-90bc-7affdba03ff1\\16-frontend-format.log\n    at command (file:///E:/ai_workflow/specgate-canary-skill-hub-initial/.specgate/codex/changes/skillhub-canary-v1-9/tests/v1-1175ddefde61d073f0f0c6633044909919df6ce853190c61c87ce4cb81b2f95a/specgate-tests/execution.mjs:867:11)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async file:///E:/ai_workflow/specgate-canary-skill-hub-initial/.specgate/codex/changes/skillhub-canary-v1-9/tests/v1-1175ddefde61d073f0f0c6633044909919df6ce853190c61c87ce4cb81b2f95a/specgate-tests/execution.mjs:472:7\n    at async stage (file:///E:/ai_workflow/specgate-canary-skill-hub-initial/.specgate/codex/changes/skillhub-canary-v1-9/tests/v1-1175ddefde61d073f0f0c6633044909919df6ce853190c61c87ce4cb81b2f95a/specgate-tests/execution.mjs:604:5)\n    at async execute (file:///E:/ai_workflow/specgate-canary-skill-hub-initial/.specgate/codex/changes/skillhub-canary-v1-9/tests/v1-1175ddefde61d073f0f0c6633044909919df6ce853190c61c87ce4cb81b2f95a/specgate-tests/execution.mjs:471:5)\n    at async file:///E:/ai_workflow/specgate-canary-skill-hub-initial/.specgate/codex/changes/skillhub-canary-v1-9/tests/v1-1175ddefde61d073f0f0c6633044909919df6ce853190c61c87ce4cb81b2f95a/specgate-tests/execution.mjs:199:3",
+      "finishedAt": "2026-10-26T06:59:39.217Z",
+      "durationMs": 297,
+      "command": "D:\\Program Files\\nodejs\\node.exe",
+      "args": [
+        "D:\\Program Files\\nodejs\\node_modules\\npm\\bin\\npm-cli.js",
+        "run",
+        "format:check"
+      ],
+      "log": "E:\\ai_workflow\\specgate-canary-skill-hub-initial\\.specgate\\codex\\runs\\native-red-report.json.artifacts\\93e3680c-3b42-4843-90bc-7affdba03ff1\\stage-frontend-format.log"
+    },
+    {
+      "name": "coverage",
+      "startedAt": "2026-10-26T06:59:39.217Z",
+      "status": 1,
+      "commands": [
+        {
+          "stage": "coverage",
+          "command": "D:\\Program Files\\nodejs\\node.exe",
+          "args": [
+            "E:\\ai_workflow\\specgate-canary-skill-hub-initial\\.specgate\\codex\\changes\\skillhub-canary-v1-9\\tests\\v1-1175ddefde61d073f0f0c6633044909919df6ce853190c61c87ce4cb81b2f95a\\specgate-tests\\quality.mjs",
+            "E:\\ai_workflow\\specgate-canary-skill-hub-initial",
+            "E:\\ai_workflow\\specgate-canary-skill-hub-initial\\.specgate\\codex\\changes\\skillhub-canary-v1-9\\tests\\v1-1175ddefde61d073f0f0c6633044909919df6ce853190c61c87ce4cb81b2f95a\\specgate-tests\\fixtures\\frozen.json",
+            "E:\\ai_workflow\\specgate-canary-skill-hub-initial\\.specgate\\codex\\runs\\native-red-report.json.artifacts\\93e3680c-3b42-4843-90bc-7affdba03ff1\\coverage.json"
+          ],
+          "cwd": "E:\\ai_workflow\\specgate-canary-skill-hub-initial",
+          "log": "E:\\ai_workflow\\specgate-canary-skill-hub-initial\\.specgate\\codex\\runs\\native-red-report.json.artifacts\\93e3680c-3b42-4843-90bc-7affdba03ff1\\18-coverage.log",
+          "invocation": {
+            "command": "D:\\Program Files\\nodejs\\node.exe",
+            "args": [
+              "E:\\ai_workflow\\specgate-canary-skill-hub-initial\\.specgate\\codex\\changes\\skillhub-canary-v1-9\\tests\\v1-1175ddefde61d073f0f0c6633044909919df6ce853190c61c87ce4cb81b2f95a\\specgate-tests\\quality.mjs",
+              "E:\\ai_workflow\\specgate-canary-skill-hub-initial",
+              "E:\\ai_workflow\\specgate-canary-skill-hub-initial\\.specgate\\codex\\changes\\skillhub-canary-v1-9\\tests\\v1-1175ddefde61d073f0f0c6633044909919df6ce853190c61c87ce4cb81b2f95a\\specgate-tests\\fixtures\\frozen.json",
+              "E:\\ai_workflow\\specgate-canary-skill-hub-initial\\.specgate\\codex\\runs\\native-red-report.json.artifacts\\93e3680c-3b42-4843-90bc-7affdba03ff1\\coverage.json"
+            ]
+          },
+          "startedAt": "2026-10-26T06:59:39.217Z",
+          "pid": 31468,
+          "timeoutMs": 120000,
+          "status": 1,
+          "signal": null,
+          "finishedAt": "2026-10-26T06:59:39.265Z",
+          "durationMs": 48,
+          "cleanup": {
+            "stage": "coverage",
+            "pid": 31468,
+            "pids": [
+              31468
+            ],
+            "reason": "command-exit",
+            "timeoutMs": 120000,
+            "timedOut": false,
+            "startedAt": "2026-10-26T06:59:39.451Z",
+            "fallbackKills": [],
+            "remainingPids": [],
+            "terminated": true,
+            "terminationMethod": "natural-exit",
+            "finishedAt": "2026-10-26T06:59:39.451Z"
+          }
+        }
+      ],
+      "failureKind": "infrastructure",
+      "listened": false,
+      "error": "Error: Coverage evidence unavailable: D:\\Program Files\\nodejs\\node.exe exited 1; E:\\ai_workflow\\specgate-canary-skill-hub-initial\\.specgate\\codex\\runs\\native-red-report.json.artifacts\\93e3680c-3b42-4843-90bc-7affdba03ff1\\18-coverage.log\n    at file:///E:/ai_workflow/specgate-canary-skill-hub-initial/.specgate/codex/changes/skillhub-canary-v1-9/tests/v1-1175ddefde61d073f0f0c6633044909919df6ce853190c61c87ce4cb81b2f95a/specgate-tests/execution.mjs:491:15\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async stage (file:///E:/ai_workflow/specgate-canary-skill-hub-initial/.specgate/codex/changes/skillhub-canary-v1-9/tests/v1-1175ddefde61d073f0f0c6633044909919df6ce853190c61c87ce4cb81b2f95a/specgate-tests/execution.mjs:604:5)\n    at async execute (file:///E:/ai_workflow/specgate-canary-skill-hub-initial/.specgate/codex/changes/skillhub-canary-v1-9/tests/v1-1175ddefde61d073f0f0c6633044909919df6ce853190c61c87ce4cb81b2f95a/specgate-tests/execution.mjs:474:5)\n    at async file:///E:/ai_workflow/specgate-canary-skill-hub-initial/.specgate/codex/changes/skillhub-canary-v1-9/tests/v1-1175ddefde61d073f0f0c6633044909919df6ce853190c61c87ce4cb81b2f95a/specgate-tests/execution.mjs:199:3",
+      "finishedAt": "2026-10-26T06:59:39.451Z",
+      "durationMs": 234,
+      "command": "D:\\Program Files\\nodejs\\node.exe",
+      "args": [
+        "E:\\ai_workflow\\specgate-canary-skill-hub-initial\\.specgate\\codex\\changes\\skillhub-canary-v1-9\\tests\\v1-1175ddefde61d073f0f0c6633044909919df6ce853190c61c87ce4cb81b2f95a\\specgate-tests\\quality.mjs",
+        "E:\\ai_workflow\\specgate-canary-skill-hub-initial",
+        "E:\\ai_workflow\\specgate-canary-skill-hub-initial\\.specgate\\codex\\changes\\skillhub-canary-v1-9\\tests\\v1-1175ddefde61d073f0f0c6633044909919df6ce853190c61c87ce4cb81b2f95a\\specgate-tests\\fixtures\\frozen.json",
+        "E:\\ai_workflow\\specgate-canary-skill-hub-initial\\.specgate\\codex\\runs\\native-red-report.json.artifacts\\93e3680c-3b42-4843-90bc-7affdba03ff1\\coverage.json"
+      ],
+      "log": "E:\\ai_workflow\\specgate-canary-skill-hub-initial\\.specgate\\codex\\runs\\native-red-report.json.artifacts\\93e3680c-3b42-4843-90bc-7affdba03ff1\\stage-coverage.log"
+    },
+    {
+      "name": "runtime",
+      "startedAt": "2026-10-26T06:59:39.452Z",
+      "status": 1,
+      "commands": [],
+      "failureKind": "infrastructure",
+      "listened": false,
+      "error": "Error: Surefire report is absent before runtime start\n    at runtime (file:///E:/ai_workflow/specgate-canary-skill-hub-initial/.specgate/codex/changes/skillhub-canary-v1-9/tests/v1-1175ddefde61d073f0f0c6633044909919df6ce853190c61c87ce4cb81b2f95a/specgate-tests/execution.mjs:918:25)\n    at file:///E:/ai_workflow/specgate-canary-skill-hub-initial/.specgate/codex/changes/skillhub-canary-v1-9/tests/v1-1175ddefde61d073f0f0c6633044909919df6ce853190c61c87ce4cb81b2f95a/specgate-tests/execution.mjs:530:13\n    at stage (file:///E:/ai_workflow/specgate-canary-skill-hub-initial/.specgate/codex/changes/skillhub-canary-v1-9/tests/v1-1175ddefde61d073f0f0c6633044909919df6ce853190c61c87ce4cb81b2f95a/specgate-tests/execution.mjs:604:11)\n    at execute (file:///E:/ai_workflow/specgate-canary-skill-hub-initial/.specgate/codex/changes/skillhub-canary-v1-9/tests/v1-1175ddefde61d073f0f0c6633044909919df6ce853190c61c87ce4cb81b2f95a/specgate-tests/execution.mjs:529:32)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async file:///E:/ai_workflow/specgate-canary-skill-hub-initial/.specgate/codex/changes/skillhub-canary-v1-9/tests/v1-1175ddefde61d073f0f0c6633044909919df6ce853190c61c87ce4cb81b2f95a/specgate-tests/execution.mjs:199:3",
+      "finishedAt": "2026-10-26T06:59:39.452Z",
+      "durationMs": 0,
+      "log": "E:\\ai_workflow\\specgate-canary-skill-hub-initial\\.specgate\\codex\\runs\\native-red-report.json.artifacts\\93e3680c-3b42-4843-90bc-7affdba03ff1\\stage-runtime.log"
+    },
+    {
+      "name": "frontend-runtime",
+      "startedAt": "2026-10-26T06:59:39.453Z",
+      "status": 1,
+      "commands": [],
+      "failureKind": "business",
+      "listened": false,
+      "error": "Error: Frontend runtime was not run because the actual frontend build failed.\n    at runtime (file:///E:/ai_workflow/specgate-canary-skill-hub-initial/.specgate/codex/changes/skillhub-canary-v1-9/tests/v1-1175ddefde61d073f0f0c6633044909919df6ce853190c61c87ce4cb81b2f95a/specgate-tests/execution.mjs:902:17)\n    at file:///E:/ai_workflow/specgate-canary-skill-hub-initial/.specgate/codex/changes/skillhub-canary-v1-9/tests/v1-1175ddefde61d073f0f0c6633044909919df6ce853190c61c87ce4cb81b2f95a/specgate-tests/execution.mjs:533:13\n    at stage (file:///E:/ai_workflow/specgate-canary-skill-hub-initial/.specgate/codex/changes/skillhub-canary-v1-9/tests/v1-1175ddefde61d073f0f0c6633044909919df6ce853190c61c87ce4cb81b2f95a/specgate-tests/execution.mjs:604:11)\n    at execute (file:///E:/ai_workflow/specgate-canary-skill-hub-initial/.specgate/codex/changes/skillhub-canary-v1-9/tests/v1-1175ddefde61d073f0f0c6633044909919df6ce853190c61c87ce4cb81b2f95a/specgate-tests/execution.mjs:532:11)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async file:///E:/ai_workflow/specgate-canary-skill-hub-initial/.specgate/codex/changes/skillhub-canary-v1-9/tests/v1-1175ddefde61d073f0f0c6633044909919df6ce853190c61c87ce4cb81b2f95a/specgate-tests/execution.mjs:199:3",
+      "finishedAt": "2026-10-26T06:59:39.453Z",
+      "durationMs": 0,
+      "log": "E:\\ai_workflow\\specgate-canary-skill-hub-initial\\.specgate\\codex\\runs\\native-red-report.json.artifacts\\93e3680c-3b42-4843-90bc-7affdba03ff1\\stage-frontend-runtime.log"
+    }
+  ],
+  "preflight": [
+    {
+      "tool": "node",
+      "executable": "D:\\Program Files\\nodejs\\node.exe",
+      "invocation": {
+        "command": "D:\\Program Files\\nodejs\\node.exe",
+        "args": [
+          "--version"
+        ]
+      },
+      "started": true,
+      "pid": 34660,
+      "status": 0,
+      "signal": null,
+      "timedOut": false,
+      "timeoutMs": 30000,
+      "terminated": true,
+      "startedAt": "2026-10-26T06:59:16.370Z",
+      "finishedAt": "2026-10-26T06:59:16.391Z",
+      "output": "v24.14.0\r\n",
+      "infrastructureError": false
+    },
+    {
+      "tool": "mvn",
+      "executable": "C:\\Users\\Administrator\\.m2\\wrapper\\dists\\apache-maven-3.9.11\\03d7e36a140982eea48e22c1dcac01d8862b2550b2939e09a0809bbc5182a5bc\\bin\\mvn.CMD",
+      "invocation": {
+        "command": "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe",
+        "args": [
+          "-NoProfile",
+          "-NonInteractive",
+          "-File",
+          "E:\\ai_workflow\\specgate-canary-skill-hub-initial\\.specgate\\codex\\changes\\skillhub-canary-v1-9\\tests\\v1-1175ddefde61d073f0f0c6633044909919df6ce853190c61c87ce4cb81b2f95a\\specgate-tests\\launch-command.ps1",
+          "-CommandPath",
+          "C:\\Users\\Administrator\\.m2\\wrapper\\dists\\apache-maven-3.9.11\\03d7e36a140982eea48e22c1dcac01d8862b2550b2939e09a0809bbc5182a5bc\\bin\\mvn.CMD",
+          "-ArgumentsBase64",
+          "WyItLXZlcnNpb24iXQ=="
+        ]
+      },
+      "started": true,
+      "pid": 30184,
+      "status": 0,
+      "signal": null,
+      "timedOut": false,
+      "timeoutMs": 30000,
+      "terminated": true,
+      "startedAt": "2026-10-26T06:59:16.396Z",
+      "finishedAt": "2026-10-26T06:59:16.772Z",
+      "output": "Apache Maven 3.9.11 (3e54c93a704957b63ee3494413a2b544fd3d825b)\r\nMaven home: C:\\Users\\Administrator\\.m2\\wrapper\\dists\\apache-maven-3.9.11\\03d7e36a140982eea48e22c1dcac01d8862b2550b2939e09a0809bbc5182a5bc\r\nJava version: 17.0.18, vendor: Azul Systems, Inc., runtime: D:\\Program Files\\Java\\Jdk17\r\nDefault locale: zh_CN, platform encoding: GBK\r\nOS name: \"windows 10\", version: \"10.0\", arch: \"amd64\", family: \"windows\"\r\n",
+      "infrastructureError": false
+    },
+    {
+      "tool": "java",
+      "executable": "D:\\Program Files\\Java\\Jdk17\\bin\\java.EXE",
+      "invocation": {
+        "command": "D:\\Program Files\\Java\\Jdk17\\bin\\java.EXE",
+        "args": [
+          "-version"
+        ]
+      },
+      "started": true,
+      "pid": 23684,
+      "status": 0,
+      "signal": null,
+      "timedOut": false,
+      "timeoutMs": 30000,
+      "terminated": true,
+      "startedAt": "2026-10-26T06:59:16.772Z",
+      "finishedAt": "2026-10-26T06:59:16.835Z",
+      "output": "openjdk version \"17.0.18\" 2026-01-20 LTS\r\nOpenJDK Runtime Environment Zulu17.64+17-CA (build 17.0.18+8-LTS)\r\nOpenJDK 64-Bit Server VM Zulu17.64+17-CA (build 17.0.18+8-LTS, mixed mode, sharing)\r\n",
+      "infrastructureError": false
+    },
+    {
+      "tool": "git",
+      "executable": "C:\\Program Files\\Git\\cmd\\git.EXE",
+      "invocation": {
+        "command": "C:\\Program Files\\Git\\cmd\\git.EXE",
+        "args": [
+          "--version"
+        ]
+      },
+      "started": true,
+      "pid": 21908,
+      "status": 0,
+      "signal": null,
+      "timedOut": false,
+      "timeoutMs": 30000,
+      "terminated": true,
+      "startedAt": "2026-10-26T06:59:16.835Z",
+      "finishedAt": "2026-10-26T06:59:16.854Z",
+      "output": "git version 2.45.1.windows.1\n",
+      "infrastructureError": false
+    }
+  ],
+  "infrastructureErrors": [
+    {
+      "type": "stage",
+      "message": "backend-verify: Surefire reconciliation failed: Missing original suite/case: com.agentskills.sharing.AgentSkillsSharingApplicationTests; Missing original suite/case: com.agentskills.sharing.controller.AuthControllerTest; Missing original suite/case: com.agentskills.sharing.controller.RepositoryControllerTest; Missing original suite/case: com.agentskills.sharing.controller.SkillControllerTest; Missing original suite/case: com.agentskills.sharing.controller.SkillGroupControllerTest; Missing original suite/case: com.agentskills.sharing.controller.TagControllerTest; Missing original suite/case: com.agentskills.sharing.controller.WebhookControllerTest; Missing original suite/case: com.agentskills.sharing.security.EncryptionUtilTest; Missing original suite/case: com.agentskills.sharing.security.JwtUtilTest; Missing original suite/case: com.agentskills.sharing.service.GitHubApiClientTest; Missing original suite/case: com.agentskills.sharing.service.RepositoryScannerServiceTest; Missing original suite/case: com.agentskills.sharing.service.ScheduledSyncServiceTest; Missing original suite/case: com.agentskills.sharing.service.SkillServiceTest; Missing original suite/case: com.agentskills.sharing.service.WebhookServiceTest; Original backend count must equal 119; All 8 frozen supplemental backend tests must run",
+      "at": "2026-10-26T06:59:29.716Z",
+      "stage": "backend-verify"
+    },
+    {
+      "type": "stage",
+      "message": "coverage: Coverage evidence unavailable: D:\\Program Files\\nodejs\\node.exe exited 1; E:\\ai_workflow\\specgate-canary-skill-hub-initial\\.specgate\\codex\\runs\\native-red-report.json.artifacts\\93e3680c-3b42-4843-90bc-7affdba03ff1\\18-coverage.log",
+      "at": "2026-10-26T06:59:39.451Z",
+      "stage": "coverage"
+    },
+    {
+      "type": "stage",
+      "message": "runtime: Surefire report is absent before runtime start",
+      "at": "2026-10-26T06:59:39.452Z",
+      "stage": "runtime"
+    }
+  ],
+  "errors": [
+    "backend-verify: Surefire reconciliation failed: Missing original suite/case: com.agentskills.sharing.AgentSkillsSharingApplicationTests; Missing original suite/case: com.agentskills.sharing.controller.AuthControllerTest; Missing original suite/case: com.agentskills.sharing.controller.RepositoryControllerTest; Missing original suite/case: com.agentskills.sharing.controller.SkillControllerTest; Missing original suite/case: com.agentskills.sharing.controller.SkillGroupControllerTest; Missing original suite/case: com.agentskills.sharing.controller.TagControllerTest; Missing original suite/case: com.agentskills.sharing.controller.WebhookControllerTest; Missing original suite/case: com.agentskills.sharing.security.EncryptionUtilTest; Missing original suite/case: com.agentskills.sharing.security.JwtUtilTest; Missing original suite/case: com.agentskills.sharing.service.GitHubApiClientTest; Missing original suite/case: com.agentskills.sharing.service.RepositoryScannerServiceTest; Missing original suite/case: com.agentskills.sharing.service.ScheduledSyncServiceTest; Missing original suite/case: com.agentskills.sharing.service.SkillServiceTest; Missing original suite/case: com.agentskills.sharing.service.WebhookServiceTest; Original backend count must equal 119; All 8 frozen supplemental backend tests must run",
+    "coverage: Coverage evidence unavailable: D:\\Program Files\\nodejs\\node.exe exited 1; E:\\ai_workflow\\specgate-canary-skill-hub-initial\\.specgate\\codex\\runs\\native-red-report.json.artifacts\\93e3680c-3b42-4843-90bc-7affdba03ff1\\18-coverage.log",
+    "runtime: Surefire report is absent before runtime start"
+  ],
+  "businessFailures": [
+    {
+      "stage": "frontend-build",
+      "message": "D:\\Program Files\\nodejs\\node.exe exited 1; E:\\ai_workflow\\specgate-canary-skill-hub-initial\\.specgate\\codex\\runs\\native-red-report.json.artifacts\\93e3680c-3b42-4843-90bc-7affdba03ff1\\10-frontend-build.log",
+      "stack": "Error: D:\\Program Files\\nodejs\\node.exe exited 1; E:\\ai_workflow\\specgate-canary-skill-hub-initial\\.specgate\\codex\\runs\\native-red-report.json.artifacts\\93e3680c-3b42-4843-90bc-7affdba03ff1\\10-frontend-build.log\n    at command (file:///E:/ai_workflow/specgate-canary-skill-hub-initial/.specgate/codex/changes/skillhub-canary-v1-9/tests/v1-1175ddefde61d073f0f0c6633044909919df6ce853190c61c87ce4cb81b2f95a/specgate-tests/execution.mjs:867:11)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async file:///E:/ai_workflow/specgate-canary-skill-hub-initial/.specgate/codex/changes/skillhub-canary-v1-9/tests/v1-1175ddefde61d073f0f0c6633044909919df6ce853190c61c87ce4cb81b2f95a/specgate-tests/execution.mjs:417:9\n    at async stage (file:///E:/ai_workflow/specgate-canary-skill-hub-initial/.specgate/codex/changes/skillhub-canary-v1-9/tests/v1-1175ddefde61d073f0f0c6633044909919df6ce853190c61c87ce4cb81b2f95a/specgate-tests/execution.mjs:604:5)\n    at async execute (file:///E:/ai_workflow/specgate-canary-skill-hub-initial/.specgate/codex/changes/skillhub-canary-v1-9/tests/v1-1175ddefde61d073f0f0c6633044909919df6ce853190c61c87ce4cb81b2f95a/specgate-tests/execution.mjs:415:5)\n    at async file:///E:/ai_workflow/specgate-canary-skill-hub-initial/.specgate/codex/changes/skillhub-canary-v1-9/tests/v1-1175ddefde61d073f0f0c6633044909919df6ce853190c61c87ce4cb81b2f95a/specgate-tests/execution.mjs:199:3",
+      "command": {
+        "command": "D:\\Program Files\\nodejs\\node.exe",
+        "status": 1,
+        "log": "E:\\ai_workflow\\specgate-canary-skill-hub-initial\\.specgate\\codex\\runs\\native-red-report.json.artifacts\\93e3680c-3b42-4843-90bc-7affdba03ff1\\10-frontend-build.log"
+      }
+    },
+    {
+      "stage": "frontend-lint",
+      "message": "D:\\Program Files\\nodejs\\node.exe exited 1; E:\\ai_workflow\\specgate-canary-skill-hub-initial\\.specgate\\codex\\runs\\native-red-report.json.artifacts\\93e3680c-3b42-4843-90bc-7affdba03ff1\\14-frontend-lint.log",
+      "stack": "Error: D:\\Program Files\\nodejs\\node.exe exited 1; E:\\ai_workflow\\specgate-canary-skill-hub-initial\\.specgate\\codex\\runs\\native-red-report.json.artifacts\\93e3680c-3b42-4843-90bc-7affdba03ff1\\14-frontend-lint.log\n    at command (file:///E:/ai_workflow/specgate-canary-skill-hub-initial/.specgate/codex/changes/skillhub-canary-v1-9/tests/v1-1175ddefde61d073f0f0c6633044909919df6ce853190c61c87ce4cb81b2f95a/specgate-tests/execution.mjs:867:11)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async file:///E:/ai_workflow/specgate-canary-skill-hub-initial/.specgate/codex/changes/skillhub-canary-v1-9/tests/v1-1175ddefde61d073f0f0c6633044909919df6ce853190c61c87ce4cb81b2f95a/specgate-tests/execution.mjs:469:7\n    at async stage (file:///E:/ai_workflow/specgate-canary-skill-hub-initial/.specgate/codex/changes/skillhub-canary-v1-9/tests/v1-1175ddefde61d073f0f0c6633044909919df6ce853190c61c87ce4cb81b2f95a/specgate-tests/execution.mjs:604:5)\n    at async execute (file:///E:/ai_workflow/specgate-canary-skill-hub-initial/.specgate/codex/changes/skillhub-canary-v1-9/tests/v1-1175ddefde61d073f0f0c6633044909919df6ce853190c61c87ce4cb81b2f95a/specgate-tests/execution.mjs:468:5)\n    at async file:///E:/ai_workflow/specgate-canary-skill-hub-initial/.specgate/codex/changes/skillhub-canary-v1-9/tests/v1-1175ddefde61d073f0f0c6633044909919df6ce853190c61c87ce4cb81b2f95a/specgate-tests/execution.mjs:199:3",
+      "command": {
+        "command": "D:\\Program Files\\nodejs\\node.exe",
+        "status": 1,
+        "log": "E:\\ai_workflow\\specgate-canary-skill-hub-initial\\.specgate\\codex\\runs\\native-red-report.json.artifacts\\93e3680c-3b42-4843-90bc-7affdba03ff1\\14-frontend-lint.log"
+      }
+    },
+    {
+      "stage": "frontend-format",
+      "message": "D:\\Program Files\\nodejs\\node.exe exited 1; E:\\ai_workflow\\specgate-canary-skill-hub-initial\\.specgate\\codex\\runs\\native-red-report.json.artifacts\\93e3680c-3b42-4843-90bc-7affdba03ff1\\16-frontend-format.log",
+      "stack": "Error: D:\\Program Files\\nodejs\\node.exe exited 1; E:\\ai_workflow\\specgate-canary-skill-hub-initial\\.specgate\\codex\\runs\\native-red-report.json.artifacts\\93e3680c-3b42-4843-90bc-7affdba03ff1\\16-frontend-format.log\n    at command (file:///E:/ai_workflow/specgate-canary-skill-hub-initial/.specgate/codex/changes/skillhub-canary-v1-9/tests/v1-1175ddefde61d073f0f0c6633044909919df6ce853190c61c87ce4cb81b2f95a/specgate-tests/execution.mjs:867:11)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async file:///E:/ai_workflow/specgate-canary-skill-hub-initial/.specgate/codex/changes/skillhub-canary-v1-9/tests/v1-1175ddefde61d073f0f0c6633044909919df6ce853190c61c87ce4cb81b2f95a/specgate-tests/execution.mjs:472:7\n    at async stage (file:///E:/ai_workflow/specgate-canary-skill-hub-initial/.specgate/codex/changes/skillhub-canary-v1-9/tests/v1-1175ddefde61d073f0f0c6633044909919df6ce853190c61c87ce4cb81b2f95a/specgate-tests/execution.mjs:604:5)\n    at async execute (file:///E:/ai_workflow/specgate-canary-skill-hub-initial/.specgate/codex/changes/skillhub-canary-v1-9/tests/v1-1175ddefde61d073f0f0c6633044909919df6ce853190c61c87ce4cb81b2f95a/specgate-tests/execution.mjs:471:5)\n    at async file:///E:/ai_workflow/specgate-canary-skill-hub-initial/.specgate/codex/changes/skillhub-canary-v1-9/tests/v1-1175ddefde61d073f0f0c6633044909919df6ce853190c61c87ce4cb81b2f95a/specgate-tests/execution.mjs:199:3",
+      "command": {
+        "command": "D:\\Program Files\\nodejs\\node.exe",
+        "status": 1,
+        "log": "E:\\ai_workflow\\specgate-canary-skill-hub-initial\\.specgate\\codex\\runs\\native-red-report.json.artifacts\\93e3680c-3b42-4843-90bc-7affdba03ff1\\16-frontend-format.log"
+      }
+    },
+    {
+      "stage": "frontend-runtime",
+      "message": "Frontend runtime was not run because the actual frontend build failed.",
+      "stack": "Error: Frontend runtime was not run because the actual frontend build failed.\n    at runtime (file:///E:/ai_workflow/specgate-canary-skill-hub-initial/.specgate/codex/changes/skillhub-canary-v1-9/tests/v1-1175ddefde61d073f0f0c6633044909919df6ce853190c61c87ce4cb81b2f95a/specgate-tests/execution.mjs:902:17)\n    at file:///E:/ai_workflow/specgate-canary-skill-hub-initial/.specgate/codex/changes/skillhub-canary-v1-9/tests/v1-1175ddefde61d073f0f0c6633044909919df6ce853190c61c87ce4cb81b2f95a/specgate-tests/execution.mjs:533:13\n    at stage (file:///E:/ai_workflow/specgate-canary-skill-hub-initial/.specgate/codex/changes/skillhub-canary-v1-9/tests/v1-1175ddefde61d073f0f0c6633044909919df6ce853190c61c87ce4cb81b2f95a/specgate-tests/execution.mjs:604:11)\n    at execute (file:///E:/ai_workflow/specgate-canary-skill-hub-initial/.specgate/codex/changes/skillhub-canary-v1-9/tests/v1-1175ddefde61d073f0f0c6633044909919df6ce853190c61c87ce4cb81b2f95a/specgate-tests/execution.mjs:532:11)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async file:///E:/ai_workflow/specgate-canary-skill-hub-initial/.specgate/codex/changes/skillhub-canary-v1-9/tests/v1-1175ddefde61d073f0f0c6633044909919df6ce853190c61c87ce4cb81b2f95a/specgate-tests/execution.mjs:199:3",
+      "command": null
+    }
+  ],
+  "commands": [
+    {
+      "stage": "selfcheck",
+      "command": "D:\\Program Files\\nodejs\\node.exe",
+      "args": [
+        "E:\\ai_workflow\\specgate-canary-skill-hub-initial\\.specgate\\codex\\changes\\skillhub-canary-v1-9\\tests\\v1-1175ddefde61d073f0f0c6633044909919df6ce853190c61c87ce4cb81b2f95a\\specgate-tests\\selfcheck.mjs"
+      ],
+      "cwd": "E:\\ai_workflow\\specgate-canary-skill-hub-initial",
+      "log": "E:\\ai_workflow\\specgate-canary-skill-hub-initial\\.specgate\\codex\\runs\\native-red-report.json.artifacts\\93e3680c-3b42-4843-90bc-7affdba03ff1\\0-selfcheck.log",
+      "invocation": {
+        "command": "D:\\Program Files\\nodejs\\node.exe",
+        "args": [
+          "E:\\ai_workflow\\specgate-canary-skill-hub-initial\\.specgate\\codex\\changes\\skillhub-canary-v1-9\\tests\\v1-1175ddefde61d073f0f0c6633044909919df6ce853190c61c87ce4cb81b2f95a\\specgate-tests\\selfcheck.mjs"
+        ]
+      },
+      "startedAt": "2026-10-26T06:59:22.568Z",
+      "pid": 21772,
+      "timeoutMs": 60000,
+      "status": 0,
+      "signal": null,
+      "finishedAt": "2026-10-26T06:59:22.992Z",
+      "durationMs": 424,
+      "cleanup": {
+        "stage": "selfcheck",
+        "pid": 21772,
+        "pids": [
+          21772
+        ],
+        "reason": "command-exit",
+        "timeoutMs": 60000,
+        "timedOut": false,
+        "startedAt": "2026-10-26T06:59:23.308Z",
+        "fallbackKills": [],
+        "remainingPids": [],
+        "terminated": true,
+        "terminationMethod": "natural-exit",
+        "finishedAt": "2026-10-26T06:59:23.308Z"
+      }
+    },
+    {
+      "command": "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe",
+      "args": [
+        "-NoProfile",
+        "-NonInteractive",
+        "-File",
+        "E:\\ai_workflow\\specgate-canary-skill-hub-initial\\.specgate\\codex\\changes\\skillhub-canary-v1-9\\tests\\v1-1175ddefde61d073f0f0c6633044909919df6ce853190c61c87ce4cb81b2f95a\\specgate-tests\\process-tree.ps1",
+        "-RootPid",
+        "21772"
+      ],
+      "cwd": "E:\\ai_workflow\\specgate-canary-skill-hub-initial",
+      "log": "E:\\ai_workflow\\specgate-canary-skill-hub-initial\\.specgate\\codex\\runs\\native-red-report.json.artifacts\\93e3680c-3b42-4843-90bc-7affdba03ff1\\1-helper.log",
+      "pid": 23684,
+      "status": 0,
+      "signal": null,
+      "timedOut": false,
+      "timeoutMs": 15000,
+      "startedAt": "2026-10-26T06:59:22.996Z",
+      "finishedAt": "2026-10-26T06:59:23.308Z",
+      "durationMs": 312
+    },
+    {
+      "stage": "backend-verify",
+      "command": "C:\\Users\\Administrator\\.m2\\wrapper\\dists\\apache-maven-3.9.11\\03d7e36a140982eea48e22c1dcac01d8862b2550b2939e09a0809bbc5182a5bc\\bin\\mvn.CMD",
+      "args": [
+        "-B",
+        "-ntp",
+        "-o",
+        "-s",
+        "E:\\ai_workflow\\specgate-canary-skill-hub-initial\\.specgate\\codex\\changes\\skillhub-canary-v1-9\\tests\\v1-1175ddefde61d073f0f0c6633044909919df6ce853190c61c87ce4cb81b2f95a\\specgate-tests\\fixtures\\maven-settings.xml",
+        "-Dmaven.repo.local=E:/ai_workflow/specgate-canary-skill-hub-initial/.specgate/codex/changes/skillhub-canary-v1-9/tests/v1-1175ddefde61d073f0f0c6633044909919df6ce853190c61c87ce4cb81b2f95a/specgate-tests/.cache/m2",
+        "-DargLine=-javaagent:../.specgate/codex/changes/skillhub-canary-v1-9/tests/v1-1175ddefde61d073f0f0c6633044909919df6ce853190c61c87ce4cb81b2f95a/specgate-tests/.cache/m2/org/jacoco/org.jacoco.agent/0.8.13/org.jacoco.agent-0.8.13-runtime.jar=destfile=target/jacoco.exec",
+        "clean",
+        "verify"
+      ],
+      "cwd": "E:\\ai_workflow\\specgate-canary-skill-hub-initial\\backend",
+      "log": "E:\\ai_workflow\\specgate-canary-skill-hub-initial\\.specgate\\codex\\runs\\native-red-report.json.artifacts\\93e3680c-3b42-4843-90bc-7affdba03ff1\\2-backend-verify.log",
+      "invocation": {
+        "command": "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe",
+        "args": [
+          "-NoProfile",
+          "-NonInteractive",
+          "-File",
+          "E:\\ai_workflow\\specgate-canary-skill-hub-initial\\.specgate\\codex\\changes\\skillhub-canary-v1-9\\tests\\v1-1175ddefde61d073f0f0c6633044909919df6ce853190c61c87ce4cb81b2f95a\\specgate-tests\\launch-command.ps1",
+          "-CommandPath",
+          "C:\\Users\\Administrator\\.m2\\wrapper\\dists\\apache-maven-3.9.11\\03d7e36a140982eea48e22c1dcac01d8862b2550b2939e09a0809bbc5182a5bc\\bin\\mvn.CMD",
+          "-ArgumentsBase64",
+          "WyItQiIsIi1udHAiLCItbyIsIi1zIiwiRTpcXGFpX3dvcmtmbG93XFxzcGVjZ2F0ZS1jYW5hcnktc2tpbGwtaHViLWluaXRpYWxcXC5zcGVjZ2F0ZVxcY29kZXhcXGNoYW5nZXNcXHNraWxsaHViLWNhbmFyeS12MS05XFx0ZXN0c1xcdjEtMTE3NWRkZWZkZTYxZDA3M2YwZjBjNjYzMzA0NDkwOTkxOWRmNmNlODUzMTkwYzYxYzg3Y2U0Y2I4MWIyZjk1YVxcc3BlY2dhdGUtdGVzdHNcXGZpeHR1cmVzXFxtYXZlbi1zZXR0aW5ncy54bWwiLCItRG1hdmVuLnJlcG8ubG9jYWw9RTovYWlfd29ya2Zsb3cvc3BlY2dhdGUtY2FuYXJ5LXNraWxsLWh1Yi1pbml0aWFsLy5zcGVjZ2F0ZS9jb2RleC9jaGFuZ2VzL3NraWxsaHViLWNhbmFyeS12MS05L3Rlc3RzL3YxLTExNzVkZGVmZGU2MWQwNzNmMGYwYzY2MzMwNDQ5MDk5MTlkZjZjZTg1MzE5MGM2MWM4N2NlNGNiODFiMmY5NWEvc3BlY2dhdGUtdGVzdHMvLmNhY2hlL20yIiwiLURhcmdMaW5lPS1qYXZhYWdlbnQ6Li4vLnNwZWNnYXRlL2NvZGV4L2NoYW5nZXMvc2tpbGxodWItY2FuYXJ5LXYxLTkvdGVzdHMvdjEtMTE3NWRkZWZkZTYxZDA3M2YwZjBjNjYzMzA0NDkwOTkxOWRmNmNlODUzMTkwYzYxYzg3Y2U0Y2I4MWIyZjk1YS9zcGVjZ2F0ZS10ZXN0cy8uY2FjaGUvbTIvb3JnL2phY29jby9vcmcuamFjb2NvLmFnZW50LzAuOC4xMy9vcmcuamFjb2NvLmFnZW50LTAuOC4xMy1ydW50aW1lLmphcj1kZXN0ZmlsZT10YXJnZXQvamFjb2NvLmV4ZWMiLCJjbGVhbiIsInZlcmlmeSJd"
+        ]
+      },
+      "startedAt": "2026-10-26T06:59:23.313Z",
+      "pid": 20564,
+      "timeoutMs": 600000,
+      "status": 1,
+      "signal": null,
+      "finishedAt": "2026-10-26T06:59:29.522Z",
+      "durationMs": 6209,
+      "cleanup": {
+        "stage": "backend-verify",
+        "pid": 20564,
+        "pids": [
+          20564,
+          34536,
+          23328
+        ],
+        "reason": "command-exit",
+        "timeoutMs": 600000,
+        "timedOut": false,
+        "startedAt": "2026-10-26T06:59:29.716Z",
+        "fallbackKills": [],
+        "remainingPids": [],
+        "terminated": true,
+        "terminationMethod": "natural-exit",
+        "finishedAt": "2026-10-26T06:59:29.716Z"
+      }
+    },
+    {
+      "command": "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe",
+      "args": [
+        "-NoProfile",
+        "-NonInteractive",
+        "-File",
+        "E:\\ai_workflow\\specgate-canary-skill-hub-initial\\.specgate\\codex\\changes\\skillhub-canary-v1-9\\tests\\v1-1175ddefde61d073f0f0c6633044909919df6ce853190c61c87ce4cb81b2f95a\\specgate-tests\\process-tree.ps1",
+        "-RootPid",
+        "20564"
+      ],
+      "cwd": "E:\\ai_workflow\\specgate-canary-skill-hub-initial",
+      "log": "E:\\ai_workflow\\specgate-canary-skill-hub-initial\\.specgate\\codex\\runs\\native-red-report.json.artifacts\\93e3680c-3b42-4843-90bc-7affdba03ff1\\3-helper.log",
+      "pid": 34720,
+      "status": 0,
+      "signal": null,
+      "timedOut": false,
+      "timeoutMs": 15000,
+      "startedAt": "2026-10-26T06:59:26.326Z",
+      "finishedAt": "2026-10-26T06:59:26.556Z",
+      "durationMs": 230
+    },
+    {
+      "command": "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe",
+      "args": [
+        "-NoProfile",
+        "-NonInteractive",
+        "-File",
+        "E:\\ai_workflow\\specgate-canary-skill-hub-initial\\.specgate\\codex\\changes\\skillhub-canary-v1-9\\tests\\v1-1175ddefde61d073f0f0c6633044909919df6ce853190c61c87ce4cb81b2f95a\\specgate-tests\\process-tree.ps1",
+        "-RootPid",
+        "20564"
+      ],
+      "cwd": "E:\\ai_workflow\\specgate-canary-skill-hub-initial",
+      "log": "E:\\ai_workflow\\specgate-canary-skill-hub-initial\\.specgate\\codex\\runs\\native-red-report.json.artifacts\\93e3680c-3b42-4843-90bc-7affdba03ff1\\4-helper.log",
+      "pid": 21256,
+      "status": 0,
+      "signal": null,
+      "timedOut": false,
+      "timeoutMs": 15000,
+      "startedAt": "2026-10-26T06:59:29.327Z",
+      "finishedAt": "2026-10-26T06:59:29.522Z",
+      "durationMs": 195
+    },
+    {
+      "command": "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe",
+      "args": [
+        "-NoProfile",
+        "-NonInteractive",
+        "-File",
+        "E:\\ai_workflow\\specgate-canary-skill-hub-initial\\.specgate\\codex\\changes\\skillhub-canary-v1-9\\tests\\v1-1175ddefde61d073f0f0c6633044909919df6ce853190c61c87ce4cb81b2f95a\\specgate-tests\\process-tree.ps1",
+        "-RootPid",
+        "20564"
+      ],
+      "cwd": "E:\\ai_workflow\\specgate-canary-skill-hub-initial",
+      "log": "E:\\ai_workflow\\specgate-canary-skill-hub-initial\\.specgate\\codex\\runs\\native-red-report.json.artifacts\\93e3680c-3b42-4843-90bc-7affdba03ff1\\5-helper.log",
+      "pid": 31600,
+      "status": 0,
+      "signal": null,
+      "timedOut": false,
+      "timeoutMs": 15000,
+      "startedAt": "2026-10-26T06:59:29.526Z",
+      "finishedAt": "2026-10-26T06:59:29.715Z",
+      "durationMs": 189
+    },
+    {
+      "stage": "frontend-install",
+      "command": "D:\\Program Files\\nodejs\\node.exe",
+      "args": [
+        "D:\\Program Files\\nodejs\\node_modules\\npm\\bin\\npm-cli.js",
+        "ci",
+        "--ignore-scripts",
+        "--no-audit",
+        "--no-fund",
+        "--offline",
+        "--cache=C:/Users/Administrator/AppData/Local/npm-cache",
+        "--logs-dir=E:\\ai_workflow\\specgate-canary-skill-hub-initial\\.specgate\\codex\\runs\\native-red-report.json.artifacts\\93e3680c-3b42-4843-90bc-7affdba03ff1\\tooling-npm-logs"
+      ],
+      "cwd": "E:\\ai_workflow\\specgate-canary-skill-hub-initial\\.specgate\\codex\\changes\\skillhub-canary-v1-9\\tests\\v1-1175ddefde61d073f0f0c6633044909919df6ce853190c61c87ce4cb81b2f95a\\specgate-tests\\.cache\\frontend-tools",
+      "log": "E:\\ai_workflow\\specgate-canary-skill-hub-initial\\.specgate\\codex\\runs\\native-red-report.json.artifacts\\93e3680c-3b42-4843-90bc-7affdba03ff1\\6-frontend-install.log",
+      "invocation": {
+        "command": "D:\\Program Files\\nodejs\\node.exe",
+        "args": [
+          "D:\\Program Files\\nodejs\\node_modules\\npm\\bin\\npm-cli.js",
+          "ci",
+          "--ignore-scripts",
+          "--no-audit",
+          "--no-fund",
+          "--offline",
+          "--cache=C:/Users/Administrator/AppData/Local/npm-cache",
+          "--logs-dir=E:\\ai_workflow\\specgate-canary-skill-hub-initial\\.specgate\\codex\\runs\\native-red-report.json.artifacts\\93e3680c-3b42-4843-90bc-7affdba03ff1\\tooling-npm-logs"
+        ]
+      },
+      "startedAt": "2026-10-26T06:59:29.718Z",
+      "pid": 21924,
+      "timeoutMs": 300000,
+      "status": 0,
+      "signal": null,
+      "finishedAt": "2026-10-26T06:59:31.775Z",
+      "durationMs": 2057,
+      "cleanup": {
+        "stage": "frontend-install",
+        "pid": 21924,
+        "pids": [
+          21924
+        ],
+        "reason": "command-exit",
+        "timeoutMs": 300000,
+        "timedOut": false,
+        "startedAt": "2026-10-26T06:59:31.968Z",
+        "fallbackKills": [],
+        "remainingPids": [],
+        "terminated": true,
+        "terminationMethod": "natural-exit",
+        "finishedAt": "2026-10-26T06:59:31.968Z"
+      }
+    },
+    {
+      "command": "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe",
+      "args": [
+        "-NoProfile",
+        "-NonInteractive",
+        "-File",
+        "E:\\ai_workflow\\specgate-canary-skill-hub-initial\\.specgate\\codex\\changes\\skillhub-canary-v1-9\\tests\\v1-1175ddefde61d073f0f0c6633044909919df6ce853190c61c87ce4cb81b2f95a\\specgate-tests\\process-tree.ps1",
+        "-RootPid",
+        "21924"
+      ],
+      "cwd": "E:\\ai_workflow\\specgate-canary-skill-hub-initial",
+      "log": "E:\\ai_workflow\\specgate-canary-skill-hub-initial\\.specgate\\codex\\runs\\native-red-report.json.artifacts\\93e3680c-3b42-4843-90bc-7affdba03ff1\\7-helper.log",
+      "pid": 20916,
+      "status": 0,
+      "signal": null,
+      "timedOut": false,
+      "timeoutMs": 15000,
+      "startedAt": "2026-10-26T06:59:31.779Z",
+      "finishedAt": "2026-10-26T06:59:31.968Z",
+      "durationMs": 189
+    },
+    {
+      "stage": "frontend-install",
+      "command": "D:\\Program Files\\nodejs\\node.exe",
+      "args": [
+        "D:\\Program Files\\nodejs\\node_modules\\npm\\bin\\npm-cli.js",
+        "ci",
+        "--ignore-scripts",
+        "--no-audit",
+        "--no-fund",
+        "--offline",
+        "--cache=C:/Users/Administrator/AppData/Local/npm-cache",
+        "--logs-dir=E:\\ai_workflow\\specgate-canary-skill-hub-initial\\.specgate\\codex\\runs\\native-red-report.json.artifacts\\93e3680c-3b42-4843-90bc-7affdba03ff1\\npm-logs"
+      ],
+      "cwd": "E:\\ai_workflow\\specgate-canary-skill-hub-initial\\frontend",
+      "log": "E:\\ai_workflow\\specgate-canary-skill-hub-initial\\.specgate\\codex\\runs\\native-red-report.json.artifacts\\93e3680c-3b42-4843-90bc-7affdba03ff1\\8-frontend-install.log",
+      "invocation": {
+        "command": "D:\\Program Files\\nodejs\\node.exe",
+        "args": [
+          "D:\\Program Files\\nodejs\\node_modules\\npm\\bin\\npm-cli.js",
+          "ci",
+          "--ignore-scripts",
+          "--no-audit",
+          "--no-fund",
+          "--offline",
+          "--cache=C:/Users/Administrator/AppData/Local/npm-cache",
+          "--logs-dir=E:\\ai_workflow\\specgate-canary-skill-hub-initial\\.specgate\\codex\\runs\\native-red-report.json.artifacts\\93e3680c-3b42-4843-90bc-7affdba03ff1\\npm-logs"
+        ]
+      },
+      "startedAt": "2026-10-26T06:59:31.968Z",
+      "pid": 24908,
+      "timeoutMs": 300000,
+      "status": 0,
+      "signal": null,
+      "finishedAt": "2026-10-26T06:59:33.888Z",
+      "durationMs": 1920,
+      "cleanup": {
+        "stage": "frontend-install",
+        "pid": 24908,
+        "pids": [
+          24908
+        ],
+        "reason": "command-exit",
+        "timeoutMs": 300000,
+        "timedOut": false,
+        "startedAt": "2026-10-26T06:59:34.078Z",
+        "fallbackKills": [],
+        "remainingPids": [],
+        "terminated": true,
+        "terminationMethod": "natural-exit",
+        "finishedAt": "2026-10-26T06:59:34.078Z"
+      }
+    },
+    {
+      "command": "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe",
+      "args": [
+        "-NoProfile",
+        "-NonInteractive",
+        "-File",
+        "E:\\ai_workflow\\specgate-canary-skill-hub-initial\\.specgate\\codex\\changes\\skillhub-canary-v1-9\\tests\\v1-1175ddefde61d073f0f0c6633044909919df6ce853190c61c87ce4cb81b2f95a\\specgate-tests\\process-tree.ps1",
+        "-RootPid",
+        "24908"
+      ],
+      "cwd": "E:\\ai_workflow\\specgate-canary-skill-hub-initial",
+      "log": "E:\\ai_workflow\\specgate-canary-skill-hub-initial\\.specgate\\codex\\runs\\native-red-report.json.artifacts\\93e3680c-3b42-4843-90bc-7affdba03ff1\\9-helper.log",
+      "pid": 9664,
+      "status": 0,
+      "signal": null,
+      "timedOut": false,
+      "timeoutMs": 15000,
+      "startedAt": "2026-10-26T06:59:33.892Z",
+      "finishedAt": "2026-10-26T06:59:34.078Z",
+      "durationMs": 186
+    },
+    {
+      "stage": "frontend-build",
+      "command": "D:\\Program Files\\nodejs\\node.exe",
+      "args": [
+        "D:\\Program Files\\nodejs\\node_modules\\npm\\bin\\npm-cli.js",
+        "run",
+        "build"
+      ],
+      "cwd": "E:\\ai_workflow\\specgate-canary-skill-hub-initial\\frontend",
+      "log": "E:\\ai_workflow\\specgate-canary-skill-hub-initial\\.specgate\\codex\\runs\\native-red-report.json.artifacts\\93e3680c-3b42-4843-90bc-7affdba03ff1\\10-frontend-build.log",
+      "invocation": {
+        "command": "D:\\Program Files\\nodejs\\node.exe",
+        "args": [
+          "D:\\Program Files\\nodejs\\node_modules\\npm\\bin\\npm-cli.js",
+          "run",
+          "build"
+        ]
+      },
+      "startedAt": "2026-10-26T06:59:34.623Z",
+      "pid": 11148,
+      "timeoutMs": 300000,
+      "status": 1,
+      "signal": null,
+      "finishedAt": "2026-10-26T06:59:36.075Z",
+      "durationMs": 1452,
+      "cleanup": {
+        "stage": "frontend-build",
+        "pid": 11148,
+        "pids": [
+          11148
+        ],
+        "reason": "command-exit",
+        "timeoutMs": 300000,
+        "timedOut": false,
+        "startedAt": "2026-10-26T06:59:36.261Z",
+        "fallbackKills": [],
+        "remainingPids": [],
+        "terminated": true,
+        "terminationMethod": "natural-exit",
+        "finishedAt": "2026-10-26T06:59:36.261Z"
+      }
+    },
+    {
+      "command": "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe",
+      "args": [
+        "-NoProfile",
+        "-NonInteractive",
+        "-File",
+        "E:\\ai_workflow\\specgate-canary-skill-hub-initial\\.specgate\\codex\\changes\\skillhub-canary-v1-9\\tests\\v1-1175ddefde61d073f0f0c6633044909919df6ce853190c61c87ce4cb81b2f95a\\specgate-tests\\process-tree.ps1",
+        "-RootPid",
+        "11148"
+      ],
+      "cwd": "E:\\ai_workflow\\specgate-canary-skill-hub-initial",
+      "log": "E:\\ai_workflow\\specgate-canary-skill-hub-initial\\.specgate\\codex\\runs\\native-red-report.json.artifacts\\93e3680c-3b42-4843-90bc-7affdba03ff1\\11-helper.log",
+      "pid": 27308,
+      "status": 0,
+      "signal": null,
+      "timedOut": false,
+      "timeoutMs": 15000,
+      "startedAt": "2026-10-26T06:59:36.079Z",
+      "finishedAt": "2026-10-26T06:59:36.261Z",
+      "durationMs": 182
+    },
+    {
+      "stage": "frontend-test",
+      "command": "D:\\Program Files\\nodejs\\node.exe",
+      "args": [
+        "D:\\Program Files\\nodejs\\node_modules\\npm\\bin\\npm-cli.js",
+        "test",
+        "--",
+        "--coverage",
+        "--coverage.provider=v8",
+        "--coverage.include=src/**/*.{ts,vue}",
+        "--coverage.include=vite.config.ts",
+        "--coverage.exclude=src/**/*.{test,spec}.*",
+        "--coverage.reporter=json",
+        "--coverage.reporter=json-summary",
+        "--reporter=json",
+        "--outputFile=E:\\ai_workflow\\specgate-canary-skill-hub-initial\\.specgate\\codex\\runs\\native-red-report.json.artifacts\\93e3680c-3b42-4843-90bc-7affdba03ff1\\vitest.json"
+      ],
+      "cwd": "E:\\ai_workflow\\specgate-canary-skill-hub-initial\\frontend",
+      "log": "E:\\ai_workflow\\specgate-canary-skill-hub-initial\\.specgate\\codex\\runs\\native-red-report.json.artifacts\\93e3680c-3b42-4843-90bc-7affdba03ff1\\12-frontend-test.log",
+      "invocation": {
+        "command": "D:\\Program Files\\nodejs\\node.exe",
+        "args": [
+          "D:\\Program Files\\nodejs\\node_modules\\npm\\bin\\npm-cli.js",
+          "test",
+          "--",
+          "--coverage",
+          "--coverage.provider=v8",
+          "--coverage.include=src/**/*.{ts,vue}",
+          "--coverage.include=vite.config.ts",
+          "--coverage.exclude=src/**/*.{test,spec}.*",
+          "--coverage.reporter=json",
+          "--coverage.reporter=json-summary",
+          "--reporter=json",
+          "--outputFile=E:\\ai_workflow\\specgate-canary-skill-hub-initial\\.specgate\\codex\\runs\\native-red-report.json.artifacts\\93e3680c-3b42-4843-90bc-7affdba03ff1\\vitest.json"
+        ]
+      },
+      "startedAt": "2026-10-26T06:59:36.262Z",
+      "pid": 15952,
+      "timeoutMs": 300000,
+      "status": 0,
+      "signal": null,
+      "finishedAt": "2026-10-26T06:59:38.292Z",
+      "durationMs": 2030,
+      "cleanup": {
+        "stage": "frontend-test",
+        "pid": 15952,
+        "pids": [
+          15952
+        ],
+        "reason": "command-exit",
+        "timeoutMs": 300000,
+        "timedOut": false,
+        "startedAt": "2026-10-26T06:59:38.487Z",
+        "fallbackKills": [],
+        "remainingPids": [],
+        "terminated": true,
+        "terminationMethod": "natural-exit",
+        "finishedAt": "2026-10-26T06:59:38.487Z"
+      }
+    },
+    {
+      "command": "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe",
+      "args": [
+        "-NoProfile",
+        "-NonInteractive",
+        "-File",
+        "E:\\ai_workflow\\specgate-canary-skill-hub-initial\\.specgate\\codex\\changes\\skillhub-canary-v1-9\\tests\\v1-1175ddefde61d073f0f0c6633044909919df6ce853190c61c87ce4cb81b2f95a\\specgate-tests\\process-tree.ps1",
+        "-RootPid",
+        "15952"
+      ],
+      "cwd": "E:\\ai_workflow\\specgate-canary-skill-hub-initial",
+      "log": "E:\\ai_workflow\\specgate-canary-skill-hub-initial\\.specgate\\codex\\runs\\native-red-report.json.artifacts\\93e3680c-3b42-4843-90bc-7affdba03ff1\\13-helper.log",
+      "pid": 22276,
+      "status": 0,
+      "signal": null,
+      "timedOut": false,
+      "timeoutMs": 15000,
+      "startedAt": "2026-10-26T06:59:38.296Z",
+      "finishedAt": "2026-10-26T06:59:38.487Z",
+      "durationMs": 191
+    },
+    {
+      "stage": "frontend-lint",
+      "command": "D:\\Program Files\\nodejs\\node.exe",
+      "args": [
+        "D:\\Program Files\\nodejs\\node_modules\\npm\\bin\\npm-cli.js",
+        "run",
+        "lint"
+      ],
+      "cwd": "E:\\ai_workflow\\specgate-canary-skill-hub-initial\\frontend",
+      "log": "E:\\ai_workflow\\specgate-canary-skill-hub-initial\\.specgate\\codex\\runs\\native-red-report.json.artifacts\\93e3680c-3b42-4843-90bc-7affdba03ff1\\14-frontend-lint.log",
+      "invocation": {
+        "command": "D:\\Program Files\\nodejs\\node.exe",
+        "args": [
+          "D:\\Program Files\\nodejs\\node_modules\\npm\\bin\\npm-cli.js",
+          "run",
+          "lint"
+        ]
+      },
+      "startedAt": "2026-10-26T06:59:38.489Z",
+      "pid": 17112,
+      "timeoutMs": 300000,
+      "status": 1,
+      "signal": null,
+      "finishedAt": "2026-10-26T06:59:38.733Z",
+      "durationMs": 244,
+      "cleanup": {
+        "stage": "frontend-lint",
+        "pid": 17112,
+        "pids": [
+          17112
+        ],
+        "reason": "command-exit",
+        "timeoutMs": 300000,
+        "timedOut": false,
+        "startedAt": "2026-10-26T06:59:38.919Z",
+        "fallbackKills": [],
+        "remainingPids": [],
+        "terminated": true,
+        "terminationMethod": "natural-exit",
+        "finishedAt": "2026-10-26T06:59:38.919Z"
+      }
+    },
+    {
+      "command": "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe",
+      "args": [
+        "-NoProfile",
+        "-NonInteractive",
+        "-File",
+        "E:\\ai_workflow\\specgate-canary-skill-hub-initial\\.specgate\\codex\\changes\\skillhub-canary-v1-9\\tests\\v1-1175ddefde61d073f0f0c6633044909919df6ce853190c61c87ce4cb81b2f95a\\specgate-tests\\process-tree.ps1",
+        "-RootPid",
+        "17112"
+      ],
+      "cwd": "E:\\ai_workflow\\specgate-canary-skill-hub-initial",
+      "log": "E:\\ai_workflow\\specgate-canary-skill-hub-initial\\.specgate\\codex\\runs\\native-red-report.json.artifacts\\93e3680c-3b42-4843-90bc-7affdba03ff1\\15-helper.log",
+      "pid": 7688,
+      "status": 0,
+      "signal": null,
+      "timedOut": false,
+      "timeoutMs": 15000,
+      "startedAt": "2026-10-26T06:59:38.737Z",
+      "finishedAt": "2026-10-26T06:59:38.919Z",
+      "durationMs": 182
+    },
+    {
+      "stage": "frontend-format",
+      "command": "D:\\Program Files\\nodejs\\node.exe",
+      "args": [
+        "D:\\Program Files\\nodejs\\node_modules\\npm\\bin\\npm-cli.js",
+        "run",
+        "format:check"
+      ],
+      "cwd": "E:\\ai_workflow\\specgate-canary-skill-hub-initial\\frontend",
+      "log": "E:\\ai_workflow\\specgate-canary-skill-hub-initial\\.specgate\\codex\\runs\\native-red-report.json.artifacts\\93e3680c-3b42-4843-90bc-7affdba03ff1\\16-frontend-format.log",
+      "invocation": {
+        "command": "D:\\Program Files\\nodejs\\node.exe",
+        "args": [
+          "D:\\Program Files\\nodejs\\node_modules\\npm\\bin\\npm-cli.js",
+          "run",
+          "format:check"
+        ]
+      },
+      "startedAt": "2026-10-26T06:59:38.920Z",
+      "pid": 20032,
+      "timeoutMs": 300000,
+      "status": 1,
+      "signal": null,
+      "finishedAt": "2026-10-26T06:59:39.033Z",
+      "durationMs": 113,
+      "cleanup": {
+        "stage": "frontend-format",
+        "pid": 20032,
+        "pids": [
+          20032
+        ],
+        "reason": "command-exit",
+        "timeoutMs": 300000,
+        "timedOut": false,
+        "startedAt": "2026-10-26T06:59:39.216Z",
+        "fallbackKills": [],
+        "remainingPids": [],
+        "terminated": true,
+        "terminationMethod": "natural-exit",
+        "finishedAt": "2026-10-26T06:59:39.216Z"
+      }
+    },
+    {
+      "command": "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe",
+      "args": [
+        "-NoProfile",
+        "-NonInteractive",
+        "-File",
+        "E:\\ai_workflow\\specgate-canary-skill-hub-initial\\.specgate\\codex\\changes\\skillhub-canary-v1-9\\tests\\v1-1175ddefde61d073f0f0c6633044909919df6ce853190c61c87ce4cb81b2f95a\\specgate-tests\\process-tree.ps1",
+        "-RootPid",
+        "20032"
+      ],
+      "cwd": "E:\\ai_workflow\\specgate-canary-skill-hub-initial",
+      "log": "E:\\ai_workflow\\specgate-canary-skill-hub-initial\\.specgate\\codex\\runs\\native-red-report.json.artifacts\\93e3680c-3b42-4843-90bc-7affdba03ff1\\17-helper.log",
+      "pid": 34148,
+      "status": 0,
+      "signal": null,
+      "timedOut": false,
+      "timeoutMs": 15000,
+      "startedAt": "2026-10-26T06:59:39.037Z",
+      "finishedAt": "2026-10-26T06:59:39.216Z",
+      "durationMs": 179
+    },
+    {
+      "stage": "coverage",
+      "command": "D:\\Program Files\\nodejs\\node.exe",
+      "args": [
+        "E:\\ai_workflow\\specgate-canary-skill-hub-initial\\.specgate\\codex\\changes\\skillhub-canary-v1-9\\tests\\v1-1175ddefde61d073f0f0c6633044909919df6ce853190c61c87ce4cb81b2f95a\\specgate-tests\\quality.mjs",
+        "E:\\ai_workflow\\specgate-canary-skill-hub-initial",
+        "E:\\ai_workflow\\specgate-canary-skill-hub-initial\\.specgate\\codex\\changes\\skillhub-canary-v1-9\\tests\\v1-1175ddefde61d073f0f0c6633044909919df6ce853190c61c87ce4cb81b2f95a\\specgate-tests\\fixtures\\frozen.json",
+        "E:\\ai_workflow\\specgate-canary-skill-hub-initial\\.specgate\\codex\\runs\\native-red-report.json.artifacts\\93e3680c-3b42-4843-90bc-7affdba03ff1\\coverage.json"
+      ],
+      "cwd": "E:\\ai_workflow\\specgate-canary-skill-hub-initial",
+      "log": "E:\\ai_workflow\\specgate-canary-skill-hub-initial\\.specgate\\codex\\runs\\native-red-report.json.artifacts\\93e3680c-3b42-4843-90bc-7affdba03ff1\\18-coverage.log",
+      "invocation": {
+        "command": "D:\\Program Files\\nodejs\\node.exe",
+        "args": [
+          "E:\\ai_workflow\\specgate-canary-skill-hub-initial\\.specgate\\codex\\changes\\skillhub-canary-v1-9\\tests\\v1-1175ddefde61d073f0f0c6633044909919df6ce853190c61c87ce4cb81b2f95a\\specgate-tests\\quality.mjs",
+          "E:\\ai_workflow\\specgate-canary-skill-hub-initial",
+          "E:\\ai_workflow\\specgate-canary-skill-hub-initial\\.specgate\\codex\\changes\\skillhub-canary-v1-9\\tests\\v1-1175ddefde61d073f0f0c6633044909919df6ce853190c61c87ce4cb81b2f95a\\specgate-tests\\fixtures\\frozen.json",
+          "E:\\ai_workflow\\specgate-canary-skill-hub-initial\\.specgate\\codex\\runs\\native-red-report.json.artifacts\\93e3680c-3b42-4843-90bc-7affdba03ff1\\coverage.json"
+        ]
+      },
+      "startedAt": "2026-10-26T06:59:39.217Z",
+      "pid": 31468,
+      "timeoutMs": 120000,
+      "status": 1,
+      "signal": null,
+      "finishedAt": "2026-10-26T06:59:39.265Z",
+      "durationMs": 48,
+      "cleanup": {
+        "stage": "coverage",
+        "pid": 31468,
+        "pids": [
+          31468
+        ],
+        "reason": "command-exit",
+        "timeoutMs": 120000,
+        "timedOut": false,
+        "startedAt": "2026-10-26T06:59:39.451Z",
+        "fallbackKills": [],
+        "remainingPids": [],
+        "terminated": true,
+        "terminationMethod": "natural-exit",
+        "finishedAt": "2026-10-26T06:59:39.451Z"
+      }
+    },
+    {
+      "command": "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe",
+      "args": [
+        "-NoProfile",
+        "-NonInteractive",
+        "-File",
+        "E:\\ai_workflow\\specgate-canary-skill-hub-initial\\.specgate\\codex\\changes\\skillhub-canary-v1-9\\tests\\v1-1175ddefde61d073f0f0c6633044909919df6ce853190c61c87ce4cb81b2f95a\\specgate-tests\\process-tree.ps1",
+        "-RootPid",
+        "31468"
+      ],
+      "cwd": "E:\\ai_workflow\\specgate-canary-skill-hub-initial",
+      "log": "E:\\ai_workflow\\specgate-canary-skill-hub-initial\\.specgate\\codex\\runs\\native-red-report.json.artifacts\\93e3680c-3b42-4843-90bc-7affdba03ff1\\19-helper.log",
+      "pid": 28332,
+      "status": 0,
+      "signal": null,
+      "timedOut": false,
+      "timeoutMs": 15000,
+      "startedAt": "2026-10-26T06:59:39.269Z",
+      "finishedAt": "2026-10-26T06:59:39.451Z",
+      "durationMs": 182
+    }
+  ],
+  "cleanup": [
+    {
+      "stage": "selfcheck",
+      "pid": 21772,
+      "pids": [
+        21772
+      ],
+      "reason": "command-exit",
+      "timeoutMs": 60000,
+      "timedOut": false,
+      "startedAt": "2026-10-26T06:59:23.308Z",
+      "fallbackKills": [],
+      "remainingPids": [],
+      "terminated": true,
+      "terminationMethod": "natural-exit",
+      "finishedAt": "2026-10-26T06:59:23.308Z"
+    },
+    {
+      "stage": "backend-verify",
+      "pid": 20564,
+      "pids": [
+        20564,
+        34536,
+        23328
+      ],
+      "reason": "command-exit",
+      "timeoutMs": 600000,
+      "timedOut": false,
+      "startedAt": "2026-10-26T06:59:29.716Z",
+      "fallbackKills": [],
+      "remainingPids": [],
+      "terminated": true,
+      "terminationMethod": "natural-exit",
+      "finishedAt": "2026-10-26T06:59:29.716Z"
+    },
+    {
+      "stage": "frontend-install",
+      "pid": 21924,
+      "pids": [
+        21924
+      ],
+      "reason": "command-exit",
+      "timeoutMs": 300000,
+      "timedOut": false,
+      "startedAt": "2026-10-26T06:59:31.968Z",
+      "fallbackKills": [],
+      "remainingPids": [],
+      "terminated": true,
+      "terminationMethod": "natural-exit",
+      "finishedAt": "2026-10-26T06:59:31.968Z"
+    },
+    {
+      "stage": "frontend-install",
+      "pid": 24908,
+      "pids": [
+        24908
+      ],
+      "reason": "command-exit",
+      "timeoutMs": 300000,
+      "timedOut": false,
+      "startedAt": "2026-10-26T06:59:34.078Z",
+      "fallbackKills": [],
+      "remainingPids": [],
+      "terminated": true,
+      "terminationMethod": "natural-exit",
+      "finishedAt": "2026-10-26T06:59:34.078Z"
+    },
+    {
+      "stage": "frontend-build",
+      "pid": 11148,
+      "pids": [
+        11148
+      ],
+      "reason": "command-exit",
+      "timeoutMs": 300000,
+      "timedOut": false,
+      "startedAt": "2026-10-26T06:59:36.261Z",
+      "fallbackKills": [],
+      "remainingPids": [],
+      "terminated": true,
+      "terminationMethod": "natural-exit",
+      "finishedAt": "2026-10-26T06:59:36.261Z"
+    },
+    {
+      "stage": "frontend-test",
+      "pid": 15952,
+      "pids": [
+        15952
+      ],
+      "reason": "command-exit",
+      "timeoutMs": 300000,
+      "timedOut": false,
+      "startedAt": "2026-10-26T06:59:38.487Z",
+      "fallbackKills": [],
+      "remainingPids": [],
+      "terminated": true,
+      "terminationMethod": "natural-exit",
+      "finishedAt": "2026-10-26T06:59:38.487Z"
+    },
+    {
+      "stage": "frontend-lint",
+      "pid": 17112,
+      "pids": [
+        17112
+      ],
+      "reason": "command-exit",
+      "timeoutMs": 300000,
+      "timedOut": false,
+      "startedAt": "2026-10-26T06:59:38.919Z",
+      "fallbackKills": [],
+      "remainingPids": [],
+      "terminated": true,
+      "terminationMethod": "natural-exit",
+      "finishedAt": "2026-10-26T06:59:38.919Z"
+    },
+    {
+      "stage": "frontend-format",
+      "pid": 20032,
+      "pids": [
+        20032
+      ],
+      "reason": "command-exit",
+      "timeoutMs": 300000,
+      "timedOut": false,
+      "startedAt": "2026-10-26T06:59:39.216Z",
+      "fallbackKills": [],
+      "remainingPids": [],
+      "terminated": true,
+      "terminationMethod": "natural-exit",
+      "finishedAt": "2026-10-26T06:59:39.216Z"
+    },
+    {
+      "stage": "coverage",
+      "pid": 31468,
+      "pids": [
+        31468
+      ],
+      "reason": "command-exit",
+      "timeoutMs": 120000,
+      "timedOut": false,
+      "startedAt": "2026-10-26T06:59:39.451Z",
+      "fallbackKills": [],
+      "remainingPids": [],
+      "terminated": true,
+      "terminationMethod": "natural-exit",
+      "finishedAt": "2026-10-26T06:59:39.451Z"
+    }
+  ],
+  "processEvidence": [
+    {
+      "stage": "preflight",
+      "tool": "node",
+      "pid": 34660,
+      "startedAt": "2026-10-26T06:59:16.370Z",
+      "finishedAt": "2026-10-26T06:59:16.391Z",
+      "timeoutMs": 30000,
+      "timedOut": false,
+      "terminated": true,
+      "terminationMethod": "natural-exit"
+    },
+    {
+      "stage": "preflight",
+      "tool": "mvn",
+      "pid": 30184,
+      "startedAt": "2026-10-26T06:59:16.396Z",
+      "finishedAt": "2026-10-26T06:59:16.772Z",
+      "timeoutMs": 30000,
+      "timedOut": false,
+      "terminated": true,
+      "terminationMethod": "natural-exit"
+    },
+    {
+      "stage": "preflight",
+      "tool": "java",
+      "pid": 23684,
+      "startedAt": "2026-10-26T06:59:16.772Z",
+      "finishedAt": "2026-10-26T06:59:16.835Z",
+      "timeoutMs": 30000,
+      "timedOut": false,
+      "terminated": true,
+      "terminationMethod": "natural-exit"
+    },
+    {
+      "stage": "preflight",
+      "tool": "git",
+      "pid": 21908,
+      "startedAt": "2026-10-26T06:59:16.835Z",
+      "finishedAt": "2026-10-26T06:59:16.854Z",
+      "timeoutMs": 30000,
+      "timedOut": false,
+      "terminated": true,
+      "terminationMethod": "natural-exit"
+    },
+    {
+      "stage": "helper",
+      "pid": 23684,
+      "timeoutMs": 15000,
+      "timedOut": false,
+      "terminated": true,
+      "terminationMethod": "natural-exit",
+      "startedAt": "2026-10-26T06:59:22.996Z",
+      "finishedAt": "2026-10-26T06:59:23.308Z"
+    },
+    {
+      "stage": "selfcheck",
+      "pid": 21772,
+      "pids": [
+        21772
+      ],
+      "reason": "command-exit",
+      "timeoutMs": 60000,
+      "timedOut": false,
+      "startedAt": "2026-10-26T06:59:23.308Z",
+      "fallbackKills": [],
+      "remainingPids": [],
+      "terminated": true,
+      "terminationMethod": "natural-exit",
+      "finishedAt": "2026-10-26T06:59:23.308Z"
+    },
+    {
+      "stage": "helper",
+      "pid": 34720,
+      "timeoutMs": 15000,
+      "timedOut": false,
+      "terminated": true,
+      "terminationMethod": "natural-exit",
+      "startedAt": "2026-10-26T06:59:26.326Z",
+      "finishedAt": "2026-10-26T06:59:26.556Z"
+    },
+    {
+      "stage": "helper",
+      "pid": 21256,
+      "timeoutMs": 15000,
+      "timedOut": false,
+      "terminated": true,
+      "terminationMethod": "natural-exit",
+      "startedAt": "2026-10-26T06:59:29.327Z",
+      "finishedAt": "2026-10-26T06:59:29.522Z"
+    },
+    {
+      "stage": "helper",
+      "pid": 31600,
+      "timeoutMs": 15000,
+      "timedOut": false,
+      "terminated": true,
+      "terminationMethod": "natural-exit",
+      "startedAt": "2026-10-26T06:59:29.526Z",
+      "finishedAt": "2026-10-26T06:59:29.716Z"
+    },
+    {
+      "stage": "backend-verify",
+      "pid": 20564,
+      "pids": [
+        20564,
+        34536,
+        23328
+      ],
+      "reason": "command-exit",
+      "timeoutMs": 600000,
+      "timedOut": false,
+      "startedAt": "2026-10-26T06:59:29.716Z",
+      "fallbackKills": [],
+      "remainingPids": [],
+      "terminated": true,
+      "terminationMethod": "natural-exit",
+      "finishedAt": "2026-10-26T06:59:29.716Z"
+    },
+    {
+      "stage": "helper",
+      "pid": 20916,
+      "timeoutMs": 15000,
+      "timedOut": false,
+      "terminated": true,
+      "terminationMethod": "natural-exit",
+      "startedAt": "2026-10-26T06:59:31.779Z",
+      "finishedAt": "2026-10-26T06:59:31.968Z"
+    },
+    {
+      "stage": "frontend-install",
+      "pid": 21924,
+      "pids": [
+        21924
+      ],
+      "reason": "command-exit",
+      "timeoutMs": 300000,
+      "timedOut": false,
+      "startedAt": "2026-10-26T06:59:31.968Z",
+      "fallbackKills": [],
+      "remainingPids": [],
+      "terminated": true,
+      "terminationMethod": "natural-exit",
+      "finishedAt": "2026-10-26T06:59:31.968Z"
+    },
+    {
+      "stage": "helper",
+      "pid": 9664,
+      "timeoutMs": 15000,
+      "timedOut": false,
+      "terminated": true,
+      "terminationMethod": "natural-exit",
+      "startedAt": "2026-10-26T06:59:33.892Z",
+      "finishedAt": "2026-10-26T06:59:34.078Z"
+    },
+    {
+      "stage": "frontend-install",
+      "pid": 24908,
+      "pids": [
+        24908
+      ],
+      "reason": "command-exit",
+      "timeoutMs": 300000,
+      "timedOut": false,
+      "startedAt": "2026-10-26T06:59:34.078Z",
+      "fallbackKills": [],
+      "remainingPids": [],
+      "terminated": true,
+      "terminationMethod": "natural-exit",
+      "finishedAt": "2026-10-26T06:59:34.078Z"
+    },
+    {
+      "stage": "helper",
+      "pid": 27308,
+      "timeoutMs": 15000,
+      "timedOut": false,
+      "terminated": true,
+      "terminationMethod": "natural-exit",
+      "startedAt": "2026-10-26T06:59:36.079Z",
+      "finishedAt": "2026-10-26T06:59:36.261Z"
+    },
+    {
+      "stage": "frontend-build",
+      "pid": 11148,
+      "pids": [
+        11148
+      ],
+      "reason": "command-exit",
+      "timeoutMs": 300000,
+      "timedOut": false,
+      "startedAt": "2026-10-26T06:59:36.261Z",
+      "fallbackKills": [],
+      "remainingPids": [],
+      "terminated": true,
+      "terminationMethod": "natural-exit",
+      "finishedAt": "2026-10-26T06:59:36.261Z"
+    },
+    {
+      "stage": "helper",
+      "pid": 22276,
+      "timeoutMs": 15000,
+      "timedOut": false,
+      "terminated": true,
+      "terminationMethod": "natural-exit",
+      "startedAt": "2026-10-26T06:59:38.296Z",
+      "finishedAt": "2026-10-26T06:59:38.487Z"
+    },
+    {
+      "stage": "frontend-test",
+      "pid": 15952,
+      "pids": [
+        15952
+      ],
+      "reason": "command-exit",
+      "timeoutMs": 300000,
+      "timedOut": false,
+      "startedAt": "2026-10-26T06:59:38.487Z",
+      "fallbackKills": [],
+      "remainingPids": [],
+      "terminated": true,
+      "terminationMethod": "natural-exit",
+      "finishedAt": "2026-10-26T06:59:38.487Z"
+    },
+    {
+      "stage": "helper",
+      "pid": 7688,
+      "timeoutMs": 15000,
+      "timedOut": false,
+      "terminated": true,
+      "terminationMethod": "natural-exit",
+      "startedAt": "2026-10-26T06:59:38.737Z",
+      "finishedAt": "2026-10-26T06:59:38.919Z"
+    },
+    {
+      "stage": "frontend-lint",
+      "pid": 17112,
+      "pids": [
+        17112
+      ],
+      "reason": "command-exit",
+      "timeoutMs": 300000,
+      "timedOut": false,
+      "startedAt": "2026-10-26T06:59:38.919Z",
+      "fallbackKills": [],
+      "remainingPids": [],
+      "terminated": true,
+      "terminationMethod": "natural-exit",
+      "finishedAt": "2026-10-26T06:59:38.919Z"
+    },
+    {
+      "stage": "helper",
+      "pid": 34148,
+      "timeoutMs": 15000,
+      "timedOut": false,
+      "terminated": true,
+      "terminationMethod": "natural-exit",
+      "startedAt": "2026-10-26T06:59:39.037Z",
+      "finishedAt": "2026-10-26T06:59:39.216Z"
+    },
+    {
+      "stage": "frontend-format",
+      "pid": 20032,
+      "pids": [
+        20032
+      ],
+      "reason": "command-exit",
+      "timeoutMs": 300000,
+      "timedOut": false,
+      "startedAt": "2026-10-26T06:59:39.216Z",
+      "fallbackKills": [],
+      "remainingPids": [],
+      "terminated": true,
+      "terminationMethod": "natural-exit",
+      "finishedAt": "2026-10-26T06:59:39.216Z"
+    },
+    {
+      "stage": "helper",
+      "pid": 28332,
+      "timeoutMs": 15000,
+      "timedOut": false,
+      "terminated": true,
+      "terminationMethod": "natural-exit",
+      "startedAt": "2026-10-26T06:59:39.269Z",
+      "finishedAt": "2026-10-26T06:59:39.451Z"
+    },
+    {
+      "stage": "coverage",
+      "pid": 31468,
+      "pids": [
+        31468
+      ],
+      "reason": "command-exit",
+      "timeoutMs": 120000,
+      "timedOut": false,
+      "startedAt": "2026-10-26T06:59:39.451Z",
+      "fallbackKills": [],
+      "remainingPids": [],
+      "terminated": true,
+      "terminationMethod": "natural-exit",
+      "finishedAt": "2026-10-26T06:59:39.451Z"
+    }
+  ],
+  "httpRequests": [],
+  "dependencyEvidence": {
+    "ok": false,
+    "entries": [
+      {
+        "file": "backend/pom.xml",
+        "acIds": [
+          "CANARY19-AC-03"
+        ],
+        "expected": "f3a3615e9d46f91256269464e8531bd4b325f2cbdf64d6f39e35ccbab0fac0f6",
+        "measured": "5111073c8b783bb9bef8131a3a8111718a623e20aeafe7efeeb923567b1766a6",
+        "match": false
+      },
+      {
+        "file": "frontend/package.json",
+        "acIds": [
+          "CANARY19-AC-02"
+        ],
+        "expected": "10bd9aa7a199a9f4ae67b8387caa12004d7dd5e8e2f16c7f39501bb9094725c3",
+        "measured": "1c1053c1b75c76d50c01b4302450fbe8027c7f33783e7f140bc7b91d86c69ab0",
+        "match": false
+      },
+      {
+        "file": "frontend/package-lock.json",
+        "acIds": [
+          "CANARY19-AC-02"
+        ],
+        "expected": "979e4f60d02cf847029e2e7faba1edc523cf5a011523603b922d54a5d181af5a",
+        "measured": "8b2fd5ba3949b684d07b95b592515c7a76a30265eac07666dd2481d017f26ad8",
+        "match": false
+      }
+    ],
+    "errors": [
+      "Frozen dependency hash mismatch: backend/pom.xml",
+      "Frozen dependency hash mismatch: frontend/package.json",
+      "Frozen dependency hash mismatch: frontend/package-lock.json"
+    ]
+  },
+  "approvedIntegrity": {
+    "ok": false,
+    "entries": [
+      {
+        "file": "backend/pom.xml",
+        "expected": "f3a3615e9d46f91256269464e8531bd4b325f2cbdf64d6f39e35ccbab0fac0f6",
+        "measured": "5111073c8b783bb9bef8131a3a8111718a623e20aeafe7efeeb923567b1766a6",
+        "match": false
+      },
+      {
+        "file": "frontend/package.json",
+        "expected": "10bd9aa7a199a9f4ae67b8387caa12004d7dd5e8e2f16c7f39501bb9094725c3",
+        "measured": "1c1053c1b75c76d50c01b4302450fbe8027c7f33783e7f140bc7b91d86c69ab0",
+        "match": false
+      },
+      {
+        "file": "frontend/package-lock.json",
+        "expected": "979e4f60d02cf847029e2e7faba1edc523cf5a011523603b922d54a5d181af5a",
+        "measured": "8b2fd5ba3949b684d07b95b592515c7a76a30265eac07666dd2481d017f26ad8",
+        "match": false
+      },
+      {
+        "file": "frontend/vite.config.ts",
+        "expected": "a4af37a0b4e7917e5fd9c27de0cc7727e3732d594ee6383f739feef908e922c7",
+        "measured": "4c66ff055c643e6fc7d34c5cc850574638b0a07aca6282c219909a8358bf086b",
+        "match": false
+      },
+      {
+        "file": "frontend/tsconfig.app.json",
+        "expected": "ba269ef2b7558d8168fe281e92b77a8e2408725654236189e196e2f0570a178d",
+        "measured": "3273111d1d21cd5b73cd26018988822e39650a4d12dc0473bec8822dcc06ee68",
+        "match": false
+      },
+      {
+        "file": "frontend/tsconfig.node.json",
+        "expected": "28a84e81342a517a782b7772b21279260bfaf1075681c16c6f489b40dc8d4401",
+        "measured": "94cc1ce3ba8da766e35eed67d0f98a283321b6c9fb8e02f87b4e7ff01e8102e4",
+        "match": false
+      },
+      {
+        "file": "frontend/.prettierrc.json",
+        "expected": "d423a7296d893ac8a1b8eb49d11a7c12293c93b3fd534c9b16ba7af632ffb276",
+        "measured": null,
+        "match": false
+      }
+    ],
+    "errors": [
+      "Approved bytes mismatch: backend/pom.xml",
+      "Approved bytes mismatch: frontend/package.json",
+      "Approved bytes mismatch: frontend/package-lock.json",
+      "Approved bytes mismatch: frontend/vite.config.ts",
+      "Approved bytes mismatch: frontend/tsconfig.app.json",
+      "Approved bytes mismatch: frontend/tsconfig.node.json",
+      "Approved bytes mismatch: frontend/.prettierrc.json"
+    ]
+  },
+  "exitCode": 2,
+  "artifacts": "E:\\ai_workflow\\specgate-canary-skill-hub-initial\\.specgate\\codex\\runs\\native-red-report.json.artifacts\\93e3680c-3b42-4843-90bc-7affdba03ff1",
+  "externalGates": [
+    "Independent strict Review, human H3 and DeliveryRecord remain SpecGate-owned and are not simulated by this runner."
+  ],
+  "knownUnverified": [
+    "生产 PostgreSQL",
+    "真实 GitHub OAuth",
+    "部署",
+    "负载性能"
+  ],
+  "executedTestAssets": {
+    ".prettierrc.json": "d423a7296d893ac8a1b8eb49d11a7c12293c93b3fd534c9b16ba7af632ffb276",
+    "build-frozen.mjs": "6dc789233e0cd9292bf04e6ffc34e3672dc0c2eb0f8d6af1413467c52d5fa378",
+    "execution.mjs": "4d05dd50d64ac670b519dc620398c79a0507928e8287d9f9f8b34b10e883f447",
+    "fixtures/frontend/SpecgateConfiguration.ts": "626e7b8b895fac2ffbb4b4e04bf3dc3e7c3985e559c8dc701fb6f48ef9d5fe43",
+    "fixtures/frontend/SpecgatePages.ts": "420d96d6f2c4658b8f89de263924f15b4ca6de0cde0869fe0f6187c575b883a3",
+    "fixtures/frontend/SpecgateSupplemental.ts": "7a8ccf49e8f1337f773448fba2d42cf1cbdf8e43407ccbe9f034bc488effde00",
+    "fixtures/frozen.json": "ba573a2b2f06478e300dce2aa09c24e9670972b1e255f123327e6c3408bd3c06",
+    "fixtures/java/SpecgateContextTest.java": "924fe1939c65b80a4a5b07c7eaa7753d0913593be53d0cf0d29bee26a1d558af",
+    "fixtures/java/SpecgateErrorsTest.java": "6f0411989696f423116a347cf5a3bbca205c13d12088886b0a44b8adc4dbbdf6",
+    "fixtures/java/SpecgateOAuthUserTest.java": "87d2a2074888565beec66f899e386e39dcc6f182bea3d468a2d9f47d2ca97f72",
+    "fixtures/java/SpecgateRuntime.java": "5a574347359eada2d99c8825a9a43ef0a6cb7adb9479e24efa0a8edd01c49f45",
+    "fixtures/java/SpecgateSecurityTest.java": "39217962011305270934f05b74ab79770711cf8da3475bca15d7a730cabd6a33",
+    "fixtures/tools/package-lock.json": "979e4f60d02cf847029e2e7faba1edc523cf5a011523603b922d54a5d181af5a",
+    "fixtures/tools/package.json": "10bd9aa7a199a9f4ae67b8387caa12004d7dd5e8e2f16c7f39501bb9094725c3",
+    "gates.mjs": "8bb0486cfac6a96cda39c5ed78b6a64128e5794c5cd52223ab0dbdd204eec7b9",
+    "infra-probe.mjs": "8bb3df7ba752311d84a1b6f6905140b3f3ae6576fe8def839841c2681565fa98",
+    "launch-command.ps1": "2eb1df4d90e38304ee4b040d55e503b01937cee1c5e4a5c35b2e23de0dae26ce",
+    "outcome.mjs": "cacc3a273081a00aedd2d37772d48f6cbee3dd01dbe3d3c893ac19d9b08fb547",
+    "process-tree.ps1": "205af682feebd776e8b6efc9eac040677a2c0ade321cf5d64d4659b68b1f5b37",
+    "quality.mjs": "1f8aac7116844fc6e3f094c46b5ce8d874a172a360726668f9ba6f1dd4e6220c",
+    "runner.mjs": "ac2d2abb9010e8b4702758c638fe3b3ac9c4abe551bacc1d093f0a61f88565c6",
+    "selfcheck.mjs": "b0ba6fa7ea643f2f69ec52cdee15ef0ac1898e50997ea3b32196273873491756",
+    "static-server.mjs": "0a2971591d5b1fe7cd1b19353de3125e04ed38ce14839863871a6a801c39812d",
+    "tsconfig.json": "bd9eb04ba6e35c40d67ae9a4439819494b90b2d6ed51ac25f8afb48cea194e02",
+    "vue.d.ts": "454dfeea5485847f488b595c6933cc32c4d106666d07e5743f620ecd1124444f"
+  },
+  "surefire": {
+    "total": 0,
+    "passed": 0,
+    "failed": 0,
+    "skipped": 0,
+    "originalTotal": 0,
+    "errors": [
+      "Missing original suite/case: com.agentskills.sharing.AgentSkillsSharingApplicationTests",
+      "Missing original suite/case: com.agentskills.sharing.controller.AuthControllerTest",
+      "Missing original suite/case: com.agentskills.sharing.controller.RepositoryControllerTest",
+      "Missing original suite/case: com.agentskills.sharing.controller.SkillControllerTest",
+      "Missing original suite/case: com.agentskills.sharing.controller.SkillGroupControllerTest",
+      "Missing original suite/case: com.agentskills.sharing.controller.TagControllerTest",
+      "Missing original suite/case: com.agentskills.sharing.controller.WebhookControllerTest",
+      "Missing original suite/case: com.agentskills.sharing.security.EncryptionUtilTest",
+      "Missing original suite/case: com.agentskills.sharing.security.JwtUtilTest",
+      "Missing original suite/case: com.agentskills.sharing.service.GitHubApiClientTest",
+      "Missing original suite/case: com.agentskills.sharing.service.RepositoryScannerServiceTest",
+      "Missing original suite/case: com.agentskills.sharing.service.ScheduledSyncServiceTest",
+      "Missing original suite/case: com.agentskills.sharing.service.SkillServiceTest",
+      "Missing original suite/case: com.agentskills.sharing.service.WebhookServiceTest",
+      "Original backend count must equal 119",
+      "All 8 frozen supplemental backend tests must run"
+    ],
+    "businessFailures": [],
+    "suites": []
+  },
+  "frontendTests": {
+    "total": 69,
+    "passed": 69,
+    "failed": 0,
+    "skipped": 0,
+    "originalTotal": 49,
+    "errors": []
+  },
+  "runtime": {
+    "listened": false
+  },
+  "baseline": {
+    "businessFailuresRequired": true,
+    "caseStatus": [
+      "pass",
+      "fail"
+    ],
+    "infrastructureErrorsMustBeEmpty": true,
+    "oauthBusinessFailure": false,
+    "runtimeListened": false
+  },
+  "integrity": {
+    "ok": true,
+    "errors": []
+  },
+  "history": {
+    "projectRoot": "E:\\ai_workflow\\specgate-canary-skill-hub-initial",
+    "changeIds": {
+      "v16": true,
+      "v17": true
+    },
+    "review": "review-7a6848e3db304e46ff6ff5b941815e4585dcab23c7d44177fe5dbb01a46f4a8b.json",
+    "worktrees": true,
+    "worktreePaths": {
+      "v16": "E:\\ai_workflow\\specgate-canary-skill-hub-initial\\.specgate\\codex\\worktrees\\skillhub-canary-v1-6",
+      "v17": "E:\\ai_workflow\\specgate-canary-skill-hub-initial\\.specgate\\codex\\worktrees\\skillhub-canary-v1-7"
+    },
+    "cancelled": {
+      "v16": true,
+      "v17": true
+    },
+    "v17RedEvidence": true,
+    "ok": true
+  },
+  "baselineErrors": [],
+  "verification": {
+    "schemaVersion": 1,
+    "kind": "codex-v1-local",
+    "root": "E:\\ai_workflow\\specgate-canary-skill-hub-initial",
+    "commit": "64c26ce65d79c53426ac3ac2fb41f2f973e51a5b",
+    "runId": "93e3680c-3b42-4843-90bc-7affdba03ff1",
+    "startedAt": "2026-10-26T06:59:16.854Z",
+    "finishedAt": "2026-10-26T06:59:39.586Z",
+    "expectedStages": [
+      "backend-verify",
+      "frontend-install",
+      "frontend-build",
+      "frontend-test",
+      "frontend-lint",
+      "frontend-format",
+      "coverage",
+      "runtime",
+      "frontend-runtime"
+    ],
+    "ok": false,
+    "v1Complete": false,
+    "status": "failed",
+    "stages": [
+      {
+        "name": "backend-verify",
+        "startedAt": "2026-10-26T06:59:23.309Z",
+        "status": 1,
+        "commands": [
+          {
+            "stage": "backend-verify",
+            "command": "C:\\Users\\Administrator\\.m2\\wrapper\\dists\\apache-maven-3.9.11\\03d7e36a140982eea48e22c1dcac01d8862b2550b2939e09a0809bbc5182a5bc\\bin\\mvn.CMD",
+            "args": [
+              "-B",
+              "-ntp",
+              "-o",
+              "-s",
+              "E:\\ai_workflow\\specgate-canary-skill-hub-initial\\.specgate\\codex\\changes\\skillhub-canary-v1-9\\tests\\v1-1175ddefde61d073f0f0c6633044909919df6ce853190c61c87ce4cb81b2f95a\\specgate-tests\\fixtures\\maven-settings.xml",
+              "-Dmaven.repo.local=E:/ai_workflow/specgate-canary-skill-hub-initial/.specgate/codex/changes/skillhub-canary-v1-9/tests/v1-1175ddefde61d073f0f0c6633044909919df6ce853190c61c87ce4cb81b2f95a/specgate-tests/.cache/m2",
+              "-DargLine=-javaagent:../.specgate/codex/changes/skillhub-canary-v1-9/tests/v1-1175ddefde61d073f0f0c6633044909919df6ce853190c61c87ce4cb81b2f95a/specgate-tests/.cache/m2/org/jacoco/org.jacoco.agent/0.8.13/org.jacoco.agent-0.8.13-runtime.jar=destfile=target/jacoco.exec",
+              "clean",
+              "verify"
+            ],
+            "cwd": "E:\\ai_workflow\\specgate-canary-skill-hub-initial\\backend",
+            "log": "E:\\ai_workflow\\specgate-canary-skill-hub-initial\\.specgate\\codex\\runs\\native-red-report.json.artifacts\\93e3680c-3b42-4843-90bc-7affdba03ff1\\2-backend-verify.log",
+            "invocation": {
+              "command": "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe",
+              "args": [
+                "-NoProfile",
+                "-NonInteractive",
+                "-File",
+                "E:\\ai_workflow\\specgate-canary-skill-hub-initial\\.specgate\\codex\\changes\\skillhub-canary-v1-9\\tests\\v1-1175ddefde61d073f0f0c6633044909919df6ce853190c61c87ce4cb81b2f95a\\specgate-tests\\launch-command.ps1",
+                "-CommandPath",
+                "C:\\Users\\Administrator\\.m2\\wrapper\\dists\\apache-maven-3.9.11\\03d7e36a140982eea48e22c1dcac01d8862b2550b2939e09a0809bbc5182a5bc\\bin\\mvn.CMD",
+                "-ArgumentsBase64",
+                "WyItQiIsIi1udHAiLCItbyIsIi1zIiwiRTpcXGFpX3dvcmtmbG93XFxzcGVjZ2F0ZS1jYW5hcnktc2tpbGwtaHViLWluaXRpYWxcXC5zcGVjZ2F0ZVxcY29kZXhcXGNoYW5nZXNcXHNraWxsaHViLWNhbmFyeS12MS05XFx0ZXN0c1xcdjEtMTE3NWRkZWZkZTYxZDA3M2YwZjBjNjYzMzA0NDkwOTkxOWRmNmNlODUzMTkwYzYxYzg3Y2U0Y2I4MWIyZjk1YVxcc3BlY2dhdGUtdGVzdHNcXGZpeHR1cmVzXFxtYXZlbi1zZXR0aW5ncy54bWwiLCItRG1hdmVuLnJlcG8ubG9jYWw9RTovYWlfd29ya2Zsb3cvc3BlY2dhdGUtY2FuYXJ5LXNraWxsLWh1Yi1pbml0aWFsLy5zcGVjZ2F0ZS9jb2RleC9jaGFuZ2VzL3NraWxsaHViLWNhbmFyeS12MS05L3Rlc3RzL3YxLTExNzVkZGVmZGU2MWQwNzNmMGYwYzY2MzMwNDQ5MDk5MTlkZjZjZTg1MzE5MGM2MWM4N2NlNGNiODFiMmY5NWEvc3BlY2dhdGUtdGVzdHMvLmNhY2hlL20yIiwiLURhcmdMaW5lPS1qYXZhYWdlbnQ6Li4vLnNwZWNnYXRlL2NvZGV4L2NoYW5nZXMvc2tpbGxodWItY2FuYXJ5LXYxLTkvdGVzdHMvdjEtMTE3NWRkZWZkZTYxZDA3M2YwZjBjNjYzMzA0NDkwOTkxOWRmNmNlODUzMTkwYzYxYzg3Y2U0Y2I4MWIyZjk1YS9zcGVjZ2F0ZS10ZXN0cy8uY2FjaGUvbTIvb3JnL2phY29jby9vcmcuamFjb2NvLmFnZW50LzAuOC4xMy9vcmcuamFjb2NvLmFnZW50LTAuOC4xMy1ydW50aW1lLmphcj1kZXN0ZmlsZT10YXJnZXQvamFjb2NvLmV4ZWMiLCJjbGVhbiIsInZlcmlmeSJd"
+              ]
+            },
+            "startedAt": "2026-10-26T06:59:23.313Z",
+            "pid": 20564,
+            "timeoutMs": 600000,
+            "status": 1,
+            "signal": null,
+            "finishedAt": "2026-10-26T06:59:29.522Z",
+            "durationMs": 6209,
+            "cleanup": {
+              "stage": "backend-verify",
+              "pid": 20564,
+              "pids": [
+                20564,
+                34536,
+                23328
+              ],
+              "reason": "command-exit",
+              "timeoutMs": 600000,
+              "timedOut": false,
+              "startedAt": "2026-10-26T06:59:29.716Z",
+              "fallbackKills": [],
+              "remainingPids": [],
+              "terminated": true,
+              "terminationMethod": "natural-exit",
+              "finishedAt": "2026-10-26T06:59:29.716Z"
+            }
+          }
+        ],
+        "failureKind": "infrastructure",
+        "listened": false,
+        "tests": {
+          "total": 0,
+          "passed": 0,
+          "failed": 0,
+          "skipped": 0,
+          "originalTotal": 0,
+          "errors": [
+            "Missing original suite/case: com.agentskills.sharing.AgentSkillsSharingApplicationTests",
+            "Missing original suite/case: com.agentskills.sharing.controller.AuthControllerTest",
+            "Missing original suite/case: com.agentskills.sharing.controller.RepositoryControllerTest",
+            "Missing original suite/case: com.agentskills.sharing.controller.SkillControllerTest",
+            "Missing original suite/case: com.agentskills.sharing.controller.SkillGroupControllerTest",
+            "Missing original suite/case: com.agentskills.sharing.controller.TagControllerTest",
+            "Missing original suite/case: com.agentskills.sharing.controller.WebhookControllerTest",
+            "Missing original suite/case: com.agentskills.sharing.security.EncryptionUtilTest",
+            "Missing original suite/case: com.agentskills.sharing.security.JwtUtilTest",
+            "Missing original suite/case: com.agentskills.sharing.service.GitHubApiClientTest",
+            "Missing original suite/case: com.agentskills.sharing.service.RepositoryScannerServiceTest",
+            "Missing original suite/case: com.agentskills.sharing.service.ScheduledSyncServiceTest",
+            "Missing original suite/case: com.agentskills.sharing.service.SkillServiceTest",
+            "Missing original suite/case: com.agentskills.sharing.service.WebhookServiceTest",
+            "Original backend count must equal 119",
+            "All 8 frozen supplemental backend tests must run"
+          ],
+          "businessFailures": [],
+          "suites": []
+        },
+        "currentSurefire": true,
+        "oauthFailures": [],
+        "error": "Error: Surefire reconciliation failed: Missing original suite/case: com.agentskills.sharing.AgentSkillsSharingApplicationTests; Missing original suite/case: com.agentskills.sharing.controller.AuthControllerTest; Missing original suite/case: com.agentskills.sharing.controller.RepositoryControllerTest; Missing original suite/case: com.agentskills.sharing.controller.SkillControllerTest; Missing original suite/case: com.agentskills.sharing.controller.SkillGroupControllerTest; Missing original suite/case: com.agentskills.sharing.controller.TagControllerTest; Missing original suite/case: com.agentskills.sharing.controller.WebhookControllerTest; Missing original suite/case: com.agentskills.sharing.security.EncryptionUtilTest; Missing original suite/case: com.agentskills.sharing.security.JwtUtilTest; Missing original suite/case: com.agentskills.sharing.service.GitHubApiClientTest; Missing original suite/case: com.agentskills.sharing.service.RepositoryScannerServiceTest; Missing original suite/case: com.agentskills.sharing.service.ScheduledSyncServiceTest; Missing original suite/case: com.agentskills.sharing.service.SkillServiceTest; Missing original suite/case: com.agentskills.sharing.service.WebhookServiceTest; Original backend count must equal 119; All 8 frozen supplemental backend tests must run\n    at file:///E:/ai_workflow/specgate-canary-skill-hub-initial/.specgate/codex/changes/skillhub-canary-v1-9/tests/v1-1175ddefde61d073f0f0c6633044909919df6ce853190c61c87ce4cb81b2f95a/specgate-tests/execution.mjs:321:15\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async stage (file:///E:/ai_workflow/specgate-canary-skill-hub-initial/.specgate/codex/changes/skillhub-canary-v1-9/tests/v1-1175ddefde61d073f0f0c6633044909919df6ce853190c61c87ce4cb81b2f95a/specgate-tests/execution.mjs:604:5)\n    at async execute (file:///E:/ai_workflow/specgate-canary-skill-hub-initial/.specgate/codex/changes/skillhub-canary-v1-9/tests/v1-1175ddefde61d073f0f0c6633044909919df6ce853190c61c87ce4cb81b2f95a/specgate-tests/execution.mjs:282:26)\n    at async file:///E:/ai_workflow/specgate-canary-skill-hub-initial/.specgate/codex/changes/skillhub-canary-v1-9/tests/v1-1175ddefde61d073f0f0c6633044909919df6ce853190c61c87ce4cb81b2f95a/specgate-tests/execution.mjs:199:3",
+        "finishedAt": "2026-10-26T06:59:29.716Z",
+        "durationMs": 6407,
+        "command": "C:\\Users\\Administrator\\.m2\\wrapper\\dists\\apache-maven-3.9.11\\03d7e36a140982eea48e22c1dcac01d8862b2550b2939e09a0809bbc5182a5bc\\bin\\mvn.CMD",
+        "args": [
+          "-B",
+          "-ntp",
+          "-o",
+          "-s",
+          "E:\\ai_workflow\\specgate-canary-skill-hub-initial\\.specgate\\codex\\changes\\skillhub-canary-v1-9\\tests\\v1-1175ddefde61d073f0f0c6633044909919df6ce853190c61c87ce4cb81b2f95a\\specgate-tests\\fixtures\\maven-settings.xml",
+          "-Dmaven.repo.local=E:/ai_workflow/specgate-canary-skill-hub-initial/.specgate/codex/changes/skillhub-canary-v1-9/tests/v1-1175ddefde61d073f0f0c6633044909919df6ce853190c61c87ce4cb81b2f95a/specgate-tests/.cache/m2",
+          "-DargLine=-javaagent:../.specgate/codex/changes/skillhub-canary-v1-9/tests/v1-1175ddefde61d073f0f0c6633044909919df6ce853190c61c87ce4cb81b2f95a/specgate-tests/.cache/m2/org/jacoco/org.jacoco.agent/0.8.13/org.jacoco.agent-0.8.13-runtime.jar=destfile=target/jacoco.exec",
+          "clean",
+          "verify"
+        ],
+        "log": "E:\\ai_workflow\\specgate-canary-skill-hub-initial\\.specgate\\codex\\runs\\native-red-report.json.artifacts\\93e3680c-3b42-4843-90bc-7affdba03ff1\\stage-backend-verify.log"
+      },
+      {
+        "name": "frontend-install",
+        "startedAt": "2026-10-26T06:59:29.718Z",
+        "status": 0,
+        "commands": [
+          {
+            "stage": "frontend-install",
+            "command": "D:\\Program Files\\nodejs\\node.exe",
+            "args": [
+              "D:\\Program Files\\nodejs\\node_modules\\npm\\bin\\npm-cli.js",
+              "ci",
+              "--ignore-scripts",
+              "--no-audit",
+              "--no-fund",
+              "--offline",
+              "--cache=C:/Users/Administrator/AppData/Local/npm-cache",
+              "--logs-dir=E:\\ai_workflow\\specgate-canary-skill-hub-initial\\.specgate\\codex\\runs\\native-red-report.json.artifacts\\93e3680c-3b42-4843-90bc-7affdba03ff1\\tooling-npm-logs"
+            ],
+            "cwd": "E:\\ai_workflow\\specgate-canary-skill-hub-initial\\.specgate\\codex\\changes\\skillhub-canary-v1-9\\tests\\v1-1175ddefde61d073f0f0c6633044909919df6ce853190c61c87ce4cb81b2f95a\\specgate-tests\\.cache\\frontend-tools",
+            "log": "E:\\ai_workflow\\specgate-canary-skill-hub-initial\\.specgate\\codex\\runs\\native-red-report.json.artifacts\\93e3680c-3b42-4843-90bc-7affdba03ff1\\6-frontend-install.log",
+            "invocation": {
+              "command": "D:\\Program Files\\nodejs\\node.exe",
+              "args": [
+                "D:\\Program Files\\nodejs\\node_modules\\npm\\bin\\npm-cli.js",
+                "ci",
+                "--ignore-scripts",
+                "--no-audit",
+                "--no-fund",
+                "--offline",
+                "--cache=C:/Users/Administrator/AppData/Local/npm-cache",
+                "--logs-dir=E:\\ai_workflow\\specgate-canary-skill-hub-initial\\.specgate\\codex\\runs\\native-red-report.json.artifacts\\93e3680c-3b42-4843-90bc-7affdba03ff1\\tooling-npm-logs"
+              ]
+            },
+            "startedAt": "2026-10-26T06:59:29.718Z",
+            "pid": 21924,
+            "timeoutMs": 300000,
+            "status": 0,
+            "signal": null,
+            "finishedAt": "2026-10-26T06:59:31.775Z",
+            "durationMs": 2057,
+            "cleanup": {
+              "stage": "frontend-install",
+              "pid": 21924,
+              "pids": [
+                21924
+              ],
+              "reason": "command-exit",
+              "timeoutMs": 300000,
+              "timedOut": false,
+              "startedAt": "2026-10-26T06:59:31.968Z",
+              "fallbackKills": [],
+              "remainingPids": [],
+              "terminated": true,
+              "terminationMethod": "natural-exit",
+              "finishedAt": "2026-10-26T06:59:31.968Z"
+            }
+          },
+          {
+            "stage": "frontend-install",
+            "command": "D:\\Program Files\\nodejs\\node.exe",
+            "args": [
+              "D:\\Program Files\\nodejs\\node_modules\\npm\\bin\\npm-cli.js",
+              "ci",
+              "--ignore-scripts",
+              "--no-audit",
+              "--no-fund",
+              "--offline",
+              "--cache=C:/Users/Administrator/AppData/Local/npm-cache",
+              "--logs-dir=E:\\ai_workflow\\specgate-canary-skill-hub-initial\\.specgate\\codex\\runs\\native-red-report.json.artifacts\\93e3680c-3b42-4843-90bc-7affdba03ff1\\npm-logs"
+            ],
+            "cwd": "E:\\ai_workflow\\specgate-canary-skill-hub-initial\\frontend",
+            "log": "E:\\ai_workflow\\specgate-canary-skill-hub-initial\\.specgate\\codex\\runs\\native-red-report.json.artifacts\\93e3680c-3b42-4843-90bc-7affdba03ff1\\8-frontend-install.log",
+            "invocation": {
+              "command": "D:\\Program Files\\nodejs\\node.exe",
+              "args": [
+                "D:\\Program Files\\nodejs\\node_modules\\npm\\bin\\npm-cli.js",
+                "ci",
+                "--ignore-scripts",
+                "--no-audit",
+                "--no-fund",
+                "--offline",
+                "--cache=C:/Users/Administrator/AppData/Local/npm-cache",
+                "--logs-dir=E:\\ai_workflow\\specgate-canary-skill-hub-initial\\.specgate\\codex\\runs\\native-red-report.json.artifacts\\93e3680c-3b42-4843-90bc-7affdba03ff1\\npm-logs"
+              ]
+            },
+            "startedAt": "2026-10-26T06:59:31.968Z",
+            "pid": 24908,
+            "timeoutMs": 300000,
+            "status": 0,
+            "signal": null,
+            "finishedAt": "2026-10-26T06:59:33.888Z",
+            "durationMs": 1920,
+            "cleanup": {
+              "stage": "frontend-install",
+              "pid": 24908,
+              "pids": [
+                24908
+              ],
+              "reason": "command-exit",
+              "timeoutMs": 300000,
+              "timedOut": false,
+              "startedAt": "2026-10-26T06:59:34.078Z",
+              "fallbackKills": [],
+              "remainingPids": [],
+              "terminated": true,
+              "terminationMethod": "natural-exit",
+              "finishedAt": "2026-10-26T06:59:34.078Z"
+            }
+          }
+        ],
+        "failureKind": null,
+        "listened": false,
+        "finishedAt": "2026-10-26T06:59:34.078Z",
+        "durationMs": 4360,
+        "command": "D:\\Program Files\\nodejs\\node.exe",
+        "args": [
+          "D:\\Program Files\\nodejs\\node_modules\\npm\\bin\\npm-cli.js",
+          "ci",
+          "--ignore-scripts",
+          "--no-audit",
+          "--no-fund",
+          "--offline",
+          "--cache=C:/Users/Administrator/AppData/Local/npm-cache",
+          "--logs-dir=E:\\ai_workflow\\specgate-canary-skill-hub-initial\\.specgate\\codex\\runs\\native-red-report.json.artifacts\\93e3680c-3b42-4843-90bc-7affdba03ff1\\tooling-npm-logs"
+        ],
+        "log": "E:\\ai_workflow\\specgate-canary-skill-hub-initial\\.specgate\\codex\\runs\\native-red-report.json.artifacts\\93e3680c-3b42-4843-90bc-7affdba03ff1\\stage-frontend-install.log"
+      },
+      {
+        "name": "frontend-build",
+        "startedAt": "2026-10-26T06:59:34.623Z",
+        "status": 1,
+        "commands": [
+          {
+            "stage": "frontend-build",
+            "command": "D:\\Program Files\\nodejs\\node.exe",
+            "args": [
+              "D:\\Program Files\\nodejs\\node_modules\\npm\\bin\\npm-cli.js",
+              "run",
+              "build"
+            ],
+            "cwd": "E:\\ai_workflow\\specgate-canary-skill-hub-initial\\frontend",
+            "log": "E:\\ai_workflow\\specgate-canary-skill-hub-initial\\.specgate\\codex\\runs\\native-red-report.json.artifacts\\93e3680c-3b42-4843-90bc-7affdba03ff1\\10-frontend-build.log",
+            "invocation": {
+              "command": "D:\\Program Files\\nodejs\\node.exe",
+              "args": [
+                "D:\\Program Files\\nodejs\\node_modules\\npm\\bin\\npm-cli.js",
+                "run",
+                "build"
+              ]
+            },
+            "startedAt": "2026-10-26T06:59:34.623Z",
+            "pid": 11148,
+            "timeoutMs": 300000,
+            "status": 1,
+            "signal": null,
+            "finishedAt": "2026-10-26T06:59:36.075Z",
+            "durationMs": 1452,
+            "cleanup": {
+              "stage": "frontend-build",
+              "pid": 11148,
+              "pids": [
+                11148
+              ],
+              "reason": "command-exit",
+              "timeoutMs": 300000,
+              "timedOut": false,
+              "startedAt": "2026-10-26T06:59:36.261Z",
+              "fallbackKills": [],
+              "remainingPids": [],
+              "terminated": true,
+              "terminationMethod": "natural-exit",
+              "finishedAt": "2026-10-26T06:59:36.261Z"
+            }
+          }
+        ],
+        "failureKind": "business",
+        "listened": false,
+        "typescriptDiagnostics": [
+          "src/views/HomePage.test.ts(38,18): error TS2339: Property 'mockImplementation' does not exist on type '<T = any, R = AxiosResponse<T, any, {}>, D = any>(url: string, config?: AxiosRequestConfig<D> | undefined) => Promise<R>'.",
+          "src/views/HomePage.test.ts(81,18): error TS2339: Property 'mockImplementation' does not exist on type '<T = any, R = AxiosResponse<T, any, {}>, D = any>(url: string, config?: AxiosRequestConfig<D> | undefined) => Promise<R>'.",
+          "src/views/HomePage.test.ts(94,43): error TS2339: Property 'mock' does not exist on type '<T = any, R = AxiosResponse<T, any, {}>, D = any>(url: string, config?: AxiosRequestConfig<D> | undefined) => Promise<R>'.",
+          "src/views/HomePage.test.ts(94,61): error TS7006: Parameter 'c' implicitly has an 'any' type.",
+          "src/views/HomePage.test.ts(102,25): error TS2339: Property 'mock' does not exist on type '<T = any, R = AxiosResponse<T, any, {}>, D = any>(url: string, config?: AxiosRequestConfig<D> | undefined) => Promise<R>'.",
+          "src/views/HomePage.test.ts(102,43): error TS7006: Parameter 'c' implicitly has an 'any' type.",
+          "src/views/HomePage.test.ts(109,37): error TS2339: Property 'mock' does not exist on type '<T = any, R = AxiosResponse<T, any, {}>, D = any>(url: string, config?: AxiosRequestConfig<D> | undefined) => Promise<R>'.",
+          "src/views/HomePage.test.ts(109,55): error TS7006: Parameter 'c' implicitly has an 'any' type.",
+          "src/views/HomePage.test.ts(119,18): error TS2339: Property 'mockImplementation' does not exist on type '<T = any, R = AxiosResponse<T, any, {}>, D = any>(url: string, config?: AxiosRequestConfig<D> | undefined) => Promise<R>'.",
+          "src/views/HomePage.test.ts(135,18): error TS2339: Property 'mockImplementation' does not exist on type '<T = any, R = AxiosResponse<T, any, {}>, D = any>(url: string, config?: AxiosRequestConfig<D> | undefined) => Promise<R>'.",
+          "src/views/HomePage.test.ts(162,37): error TS2339: Property 'mock' does not exist on type '<T = any, R = AxiosResponse<T, any, {}>, D = any>(url: string, config?: AxiosRequestConfig<D> | undefined) => Promise<R>'.",
+          "src/views/HomePage.test.ts(162,55): error TS7006: Parameter 'c' implicitly has an 'any' type.",
+          "src/views/HomePage.test.ts(172,18): error TS2339: Property 'mockImplementation' does not exist on type '<T = any, R = AxiosResponse<T, any, {}>, D = any>(url: string, config?: AxiosRequestConfig<D> | undefined) => Promise<R>'.",
+          "src/views/HomePage.test.ts(181,11): error TS6133: 'wrapper' is declared but its value is never read.",
+          "src/views/HomePage.test.ts(185,39): error TS2339: Property 'mock' does not exist on type '<T = any, R = AxiosResponse<T, any, {}>, D = any>(url: string, config?: AxiosRequestConfig<D> | undefined) => Promise<R>'.",
+          "src/views/HomePage.test.ts(185,57): error TS7006: Parameter 'c' implicitly has an 'any' type.",
+          "src/views/RepositoriesPage.test.ts(31,18): error TS2339: Property 'mockResolvedValue' does not exist on type '<T = any, R = AxiosResponse<T, any, {}>, D = any>(url: string, config?: AxiosRequestConfig<D> | undefined) => Promise<R>'.",
+          "src/views/RepositoriesPage.test.ts(49,19): error TS2339: Property 'mockResolvedValue' does not exist on type '<T = any, R = AxiosResponse<T, any, {}>, D = any>(url: string, data?: D | undefined, config?: AxiosRequestConfig<D> | undefined) => Promise<R>'.",
+          "src/views/RepositoriesPage.test.ts(63,19): error TS2339: Property 'mockReturnValue' does not exist on type '<T = any, R = AxiosResponse<T, any, {}>, D = any>(url: string, data?: D | undefined, config?: AxiosRequestConfig<D> | undefined) => Promise<R>'.",
+          "src/views/RepositoriesPage.test.ts(85,19): error TS2339: Property 'mockResolvedValue' does not exist on type '<T = any, R = AxiosResponse<T, any, {}>, D = any>(url: string, data?: D | undefined, config?: AxiosRequestConfig<D> | undefined) => Promise<R>'.",
+          "src/views/RepositoriesPage.test.ts(100,19): error TS2339: Property 'mockRejectedValue' does not exist on type '<T = any, R = AxiosResponse<T, any, {}>, D = any>(url: string, data?: D | undefined, config?: AxiosRequestConfig<D> | undefined) => Promise<R>'.",
+          "src/views/RepositoriesPage.test.ts(114,19): error TS2339: Property 'mockReturnValue' does not exist on type '<T = any, R = AxiosResponse<T, any, {}>, D = any>(url: string, data?: D | undefined, config?: AxiosRequestConfig<D> | undefined) => Promise<R>'.",
+          "src/views/SkillDetailPage.test.ts(55,18): error TS2339: Property 'mockResolvedValue' does not exist on type '<T = any, R = AxiosResponse<T, any, {}>, D = any>(url: string, config?: AxiosRequestConfig<D> | undefined) => Promise<R>'.",
+          "src/views/SkillDetailPage.test.ts(73,18): error TS2339: Property 'mockResolvedValue' does not exist on type '<T = any, R = AxiosResponse<T, any, {}>, D = any>(url: string, config?: AxiosRequestConfig<D> | undefined) => Promise<R>'.",
+          "src/views/SkillDetailPage.test.ts(88,18): error TS2339: Property 'mockResolvedValue' does not exist on type '<T = any, R = AxiosResponse<T, any, {}>, D = any>(url: string, config?: AxiosRequestConfig<D> | undefined) => Promise<R>'.",
+          "src/views/SkillDetailPage.test.ts(103,18): error TS2339: Property 'mockResolvedValue' does not exist on type '<T = any, R = AxiosResponse<T, any, {}>, D = any>(url: string, config?: AxiosRequestConfig<D> | undefined) => Promise<R>'.",
+          "src/views/SkillDetailPage.test.ts(119,18): error TS2339: Property 'mockResolvedValue' does not exist on type '<T = any, R = AxiosResponse<T, any, {}>, D = any>(url: string, config?: AxiosRequestConfig<D> | undefined) => Promise<R>'.",
+          "src/views/SkillDetailPage.test.ts(135,18): error TS2339: Property 'mockReturnValue' does not exist on type '<T = any, R = AxiosResponse<T, any, {}>, D = any>(url: string, config?: AxiosRequestConfig<D> | undefined) => Promise<R>'.",
+          "src/views/SkillDetailPage.test.ts(147,18): error TS2339: Property 'mockRejectedValue' does not exist on type '<T = any, R = AxiosResponse<T, any, {}>, D = any>(url: string, config?: AxiosRequestConfig<D> | undefined) => Promise<R>'.",
+          "src/views/SkillDetailPage.test.ts(160,18): error TS2339: Property 'mockRejectedValue' does not exist on type '<T = any, R = AxiosResponse<T, any, {}>, D = any>(url: string, config?: AxiosRequestConfig<D> | undefined) => Promise<R>'.",
+          "src/views/SkillDetailPage.test.ts(173,18): error TS2339: Property 'mockResolvedValue' does not exist on type '<T = any, R = AxiosResponse<T, any, {}>, D = any>(url: string, config?: AxiosRequestConfig<D> | undefined) => Promise<R>'.",
+          "src/views/SkillDetailPage.test.ts(188,18): error TS2339: Property 'mockResolvedValue' does not exist on type '<T = any, R = AxiosResponse<T, any, {}>, D = any>(url: string, config?: AxiosRequestConfig<D> | undefined) => Promise<R>'.",
+          "src/views/SkillDetailPage.test.ts(189,19): error TS2339: Property 'mockResolvedValue' does not exist on type '<T = any, R = AxiosResponse<T, any, {}>, D = any>(url: string, data?: D | undefined, config?: AxiosRequestConfig<D> | undefined) => Promise<R>'.",
+          "src/views/SkillDetailPage.test.ts(214,18): error TS2339: Property 'mockResolvedValue' does not exist on type '<T = any, R = AxiosResponse<T, any, {}>, D = any>(url: string, config?: AxiosRequestConfig<D> | undefined) => Promise<R>'.",
+          "src/views/SkillDetailPage.test.ts(215,19): error TS2339: Property 'mockResolvedValue' does not exist on type '<T = any, R = AxiosResponse<T, any, {}>, D = any>(url: string, data?: D | undefined, config?: AxiosRequestConfig<D> | undefined) => Promise<R>'.",
+          "src/views/SkillGroupDetailPage.test.ts(31,10): error TS2305: Module '\"@/composables/useAuth\"' has no exported member '__mockState'.",
+          "src/views/SkillGroupDetailPage.test.ts(71,18): error TS2339: Property 'mockResolvedValue' does not exist on type '<T = any, R = AxiosResponse<T, any, {}>, D = any>(url: string, config?: AxiosRequestConfig<D> | undefined) => Promise<R>'.",
+          "src/views/SkillGroupDetailPage.test.ts(88,18): error TS2339: Property 'mockResolvedValue' does not exist on type '<T = any, R = AxiosResponse<T, any, {}>, D = any>(url: string, config?: AxiosRequestConfig<D> | undefined) => Promise<R>'.",
+          "src/views/SkillGroupDetailPage.test.ts(104,18): error TS2339: Property 'mockResolvedValue' does not exist on type '<T = any, R = AxiosResponse<T, any, {}>, D = any>(url: string, config?: AxiosRequestConfig<D> | undefined) => Promise<R>'.",
+          "src/views/SkillGroupDetailPage.test.ts(118,18): error TS2339: Property 'mockResolvedValue' does not exist on type '<T = any, R = AxiosResponse<T, any, {}>, D = any>(url: string, config?: AxiosRequestConfig<D> | undefined) => Promise<R>'.",
+          "src/views/SkillGroupDetailPage.test.ts(131,18): error TS2339: Property 'mockResolvedValue' does not exist on type '<T = any, R = AxiosResponse<T, any, {}>, D = any>(url: string, config?: AxiosRequestConfig<D> | undefined) => Promise<R>'.",
+          "src/views/SkillGroupDetailPage.test.ts(132,19): error TS2339: Property 'mockResolvedValue' does not exist on type '<T = any, R = AxiosResponse<T, any, {}>, D = any>(url: string, data?: D | undefined, config?: AxiosRequestConfig<D> | undefined) => Promise<R>'.",
+          "src/views/SkillGroupDetailPage.test.ts(156,18): error TS2339: Property 'mockResolvedValue' does not exist on type '<T = any, R = AxiosResponse<T, any, {}>, D = any>(url: string, config?: AxiosRequestConfig<D> | undefined) => Promise<R>'.",
+          "src/views/SkillGroupDetailPage.test.ts(157,19): error TS2339: Property 'mockResolvedValue' does not exist on type '<T = any, R = AxiosResponse<T, any, {}>, D = any>(url: string, data?: D | undefined, config?: AxiosRequestConfig<D> | undefined) => Promise<R>'.",
+          "src/views/SkillGroupDetailPage.test.ts(175,18): error TS2339: Property 'mockResolvedValue' does not exist on type '<T = any, R = AxiosResponse<T, any, {}>, D = any>(url: string, config?: AxiosRequestConfig<D> | undefined) => Promise<R>'.",
+          "src/views/SkillGroupDetailPage.test.ts(176,19): error TS2339: Property 'mockResolvedValue' does not exist on type '<T = any, R = AxiosResponse<T, any, {}>, D = any>(url: string, data?: D | undefined, config?: AxiosRequestConfig<D> | undefined) => Promise<R>'.",
+          "src/views/SkillGroupDetailPage.test.ts(202,18): error TS2339: Property 'mockReturnValue' does not exist on type '<T = any, R = AxiosResponse<T, any, {}>, D = any>(url: string, config?: AxiosRequestConfig<D> | undefined) => Promise<R>'.",
+          "src/views/SkillGroupDetailPage.test.ts(214,18): error TS2339: Property 'mockRejectedValue' does not exist on type '<T = any, R = AxiosResponse<T, any, {}>, D = any>(url: string, config?: AxiosRequestConfig<D> | undefined) => Promise<R>'.",
+          "src/views/SkillGroupDetailPage.test.ts(227,18): error TS2339: Property 'mockResolvedValue' does not exist on type '<T = any, R = AxiosResponse<T, any, {}>, D = any>(url: string, config?: AxiosRequestConfig<D> | undefined) => Promise<R>'.",
+          "src/views/SkillGroupDetailPage.test.ts(242,18): error TS2339: Property 'mockResolvedValue' does not exist on type '<T = any, R = AxiosResponse<T, any, {}>, D = any>(url: string, config?: AxiosRequestConfig<D> | undefined) => Promise<R>'.",
+          "src/views/SkillGroupDetailPage.test.ts(259,18): error TS2339: Property 'mockResolvedValue' does not exist on type '<T = any, R = AxiosResponse<T, any, {}>, D = any>(url: string, config?: AxiosRequestConfig<D> | undefined) => Promise<R>'.",
+          "src/views/SkillGroupDetailPage.test.ts(274,18): error TS2339: Property 'mockResolvedValue' does not exist on type '<T = any, R = AxiosResponse<T, any, {}>, D = any>(url: string, config?: AxiosRequestConfig<D> | undefined) => Promise<R>'.",
+          "src/views/SkillGroupDetailPage.test.ts(289,18): error TS2339: Property 'mockResolvedValue' does not exist on type '<T = any, R = AxiosResponse<T, any, {}>, D = any>(url: string, config?: AxiosRequestConfig<D> | undefined) => Promise<R>'.",
+          "src/views/SkillGroupDetailPage.test.ts(304,18): error TS2339: Property 'mockResolvedValue' does not exist on type '<T = any, R = AxiosResponse<T, any, {}>, D = any>(url: string, config?: AxiosRequestConfig<D> | undefined) => Promise<R>'.",
+          "src/views/SkillGroupDetailPage.test.ts(327,18): error TS2339: Property 'mockResolvedValue' does not exist on type '<T = any, R = AxiosResponse<T, any, {}>, D = any>(url: string, config?: AxiosRequestConfig<D> | undefined) => Promise<R>'.",
+          "src/views/SkillGroupDetailPage.test.ts(350,18): error TS2339: Property 'mockResolvedValue' does not exist on type '<T = any, R = AxiosResponse<T, any, {}>, D = any>(url: string, config?: AxiosRequestConfig<D> | undefined) => Promise<R>'.",
+          "src/views/SkillGroupDetailPage.test.ts(351,20): error TS2339: Property 'mockResolvedValue' does not exist on type '<T = any, R = AxiosResponse<T, any, {}>, D = any>(url: string, data?: D | undefined, config?: AxiosRequestConfig<D> | undefined) => Promise<R>'.",
+          "src/views/SkillGroupDetailPage.test.ts(380,18): error TS2339: Property 'mockResolvedValue' does not exist on type '<T = any, R = AxiosResponse<T, any, {}>, D = any>(url: string, config?: AxiosRequestConfig<D> | undefined) => Promise<R>'.",
+          "src/views/SkillGroupDetailPage.test.ts(381,20): error TS2339: Property 'mockRejectedValue' does not exist on type '<T = any, R = AxiosResponse<T, any, {}>, D = any>(url: string, data?: D | undefined, config?: AxiosRequestConfig<D> | undefined) => Promise<R>'.",
+          "src/views/SkillGroupDetailPage.test.ts(405,18): error TS2339: Property 'mockResolvedValue' does not exist on type '<T = any, R = AxiosResponse<T, any, {}>, D = any>(url: string, config?: AxiosRequestConfig<D> | undefined) => Promise<R>'.",
+          "src/views/SkillGroupDetailPage.test.ts(406,20): error TS2339: Property 'mockRejectedValue' does not exist on type '<T = any, R = AxiosResponse<T, any, {}>, D = any>(url: string, data?: D | undefined, config?: AxiosRequestConfig<D> | undefined) => Promise<R>'.",
+          "vite.config.ts(28,3): error TS2769: No overload matches this call."
+        ],
+        "error": "Error: D:\\Program Files\\nodejs\\node.exe exited 1; E:\\ai_workflow\\specgate-canary-skill-hub-initial\\.specgate\\codex\\runs\\native-red-report.json.artifacts\\93e3680c-3b42-4843-90bc-7affdba03ff1\\10-frontend-build.log\n    at command (file:///E:/ai_workflow/specgate-canary-skill-hub-initial/.specgate/codex/changes/skillhub-canary-v1-9/tests/v1-1175ddefde61d073f0f0c6633044909919df6ce853190c61c87ce4cb81b2f95a/specgate-tests/execution.mjs:867:11)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async file:///E:/ai_workflow/specgate-canary-skill-hub-initial/.specgate/codex/changes/skillhub-canary-v1-9/tests/v1-1175ddefde61d073f0f0c6633044909919df6ce853190c61c87ce4cb81b2f95a/specgate-tests/execution.mjs:417:9\n    at async stage (file:///E:/ai_workflow/specgate-canary-skill-hub-initial/.specgate/codex/changes/skillhub-canary-v1-9/tests/v1-1175ddefde61d073f0f0c6633044909919df6ce853190c61c87ce4cb81b2f95a/specgate-tests/execution.mjs:604:5)\n    at async execute (file:///E:/ai_workflow/specgate-canary-skill-hub-initial/.specgate/codex/changes/skillhub-canary-v1-9/tests/v1-1175ddefde61d073f0f0c6633044909919df6ce853190c61c87ce4cb81b2f95a/specgate-tests/execution.mjs:415:5)\n    at async file:///E:/ai_workflow/specgate-canary-skill-hub-initial/.specgate/codex/changes/skillhub-canary-v1-9/tests/v1-1175ddefde61d073f0f0c6633044909919df6ce853190c61c87ce4cb81b2f95a/specgate-tests/execution.mjs:199:3",
+        "finishedAt": "2026-10-26T06:59:36.262Z",
+        "durationMs": 1639,
+        "command": "D:\\Program Files\\nodejs\\node.exe",
+        "args": [
+          "D:\\Program Files\\nodejs\\node_modules\\npm\\bin\\npm-cli.js",
+          "run",
+          "build"
+        ],
+        "log": "E:\\ai_workflow\\specgate-canary-skill-hub-initial\\.specgate\\codex\\runs\\native-red-report.json.artifacts\\93e3680c-3b42-4843-90bc-7affdba03ff1\\stage-frontend-build.log"
+      },
+      {
+        "name": "frontend-test",
+        "startedAt": "2026-10-26T06:59:36.262Z",
+        "status": 0,
+        "commands": [
+          {
+            "stage": "frontend-test",
+            "command": "D:\\Program Files\\nodejs\\node.exe",
+            "args": [
+              "D:\\Program Files\\nodejs\\node_modules\\npm\\bin\\npm-cli.js",
+              "test",
+              "--",
+              "--coverage",
+              "--coverage.provider=v8",
+              "--coverage.include=src/**/*.{ts,vue}",
+              "--coverage.include=vite.config.ts",
+              "--coverage.exclude=src/**/*.{test,spec}.*",
+              "--coverage.reporter=json",
+              "--coverage.reporter=json-summary",
+              "--reporter=json",
+              "--outputFile=E:\\ai_workflow\\specgate-canary-skill-hub-initial\\.specgate\\codex\\runs\\native-red-report.json.artifacts\\93e3680c-3b42-4843-90bc-7affdba03ff1\\vitest.json"
+            ],
+            "cwd": "E:\\ai_workflow\\specgate-canary-skill-hub-initial\\frontend",
+            "log": "E:\\ai_workflow\\specgate-canary-skill-hub-initial\\.specgate\\codex\\runs\\native-red-report.json.artifacts\\93e3680c-3b42-4843-90bc-7affdba03ff1\\12-frontend-test.log",
+            "invocation": {
+              "command": "D:\\Program Files\\nodejs\\node.exe",
+              "args": [
+                "D:\\Program Files\\nodejs\\node_modules\\npm\\bin\\npm-cli.js",
+                "test",
+                "--",
+                "--coverage",
+                "--coverage.provider=v8",
+                "--coverage.include=src/**/*.{ts,vue}",
+                "--coverage.include=vite.config.ts",
+                "--coverage.exclude=src/**/*.{test,spec}.*",
+                "--coverage.reporter=json",
+                "--coverage.reporter=json-summary",
+                "--reporter=json",
+                "--outputFile=E:\\ai_workflow\\specgate-canary-skill-hub-initial\\.specgate\\codex\\runs\\native-red-report.json.artifacts\\93e3680c-3b42-4843-90bc-7affdba03ff1\\vitest.json"
+              ]
+            },
+            "startedAt": "2026-10-26T06:59:36.262Z",
+            "pid": 15952,
+            "timeoutMs": 300000,
+            "status": 0,
+            "signal": null,
+            "finishedAt": "2026-10-26T06:59:38.292Z",
+            "durationMs": 2030,
+            "cleanup": {
+              "stage": "frontend-test",
+              "pid": 15952,
+              "pids": [
+                15952
+              ],
+              "reason": "command-exit",
+              "timeoutMs": 300000,
+              "timedOut": false,
+              "startedAt": "2026-10-26T06:59:38.487Z",
+              "fallbackKills": [],
+              "remainingPids": [],
+              "terminated": true,
+              "terminationMethod": "natural-exit",
+              "finishedAt": "2026-10-26T06:59:38.487Z"
+            }
+          }
+        ],
+        "failureKind": null,
+        "listened": false,
+        "tests": {
+          "total": 69,
+          "passed": 69,
+          "failed": 0,
+          "skipped": 0,
+          "originalTotal": 49,
+          "errors": []
+        },
+        "currentVitest": true,
+        "finishedAt": "2026-10-26T06:59:38.489Z",
+        "durationMs": 2227,
+        "command": "D:\\Program Files\\nodejs\\node.exe",
+        "args": [
+          "D:\\Program Files\\nodejs\\node_modules\\npm\\bin\\npm-cli.js",
+          "test",
+          "--",
+          "--coverage",
+          "--coverage.provider=v8",
+          "--coverage.include=src/**/*.{ts,vue}",
+          "--coverage.include=vite.config.ts",
+          "--coverage.exclude=src/**/*.{test,spec}.*",
+          "--coverage.reporter=json",
+          "--coverage.reporter=json-summary",
+          "--reporter=json",
+          "--outputFile=E:\\ai_workflow\\specgate-canary-skill-hub-initial\\.specgate\\codex\\runs\\native-red-report.json.artifacts\\93e3680c-3b42-4843-90bc-7affdba03ff1\\vitest.json"
+        ],
+        "log": "E:\\ai_workflow\\specgate-canary-skill-hub-initial\\.specgate\\codex\\runs\\native-red-report.json.artifacts\\93e3680c-3b42-4843-90bc-7affdba03ff1\\stage-frontend-test.log"
+      },
+      {
+        "name": "frontend-lint",
+        "startedAt": "2026-10-26T06:59:38.489Z",
+        "status": 1,
+        "commands": [
+          {
+            "stage": "frontend-lint",
+            "command": "D:\\Program Files\\nodejs\\node.exe",
+            "args": [
+              "D:\\Program Files\\nodejs\\node_modules\\npm\\bin\\npm-cli.js",
+              "run",
+              "lint"
+            ],
+            "cwd": "E:\\ai_workflow\\specgate-canary-skill-hub-initial\\frontend",
+            "log": "E:\\ai_workflow\\specgate-canary-skill-hub-initial\\.specgate\\codex\\runs\\native-red-report.json.artifacts\\93e3680c-3b42-4843-90bc-7affdba03ff1\\14-frontend-lint.log",
+            "invocation": {
+              "command": "D:\\Program Files\\nodejs\\node.exe",
+              "args": [
+                "D:\\Program Files\\nodejs\\node_modules\\npm\\bin\\npm-cli.js",
+                "run",
+                "lint"
+              ]
+            },
+            "startedAt": "2026-10-26T06:59:38.489Z",
+            "pid": 17112,
+            "timeoutMs": 300000,
+            "status": 1,
+            "signal": null,
+            "finishedAt": "2026-10-26T06:59:38.733Z",
+            "durationMs": 244,
+            "cleanup": {
+              "stage": "frontend-lint",
+              "pid": 17112,
+              "pids": [
+                17112
+              ],
+              "reason": "command-exit",
+              "timeoutMs": 300000,
+              "timedOut": false,
+              "startedAt": "2026-10-26T06:59:38.919Z",
+              "fallbackKills": [],
+              "remainingPids": [],
+              "terminated": true,
+              "terminationMethod": "natural-exit",
+              "finishedAt": "2026-10-26T06:59:38.919Z"
+            }
+          }
+        ],
+        "failureKind": "business",
+        "listened": false,
+        "error": "Error: D:\\Program Files\\nodejs\\node.exe exited 1; E:\\ai_workflow\\specgate-canary-skill-hub-initial\\.specgate\\codex\\runs\\native-red-report.json.artifacts\\93e3680c-3b42-4843-90bc-7affdba03ff1\\14-frontend-lint.log\n    at command (file:///E:/ai_workflow/specgate-canary-skill-hub-initial/.specgate/codex/changes/skillhub-canary-v1-9/tests/v1-1175ddefde61d073f0f0c6633044909919df6ce853190c61c87ce4cb81b2f95a/specgate-tests/execution.mjs:867:11)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async file:///E:/ai_workflow/specgate-canary-skill-hub-initial/.specgate/codex/changes/skillhub-canary-v1-9/tests/v1-1175ddefde61d073f0f0c6633044909919df6ce853190c61c87ce4cb81b2f95a/specgate-tests/execution.mjs:469:7\n    at async stage (file:///E:/ai_workflow/specgate-canary-skill-hub-initial/.specgate/codex/changes/skillhub-canary-v1-9/tests/v1-1175ddefde61d073f0f0c6633044909919df6ce853190c61c87ce4cb81b2f95a/specgate-tests/execution.mjs:604:5)\n    at async execute (file:///E:/ai_workflow/specgate-canary-skill-hub-initial/.specgate/codex/changes/skillhub-canary-v1-9/tests/v1-1175ddefde61d073f0f0c6633044909919df6ce853190c61c87ce4cb81b2f95a/specgate-tests/execution.mjs:468:5)\n    at async file:///E:/ai_workflow/specgate-canary-skill-hub-initial/.specgate/codex/changes/skillhub-canary-v1-9/tests/v1-1175ddefde61d073f0f0c6633044909919df6ce853190c61c87ce4cb81b2f95a/specgate-tests/execution.mjs:199:3",
+        "finishedAt": "2026-10-26T06:59:38.919Z",
+        "durationMs": 430,
+        "command": "D:\\Program Files\\nodejs\\node.exe",
+        "args": [
+          "D:\\Program Files\\nodejs\\node_modules\\npm\\bin\\npm-cli.js",
+          "run",
+          "lint"
+        ],
+        "log": "E:\\ai_workflow\\specgate-canary-skill-hub-initial\\.specgate\\codex\\runs\\native-red-report.json.artifacts\\93e3680c-3b42-4843-90bc-7affdba03ff1\\stage-frontend-lint.log"
+      },
+      {
+        "name": "frontend-format",
+        "startedAt": "2026-10-26T06:59:38.920Z",
+        "status": 1,
+        "commands": [
+          {
+            "stage": "frontend-format",
+            "command": "D:\\Program Files\\nodejs\\node.exe",
+            "args": [
+              "D:\\Program Files\\nodejs\\node_modules\\npm\\bin\\npm-cli.js",
+              "run",
+              "format:check"
+            ],
+            "cwd": "E:\\ai_workflow\\specgate-canary-skill-hub-initial\\frontend",
+            "log": "E:\\ai_workflow\\specgate-canary-skill-hub-initial\\.specgate\\codex\\runs\\native-red-report.json.artifacts\\93e3680c-3b42-4843-90bc-7affdba03ff1\\16-frontend-format.log",
+            "invocation": {
+              "command": "D:\\Program Files\\nodejs\\node.exe",
+              "args": [
+                "D:\\Program Files\\nodejs\\node_modules\\npm\\bin\\npm-cli.js",
+                "run",
+                "format:check"
+              ]
+            },
+            "startedAt": "2026-10-26T06:59:38.920Z",
+            "pid": 20032,
+            "timeoutMs": 300000,
+            "status": 1,
+            "signal": null,
+            "finishedAt": "2026-10-26T06:59:39.033Z",
+            "durationMs": 113,
+            "cleanup": {
+              "stage": "frontend-format",
+              "pid": 20032,
+              "pids": [
+                20032
+              ],
+              "reason": "command-exit",
+              "timeoutMs": 300000,
+              "timedOut": false,
+              "startedAt": "2026-10-26T06:59:39.216Z",
+              "fallbackKills": [],
+              "remainingPids": [],
+              "terminated": true,
+              "terminationMethod": "natural-exit",
+              "finishedAt": "2026-10-26T06:59:39.216Z"
+            }
+          }
+        ],
+        "failureKind": "business",
+        "listened": false,
+        "error": "Error: D:\\Program Files\\nodejs\\node.exe exited 1; E:\\ai_workflow\\specgate-canary-skill-hub-initial\\.specgate\\codex\\runs\\native-red-report.json.artifacts\\93e3680c-3b42-4843-90bc-7affdba03ff1\\16-frontend-format.log\n    at command (file:///E:/ai_workflow/specgate-canary-skill-hub-initial/.specgate/codex/changes/skillhub-canary-v1-9/tests/v1-1175ddefde61d073f0f0c6633044909919df6ce853190c61c87ce4cb81b2f95a/specgate-tests/execution.mjs:867:11)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async file:///E:/ai_workflow/specgate-canary-skill-hub-initial/.specgate/codex/changes/skillhub-canary-v1-9/tests/v1-1175ddefde61d073f0f0c6633044909919df6ce853190c61c87ce4cb81b2f95a/specgate-tests/execution.mjs:472:7\n    at async stage (file:///E:/ai_workflow/specgate-canary-skill-hub-initial/.specgate/codex/changes/skillhub-canary-v1-9/tests/v1-1175ddefde61d073f0f0c6633044909919df6ce853190c61c87ce4cb81b2f95a/specgate-tests/execution.mjs:604:5)\n    at async execute (file:///E:/ai_workflow/specgate-canary-skill-hub-initial/.specgate/codex/changes/skillhub-canary-v1-9/tests/v1-1175ddefde61d073f0f0c6633044909919df6ce853190c61c87ce4cb81b2f95a/specgate-tests/execution.mjs:471:5)\n    at async file:///E:/ai_workflow/specgate-canary-skill-hub-initial/.specgate/codex/changes/skillhub-canary-v1-9/tests/v1-1175ddefde61d073f0f0c6633044909919df6ce853190c61c87ce4cb81b2f95a/specgate-tests/execution.mjs:199:3",
+        "finishedAt": "2026-10-26T06:59:39.217Z",
+        "durationMs": 297,
+        "command": "D:\\Program Files\\nodejs\\node.exe",
+        "args": [
+          "D:\\Program Files\\nodejs\\node_modules\\npm\\bin\\npm-cli.js",
+          "run",
+          "format:check"
+        ],
+        "log": "E:\\ai_workflow\\specgate-canary-skill-hub-initial\\.specgate\\codex\\runs\\native-red-report.json.artifacts\\93e3680c-3b42-4843-90bc-7affdba03ff1\\stage-frontend-format.log"
+      },
+      {
+        "name": "coverage",
+        "startedAt": "2026-10-26T06:59:39.217Z",
+        "status": 1,
+        "commands": [
+          {
+            "stage": "coverage",
+            "command": "D:\\Program Files\\nodejs\\node.exe",
+            "args": [
+              "E:\\ai_workflow\\specgate-canary-skill-hub-initial\\.specgate\\codex\\changes\\skillhub-canary-v1-9\\tests\\v1-1175ddefde61d073f0f0c6633044909919df6ce853190c61c87ce4cb81b2f95a\\specgate-tests\\quality.mjs",
+              "E:\\ai_workflow\\specgate-canary-skill-hub-initial",
+              "E:\\ai_workflow\\specgate-canary-skill-hub-initial\\.specgate\\codex\\changes\\skillhub-canary-v1-9\\tests\\v1-1175ddefde61d073f0f0c6633044909919df6ce853190c61c87ce4cb81b2f95a\\specgate-tests\\fixtures\\frozen.json",
+              "E:\\ai_workflow\\specgate-canary-skill-hub-initial\\.specgate\\codex\\runs\\native-red-report.json.artifacts\\93e3680c-3b42-4843-90bc-7affdba03ff1\\coverage.json"
+            ],
+            "cwd": "E:\\ai_workflow\\specgate-canary-skill-hub-initial",
+            "log": "E:\\ai_workflow\\specgate-canary-skill-hub-initial\\.specgate\\codex\\runs\\native-red-report.json.artifacts\\93e3680c-3b42-4843-90bc-7affdba03ff1\\18-coverage.log",
+            "invocation": {
+              "command": "D:\\Program Files\\nodejs\\node.exe",
+              "args": [
+                "E:\\ai_workflow\\specgate-canary-skill-hub-initial\\.specgate\\codex\\changes\\skillhub-canary-v1-9\\tests\\v1-1175ddefde61d073f0f0c6633044909919df6ce853190c61c87ce4cb81b2f95a\\specgate-tests\\quality.mjs",
+                "E:\\ai_workflow\\specgate-canary-skill-hub-initial",
+                "E:\\ai_workflow\\specgate-canary-skill-hub-initial\\.specgate\\codex\\changes\\skillhub-canary-v1-9\\tests\\v1-1175ddefde61d073f0f0c6633044909919df6ce853190c61c87ce4cb81b2f95a\\specgate-tests\\fixtures\\frozen.json",
+                "E:\\ai_workflow\\specgate-canary-skill-hub-initial\\.specgate\\codex\\runs\\native-red-report.json.artifacts\\93e3680c-3b42-4843-90bc-7affdba03ff1\\coverage.json"
+              ]
+            },
+            "startedAt": "2026-10-26T06:59:39.217Z",
+            "pid": 31468,
+            "timeoutMs": 120000,
+            "status": 1,
+            "signal": null,
+            "finishedAt": "2026-10-26T06:59:39.265Z",
+            "durationMs": 48,
+            "cleanup": {
+              "stage": "coverage",
+              "pid": 31468,
+              "pids": [
+                31468
+              ],
+              "reason": "command-exit",
+              "timeoutMs": 120000,
+              "timedOut": false,
+              "startedAt": "2026-10-26T06:59:39.451Z",
+              "fallbackKills": [],
+              "remainingPids": [],
+              "terminated": true,
+              "terminationMethod": "natural-exit",
+              "finishedAt": "2026-10-26T06:59:39.451Z"
+            }
+          }
+        ],
+        "failureKind": "infrastructure",
+        "listened": false,
+        "error": "Error: Coverage evidence unavailable: D:\\Program Files\\nodejs\\node.exe exited 1; E:\\ai_workflow\\specgate-canary-skill-hub-initial\\.specgate\\codex\\runs\\native-red-report.json.artifacts\\93e3680c-3b42-4843-90bc-7affdba03ff1\\18-coverage.log\n    at file:///E:/ai_workflow/specgate-canary-skill-hub-initial/.specgate/codex/changes/skillhub-canary-v1-9/tests/v1-1175ddefde61d073f0f0c6633044909919df6ce853190c61c87ce4cb81b2f95a/specgate-tests/execution.mjs:491:15\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async stage (file:///E:/ai_workflow/specgate-canary-skill-hub-initial/.specgate/codex/changes/skillhub-canary-v1-9/tests/v1-1175ddefde61d073f0f0c6633044909919df6ce853190c61c87ce4cb81b2f95a/specgate-tests/execution.mjs:604:5)\n    at async execute (file:///E:/ai_workflow/specgate-canary-skill-hub-initial/.specgate/codex/changes/skillhub-canary-v1-9/tests/v1-1175ddefde61d073f0f0c6633044909919df6ce853190c61c87ce4cb81b2f95a/specgate-tests/execution.mjs:474:5)\n    at async file:///E:/ai_workflow/specgate-canary-skill-hub-initial/.specgate/codex/changes/skillhub-canary-v1-9/tests/v1-1175ddefde61d073f0f0c6633044909919df6ce853190c61c87ce4cb81b2f95a/specgate-tests/execution.mjs:199:3",
+        "finishedAt": "2026-10-26T06:59:39.451Z",
+        "durationMs": 234,
+        "command": "D:\\Program Files\\nodejs\\node.exe",
+        "args": [
+          "E:\\ai_workflow\\specgate-canary-skill-hub-initial\\.specgate\\codex\\changes\\skillhub-canary-v1-9\\tests\\v1-1175ddefde61d073f0f0c6633044909919df6ce853190c61c87ce4cb81b2f95a\\specgate-tests\\quality.mjs",
+          "E:\\ai_workflow\\specgate-canary-skill-hub-initial",
+          "E:\\ai_workflow\\specgate-canary-skill-hub-initial\\.specgate\\codex\\changes\\skillhub-canary-v1-9\\tests\\v1-1175ddefde61d073f0f0c6633044909919df6ce853190c61c87ce4cb81b2f95a\\specgate-tests\\fixtures\\frozen.json",
+          "E:\\ai_workflow\\specgate-canary-skill-hub-initial\\.specgate\\codex\\runs\\native-red-report.json.artifacts\\93e3680c-3b42-4843-90bc-7affdba03ff1\\coverage.json"
+        ],
+        "log": "E:\\ai_workflow\\specgate-canary-skill-hub-initial\\.specgate\\codex\\runs\\native-red-report.json.artifacts\\93e3680c-3b42-4843-90bc-7affdba03ff1\\stage-coverage.log"
+      },
+      {
+        "name": "runtime",
+        "startedAt": "2026-10-26T06:59:39.452Z",
+        "status": 1,
+        "commands": [],
+        "failureKind": "infrastructure",
+        "listened": false,
+        "error": "Error: Surefire report is absent before runtime start\n    at runtime (file:///E:/ai_workflow/specgate-canary-skill-hub-initial/.specgate/codex/changes/skillhub-canary-v1-9/tests/v1-1175ddefde61d073f0f0c6633044909919df6ce853190c61c87ce4cb81b2f95a/specgate-tests/execution.mjs:918:25)\n    at file:///E:/ai_workflow/specgate-canary-skill-hub-initial/.specgate/codex/changes/skillhub-canary-v1-9/tests/v1-1175ddefde61d073f0f0c6633044909919df6ce853190c61c87ce4cb81b2f95a/specgate-tests/execution.mjs:530:13\n    at stage (file:///E:/ai_workflow/specgate-canary-skill-hub-initial/.specgate/codex/changes/skillhub-canary-v1-9/tests/v1-1175ddefde61d073f0f0c6633044909919df6ce853190c61c87ce4cb81b2f95a/specgate-tests/execution.mjs:604:11)\n    at execute (file:///E:/ai_workflow/specgate-canary-skill-hub-initial/.specgate/codex/changes/skillhub-canary-v1-9/tests/v1-1175ddefde61d073f0f0c6633044909919df6ce853190c61c87ce4cb81b2f95a/specgate-tests/execution.mjs:529:32)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async file:///E:/ai_workflow/specgate-canary-skill-hub-initial/.specgate/codex/changes/skillhub-canary-v1-9/tests/v1-1175ddefde61d073f0f0c6633044909919df6ce853190c61c87ce4cb81b2f95a/specgate-tests/execution.mjs:199:3",
+        "finishedAt": "2026-10-26T06:59:39.452Z",
+        "durationMs": 0,
+        "log": "E:\\ai_workflow\\specgate-canary-skill-hub-initial\\.specgate\\codex\\runs\\native-red-report.json.artifacts\\93e3680c-3b42-4843-90bc-7affdba03ff1\\stage-runtime.log"
+      },
+      {
+        "name": "frontend-runtime",
+        "startedAt": "2026-10-26T06:59:39.453Z",
+        "status": 1,
+        "commands": [],
+        "failureKind": "business",
+        "listened": false,
+        "error": "Error: Frontend runtime was not run because the actual frontend build failed.\n    at runtime (file:///E:/ai_workflow/specgate-canary-skill-hub-initial/.specgate/codex/changes/skillhub-canary-v1-9/tests/v1-1175ddefde61d073f0f0c6633044909919df6ce853190c61c87ce4cb81b2f95a/specgate-tests/execution.mjs:902:17)\n    at file:///E:/ai_workflow/specgate-canary-skill-hub-initial/.specgate/codex/changes/skillhub-canary-v1-9/tests/v1-1175ddefde61d073f0f0c6633044909919df6ce853190c61c87ce4cb81b2f95a/specgate-tests/execution.mjs:533:13\n    at stage (file:///E:/ai_workflow/specgate-canary-skill-hub-initial/.specgate/codex/changes/skillhub-canary-v1-9/tests/v1-1175ddefde61d073f0f0c6633044909919df6ce853190c61c87ce4cb81b2f95a/specgate-tests/execution.mjs:604:11)\n    at execute (file:///E:/ai_workflow/specgate-canary-skill-hub-initial/.specgate/codex/changes/skillhub-canary-v1-9/tests/v1-1175ddefde61d073f0f0c6633044909919df6ce853190c61c87ce4cb81b2f95a/specgate-tests/execution.mjs:532:11)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async file:///E:/ai_workflow/specgate-canary-skill-hub-initial/.specgate/codex/changes/skillhub-canary-v1-9/tests/v1-1175ddefde61d073f0f0c6633044909919df6ce853190c61c87ce4cb81b2f95a/specgate-tests/execution.mjs:199:3",
+        "finishedAt": "2026-10-26T06:59:39.453Z",
+        "durationMs": 0,
+        "log": "E:\\ai_workflow\\specgate-canary-skill-hub-initial\\.specgate\\codex\\runs\\native-red-report.json.artifacts\\93e3680c-3b42-4843-90bc-7affdba03ff1\\stage-frontend-runtime.log"
+      }
+    ],
+    "reconciliation": {
+      "expected": 9,
+      "executed": 9,
+      "passed": 2,
+      "failed": 7,
+      "notRun": 0
+    }
+  }
+}

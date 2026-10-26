@@ -1,0 +1,12 @@
+{
+  "tool": "sg_test_design_prepare",
+  "args": {
+    "expectedVersion": 308
+  },
+  "result": {
+    "ok": false,
+    "code": "GIT_NOT_CLEAN",
+    "message": "The main worktree must be clean before test design"
+  },
+  "observedAt": "2026-10-26T06:38:26.990Z"
+}

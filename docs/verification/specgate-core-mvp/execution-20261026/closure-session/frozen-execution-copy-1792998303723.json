@@ -1,0 +1,131 @@
+{
+  "kind": "verified-byte-identical-short-execution-copy",
+  "testsHash": "sha256:1175ddefde61d073f0f0c6633044909919df6ce853190c61c87ce4cb81b2f95a",
+  "source": "E:\\ai_workflow\\specgate-canary-skill-hub-initial\\.specgate\\codex\\changes\\skillhub-canary-v1-9\\tests\\v1-1175ddefde61d073f0f0c6633044909919df6ce853190c61c87ce4cb81b2f95a",
+  "mirror": "E:\\ai_workflow\\specgate-canary-skill-hub-initial\\.specgate\\codex\\runs\\frozen-1175ddefde61",
+  "copied": [
+    {
+      "relative": "cases.json",
+      "expected": "sha256:b320bd244ea3045d8d4244b671632f383e8aaef5b5187793a4e0d6c4e1867ace"
+    },
+    {
+      "relative": "cases.md",
+      "expected": "sha256:513fab842cf8018c81aff70e60e7d267f73b9c6cd09b5aaffc10a3e274068e94"
+    },
+    {
+      "relative": "specgate-tests/.gitignore",
+      "expected": "sha256:3345aed143b8906883a1ead09d1a8c0b5833cb77dec92e3467156f902bd61da0"
+    },
+    {
+      "relative": "specgate-tests/.prettierrc.json",
+      "expected": "sha256:d150d82d3485bb7a924ca0763b2d14638b1aa6f9c26251b28bfca22e9dfd7e2c"
+    },
+    {
+      "relative": "specgate-tests/README.md",
+      "expected": "sha256:c2580deabcec083ee349cc78bbe1d5a4e32aff2683e959ee83174eeb2828f9f8"
+    },
+    {
+      "relative": "specgate-tests/build-frozen.mjs",
+      "expected": "sha256:d43b55880435ba7b187b52c2964a60f6d7334c72632bc021ca0ade6fb5ffe455"
+    },
+    {
+      "relative": "specgate-tests/execution.mjs",
+      "expected": "sha256:0cbb90b9946c78ba177b6154414458904c577274a7064cee52721b754cf7072f"
+    },
+    {
+      "relative": "specgate-tests/fixtures/frontend/SpecgateConfiguration.ts",
+      "expected": "sha256:7e59e54700e4d2882c174aac7fea227751fb1960a884fa41ccbd27efc074b477"
+    },
+    {
+      "relative": "specgate-tests/fixtures/frontend/SpecgatePages.ts",
+      "expected": "sha256:09dfafafd5da13d39440c0d22ed8f5a076d0d57fae995547af56bfd496406e5d"
+    },
+    {
+      "relative": "specgate-tests/fixtures/frontend/SpecgateSupplemental.ts",
+      "expected": "sha256:3d57c495068a41081c8169eadf703fca4be0f15a2e2fd44ebe5ee5398d8aa121"
+    },
+    {
+      "relative": "specgate-tests/fixtures/frozen.json",
+      "expected": "sha256:109e0627bf7bfaec672ba3c2e26f66afbc7f0fdbb4743a7dee7a516b938196b6"
+    },
+    {
+      "relative": "specgate-tests/fixtures/java/SpecgateContextTest.java",
+      "expected": "sha256:7a7a550ffc97fa8a5b3e9f51d5cc8d6ff449ce2590ac4ed6c37f5ba8baf686b0"
+    },
+    {
+      "relative": "specgate-tests/fixtures/java/SpecgateErrorsTest.java",
+      "expected": "sha256:6e21e71da4aac440fe4162fa05eed8043b7b3554fbc41469a3f54db7679edf2c"
+    },
+    {
+      "relative": "specgate-tests/fixtures/java/SpecgateOAuthUserTest.java",
+      "expected": "sha256:227cb57562cc18706bbea1d658d4bdebee76e237eb74d2a6b24679c63420f36c"
+    },
+    {
+      "relative": "specgate-tests/fixtures/java/SpecgateRuntime.java",
+      "expected": "sha256:8c9bac516a452f552c8b9cde1f51bdaeec0e0bb64715d37d1ef48563da175269"
+    },
+    {
+      "relative": "specgate-tests/fixtures/java/SpecgateSecurityTest.java",
+      "expected": "sha256:9d728deea2a873dd142064be0f6ad928df13fc2191ddd7517e35a5d939050d7b"
+    },
+    {
+      "relative": "specgate-tests/fixtures/maven-settings.xml",
+      "expected": "sha256:348aa2274902e0777b3733ed0ef4b584453f3fce203e07d8f29cbf71a9d46c67"
+    },
+    {
+      "relative": "specgate-tests/fixtures/tools/package-lock.json",
+      "expected": "sha256:40cf52828c04b0e46b481d6aee23023982aef565de7d72c53ed7f0a0ec7193c0"
+    },
+    {
+      "relative": "specgate-tests/fixtures/tools/package.json",
+      "expected": "sha256:91218f4979745a0a8dcd1ec71e8d03630a6c098cac83fd3a16263bc081622ffd"
+    },
+    {
+      "relative": "specgate-tests/gates.mjs",
+      "expected": "sha256:8c4a7b7e8ed524eacd084a47951a3d34ad680da7abc1908877c83682f518d182"
+    },
+    {
+      "relative": "specgate-tests/infra-probe.mjs",
+      "expected": "sha256:3a49e63b8550682ae017b4df612762a342800bc22ab2f0d7892d574f0fb3b285"
+    },
+    {
+      "relative": "specgate-tests/launch-command.ps1",
+      "expected": "sha256:caa230f237b628a34ba90d05116672b220ed2d9c0b40477c4c70cde48b02e513"
+    },
+    {
+      "relative": "specgate-tests/outcome.mjs",
+      "expected": "sha256:a4860c293dd1dc12a9888fd82b4c4dc52d61a58eb5a8a3ee2ae1fe44a6b475a8"
+    },
+    {
+      "relative": "specgate-tests/process-tree.ps1",
+      "expected": "sha256:de553e5d239686ffa1b25ce7d1fbe339b10363b386501a287b93f4f3bd409762"
+    },
+    {
+      "relative": "specgate-tests/quality.mjs",
+      "expected": "sha256:88726b935ab25cbc042e19a712be3726c7f6b88b1b7ad87871b9ce909ed61642"
+    },
+    {
+      "relative": "specgate-tests/runner.mjs",
+      "expected": "sha256:76b00d5bbe9c9bf6aa091b55a32fd0796247124126caa689051663abdd00f1db"
+    },
+    {
+      "relative": "specgate-tests/selfcheck.mjs",
+      "expected": "sha256:cf18bd2485e334931a7afa1305491f4c6ca876b853beb208d49223fc5ad88bd4"
+    },
+    {
+      "relative": "specgate-tests/static-server.mjs",
+      "expected": "sha256:2c4ab22ad8ac58eead78a380d0642b32e2634606d5ba18285cdc0a035af68d94"
+    },
+    {
+      "relative": "specgate-tests/tsconfig.json",
+      "expected": "sha256:04d3827ca5fe12c2f5d1a9c842dbd593c21e45a8f7357a4ff0dab900a44d98e2"
+    },
+    {
+      "relative": "specgate-tests/vue.d.ts",
+      "expected": "sha256:f3490798fe7d349a1876b7dcbfa412236a2b20615b5d8ef3fa85271a24cd1d51"
+    }
+  ],
+  "mode": "red",
+  "worktree": "E:/ai_workflow/specgate-canary-skill-hub-initial",
+  "observedAt": "2026-10-26T07:05:03.723Z"
+}

@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 1,
+  "purpose": "Preserve the exact H1-approved dependency/configuration bytes across local Windows worktree checkouts and merges without rewriting original tests.",
+  "observedCoreAutocrlf": {
+    "value": "true",
+    "origin": "E:/ai_workflow/specgate-canary-skill-hub/.git/config"
+  },
+  "previousInfoAttributes": "absent",
+  "writtenLocalGitMetadata": "E:/ai_workflow/specgate-canary-skill-hub/.git/info/attributes",
+  "rules": [
+    "backend/pom.xml -text",
+    "backend/src/main/java/com/agentskills/sharing/controller/AuthController.java -text",
+    "frontend/package.json -text",
+    "frontend/package-lock.json -text",
+    "frontend/vite.config.ts -text",
+    "frontend/tsconfig.app.json -text",
+    "frontend/tsconfig.node.json -text",
+    "frontend/.prettierrc.json -text"
+  ],
+  "verification": "git check-attr text confirms unset for all three dependency manifests; main business worktree remains clean. Original test paths and the global/local core.autocrlf setting are unchanged.",
+  "approvedHashes": "unchanged"
+}

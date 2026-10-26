@@ -1,0 +1,35 @@
+✔ Windows long frozen snapshots execute byte-identical short copies and red/green reuse one cache (113.9554ms)
+✔ short synthetic snapshots and non-Windows paths keep the existing direct runner contract (1.6906ms)
+▶ execution copies reject canonical or cached tampering, foreign markers, escapes and links
+  ✔ canonical (3.4413ms)
+  ✔ cached (10.9875ms)
+  ✔ marker (10.7493ms)
+  ✔ escape (2.4555ms)
+  ✔ canonical-link (2.854ms)
+  ✔ cached-link (8.7983ms)
+  ✔ runtime-link (9.7018ms)
+  ✔ unmarked (9.5806ms)
+  ✔ source-race (5.3084ms)
+✔ execution copies reject canonical or cached tampering, foreign markers, escapes and links (64.9953ms)
+✔ identical tests from different projects never share an execution cache (16.5112ms)
+✔ public Core tools cannot select execution caches, arbitrary commands or quality reports (3.2195ms)
+✔ native runner adapter retries the legacy snapshot argument only when canonical mode writes no report (145.5514ms)
+✔ native runner adapter never retries a runner that produced an explicit failing report (100.2806ms)
+✔ native runner adapter retries an explicit setup failure caused by the duplicated test root (143.7314ms)
+✔ unbound Core diagnostics only recommend tools in the public Core registry (3.0159ms)
+✔ native runner receives the manifest test root instead of its frozen snapshot parent (0.3416ms)
+✔ native red and green reports stay under ignored runtime evidence (0.14ms)
+✔ state inspection is read-only and mutation schemas require a current version (2.5262ms)
+✔ MCP lifecycle controls preserve worktrees and evidence and enforce CAS (68.9554ms)
+✔ init preview is read-only; nonempty initialization cannot manufacture approval (165.2557ms)
+✔ the public tool set cannot import approvals or arbitrarily change phases (0.9919ms)
+✔ plan and development tools expose only versions and frozen content, never roles or commands (0.9933ms)
+✔ nested change schemas reject forged answers and credentials before touching storage (0.5846ms)
+ℹ tests 26
+ℹ suites 0
+ℹ pass 26
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 453.7302

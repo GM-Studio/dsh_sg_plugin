@@ -1,0 +1,16 @@
+{
+  "type": "reply",
+  "id": "native-1792996370911",
+  "hostCallId": "call_64cbfcd9ef4e499a94e52ba67db5a78e",
+  "result": {
+    "action": "accept",
+    "content": {
+      "Q-INTAKE-1": "五项均按闭环修正候选执行",
+      "Q-INTAKE-2": "五项均按闭环修正候选执行",
+      "Q-INTAKE-3": "五项均按闭环修正候选执行",
+      "Q-INTAKE-4": "五项均按闭环修正候选执行",
+      "Q-INTAKE-5": "五项均按闭环修正候选执行"
+    }
+  },
+  "receivedAt": "2026-10-26T06:33:32.463Z"
+}

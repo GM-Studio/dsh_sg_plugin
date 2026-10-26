@@ -11,3 +11,11 @@ coverage/
 .runtime/
 .npmrc
 .commandcode/
+# 本地 npm 缓存与测试证据产物：不属于源码，体积可达数十 MB。
+.npm-cache/
+.task-evidence/
+# Java/Node 探针产生的临时文件。
+jacoco.exec
+node-out.txt
+patch-probe*.txt
+.codex-read-change-add.txt

@@ -1,0 +1,75 @@
+✖ automatic management ports retry browser-blocked allocations before publishing a URL (19.671ms)
+✖ an explicit browser-blocked management port is rejected without rebinding (0.9987ms)
+✖ repeated browser-blocked dynamic allocations fail within a bound and close the listener (2.1357ms)
+ℹ tests 3
+ℹ suites 0
+ℹ pass 0
+ℹ fail 3
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 92.9691
+
+✖ failing tests:
+
+test at test\codex-management-api.test.js:104:1
+✖ automatic management ports retry browser-blocked allocations before publishing a URL (19.671ms)
+  AssertionError [ERR_ASSERTION]: Expected "actual" to be strictly unequal to: 6000
+      at TestContext.<anonymous> (file:///E:/ai_workflow/specgate/test/codex-management-api.test.js:115:10)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1125:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:358:3) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 6000,
+    expected: 6000,
+    operator: 'notStrictEqual',
+    diff: 'simple'
+  }
+
+test at test\codex-management-api.test.js:122:1
+✖ an explicit browser-blocked management port is rejected without rebinding (0.9987ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+  
+  + Comparison {}
+  - Comparison {
+  -   code: 'MANAGEMENT_PORT_BLOCKED'
+  - }
+  
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async TestContext.<anonymous> (file:///E:/ai_workflow/specgate/test/codex-management-api.test.js:128:3)
+      at async Test.run (node:internal/test_runner/test:1125:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:787:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: Error: Blocked ports must be rejected before listening
+        at Server.<anonymous> (file:///E:/ai_workflow/specgate/test/codex-management-api.test.js:126:11)
+        at Object.apply (node:internal/test_runner/mock/mock:757:20)
+        at file:///E:/ai_workflow/specgate/src/codex/management/server.js:1446:14
+        at new Promise (<anonymous>)
+        at Object.start (file:///E:/ai_workflow/specgate/src/codex/management/server.js:1429:12)
+        at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+        at async waitForActual (node:assert:646:5)
+        at async strict.rejects (node:assert:769:25)
+        at async TestContext.<anonymous> (file:///E:/ai_workflow/specgate/test/codex-management-api.test.js:128:3)
+        at async Test.run (node:internal/test_runner/test:1125:7),
+    expected: { code: 'MANAGEMENT_PORT_BLOCKED' },
+    operator: 'rejects',
+    diff: 'simple'
+  }
+
+test at test\codex-management-api.test.js:132:1
+✖ repeated browser-blocked dynamic allocations fail within a bound and close the listener (2.1357ms)
+  AssertionError [ERR_ASSERTION]: Missing expected rejection.
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async TestContext.<anonymous> (file:///E:/ai_workflow/specgate/test/codex-management-api.test.js:138:3)
+      at async Test.run (node:internal/test_runner/test:1125:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:787:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: { code: 'MANAGEMENT_PORT_UNAVAILABLE' },
+    operator: 'rejects',
+    diff: 'simple'
+  }

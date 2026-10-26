@@ -1,0 +1,23 @@
+✔ red baseline requires a real failing command mapped to every frozen case before worktrees (2194.3494ms)
+▶ red baseline cannot relax per-case failure or accept infrastructure failures
+  ✔ verification metadata cannot excuse a passing frozen case (551.767ms)
+  ✔ a baseline hint cannot excuse a passing frozen case (521.9285ms)
+  ✔ infrastructureErrors cannot stand in for failed assertions (580.9401ms)
+  ✔ an infrastructure stage cannot stand in for failed assertions (544.0768ms)
+  ✔ a skipped frozen case is never a red assertion (525.5423ms)
+  ✔ every frozen case failing remains valid with verification metadata (1415.8529ms)
+✔ red baseline cannot relax per-case failure or accept infrastructure failures (4141.1085ms)
+✔ frontend and backend run serially in isolated worktrees and merge only through integration (3045.3559ms)
+✔ server accepts native-role precompleted commits only when they descend from freeze (2677.7875ms)
+✔ cross-role or test-file changes fail closed, exhaust the shared retry ceiling and preserve branches (2637.2879ms)
+✔ merge conflicts return to the owning role with conflict paths before integration continues (2945.6812ms)
+✔ same-role changes outside task allowlists and inside forbiddenFiles are blocked (5025.6546ms)
+✔ dependency manifests require the exact H1-approved content hash and AC (5196.5802ms)
+ℹ tests 14
+ℹ suites 0
+ℹ pass 14
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 28115.8937

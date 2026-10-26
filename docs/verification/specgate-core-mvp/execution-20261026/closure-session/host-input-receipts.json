@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "source": "Actual user replies delivered by Codex request_user_input_async in the primary chat",
+  "clarification": {
+    "hostCallId": "call_64cbfcd9ef4e499a94e52ba67db5a78e",
+    "nativeRequestId": "native-1792996370911",
+    "answerVerbatim": "五项均按闭环修正候选执行",
+    "mapping": "The host question explicitly states this is a unified answer for the five displayed intake topics; the verbatim answer is forwarded to Q-INTAKE-1 through Q-INTAKE-5. This is clarification only, not H1."
+  },
+  "h1": {
+    "hostCallId": "call_65f3b3cf147a4044b4479ad94a2a6230",
+    "nativeRequestId": "native-1792996592142",
+    "answerVerbatim": "确认：批准并冻结 v1.9 H1",
+    "documentSha256": "87e9e6a1ef275c6d618de5d62d9706501f691594fb6acf9977898a1c7313c988",
+    "mapping": "The actual affirmative choice is relayed as elicitation action accept with empty content because the requested H1 schema has no fields. The approval authority, not tool arguments, consumes the receipt."
+  },
+  "priorLocalCommitAuthorization": {
+    "threadId": "01a1759c-7c0a-7e71-be5c-67556e847380",
+    "userMessageId": "01a175b5-f3e8-7de1-9763-a17a7f35fca9",
+    "hostCallId": "call_9fd5b9ff2e36406a80f2634558e2d8ef",
+    "questionVerbatim": "是否授权按 11-canary-proposal.md，在独立的 GitHub 金丝雀仓库中执行测试设计、修复、格式化和交付所必需的本地 Git 提交？这不授权提交 SpecGate 源码、不授权推送或部署，也不替代 H1/H3。",
+    "answerVerbatim": "允许独立金丝雀仓库的本地提交"
+  }
+}

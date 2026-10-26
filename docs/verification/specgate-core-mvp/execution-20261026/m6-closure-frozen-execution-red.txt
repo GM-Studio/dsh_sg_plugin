@@ -1,0 +1,187 @@
+✖ Windows long frozen snapshots execute byte-identical short copies and red/green reuse one cache (5.4145ms)
+✔ short synthetic snapshots and non-Windows paths keep the existing direct runner contract (2.2175ms)
+▶ execution copies reject canonical or cached tampering, foreign markers, escapes and links
+  ✖ canonical (2.3001ms)
+  ✖ cached (2.7ms)
+  ✖ marker (4.0515ms)
+  ✖ escape (2.3558ms)
+  ✖ canonical-link (2.5498ms)
+  ✖ cached-link (1.9992ms)
+  ✖ runtime-link (3.1094ms)
+✖ execution copies reject canonical or cached tampering, foreign markers, escapes and links (19.8398ms)
+✖ identical tests from different projects never share an execution cache (5.2654ms)
+✔ public Core tools cannot select execution caches, arbitrary commands or quality reports (3.197ms)
+ℹ tests 12
+ℹ suites 0
+ℹ pass 2
+ℹ fail 10
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 138.8842
+
+✖ failing tests:
+
+test at test\codex-frozen-execution.test.js:60:1
+✖ Windows long frozen snapshots execute byte-identical short copies and red/green reuse one cache (5.4145ms)
+  AssertionError [ERR_ASSERTION]: Expected "actual" to be strictly unequal to:
+  
+  'C:\\sg-core-test-temp\\specgate-codex-tests\\run-24160-xJoaQ7\\sg-frozen-6FZvTy\\.specgate\\changes\\long-change-long-change-long-change-long-change-long-change-long-change-long-change-long-change-\\tests\\v1-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\\specgate-tests'
+      at TestContext.<anonymous> (file:///E:/ai_workflow/specgate/test/codex-frozen-execution.test.js:63:10)
+      at Test.runInAsyncScope (node:async_hooks:228:14)
+      at Test.run (node:internal/test_runner/test:1118:25)
+      at Test.start (node:internal/test_runner/test:1015:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:358:17) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'C:\\sg-core-test-temp\\specgate-codex-tests\\run-24160-xJoaQ7\\sg-frozen-6FZvTy\\.specgate\\changes\\long-change-long-change-long-change-long-change-long-change-long-change-long-change-long-change-\\tests\\v1-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\\specgate-tests',
+    expected: 'C:\\sg-core-test-temp\\specgate-codex-tests\\run-24160-xJoaQ7\\sg-frozen-6FZvTy\\.specgate\\changes\\long-change-long-change-long-change-long-change-long-change-long-change-long-change-long-change-\\tests\\v1-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\\specgate-tests',
+    operator: 'notStrictEqual',
+    diff: 'simple'
+  }
+
+test at test\codex-frozen-execution.test.js:105:13
+✖ canonical (2.3001ms)
+  AssertionError [ERR_ASSERTION]: Missing expected exception.
+      at TestContext.<anonymous> (file:///E:/ai_workflow/specgate/test/codex-frozen-execution.test.js:132:14)
+      at Test.runInAsyncScope (node:async_hooks:228:14)
+      at Test.run (node:internal/test_runner/test:1118:25)
+      at Test.start (node:internal/test_runner/test:1015:17)
+      at TestContext.test (node:internal/test_runner/test:368:20)
+      at TestContext.<anonymous> (file:///E:/ai_workflow/specgate/test/codex-frozen-execution.test.js:105:13)
+      at Test.runInAsyncScope (node:async_hooks:228:14)
+      at Test.run (node:internal/test_runner/test:1118:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:787:18)
+      at Test.postRun (node:internal/test_runner/test:1247:19) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: { code: 'FROZEN_EXECUTION_INVALID' },
+    operator: 'throws',
+    diff: 'simple'
+  }
+
+test at test\codex-frozen-execution.test.js:105:13
+✖ cached (2.7ms)
+  AssertionError [ERR_ASSERTION]: Missing expected exception.
+      at TestContext.<anonymous> (file:///E:/ai_workflow/specgate/test/codex-frozen-execution.test.js:132:14)
+      at Test.runInAsyncScope (node:async_hooks:228:14)
+      at Test.run (node:internal/test_runner/test:1118:25)
+      at Test.start (node:internal/test_runner/test:1015:17)
+      at TestContext.test (node:internal/test_runner/test:368:20)
+      at TestContext.<anonymous> (file:///E:/ai_workflow/specgate/test/codex-frozen-execution.test.js:105:13)
+      at async Test.run (node:internal/test_runner/test:1125:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:787:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: { code: 'FROZEN_EXECUTION_INVALID' },
+    operator: 'throws',
+    diff: 'simple'
+  }
+
+test at test\codex-frozen-execution.test.js:105:13
+✖ marker (4.0515ms)
+  TypeError: Cannot read properties of undefined (reading 'markerPath')
+      at TestContext.<anonymous> (file:///E:/ai_workflow/specgate/test/codex-frozen-execution.test.js:113:71)
+      at Test.runInAsyncScope (node:async_hooks:228:14)
+      at Test.run (node:internal/test_runner/test:1118:25)
+      at Test.start (node:internal/test_runner/test:1015:17)
+      at TestContext.test (node:internal/test_runner/test:368:20)
+      at TestContext.<anonymous> (file:///E:/ai_workflow/specgate/test/codex-frozen-execution.test.js:105:13)
+      at async Test.run (node:internal/test_runner/test:1125:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:787:7)
+
+test at test\codex-frozen-execution.test.js:105:13
+✖ escape (2.3558ms)
+  AssertionError [ERR_ASSERTION]: Missing expected exception.
+      at TestContext.<anonymous> (file:///E:/ai_workflow/specgate/test/codex-frozen-execution.test.js:132:14)
+      at Test.runInAsyncScope (node:async_hooks:228:14)
+      at Test.run (node:internal/test_runner/test:1118:25)
+      at Test.start (node:internal/test_runner/test:1015:17)
+      at TestContext.test (node:internal/test_runner/test:368:20)
+      at TestContext.<anonymous> (file:///E:/ai_workflow/specgate/test/codex-frozen-execution.test.js:105:13)
+      at async Test.run (node:internal/test_runner/test:1125:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:787:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: { code: 'FROZEN_EXECUTION_INVALID' },
+    operator: 'throws',
+    diff: 'simple'
+  }
+
+test at test\codex-frozen-execution.test.js:105:13
+✖ canonical-link (2.5498ms)
+  AssertionError [ERR_ASSERTION]: Missing expected exception.
+      at TestContext.<anonymous> (file:///E:/ai_workflow/specgate/test/codex-frozen-execution.test.js:132:14)
+      at Test.runInAsyncScope (node:async_hooks:228:14)
+      at Test.run (node:internal/test_runner/test:1118:25)
+      at Test.start (node:internal/test_runner/test:1015:17)
+      at TestContext.test (node:internal/test_runner/test:368:20)
+      at TestContext.<anonymous> (file:///E:/ai_workflow/specgate/test/codex-frozen-execution.test.js:105:13)
+      at async Test.run (node:internal/test_runner/test:1125:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:787:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: { code: 'FROZEN_EXECUTION_INVALID' },
+    operator: 'throws',
+    diff: 'simple'
+  }
+
+test at test\codex-frozen-execution.test.js:105:13
+✖ cached-link (1.9992ms)
+  AssertionError [ERR_ASSERTION]: Missing expected exception.
+      at TestContext.<anonymous> (file:///E:/ai_workflow/specgate/test/codex-frozen-execution.test.js:132:14)
+      at Test.runInAsyncScope (node:async_hooks:228:14)
+      at Test.run (node:internal/test_runner/test:1118:25)
+      at Test.start (node:internal/test_runner/test:1015:17)
+      at TestContext.test (node:internal/test_runner/test:368:20)
+      at TestContext.<anonymous> (file:///E:/ai_workflow/specgate/test/codex-frozen-execution.test.js:105:13)
+      at async Test.run (node:internal/test_runner/test:1125:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:787:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: { code: 'FROZEN_EXECUTION_INVALID' },
+    operator: 'throws',
+    diff: 'simple'
+  }
+
+test at test\codex-frozen-execution.test.js:105:13
+✖ runtime-link (3.1094ms)
+  AssertionError [ERR_ASSERTION]: Missing expected exception.
+      at TestContext.<anonymous> (file:///E:/ai_workflow/specgate/test/codex-frozen-execution.test.js:132:14)
+      at Test.runInAsyncScope (node:async_hooks:228:14)
+      at Test.run (node:internal/test_runner/test:1118:25)
+      at Test.start (node:internal/test_runner/test:1015:17)
+      at TestContext.test (node:internal/test_runner/test:368:20)
+      at TestContext.<anonymous> (file:///E:/ai_workflow/specgate/test/codex-frozen-execution.test.js:105:13)
+      at async Test.run (node:internal/test_runner/test:1125:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:787:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: { code: 'FROZEN_EXECUTION_INVALID' },
+    operator: 'throws',
+    diff: 'simple'
+  }
+
+test at test\codex-frozen-execution.test.js:137:1
+✖ identical tests from different projects never share an execution cache (5.2654ms)
+  AssertionError [ERR_ASSERTION]: Missing expected exception.
+      at TestContext.<anonymous> (file:///E:/ai_workflow/specgate/test/codex-frozen-execution.test.js:144:10)
+      at Test.runInAsyncScope (node:async_hooks:228:14)
+      at Test.run (node:internal/test_runner/test:1118:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:787:18)
+      at Test.postRun (node:internal/test_runner/test:1247:19)
+      at Test.run (node:internal/test_runner/test:1175:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:787:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: { code: 'FROZEN_EXECUTION_INVALID' },
+    operator: 'throws',
+    diff: 'simple'
+  }

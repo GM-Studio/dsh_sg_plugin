@@ -1161,3 +1161,12 @@ baseline evidence 报告（NR-01…NR-08 回填结果）
 | M4    | 已验收：聚焦 57、全量 719，0 fail/skip/cancel，lint/format/pack 退出 0        | `docs/implementation/specgate-core-mvp-v2/08-m4-acceptance.md` |
 | M5 | 已验收：聚焦 49、全量 723，0 fail/skip/cancel；lint/format/pack/smoke 退出 0 | `docs/implementation/specgate-core-mvp-v2/09-m5-acceptance.md` |
 | M6 | 尚未验收；真实 GitHub 金丝雀基线核验进行中 | 不得以仓库 fixture 替代真实闭环 |
+
+### 2026-10-26 接续核验
+
+- Core 修复严格全红门禁和动态 Fetch 禁用端口缺陷；最终全量 **754/754，0 fail/skip/cancel**，lint、format check、pack check、smoke 退出 0。修复前真实失败及最终日志保留在 `docs/verification/specgate-core-mvp/execution-20261026/m6-closure-*.txt`。
+- 权威项目已经推进到 v1.8；审计发现其运行约束与业务 AC 混淆，不能诚实全红。正式取消 v1.8，保留历史；真实用户已澄清并批准 v1.9 H1，业务范围恢复为原定 OAuth、前端生产构建和真实端到端验证三项，不降低质量门。
+- v1.9 H1 文档哈希为 `87e9e6a1ef275c6d618de5d62d9706501f691594fb6acf9977898a1c7313c988`；获批需求/计划在独立业务仓库提交 `64c26ce`，测试设计状态 v309。详细事实见 `10-m6-verification.md` 和 `closure-session/`。
+- **M6 仍在执行、尚未验收**：当前提交测试冻结/红基线、实现、质量、Formatter 后完整质量、独立 Review、H3 和唯一提交 DeliveryRecord 必须逐项真实完成。SpecGate 源码不提交、不推送。
+
+补充：v1.9 Test Designer 提交 `3a7f804`，正式测试已在 v311 冻结（`sha256:1175ddefde61d073f0f0c6633044909919df6ce853190c61c87ce4cb81b2f95a`）。设计诊断 3/3 业务 case 真实失败、infra 0；规范冻结快照重跑因 Windows JVM 长路径问题被正确拒绝，未进入实现。磁盘耗尽的第二次失败亦保留；三份生成缓存经用户确认后保留迁移至 C 盘，当前修复 Core 的短执行路径与缓存复用，再重跑正式红基线。

@@ -1,5 +1,7 @@
 # SpecGate Core 最小可靠交付 MVP 执行计划与里程碑
 
+> 执行入口说明（2026-10-26）：本文是历史候选计划，已经由 [v2 批准计划](2026-10-25-specgate-core-reliable-delivery-mvp-plan-v2.zh.md) 取代。M6 当前实际执行和验收事实追加在 v2 §18、[M6 验证记录](../implementation/specgate-core-mvp-v2/10-m6-verification.md)；不得把本文的候选状态当作当前执行权威。
+
 - 计划状态：**v1.0 候选，等待用户确认**
 - 日期：2026-10-25
 - 适用仓库：SpecGate Codex 插件

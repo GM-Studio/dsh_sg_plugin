@@ -1,0 +1,670 @@
+{
+  "tool": "sg_change_critique",
+  "args": {
+    "expectedVersion": 295,
+    "report": {
+      "restatement": [
+        {
+          "requirementId": "CANARY19-REQ-01",
+          "text": "只恢复现有OAuth相对跳转，保留全部原后端测试并真实红转绿。"
+        },
+        {
+          "requirementId": "CANARY19-REQ-02",
+          "text": "仅用批准配置修复生产构建，所有原前端测试、类型检查、lint和格式检查必须真实运行。"
+        },
+        {
+          "requirementId": "CANARY19-REQ-03",
+          "text": "用相同断言证明旧业务缺陷存在与修复后九阶段、覆盖率、HTTP全部通过；辅助自检是前置约束，独立Review/H3/Delivery由后续门禁负责，不硬编码到测试结果中。"
+        }
+      ],
+      "ambiguities": [],
+      "contradictions": [],
+      "infeasibleItems": [],
+      "nonFunctionalRisks": [
+        {
+          "id": "RISK19-01",
+          "requirementIds": [
+            "CANARY19-REQ-03"
+          ],
+          "text": "真实生产数据库、外部OAuth和负载未验收。",
+          "severity": "non-blocking",
+          "suggestion": "始终逐项标NOT_RUN，写入最终客户包与风险。"
+        }
+      ],
+      "securityPerformanceConcurrencyRisks": [
+        {
+          "id": "RISK19-02",
+          "requirementIds": [
+            "CANARY19-REQ-03"
+          ],
+          "text": "本地子进程与隔离HTTP运行可能超时或留下监听。",
+          "severity": "non-blocking",
+          "suggestion": "沿用有界超时、127.0.0.1绑定及进程树终止证据，失败不宣称通过。"
+        }
+      ],
+      "testBlindSpots": [
+        {
+          "id": "RISK19-03",
+          "requirementIds": [
+            "CANARY19-REQ-01",
+            "CANARY19-REQ-02",
+            "CANARY19-REQ-03"
+          ],
+          "text": "既有v1.8曾混淆自检与业务AC，且存在硬编码红灯。",
+          "severity": "non-blocking",
+          "suggestion": "独立Test Designer只冻结3个可真实失败的业务case；增加无业务失败、工具缺失、报告过期负向自检；严格每case全红。"
+        }
+      ],
+      "suggestedQuestions": []
+    }
+  },
+  "result": {
+    "ok": true,
+    "code": "H1_DOCUMENT_READY",
+    "message": "需求审查文档已写入，请展示文档链接供用户查看和修改。修改后须重新执行 sg_change_propose 和 sg_change_critique。用户查看后调用 sg_request_h1；若该工具未暴露，使用 sg_change({ action: \"request_h1\", expectedVersion }) 打开同一可信审批表单。",
+    "status": "AWAITING_REQUIREMENTS_REVIEW",
+    "nextAction": "REVIEW_AND_REQUEST_H1_APPROVAL",
+    "document": {
+      "path": ".specgate/codex/changes/skillhub-canary-v1-9/requirements/revision-1-78df3135648cc8ef3181420b9c35f3df8ca2099cf83aa6ed0eb4c62e0fefde57-review-v2.md",
+      "absolutePath": "E:\\ai_workflow\\specgate-canary-skill-hub-initial\\.specgate\\codex\\changes\\skillhub-canary-v1-9\\requirements\\revision-1-78df3135648cc8ef3181420b9c35f3df8ca2099cf83aa6ed0eb4c62e0fefde57-review-v2.md",
+      "hash": "sha256:87e9e6a1ef275c6d618de5d62d9706501f691594fb6acf9977898a1c7313c988"
+    },
+    "state": {
+      "automaticFailures": 0,
+      "changeId": "skillhub-canary-v1-9",
+      "checkpoint": {
+        "id": "skillhub-canary-v1-9:298",
+        "label": "H1_PENDING",
+        "phase": "H1_PENDING",
+        "recordedAt": "2026-10-26T06:36:03.864Z",
+        "version": 298
+      },
+      "context": {
+        "artifacts": {
+          "requirements": {
+            "candidatePath": ".specgate/codex/changes/skillhub-canary-v1-9/requirements/candidate-78df3135648cc8ef3181420b9c35f3df8ca2099cf83aa6ed0eb4c62e0fefde57.json",
+            "documentHash": "sha256:87e9e6a1ef275c6d618de5d62d9706501f691594fb6acf9977898a1c7313c988",
+            "documentPath": ".specgate/codex/changes/skillhub-canary-v1-9/requirements/revision-1-78df3135648cc8ef3181420b9c35f3df8ca2099cf83aa6ed0eb4c62e0fefde57-review-v2.md",
+            "hash": "sha256:78df3135648cc8ef3181420b9c35f3df8ca2099cf83aa6ed0eb4c62e0fefde57",
+            "revision": 1
+          }
+        },
+        "changeAdd": {
+          "candidate": {
+            "hash": "sha256:78df3135648cc8ef3181420b9c35f3df8ca2099cf83aa6ed0eb4c62e0fefde57",
+            "snapshot": {
+              "assumptions": [],
+              "change": {
+                "baselineId": "baseline-3f8381e9b38f8a0d",
+                "details": {
+                  "actualBehavior": "原始 OAuth redirect 断言和前端生产 build 失败；v1.8 把已满足的运行器/历史约束建为独立业务case，无法满足冻结MVP的每case全红规则，已正式取消保留。",
+                  "expectedBehavior": "三个业务 case 在相同断言下真实红转绿，全部原后端119/前端49及补充测试、生产build、lint、format、覆盖率和回环HTTP通过；独立Review和H3后交付同一提交。",
+                  "nonGoals": [
+                    "弱化原测试或覆盖率",
+                    "伪造红灯或审批",
+                    "覆盖历史证据",
+                    "生产 PostgreSQL、真实 GitHub OAuth、部署和负载性能验收",
+                    "远程推送或 SpecGate 源码提交"
+                  ],
+                  "scope": [
+                    "修复现有 OAuth 同源跳转",
+                    "修复 Vue 生产构建及原测试",
+                    "以真实覆盖率、九阶段命令和回环 HTTP 证明同一固定提交的业务端到端行为"
+                  ]
+                },
+                "parentDeliveryId": null,
+                "type": "fix"
+              },
+              "changeContract": {
+                "acceptance": [
+                  "CANARY19-AC-01",
+                  "CANARY19-AC-02",
+                  "CANARY19-AC-03"
+                ],
+                "assumptions": [],
+                "baselineId": "baseline-3f8381e9b38f8a0d",
+                "changeId": "skillhub-canary-v1-9",
+                "nonGoals": [
+                  "弱化原测试或覆盖率",
+                  "伪造红灯或审批",
+                  "覆盖历史证据",
+                  "生产 PostgreSQL、真实 GitHub OAuth、部署和负载性能验收",
+                  "远程推送或 SpecGate 源码提交"
+                ],
+                "parentDeliveryId": null,
+                "request": "继续完成用户授权的 SkillHub 真实 M6 金丝雀闭环。修正 v1.8 将已满足的工具自检和历史保留作为业务 AC、无法诚实全红的需求建模错误，恢复原始 OAuth 跳转、前端生产构建和真实本地端到端验证三个业务目标。工具链/运行器安全、自检、全量原测试、证据新鲜度、进程树清理、历史保留仍为强制约束；三个业务 case 必须在实现前真实失败、实现后以相同断言真实通过。保留已有依赖精确哈希批准和可复用产品提交，重新冻结测试、执行红基线、串行集成、九阶段质量、Formatter 后完整重跑、strict Review、真实 H3 和唯一提交 DeliveryRecord。不推送不部署，生产 PostgreSQL、真实外部 OAuth、负载性能标 NOT_RUN。候选全文位于 SpecGate 源仓库 docs/implementation/specgate-core-mvp-v2/13-canary-closure-correction.md，最终以本 Change H1 文档为准。",
+                "risks": [],
+                "schemaVersion": 2,
+                "scope": [
+                  "修复现有 OAuth 同源跳转",
+                  "修复 Vue 生产构建及原测试",
+                  "以真实覆盖率、九阶段命令和回环 HTTP 证明同一固定提交的业务端到端行为"
+                ],
+                "status": "H1_PENDING",
+                "type": "fix"
+              },
+              "changeId": "skillhub-canary-v1-9",
+              "clarifications": [
+                {
+                  "answers": [
+                    {
+                      "actor": {
+                        "id": "Administrator",
+                        "kind": "user",
+                        "source": "codex-mcp-os-user"
+                      },
+                      "answer": "五项均按闭环修正候选执行",
+                      "at": "2026-10-26T06:33:32.464Z",
+                      "questionId": "Q-INTAKE-1",
+                      "source": "native-user-provider"
+                    },
+                    {
+                      "actor": {
+                        "id": "Administrator",
+                        "kind": "user",
+                        "source": "codex-mcp-os-user"
+                      },
+                      "answer": "五项均按闭环修正候选执行",
+                      "at": "2026-10-26T06:33:32.464Z",
+                      "questionId": "Q-INTAKE-2",
+                      "source": "native-user-provider"
+                    },
+                    {
+                      "actor": {
+                        "id": "Administrator",
+                        "kind": "user",
+                        "source": "codex-mcp-os-user"
+                      },
+                      "answer": "五项均按闭环修正候选执行",
+                      "at": "2026-10-26T06:33:32.464Z",
+                      "questionId": "Q-INTAKE-3",
+                      "source": "native-user-provider"
+                    },
+                    {
+                      "actor": {
+                        "id": "Administrator",
+                        "kind": "user",
+                        "source": "codex-mcp-os-user"
+                      },
+                      "answer": "五项均按闭环修正候选执行",
+                      "at": "2026-10-26T06:33:32.464Z",
+                      "questionId": "Q-INTAKE-4",
+                      "source": "native-user-provider"
+                    },
+                    {
+                      "actor": {
+                        "id": "Administrator",
+                        "kind": "user",
+                        "source": "codex-mcp-os-user"
+                      },
+                      "answer": "五项均按闭环修正候选执行",
+                      "at": "2026-10-26T06:33:32.464Z",
+                      "questionId": "Q-INTAKE-5",
+                      "source": "native-user-provider"
+                    }
+                  ],
+                  "at": "2026-10-26T06:32:50.796Z",
+                  "questions": [
+                    {
+                      "category": "functional",
+                      "id": "Q-INTAKE-1",
+                      "text": "这个变更要解决的核心问题是什么？目标用户和期望结果是什么？"
+                    },
+                    {
+                      "category": "constraint",
+                      "id": "Q-INTAKE-2",
+                      "text": "哪些内容明确在范围内，哪些明确不在范围内？"
+                    },
+                    {
+                      "category": "acceptance",
+                      "id": "Q-INTAKE-3",
+                      "text": "完成后有哪些可观察、可验证的验收标准？"
+                    },
+                    {
+                      "category": "failure",
+                      "id": "Q-INTAKE-4",
+                      "text": "需要覆盖哪些失败、边界或兼容场景？"
+                    },
+                    {
+                      "category": "security",
+                      "id": "Q-INTAKE-5",
+                      "text": "有哪些安全、性能或并发约束？"
+                    }
+                  ],
+                  "round": 1,
+                  "source": "server-intake",
+                  "status": "answered"
+                }
+              ],
+              "critique": {
+                "at": "2026-10-26T06:36:03.539Z",
+                "report": {
+                  "ambiguities": [],
+                  "contradictions": [],
+                  "infeasibleItems": [],
+                  "nonFunctionalRisks": [
+                    {
+                      "id": "RISK19-01",
+                      "requirementIds": [
+                        "CANARY19-REQ-03"
+                      ],
+                      "severity": "non-blocking",
+                      "suggestion": "始终逐项标NOT_RUN，写入最终客户包与风险。",
+                      "text": "真实生产数据库、外部OAuth和负载未验收。"
+                    }
+                  ],
+                  "restatement": [
+                    {
+                      "requirementId": "CANARY19-REQ-01",
+                      "text": "只恢复现有OAuth相对跳转，保留全部原后端测试并真实红转绿。"
+                    },
+                    {
+                      "requirementId": "CANARY19-REQ-02",
+                      "text": "仅用批准配置修复生产构建，所有原前端测试、类型检查、lint和格式检查必须真实运行。"
+                    },
+                    {
+                      "requirementId": "CANARY19-REQ-03",
+                      "text": "用相同断言证明旧业务缺陷存在与修复后九阶段、覆盖率、HTTP全部通过；辅助自检是前置约束，独立Review/H3/Delivery由后续门禁负责，不硬编码到测试结果中。"
+                    }
+                  ],
+                  "securityPerformanceConcurrencyRisks": [
+                    {
+                      "id": "RISK19-02",
+                      "requirementIds": [
+                        "CANARY19-REQ-03"
+                      ],
+                      "severity": "non-blocking",
+                      "suggestion": "沿用有界超时、127.0.0.1绑定及进程树终止证据，失败不宣称通过。",
+                      "text": "本地子进程与隔离HTTP运行可能超时或留下监听。"
+                    }
+                  ],
+                  "suggestedQuestions": [],
+                  "testBlindSpots": [
+                    {
+                      "id": "RISK19-03",
+                      "requirementIds": [
+                        "CANARY19-REQ-01",
+                        "CANARY19-REQ-02",
+                        "CANARY19-REQ-03"
+                      ],
+                      "severity": "non-blocking",
+                      "suggestion": "独立Test Designer只冻结3个可真实失败的业务case；增加无业务失败、工具缺失、报告过期负向自检；严格每case全红。",
+                      "text": "既有v1.8曾混淆自检与业务AC，且存在硬编码红灯。"
+                    }
+                  ]
+                },
+                "source": "model-proposal"
+              },
+              "openIssues": [],
+              "request": {
+                "at": "2026-10-26T06:32:50.442Z",
+                "source": "command-input",
+                "text": "继续完成用户授权的 SkillHub 真实 M6 金丝雀闭环。修正 v1.8 将已满足的工具自检和历史保留作为业务 AC、无法诚实全红的需求建模错误，恢复原始 OAuth 跳转、前端生产构建和真实本地端到端验证三个业务目标。工具链/运行器安全、自检、全量原测试、证据新鲜度、进程树清理、历史保留仍为强制约束；三个业务 case 必须在实现前真实失败、实现后以相同断言真实通过。保留已有依赖精确哈希批准和可复用产品提交，重新冻结测试、执行红基线、串行集成、九阶段质量、Formatter 后完整重跑、strict Review、真实 H3 和唯一提交 DeliveryRecord。不推送不部署，生产 PostgreSQL、真实外部 OAuth、负载性能标 NOT_RUN。候选全文位于 SpecGate 源仓库 docs/implementation/specgate-core-mvp-v2/13-canary-closure-correction.md，最终以本 Change H1 文档为准。"
+              },
+              "requirements": [
+                {
+                  "acceptanceCriteria": [
+                    {
+                      "id": "CANARY19-AC-01",
+                      "text": "GET /api/auth/github 返回302且Location严格等于 /oauth2/authorization/github；全部原后端119项及补充测试真实通过，0 fail/skip/cancel。"
+                    }
+                  ],
+                  "category": "functional",
+                  "id": "CANARY19-REQ-01",
+                  "text": "修复现有 GET /api/auth/github 的开发机绝对跳转，返回相对同源 /oauth2/authorization/github；仅修改 AuthController.java 和精确批准的POM。完整保留原119项后端测试及补充测试，原 OAuth 断言在实现前须真实失败。"
+                },
+                {
+                  "acceptanceCriteria": [
+                    {
+                      "id": "CANARY19-AC-02",
+                      "text": "npm run build、原49项及补充测试、npm run lint、npm run format:check实际退出0，0 skip/cancel；实现前生产build应因原TypeScript配置缺陷真实失败。"
+                    }
+                  ],
+                  "category": "functional",
+                  "dependencyChanges": [
+                    {
+                      "acIds": [
+                        "CANARY19-AC-02"
+                      ],
+                      "file": "frontend/package.json",
+                      "hash": "sha256:10bd9aa7a199a9f4ae67b8387caa12004d7dd5e8e2f16c7f39501bb9094725c3"
+                    },
+                    {
+                      "acIds": [
+                        "CANARY19-AC-02"
+                      ],
+                      "file": "frontend/package-lock.json",
+                      "hash": "sha256:979e4f60d02cf847029e2e7faba1edc523cf5a011523603b922d54a5d181af5a"
+                    }
+                  ],
+                  "id": "CANARY19-REQ-02",
+                  "text": "修复Vue生产构建，保留原49项前端测试及补充测试，生产类型检查继续执行。仅复制 .specgate/codex/evidence/proposed-config-v1.1 中获批frontend配置和原精确manifest/lockfile。不得修改原测试、弱化断言、更新依赖；两个tsconfig使用此前语义等价且通过Prettier的规范字节。"
+                },
+                {
+                  "acceptanceCriteria": [
+                    {
+                      "id": "CANARY19-AC-03",
+                      "text": "同一固定提交九阶段9/9实际通过，原测试及补充测试完整运行无跳过，真实覆盖率达到行80%/分支70%/变更行90%；回环后端JSON查询200、OAuth同源302、前端HTML及非空JS资源200，有PID及实际终止证据。实现前原OAuth和前端build缺陷使该端到端断言真实失败；基础设施错误不能算有效红。"
+                    }
+                  ],
+                  "category": "acceptance",
+                  "dependencyChanges": [
+                    {
+                      "acIds": [
+                        "CANARY19-AC-03"
+                      ],
+                      "file": "backend/pom.xml",
+                      "hash": "sha256:f3a3615e9d46f91256269464e8531bd4b325f2cbdf64d6f39e35ccbab0fac0f6"
+                    }
+                  ],
+                  "id": "CANARY19-REQ-03",
+                  "text": "在同一固定提交执行九阶段真实本地质量验证：backend-verify、frontend-install、frontend-build、frontend-test、frontend-lint、frontend-format、coverage、runtime、frontend-runtime。完整测量原Java/Vue/TS业务源和改动配置，行80%、分支70%、变更可执行行90%。H2测试配置启动后端，检查JSON查询、同源OAuth302和实际构建前端HTML/JS。运行器预检、自检、退出码传播、当前报告新鲜度、进程树清理和历史保留是强制运行约束；基础设施失败退出2并阻断，不能伪造业务红灯。每个业务case必须以red/green完全相同断言先真实失败后真实通过。运行隔离、仅回环、串行写入，原项目测试不得改动；生产PostgreSQL、真实GitHub OAuth、部署、负载性能NOT_RUN。严格Review、Formatter后全量质量、真实H3和DeliveryRecord由后续独立状态机门禁验证，不伪装为本技术case已执行的事实。"
+                }
+              ],
+              "revision": 1,
+              "schemaVersion": 1
+            }
+          },
+          "change": {
+            "baselineId": "baseline-3f8381e9b38f8a0d",
+            "details": {
+              "actualBehavior": "原始 OAuth redirect 断言和前端生产 build 失败；v1.8 把已满足的运行器/历史约束建为独立业务case，无法满足冻结MVP的每case全红规则，已正式取消保留。",
+              "expectedBehavior": "三个业务 case 在相同断言下真实红转绿，全部原后端119/前端49及补充测试、生产build、lint、format、覆盖率和回环HTTP通过；独立Review和H3后交付同一提交。",
+              "nonGoals": [
+                "弱化原测试或覆盖率",
+                "伪造红灯或审批",
+                "覆盖历史证据",
+                "生产 PostgreSQL、真实 GitHub OAuth、部署和负载性能验收",
+                "远程推送或 SpecGate 源码提交"
+              ],
+              "scope": [
+                "修复现有 OAuth 同源跳转",
+                "修复 Vue 生产构建及原测试",
+                "以真实覆盖率、九阶段命令和回环 HTTP 证明同一固定提交的业务端到端行为"
+              ]
+            },
+            "parentDeliveryId": null,
+            "type": "fix"
+          },
+          "changeContract": {
+            "acceptance": [
+              "CANARY19-AC-01",
+              "CANARY19-AC-02",
+              "CANARY19-AC-03"
+            ],
+            "assumptions": [],
+            "baselineId": "baseline-3f8381e9b38f8a0d",
+            "changeId": "skillhub-canary-v1-9",
+            "nonGoals": [
+              "弱化原测试或覆盖率",
+              "伪造红灯或审批",
+              "覆盖历史证据",
+              "生产 PostgreSQL、真实 GitHub OAuth、部署和负载性能验收",
+              "远程推送或 SpecGate 源码提交"
+            ],
+            "parentDeliveryId": null,
+            "request": "继续完成用户授权的 SkillHub 真实 M6 金丝雀闭环。修正 v1.8 将已满足的工具自检和历史保留作为业务 AC、无法诚实全红的需求建模错误，恢复原始 OAuth 跳转、前端生产构建和真实本地端到端验证三个业务目标。工具链/运行器安全、自检、全量原测试、证据新鲜度、进程树清理、历史保留仍为强制约束；三个业务 case 必须在实现前真实失败、实现后以相同断言真实通过。保留已有依赖精确哈希批准和可复用产品提交，重新冻结测试、执行红基线、串行集成、九阶段质量、Formatter 后完整重跑、strict Review、真实 H3 和唯一提交 DeliveryRecord。不推送不部署，生产 PostgreSQL、真实外部 OAuth、负载性能标 NOT_RUN。候选全文位于 SpecGate 源仓库 docs/implementation/specgate-core-mvp-v2/13-canary-closure-correction.md，最终以本 Change H1 文档为准。",
+            "risks": [],
+            "schemaVersion": 2,
+            "scope": [
+              "修复现有 OAuth 同源跳转",
+              "修复 Vue 生产构建及原测试",
+              "以真实覆盖率、九阶段命令和回环 HTTP 证明同一固定提交的业务端到端行为"
+            ],
+            "status": "H1_PENDING",
+            "type": "fix"
+          },
+          "critique": {
+            "at": "2026-10-26T06:36:03.539Z",
+            "report": {
+              "ambiguities": [],
+              "contradictions": [],
+              "infeasibleItems": [],
+              "nonFunctionalRisks": [
+                {
+                  "id": "RISK19-01",
+                  "requirementIds": [
+                    "CANARY19-REQ-03"
+                  ],
+                  "severity": "non-blocking",
+                  "suggestion": "始终逐项标NOT_RUN，写入最终客户包与风险。",
+                  "text": "真实生产数据库、外部OAuth和负载未验收。"
+                }
+              ],
+              "restatement": [
+                {
+                  "requirementId": "CANARY19-REQ-01",
+                  "text": "只恢复现有OAuth相对跳转，保留全部原后端测试并真实红转绿。"
+                },
+                {
+                  "requirementId": "CANARY19-REQ-02",
+                  "text": "仅用批准配置修复生产构建，所有原前端测试、类型检查、lint和格式检查必须真实运行。"
+                },
+                {
+                  "requirementId": "CANARY19-REQ-03",
+                  "text": "用相同断言证明旧业务缺陷存在与修复后九阶段、覆盖率、HTTP全部通过；辅助自检是前置约束，独立Review/H3/Delivery由后续门禁负责，不硬编码到测试结果中。"
+                }
+              ],
+              "securityPerformanceConcurrencyRisks": [
+                {
+                  "id": "RISK19-02",
+                  "requirementIds": [
+                    "CANARY19-REQ-03"
+                  ],
+                  "severity": "non-blocking",
+                  "suggestion": "沿用有界超时、127.0.0.1绑定及进程树终止证据，失败不宣称通过。",
+                  "text": "本地子进程与隔离HTTP运行可能超时或留下监听。"
+                }
+              ],
+              "suggestedQuestions": [],
+              "testBlindSpots": [
+                {
+                  "id": "RISK19-03",
+                  "requirementIds": [
+                    "CANARY19-REQ-01",
+                    "CANARY19-REQ-02",
+                    "CANARY19-REQ-03"
+                  ],
+                  "severity": "non-blocking",
+                  "suggestion": "独立Test Designer只冻结3个可真实失败的业务case；增加无业务失败、工具缺失、报告过期负向自检；严格每case全红。",
+                  "text": "既有v1.8曾混淆自检与业务AC，且存在硬编码红灯。"
+                }
+              ]
+            },
+            "source": "model-proposal"
+          },
+          "document": {
+            "candidateHash": "sha256:78df3135648cc8ef3181420b9c35f3df8ca2099cf83aa6ed0eb4c62e0fefde57",
+            "hash": "sha256:87e9e6a1ef275c6d618de5d62d9706501f691594fb6acf9977898a1c7313c988",
+            "path": ".specgate/codex/changes/skillhub-canary-v1-9/requirements/revision-1-78df3135648cc8ef3181420b9c35f3df8ca2099cf83aa6ed0eb4c62e0fefde57-review-v2.md",
+            "preparedAt": "2026-10-26T06:36:03.883Z",
+            "rendererVersion": 2
+          },
+          "frozen": null,
+          "incremental": null,
+          "request": {
+            "at": "2026-10-26T06:32:50.442Z",
+            "source": "command-input",
+            "text": "继续完成用户授权的 SkillHub 真实 M6 金丝雀闭环。修正 v1.8 将已满足的工具自检和历史保留作为业务 AC、无法诚实全红的需求建模错误，恢复原始 OAuth 跳转、前端生产构建和真实本地端到端验证三个业务目标。工具链/运行器安全、自检、全量原测试、证据新鲜度、进程树清理、历史保留仍为强制约束；三个业务 case 必须在实现前真实失败、实现后以相同断言真实通过。保留已有依赖精确哈希批准和可复用产品提交，重新冻结测试、执行红基线、串行集成、九阶段质量、Formatter 后完整重跑、strict Review、真实 H3 和唯一提交 DeliveryRecord。不推送不部署，生产 PostgreSQL、真实外部 OAuth、负载性能标 NOT_RUN。候选全文位于 SpecGate 源仓库 docs/implementation/specgate-core-mvp-v2/13-canary-closure-correction.md，最终以本 Change H1 文档为准。"
+          },
+          "revisions": [
+            {
+              "assumptions": [],
+              "at": "2026-10-26T06:35:49.942Z",
+              "openIssues": [],
+              "requirements": [
+                {
+                  "acceptanceCriteria": [
+                    {
+                      "id": "CANARY19-AC-01",
+                      "text": "GET /api/auth/github 返回302且Location严格等于 /oauth2/authorization/github；全部原后端119项及补充测试真实通过，0 fail/skip/cancel。"
+                    }
+                  ],
+                  "category": "functional",
+                  "id": "CANARY19-REQ-01",
+                  "text": "修复现有 GET /api/auth/github 的开发机绝对跳转，返回相对同源 /oauth2/authorization/github；仅修改 AuthController.java 和精确批准的POM。完整保留原119项后端测试及补充测试，原 OAuth 断言在实现前须真实失败。"
+                },
+                {
+                  "acceptanceCriteria": [
+                    {
+                      "id": "CANARY19-AC-02",
+                      "text": "npm run build、原49项及补充测试、npm run lint、npm run format:check实际退出0，0 skip/cancel；实现前生产build应因原TypeScript配置缺陷真实失败。"
+                    }
+                  ],
+                  "category": "functional",
+                  "dependencyChanges": [
+                    {
+                      "acIds": [
+                        "CANARY19-AC-02"
+                      ],
+                      "file": "frontend/package.json",
+                      "hash": "sha256:10bd9aa7a199a9f4ae67b8387caa12004d7dd5e8e2f16c7f39501bb9094725c3"
+                    },
+                    {
+                      "acIds": [
+                        "CANARY19-AC-02"
+                      ],
+                      "file": "frontend/package-lock.json",
+                      "hash": "sha256:979e4f60d02cf847029e2e7faba1edc523cf5a011523603b922d54a5d181af5a"
+                    }
+                  ],
+                  "id": "CANARY19-REQ-02",
+                  "text": "修复Vue生产构建，保留原49项前端测试及补充测试，生产类型检查继续执行。仅复制 .specgate/codex/evidence/proposed-config-v1.1 中获批frontend配置和原精确manifest/lockfile。不得修改原测试、弱化断言、更新依赖；两个tsconfig使用此前语义等价且通过Prettier的规范字节。"
+                },
+                {
+                  "acceptanceCriteria": [
+                    {
+                      "id": "CANARY19-AC-03",
+                      "text": "同一固定提交九阶段9/9实际通过，原测试及补充测试完整运行无跳过，真实覆盖率达到行80%/分支70%/变更行90%；回环后端JSON查询200、OAuth同源302、前端HTML及非空JS资源200，有PID及实际终止证据。实现前原OAuth和前端build缺陷使该端到端断言真实失败；基础设施错误不能算有效红。"
+                    }
+                  ],
+                  "category": "acceptance",
+                  "dependencyChanges": [
+                    {
+                      "acIds": [
+                        "CANARY19-AC-03"
+                      ],
+                      "file": "backend/pom.xml",
+                      "hash": "sha256:f3a3615e9d46f91256269464e8531bd4b325f2cbdf64d6f39e35ccbab0fac0f6"
+                    }
+                  ],
+                  "id": "CANARY19-REQ-03",
+                  "text": "在同一固定提交执行九阶段真实本地质量验证：backend-verify、frontend-install、frontend-build、frontend-test、frontend-lint、frontend-format、coverage、runtime、frontend-runtime。完整测量原Java/Vue/TS业务源和改动配置，行80%、分支70%、变更可执行行90%。H2测试配置启动后端，检查JSON查询、同源OAuth302和实际构建前端HTML/JS。运行器预检、自检、退出码传播、当前报告新鲜度、进程树清理和历史保留是强制运行约束；基础设施失败退出2并阻断，不能伪造业务红灯。每个业务case必须以red/green完全相同断言先真实失败后真实通过。运行隔离、仅回环、串行写入，原项目测试不得改动；生产PostgreSQL、真实GitHub OAuth、部署、负载性能NOT_RUN。严格Review、Formatter后全量质量、真实H3和DeliveryRecord由后续独立状态机门禁验证，不伪装为本技术case已执行的事实。"
+                }
+              ],
+              "revision": 1,
+              "source": "model-proposal"
+            }
+          ],
+          "rounds": [
+            {
+              "answers": [
+                {
+                  "actor": {
+                    "id": "Administrator",
+                    "kind": "user",
+                    "source": "codex-mcp-os-user"
+                  },
+                  "answer": "五项均按闭环修正候选执行",
+                  "at": "2026-10-26T06:33:32.464Z",
+                  "questionId": "Q-INTAKE-1",
+                  "source": "native-user-provider"
+                },
+                {
+                  "actor": {
+                    "id": "Administrator",
+                    "kind": "user",
+                    "source": "codex-mcp-os-user"
+                  },
+                  "answer": "五项均按闭环修正候选执行",
+                  "at": "2026-10-26T06:33:32.464Z",
+                  "questionId": "Q-INTAKE-2",
+                  "source": "native-user-provider"
+                },
+                {
+                  "actor": {
+                    "id": "Administrator",
+                    "kind": "user",
+                    "source": "codex-mcp-os-user"
+                  },
+                  "answer": "五项均按闭环修正候选执行",
+                  "at": "2026-10-26T06:33:32.464Z",
+                  "questionId": "Q-INTAKE-3",
+                  "source": "native-user-provider"
+                },
+                {
+                  "actor": {
+                    "id": "Administrator",
+                    "kind": "user",
+                    "source": "codex-mcp-os-user"
+                  },
+                  "answer": "五项均按闭环修正候选执行",
+                  "at": "2026-10-26T06:33:32.464Z",
+                  "questionId": "Q-INTAKE-4",
+                  "source": "native-user-provider"
+                },
+                {
+                  "actor": {
+                    "id": "Administrator",
+                    "kind": "user",
+                    "source": "codex-mcp-os-user"
+                  },
+                  "answer": "五项均按闭环修正候选执行",
+                  "at": "2026-10-26T06:33:32.464Z",
+                  "questionId": "Q-INTAKE-5",
+                  "source": "native-user-provider"
+                }
+              ],
+              "at": "2026-10-26T06:32:50.796Z",
+              "questions": [
+                {
+                  "category": "functional",
+                  "id": "Q-INTAKE-1",
+                  "text": "这个变更要解决的核心问题是什么？目标用户和期望结果是什么？"
+                },
+                {
+                  "category": "constraint",
+                  "id": "Q-INTAKE-2",
+                  "text": "哪些内容明确在范围内，哪些明确不在范围内？"
+                },
+                {
+                  "category": "acceptance",
+                  "id": "Q-INTAKE-3",
+                  "text": "完成后有哪些可观察、可验证的验收标准？"
+                },
+                {
+                  "category": "failure",
+                  "id": "Q-INTAKE-4",
+                  "text": "需要覆盖哪些失败、边界或兼容场景？"
+                },
+                {
+                  "category": "security",
+                  "id": "Q-INTAKE-5",
+                  "text": "有哪些安全、性能或并发约束？"
+                }
+              ],
+              "round": 1,
+              "source": "server-intake",
+              "status": "answered"
+            }
+          ]
+        },
+        "prerequisiteVerification": null,
+        "project": {
+          "baselineId": "baseline-3f8381e9b38f8a0d",
+          "baselineStatus": "known-failures",
+          "environmentFingerprint": "35d375169d144fc09999110af9771723cf3e542d4f46a4732da4b91d6e346ba7",
+          "mode": "adopted",
+          "projectId": "project-3d2b3b864d29e724"
+        }
+      },
+      "phase": "H1_PENDING",
+      "resumePhase": null,
+      "retries": {},
+      "schemaVersion": 1,
+      "version": 299
+    },
+    "actualVersion": 299
+  },
+  "observedAt": "2026-10-26T06:36:03.994Z"
+}
