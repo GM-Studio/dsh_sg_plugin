@@ -7,7 +7,13 @@ on:
 
 jobs:
   verify:
-    runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # 首期真实验收范围（D02）：Windows/Linux x64。
+        # 两个平台各自独立跑完整门禁，任何一方失败都不得被另一方掩盖。
+        os: [windows-latest, ubuntu-latest]
+    runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -21,3 +27,13 @@ jobs:
       - run: npm run format:check
       - run: npm run pack:check
       - run: npm run codex:smoke
+      # 记录本平台的真实证据。该步骤只为 matrix.os 对应的平台背书，
+      # 不会替另一个平台写入通过记录（平台诚实性由脚本自身保证）。
+      - name: Record platform evidence
+        run: node scripts/record-platform-evidence.mjs
+      - name: Upload platform evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: platform-evidence-${{ matrix.os }}
+          path: docs/verification/stack-neutral-adoption/platform-*.json
+          if-no-files-found: error
