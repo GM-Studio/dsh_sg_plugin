@@ -6,6 +6,7 @@ import { load as loadState } from './state.js';
 import { init as initState, patchState } from './project-facts.js';
 import { REQ_VERSION, isRequirementsFrozen } from './requirements.js';
 import { loadTemplateStyle } from './template-style.js';
+import { CHANGE_TYPES, CHANGE_TYPE_HINT } from './change-types.js';
 
 export const CONFIG_FILE = 'config.yaml';
 export const CHANGE_NAME_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
@@ -395,12 +396,12 @@ export function createChange(
       fix: '使用 kebab-case，例如 add-login',
     };
   }
-  if (!['feature', 'modify', 'fix', 'remove'].includes(type)) {
+  if (!CHANGE_TYPES.includes(type)) {
     return {
       ok: false,
       code: 'INVALID_CHANGE_TYPE',
       message: `变更类型不合法：${String(type)}`,
-      fix: 'type 只能是 feature / modify / fix / remove',
+      fix: `type 只能是 ${CHANGE_TYPE_HINT}`,
     };
   }
 

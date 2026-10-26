@@ -1,6 +1,7 @@
 import path from 'node:path';
 import { exists, readText } from './util/fsx.js';
 import { readProjectFacts } from '../state-machine.js';
+import { CHANGE_TYPES } from './change-types.js';
 
 export const SCHEMA_VERSION = 3;
 
@@ -19,7 +20,8 @@ export const PHASES = [
   'ABORTED',
 ];
 
-export const CHANGE_TYPES = ['feature', 'modify', 'fix', 'remove'];
+// 词表唯一来源见 ./change-types.js（M1 / SNA-0103）；此处re-export保持既有导入可用。
+export { CHANGE_TYPES };
 
 export function nowIso() {
   return new Date().toISOString();

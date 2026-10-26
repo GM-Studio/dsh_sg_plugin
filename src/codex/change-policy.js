@@ -1,6 +1,5 @@
 import { validateChangeContract } from './project-model.js';
-
-const TYPES = new Set(['feature', 'modify', 'fix']);
+import { CHANGE_TYPE_HINT, isChangeType } from './core/change-types.js';
 const DETAIL_KEYS = new Set([
   'scope',
   'nonGoals',
@@ -28,8 +27,8 @@ const sensitive = (value) =>
 
 export function normalizeChangeInput({ legacyFeature = false, request, type, details = {} } = {}) {
   const normalizedType = legacyFeature ? 'feature' : (type ?? 'feature');
-  if (!TYPES.has(normalizedType))
-    return failure('CHANGE_TYPE_INVALID', 'Only feature, modify and fix are supported');
+  if (!isChangeType(normalizedType))
+    return failure('CHANGE_TYPE_INVALID', 'Supported change types: ' + CHANGE_TYPE_HINT);
   const normalizedDetails = object(details) ? { ...details } : null;
   if (!normalizedDetails)
     return failure('CHANGE_DETAILS_INVALID', 'Change details must be an object');
@@ -37,8 +36,8 @@ export function normalizeChangeInput({ legacyFeature = false, request, type, det
 }
 
 export function validateChangeInput(value = {}) {
-  if (!TYPES.has(value.type))
-    return failure('CHANGE_TYPE_INVALID', 'Only feature, modify and fix are supported');
+  if (!isChangeType(value.type))
+    return failure('CHANGE_TYPE_INVALID', 'Supported change types: ' + CHANGE_TYPE_HINT);
   if (!text(value.request) || sensitive(value.request))
     return sensitive(value.request)
       ? failure('SENSITIVE_CHANGE_INPUT', 'Change request contains apparent credentials')

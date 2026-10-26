@@ -27,6 +27,10 @@ const kinds = [
   'docs',
 ];
 const roles = ['backend', 'frontend', 'test', 'integration', 'review', 'docs'];
+// D08：执行 agent 上限为 4（不含主控）。默认值保持 1，与既有计划行为等价；
+// 上界是硬约束，超界拒绝而非截断——截断会静默改变用户批准的资源预算。
+export const MAX_PARALLEL_DEVELOPMENT = 4;
+export const DEFAULT_PARALLEL_DEVELOPMENT = 1;
 const roleForKind = {
   contract: 'backend',
   model: 'backend',
@@ -159,13 +163,20 @@ function validateGraph(graph) {
     );
   if (
     !object(graph) ||
-    graph.maxParallelDevelopment !== 1 ||
     !Array.isArray(graph.acs) ||
     !graph.acs.length ||
     !Array.isArray(graph.tasks) ||
     !graph.tasks.length
   )
     return invalid();
+  // 并发上限校验独立出来，便于给出可区分的错误码（AC-24 / D08）。
+  if (!Number.isInteger(graph.maxParallelDevelopment) || graph.maxParallelDevelopment < 1)
+    return failure('PLAN_PARALLEL_INVALID', 'maxParallelDevelopment must be a positive integer');
+  if (graph.maxParallelDevelopment > MAX_PARALLEL_DEVELOPMENT)
+    return failure(
+      'PLAN_PARALLEL_LIMIT_EXCEEDED',
+      'maxParallelDevelopment exceeds the approved limit of ' + MAX_PARALLEL_DEVELOPMENT,
+    );
   const acs = new Map(graph.acs.map((ac) => [ac.id, ac]));
   if (
     acs.size !== graph.acs.length ||
@@ -400,7 +411,12 @@ export function buildTaskGraph(snapshot, filePolicies = {}) {
         'Reconcile frozen assets, quality commands and acceptance evidence before Review.',
       ]),
     );
-    const graph = { schemaVersion: 1, maxParallelDevelopment: 1, acs, tasks };
+    const graph = {
+      schemaVersion: 1,
+      maxParallelDevelopment: DEFAULT_PARALLEL_DEVELOPMENT,
+      acs,
+      tasks,
+    };
     const checked = validateTaskGraph(graph);
     return checked.ok ? { ok: true, graph } : checked;
   } catch (error) {

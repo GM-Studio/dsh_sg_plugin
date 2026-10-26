@@ -191,7 +191,8 @@ test('DAG validation rejects cycles, dangling dependencies, invalid AC reference
       graph.tasks.find((task) => task.kind === 'frontend').deps = [];
     },
     (graph) => {
-      graph.maxParallelDevelopment = 3;
+      // D08 上界为 4：5 越界必须被拒（原断言用 3，把「只允许 1」固化进了测试）。
+      graph.maxParallelDevelopment = 5;
     },
     (graph) => {
       graph.tasks.find((task) => task.kind === 'frontend').role = 'test';
@@ -584,4 +585,61 @@ test('test design preparation assigns and runs the real designer before reportin
   });
   assert.equal(frozen.ok, true, JSON.stringify(frozen));
   assert.equal(frozen.state.phase, 'TEST_CASES_FROZEN');
+});
+
+test('parallel development is bounded by D08 instead of being pinned to one', () => {
+  // 旧行为：maxParallelDevelopment !== 1 直接判 PLAN_GRAPH_INVALID。
+  // 新行为：1..4 合法（默认仍为 1），0/负数/小数/字符串/超界一律拒绝。
+  const base = buildTaskGraph({ requirements: requirements(2) }).graph;
+  assert.equal(base.maxParallelDevelopment, 1, '默认值必须保持 1，既有计划无需迁移');
+
+  for (const value of [1, 2, 3, 4]) {
+    const graph = structuredClone(base);
+    graph.maxParallelDevelopment = value;
+    assert.equal(validateTaskGraph(graph).ok, true, 'should accept ' + value);
+  }
+
+  const outOfRange = structuredClone(base);
+  outOfRange.maxParallelDevelopment = 5;
+  const exceeded = validateTaskGraph(outOfRange);
+  assert.equal(exceeded.ok, false);
+  assert.equal(
+    exceeded.code,
+    'PLAN_PARALLEL_LIMIT_EXCEEDED',
+    '超界必须给出专门错误码而不是笼统的图错误',
+  );
+
+  for (const value of [0, -1, 4.5, '4', null, undefined, NaN]) {
+    const graph = structuredClone(base);
+    graph.maxParallelDevelopment = value;
+    const result = validateTaskGraph(graph);
+    assert.equal(result.ok, false, 'should reject ' + String(value));
+    assert.equal(
+      result.code,
+      'PLAN_PARALLEL_INVALID',
+      'should be a bounded-value error for ' + String(value),
+    );
+  }
+});
+
+test('the approved parallel limit is exported as a single source of truth', async () => {
+  const plan = await import('../src/codex/plan.js');
+  assert.equal(plan.MAX_PARALLEL_DEVELOPMENT, 4, 'D08 上界为 4，不含主控');
+  assert.equal(plan.DEFAULT_PARALLEL_DEVELOPMENT, 1, '默认保持既有行为');
+  // 生成器不得再写死字面量 1。
+  const fs = await import('node:fs');
+  const path = await import('node:path');
+  const { fileURLToPath } = await import('node:url');
+  const root = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
+  const source = fs.readFileSync(path.join(root, 'src/codex/plan.js'), 'utf8');
+  assert.equal(
+    /maxParallelDevelopment:\s*1\b/.test(source),
+    false,
+    'plan.js must not hardcode maxParallelDevelopment: 1',
+  );
+  assert.equal(
+    /maxParallelDevelopment\s*!==\s*1/.test(source),
+    false,
+    'plan.js must not compare maxParallelDevelopment !== 1',
+  );
 });
