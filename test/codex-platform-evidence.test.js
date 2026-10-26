@@ -112,20 +112,31 @@ test('the summary cannot claim full support while either platform lacks evidence
   assert.equal(complete.reservedCount, 1);
 });
 
-test('the repository currently has no platform evidence, so both stay unverified', () => {
-  // 这一条记录真实状态：本仓库尚未产出原生平台证据。
-  // 若将来 CI 提交了证据文件，本断言会失败，届时应更新为「已支持」。
+test('a platform is supported only when its own evidence file says passed', () => {
+  // 这一点记录真实状态：证据文件存在但 status 为 failed 时，等级必须是 unverified。
   const evidenceDirectory = path.join(root, PLATFORM_EVIDENCE_DIRECTORY);
-  const files = fs.existsSync(evidenceDirectory)
-    ? fs.readdirSync(evidenceDirectory).filter((name) => /^platform-.*.json$/.test(name))
-    : [];
+  const readStatus = (name) => {
+    try {
+      return (
+        JSON.parse(fs.readFileSync(path.join(evidenceDirectory, name), 'utf8'))?.status ?? null
+      );
+    } catch {
+      return null;
+    }
+  };
   const summary = summarizePlatforms({ root });
   for (const row of summary.rows) {
     if (row.platform === 'darwin') {
       assert.equal(row.level, 'reserved');
       continue;
     }
-    const hasFile = files.includes(evidenceFileName(row.platform, row.arch));
-    assert.equal(row.level, hasFile ? 'supported' : 'unverified', row.platform);
+    const name = evidenceFileName(row.platform, row.arch);
+    const fileStatus = readStatus(name);
+    const expected = fileStatus === 'passed' ? 'supported' : 'unverified';
+    assert.equal(
+      row.level,
+      expected,
+      row.platform + ' (evidence status: ' + String(fileStatus) + ')',
+    );
   }
 });

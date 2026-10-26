@@ -1,0 +1,50 @@
+{
+  "$schema": "https://specgate.dev/schemas/platform-evidence-v1.json",
+  "platform": "win32",
+  "arch": "x64",
+  "status": "passed",
+  "recordedAt": "2026-10-26T12:17:37.062Z",
+  "recordedBy": "manual local run on Windows host",
+  "node": "v24.14.0",
+  "release": "Windows 10.0.19045 (MINGW64 bash shell)",
+  "environment": {
+    "kind": "native-host",
+    "hypervisor": null,
+    "isEmulated": false,
+    "isContainer": false,
+    "isWsl": false
+  },
+  "source": {
+    "transfer": "working tree",
+    "commit": "1156f7023451a97db183d9ac441575c10deefa18"
+  },
+  "checks": [
+    {
+      "name": "core-tests",
+      "command": "npm test",
+      "exitCode": 0,
+      "summary": "tests 1139 / pass 1139 / fail 0 / cancelled 0 / skipped 0"
+    },
+    {
+      "name": "lint",
+      "command": "npm run lint",
+      "exitCode": 0
+    },
+    {
+      "name": "format-check",
+      "command": "npm run format:check",
+      "exitCode": 0
+    },
+    {
+      "name": "pack-check",
+      "command": "npm run pack:check",
+      "exitCode": 0
+    },
+    {
+      "name": "mcp-smoke",
+      "command": "npm run codex:smoke",
+      "exitCode": 0
+    }
+  ],
+  "coversOnlyOwnPlatform": true
+}

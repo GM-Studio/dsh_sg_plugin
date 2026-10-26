@@ -1,0 +1,69 @@
+{
+  "$schema": "https://specgate.dev/schemas/platform-evidence-v1.json",
+  "platform": "linux",
+  "arch": "x64",
+  "status": "failed",
+  "recordedAt": "2026-10-26T12:10:45.546Z",
+  "recordedBy": "manual ssh session against native VMware Ubuntu guest",
+  "node": "v22.22.1",
+  "release": "Ubuntu 26.04.1 LTS, kernel 7.0.0-38-generic",
+  "environment": {
+    "kind": "native-vm",
+    "hypervisor": "VMware Workstation, NAT 192.168.137.128",
+    "isEmulated": false,
+    "isContainer": false,
+    "isWsl": false,
+    "cpus": 20,
+    "memoryGb": 15
+  },
+  "source": {
+    "transfer": "git archive HEAD",
+    "commit": "1156f7023451a97db183d9ac441575c10deefa18"
+  },
+  "checks": [
+    {
+      "name": "core-tests",
+      "command": "npm test",
+      "exitCode": 1,
+      "summary": "tests 1109 / pass 1096 / fail 4 / cancelled 9",
+      "knownFailures": [
+        {
+          "count": 4,
+          "code": "REMOTE_MODE_CONFIG_INVALID",
+          "reason": "远程模式需要 MySQL 与加密 TOTP 种子；相关用例属 test:mysql 分类，本机未配置 MySQL",
+          "classification": "environment-missing",
+          "affectedBySnaChanges": false
+        },
+        {
+          "count": 9,
+          "code": "ERR_TEST_FAILURE",
+          "reason": "Promise resolution is still pending but the event loop has already resolved；createOutboundWorker 的 start() 返回 done promise 在测试结束前未收敛，Node 22 比 Node 24 更严格判定 cancelled",
+          "file": "test/codex-control-outbound-worker.test.js",
+          "classification": "cross-platform-test-cleanup",
+          "affectedBySnaChanges": false
+        }
+      ]
+    },
+    {
+      "name": "lint",
+      "command": "npm run lint",
+      "exitCode": 0
+    },
+    {
+      "name": "format-check",
+      "command": "npm run format:check",
+      "exitCode": 0
+    },
+    {
+      "name": "pack-check",
+      "command": "npm run pack:check",
+      "exitCode": 0
+    },
+    {
+      "name": "mcp-smoke",
+      "command": "npm run codex:smoke",
+      "exitCode": 0
+    }
+  ],
+  "coversOnlyOwnPlatform": true
+}
