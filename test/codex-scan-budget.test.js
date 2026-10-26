@@ -65,6 +65,20 @@ test('dependency directories are skipped and counted, not analysed', (t) => {
   for (const entry of result.skipped) assert.equal(entry.reason, 'dependency-or-artifact');
 });
 
+test('local runtime, cache and evidence directories are skipped so real source is not starved', (t) => {
+  const root = workspace(t);
+  write(root, 'src/app.js', 'console.log(1);');
+  // 本地工具状态目录：体积可能远大于源码，必须先跳过，否则预算被其耗尽。
+  for (const directory of ['.runtime', '.npm-cache', '.task-evidence'])
+    write(root, directory + '/bulk.bin', 'x'.repeat(4096));
+  const result = scanRepository({ root, budget: { maxTotalBytes: 1024 * 1024 } });
+  assert.deepEqual(paths(result.scanned), ['src/app.js'], '真实源码必须仍被扫描');
+  assert.equal(result.complete, true, '跳过工具状态目录后扫描应完整');
+  const skippedPaths = paths(result.skipped);
+  for (const directory of ['.runtime', '.npm-cache', '.task-evidence'])
+    assert.ok(skippedPaths.includes(directory), directory + ' 应被跳过');
+});
+
 test('suspected secret files are skipped by name and never described as analysed', (t) => {
   const root = workspace(t);
   write(root, 'app.js', 'console.log(1);');

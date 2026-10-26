@@ -40,6 +40,13 @@ export const DEFAULT_SKIP_DIRECTORIES = Object.freeze([
   '.vscode',
   'vendor',
   'Pods',
+  // 本地运行时/缓存/证据目录：属工具状态而非项目内容。
+  // 缺省跳过它们是 NFR-01 的必要条件——否则 1.8G 的本地运行时会耗尽预算，
+  // 让真实源码（本仓库约 17MB）反而落在未扫描范围。
+  '.runtime',
+  '.npm-cache',
+  '.task-evidence',
+  '.specgate-cache',
 ]);
 
 /** 疑似密钥文件名模式：默认跳过，且不计入已分析范围（NFR-03）。 */
