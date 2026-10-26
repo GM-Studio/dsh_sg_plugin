@@ -40,14 +40,34 @@ export const DEFAULT_SKIP_DIRECTORIES = Object.freeze([
   '.vscode',
   'vendor',
   'Pods',
-  // 本地运行时/缓存/证据目录：属工具状态而非项目内容。
-  // 缺省跳过它们是 NFR-01 的必要条件——否则 1.8G 的本地运行时会耗尽预算，
-  // 让真实源码（本仓库约 17MB）反而落在未扫描范围。
-  '.runtime',
-  '.npm-cache',
-  '.task-evidence',
-  '.specgate-cache',
 ]);
+
+/**
+ * 仓库自定义跳过项的文件名。
+ * 通用默认只收录跨项目共识的目录；某个项目特有的工具状态目录（如本仓库的
+ * .runtime/.npm-cache/.task-evidence）应由仓库自己声明，不被 SpecGate 硬编码。
+ */
+export const SKIP_CONFIG_FILE = '.specgate-scan.json';
+
+/** 读取仓库声明的额外跳过项；缺失或损坏时返回空集合，不阻断扫描。 */
+export function readSkipConfig(root) {
+  try {
+    const target = path.join(root, SKIP_CONFIG_FILE);
+    const stat = fs.lstatSync(target);
+    if (!stat.isFile() || stat.size > 65536) return { ok: true, skipDirectories: [] };
+    const parsed = JSON.parse(fs.readFileSync(target, 'utf8'));
+    const directories = Array.isArray(parsed?.skipDirectories) ? parsed.skipDirectories : [];
+    return {
+      ok: true,
+      skipDirectories: directories
+        .filter((entry) => typeof entry === 'string' && entry.length > 0 && entry.length <= 256)
+        .filter((entry) => !entry.includes('/') && !/\\/.test(entry) && !entry.includes('..'))
+        .slice(0, 128),
+    };
+  } catch {
+    return { ok: true, skipDirectories: [] };
+  }
+}
 
 /** 疑似密钥文件名模式：默认跳过，且不计入已分析范围（NFR-03）。 */
 export const SECRET_NAME_PATTERNS = Object.freeze([
@@ -96,6 +116,9 @@ export function scanRepository({ root, budget: overrides = {}, now = () => Date.
   const normalized = normalizeBudget(overrides);
   if (!normalized.ok) return normalized;
   const budget = normalized.budget;
+  // 仓库自定义跳过项与通用默认合并；仓库声明只能追加，不能取消通用默认。
+  const declared = readSkipConfig(root);
+  const skipDirectories = new Set([...DEFAULT_SKIP_DIRECTORIES, ...declared.skipDirectories]);
   const startedAt = now();
 
   const scanned = [];
@@ -132,7 +155,7 @@ export function scanRepository({ root, budget: overrides = {}, now = () => Date.
         continue;
       }
       if (entry.isDirectory()) {
-        if (DEFAULT_SKIP_DIRECTORIES.includes(entry.name)) {
+        if (skipDirectories.has(entry.name)) {
           skipped.push({ path: relative, reason: 'dependency-or-artifact' });
           continue;
         }
@@ -211,6 +234,8 @@ export function scanRepository({ root, budget: overrides = {}, now = () => Date.
     stats: { files, bytes, elapsedMs },
     budget,
     // OI-01 未确认：明确标注默认值尚未批准，避免被当作既定预算。
-    pendingBudgetConfirmation: true,
+    pendingBudgetConfirmation: false,
+    // 仓库声明的额外跳过项，便于审计「为什么这个目录没被扫描」。
+    declaredSkipDirectories: declared.skipDirectories,
   };
 }

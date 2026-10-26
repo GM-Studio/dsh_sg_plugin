@@ -5,6 +5,7 @@ import os from 'node:os';
 import path from 'node:path';
 import {
   DEFAULT_BUDGET,
+  SKIP_CONFIG_FILE,
   isSecretName,
   normalizeBudget,
   scanRepository,
@@ -65,18 +66,63 @@ test('dependency directories are skipped and counted, not analysed', (t) => {
   for (const entry of result.skipped) assert.equal(entry.reason, 'dependency-or-artifact');
 });
 
-test('local runtime, cache and evidence directories are skipped so real source is not starved', (t) => {
+test('a repository can declare its own skip directories so real source is not starved', (t) => {
   const root = workspace(t);
   write(root, 'src/app.js', 'console.log(1);');
-  // 本地工具状态目录：体积可能远大于源码，必须先跳过，否则预算被其耗尽。
-  for (const directory of ['.runtime', '.npm-cache', '.task-evidence'])
+  // 项目特有的工具状态目录：体积可能远大于源码，必须先跳过，否则预算被其耗尽。
+  for (const directory of ['.runtime', '.npm-cache', '.my-cache'])
     write(root, directory + '/bulk.bin', 'x'.repeat(4096));
+  // 通用默认只收录跨项目共识项，项目特有目录由仓库自己声明。
+  write(
+    root,
+    SKIP_CONFIG_FILE,
+    JSON.stringify({ skipDirectories: ['.runtime', '.npm-cache', '.my-cache'] }),
+  );
   const result = scanRepository({ root, budget: { maxTotalBytes: 1024 * 1024 } });
-  assert.deepEqual(paths(result.scanned), ['src/app.js'], '真实源码必须仍被扫描');
-  assert.equal(result.complete, true, '跳过工具状态目录后扫描应完整');
+  assert.deepEqual(
+    paths(result.scanned),
+    [SKIP_CONFIG_FILE, 'src/app.js'].sort(),
+    '真实源码与配置本身都应被扫描',
+  );
+  assert.equal(result.complete, true, '跳过已声明目录后扫描应完整');
   const skippedPaths = paths(result.skipped);
-  for (const directory of ['.runtime', '.npm-cache', '.task-evidence'])
+  for (const directory of ['.runtime', '.npm-cache', '.my-cache'])
     assert.ok(skippedPaths.includes(directory), directory + ' 应被跳过');
+  assert.deepEqual(result.declaredSkipDirectories, ['.runtime', '.npm-cache', '.my-cache']);
+});
+
+test('an undeclared tool-state directory is NOT silently skipped', (t) => {
+  // 这是反例：SpecGate 不得硬编码某个项目的目录名。
+  const root = workspace(t);
+  write(root, 'src/app.js', 'console.log(1);');
+  write(root, '.runtime/bulk.bin', 'x'.repeat(4096));
+  const result = scanRepository({ root });
+  assert.equal(result.declaredSkipDirectories.length, 0);
+  assert.ok(
+    paths(result.scanned).includes('.runtime/bulk.bin'),
+    '未声明的目录必须被扫描，不能被硬编码跳过',
+  );
+});
+
+test('an invalid skip config is ignored rather than breaking the scan', (t) => {
+  const root = workspace(t);
+  write(root, 'src/app.js', 'console.log(1);');
+  for (const content of [
+    'not json',
+    '{"skipDirectories":"nope"}',
+    '{"skipDirectories":[1,null,"ok","a/b","../x"]}',
+  ]) {
+    write(root, SKIP_CONFIG_FILE, content);
+    const result = scanRepository({ root });
+    assert.equal(result.ok, true, content);
+    // 只接受合法的简单目录名。
+    for (const entry of result.declaredSkipDirectories)
+      assert.equal(
+        typeof entry === 'string' && !entry.includes('/') && !entry.includes('..'),
+        true,
+        entry,
+      );
+  }
 });
 
 test('suspected secret files are skipped by name and never described as analysed', (t) => {
@@ -165,12 +211,19 @@ test('depth beyond the budget is recorded as unscanned rather than silently drop
   assert.deepEqual(paths(result.scanned), []);
 });
 
-test('the budget defaults are marked as pending confirmation', (t) => {
+test('the approved OI-01 budget is the effective default', (t) => {
+  // OI-01 于 2026-10-26 由用户确认为「沿用当前默认」。
   const root = workspace(t);
   write(root, 'a.txt', 'x');
   const result = scanRepository({ root });
-  assert.equal(result.pendingBudgetConfirmation, true, 'OI-01 未确认，不得伪装成既定预算');
-  assert.equal(result.budget.maxFiles, DEFAULT_BUDGET.maxFiles);
+  assert.equal(result.pendingBudgetConfirmation, false, '预算已批准，不应再标为待确认');
+  assert.deepEqual(DEFAULT_BUDGET, {
+    maxFiles: 20000,
+    maxFileBytes: 1024 * 1024,
+    maxTotalBytes: 64 * 1024 * 1024,
+    maxMilliseconds: 60000,
+    maxDepth: 12,
+  });
   assert.deepEqual(result.budget, DEFAULT_BUDGET);
 });
 

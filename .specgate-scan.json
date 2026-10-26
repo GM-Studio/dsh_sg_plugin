@@ -1,0 +1,5 @@
+{
+  "$schema": "https://specgate.dev/schemas/scan-config-v1.json",
+  "description": "供 SpecGate 只读扫描使用的仓库级排除项。这些是本地工具状态目录，不是项目内容；未跳过的仓库级状态目录会耗尽扫描预算，使真实源码落在未扫描范围。",
+  "skipDirectories": [".runtime", ".npm-cache", ".task-evidence", ".specgate-cache"]
+}
