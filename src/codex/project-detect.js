@@ -4,6 +4,8 @@ import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { gitSafeDirectory } from './git-path.js';
+import { detectStack } from './core/discovery/stack.js';
+import { discoverModules } from './core/discovery/modules.js';
 
 const SOURCE_ROOT = path.resolve(fileURLToPath(new URL('../..', import.meta.url)));
 const SKIP = new Set(['.git', 'node_modules', 'dist', 'target', 'coverage', '.specgate']);
@@ -228,17 +230,22 @@ export function detectProject({ root: inputRoot } = {}) {
       return failure('PROJECT_SOURCE_FORBIDDEN', 'The plugin source repository cannot be adopted');
     inspectFiles(root);
 
+    // FR-01 / AC-01：不再要求 Maven + 前端 package 根。
+    // 任意仓库都得到观察与能力清单；缺失部分进入 gaps，而不是整体拒绝。
+    const stack = detectStack({ root });
+    if (!stack.ok) return stack;
+    // AC-02：按真实构建文件识别模块，不凭目录名补造前后端。
+    const discovered = discoverModules({
+      root,
+      candidates: ['.', ...stack.scanned.filter((entry) => entry !== '.')],
+    });
+    if (!discovered.ok) return discovered;
     const java = fs.existsSync(path.join(root, 'backend', 'pom.xml'))
       ? 'backend'
       : fs.existsSync(path.join(root, 'pom.xml'))
         ? 'root'
         : null;
     const frontends = frontendRoots(root);
-    if (!java || frontends.length === 0)
-      return failure(
-        'PROJECT_STACK_UNSUPPORTED',
-        'Only Java/Vue projects with a Maven and frontend package root are supported',
-      );
 
     const environment = {
       ...Object.fromEntries(
@@ -289,20 +296,43 @@ export function detectProject({ root: inputRoot } = {}) {
     if (commands.test.length === 0) risks.push('No test command was discovered.');
     if (status?.status === 0 && status.stdout.trim())
       risks.push('The worktree has uncommitted or untracked files.');
+    // 前后端约定只在对应模块真实存在时才表达，不补造不存在的模块（AC-02）。
+    const hasFrontend = frontends.length > 0;
+    const conventions = {
+      ...(detectedPackage ? { backendPackage: detectedPackage } : {}),
+      ...(hasFrontend
+        ? {
+            frontendDefaultLocale: 'zh-CN',
+            frontendLocales: ['zh-CN'],
+            frontendFramework: frontendFramework(root, frontends),
+          }
+        : {}),
+    };
+    // stack 是描述性标签：Java+前端仍报 java-vue（既有语义），其余由检测结果给出。
+    let stackLabel = stack.stack;
+    if (java && hasFrontend) stackLabel = 'java-vue';
     return {
       ok: true,
       root,
       mode: 'adopted',
-      stack: 'java-vue',
+      stack: stackLabel,
       modules: { backend: java, frontends },
+      // 技术栈无关的观察与能力清单（FR-01）。
+      buildSystems: stack.buildSystems,
+      languages: stack.languages,
+      capabilities: stack.capabilities,
+      observations: stack.observations,
+      detectedModules: stack.modules,
+      // 通用模块列表（含角色与入口）。modules.{backend,frontends} 保留兼容，
+      // 退场条件见 docs/implementation/stack-neutral-adoption/01-binding-matrix.md。
+      moduleList: discovered.modules,
+      moduleRoles: discovered.roles,
+      moduleObservations: discovered.observations,
+      gaps: [...stack.gaps, ...discovered.gaps],
+      lockfiles: stack.lockfiles,
       packageManager:
         frontends.length === 1 ? packageManager(path.join(root, frontends[0])) : 'mixed',
-      conventions: {
-        ...(detectedPackage ? { backendPackage: detectedPackage } : {}),
-        frontendDefaultLocale: 'zh-CN',
-        frontendLocales: ['zh-CN'],
-        frontendFramework: frontendFramework(root, frontends),
-      },
+      conventions,
       commands,
       protectedPaths: fs.existsSync(path.join(root, '.env')) ? ['.env'] : [],
       risks,

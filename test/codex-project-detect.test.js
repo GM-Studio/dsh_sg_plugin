@@ -136,13 +136,24 @@ test('reports dirty files and package-manager choice without committing or stagi
   assert.equal(git(root, ['status', '--porcelain=v1', '--untracked-files=all']), before);
 });
 
-test('rejects unsupported stacks and source repository targets without writes', (t) => {
+test('a repository without Maven or a frontend is analysed instead of rejected', (t) => {
+  // AC-01：旧行为是 PROJECT_STACK_UNSUPPORTED 整体拒绝；
+  // 新行为是返回可确认的观察与缺口，且不虚构前后端模块（AC-02、AC-03）。
   const root = temp(t);
   fs.writeFileSync(path.join(root, 'index.js'), 'console.log("node");\n');
   git(root, ['init', '-q']);
   const result = detectProject({ root });
-  assert.equal(result.code, 'PROJECT_STACK_UNSUPPORTED');
-  assert.deepEqual(fs.readdirSync(root).sort(), ['.git', 'index.js']);
+  assert.equal(result.ok, true, JSON.stringify(result));
+  assert.equal(result.code, undefined, 'PROJECT_STACK_UNSUPPORTED 不得再因技术栈出现');
+  assert.deepEqual(result.modules, { backend: null, frontends: [] }, '不得补造模块');
+  assert.equal(result.stack, null, '无构建事实时 stack 为 null 而不是 java-vue');
+  assert.deepEqual(result.capabilities, []);
+  // 缺口来自两处检测：技术栈探测与模块识别各给一条，均需显式可见。
+  assert.ok(result.gaps.length >= 1, '必须显式列出缺口');
+  assert.ok(result.gaps.some((entry) => /未发现任何已知构建文件/.test(entry)));
+  assert.ok(result.gaps.some((entry) => /未识别到任何模块/.test(entry)));
+  assert.deepEqual(result.moduleList, [], '不得凭目录名或空目录补造模块');
+  assert.deepEqual(fs.readdirSync(root).sort(), ['.git', 'index.js'], '检测不得写入');
   assert.equal(detectProject({ root: process.cwd() }).code, 'PROJECT_SOURCE_FORBIDDEN');
 });
 
