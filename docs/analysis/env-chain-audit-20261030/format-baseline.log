@@ -1,0 +1,11 @@
+
+> specgate-codex@0.3.4 format:check
+> prettier --check .
+
+Checking formatting...
+[warn] .tmp/audit-20261030/adoption-dependency-repro.json
+[warn] .tmp/audit-20261030/adoption-retry-race.json
+[warn] .tmp/audit-20261030/inventory.mjs
+[warn] .tmp/audit-20261030/node-core-sample.json
+[warn] docs/reviews/2026-10-30-specgate-codex-workflow-usability-review.zh.md
+[warn] Code style issues found in 5 files. Run Prettier with --write to fix.

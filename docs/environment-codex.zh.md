@@ -1,12 +1,12 @@
 # SpecGate Core 环境检查
 
-Core v1 只检测、复用、阻断和报告已有工具，不下载或安装 JDK、Maven、Node、Git。历史自动安装与镜像说明保存在 [可选环境历史文档](optional/environment-codex.zh.md)，非 MVP、非默认、未被当前 Core 发行验证。
+默认环境入口支持只读探测和复用；缺项通过 `sg_env_prepare` 请求可信用户确认确切方案后下载、校验、隔离安装和复验。需要宿主原生安装的组件保持阻塞并报告。历史独立安装脚本不作为默认入口。
 
 ## 会话内入口
 
 使用 $sg-codex-env 或调用 sg_env_check。先绑定已有业务项目；从真实 pom.xml、frontend/package.json 和 ProjectProfile 识别技术栈。发现必须有界并优先复用已有安装，不能扫描整盘或因状态查询修改用户环境。
 
-默认不公开 sg_env_prepare。缺项时保持阻塞，由用户或其授权环境维护者处理，之后重新真实探测。Core 不替换项目技术栈，不修改全局 PATH、JAVA_HOME、npm 或 Maven 配置。
+只读检查不会下载安装。缺项未经对应方案批准不得执行，失败不得宣称READY。Core 不替换项目技术栈，不修改全局 PATH、JAVA_HOME、npm 或 Maven 配置。新项目由 `sg_project_create` 收集用户选择并准备环境，不生成业务模板。
 
 ## 就绪含义
 

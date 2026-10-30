@@ -55,14 +55,9 @@ export const ENVIRONMENT_TOOLS = [
   },
 ];
 
-export function environmentConsent({ requestPeer, peerCapabilities, trustedUserIdentity } = {}) {
+export function environmentConsent({ requestPeer, trustedUserIdentity } = {}) {
   return async (plan, { signal } = {}) => {
-    if (
-      !trustedUserIdentity ||
-      typeof requestPeer !== 'function' ||
-      peerCapabilities?.().elicitationSupported !== true
-    )
-      return false;
+    if (!trustedUserIdentity || typeof requestPeer !== 'function') return false;
     const response = await requestPeer(
       'elicitation/create',
       {

@@ -1,0 +1,277 @@
+{
+  "note": "Real temporary Git fixture and real Node command, with a local ignored dependency; no network installation or real human approval.",
+  "detection": {
+    "ok": true,
+    "root": "C:\\Users\\Administrator\\AppData\\Local\\Temp\\specgate-codex-tests\\run-22492-JRkiI7\\sg-adoption-audit-tGiK2h",
+    "mode": "adopted",
+    "stack": "javascript-npm",
+    "modules": {
+      "backend": null,
+      "frontends": ["."]
+    },
+    "buildSystems": ["npm"],
+    "languages": ["javascript"],
+    "capabilities": [
+      {
+        "id": "root-npm-build",
+        "kind": "build",
+        "module": "root",
+        "toolchain": "npm"
+      },
+      {
+        "id": "root-test",
+        "kind": "test",
+        "module": "."
+      }
+    ],
+    "observations": [],
+    "detectedModules": [
+      {
+        "id": "root",
+        "root": ".",
+        "buildSystems": ["npm"],
+        "languages": ["javascript"],
+        "packageManager": ""
+      }
+    ],
+    "moduleList": [
+      {
+        "id": "root",
+        "root": ".",
+        "role": "other",
+        "buildSystem": "npm",
+        "buildFiles": ["package.json"],
+        "entryPoints": []
+      }
+    ],
+    "moduleRoles": {
+      "other": 1
+    },
+    "moduleObservations": [
+      {
+        "id": "root-build-system",
+        "text": "root 的构建系统为 npm",
+        "sourceRefs": ["package.json"]
+      }
+    ],
+    "gaps": ["root 未发现约定入口，无法推断运行验证方式"],
+    "lockfiles": [],
+    "packageManager": "npm",
+    "conventions": {
+      "frontendDefaultLocale": "zh-CN",
+      "frontendLocales": ["zh-CN"],
+      "frontendFramework": "vue"
+    },
+    "commands": {
+      "install": [],
+      "build": [],
+      "test": [
+        {
+          "id": "frontend-.-test",
+          "cwd": ".",
+          "argv": ["npm", "run", "test"]
+        }
+      ],
+      "lint": [],
+      "format": [],
+      "runtime": []
+    },
+    "protectedPaths": [],
+    "risks": [],
+    "git": {
+      "repository": true,
+      "branch": "main",
+      "clean": true,
+      "dirtyFiles": [],
+      "remoteUrl": null
+    }
+  },
+  "preview": {
+    "ok": true,
+    "root": "C:\\Users\\Administrator\\AppData\\Local\\Temp\\specgate-codex-tests\\run-22492-JRkiI7\\sg-adoption-audit-tGiK2h",
+    "stack": "java-vue",
+    "profile": {
+      "schemaVersion": 2,
+      "projectId": "project-778ed1e03625a4c5",
+      "mode": "adopted",
+      "stack": "java-vue",
+      "root": "C:\\Users\\Administrator\\AppData\\Local\\Temp\\specgate-codex-tests\\run-22492-JRkiI7\\sg-adoption-audit-tGiK2h",
+      "targetBranch": "main",
+      "remoteUrl": null,
+      "frontendDefaultLocale": "zh-CN",
+      "frontendLocales": ["zh-CN"],
+      "frontendFramework": "vue",
+      "commands": {
+        "install": [],
+        "build": [],
+        "test": [
+          {
+            "id": "frontend-.-test",
+            "cwd": ".",
+            "argv": ["npm", "run", "test"]
+          }
+        ],
+        "lint": [],
+        "format": [],
+        "runtime": []
+      },
+      "protectedPaths": [],
+      "createdAt": "2026-10-30T11:22:39.963Z",
+      "updatedAt": "2026-10-30T11:22:39.963Z"
+    },
+    "previewHash": "ef45333d1b890d9ea1188bc021e955dbb504f3f30a86b00ad46b3bfc53d4fe21",
+    "git": {
+      "repository": true,
+      "branch": "main",
+      "clean": true,
+      "dirtyFiles": [],
+      "remoteUrl": null,
+      "commit": "94531cfd30a79aa15a2c8b3eb54c8a6168d4da87"
+    },
+    "needsBaselineCommit": false,
+    "dirty": {
+      "files": [],
+      "proposal": {
+        "message": "chore: establish adopted project baseline",
+        "paths": []
+      }
+    },
+    "risks": []
+  },
+  "original": {
+    "commandId": "frontend-.-test",
+    "status": "passed",
+    "exitCode": 0,
+    "stdout": "\n> audit-only@1.0.0 test\n> node -e \"require('audit-local-dependency')\"\n\n",
+    "stderr": "",
+    "durationMs": 527,
+    "startedAt": "2026-10-30T11:22:40.094Z",
+    "finishedAt": "2026-10-30T11:22:40.621Z"
+  },
+  "start": {
+    "ok": true,
+    "runId": "baseline-run-399cb81778abe887",
+    "status": "running",
+    "previewHash": "ef45333d1b890d9ea1188bc021e955dbb504f3f30a86b00ad46b3bfc53d4fe21",
+    "startedAt": "2026-10-30T11:22:40.621Z",
+    "finishedAt": null,
+    "totalCommands": 1,
+    "completedCommands": 0,
+    "currentCommand": null
+  },
+  "readiness": {
+    "ok": true,
+    "profile": {
+      "schemaVersion": 2,
+      "projectId": "project-778ed1e03625a4c5",
+      "mode": "adopted",
+      "stack": "java-vue",
+      "root": "C:\\Users\\Administrator\\AppData\\Local\\Temp\\specgate-codex-tests\\run-22492-JRkiI7\\sg-adoption-audit-tGiK2h",
+      "targetBranch": "main",
+      "remoteUrl": null,
+      "frontendDefaultLocale": "zh-CN",
+      "frontendLocales": ["zh-CN"],
+      "frontendFramework": "vue",
+      "commands": {
+        "install": [],
+        "build": [],
+        "test": [
+          {
+            "id": "frontend-.-test",
+            "cwd": ".",
+            "argv": ["npm", "run", "test"]
+          }
+        ],
+        "lint": [],
+        "format": [],
+        "runtime": []
+      },
+      "protectedPaths": [],
+      "createdAt": "2026-10-30T11:22:41.074Z",
+      "updatedAt": "2026-10-30T11:22:41.074Z"
+    },
+    "baseline": {
+      "schemaVersion": 2,
+      "baselineId": "baseline-b25b0a225ff8b29b",
+      "projectId": "project-778ed1e03625a4c5",
+      "commit": "94531cfd30a79aa15a2c8b3eb54c8a6168d4da87",
+      "status": "known-failures",
+      "knownFailures": [
+        {
+          "id": "known-94d30cbd9b72481e",
+          "signature": "frontend-.-test:failed:exit=1:c6884aca0b63",
+          "commandId": "frontend-.-test",
+          "scope": "test",
+          "evidence": "baseline-c5c8c37e6dbb1ade"
+        }
+      ],
+      "unverifiedAreas": [],
+      "commands": ["frontend-.-test"],
+      "evidence": ["baseline-c5c8c37e6dbb1ade"],
+      "environmentFingerprint": "ae6a1fc62d0e7dcd4767b5bb7467c2a793d7088b783502ea9171df0c3af25837",
+      "createdAt": "2026-10-30T11:22:40.621Z"
+    },
+    "baselinePath": ".specgate/codex/baselines/baseline-b25b0a225ff8b29b.json",
+    "canStartChange": true,
+    "fingerprint": "ae6a1fc62d0e7dcd4767b5bb7467c2a793d7088b783502ea9171df0c3af25837"
+  },
+  "status": null,
+  "summary": {
+    "schemaVersion": 1,
+    "runId": "baseline-run-399cb81778abe887",
+    "projectId": "project-778ed1e03625a4c5",
+    "commit": "94531cfd30a79aa15a2c8b3eb54c8a6168d4da87",
+    "baseline": {
+      "schemaVersion": 2,
+      "baselineId": "baseline-b25b0a225ff8b29b",
+      "projectId": "project-778ed1e03625a4c5",
+      "commit": "94531cfd30a79aa15a2c8b3eb54c8a6168d4da87",
+      "status": "known-failures",
+      "knownFailures": [
+        {
+          "id": "known-94d30cbd9b72481e",
+          "signature": "frontend-.-test:failed:exit=1:c6884aca0b63",
+          "commandId": "frontend-.-test",
+          "scope": "test",
+          "evidence": "baseline-c5c8c37e6dbb1ade"
+        }
+      ],
+      "unverifiedAreas": [],
+      "commands": ["frontend-.-test"],
+      "evidence": ["baseline-c5c8c37e6dbb1ade"],
+      "environmentFingerprint": "ae6a1fc62d0e7dcd4767b5bb7467c2a793d7088b783502ea9171df0c3af25837",
+      "createdAt": "2026-10-30T11:22:40.621Z"
+    },
+    "commands": [
+      {
+        "id": "frontend-.-test",
+        "kind": "test",
+        "cwd": ".",
+        "argv": ["npm", "run", "test"],
+        "status": "failed",
+        "exitCode": 1,
+        "durationMs": 248,
+        "startedAt": "2026-10-30T11:22:40.781Z",
+        "finishedAt": "2026-10-30T11:22:41.029Z",
+        "stdout": "\n> audit-only@1.0.0 test\n> node -e \"require('audit-local-dependency')\"\n\n",
+        "stderr": "node:internal/modules/cjs/loader:1459\r\n  throw err;\r\n  ^\r\n\r\nError: Cannot find module 'audit-local-dependency'\r\nRequire stack:\r\n- C:\\Users\\Administrator\\AppData\\Local\\Temp\\specgate-codex-tests\\run-22492-JRkiI7\\specgate-baseline-worktrees\\baseline-run-399cb81778abe887\\[eval]\r\n    at Module._resolveFilename (node:internal/modules/cjs/loader:1456:15)\r\n    at defaultResolveImpl (node:internal/modules/cjs/loader:1066:19)\r\n    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1071:22)\r\n    at Module._load (node:internal/modules/cjs/loader:1242:25)\r\n    at wrapModuleLoad (node:internal/modules/cjs/loader:255:19)\r\n    at Module.require (node:internal/modules/cjs/loader:1556:12)\r\n    at require (node:internal/modules/helpers:152:16)\r\n    at [eval]:1:1\r\n    at runScriptInThisContext (node:internal/vm:219:10)\r\n    at node:internal/process/execution:451:12 {\r\n  code: 'MODULE_NOT_FOUND',\r\n  requireStack: [\r\n    'C:\\\\Users\\\\Administrator\\\\AppData\\\\Local\\\\Temp\\\\specgate-codex-tests\\\\run-22492-JRkiI7\\\\specgate-baseline-worktrees\\\\baseline-run-399cb81778abe887\\\\[eval]'\r\n  ]\r\n}\r\n\r\nNode.js v24.14.0\r\n"
+      }
+    ]
+  },
+  "afterEnvironment": {
+    "ok": false,
+    "environmentReady": false,
+    "code": "ENV_STACK_REQUIRED",
+    "message": "请先选择或确认当前项目的 JDK/Spring Boot 和 Vue/React 技术栈",
+    "projectRoot": "C:\\Users\\Administrator\\AppData\\Local\\Temp\\specgate-codex-tests\\run-22492-JRkiI7\\sg-adoption-audit-tGiK2h",
+    "checkedAt": "2026-10-30T11:22:41.501Z"
+  },
+  "afterPrepare": {
+    "ok": false,
+    "environmentReady": false,
+    "code": "ENV_STACK_REQUIRED",
+    "message": "请先选择或确认当前项目的 JDK/Spring Boot 和 Vue/React 技术栈",
+    "projectRoot": "C:\\Users\\Administrator\\AppData\\Local\\Temp\\specgate-codex-tests\\run-22492-JRkiI7\\sg-adoption-audit-tGiK2h",
+    "checkedAt": "2026-10-30T11:22:41.501Z"
+  }
+}

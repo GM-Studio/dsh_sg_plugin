@@ -39,7 +39,6 @@
     "!src/codex/management/**",
     "!src/codex/channels/**",
     "!src/codex/core/control/**",
-    "!src/codex/core/environment-install.js",
     "!src/codex/onboarding.js",
     "!src/codex/init.js",
     "!src/codex/init-consent.js",

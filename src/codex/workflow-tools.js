@@ -42,8 +42,6 @@ const OPTIONAL_TOOL_NAMES = new Set([
   'sg_project_verify',
   'sg_project_finalize_new',
   'sg_project_setup',
-  'sg_project_create',
-  'sg_env_prepare',
   ...CONTROL_TOOLS.map((entry) => entry.name),
 ]);
 const NATIVE_RUNNER_ADAPTER = fileURLToPath(new URL('./native-test-runner.mjs', import.meta.url));
@@ -924,6 +922,7 @@ export function createToolRegistry(options = {}) {
       ? !insideSpecGateSource(initialRoot)
       : options.projectBound === true;
   const environments = new Map();
+  const environmentSelections = new Map();
   const environmentFor = (target) => {
     target = path.resolve(target);
     if (!environments.has(target))
@@ -997,9 +996,15 @@ export function createToolRegistry(options = {}) {
         if (name === 'sg_env_check') {
           const selection = { ...args };
           delete selection.path;
-          return result({ ...(await environment.check(selection)), projectRoot: root });
+          return result({
+            ...(await environment.check({ ...environmentSelections.get(root), ...selection })),
+            projectRoot: root,
+          });
         }
-        if (name === 'sg_env_prepare') return result(await environment.prepare(args, context));
+        if (name === 'sg_env_prepare')
+          return result(
+            await environment.prepare({ ...environmentSelections.get(root), ...args }, context),
+          );
         if (name === 'sg_status') return result(await inspectProjectStatus({ root, environment }));
         if (name === 'sg_project_bind')
           return result({
@@ -1014,6 +1019,30 @@ export function createToolRegistry(options = {}) {
           return result({ ...installed, projectRoot: bind(installed.project) });
         }
         if (name === 'sg_project_create') {
+          if (!optionalModules) {
+            const { selectEnvironmentProject } = await import('./core/environment-project.js');
+            const selected = await selectEnvironmentProject({
+              ...options,
+              projectRoot: projectBound ? root : null,
+              initialPath: args.path,
+              draft: onboardingDraft,
+              reset: args.reset,
+              signal: context.signal,
+            });
+            if (!selected.ok) return result(selected);
+            bind(selected.root);
+            environmentSelections.set(root, selected.selection);
+            const checked = await environment.check(selected.selection);
+            return result({
+              ...checked,
+              projectRoot: root,
+              selection: selected.selection,
+              generated: false,
+              projectReady: false,
+              nextAction: checked.environmentReady ? 'ENVIRONMENT_READY' : 'PREPARE_ENVIRONMENT',
+              nextTool: checked.environmentReady ? 'sg_env_check' : 'sg_env_prepare',
+            });
+          }
           const { createProjectInteractively } = await import('./onboarding.js');
           const created = await createProjectInteractively({
             ...options,

@@ -1,0 +1,491 @@
+{
+  "recordedAt": "2026-10-30T11:19:33.260Z",
+  "platform": "win32",
+  "arch": "x64",
+  "node": "v24.14.0",
+  "note": "Temporary fixtures; no actual installation or user approval performed.",
+  "stacks": [
+    {
+      "name": "node",
+      "detected": {
+        "stack": "javascript-npm",
+        "buildSystems": ["npm"],
+        "scanned": ["."],
+        "gaps": []
+      },
+      "environment": {
+        "ok": false,
+        "environmentReady": false,
+        "code": "ENV_STACK_REQUIRED",
+        "message": "请先选择或确认当前项目的 JDK/Spring Boot 和 Vue/React 技术栈",
+        "projectRoot": "C:\\Users\\Administrator\\AppData\\Local\\Temp\\sg-environment-audit-gDo6tC\\node",
+        "checkedAt": "2026-10-30T11:19:33.261Z"
+      },
+      "publicCheck": {
+        "ok": false,
+        "environmentReady": false,
+        "code": "ENV_STACK_REQUIRED",
+        "message": "请先选择或确认当前项目的 JDK/Spring Boot 和 Vue/React 技术栈",
+        "projectRoot": "C:\\Users\\Administrator\\AppData\\Local\\Temp\\sg-environment-audit-gDo6tC\\node",
+        "checkedAt": "2026-10-30T11:19:33.262Z"
+      },
+      "publicPrepare": {
+        "ok": false,
+        "code": "UNKNOWN_TOOL",
+        "message": "Tool is not available"
+      }
+    },
+    {
+      "name": "react",
+      "detected": {
+        "stack": "javascript-npm",
+        "buildSystems": ["npm"],
+        "scanned": ["."],
+        "gaps": []
+      },
+      "environment": {
+        "ok": false,
+        "environmentReady": false,
+        "code": "ENV_STACK_REQUIRED",
+        "message": "请先选择或确认当前项目的 JDK/Spring Boot 和 Vue/React 技术栈",
+        "projectRoot": "C:\\Users\\Administrator\\AppData\\Local\\Temp\\sg-environment-audit-gDo6tC\\react",
+        "checkedAt": "2026-10-30T11:19:33.263Z"
+      },
+      "publicCheck": {
+        "ok": false,
+        "environmentReady": false,
+        "code": "ENV_STACK_REQUIRED",
+        "message": "请先选择或确认当前项目的 JDK/Spring Boot 和 Vue/React 技术栈",
+        "projectRoot": "C:\\Users\\Administrator\\AppData\\Local\\Temp\\sg-environment-audit-gDo6tC\\react",
+        "checkedAt": "2026-10-30T11:19:33.264Z"
+      },
+      "publicPrepare": {
+        "ok": false,
+        "code": "UNKNOWN_TOOL",
+        "message": "Tool is not available"
+      }
+    },
+    {
+      "name": "vue",
+      "detected": {
+        "stack": "javascript-npm",
+        "buildSystems": ["npm"],
+        "scanned": ["."],
+        "gaps": []
+      },
+      "environment": {
+        "ok": false,
+        "environmentReady": false,
+        "code": "ENV_STACK_REQUIRED",
+        "message": "请先选择或确认当前项目的 JDK/Spring Boot 和 Vue/React 技术栈",
+        "projectRoot": "C:\\Users\\Administrator\\AppData\\Local\\Temp\\sg-environment-audit-gDo6tC\\vue",
+        "checkedAt": "2026-10-30T11:19:33.265Z"
+      },
+      "publicCheck": {
+        "ok": false,
+        "environmentReady": false,
+        "code": "ENV_STACK_REQUIRED",
+        "message": "请先选择或确认当前项目的 JDK/Spring Boot 和 Vue/React 技术栈",
+        "projectRoot": "C:\\Users\\Administrator\\AppData\\Local\\Temp\\sg-environment-audit-gDo6tC\\vue",
+        "checkedAt": "2026-10-30T11:19:33.265Z"
+      },
+      "publicPrepare": {
+        "ok": false,
+        "code": "UNKNOWN_TOOL",
+        "message": "Tool is not available"
+      }
+    },
+    {
+      "name": "python",
+      "detected": {
+        "stack": "python-python",
+        "buildSystems": ["python"],
+        "scanned": ["."],
+        "gaps": []
+      },
+      "environment": {
+        "ok": false,
+        "environmentReady": false,
+        "code": "ENV_STACK_REQUIRED",
+        "message": "请先选择或确认当前项目的 JDK/Spring Boot 和 Vue/React 技术栈",
+        "projectRoot": "C:\\Users\\Administrator\\AppData\\Local\\Temp\\sg-environment-audit-gDo6tC\\python",
+        "checkedAt": "2026-10-30T11:19:33.266Z"
+      },
+      "publicCheck": {
+        "ok": false,
+        "environmentReady": false,
+        "code": "ENV_STACK_REQUIRED",
+        "message": "请先选择或确认当前项目的 JDK/Spring Boot 和 Vue/React 技术栈",
+        "projectRoot": "C:\\Users\\Administrator\\AppData\\Local\\Temp\\sg-environment-audit-gDo6tC\\python",
+        "checkedAt": "2026-10-30T11:19:33.266Z"
+      },
+      "publicPrepare": {
+        "ok": false,
+        "code": "UNKNOWN_TOOL",
+        "message": "Tool is not available"
+      }
+    },
+    {
+      "name": "go",
+      "detected": {
+        "stack": "go-go",
+        "buildSystems": ["go"],
+        "scanned": ["."],
+        "gaps": []
+      },
+      "environment": {
+        "ok": false,
+        "environmentReady": false,
+        "code": "ENV_STACK_REQUIRED",
+        "message": "请先选择或确认当前项目的 JDK/Spring Boot 和 Vue/React 技术栈",
+        "projectRoot": "C:\\Users\\Administrator\\AppData\\Local\\Temp\\sg-environment-audit-gDo6tC\\go",
+        "checkedAt": "2026-10-30T11:19:33.267Z"
+      },
+      "publicCheck": {
+        "ok": false,
+        "environmentReady": false,
+        "code": "ENV_STACK_REQUIRED",
+        "message": "请先选择或确认当前项目的 JDK/Spring Boot 和 Vue/React 技术栈",
+        "projectRoot": "C:\\Users\\Administrator\\AppData\\Local\\Temp\\sg-environment-audit-gDo6tC\\go",
+        "checkedAt": "2026-10-30T11:19:33.267Z"
+      },
+      "publicPrepare": {
+        "ok": false,
+        "code": "UNKNOWN_TOOL",
+        "message": "Tool is not available"
+      }
+    },
+    {
+      "name": "java",
+      "detected": {
+        "stack": "java-maven",
+        "buildSystems": ["maven"],
+        "scanned": ["."],
+        "gaps": []
+      },
+      "environment": {
+        "ok": false,
+        "environmentReady": false,
+        "code": "ENV_STACK_REQUIRED",
+        "message": "请先选择或确认当前项目的 JDK/Spring Boot 和 Vue/React 技术栈",
+        "projectRoot": "C:\\Users\\Administrator\\AppData\\Local\\Temp\\sg-environment-audit-gDo6tC\\java",
+        "checkedAt": "2026-10-30T11:19:33.268Z"
+      },
+      "publicCheck": {
+        "ok": false,
+        "environmentReady": false,
+        "code": "ENV_STACK_REQUIRED",
+        "message": "请先选择或确认当前项目的 JDK/Spring Boot 和 Vue/React 技术栈",
+        "projectRoot": "C:\\Users\\Administrator\\AppData\\Local\\Temp\\sg-environment-audit-gDo6tC\\java",
+        "checkedAt": "2026-10-30T11:19:33.268Z"
+      },
+      "publicPrepare": {
+        "ok": false,
+        "code": "UNKNOWN_TOOL",
+        "message": "Tool is not available"
+      }
+    },
+    {
+      "name": "nested",
+      "detected": {
+        "stack": null,
+        "buildSystems": [],
+        "scanned": [".", "apps", "services"],
+        "gaps": [
+          "未发现任何已知构建文件（pom.xml/build.gradle/package.json/pyproject.toml/go.mod/Cargo.toml 等）"
+        ]
+      },
+      "environment": {
+        "ok": false,
+        "environmentReady": false,
+        "code": "ENV_STACK_REQUIRED",
+        "message": "请先选择或确认当前项目的 JDK/Spring Boot 和 Vue/React 技术栈",
+        "projectRoot": "C:\\Users\\Administrator\\AppData\\Local\\Temp\\sg-environment-audit-gDo6tC\\nested",
+        "checkedAt": "2026-10-30T11:19:33.270Z"
+      },
+      "publicCheck": {
+        "ok": false,
+        "environmentReady": false,
+        "code": "ENV_STACK_REQUIRED",
+        "message": "请先选择或确认当前项目的 JDK/Spring Boot 和 Vue/React 技术栈",
+        "projectRoot": "C:\\Users\\Administrator\\AppData\\Local\\Temp\\sg-environment-audit-gDo6tC\\nested",
+        "checkedAt": "2026-10-30T11:19:33.270Z"
+      },
+      "publicPrepare": {
+        "ok": false,
+        "code": "UNKNOWN_TOOL",
+        "message": "Tool is not available"
+      }
+    }
+  ],
+  "tools": {
+    "core": 43,
+    "optional": 54,
+    "absentFromCore": ["sg_env_prepare", "sg_project_create", "sg_project_setup", "sg_init"]
+  },
+  "platforms": [
+    {
+      "platform": "win32",
+      "arch": "x64",
+      "result": {
+        "ok": true,
+        "environmentReady": false,
+        "status": "blocked",
+        "platform": "win32",
+        "arch": "x64",
+        "selection": {
+          "preset": "jdk17-boot3.5",
+          "frontend": "react"
+        },
+        "required": ["git", "node", "jdk17", "maven"],
+        "missing": ["git", "node", "jdk17", "maven"],
+        "tools": {
+          "git": null,
+          "node": null,
+          "jdk17": null,
+          "maven": null
+        },
+        "fingerprint": "03978d292f774baf11ac3a0085db8b73467b901d7aacff726a039bf3a622eb7f",
+        "source": "domestic",
+        "plan": [
+          {
+            "id": "git",
+            "action": "install",
+            "current": null,
+            "archive": null
+          },
+          {
+            "id": "node",
+            "action": "install",
+            "current": null,
+            "archive": {
+              "id": "node",
+              "version": "22.22.0",
+              "name": "node-v22.22.0-win-x64.zip",
+              "algorithm": "sha256",
+              "checksum": "c97fa376d2becdc8863fcd3ca2dd9a83a9f3468ee7ccf7a6d076ec66a645c77a",
+              "url": "https://npmmirror.com/mirrors/node/v22.22.0/node-v22.22.0-win-x64.zip",
+              "metadata": "https://nodejs.org/dist/v22.22.0/SHASUMS256.txt",
+              "source": "domestic"
+            }
+          },
+          {
+            "id": "jdk17",
+            "action": "install",
+            "current": null,
+            "archive": {
+              "id": "jdk17",
+              "version": "17.0.20.1_1",
+              "name": "OpenJDK17U-jdk_x64_windows_hotspot_17.0.20.1_1.zip",
+              "algorithm": "sha256",
+              "checksum": "e53a79c3c3d86865bd7e787903884331068e71321714ffd44f145785affc7cb0",
+              "url": "https://mirrors.nju.edu.cn/adoptium/17/jdk/x64/windows/OpenJDK17U-jdk_x64_windows_hotspot_17.0.20.1_1.zip",
+              "metadata": "https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17.0.20.1%2B1/OpenJDK17U-jdk_x64_windows_hotspot_17.0.20.1_1.zip.sha256.txt",
+              "source": "domestic"
+            }
+          },
+          {
+            "id": "maven",
+            "action": "install",
+            "current": null,
+            "archive": {
+              "id": "maven",
+              "version": "3.9.11",
+              "name": "apache-maven-3.9.11-bin.zip",
+              "algorithm": "sha512",
+              "checksum": "03e2d65d4483a3396980629f260e25cac0d8b6f7f2791e4dc20bc83f9514db8d0f05b0479e699a5f34679250c49c8e52e961262ded468a20de0be254d8207076",
+              "url": "https://maven.aliyun.com/repository/public/org/apache/maven/apache-maven/3.9.11/apache-maven-3.9.11-bin.zip",
+              "metadata": "https://archive.apache.org/dist/maven/maven-3/3.9.11/binaries/apache-maven-3.9.11-bin.zip.sha512",
+              "source": "domestic"
+            }
+          }
+        ],
+        "message": "缺少：git、node、jdk17、maven。通过环境准备入口补齐后重新验证。",
+        "workflowVerification": "not-run"
+      }
+    },
+    {
+      "platform": "win32",
+      "arch": "arm64",
+      "result": {
+        "ok": false,
+        "environmentReady": false,
+        "code": "ENV_PLATFORM_UNSUPPORTED",
+        "message": "当前仅支持 Windows/Linux x64"
+      }
+    },
+    {
+      "platform": "linux",
+      "arch": "x64",
+      "result": {
+        "ok": true,
+        "environmentReady": false,
+        "status": "blocked",
+        "platform": "linux",
+        "arch": "x64",
+        "selection": {
+          "preset": "jdk17-boot3.5",
+          "frontend": "react"
+        },
+        "required": ["git", "node", "jdk17", "maven"],
+        "missing": ["git", "node", "jdk17", "maven"],
+        "tools": {
+          "git": null,
+          "node": null,
+          "jdk17": null,
+          "maven": null
+        },
+        "fingerprint": "c57fbbc4e14adcb323e5be97cbd6c137e0c0d27ad6790917eb5813a9705c4899",
+        "source": "domestic",
+        "plan": [
+          {
+            "id": "git",
+            "action": "install",
+            "current": null,
+            "archive": null
+          },
+          {
+            "id": "node",
+            "action": "install",
+            "current": null,
+            "archive": {
+              "id": "node",
+              "version": "22.22.0",
+              "name": "node-v22.22.0-linux-x64.tar.gz",
+              "algorithm": "sha256",
+              "checksum": "c33c39ed9c80deddde77c960d00119918b9e352426fd604ba41638d6526a4744",
+              "url": "https://npmmirror.com/mirrors/node/v22.22.0/node-v22.22.0-linux-x64.tar.gz",
+              "metadata": "https://nodejs.org/dist/v22.22.0/SHASUMS256.txt",
+              "source": "domestic"
+            }
+          },
+          {
+            "id": "jdk17",
+            "action": "install",
+            "current": null,
+            "archive": {
+              "id": "jdk17",
+              "version": "17.0.20.1_1",
+              "name": "OpenJDK17U-jdk_x64_linux_hotspot_17.0.20.1_1.tar.gz",
+              "algorithm": "sha256",
+              "checksum": "3808d1d15e3ec6bd5b84057fb5d84c33d8a1536a258146bcea2e603fc726e08e",
+              "url": "https://mirrors.nju.edu.cn/adoptium/17/jdk/x64/linux/OpenJDK17U-jdk_x64_linux_hotspot_17.0.20.1_1.tar.gz",
+              "metadata": "https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17.0.20.1%2B1/OpenJDK17U-jdk_x64_linux_hotspot_17.0.20.1_1.tar.gz.sha256.txt",
+              "source": "domestic"
+            }
+          },
+          {
+            "id": "maven",
+            "action": "install",
+            "current": null,
+            "archive": {
+              "id": "maven",
+              "version": "3.9.11",
+              "name": "apache-maven-3.9.11-bin.tar.gz",
+              "algorithm": "sha512",
+              "checksum": "bcfe4fe305c962ace56ac7b5fc7a08b87d5abd8b7e89027ab251069faebee516b0ded8961445d6d91ec1985dfe30f8153268843c89aa392733d1a3ec956c9978",
+              "url": "https://maven.aliyun.com/repository/public/org/apache/maven/apache-maven/3.9.11/apache-maven-3.9.11-bin.tar.gz",
+              "metadata": "https://archive.apache.org/dist/maven/maven-3/3.9.11/binaries/apache-maven-3.9.11-bin.tar.gz.sha512",
+              "source": "domestic"
+            }
+          }
+        ],
+        "message": "缺少：git、node、jdk17、maven。通过环境准备入口补齐后重新验证。",
+        "workflowVerification": "not-run"
+      }
+    },
+    {
+      "platform": "linux",
+      "arch": "arm64",
+      "result": {
+        "ok": false,
+        "environmentReady": false,
+        "code": "ENV_PLATFORM_UNSUPPORTED",
+        "message": "当前仅支持 Windows/Linux x64"
+      }
+    },
+    {
+      "platform": "darwin",
+      "arch": "x64",
+      "result": {
+        "ok": false,
+        "environmentReady": false,
+        "code": "ENV_PLATFORM_UNSUPPORTED",
+        "message": "当前仅支持 Windows/Linux x64"
+      }
+    },
+    {
+      "platform": "darwin",
+      "arch": "arm64",
+      "result": {
+        "ok": false,
+        "environmentReady": false,
+        "code": "ENV_PLATFORM_UNSUPPORTED",
+        "message": "当前仅支持 Windows/Linux x64"
+      }
+    }
+  ],
+  "pythonRanges": [
+    {
+      "version": "3.12.0",
+      "requirement": "3.11.9",
+      "accepted": true
+    },
+    {
+      "version": "3.12.0",
+      "requirement": "==3.11.9",
+      "accepted": true
+    },
+    {
+      "version": "3.12.0",
+      "requirement": "!=3.11",
+      "accepted": true
+    },
+    {
+      "version": "3.12.0",
+      "requirement": "~=3.11",
+      "accepted": true
+    }
+  ],
+  "nodeRanges": [
+    {
+      "available": ["22.22.0"],
+      "requirement": ">=24",
+      "selected": null
+    },
+    {
+      "available": ["22.22.0"],
+      "requirement": ">=20 <22",
+      "selected": null
+    },
+    {
+      "available": ["22.22.0"],
+      "requirement": "^20.0.0",
+      "selected": null
+    },
+    {
+      "available": ["22.22.0"],
+      "requirement": "22.x",
+      "selected": "22.22.0"
+    },
+    {
+      "available": ["22.22.0"],
+      "requirement": ">=22.24.0",
+      "selected": "22.22.0"
+    },
+    {
+      "available": ["22.22.0"],
+      "requirement": "22.22.1",
+      "selected": "22.22.0"
+    }
+  ],
+  "unadvertisedElicitation": {
+    "accepted": false,
+    "requests": 0,
+    "capabilities": {
+      "elicitationSupported": false,
+      "rootsSupported": false,
+      "trustedUserIdentity": false
+    }
+  }
+}

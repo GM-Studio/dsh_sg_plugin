@@ -1,0 +1,90 @@
+[
+  {
+    "case": "nonblocking-review-finding-lost",
+    "reviewOk": true,
+    "savedFindings": [
+      {
+        "acIds": ["AC-1"],
+        "evidence": "public class Controller { public void deleteAccount() { System.out.println(\"secure\"); } }",
+        "file": "backend/src/main/java/Controller.java",
+        "id": "AUDIT-P3",
+        "line": 1,
+        "recommendation": "AUDIT_KNOWN_ISSUE_MUST_REACH_CUSTOMER",
+        "severity": "P3"
+      }
+    ],
+    "h3Ok": true,
+    "archiveOk": true,
+    "deliveryKnownIssues": [],
+    "customerContainsKnownIssue": false
+  },
+  {
+    "case": "h3-modify",
+    "responseCode": "APPROVAL_MODIFY_REQUESTED",
+    "phase": "H3_PENDING",
+    "reworkCode": "REWORK_NOT_REQUIRED"
+  },
+  {
+    "case": "h3-cancel",
+    "responseCode": "APPROVAL_CANCELLED",
+    "phase": "H3_PENDING",
+    "reworkCode": "REWORK_NOT_REQUIRED"
+  },
+  {
+    "case": "scenario-profile-not-connected",
+    "declaredType": "refactor",
+    "topLevelType": null,
+    "declaredContextProfile": "scenario-v1",
+    "resolvedProfile": {
+      "ok": true,
+      "profile": {
+        "profileVersion": 1,
+        "profileId": "legacy",
+        "requiresAllFrozenCasesRed": true,
+        "scenarios": {
+          "feature": {
+            "redBaseline": "all-frozen-cases-red",
+            "regression": "all-green"
+          },
+          "modify": {
+            "redBaseline": "all-frozen-cases-red",
+            "regression": "all-green"
+          },
+          "fix": {
+            "redBaseline": "all-frozen-cases-red",
+            "regression": "all-green"
+          },
+          "refactor": {
+            "redBaseline": "all-frozen-cases-red",
+            "regression": "all-green"
+          }
+        }
+      },
+      "source": "legacy-default"
+    },
+    "selectedPolicy": {
+      "ok": true,
+      "redBaseline": "all-frozen-cases-red",
+      "regression": "all-green"
+    },
+    "prepareCode": "RED_BASELINE_NOT_FAILING",
+    "topLevelProfileWriteCode": "INVALID_ARGUMENT"
+  },
+  {
+    "case": "root-node-project-format",
+    "result": {
+      "ok": false,
+      "code": "FORMAT_COMMAND_MISSING",
+      "message": "No project formatter command is configured"
+    }
+  },
+  {
+    "case": "archive-failure-after-merge-cannot-retry",
+    "firstCode": "UNSAFE_ARTIFACT_PATH",
+    "targetMoved": true,
+    "targetIsReviewedIntegration": true,
+    "retryCode": "ARCHIVE_PREVIEW_CHANGED",
+    "requestNewH3Code": "INVALID_TRANSITION",
+    "phase": "ARCHIVING"
+  }
+]

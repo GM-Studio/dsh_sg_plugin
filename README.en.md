@@ -17,9 +17,9 @@ Unexecuted, skipped, timed-out, or failed checks cannot count as passed. The rea
 
 ## Installation and scope
 
-`plugin.json` and `mcp.json` are the portable entry points; the MCP server is `src/codex/server.js`. The default 43-tool list is asserted in the protocol tests. `$sg-codex` routes to environment inspection, existing-project adoption, change delivery, and read-only status. Core inspects and reuses installed toolchains without automatic downloads or installation.
+`plugin.json` and `mcp.json` are the portable entry points; the MCP server is `src/codex/server.js`. The default 45-tool list is asserted in the protocol tests. `sg_env_check` is read-only; `sg_env_prepare` installs missing toolchains only after trusted user confirmation and probes them again. `sg_project_create` collects the user's directory and stack selection for environment preparation, without generating business templates or claiming project acceptance.
 
-Historical new-project templates, auto-installation, asynchronous WorkItems, control plane, Workers, Decisions, TOTP, web UI, and notifications remain in the source tree. They are excluded from the default tools, static startup graph, and Core tarball. Source developers can explicitly set `SPECGATE_OPTIONAL_MODULES=1` to expose historical tools; that mode and its external dependencies are outside Core release validation. The Core package contains no `mysql2`.
+Historical business templates, asynchronous WorkItems, control plane, Workers, Decisions, TOTP, web UI, and notifications remain optional and excluded from the Core tarball. Source developers can set `SPECGATE_OPTIONAL_MODULES=1` to expose historical tools. The environment installer is packaged and loaded on demand. The Core package contains no `mysql2`.
 
 ## Verification
 

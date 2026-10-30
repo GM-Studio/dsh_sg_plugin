@@ -1,0 +1,294 @@
+{
+  "approvalSource": "Real user approval in the current Codex chat, exact Windows Node plan; no synthetic human approval",
+  "controlledDiscovery": "Node search deliberately limited to approved cache without modifying host installations",
+  "before": {
+    "ok": true,
+    "environmentReady": false,
+    "status": "blocked",
+    "platform": "win32",
+    "arch": "x64",
+    "selection": {
+      "preset": "jdk17-boot3.5",
+      "frontend": "react"
+    },
+    "required": [
+      "git",
+      "node",
+      "jdk17",
+      "maven"
+    ],
+    "missing": [
+      "node"
+    ],
+    "tools": {
+      "git": {
+        "version": "2.45.1.windows.1",
+        "path": "C:\\Program Files\\Git\\cmd\\git.exe"
+      },
+      "node": null,
+      "jdk17": {
+        "home": "D:\\Program Files\\Java\\Jdk17",
+        "java": "D:\\Program Files\\Java\\Jdk17\\bin\\java.exe",
+        "javac": "D:\\Program Files\\Java\\Jdk17\\bin\\javac.exe",
+        "version": "17.0.18",
+        "major": 17,
+        "source": "dir"
+      },
+      "maven": {
+        "path": "C:\\Users\\Administrator\\.m2\\wrapper\\dists\\apache-maven-3.9.11\\03d7e36a140982eea48e22c1dcac01d8862b2550b2939e09a0809bbc5182a5bc\\bin\\mvn.cmd",
+        "home": "C:\\Users\\Administrator\\.m2\\wrapper\\dists\\apache-maven-3.9.11\\03d7e36a140982eea48e22c1dcac01d8862b2550b2939e09a0809bbc5182a5bc",
+        "version": "3.9.11"
+      }
+    },
+    "fingerprint": "ba0d71a51f071949ba12047b8e9c4c60235d786cd6426688c039bffe52096615",
+    "source": "official",
+    "plan": [
+      {
+        "id": "git",
+        "action": "reuse",
+        "current": {
+          "version": "2.45.1.windows.1",
+          "path": "C:\\Program Files\\Git\\cmd\\git.exe"
+        }
+      },
+      {
+        "id": "node",
+        "action": "install",
+        "current": null,
+        "archive": {
+          "id": "node",
+          "version": "22.22.0",
+          "name": "node-v22.22.0-win-x64.zip",
+          "algorithm": "sha256",
+          "checksum": "c97fa376d2becdc8863fcd3ca2dd9a83a9f3468ee7ccf7a6d076ec66a645c77a",
+          "url": "https://nodejs.org/dist/v22.22.0/node-v22.22.0-win-x64.zip",
+          "metadata": "https://nodejs.org/dist/v22.22.0/SHASUMS256.txt",
+          "source": "official"
+        }
+      },
+      {
+        "id": "jdk17",
+        "action": "reuse",
+        "current": {
+          "home": "D:\\Program Files\\Java\\Jdk17",
+          "java": "D:\\Program Files\\Java\\Jdk17\\bin\\java.exe",
+          "javac": "D:\\Program Files\\Java\\Jdk17\\bin\\javac.exe",
+          "version": "17.0.18",
+          "major": 17,
+          "source": "dir"
+        }
+      },
+      {
+        "id": "maven",
+        "action": "reuse",
+        "current": {
+          "path": "C:\\Users\\Administrator\\.m2\\wrapper\\dists\\apache-maven-3.9.11\\03d7e36a140982eea48e22c1dcac01d8862b2550b2939e09a0809bbc5182a5bc\\bin\\mvn.cmd",
+          "home": "C:\\Users\\Administrator\\.m2\\wrapper\\dists\\apache-maven-3.9.11\\03d7e36a140982eea48e22c1dcac01d8862b2550b2939e09a0809bbc5182a5bc",
+          "version": "3.9.11"
+        }
+      }
+    ],
+    "message": "缺少：node。通过环境准备入口补齐后重新验证。",
+    "workflowVerification": "not-run",
+    "projectRoot": "E:\\ai_workflow\\specgate\\.tmp\\env-repair-install\\business",
+    "checkedAt": "2026-10-30T11:45:27.273Z"
+  },
+  "installed": {
+    "ok": true,
+    "environmentReady": true,
+    "status": "ready",
+    "platform": "win32",
+    "arch": "x64",
+    "selection": {
+      "preset": "jdk17-boot3.5",
+      "frontend": "react"
+    },
+    "required": [
+      "git",
+      "node",
+      "jdk17",
+      "maven"
+    ],
+    "missing": [],
+    "tools": {
+      "git": {
+        "version": "2.45.1.windows.1",
+        "path": "C:\\Program Files\\Git\\cmd\\git.exe"
+      },
+      "node": {
+        "node": "E:\\ai_workflow\\specgate\\.tmp\\env-repair-install\\node-22.22.0\\node.exe",
+        "npm": "E:\\ai_workflow\\specgate\\.tmp\\env-repair-install\\node-22.22.0\\npm.cmd",
+        "version": "22.22.0",
+        "npmVersion": "10.9.4"
+      },
+      "jdk17": {
+        "home": "D:\\Program Files\\Java\\Jdk17",
+        "java": "D:\\Program Files\\Java\\Jdk17\\bin\\java.exe",
+        "javac": "D:\\Program Files\\Java\\Jdk17\\bin\\javac.exe",
+        "version": "17.0.18",
+        "major": 17,
+        "source": "dir"
+      },
+      "maven": {
+        "path": "C:\\Users\\Administrator\\.m2\\wrapper\\dists\\apache-maven-3.9.11\\03d7e36a140982eea48e22c1dcac01d8862b2550b2939e09a0809bbc5182a5bc\\bin\\mvn.cmd",
+        "home": "C:\\Users\\Administrator\\.m2\\wrapper\\dists\\apache-maven-3.9.11\\03d7e36a140982eea48e22c1dcac01d8862b2550b2939e09a0809bbc5182a5bc",
+        "version": "3.9.11"
+      }
+    },
+    "fingerprint": "c18175f2b3425a5ae5d434b9a4f7163bb1ebb95ce3a52d257d28be93cc8bea0e",
+    "source": "official",
+    "plan": [
+      {
+        "id": "git",
+        "action": "reuse",
+        "current": {
+          "version": "2.45.1.windows.1",
+          "path": "C:\\Program Files\\Git\\cmd\\git.exe"
+        }
+      },
+      {
+        "id": "node",
+        "action": "reuse",
+        "current": {
+          "node": "E:\\ai_workflow\\specgate\\.tmp\\env-repair-install\\node-22.22.0\\node.exe",
+          "npm": "E:\\ai_workflow\\specgate\\.tmp\\env-repair-install\\node-22.22.0\\npm.cmd",
+          "version": "22.22.0",
+          "npmVersion": "10.9.4"
+        }
+      },
+      {
+        "id": "jdk17",
+        "action": "reuse",
+        "current": {
+          "home": "D:\\Program Files\\Java\\Jdk17",
+          "java": "D:\\Program Files\\Java\\Jdk17\\bin\\java.exe",
+          "javac": "D:\\Program Files\\Java\\Jdk17\\bin\\javac.exe",
+          "version": "17.0.18",
+          "major": 17,
+          "source": "dir"
+        }
+      },
+      {
+        "id": "maven",
+        "action": "reuse",
+        "current": {
+          "path": "C:\\Users\\Administrator\\.m2\\wrapper\\dists\\apache-maven-3.9.11\\03d7e36a140982eea48e22c1dcac01d8862b2550b2939e09a0809bbc5182a5bc\\bin\\mvn.cmd",
+          "home": "C:\\Users\\Administrator\\.m2\\wrapper\\dists\\apache-maven-3.9.11\\03d7e36a140982eea48e22c1dcac01d8862b2550b2939e09a0809bbc5182a5bc",
+          "version": "3.9.11"
+        }
+      }
+    ],
+    "message": "当前项目所需工具链真实版本探测通过。项目基线和业务验证需分别执行。",
+    "workflowVerification": "not-run",
+    "projectRoot": "E:\\ai_workflow\\specgate\\.tmp\\env-repair-install\\business",
+    "checkedAt": "2026-10-30T11:45:48.503Z",
+    "completed": [
+      {
+        "id": "node",
+        "ok": true,
+        "version": "22.22.0",
+        "location": "E:\\ai_workflow\\specgate\\.tmp\\env-repair-install\\node-22.22.0",
+        "source": "official",
+        "url": "https://nodejs.org/dist/v22.22.0/node-v22.22.0-win-x64.zip",
+        "resolvedUrl": "https://nodejs.org/dist/v22.22.0/node-v22.22.0-win-x64.zip",
+        "integrity": {
+          "algorithm": "sha256",
+          "checksum": "c97fa376d2becdc8863fcd3ca2dd9a83a9f3468ee7ccf7a6d076ec66a645c77a",
+          "metadata": "https://nodejs.org/dist/v22.22.0/SHASUMS256.txt"
+        },
+        "cleanup": "completed"
+      }
+    ]
+  },
+  "repeated": {
+    "ok": true,
+    "environmentReady": true,
+    "status": "ready",
+    "platform": "win32",
+    "arch": "x64",
+    "selection": {
+      "preset": "jdk17-boot3.5",
+      "frontend": "react"
+    },
+    "required": [
+      "git",
+      "node",
+      "jdk17",
+      "maven"
+    ],
+    "missing": [],
+    "tools": {
+      "git": {
+        "version": "2.45.1.windows.1",
+        "path": "C:\\Program Files\\Git\\cmd\\git.exe"
+      },
+      "node": {
+        "node": "E:\\ai_workflow\\specgate\\.tmp\\env-repair-install\\node-22.22.0\\node.exe",
+        "npm": "E:\\ai_workflow\\specgate\\.tmp\\env-repair-install\\node-22.22.0\\npm.cmd",
+        "version": "22.22.0",
+        "npmVersion": "10.9.4"
+      },
+      "jdk17": {
+        "home": "D:\\Program Files\\Java\\Jdk17",
+        "java": "D:\\Program Files\\Java\\Jdk17\\bin\\java.exe",
+        "javac": "D:\\Program Files\\Java\\Jdk17\\bin\\javac.exe",
+        "version": "17.0.18",
+        "major": 17,
+        "source": "dir"
+      },
+      "maven": {
+        "path": "C:\\Users\\Administrator\\.m2\\wrapper\\dists\\apache-maven-3.9.11\\03d7e36a140982eea48e22c1dcac01d8862b2550b2939e09a0809bbc5182a5bc\\bin\\mvn.cmd",
+        "home": "C:\\Users\\Administrator\\.m2\\wrapper\\dists\\apache-maven-3.9.11\\03d7e36a140982eea48e22c1dcac01d8862b2550b2939e09a0809bbc5182a5bc",
+        "version": "3.9.11"
+      }
+    },
+    "fingerprint": "c18175f2b3425a5ae5d434b9a4f7163bb1ebb95ce3a52d257d28be93cc8bea0e",
+    "source": "official",
+    "plan": [
+      {
+        "id": "git",
+        "action": "reuse",
+        "current": {
+          "version": "2.45.1.windows.1",
+          "path": "C:\\Program Files\\Git\\cmd\\git.exe"
+        }
+      },
+      {
+        "id": "node",
+        "action": "reuse",
+        "current": {
+          "node": "E:\\ai_workflow\\specgate\\.tmp\\env-repair-install\\node-22.22.0\\node.exe",
+          "npm": "E:\\ai_workflow\\specgate\\.tmp\\env-repair-install\\node-22.22.0\\npm.cmd",
+          "version": "22.22.0",
+          "npmVersion": "10.9.4"
+        }
+      },
+      {
+        "id": "jdk17",
+        "action": "reuse",
+        "current": {
+          "home": "D:\\Program Files\\Java\\Jdk17",
+          "java": "D:\\Program Files\\Java\\Jdk17\\bin\\java.exe",
+          "javac": "D:\\Program Files\\Java\\Jdk17\\bin\\javac.exe",
+          "version": "17.0.18",
+          "major": 17,
+          "source": "dir"
+        }
+      },
+      {
+        "id": "maven",
+        "action": "reuse",
+        "current": {
+          "path": "C:\\Users\\Administrator\\.m2\\wrapper\\dists\\apache-maven-3.9.11\\03d7e36a140982eea48e22c1dcac01d8862b2550b2939e09a0809bbc5182a5bc\\bin\\mvn.cmd",
+          "home": "C:\\Users\\Administrator\\.m2\\wrapper\\dists\\apache-maven-3.9.11\\03d7e36a140982eea48e22c1dcac01d8862b2550b2939e09a0809bbc5182a5bc",
+          "version": "3.9.11"
+        }
+      }
+    ],
+    "message": "当前项目所需工具链真实版本探测通过。项目基线和业务验证需分别执行。",
+    "workflowVerification": "not-run",
+    "projectRoot": "E:\\ai_workflow\\specgate\\.tmp\\env-repair-install\\business",
+    "checkedAt": "2026-10-30T11:45:50.790Z"
+  },
+  "approvals": 1
+}

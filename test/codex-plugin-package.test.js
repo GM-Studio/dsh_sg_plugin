@@ -118,6 +118,7 @@ test(
       [
         path.join(path.dirname(process.execPath), 'node_modules/npm/bin/npm-cli.js'),
         path.resolve(path.dirname(process.execPath), '../lib/node_modules/npm/bin/npm-cli.js'),
+        '/usr/share/nodejs/npm/bin/npm-cli.js',
       ].find((file) => fs.existsSync(file));
     assert.ok(npmCli, 'npm CLI is required for the package acceptance test');
     const npm = (args, cwd) => {
@@ -156,6 +157,8 @@ test(
       'assets/codex/agents/specgate_implementer.toml',
       'assets/codex/agents/specgate_reviewer.toml',
       'src/codex/core/java/java-versions.js',
+      'src/codex/core/environment-install.js',
+      'src/codex/core/environment-project.js',
       'scripts/codex-plugin-smoke.mjs',
     ]) {
       assert.ok(
@@ -167,7 +170,7 @@ test(
       assert.doesNotMatch(entry.path, /^src\/codex\/(?:control|management|channels)\//);
       assert.doesNotMatch(entry.path, /^src\/codex\/core\/control\//);
       assert.doesNotMatch(entry.path, /^assets\/java-vue\//);
-      assert.doesNotMatch(entry.path, /(?:mysql-repository|environment-install|specgate-worker)/);
+      assert.doesNotMatch(entry.path, /(?:mysql-repository|specgate-worker)/);
     }
     const installRoot = path.join(fixture, 'installation');
     fs.mkdirSync(installRoot);

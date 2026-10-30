@@ -1,0 +1,26 @@
+✔ exceeding the file budget stops expansion and reports the unscanned range (4.893ms)
+✔ a file above the single-file budget is skipped without being read (1.6604ms)
+✔ dependency directories are skipped and counted, not analysed (2.5191ms)
+✔ a repository can declare its own skip directories so real source is not starved (2.5007ms)
+✔ an undeclared tool-state directory is NOT silently skipped (2.1016ms)
+✔ an invalid skip config is ignored rather than breaking the scan (2.401ms)
+✔ suspected secret files are skipped by name and never described as analysed (2.4055ms)
+✔ a file whose content looks like a credential is analysed but marked redacted (0.8972ms)
+✔ a source file holding the detection pattern itself is not treated as a credential (0.8242ms)
+✔ a real credential-shaped assignment redacts without removing the file (0.8869ms)
+✔ symlinks are neither followed nor counted as analysed (1.2829ms)
+✔ a timeout returns partial results with a reason instead of throwing (5.2396ms)
+✔ depth beyond the budget is recorded as unscanned rather than silently dropped (1.0149ms)
+✔ the approved OI-01 budget is the effective default (1.0518ms)
+✔ an invalid budget is refused instead of silently falling back (0.1295ms)
+✔ an invalid root is refused (0.0672ms)
+✔ secret detection is name based and case aware (0.0556ms)
+✔ scanning is read-only (2.1815ms)
+ℹ tests 18
+ℹ suites 0
+ℹ pass 18
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 102.9077

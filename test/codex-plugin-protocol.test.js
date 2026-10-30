@@ -185,7 +185,9 @@ test('stdio handshake and diagnostic tools leave a nonempty project unchanged', 
       'sg_release_preview',
       'sg_release_archive',
       'sg_project_bind',
+      'sg_project_create',
       'sg_env_check',
+      'sg_env_prepare',
       'sg_status',
     ],
   );
@@ -271,8 +273,6 @@ test('source-only optional mode explicitly adds the historical tool entries', ()
       'sg_work_item_status',
       'sg_work_item_wait',
       'sg_project_setup',
-      'sg_project_create',
-      'sg_env_prepare',
     ],
   );
   assert.equal(
@@ -296,7 +296,7 @@ test('lifecycle rejects calls before handshake and repeated initialization', () 
   assert.equal(result.messages[0].error.code, -32002);
   assert.equal(result.messages[2].error.code, -32002);
   assert.equal(result.messages[3].error.code, -32600);
-  assert.equal(result.messages[4].result.tools.length, 43);
+  assert.equal(result.messages[4].result.tools.length, 45);
 });
 
 test('malformed JSON, batch messages and invalid envelopes do not terminate the server', () => {

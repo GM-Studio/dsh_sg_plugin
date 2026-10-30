@@ -14,4 +14,4 @@ description: 在 Codex 中使用 SpecGate Core、寻找入口或按当前项目�
 | 需求、实现、验证与交付         | `$sg-codex-change`  |
 | 只读进度、阻塞和证据           | `$sg-codex-status`  |
 
-默认工具不提供新建项目、自动安装、异步 WorkItem、远程 Decision、Web 管理或生产部署。历史实现保留在源码的显式可选模式，未作为 Core 发行验收。H1/H3 只接受可信宿主审批；不得修改状态、事件、冻结文件或交付证据来代替工具执行。
+新项目用 `sg_project_create` 选择环境；`sg_env_prepare` 在可信安装批准后补齐缺项并复验，环境就绪不代表业务验收。默认不生成业务模板，不提供异步 WorkItem、远程 Decision、Web 管理或生产部署。H1/H3 只接受可信宿主审批；不得修改状态、事件、冻结文件或交付证据来代替工具执行。
