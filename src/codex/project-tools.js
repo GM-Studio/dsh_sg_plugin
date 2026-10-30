@@ -217,9 +217,25 @@ export async function callProjectTool(services, name, args = {}, { signal } = {}
         code: 'ADOPTION_PREVIEW_STALE',
         message: 'The project changed after adoption preview',
       };
-    if (!services?.baselineRunner) return startBaselineJob({ projectRoot: root, preview });
+    const executionContext = services.environmentContext
+      ? await services.environmentContext()
+      : undefined;
+    if (executionContext && !executionContext.ok)
+      return {
+        ok: false,
+        code: executionContext.code || 'ENV_NOT_READY',
+        message: '环境未就绪，未启动基线',
+        environment: executionContext.report,
+      };
+    if (!services?.baselineRunner)
+      return startBaselineJob({
+        projectRoot: root,
+        preview,
+        environmentReport: executionContext?.report,
+      });
     return startAdoptionBaseline({
       preview,
+      executionContext,
       runner: services.baselineRunner,
       persist: (baseline) =>
         applyAdoption({
@@ -241,6 +257,7 @@ export async function callProjectTool(services, name, args = {}, { signal } = {}
             kind: command.kind,
             cwd: command.cwd,
             argv: command.argv,
+            executedArgv: result.argv || null,
             status: result.status,
             exitCode: result.exitCode,
             durationMs: result.durationMs,

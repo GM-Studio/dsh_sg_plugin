@@ -3,6 +3,7 @@ import path from 'node:path';
 import { hashValue } from './events.js';
 import { validateProjectBaseline } from './project-model.js';
 import { projectCommandSpec } from './core/project-command.js';
+import { executionEnvironment, resolveEnvironmentCommand } from './core/environment-execution.js';
 
 const failure = (code, message) => ({ ok: false, code, message });
 const STATUSES = new Set(['passed', 'failed', 'skipped', 'not-run', 'timeout', 'cancelled']);
@@ -75,8 +76,15 @@ function stopProcess(child) {
   }
 }
 
-export function runBaselineCommand({ command, cwd, timeoutMs = 15 * 60 * 1000, signal } = {}) {
+export function runBaselineCommand({
+  command,
+  cwd,
+  timeoutMs = 15 * 60 * 1000,
+  signal,
+  executionContext,
+} = {}) {
   return new Promise((resolve) => {
+    let argv = command?.argv || [];
     if (
       !command ||
       typeof command.id !== 'string' ||
@@ -115,6 +123,7 @@ export function runBaselineCommand({ command, cwd, timeoutMs = 15 * 60 * 1000, s
         durationMs: Date.now() - started,
         startedAt,
         finishedAt: new Date().toISOString(),
+        argv,
       });
     };
     if (signal?.aborted) {
@@ -123,9 +132,12 @@ export function runBaselineCommand({ command, cwd, timeoutMs = 15 * 60 * 1000, s
     }
     let child;
     try {
-      const resolved = projectCommandSpec(command.argv[0], command.argv.slice(1));
+      argv = resolveEnvironmentCommand(command.argv, executionContext, cwd);
+      const env = executionEnvironment(executionContext, {}, cwd);
+      const resolved = projectCommandSpec(argv[0], argv.slice(1), { env });
       child = spawn(resolved.command, resolved.args, {
         cwd,
+        env,
         shell: false,
         windowsHide: true,
         windowsVerbatimArguments: resolved.windowsVerbatimArguments,
@@ -171,6 +183,7 @@ export async function runAdoptionBaseline({
   signal,
   createdAt = new Date().toISOString(),
   onProgress = () => {},
+  executionContext,
 } = {}) {
   if (!preview?.ok || !preview.profile || !preview.git?.commit)
     return failure('BASELINE_PREVIEW_INVALID', 'A valid adoption preview is required');
@@ -224,6 +237,7 @@ export async function runAdoptionBaseline({
         cwd: path.join(preview.root, command.cwd),
         timeoutMs: command.timeoutMs,
         signal,
+        executionContext,
       });
     } catch (error) {
       if (signal?.aborted || error?.code === 'ABORT_ERR')
@@ -323,6 +337,7 @@ export function startAdoptionBaseline({
   persist,
   record,
   createdAt = new Date().toISOString(),
+  executionContext,
 } = {}) {
   if (!preview?.ok || !preview.profile || !preview.git?.commit)
     return failure('BASELINE_PREVIEW_INVALID', 'A valid adoption preview is required');
@@ -354,6 +369,7 @@ export function startAdoptionBaseline({
       runAdoptionBaseline({
         preview,
         runner,
+        executionContext,
         createdAt,
         onProgress(progress) {
           Object.assign(run, progress);

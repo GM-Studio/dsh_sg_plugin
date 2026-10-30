@@ -97,6 +97,7 @@ export async function verifyAdoptedProject({
   runner = runBaselineCommand,
   signal,
   startedAt = new Date().toISOString(),
+  executionContext,
 } = {}) {
   const profileCheck = validateProjectProfile(profile);
   if (!profileCheck.ok) return profileCheck;
@@ -137,6 +138,7 @@ export async function verifyAdoptedProject({
         cwd: path.join(worktree, command.cwd),
         timeoutMs: command.timeoutMs,
         signal,
+        executionContext,
       });
     } catch (error) {
       return failure(
@@ -164,6 +166,7 @@ export async function verifyAdoptedProject({
       kind: command.kind,
       cwd: command.cwd,
       argv: command.argv,
+      executedArgv: raw.argv || null,
       status: raw.status,
       exitCode: raw.exitCode,
       durationMs: raw.durationMs || 0,

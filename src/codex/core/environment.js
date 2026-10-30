@@ -17,6 +17,7 @@ import { projectToolRequirements } from './environment-requirements.js';
 import { discoverRequiredEnvironment } from './environment-discovery.js';
 import { resolveToolArchive } from './environment-archives.js';
 import { matchesVersion } from './env/version-range.js';
+import { environmentExecutionContext } from './environment-execution.js';
 
 export const environmentCacheRoot = (env = process.env) =>
   path.join(env.USERPROFILE || env.HOME || os.homedir(), '.specgate', 'toolchains');
@@ -238,6 +239,13 @@ export function createEnvironmentService({
   };
   return {
     check,
+    async executionContext(input = {}) {
+      const report = await check(input);
+      return environmentExecutionContext(report, {
+        root,
+        env: managedEnvironment({ env, platform, cacheRoot }),
+      });
+    },
     inspect: () => latest || { status: 'not-checked', environmentReady: false },
     async prepare(input = {}, { signal } = {}) {
       const before = await check(input);

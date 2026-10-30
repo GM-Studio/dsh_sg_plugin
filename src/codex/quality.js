@@ -1,3 +1,4 @@
+import { gitExecutable } from './core/git-runtime.js';
 import fs from 'node:fs';
 import path from 'node:path';
 import { spawn, execFileSync } from 'node:child_process';
@@ -9,6 +10,7 @@ import { loadProjectReadiness } from './project-state.js';
 import { VERIFY_STAGES } from './core/java/verify-evidence.js';
 import { commandSpec } from './core/java/verify-evidence.js';
 import { reconcileCoverage } from './core/java/coverage-evidence.js';
+import { executionEnvironment } from './core/environment-execution.js';
 
 const SOURCE_ROOT = path.resolve(fileURLToPath(new URL('../..', import.meta.url)));
 const EXPECTED_STAGES = Object.freeze([...VERIFY_STAGES, 'frontend-runtime']);
@@ -60,7 +62,7 @@ function errorText(error) {
 }
 
 function git(root, args) {
-  return execFileSync('git', args, {
+  return execFileSync(gitExecutable(), args, {
     cwd: root,
     encoding: 'utf8',
     stdio: ['ignore', 'pipe', 'pipe'],
@@ -156,7 +158,7 @@ function terminate(child) {
   }
 }
 
-function runCommand(specification, { signal, timeoutMs }) {
+function runCommand(specification, { signal, timeoutMs, executionContext }) {
   return new Promise((resolve) => {
     const startedAt = new Date().toISOString();
     const startedMs = Date.now();
@@ -192,7 +194,7 @@ function runCommand(specification, { signal, timeoutMs }) {
     }
     const child = spawn(command.command, command.args, {
       cwd: specification.cwd,
-      env: { ...process.env, ...(specification.env || {}) },
+      env: executionEnvironment(executionContext, specification.env, specification.cwd),
       shell: false,
       windowsHide: true,
       windowsVerbatimArguments: command.windowsVerbatimArguments,
@@ -580,6 +582,7 @@ export function createQualityService({
   verifier,
   nativeVerification = false,
   adoptedVerifier = verifyAdoptedProject,
+  environmentContext,
   timeoutMs = DEFAULT_TIMEOUT_MS,
 } = {}) {
   if (typeof projectRoot !== 'string' || !projectRoot)
@@ -909,7 +912,12 @@ export function createQualityService({
           `The Test role changed production files: ${policyViolations.join(', ')}`,
           { violations: policyViolations, quality: runEvidence },
         );
-      const command = await runCommand(specification, { signal, timeoutMs });
+      const executionContext = environmentContext
+        ? await environmentContext({ worktree: test.path })
+        : undefined;
+      if (executionContext && !executionContext.ok)
+        return failure(executionContext.code || 'ENV_NOT_READY', '质量执行环境未就绪');
+      const command = await runCommand(specification, { signal, timeoutMs, executionContext });
       const stdoutPath = `${runEvidence.directory}/stdout.log`;
       const stderrPath = `${runEvidence.directory}/stderr.log`;
       const testLog = `${runEvidence.directory}/test.log`;
@@ -1147,6 +1155,7 @@ export function createQualityService({
             profileHash: digest(readiness.profile),
           };
           const adopted = await adoptedVerifier({
+            executionContext,
             profile: readiness.profile,
             baseline: readiness.baseline,
             worktree: test.path,

@@ -1,3 +1,4 @@
+import { gitExecutable } from './core/git-runtime.js';
 import fs from 'node:fs';
 import path from 'node:path';
 import { execFileSync } from 'node:child_process';
@@ -52,7 +53,7 @@ function safeRelative(relative) {
 }
 
 function git(root, args) {
-  return execFileSync('git', args, {
+  return execFileSync(gitExecutable(), args, {
     cwd: root,
     encoding: 'utf8',
     stdio: ['ignore', 'pipe', 'pipe'],

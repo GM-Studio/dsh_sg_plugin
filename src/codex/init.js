@@ -1,3 +1,4 @@
+import { gitExecutable } from './core/git-runtime.js';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -269,7 +270,7 @@ function inspectGit(root) {
   }
   const git = (args) =>
     spawnSync(
-      'git',
+      gitExecutable(),
       [
         '-c',
         'core.fsmonitor=false',
@@ -508,7 +509,7 @@ function generateStaging({
 function baseline(root, created, report, templateDirectory, identity, bindingProject) {
   const git = (args) => {
     const step = spawnSync(
-      'git',
+      gitExecutable(),
       [
         '-c',
         'user.name=' + identity.name,

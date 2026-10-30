@@ -1,3 +1,4 @@
+import { gitExecutable } from './core/git-runtime.js';
 import os from 'node:os';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
@@ -29,7 +30,7 @@ function gitEnvironment() {
 
 function git(root, args) {
   return spawnSync(
-    'git',
+    gitExecutable(),
     [
       '-c',
       `safe.directory=${gitSafeDirectory(root)}`,

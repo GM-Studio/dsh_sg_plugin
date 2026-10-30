@@ -1,3 +1,6 @@
+import { gitExecutable } from './core/git-runtime.js';
+import { environmentExecutionContext } from './core/environment-execution.js';
+import { managedEnvironment } from './core/environment.js';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -25,7 +28,7 @@ function gitEnvironment() {
 
 function git(root, args) {
   return spawnSync(
-    'git',
+    gitExecutable(),
     [
       '-c',
       `safe.directory=${gitSafeDirectory(root)}`,
@@ -124,6 +127,7 @@ export function startBaselineJob({
   projectRoot,
   preview,
   createdAt = new Date().toISOString(),
+  environmentReport,
 } = {}) {
   let root;
   try {
@@ -162,6 +166,7 @@ export function startBaselineJob({
       runId,
       projectRoot: root,
       preview,
+      environmentReport,
       statusPath,
       createdAt,
     });
@@ -171,7 +176,9 @@ export function startBaselineJob({
       detached: true,
       stdio: 'ignore',
       windowsHide: true,
-      env: process.env,
+      env: environmentReport
+        ? environmentExecutionContext(environmentReport, { root, env: managedEnvironment() }).env
+        : process.env,
     });
     status.pid = child.pid || null;
     writeJson(statusPath, status);

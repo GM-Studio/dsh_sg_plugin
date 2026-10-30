@@ -1,3 +1,4 @@
+import { gitExecutable } from './git-runtime.js';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { gitSafeDirectory } from '../git-path.js';
@@ -463,7 +464,7 @@ export function createChange(
             ) &&
             (() => {
               const committed = spawnSync(
-                'git',
+                gitExecutable(),
                 [
                   '-c',
                   `safe.directory=${gitSafeDirectory(root)}`,

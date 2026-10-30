@@ -1,3 +1,4 @@
+import { gitExecutable } from './core/git-runtime.js';
 import fs from 'node:fs';
 import path from 'node:path';
 import { spawnSync, execFileSync } from 'node:child_process';
@@ -41,14 +42,18 @@ function safeRelative(relative) {
 }
 
 function git(root, args, environment) {
-  return execFileSync('git', ['-c', `safe.directory=${gitSafeDirectory(root)}`, ...args], {
-    cwd: root,
-    encoding: 'utf8',
-    env: { ...process.env, ...(environment || {}) },
-    stdio: ['ignore', 'pipe', 'pipe'],
-    windowsHide: true,
-    timeout: 120000,
-  }).trim();
+  return execFileSync(
+    gitExecutable(),
+    ['-c', `safe.directory=${gitSafeDirectory(root)}`, ...args],
+    {
+      cwd: root,
+      encoding: 'utf8',
+      env: { ...process.env, ...(environment || {}) },
+      stdio: ['ignore', 'pipe', 'pipe'],
+      windowsHide: true,
+      timeout: 120000,
+    },
+  ).trim();
 }
 
 function gitMaybe(root, args) {
@@ -297,7 +302,7 @@ function mergeIntegration(root, integration) {
 function pushTarget(root, remote, branch) {
   const startedAt = new Date().toISOString();
   const result = spawnSync(
-    'git',
+    gitExecutable(),
     [
       '-c',
       `safe.directory=${gitSafeDirectory(root)}`,

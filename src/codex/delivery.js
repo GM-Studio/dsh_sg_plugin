@@ -1,3 +1,4 @@
+import { gitExecutable } from './core/git-runtime.js';
 import os from 'node:os';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -138,7 +139,7 @@ export function renderCustomerPack({ delivery, customer = {} } = {}) {
 
 function git(root, args) {
   return spawnSync(
-    'git',
+    gitExecutable(),
     [
       '-c',
       `safe.directory=${gitSafeDirectory(root)}`,

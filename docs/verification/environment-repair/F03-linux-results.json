@@ -1,0 +1,44 @@
+[
+  {
+    "platform": "linux",
+    "arch": "x64",
+    "name": "focused",
+    "command": "node --import ./test/setup-temp.mjs --test test/codex-environment-entry-e2e.test.js test/codex-environment-execution-e2e.test.js test/codex-environment-stack-e2e.test.js test/codex-environment.test.js test/codex-plugin-protocol.test.js test/codex-plugin-package.test.js",
+    "exitCode": 0
+  },
+  {
+    "platform": "linux",
+    "arch": "x64",
+    "name": "test",
+    "command": "npm test",
+    "exitCode": 0
+  },
+  {
+    "platform": "linux",
+    "arch": "x64",
+    "name": "lint",
+    "command": "npm run lint",
+    "exitCode": 0
+  },
+  {
+    "platform": "linux",
+    "arch": "x64",
+    "name": "format",
+    "command": "npm run format:check",
+    "exitCode": 0
+  },
+  {
+    "platform": "linux",
+    "arch": "x64",
+    "name": "pack",
+    "command": "npm run pack:check",
+    "exitCode": 0
+  },
+  {
+    "platform": "linux",
+    "arch": "x64",
+    "name": "smoke",
+    "command": "npm run codex:smoke",
+    "exitCode": 0
+  }
+]

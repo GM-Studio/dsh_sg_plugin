@@ -1,3 +1,4 @@
+import { gitExecutable } from './core/git-runtime.js';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -23,7 +24,7 @@ const failure = (code, message) => ({ ok: false, code, message });
 
 function git(root, args) {
   return spawnSync(
-    'git',
+    gitExecutable(),
     [
       '-c',
       `safe.directory=${gitSafeDirectory(root)}`,

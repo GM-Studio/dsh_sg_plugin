@@ -4,12 +4,12 @@ import { commandSpec } from './java/verify-evidence.js';
 
 // Resolve only declared project launchers, using a bounded PATH search. Windows
 // batch files need an absolute path so their own relative tool paths stay valid.
-export function projectCommandSpec(command, args) {
+export function projectCommandSpec(command, args, { env = process.env } = {}) {
   let executable = command;
   if (process.platform === 'win32') {
     if (/^(?:npm|npx|pnpm|yarn|mvn|mvnw|gradlew)$/i.test(executable)) executable += '.cmd';
     if (!/[\\/]/.test(executable) && /\.(cmd|bat)$/i.test(executable)) {
-      const found = String(process.env.PATH || '')
+      const found = String(env.PATH || env.Path || '')
         .split(path.delimiter)
         .filter(Boolean)
         .slice(0, 128)

@@ -1,3 +1,4 @@
+import { gitExecutable } from './core/git-runtime.js';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -546,7 +547,7 @@ export function createChangeAddService({
   };
   const git = (args) =>
     spawnSync(
-      'git',
+      gitExecutable(),
       [
         '-c',
         `safe.directory=${gitSafeDirectory(root)}`,

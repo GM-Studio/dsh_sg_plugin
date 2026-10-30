@@ -1,3 +1,4 @@
+import { gitExecutable } from './core/git-runtime.js';
 import fs from 'node:fs';
 import path from 'node:path';
 import { spawn, execFileSync } from 'node:child_process';
@@ -9,6 +10,7 @@ import { taskFilePolicy, dependencyFile } from './core/task-policy.js';
 import { createHash } from 'node:crypto';
 import { buildRepairContext } from './core/repair-context.js';
 import { resolveProfile, policyFor } from './core/validation-profile.js';
+import { executionEnvironment } from './core/environment-execution.js';
 
 const SOURCE_ROOT = path.resolve(fileURLToPath(new URL('../..', import.meta.url)));
 const ROLES = Object.freeze(['frontend', 'backend', 'integration', 'test', 'review', 'format']);
@@ -66,7 +68,7 @@ function errorText(error) {
 }
 
 function runGit(root, args, environment) {
-  return execFileSync('git', args, {
+  return execFileSync(gitExecutable(), args, {
     cwd: root,
     encoding: 'utf8',
     env: { ...process.env, ...(environment || {}) },
@@ -186,7 +188,10 @@ function terminate(child) {
   }
 }
 
-function runProcess(specification, { signal, timeoutMs = COMMAND_TIMEOUT_MS } = {}) {
+function runProcess(
+  specification,
+  { signal, timeoutMs = COMMAND_TIMEOUT_MS, executionContext } = {},
+) {
   return new Promise((resolve) => {
     if (signal?.aborted) {
       resolve({ ok: false, code: 'CANCELLED', stdout: '', stderr: '', exitCode: null });
@@ -194,7 +199,7 @@ function runProcess(specification, { signal, timeoutMs = COMMAND_TIMEOUT_MS } = 
     }
     const child = spawn(specification.command, specification.args, {
       cwd: specification.cwd,
-      env: { ...process.env, ...(specification.env || {}) },
+      env: executionEnvironment(executionContext, specification.env, specification.cwd),
       shell: false,
       windowsHide: true,
       stdio: ['ignore', 'pipe', 'pipe'],
@@ -492,7 +497,15 @@ function artifactDetails(root, checked) {
   };
 }
 
-async function redBaseline({ root, checked, redRunner, signal, timeoutMs, policy = null }) {
+async function redBaseline({
+  root,
+  checked,
+  redRunner,
+  signal,
+  timeoutMs,
+  policy = null,
+  environmentContext,
+}) {
   if (typeof redRunner !== 'function')
     return failure(
       'RED_RUNNER_UNAVAILABLE',
@@ -518,7 +531,12 @@ async function redBaseline({ root, checked, redRunner, signal, timeoutMs, policy
   } catch (error) {
     return failure(error.code || 'RED_RUNNER_INVALID', error.message);
   }
-  const run = await runProcess(specification, { signal, timeoutMs });
+  const executionContext = environmentContext
+    ? await environmentContext({ worktree: root })
+    : undefined;
+  if (executionContext && !executionContext.ok)
+    return failure(executionContext.code || 'ENV_NOT_READY', '红基线执行环境未就绪');
+  const run = await runProcess(specification, { signal, timeoutMs, executionContext });
   if (!run.ok && run.code === 'CANCELLED')
     return failure('CANCELLED', 'Red baseline execution was cancelled');
   if (run.code === 'COMMAND_TIMEOUT')
@@ -589,6 +607,7 @@ export function createDevelopmentService({
   store,
   planService,
   redRunner,
+  environmentContext,
   roleProvider,
   rolePolicy = defaultRolePolicy,
   timeoutMs = COMMAND_TIMEOUT_MS,
@@ -695,6 +714,7 @@ export function createDevelopmentService({
         signal,
         timeoutMs,
         policy,
+        environmentContext,
       });
       if (!red.ok) return red;
       const afterRed = await store.inspect();
@@ -849,7 +869,7 @@ export function createDevelopmentService({
           ? 'sha256:' +
             createHash('sha256')
               .update(
-                execFileSync('git', ['show', `${head}:${entry.path}`], {
+                execFileSync(gitExecutable(), ['show', `${head}:${entry.path}`], {
                   cwd: root,
                   windowsHide: true,
                 }),

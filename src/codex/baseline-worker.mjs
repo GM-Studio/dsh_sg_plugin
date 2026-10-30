@@ -1,3 +1,4 @@
+import { gitExecutable } from './core/git-runtime.js';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -7,6 +8,8 @@ import { runAdoptionBaseline } from './baseline.js';
 import { gitSafeDirectory } from './git-path.js';
 import { applyAdoption } from './project-adopt.js';
 import { createArtifactStore } from './core/artifact-store.js';
+import { environmentExecutionContext } from './core/environment-execution.js';
+import { managedEnvironment } from './core/environment.js';
 
 function writeStatus(target, value) {
   fs.mkdirSync(path.dirname(target), { recursive: true });
@@ -41,7 +44,7 @@ function option(name) {
 
 function git(projectRoot, args) {
   return spawnSync(
-    'git',
+    gitExecutable(),
     [
       '-c',
       `safe.directory=${gitSafeDirectory(projectRoot)}`,
@@ -75,6 +78,7 @@ function recordEvidence(projectRoot, baselineRun, run) {
       kind: command.kind,
       cwd: command.cwd,
       argv: command.argv,
+      executedArgv: result.argv || null,
       status: result.status,
       exitCode: result.exitCode,
       durationMs: result.durationMs,
@@ -123,6 +127,12 @@ async function main() {
   try {
     baselineRun = await runAdoptionBaseline({
       preview: { ...job.preview, root: worktree },
+      executionContext: job.environmentReport
+        ? environmentExecutionContext(job.environmentReport, {
+            root: worktree,
+            env: managedEnvironment(),
+          })
+        : undefined,
       createdAt: job.createdAt,
       onProgress(progress) {
         Object.assign(status, progress);

@@ -33,6 +33,7 @@ import { inspectProjectStatus } from './project-status.js';
 import { ONBOARDING_TOOLS } from './core/onboarding-tool-definitions.js';
 import { bindProject } from './core/project-binding.js';
 import { prepareFrozenExecution } from './core/frozen-execution.js';
+import { environmentExecutionContext } from './core/environment-execution.js';
 
 const object = (value) => value !== null && typeof value === 'object' && !Array.isArray(value);
 const OPTIONAL_TOOL_NAMES = new Set([
@@ -359,12 +360,15 @@ function createBoundToolRegistry({
   dirtyApprovalProvider,
   controlService,
   environmentGate,
+  environmentContext,
   optionalModules = false,
 } = {}) {
   const root = path.resolve(projectRoot);
   const effectiveNativeRoleProvider =
     nativeRoleProvider ||
-    (nativeAgents ? createNativeCodexRoleProvider({ projectRoot: root }) : undefined);
+    (nativeAgents
+      ? createNativeCodexRoleProvider({ projectRoot: root, environmentContext })
+      : undefined);
   const effectiveDevelopmentRoleProvider = developmentRoleProvider || effectiveNativeRoleProvider;
   const effectiveReviewRoleProvider = reviewRoleProvider || effectiveNativeRoleProvider;
   const effectiveTestDesignerRunner = testDesignerRunner || effectiveNativeRoleProvider;
@@ -416,7 +420,8 @@ function createBoundToolRegistry({
           return specification;
         }
       : undefined);
-  const effectiveFormatter = formatter || (nativeAgents ? createNativeFormatter() : undefined);
+  const effectiveFormatter =
+    formatter || (nativeAgents ? createNativeFormatter({ environmentContext }) : undefined);
   let store;
   const stateStore = () =>
     (store ||= createStateStore({ projectRoot: root, authorizeGate: authority.authorizeGate }));
@@ -603,6 +608,7 @@ function createBoundToolRegistry({
       planService: plans(),
       roleProvider: effectiveDevelopmentRoleProvider,
       redRunner: effectiveRedRunner,
+      environmentContext,
     }));
   let qualityService;
   const quality = () =>
@@ -614,6 +620,7 @@ function createBoundToolRegistry({
       verifier: qualityVerifier,
       nativeVerification: nativeAgents,
       timeoutMs: qualityTimeoutMs,
+      environmentContext,
     }));
   let reviewService;
   const review = () =>
@@ -781,6 +788,7 @@ function createBoundToolRegistry({
               {
                 projectRoot: root,
                 optionalModules,
+                environmentContext,
                 ...(baselineRunner ? { baselineRunner } : {}),
                 dirtyApprovalProvider: effectiveDirtyApprovalProvider,
                 newProjectVerifier:
@@ -935,7 +943,20 @@ export function createToolRegistry(options = {}) {
   };
   const environmentGate = ({ root: target, ...selection }) =>
     environmentFor(target).check(selection);
-  let bound = createBoundToolRegistry({ ...configured, projectRoot: root, environmentGate });
+  const environmentContext = async ({ worktree } = {}) => {
+    const target = worktree || root;
+    const service = environmentFor(target);
+    const selection = environmentSelections.get(root) || {};
+    return typeof service.executionContext === 'function'
+      ? service.executionContext(selection)
+      : environmentExecutionContext(await service.check(selection), { root: target });
+  };
+  let bound = createBoundToolRegistry({
+    ...configured,
+    projectRoot: root,
+    environmentGate,
+    environmentContext,
+  });
   let environment = environmentFor(root);
   const onboardingDraft = {};
   const definitions = [...bound.definitions, ...ONBOARDING_TOOLS, ...ENVIRONMENT_TOOLS]
@@ -947,7 +968,12 @@ export function createToolRegistry(options = {}) {
   const bind = (selected) => {
     root = bindProject(selected);
     projectBound = true;
-    bound = createBoundToolRegistry({ ...configured, projectRoot: root, environmentGate });
+    bound = createBoundToolRegistry({
+      ...configured,
+      projectRoot: root,
+      environmentGate,
+      environmentContext,
+    });
     environment = environmentFor(root);
     return root;
   };

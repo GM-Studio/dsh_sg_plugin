@@ -1,8 +1,10 @@
+import { gitExecutable } from './core/git-runtime.js';
 import { spawn, execFileSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { canonicalJson, hashValue } from './events.js';
+import { executionEnvironment } from './core/environment-execution.js';
 
 const PLUGIN_ROOT = fileURLToPath(new URL('../..', import.meta.url));
 const MAX_PROMPT_BYTES = 512 * 1024;
@@ -13,7 +15,7 @@ const failure = (code, message, extra = {}) => ({ ok: false, code, message, ...e
 function writableGitDirectory(root, worktree, branch) {
   if (!fs.existsSync(path.join(worktree, '.git'))) return null;
   const git = (cwd, args) =>
-    execFileSync('git', args, {
+    execFileSync(gitExecutable(), args, {
       cwd,
       encoding: 'utf8',
       windowsHide: true,
@@ -267,6 +269,7 @@ export function createNativeCodexRoleProvider({
   platform = process.platform,
   env = process.env,
   clock = Date.now,
+  environmentContext,
 } = {}) {
   command ||= env.SPECGATE_CODEX_COMMAND || 'codex';
   if (typeof projectRoot !== 'string' || !path.isAbsolute(projectRoot))
@@ -341,8 +344,13 @@ export function createNativeCodexRoleProvider({
       'plugins={}',
       '-',
     ];
+    const executionContext = environmentContext
+      ? await environmentContext({ worktree })
+      : undefined;
+    if (executionContext && !executionContext.ok)
+      return failure(executionContext.code || 'ENV_NOT_READY', '原生角色环境未就绪');
     const childEnvironment = {
-      ...env,
+      ...executionEnvironment(executionContext, env, worktree),
       SPECGATE_NATIVE_AGENTS: '0',
       SPECGATE_INTERACTIVE_APPROVAL: '0',
       SPECGATE_ROLE_AGENT: configured.agent.name,

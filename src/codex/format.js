@@ -1,3 +1,4 @@
+import { gitExecutable } from './core/git-runtime.js';
 import fs from 'node:fs';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
@@ -5,6 +6,7 @@ import { fileURLToPath } from 'node:url';
 import { canonicalJson, hashValue } from './events.js';
 import { gitSafeDirectory } from './git-path.js';
 import { projectCommandSpec } from './core/project-command.js';
+import { executionEnvironment, resolveEnvironmentCommand } from './core/environment-execution.js';
 
 const SOURCE_ROOT = path.resolve(fileURLToPath(new URL('../..', import.meta.url)));
 const object = (value) => value !== null && typeof value === 'object' && !Array.isArray(value);
@@ -38,14 +40,18 @@ function safeRelative(relative) {
 }
 
 function git(root, args, env = process.env) {
-  const result = spawnSync('git', ['-c', `safe.directory=${gitSafeDirectory(root)}`, ...args], {
-    cwd: root,
-    encoding: 'utf8',
-    stdio: ['ignore', 'pipe', 'pipe'],
-    windowsHide: true,
-    timeout: 60000,
-    env: { ...process.env, ...env },
-  });
+  const result = spawnSync(
+    gitExecutable(),
+    ['-c', `safe.directory=${gitSafeDirectory(root)}`, ...args],
+    {
+      cwd: root,
+      encoding: 'utf8',
+      stdio: ['ignore', 'pipe', 'pipe'],
+      windowsHide: true,
+      timeout: 60000,
+      env: { ...process.env, ...env },
+    },
+  );
   if (result.status !== 0)
     fail(
       'FORMAT_GIT_FAILED',
@@ -56,7 +62,7 @@ function git(root, args, env = process.env) {
 
 function status(root) {
   const result = spawnSync(
-    'git',
+    gitExecutable(),
     [
       '-c',
       `safe.directory=${gitSafeDirectory(root)}`,
@@ -126,13 +132,23 @@ function command(specification, worktree) {
   const started = Date.now();
   let resolved;
   try {
-    resolved = projectCommandSpec(specification.command, specification.args);
+    const env = executionEnvironment(
+      specification.executionContext,
+      specification.env,
+      specification.cwd,
+    );
+    const argv = resolveEnvironmentCommand(
+      [specification.command, ...specification.args],
+      specification.executionContext,
+      specification.cwd,
+    );
+    resolved = projectCommandSpec(argv[0], argv.slice(1), { env });
   } catch (error) {
     return { ...failure('FORMAT_COMMAND_INVALID', error.message), startedAt, durationMs: 0 };
   }
   const result = spawnSync(resolved.command, resolved.args, {
     cwd: specification.cwd,
-    env: { ...process.env, ...(specification.env || {}) },
+    env: executionEnvironment(specification.executionContext, specification.env, specification.cwd),
     encoding: 'utf8',
     stdio: ['ignore', 'pipe', 'pipe'],
     windowsHide: true,
@@ -143,6 +159,7 @@ function command(specification, worktree) {
   const record = {
     command: specification.command,
     args: specification.args,
+    executedArgv: [resolved.command, ...resolved.args],
     cwd: path.relative(worktree, specification.cwd).replace(/\\/g, '/') || '.',
     exitCode: result.status,
     signal: result.signal || null,
@@ -160,7 +177,7 @@ function command(specification, worktree) {
       };
 }
 
-export function createNativeFormatter({ run = command } = {}) {
+export function createNativeFormatter({ run = command, environmentContext } = {}) {
   return async ({ worktree }) => {
     const commands = [];
     const backend = path.join(worktree, 'backend');
@@ -213,8 +230,13 @@ export function createNativeFormatter({ run = command } = {}) {
     if (!commands.length)
       return failure('FORMAT_COMMAND_MISSING', 'No project formatter command is configured');
     const results = [];
+    const executionContext = environmentContext
+      ? await environmentContext({ worktree })
+      : undefined;
+    if (executionContext && !executionContext.ok)
+      return failure(executionContext.code || 'ENV_NOT_READY', '格式化执行环境未就绪');
     for (const entry of commands) {
-      const result = run(entry, worktree);
+      const result = run({ ...entry, executionContext }, worktree);
       results.push(result);
       if (!result.ok) return { ...result, commands: results };
     }

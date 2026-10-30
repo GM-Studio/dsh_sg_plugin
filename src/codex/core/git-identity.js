@@ -1,3 +1,4 @@
+import { gitExecutable } from './git-runtime.js';
 import fs from 'node:fs';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
@@ -12,7 +13,7 @@ export function resolveGitIdentity({ root, gitName, gitEmail, env = process.env 
   for (const key of ['GIT_CONFIG_GLOBAL', 'GIT_CONFIG_SYSTEM', 'GIT_CONFIG_NOSYSTEM'])
     if (env[key] !== undefined) environment[key] = env[key];
   const config = (key) => {
-    const result = spawnSync('git', ['config', '--get', key], {
+    const result = spawnSync(gitExecutable(env), ['config', '--get', key], {
       cwd,
       env: environment,
       encoding: 'utf8',

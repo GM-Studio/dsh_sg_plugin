@@ -1,3 +1,4 @@
+import { gitExecutable } from '../git-runtime.js';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -489,7 +490,7 @@ export async function startJavaInit({
     if (!generateOnly && !identity.ok) throw new Error(identity.message);
     const git = (args) =>
       spawnSync(
-        'git',
+        gitExecutable(),
         [
           '-c',
           `safe.directory=${gitSafeDirectory(workRoot)}`,
