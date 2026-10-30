@@ -88,7 +88,7 @@ export function previewAdoption({
       schemaVersion: 2,
       projectId: projectIdForRoot(root),
       mode: 'adopted',
-      stack: 'java-vue',
+      stack: detected.stack || 'unknown',
       root,
       targetBranch: detected.git.branch,
       remoteUrl: detected.git.remoteUrl,
@@ -113,7 +113,7 @@ export function previewAdoption({
     return {
       ok: true,
       root,
-      stack: 'java-vue',
+      stack: profile.stack,
       profile,
       previewHash,
       git: { ...detected.git, commit: head(root) },

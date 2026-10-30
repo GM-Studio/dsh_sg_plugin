@@ -19,6 +19,8 @@ SpecGate Core 为**已有 Git 项目**提供本地、可审计的需求到交付
 
 `plugin.json` / `mcp.json` 是便携入口，MCP server 为 `src/codex/server.js`。默认公开 45 个工具，完整清单由协议测试锁定。`sg_env_check` 只读发现和复用，`sg_env_prepare` 在可信用户确认安装方案后补齐并复验；Git 等需要宿主原生安装的缺项明确阻断。`sg_project_create` 由用户选择新项目目录与环境，只准备目录和工具链，不生成业务模板，不宣称项目基线或业务验收通过。
 
+存量环境按真实构建文件识别 Node/React/Vue、Python、Go、Maven/Gradle Java，并校验声明的版本约束；新项目可选择纯前端、纯后端或带 Vue/React 的组合。Go 与 Python portable 安装仅在显式选择官方源后解析确切版本/校验并申请批准；没有适配器或匹配归档时明确阻断，不冒充已支持。
+
 历史业务模板、异步 WorkItem、控制面、Worker、Decision、TOTP、Web 和通知代码仍在源码中；默认工具面和 Core tarball 排除这些能力。源码开发者可显式设置 `SPECGATE_OPTIONAL_MODULES=1` 加载历史工具；该模式及其外部依赖不属于 Core 发行验收。环境安装器按需加载并随包提供；Core 包不包含 `mysql2`。
 
 ## 验证

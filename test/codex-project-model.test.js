@@ -157,7 +157,9 @@ test('ProjectProfile accepts new and adopted Java/Vue modes and rejects unsafe c
     assert.deepEqual(validateProjectProfile(profile({ mode })), { ok: true });
   }
   assert.equal(validateProjectProfile(profile({ mode: 'imported' })).ok, false);
-  assert.equal(validateProjectProfile(profile({ stack: 'node' })).ok, false);
+  assert.equal(validateProjectProfile(profile({ stack: 'node' })).ok, true);
+  assert.equal(validateProjectProfile(profile({ stack: 'go+npm' })).ok, true);
+  assert.equal(validateProjectProfile(profile({ stack: '../node' })).ok, false);
   assert.equal(
     validateProjectProfile(profile({ remoteUrl: 'https://user:secret@example.com/repo.git' })).ok,
     false,

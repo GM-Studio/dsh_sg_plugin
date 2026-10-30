@@ -125,7 +125,8 @@ export function validateProjectProfile(value) {
     value.schemaVersion !== 2 ||
     !id(value.projectId) ||
     !['new', 'adopted'].includes(value.mode) ||
-    value.stack !== 'java-vue' ||
+    typeof value.stack !== 'string' ||
+    !/^[A-Za-z0-9][A-Za-z0-9.+_-]{0,127}$/.test(value.stack) ||
     !nonEmpty(value.root) ||
     !nonEmpty(value.targetBranch, 255) ||
     !optionalRemote(value.remoteUrl) ||

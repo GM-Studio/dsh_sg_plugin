@@ -97,10 +97,11 @@ function childDirectories(directory) {
     return [];
   }
   const result = [];
-  for (const entry of entries.slice(0, MAX_TOP_LEVEL_DIRECTORIES)) {
+  for (const entry of entries) {
     if (!entry.isDirectory() || SKIP_DIRECTORIES.has(entry.name)) continue;
     if (entry.name.startsWith('.') && entry.name !== '.github') continue;
     result.push(entry.name);
+    if (result.length >= MAX_TOP_LEVEL_DIRECTORIES) break;
   }
   return result;
 }
@@ -208,7 +209,15 @@ export function detectStack({ root, maxDirectories = MAX_TOP_LEVEL_DIRECTORIES }
   const lockfiles = [];
 
   // 扫描范围 = root + 至多 maxDirectories-1 个顶层子目录，保证总数不超过上限。
-  const candidates = ['.', ...childDirectories(root).slice(0, Math.max(0, maxDirectories - 1))];
+  const candidates = ['.'];
+  for (let index = 0; index < candidates.length && candidates.length < maxDirectories; index++) {
+    const relative = candidates[index];
+    if (relative !== '.' && relative.split('/').length >= 4) continue;
+    for (const child of childDirectories(path.join(root, relative))) {
+      candidates.push(relative === '.' ? child : relative + '/' + child);
+      if (candidates.length >= maxDirectories) break;
+    }
+  }
   for (const relative of candidates) {
     const found = inspectDirectory(root, relative);
     scanned.push(relative);

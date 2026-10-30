@@ -1,0 +1,62 @@
+[
+  {
+    "id": "go",
+    "version": "1.27.3",
+    "name": "go1.27.3.windows-amd64.zip",
+    "algorithm": "sha256",
+    "checksum": "f26081f438319757f8a1b46d7d0b2c5ec7583d4038e485e0aa725cfde7885fff",
+    "url": "https://go.dev/dl/go1.27.3.windows-amd64.zip",
+    "metadata": "https://go.dev/dl/?mode=json&include=all",
+    "source": "official",
+    "platform": "win32",
+    "location": "E:/ai_workflow/specgate/.tmp/env-repair-install/go-1.27.3",
+    "privilege": "user",
+    "configChanges": [],
+    "purpose": "F02 双平台真实缺项安装、编译/导入验证与重复复用"
+  },
+  {
+    "id": "python",
+    "version": "3.12.16",
+    "name": "cpython-3.12.16+20261026-x86_64-pc-windows-msvc-install_only.tar.gz",
+    "algorithm": "sha256",
+    "checksum": "590dfcbe3a34c07301e6332e13e2188b98655cd072b08afa45a7998dc4c22bc5",
+    "url": "https://github.com/astral-sh/python-build-standalone/releases/download/20261026/cpython-3.12.16%2B20261026-x86_64-pc-windows-msvc-install_only.tar.gz",
+    "metadata": "https://github.com/astral-sh/python-build-standalone/releases/tag/20261026",
+    "source": "official",
+    "platform": "win32",
+    "location": "E:/ai_workflow/specgate/.tmp/env-repair-install/python-3.12.16",
+    "privilege": "user",
+    "configChanges": [],
+    "purpose": "F02 双平台真实缺项安装、编译/导入验证与重复复用"
+  },
+  {
+    "id": "go",
+    "version": "1.27.3",
+    "name": "go1.27.3.linux-amd64.tar.gz",
+    "algorithm": "sha256",
+    "checksum": "65efbc80fdc1fa2cd2631cad5b481777a68e8725f34e89f50fc6ac714e379b40",
+    "url": "https://go.dev/dl/go1.27.3.linux-amd64.tar.gz",
+    "metadata": "https://go.dev/dl/?mode=json&include=all",
+    "source": "official",
+    "platform": "linux",
+    "location": "/home/sc/specgate-env-repair/toolchains/go-1.27.3",
+    "privilege": "user",
+    "configChanges": [],
+    "purpose": "F02 双平台真实缺项安装、编译/导入验证与重复复用"
+  },
+  {
+    "id": "python",
+    "version": "3.12.16",
+    "name": "cpython-3.12.16+20261026-x86_64-unknown-linux-gnu-install_only.tar.gz",
+    "algorithm": "sha256",
+    "checksum": "6a79e922e50006b601f29e688407659da1c2b86ebcd4e9c7254cf234be8b89de",
+    "url": "https://github.com/astral-sh/python-build-standalone/releases/download/20261026/cpython-3.12.16%2B20261026-x86_64-unknown-linux-gnu-install_only.tar.gz",
+    "metadata": "https://github.com/astral-sh/python-build-standalone/releases/tag/20261026",
+    "source": "official",
+    "platform": "linux",
+    "location": "/home/sc/specgate-env-repair/toolchains/python-3.12.16",
+    "privilege": "user",
+    "configChanges": [],
+    "purpose": "F02 双平台真实缺项安装、编译/导入验证与重复复用"
+  }
+]

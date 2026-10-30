@@ -1,0 +1,562 @@
+[
+  {
+    "platform": "win32",
+    "approvalSource": "Real current-chat approval bound to the exact URL/checksum/version/location; no synthetic human approval",
+    "approvedPlan": {
+      "id": "go",
+      "version": "1.27.3",
+      "name": "go1.27.3.windows-amd64.zip",
+      "algorithm": "sha256",
+      "checksum": "f26081f438319757f8a1b46d7d0b2c5ec7583d4038e485e0aa725cfde7885fff",
+      "url": "https://go.dev/dl/go1.27.3.windows-amd64.zip",
+      "metadata": "https://go.dev/dl/?mode=json&include=all",
+      "source": "official",
+      "platform": "win32",
+      "location": "E:/ai_workflow/specgate/.tmp/env-repair-install/go-1.27.3",
+      "privilege": "user",
+      "configChanges": [],
+      "purpose": "F02 双平台真实缺项安装、编译/导入验证与重复复用"
+    },
+    "before": {
+      "ok": true,
+      "environmentReady": true,
+      "status": "ready",
+      "platform": "win32",
+      "arch": "x64",
+      "selection": {
+        "stack": "go-go",
+        "requirements": [
+          {
+            "id": "git",
+            "constraints": [],
+            "modules": [
+              "."
+            ]
+          },
+          {
+            "id": "go",
+            "constraints": [
+              ">=1.23"
+            ],
+            "modules": [
+              "."
+            ]
+          }
+        ],
+        "unsupported": [],
+        "modules": [
+          {
+            "id": "root",
+            "root": ".",
+            "buildSystems": [
+              "go"
+            ],
+            "languages": [
+              "go"
+            ],
+            "packageManager": ""
+          }
+        ]
+      },
+      "required": [
+        "git",
+        "go"
+      ],
+      "missing": [],
+      "tools": {
+        "git": {
+          "path": "C:\\Program Files\\Git\\cmd\\git.exe",
+          "version": "2.45.1"
+        },
+        "go": {
+          "path": "E:\\ai_workflow\\specgate\\.tmp\\env-repair-install\\go-1.27.3\\bin\\go.exe",
+          "version": "1.27.3"
+        }
+      },
+      "fingerprint": "b9486b58489a77736fb2a0bfbae5e09ba76242cec4a82f57b0496d57d59925ac",
+      "source": "official",
+      "plan": [
+        {
+          "id": "git",
+          "action": "reuse",
+          "current": {
+            "path": "C:\\Program Files\\Git\\cmd\\git.exe",
+            "version": "2.45.1"
+          }
+        },
+        {
+          "id": "go",
+          "action": "reuse",
+          "current": {
+            "path": "E:\\ai_workflow\\specgate\\.tmp\\env-repair-install\\go-1.27.3\\bin\\go.exe",
+            "version": "1.27.3"
+          }
+        }
+      ],
+      "message": "当前项目所需工具链真实版本探测通过。项目基线和业务验证需分别执行。",
+      "workflowVerification": "not-run",
+      "projectRoot": "E:\\ai_workflow\\specgate\\.tmp\\env-repair-install\\proof-go",
+      "checkedAt": "2026-10-30T12:05:01.764Z"
+    },
+    "installed": {
+      "ok": true,
+      "environmentReady": true,
+      "status": "ready",
+      "platform": "win32",
+      "arch": "x64",
+      "selection": {
+        "stack": "go-go",
+        "requirements": [
+          {
+            "id": "git",
+            "constraints": [],
+            "modules": [
+              "."
+            ]
+          },
+          {
+            "id": "go",
+            "constraints": [
+              ">=1.23"
+            ],
+            "modules": [
+              "."
+            ]
+          }
+        ],
+        "unsupported": [],
+        "modules": [
+          {
+            "id": "root",
+            "root": ".",
+            "buildSystems": [
+              "go"
+            ],
+            "languages": [
+              "go"
+            ],
+            "packageManager": ""
+          }
+        ]
+      },
+      "required": [
+        "git",
+        "go"
+      ],
+      "missing": [],
+      "tools": {
+        "git": {
+          "path": "C:\\Program Files\\Git\\cmd\\git.exe",
+          "version": "2.45.1"
+        },
+        "go": {
+          "path": "E:\\ai_workflow\\specgate\\.tmp\\env-repair-install\\go-1.27.3\\bin\\go.exe",
+          "version": "1.27.3"
+        }
+      },
+      "fingerprint": "b9486b58489a77736fb2a0bfbae5e09ba76242cec4a82f57b0496d57d59925ac",
+      "source": "official",
+      "plan": [
+        {
+          "id": "git",
+          "action": "reuse",
+          "current": {
+            "path": "C:\\Program Files\\Git\\cmd\\git.exe",
+            "version": "2.45.1"
+          }
+        },
+        {
+          "id": "go",
+          "action": "reuse",
+          "current": {
+            "path": "E:\\ai_workflow\\specgate\\.tmp\\env-repair-install\\go-1.27.3\\bin\\go.exe",
+            "version": "1.27.3"
+          }
+        }
+      ],
+      "message": "当前项目所需工具链真实版本探测通过。项目基线和业务验证需分别执行。",
+      "workflowVerification": "not-run",
+      "projectRoot": "E:\\ai_workflow\\specgate\\.tmp\\env-repair-install\\proof-go",
+      "checkedAt": "2026-10-30T12:05:01.972Z"
+    },
+    "execution": {
+      "argv": [
+        "E:\\ai_workflow\\specgate\\.tmp\\env-repair-install\\go-1.27.3\\bin\\go.exe",
+        "test",
+        "./..."
+      ],
+      "exitCode": 0,
+      "stdout": "ok  \texample.com/specgateproof\t0.035s\n",
+      "stderr": ""
+    },
+    "repeated": {
+      "ok": true,
+      "environmentReady": true,
+      "status": "ready",
+      "platform": "win32",
+      "arch": "x64",
+      "selection": {
+        "stack": "go-go",
+        "requirements": [
+          {
+            "id": "git",
+            "constraints": [],
+            "modules": [
+              "."
+            ]
+          },
+          {
+            "id": "go",
+            "constraints": [
+              ">=1.23"
+            ],
+            "modules": [
+              "."
+            ]
+          }
+        ],
+        "unsupported": [],
+        "modules": [
+          {
+            "id": "root",
+            "root": ".",
+            "buildSystems": [
+              "go"
+            ],
+            "languages": [
+              "go"
+            ],
+            "packageManager": ""
+          }
+        ]
+      },
+      "required": [
+        "git",
+        "go"
+      ],
+      "missing": [],
+      "tools": {
+        "git": {
+          "path": "C:\\Program Files\\Git\\cmd\\git.exe",
+          "version": "2.45.1"
+        },
+        "go": {
+          "path": "E:\\ai_workflow\\specgate\\.tmp\\env-repair-install\\go-1.27.3\\bin\\go.exe",
+          "version": "1.27.3"
+        }
+      },
+      "fingerprint": "b9486b58489a77736fb2a0bfbae5e09ba76242cec4a82f57b0496d57d59925ac",
+      "source": "official",
+      "plan": [
+        {
+          "id": "git",
+          "action": "reuse",
+          "current": {
+            "path": "C:\\Program Files\\Git\\cmd\\git.exe",
+            "version": "2.45.1"
+          }
+        },
+        {
+          "id": "go",
+          "action": "reuse",
+          "current": {
+            "path": "E:\\ai_workflow\\specgate\\.tmp\\env-repair-install\\go-1.27.3\\bin\\go.exe",
+            "version": "1.27.3"
+          }
+        }
+      ],
+      "message": "当前项目所需工具链真实版本探测通过。项目基线和业务验证需分别执行。",
+      "workflowVerification": "not-run",
+      "projectRoot": "E:\\ai_workflow\\specgate\\.tmp\\env-repair-install\\proof-go",
+      "checkedAt": "2026-10-30T12:05:05.497Z"
+    },
+    "approvals": 0
+  },
+  {
+    "platform": "win32",
+    "approvalSource": "Real current-chat approval bound to the exact URL/checksum/version/location; no synthetic human approval",
+    "approvedPlan": {
+      "id": "python",
+      "version": "3.12.16",
+      "name": "cpython-3.12.16+20261026-x86_64-pc-windows-msvc-install_only.tar.gz",
+      "algorithm": "sha256",
+      "checksum": "590dfcbe3a34c07301e6332e13e2188b98655cd072b08afa45a7998dc4c22bc5",
+      "url": "https://github.com/astral-sh/python-build-standalone/releases/download/20261026/cpython-3.12.16%2B20261026-x86_64-pc-windows-msvc-install_only.tar.gz",
+      "metadata": "https://github.com/astral-sh/python-build-standalone/releases/tag/20261026",
+      "source": "official",
+      "platform": "win32",
+      "location": "E:/ai_workflow/specgate/.tmp/env-repair-install/python-3.12.16",
+      "privilege": "user",
+      "configChanges": [],
+      "purpose": "F02 双平台真实缺项安装、编译/导入验证与重复复用"
+    },
+    "before": {
+      "ok": true,
+      "environmentReady": false,
+      "status": "blocked",
+      "platform": "win32",
+      "arch": "x64",
+      "selection": {
+        "stack": "python-python",
+        "requirements": [
+          {
+            "id": "git",
+            "constraints": [],
+            "modules": [
+              "."
+            ]
+          },
+          {
+            "id": "python",
+            "constraints": [
+              ">=3.12,<3.13"
+            ],
+            "modules": [
+              "."
+            ]
+          }
+        ],
+        "unsupported": [],
+        "modules": [
+          {
+            "id": "root",
+            "root": ".",
+            "buildSystems": [
+              "python"
+            ],
+            "languages": [
+              "python"
+            ],
+            "packageManager": ""
+          }
+        ]
+      },
+      "required": [
+        "git",
+        "python"
+      ],
+      "missing": [
+        "python"
+      ],
+      "tools": {
+        "git": {
+          "path": "C:\\Program Files\\Git\\cmd\\git.exe",
+          "version": "2.45.1"
+        },
+        "python": null
+      },
+      "fingerprint": "37fc7a1f7fe6970525d22926f7dc49b4694a798358f6094ec15a75928b7a69fe",
+      "source": "official",
+      "plan": [
+        {
+          "id": "git",
+          "action": "reuse",
+          "current": {
+            "path": "C:\\Program Files\\Git\\cmd\\git.exe",
+            "version": "2.45.1"
+          }
+        },
+        {
+          "id": "python",
+          "action": "install",
+          "current": null,
+          "archive": null
+        }
+      ],
+      "message": "缺少：python。通过环境准备入口补齐后重新验证。",
+      "workflowVerification": "not-run",
+      "projectRoot": "E:\\ai_workflow\\specgate\\.tmp\\env-repair-install\\proof-python",
+      "checkedAt": "2026-10-30T12:05:05.689Z"
+    },
+    "installed": {
+      "ok": true,
+      "environmentReady": true,
+      "status": "ready",
+      "platform": "win32",
+      "arch": "x64",
+      "selection": {
+        "stack": "python-python",
+        "requirements": [
+          {
+            "id": "git",
+            "constraints": [],
+            "modules": [
+              "."
+            ]
+          },
+          {
+            "id": "python",
+            "constraints": [
+              ">=3.12,<3.13"
+            ],
+            "modules": [
+              "."
+            ]
+          }
+        ],
+        "unsupported": [],
+        "modules": [
+          {
+            "id": "root",
+            "root": ".",
+            "buildSystems": [
+              "python"
+            ],
+            "languages": [
+              "python"
+            ],
+            "packageManager": ""
+          }
+        ]
+      },
+      "required": [
+        "git",
+        "python"
+      ],
+      "missing": [],
+      "tools": {
+        "git": {
+          "path": "C:\\Program Files\\Git\\cmd\\git.exe",
+          "version": "2.45.1"
+        },
+        "python": {
+          "path": "E:\\ai_workflow\\specgate\\.tmp\\env-repair-install\\python-3.12.16\\python.exe",
+          "version": "3.12.16"
+        }
+      },
+      "fingerprint": "2098cd2cf90788af2fa4f88ee38a5e95ddfcc1c7d3624fbdbe218b520125c07d",
+      "source": "official",
+      "plan": [
+        {
+          "id": "git",
+          "action": "reuse",
+          "current": {
+            "path": "C:\\Program Files\\Git\\cmd\\git.exe",
+            "version": "2.45.1"
+          }
+        },
+        {
+          "id": "python",
+          "action": "reuse",
+          "current": {
+            "path": "E:\\ai_workflow\\specgate\\.tmp\\env-repair-install\\python-3.12.16\\python.exe",
+            "version": "3.12.16"
+          }
+        }
+      ],
+      "message": "当前项目所需工具链真实版本探测通过。项目基线和业务验证需分别执行。",
+      "workflowVerification": "not-run",
+      "projectRoot": "E:\\ai_workflow\\specgate\\.tmp\\env-repair-install\\proof-python",
+      "checkedAt": "2026-10-30T12:06:26.544Z",
+      "completed": [
+        {
+          "id": "python",
+          "ok": true,
+          "version": "3.12.16",
+          "location": "E:\\ai_workflow\\specgate\\.tmp\\env-repair-install\\python-3.12.16",
+          "source": "official",
+          "url": "https://github.com/astral-sh/python-build-standalone/releases/download/20261026/cpython-3.12.16%2B20261026-x86_64-pc-windows-msvc-install_only.tar.gz",
+          "resolvedUrl": "https://release-assets.githubusercontent.com/github-production-release-asset/162334160/25b500d5-e8f3-4926-86c0-6cb1c59e7979?sp=r&sv=2018-11-09&sr=b&spr=https&se=2026-10-30T12%3A59%3A57Z&rscd=attachment%3B+filename%3Dcpython-3.12.16%2B20261026-x86_64-pc-windows-msvc-install_only.tar.gz&rsct=application%2Foctet-stream&skoid=96c2d410-5711-43a1-aedd-ab1947aa7ab0&sktid=398a6654-997b-47e9-b12b-9515b896b4de&skt=2026-10-30T11%3A59%3A18Z&ske=2026-10-30T12%3A59%3A57Z&sks=b&skv=2018-11-09&sig=2y3RkgdBM6D7lNoE7hRfBXn7Y5Qkok78f6GVJDxGjPE%3D&jwt=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJnaXRodWIuY29tIiwiYXVkIjoicmVsZWFzZS1hc3NldHMuZ2l0aHVidXNlcmNvbnRlbnQuY29tIiwia2V5Ijoia2V5MSIsImV4cCI6MTc5MzM2MzcwOSwibmJmIjoxNzkzMzYxOTA5LCJwYXRoIjoicmVsZWFzZWFzc2V0cHJvZHVjdGlvbi5ibG9iLmNvcmUud2luZG93cy5uZXQifQ.UUDH0_tzzgL2MMK8aDgQ1hiYeyvlHVVB07Hr--YU1CE&response-content-disposition=attachment%3B%20filename%3Dcpython-3.12.16%2B20261026-x86_64-pc-windows-msvc-install_only.tar.gz&response-content-type=application%2Foctet-stream",
+          "integrity": {
+            "algorithm": "sha256",
+            "checksum": "590dfcbe3a34c07301e6332e13e2188b98655cd072b08afa45a7998dc4c22bc5",
+            "metadata": "https://github.com/astral-sh/python-build-standalone/releases/tag/20261026"
+          },
+          "cleanup": "completed"
+        }
+      ]
+    },
+    "execution": {
+      "argv": [
+        "E:\\ai_workflow\\specgate\\.tmp\\env-repair-install\\python-3.12.16\\python.exe",
+        "-c",
+        "import sys,ssl,sqlite3,venv; assert sys.version_info[:2] == (3,12); print(sys.version)"
+      ],
+      "exitCode": 0,
+      "stdout": "3.12.16 (main, Oct 26 2026, 14:10:56) [MSC v.1944 64 bit (AMD64)]\r\n",
+      "stderr": ""
+    },
+    "repeated": {
+      "ok": true,
+      "environmentReady": true,
+      "status": "ready",
+      "platform": "win32",
+      "arch": "x64",
+      "selection": {
+        "stack": "python-python",
+        "requirements": [
+          {
+            "id": "git",
+            "constraints": [],
+            "modules": [
+              "."
+            ]
+          },
+          {
+            "id": "python",
+            "constraints": [
+              ">=3.12,<3.13"
+            ],
+            "modules": [
+              "."
+            ]
+          }
+        ],
+        "unsupported": [],
+        "modules": [
+          {
+            "id": "root",
+            "root": ".",
+            "buildSystems": [
+              "python"
+            ],
+            "languages": [
+              "python"
+            ],
+            "packageManager": ""
+          }
+        ]
+      },
+      "required": [
+        "git",
+        "python"
+      ],
+      "missing": [],
+      "tools": {
+        "git": {
+          "path": "C:\\Program Files\\Git\\cmd\\git.exe",
+          "version": "2.45.1"
+        },
+        "python": {
+          "path": "E:\\ai_workflow\\specgate\\.tmp\\env-repair-install\\python-3.12.16\\python.exe",
+          "version": "3.12.16"
+        }
+      },
+      "fingerprint": "2098cd2cf90788af2fa4f88ee38a5e95ddfcc1c7d3624fbdbe218b520125c07d",
+      "source": "official",
+      "plan": [
+        {
+          "id": "git",
+          "action": "reuse",
+          "current": {
+            "path": "C:\\Program Files\\Git\\cmd\\git.exe",
+            "version": "2.45.1"
+          }
+        },
+        {
+          "id": "python",
+          "action": "reuse",
+          "current": {
+            "path": "E:\\ai_workflow\\specgate\\.tmp\\env-repair-install\\python-3.12.16\\python.exe",
+            "version": "3.12.16"
+          }
+        }
+      ],
+      "message": "当前项目所需工具链真实版本探测通过。项目基线和业务验证需分别执行。",
+      "workflowVerification": "not-run",
+      "projectRoot": "E:\\ai_workflow\\specgate\\.tmp\\env-repair-install\\proof-python",
+      "checkedAt": "2026-10-30T12:06:26.935Z"
+    },
+    "approvals": 1
+  }
+]

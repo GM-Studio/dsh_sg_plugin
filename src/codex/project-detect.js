@@ -8,7 +8,18 @@ import { detectStack } from './core/discovery/stack.js';
 import { discoverModules } from './core/discovery/modules.js';
 
 const SOURCE_ROOT = path.resolve(fileURLToPath(new URL('../..', import.meta.url)));
-const SKIP = new Set(['.git', 'node_modules', 'dist', 'target', 'coverage', '.specgate']);
+const SKIP = new Set([
+  '.git',
+  'node_modules',
+  'dist',
+  'target',
+  'coverage',
+  '.specgate',
+  '.venv',
+  'venv',
+  '__pycache__',
+  '.gradle',
+]);
 const MAX_ENTRIES = 25000;
 
 const failure = (code, message) => ({ ok: false, code, message });
@@ -245,7 +256,14 @@ export function detectProject({ root: inputRoot } = {}) {
       : fs.existsSync(path.join(root, 'pom.xml'))
         ? 'root'
         : null;
-    const frontends = frontendRoots(root);
+    const frontends = [
+      ...new Set([
+        ...frontendRoots(root),
+        ...stack.modules
+          .filter((entry) => entry.buildSystems.includes('npm'))
+          .map((entry) => entry.root),
+      ]),
+    ].sort();
 
     const environment = {
       ...Object.fromEntries(
@@ -293,6 +311,79 @@ export function detectProject({ root: inputRoot } = {}) {
       format: [...frontendFound.format],
       runtime: [...frontendFound.runtime],
     };
+    for (const module of stack.modules) {
+      const cwd = module.root;
+      const prefix = module.id.replace(/[^A-Za-z0-9._-]/g, '-');
+      if (module.buildSystems.includes('go')) {
+        commands.install.push({ id: prefix + '-go-deps', cwd, argv: ['go', 'mod', 'download'] });
+        commands.build.push({ id: prefix + '-go-build', cwd, argv: ['go', 'build', './...'] });
+        commands.test.push({ id: prefix + '-go-test', cwd, argv: ['go', 'test', './...'] });
+      }
+      if (module.buildSystems.includes('python')) {
+        const directory = path.join(root, cwd);
+        const uv = fs.existsSync(path.join(directory, 'uv.lock'));
+        const poetry = fs.existsSync(path.join(directory, 'poetry.lock'));
+        const executable = uv ? 'uv' : poetry ? 'poetry' : 'python';
+        if (uv || poetry)
+          commands.install.push({
+            id: prefix + '-python-deps',
+            cwd,
+            argv: uv
+              ? ['uv', 'sync', '--frozen']
+              : ['poetry', 'install', '--sync', '--no-interaction'],
+          });
+        else if (fs.existsSync(path.join(directory, 'requirements.txt')))
+          commands.install.push({
+            id: prefix + '-python-deps',
+            cwd,
+            argv: ['python', '-m', 'pip', 'install', '-r', 'requirements.txt'],
+          });
+        else if (fs.existsSync(path.join(directory, 'pyproject.toml')))
+          commands.install.push({
+            id: prefix + '-python-deps',
+            cwd,
+            argv: ['python', '-m', 'pip', 'install', '-e', '.'],
+          });
+        const prefixArgs = uv ? ['run', '--frozen'] : poetry ? ['run'] : [];
+        commands.test.push({
+          id: prefix + '-python-test',
+          cwd,
+          argv: [
+            executable,
+            ...prefixArgs,
+            ...(uv || poetry ? ['python'] : []),
+            '-m',
+            fs.existsSync(path.join(directory, 'pytest.ini')) ||
+            fs.existsSync(path.join(directory, 'conftest.py'))
+              ? 'pytest'
+              : 'unittest',
+            ...(fs.existsSync(path.join(directory, 'pytest.ini')) ||
+            fs.existsSync(path.join(directory, 'conftest.py'))
+              ? []
+              : ['discover']),
+          ],
+        });
+      }
+      if (module.buildSystems.includes('gradle')) {
+        commands.build.push({ id: prefix + '-gradle-build', cwd, argv: ['gradle', 'build'] });
+        commands.test.push({ id: prefix + '-gradle-test', cwd, argv: ['gradle', 'test'] });
+      }
+      if (
+        module.buildSystems.includes('maven') &&
+        !commands.test.some((entry) => entry.cwd === cwd && entry.argv[0] === 'mvn')
+      ) {
+        commands.build.push({
+          id: prefix + '-maven-build',
+          cwd,
+          argv: ['mvn', '-B', '-ntp', 'verify'],
+        });
+        commands.test.push({
+          id: prefix + '-maven-test',
+          cwd,
+          argv: ['mvn', '-B', '-ntp', 'test'],
+        });
+      }
+    }
     if (commands.test.length === 0) risks.push('No test command was discovered.');
     if (status?.status === 0 && status.stdout.trim())
       risks.push('The worktree has uncommitted or untracked files.');

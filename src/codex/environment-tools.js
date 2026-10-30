@@ -1,4 +1,11 @@
 const selection = {
+  stack: { type: 'string', enum: ['node', 'react', 'vue', 'python', 'go', 'java'] },
+  nodeVersion: { type: 'string', minLength: 1, maxLength: 160 },
+  pythonVersion: { type: 'string', minLength: 1, maxLength: 160 },
+  goVersion: { type: 'string', minLength: 1, maxLength: 160 },
+  javaVersion: { type: 'string', pattern: '^\\d{1,2}$' },
+  packageManager: { type: 'string', enum: ['npm', 'pnpm', 'yarn'] },
+  buildTool: { type: 'string', enum: ['maven', 'gradle'] },
   preset: { type: 'string', enum: ['jdk8-boot2.7', 'jdk17-boot3.5', 'jdk21-boot3.5'] },
   frontend: { type: 'string', enum: ['vue', 'react'] },
   source: { type: 'string', enum: ['domestic', 'official', 'custom'] },
@@ -61,7 +68,7 @@ export function environmentConsent({ requestPeer, trustedUserIdentity } = {}) {
     const response = await requestPeer(
       'elicitation/create',
       {
-        message: `当前项目：${plan.projectRoot}\n技术栈：${plan.selection.preset} + ${plan.selection.frontend}\n可复用：${plan.plan
+        message: `当前项目：${plan.projectRoot}\n技术栈：${plan.selection.stack || plan.selection.preset} ${plan.selection.frontend || ''}\n可复用：${plan.plan
           .filter((entry) => entry.action === 'reuse')
           .map((entry) => entry.id)
           .join(

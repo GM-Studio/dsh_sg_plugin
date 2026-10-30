@@ -13,6 +13,10 @@ import {
   probeTool,
 } from './java/java-env.js';
 import { componentArchive } from './environment-catalog.js';
+import { projectToolRequirements } from './environment-requirements.js';
+import { discoverRequiredEnvironment } from './environment-discovery.js';
+import { resolveToolArchive } from './environment-archives.js';
+import { matchesVersion } from './env/version-range.js';
 
 export const environmentCacheRoot = (env = process.env) =>
   path.join(env.USERPROFILE || env.HOME || os.homedir(), '.specgate', 'toolchains');
@@ -30,6 +34,8 @@ export function readEnvironmentJson(file) {
 }
 
 export function projectEnvironmentSelection(root, selection = {}) {
+  const remembered = readEnvironmentJson(path.join(root, '.specgate/environment-selection.json'));
+  selection = { ...(remembered?.selection || {}), ...selection };
   const profile = readEnvironmentJson(path.join(root, '.specgate/codex/project.json'));
   const monorepo = readEnvironmentJson(path.join(root, '.specgate/monorepo.json'));
   const style = readEnvironmentJson(path.join(root, '.specgate/template-style.json'));
@@ -67,6 +73,7 @@ export function projectEnvironmentSelection(root, selection = {}) {
     (configured.frontend && selection.frontend && configured.frontend !== selection.frontend)
   )
     return { conflict: true };
+  if (!configured.preset && !selection.preset) return projectToolRequirements(root, selection);
   return {
     preset: configured.preset || selection.preset,
     frontend: configured.frontend || selection.frontend,
@@ -102,6 +109,8 @@ export function discoverEnvironment({
   cacheRoot = environmentCacheRoot(env),
 } = {}) {
   const merged = managedEnvironment({ env, platform, cacheRoot });
+  if (selection.requirements)
+    return discoverRequiredEnvironment({ root, selection, env: merged, platform, cacheRoot });
   const projectCache = path.join(root, '.specgate/toolchains');
   const java = discoverJava({
     env: merged,
@@ -144,22 +153,29 @@ export function planEnvironment({
   if (selection.conflict)
     return failed('ENV_STACK_CONFLICT', '输入技术栈与项目记录不一致，请保留项目技术栈');
   const major = /^jdk(8|17|21)-boot(?:2\.7|3\.5)$/.exec(selection.preset || '')?.[1];
+  if (selection.unsupported?.length)
+    return { ...failed('ENV_STACK_UNSUPPORTED', selection.unsupported.join('；')), selection };
   if (
-    !major ||
-    !['jdk8-boot2.7', 'jdk17-boot3.5', 'jdk21-boot3.5'].includes(selection.preset) ||
-    !['vue', 'react'].includes(selection.frontend)
+    !selection.requirements &&
+    (!major ||
+      !['jdk8-boot2.7', 'jdk17-boot3.5', 'jdk21-boot3.5'].includes(selection.preset) ||
+      !['vue', 'react'].includes(selection.frontend))
   )
     return failed(
       'ENV_STACK_REQUIRED',
       '请先选择或确认当前项目的 JDK/Spring Boot 和 Vue/React 技术栈',
     );
-  const required = ['git', 'node', `jdk${major}`, 'maven'];
-  const found = {
-    git: tools.git || null,
-    node: tools.node || null,
-    [`jdk${major}`]: Number(tools.java?.major) === Number(major) ? tools.java : null,
-    maven: tools.maven || null,
-  };
+  const required = selection.requirements
+    ? selection.requirements.map((entry) => entry.id)
+    : ['git', 'node', `jdk${major}`, 'maven'];
+  const found = selection.requirements
+    ? Object.fromEntries(required.map((id) => [id, tools[id] || null]))
+    : {
+        git: tools.git || null,
+        node: tools.node || null,
+        [`jdk${major}`]: Number(tools.java?.major) === Number(major) ? tools.java : null,
+        maven: tools.maven || null,
+      };
   const missing = required.filter((id) => !found[id]);
   const fingerprint = createHash('sha256')
     .update(JSON.stringify({ selection, platform, arch, found }))
@@ -196,6 +212,7 @@ export function createEnvironmentService({
   arch = process.arch,
   discover = discoverEnvironment,
   install,
+  resolveArchive = resolveToolArchive,
   consent,
   cacheRoot = environmentCacheRoot(env),
 } = {}) {
@@ -225,6 +242,35 @@ export function createEnvironmentService({
     async prepare(input = {}, { signal } = {}) {
       const before = await check(input);
       if (!before.ok || before.environmentReady) return before;
+      try {
+        for (const entry of before.plan.filter((item) => item.action === 'install')) {
+          const constraints =
+            before.selection.requirements?.find((item) => item.id === entry.id)?.constraints || [];
+          entry.archive ||= await resolveArchive(entry.id, {
+            platform,
+            source: before.source,
+            constraints,
+            signal,
+          });
+          if (
+            entry.archive &&
+            !constraints.every((constraint) => matchesVersion(entry.archive.version, constraint))
+          )
+            return {
+              ...before,
+              ok: false,
+              code: 'ENV_INSTALL_VERSION_UNAVAILABLE',
+              message: entry.id + ' 的固定安装版本不满足项目约束，未下载或安装',
+            };
+        }
+      } catch (error) {
+        return {
+          ...before,
+          ok: false,
+          code: error.code || 'ENV_METADATA_FAILED',
+          message: error.message,
+        };
+      }
       if (typeof consent !== 'function' || !(await consent(before, { signal })))
         return {
           ...before,
@@ -238,6 +284,13 @@ export function createEnvironmentService({
           if (signal?.aborted)
             throw Object.assign(new Error('环境准备已取消'), { code: 'CANCELLED' });
           const current = await check(input);
+          if (JSON.stringify(current.selection) !== JSON.stringify(before.selection))
+            return {
+              ...current,
+              ok: false,
+              code: 'ENV_INSTALL_PLAN_CHANGED',
+              message: '项目技术栈或版本约束已变化，必须重新确认安装方案',
+            };
           if (!current.missing.includes(id)) continue;
           const installer =
             install || (await import('./environment-install.js')).installEnvironmentComponent;
@@ -246,8 +299,11 @@ export function createEnvironmentService({
             env,
             platform,
             source: before.source,
+            archive: before.plan.find((entry) => entry.id === id)?.archive,
             signal,
-            javaHome: current.tools[`jdk${/jdk(\d+)/.exec(before.selection.preset)[1]}`]?.home,
+            javaHome: Object.entries(current.tools).find(
+              ([key, value]) => key.startsWith('jdk') && value,
+            )?.[1]?.home,
           });
           completed.push({ id, ...result });
           if (!result?.ok)

@@ -64,14 +64,31 @@ export async function selectEnvironmentProject({
             minLength: 1,
             maxLength: 32768,
           },
-          preset: {
+          stack: {
             type: 'string',
-            title: '后端技术栈',
-            enum: ['jdk8-boot2.7', 'jdk17-boot3.5', 'jdk21-boot3.5'],
+            title: '主要技术栈',
+            enum: ['node', 'python', 'go', 'java'],
           },
-          frontend: { type: 'string', title: '前端技术栈', enum: ['vue', 'react'] },
+          javaVersion: {
+            type: 'string',
+            title: 'Java主版本（Java项目填写）',
+            pattern: '^\\d{1,2}$',
+          },
+          nodeVersion: { type: 'string', title: 'Node版本约束（可选）', maxLength: 160 },
+          pythonVersion: { type: 'string', title: 'Python版本约束（可选）', maxLength: 160 },
+          goVersion: { type: 'string', title: 'Go版本约束（可选）', maxLength: 160 },
+          packageManager: {
+            type: 'string',
+            title: '前端包管理器（可选）',
+            enum: ['npm', 'pnpm', 'yarn'],
+          },
+          frontend: {
+            type: 'string',
+            title: '前端（纯后端选none）',
+            enum: ['none', 'vue', 'react'],
+          },
         },
-        required: ['path', 'preset', 'frontend'],
+        required: ['path', 'stack', 'frontend'],
         additionalProperties: false,
       },
     },
@@ -84,14 +101,55 @@ export async function selectEnvironmentProject({
     !input ||
     typeof input !== 'object' ||
     Array.isArray(input) ||
-    Object.keys(input).some((key) => !['path', 'preset', 'frontend'].includes(key)) ||
-    !['jdk8-boot2.7', 'jdk17-boot3.5', 'jdk21-boot3.5'].includes(input.preset) ||
-    !['vue', 'react'].includes(input.frontend)
+    Object.keys(input).some(
+      (key) =>
+        ![
+          'path',
+          'stack',
+          'preset',
+          'frontend',
+          'javaVersion',
+          'nodeVersion',
+          'pythonVersion',
+          'goVersion',
+          'packageManager',
+        ].includes(key),
+    ) ||
+    !(input.stack
+      ? ['node', 'python', 'go', 'java'].includes(input.stack)
+      : ['jdk8-boot2.7', 'jdk17-boot3.5', 'jdk21-boot3.5'].includes(input.preset)) ||
+    !['none', 'vue', 'react'].includes(input.frontend) ||
+    ['javaVersion', 'nodeVersion', 'pythonVersion', 'goVersion'].some(
+      (key) =>
+        input[key] !== undefined && (typeof input[key] !== 'string' || input[key].length > 160),
+    ) ||
+    (input.javaVersion && !/^\d{1,2}$/.test(input.javaVersion)) ||
+    (input.packageManager && !['npm', 'pnpm', 'yarn'].includes(input.packageManager))
   )
     return failure('PROJECT_SELECTION_INVALID', '技术栈必须由用户明确选择');
   const root = environmentProjectTarget(input.path);
   fs.mkdirSync(root, { recursive: true });
-  const selection = { preset: input.preset, frontend: input.frontend };
+  const selection = Object.fromEntries(
+    Object.entries(input).filter(([key, value]) => key !== 'path' && value && value !== 'none'),
+  );
+  const configuration = path.join(root, '.specgate');
+  if (
+    fs.existsSync(configuration) &&
+    (fs.lstatSync(configuration).isSymbolicLink() || !fs.lstatSync(configuration).isDirectory())
+  )
+    throw Object.assign(new Error('环境配置目录不安全'), { code: 'UNSAFE_PROJECT_PATH' });
+  fs.mkdirSync(configuration, { recursive: true });
+  const selectionFile = path.join(configuration, 'environment-selection.json');
+  if (
+    fs.existsSync(selectionFile) &&
+    (fs.lstatSync(selectionFile).isSymbolicLink() ||
+      !fs.lstatSync(selectionFile).isFile() ||
+      fs.lstatSync(selectionFile).nlink > 1)
+  )
+    throw Object.assign(new Error('环境选择文件不安全'), { code: 'UNSAFE_PROJECT_PATH' });
+  fs.writeFileSync(selectionFile, JSON.stringify({ schemaVersion: 1, selection }, null, 2) + '\n', {
+    mode: 0o600,
+  });
   draft.environment = { root, selection };
   return { ok: true, root, selection };
 }

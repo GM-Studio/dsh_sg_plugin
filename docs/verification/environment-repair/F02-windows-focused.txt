@@ -1,0 +1,42 @@
+✔ default stdio package surface exposes environment preparation and new-project selection (3220.7843ms)
+✔ new-project environment selection is trusted, resumable, and does not generate business code (4.6837ms)
+✔ missing or cancelled project form leaves the requested target untouched (1.0887ms)
+✔ initialization checks the selected environment before creating project files (109.469ms)
+✔ read-only control status verifies the snapshot without repairing corrupt history (14.6769ms)
+✔ only marked staging owned by an exited process is recovered (53.3241ms)
+✔ temporary mirrors are scoped to the callback and removed on failure (2.2916ms)
+✔ planning requires a selected stack and installs only selected missing tools (0.5108ms)
+✔ check is read-only and stack changes invalidate readiness (1.0253ms)
+✔ install has no approval argument and needs trusted installation consent (1.5421ms)
+✔ installation probes again and rerun reuses tools without asking or installing (1.1544ms)
+✔ an installer success without real discovered binaries stays blocked (1.1609ms)
+✔ archive integrity rejects corrupted downloads before publication (0.9159ms)
+✔ aggregated status on a bare project never creates files or starts control runtime (4.098ms)
+✔ all task Skills and generated project copies are declared (0.376ms)
+✔ a corrupt download is cleaned and an existing installation remains untouched (13.0073ms)
+✔ workflow execution remains blocked without creating runtime state (1.4175ms)
+✔ status in supervisor mode does not create the control home (2.5178ms)
+✔ default MCP static import graph excludes optional control, notification and installer code (17.3358ms)
+✔ Core v1 installation and lockfile have no MySQL driver dependency (0.6114ms)
+✔ Codex manifest and MCP entry stay contained in the shipped plugin (13.6929ms)
+✔ offline tarball install launches the packaged entry from a different project cwd (51644.6132ms)
+✔ smoke evidence rejects stdout pollution after the final reply (117.9151ms)
+✔ MCP roots bind tools to the target project instead of the plugin cache (4.1964ms)
+✔ session cwd wins over ambient roots and environment variables (1.1187ms)
+✔ plugin-cache sessions use one unambiguous business root or stay unbound (4.1282ms)
+✔ stdio handshake and diagnostic tools leave a nonempty project unchanged (98.4722ms)
+✔ unknown versions negotiate the supported version; invalid initialize can be corrected (97.5622ms)
+✔ source-only optional mode explicitly adds the historical tool entries (1.4458ms)
+✔ lifecycle rejects calls before handshake and repeated initialization (95.3947ms)
+✔ malformed JSON, batch messages and invalid envelopes do not terminate the server (93.798ms)
+✔ tools reject forged approvals, arguments and unknown methods; notifications get no reply (94.158ms)
+✔ large and truncated frames fail closed; an empty EOF exits cleanly (283.2421ms)
+✔ project root comes from startup options; invalid options cannot start a workflow (183.7019ms)
+ℹ tests 34
+ℹ suites 0
+ℹ pass 34
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 52193.6249

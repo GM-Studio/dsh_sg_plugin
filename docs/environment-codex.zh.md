@@ -6,6 +6,8 @@
 
 使用 $sg-codex-env 或调用 sg_env_check。先绑定已有业务项目；从真实 pom.xml、frontend/package.json 和 ProjectProfile 识别技术栈。发现必须有界并优先复用已有安装，不能扫描整盘或因状态查询修改用户环境。
 
+存量项目以 root/模块中的 package.json、Python项目配置、go.mod、pom.xml/Gradle 文件推导所需工具；不要求同时存在Java和前端。新项目支持 `stack=node|react|vue|python|go|java` 和版本约束，`sg_project_create` 通过用户表单记录选择，后续会话仍可读取。Python与Go的缺项安装使用显式 `source=official`，只读check不联网取安装元数据；prepare在批准前展示从官方元数据解析的确切归档与校验。未适配包管理器、版本或平台必须阻断并说明，不静默替换技术栈。
+
 只读检查不会下载安装。缺项未经对应方案批准不得执行，失败不得宣称READY。Core 不替换项目技术栈，不修改全局 PATH、JAVA_HOME、npm 或 Maven 配置。新项目由 `sg_project_create` 收集用户选择并准备环境，不生成业务模板。
 
 ## 就绪含义

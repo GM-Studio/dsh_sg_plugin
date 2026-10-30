@@ -1,0 +1,4 @@
+REAL INSTALL linux go 1.27.3 missing [ 'go' ]
+REAL INSTALL/COMPILE/IMPORT/REUSE PASS go
+REAL INSTALL linux python 3.12.16 missing [ 'python' ]
+REAL INSTALL/COMPILE/IMPORT/REUSE PASS python

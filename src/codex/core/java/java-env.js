@@ -455,10 +455,10 @@ function mavenBin(home, platform) {
   return null;
 }
 
-function describeMaven(bin, probe, env) {
+function describeMaven(bin, probe, env, acceptVersion = (version) => /^3\.9\./.test(version)) {
   const text = probe(bin, ['-v'], 3000, env);
   const match = /Apache Maven\s+([\w.-]+)/i.exec(text);
-  if (!match || !/^3\.9\./.test(match[1])) return null;
+  if (!match || !acceptVersion(match[1])) return null;
   return { path: bin, home: path.dirname(path.dirname(bin)), version: match ? match[1] : null };
 }
 
@@ -468,6 +468,7 @@ export function discoverMaven({
   homedir,
   roots = mavenRoots({ env, platform, homedir }),
   probe = probeTool,
+  acceptVersion,
 } = {}) {
   env = mergeEnvironment({ env, platform });
   const deadline = Date.now() + 6000;
@@ -476,7 +477,7 @@ export function discoverMaven({
     if (!bin || seen.has(bin) || seen.size >= 32 || Date.now() >= deadline || !exists(bin))
       return null;
     seen.add(bin);
-    return describeMaven(bin, probe, env);
+    return describeMaven(bin, probe, env, acceptVersion);
   };
   const explicit = tryBin(env.MAVEN_CMD);
   if (explicit) return explicit;
@@ -513,10 +514,14 @@ export function discoverNode({
   platform = process.platform,
   homedir,
   fallbackNode = process.execPath,
+  extraRoots = [],
+  acceptVersion,
 } = {}) {
   const home = envHome(env, homedir);
   const seen = new Set();
   const candidates = [];
+  for (const directory of extraRoots.slice(0, 32))
+    candidates.push(path.join(directory, platform === 'win32' ? 'node.exe' : 'bin/node'));
   for (const dir of listDirs(path.join(home, '.specgate', 'toolchains')).slice(0, 32))
     if (/^node-/.test(path.basename(dir)))
       candidates.push(path.join(dir, platform === 'win32' ? 'node.exe' : 'bin/node'));
@@ -547,7 +552,8 @@ export function discoverNode({
     const version = /v?([\d.]+)/.exec(probeTool(node, ['-v'], 3000, env))?.[1] || null;
     if (!version) continue;
     const [major, minor] = version.split('.').map(Number);
-    if (!((major === 22 && minor >= 12) || major === 24)) continue;
+    if (!(acceptVersion ? acceptVersion(version) : (major === 22 && minor >= 12) || major === 24))
+      continue;
     const dir = path.dirname(node);
     let npm = null;
     for (const name of platform === 'win32' ? ['npm.cmd', 'npm.exe', 'npm'] : ['npm']) {

@@ -1,0 +1,576 @@
+[
+  {
+    "platform": "linux",
+    "approvalSource": "Real current-chat approval bound to the exact URL/checksum/version/location; no synthetic human approval",
+    "approvedPlan": {
+      "id": "go",
+      "version": "1.27.3",
+      "name": "go1.27.3.linux-amd64.tar.gz",
+      "algorithm": "sha256",
+      "checksum": "65efbc80fdc1fa2cd2631cad5b481777a68e8725f34e89f50fc6ac714e379b40",
+      "url": "https://go.dev/dl/go1.27.3.linux-amd64.tar.gz",
+      "metadata": "https://go.dev/dl/?mode=json&include=all",
+      "source": "official",
+      "platform": "linux",
+      "location": "/home/sc/specgate-env-repair/toolchains/go-1.27.3",
+      "privilege": "user",
+      "configChanges": [],
+      "purpose": "F02 双平台真实缺项安装、编译/导入验证与重复复用"
+    },
+    "before": {
+      "ok": true,
+      "environmentReady": false,
+      "status": "blocked",
+      "platform": "linux",
+      "arch": "x64",
+      "selection": {
+        "stack": "go-go",
+        "requirements": [
+          {
+            "id": "git",
+            "constraints": [],
+            "modules": [
+              "."
+            ]
+          },
+          {
+            "id": "go",
+            "constraints": [
+              ">=1.23"
+            ],
+            "modules": [
+              "."
+            ]
+          }
+        ],
+        "unsupported": [],
+        "modules": [
+          {
+            "id": "root",
+            "root": ".",
+            "buildSystems": [
+              "go"
+            ],
+            "languages": [
+              "go"
+            ],
+            "packageManager": ""
+          }
+        ]
+      },
+      "required": [
+        "git",
+        "go"
+      ],
+      "missing": [
+        "go"
+      ],
+      "tools": {
+        "git": {
+          "path": "/usr/bin/git",
+          "version": "2.53.0"
+        },
+        "go": null
+      },
+      "fingerprint": "e2f4002a2c3ba9f1c49b8ff4c27b8363a05a09d5496e19789ab09bcc04d335b6",
+      "source": "official",
+      "plan": [
+        {
+          "id": "git",
+          "action": "reuse",
+          "current": {
+            "path": "/usr/bin/git",
+            "version": "2.53.0"
+          }
+        },
+        {
+          "id": "go",
+          "action": "install",
+          "current": null,
+          "archive": null
+        }
+      ],
+      "message": "缺少：go。通过环境准备入口补齐后重新验证。",
+      "workflowVerification": "not-run",
+      "projectRoot": "/home/sc/specgate-env-repair/toolchains/proof-go",
+      "checkedAt": "2026-10-30T12:07:26.971Z"
+    },
+    "installed": {
+      "ok": true,
+      "environmentReady": true,
+      "status": "ready",
+      "platform": "linux",
+      "arch": "x64",
+      "selection": {
+        "stack": "go-go",
+        "requirements": [
+          {
+            "id": "git",
+            "constraints": [],
+            "modules": [
+              "."
+            ]
+          },
+          {
+            "id": "go",
+            "constraints": [
+              ">=1.23"
+            ],
+            "modules": [
+              "."
+            ]
+          }
+        ],
+        "unsupported": [],
+        "modules": [
+          {
+            "id": "root",
+            "root": ".",
+            "buildSystems": [
+              "go"
+            ],
+            "languages": [
+              "go"
+            ],
+            "packageManager": ""
+          }
+        ]
+      },
+      "required": [
+        "git",
+        "go"
+      ],
+      "missing": [],
+      "tools": {
+        "git": {
+          "path": "/usr/bin/git",
+          "version": "2.53.0"
+        },
+        "go": {
+          "path": "/home/sc/specgate-env-repair/toolchains/go-1.27.3/bin/go",
+          "version": "1.27.3"
+        }
+      },
+      "fingerprint": "f804aac9d5cb29a02dd74b3ae0f9b6a17f76d6ac06e90cf0ddc0fe89f99dc62f",
+      "source": "official",
+      "plan": [
+        {
+          "id": "git",
+          "action": "reuse",
+          "current": {
+            "path": "/usr/bin/git",
+            "version": "2.53.0"
+          }
+        },
+        {
+          "id": "go",
+          "action": "reuse",
+          "current": {
+            "path": "/home/sc/specgate-env-repair/toolchains/go-1.27.3/bin/go",
+            "version": "1.27.3"
+          }
+        }
+      ],
+      "message": "当前项目所需工具链真实版本探测通过。项目基线和业务验证需分别执行。",
+      "workflowVerification": "not-run",
+      "projectRoot": "/home/sc/specgate-env-repair/toolchains/proof-go",
+      "checkedAt": "2026-10-30T12:07:37.496Z",
+      "completed": [
+        {
+          "id": "go",
+          "ok": true,
+          "version": "1.27.3",
+          "location": "/home/sc/specgate-env-repair/toolchains/go-1.27.3",
+          "source": "official",
+          "url": "https://go.dev/dl/go1.27.3.linux-amd64.tar.gz",
+          "resolvedUrl": "https://dl.google.com/go/go1.27.3.linux-amd64.tar.gz",
+          "integrity": {
+            "algorithm": "sha256",
+            "checksum": "65efbc80fdc1fa2cd2631cad5b481777a68e8725f34e89f50fc6ac714e379b40",
+            "metadata": "https://go.dev/dl/?mode=json&include=all"
+          },
+          "cleanup": "completed"
+        }
+      ]
+    },
+    "execution": {
+      "argv": [
+        "/home/sc/specgate-env-repair/toolchains/go-1.27.3/bin/go",
+        "test",
+        "./..."
+      ],
+      "exitCode": 0,
+      "stdout": "ok  \texample.com/specgateproof\t0.002s\n",
+      "stderr": ""
+    },
+    "repeated": {
+      "ok": true,
+      "environmentReady": true,
+      "status": "ready",
+      "platform": "linux",
+      "arch": "x64",
+      "selection": {
+        "stack": "go-go",
+        "requirements": [
+          {
+            "id": "git",
+            "constraints": [],
+            "modules": [
+              "."
+            ]
+          },
+          {
+            "id": "go",
+            "constraints": [
+              ">=1.23"
+            ],
+            "modules": [
+              "."
+            ]
+          }
+        ],
+        "unsupported": [],
+        "modules": [
+          {
+            "id": "root",
+            "root": ".",
+            "buildSystems": [
+              "go"
+            ],
+            "languages": [
+              "go"
+            ],
+            "packageManager": ""
+          }
+        ]
+      },
+      "required": [
+        "git",
+        "go"
+      ],
+      "missing": [],
+      "tools": {
+        "git": {
+          "path": "/usr/bin/git",
+          "version": "2.53.0"
+        },
+        "go": {
+          "path": "/home/sc/specgate-env-repair/toolchains/go-1.27.3/bin/go",
+          "version": "1.27.3"
+        }
+      },
+      "fingerprint": "f804aac9d5cb29a02dd74b3ae0f9b6a17f76d6ac06e90cf0ddc0fe89f99dc62f",
+      "source": "official",
+      "plan": [
+        {
+          "id": "git",
+          "action": "reuse",
+          "current": {
+            "path": "/usr/bin/git",
+            "version": "2.53.0"
+          }
+        },
+        {
+          "id": "go",
+          "action": "reuse",
+          "current": {
+            "path": "/home/sc/specgate-env-repair/toolchains/go-1.27.3/bin/go",
+            "version": "1.27.3"
+          }
+        }
+      ],
+      "message": "当前项目所需工具链真实版本探测通过。项目基线和业务验证需分别执行。",
+      "workflowVerification": "not-run",
+      "projectRoot": "/home/sc/specgate-env-repair/toolchains/proof-go",
+      "checkedAt": "2026-10-30T12:07:42.322Z"
+    },
+    "approvals": 1
+  },
+  {
+    "platform": "linux",
+    "approvalSource": "Real current-chat approval bound to the exact URL/checksum/version/location; no synthetic human approval",
+    "approvedPlan": {
+      "id": "python",
+      "version": "3.12.16",
+      "name": "cpython-3.12.16+20261026-x86_64-unknown-linux-gnu-install_only.tar.gz",
+      "algorithm": "sha256",
+      "checksum": "6a79e922e50006b601f29e688407659da1c2b86ebcd4e9c7254cf234be8b89de",
+      "url": "https://github.com/astral-sh/python-build-standalone/releases/download/20261026/cpython-3.12.16%2B20261026-x86_64-unknown-linux-gnu-install_only.tar.gz",
+      "metadata": "https://github.com/astral-sh/python-build-standalone/releases/tag/20261026",
+      "source": "official",
+      "platform": "linux",
+      "location": "/home/sc/specgate-env-repair/toolchains/python-3.12.16",
+      "privilege": "user",
+      "configChanges": [],
+      "purpose": "F02 双平台真实缺项安装、编译/导入验证与重复复用"
+    },
+    "before": {
+      "ok": true,
+      "environmentReady": false,
+      "status": "blocked",
+      "platform": "linux",
+      "arch": "x64",
+      "selection": {
+        "stack": "python-python",
+        "requirements": [
+          {
+            "id": "git",
+            "constraints": [],
+            "modules": [
+              "."
+            ]
+          },
+          {
+            "id": "python",
+            "constraints": [
+              ">=3.12,<3.13"
+            ],
+            "modules": [
+              "."
+            ]
+          }
+        ],
+        "unsupported": [],
+        "modules": [
+          {
+            "id": "root",
+            "root": ".",
+            "buildSystems": [
+              "python"
+            ],
+            "languages": [
+              "python"
+            ],
+            "packageManager": ""
+          }
+        ]
+      },
+      "required": [
+        "git",
+        "python"
+      ],
+      "missing": [
+        "python"
+      ],
+      "tools": {
+        "git": {
+          "path": "/usr/bin/git",
+          "version": "2.53.0"
+        },
+        "python": null
+      },
+      "fingerprint": "645a46486c4e198afe7bef7f6a8398becdebcbb7b9ca758c3fcf49cb5c226efd",
+      "source": "official",
+      "plan": [
+        {
+          "id": "git",
+          "action": "reuse",
+          "current": {
+            "path": "/usr/bin/git",
+            "version": "2.53.0"
+          }
+        },
+        {
+          "id": "python",
+          "action": "install",
+          "current": null,
+          "archive": null
+        }
+      ],
+      "message": "缺少：python。通过环境准备入口补齐后重新验证。",
+      "workflowVerification": "not-run",
+      "projectRoot": "/home/sc/specgate-env-repair/toolchains/proof-python",
+      "checkedAt": "2026-10-30T12:07:42.336Z"
+    },
+    "installed": {
+      "ok": true,
+      "environmentReady": true,
+      "status": "ready",
+      "platform": "linux",
+      "arch": "x64",
+      "selection": {
+        "stack": "python-python",
+        "requirements": [
+          {
+            "id": "git",
+            "constraints": [],
+            "modules": [
+              "."
+            ]
+          },
+          {
+            "id": "python",
+            "constraints": [
+              ">=3.12,<3.13"
+            ],
+            "modules": [
+              "."
+            ]
+          }
+        ],
+        "unsupported": [],
+        "modules": [
+          {
+            "id": "root",
+            "root": ".",
+            "buildSystems": [
+              "python"
+            ],
+            "languages": [
+              "python"
+            ],
+            "packageManager": ""
+          }
+        ]
+      },
+      "required": [
+        "git",
+        "python"
+      ],
+      "missing": [],
+      "tools": {
+        "git": {
+          "path": "/usr/bin/git",
+          "version": "2.53.0"
+        },
+        "python": {
+          "path": "/home/sc/specgate-env-repair/toolchains/python-3.12.16/bin/python3",
+          "version": "3.12.16"
+        }
+      },
+      "fingerprint": "f74f51b08fc1e36bcf8560263544dcba08d3800e4ba63181574412406814d80e",
+      "source": "official",
+      "plan": [
+        {
+          "id": "git",
+          "action": "reuse",
+          "current": {
+            "path": "/usr/bin/git",
+            "version": "2.53.0"
+          }
+        },
+        {
+          "id": "python",
+          "action": "reuse",
+          "current": {
+            "path": "/home/sc/specgate-env-repair/toolchains/python-3.12.16/bin/python3",
+            "version": "3.12.16"
+          }
+        }
+      ],
+      "message": "当前项目所需工具链真实版本探测通过。项目基线和业务验证需分别执行。",
+      "workflowVerification": "not-run",
+      "projectRoot": "/home/sc/specgate-env-repair/toolchains/proof-python",
+      "checkedAt": "2026-10-30T12:12:05.467Z",
+      "completed": [
+        {
+          "id": "python",
+          "ok": true,
+          "version": "3.12.16",
+          "location": "/home/sc/specgate-env-repair/toolchains/python-3.12.16",
+          "source": "official",
+          "url": "https://github.com/astral-sh/python-build-standalone/releases/download/20261026/cpython-3.12.16%2B20261026-x86_64-unknown-linux-gnu-install_only.tar.gz",
+          "resolvedUrl": "https://release-assets.githubusercontent.com/github-production-release-asset/162334160/b58630f4-86f0-4a63-b89f-772d8c83dba3?sp=r&sv=2018-11-09&sr=b&spr=https&se=2026-10-30T12%3A57%3A36Z&rscd=attachment%3B+filename%3Dcpython-3.12.16%2B20261026-x86_64-unknown-linux-gnu-install_only.tar.gz&rsct=application%2Foctet-stream&skoid=96c2d410-5711-43a1-aedd-ab1947aa7ab0&sktid=398a6654-997b-47e9-b12b-9515b896b4de&skt=2026-10-30T11%3A57%3A36Z&ske=2026-10-30T12%3A57%3A36Z&sks=b&skv=2018-11-09&sig=ZzWYvC4QJG0a8v2rzDGzuMuIdHNCOcwh5zukwvt615w%3D&jwt=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJnaXRodWIuY29tIiwiYXVkIjoicmVsZWFzZS1hc3NldHMuZ2l0aHVidXNlcmNvbnRlbnQuY29tIiwia2V5Ijoia2V5MSIsImV4cCI6MTc5MzM2Mzg2NCwibmJmIjoxNzkzMzYyMDY0LCJwYXRoIjoicmVsZWFzZWFzc2V0cHJvZHVjdGlvbi5ibG9iLmNvcmUud2luZG93cy5uZXQifQ.PM8U3uOmoZ3HxZdjWeo-xOaEsC_8n-zQ8yzk3I3cgPA&response-content-disposition=attachment%3B%20filename%3Dcpython-3.12.16%2B20261026-x86_64-unknown-linux-gnu-install_only.tar.gz&response-content-type=application%2Foctet-stream",
+          "integrity": {
+            "algorithm": "sha256",
+            "checksum": "6a79e922e50006b601f29e688407659da1c2b86ebcd4e9c7254cf234be8b89de",
+            "metadata": "https://github.com/astral-sh/python-build-standalone/releases/tag/20261026"
+          },
+          "cleanup": "completed"
+        }
+      ]
+    },
+    "execution": {
+      "argv": [
+        "/home/sc/specgate-env-repair/toolchains/python-3.12.16/bin/python3",
+        "-c",
+        "import sys,ssl,sqlite3,venv; assert sys.version_info[:2] == (3,12); print(sys.version)"
+      ],
+      "exitCode": 0,
+      "stdout": "3.12.16 (main, Oct 26 2026, 14:08:45) [Clang 23.1.3 ]\n",
+      "stderr": ""
+    },
+    "repeated": {
+      "ok": true,
+      "environmentReady": true,
+      "status": "ready",
+      "platform": "linux",
+      "arch": "x64",
+      "selection": {
+        "stack": "python-python",
+        "requirements": [
+          {
+            "id": "git",
+            "constraints": [],
+            "modules": [
+              "."
+            ]
+          },
+          {
+            "id": "python",
+            "constraints": [
+              ">=3.12,<3.13"
+            ],
+            "modules": [
+              "."
+            ]
+          }
+        ],
+        "unsupported": [],
+        "modules": [
+          {
+            "id": "root",
+            "root": ".",
+            "buildSystems": [
+              "python"
+            ],
+            "languages": [
+              "python"
+            ],
+            "packageManager": ""
+          }
+        ]
+      },
+      "required": [
+        "git",
+        "python"
+      ],
+      "missing": [],
+      "tools": {
+        "git": {
+          "path": "/usr/bin/git",
+          "version": "2.53.0"
+        },
+        "python": {
+          "path": "/home/sc/specgate-env-repair/toolchains/python-3.12.16/bin/python3",
+          "version": "3.12.16"
+        }
+      },
+      "fingerprint": "f74f51b08fc1e36bcf8560263544dcba08d3800e4ba63181574412406814d80e",
+      "source": "official",
+      "plan": [
+        {
+          "id": "git",
+          "action": "reuse",
+          "current": {
+            "path": "/usr/bin/git",
+            "version": "2.53.0"
+          }
+        },
+        {
+          "id": "python",
+          "action": "reuse",
+          "current": {
+            "path": "/home/sc/specgate-env-repair/toolchains/python-3.12.16/bin/python3",
+            "version": "3.12.16"
+          }
+        }
+      ],
+      "message": "当前项目所需工具链真实版本探测通过。项目基线和业务验证需分别执行。",
+      "workflowVerification": "not-run",
+      "projectRoot": "/home/sc/specgate-env-repair/toolchains/proof-python",
+      "checkedAt": "2026-10-30T12:12:05.585Z"
+    },
+    "approvals": 1
+  }
+]

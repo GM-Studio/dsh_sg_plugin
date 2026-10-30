@@ -119,6 +119,9 @@ test('default stdio package surface exposes environment preparation and new-proj
   assert.equal(check.ok, true, JSON.stringify(check));
   assert.ok(Array.isArray(check.plan));
   assert.equal(check.workflowVerification, 'not-run');
+  const node = data(await client.call('sg_env_check', { stack: 'node' }));
+  assert.deepEqual(node.required, ['git', 'node']);
+  assert.equal(node.environmentReady, true, JSON.stringify(node));
   assert.deepEqual(fs.readdirSync(root), []);
 });
 
@@ -147,7 +150,12 @@ test('new-project environment selection is trusted, resumable, and does not gene
   assert.equal(selected.generated, false);
   assert.equal(selected.projectReady, false);
   assert.equal(selected.nextAction, 'ENVIRONMENT_READY');
-  assert.deepEqual(fs.readdirSync(target), []);
+  assert.deepEqual(fs.readdirSync(target), ['.specgate']);
+  assert.deepEqual(
+    JSON.parse(fs.readFileSync(path.join(target, '.specgate/environment-selection.json'), 'utf8'))
+      .selection,
+    { preset: 'jdk17-boot3.5', frontend: 'react' },
+  );
   assert.equal(data(await registry.call('sg_project_create')).projectRoot, selected.projectRoot);
   assert.equal(forms, 1);
 });

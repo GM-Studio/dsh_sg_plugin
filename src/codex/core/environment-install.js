@@ -60,13 +60,21 @@ function toolHome(root, id, platform) {
       ? platform === 'win32'
         ? 'node.exe'
         : 'bin/node'
-      : id === 'maven'
+      : id === 'python'
         ? platform === 'win32'
-          ? 'bin/mvn.cmd'
-          : 'bin/mvn'
-        : platform === 'win32'
-          ? 'bin/javac.exe'
-          : 'bin/javac';
+          ? 'python.exe'
+          : 'bin/python3'
+        : id === 'go'
+          ? platform === 'win32'
+            ? 'bin/go.exe'
+            : 'bin/go'
+          : id === 'maven'
+            ? platform === 'win32'
+              ? 'bin/mvn.cmd'
+              : 'bin/mvn'
+            : platform === 'win32'
+              ? 'bin/javac.exe'
+              : 'bin/javac';
   if (fs.existsSync(path.join(root, marker))) return root;
   for (const entry of fs.readdirSync(root, { withFileTypes: true }).slice(0, 64))
     if (entry.isDirectory() && fs.existsSync(path.join(root, entry.name, marker)))
@@ -85,9 +93,22 @@ export async function installEnvironmentComponent(
     fetchImpl = fetch,
     run = runEnvironmentCommand,
     javaHome,
+    archive: approvedArchive,
   } = {},
 ) {
-  const archive = componentArchive(id, { platform, source, env });
+  const archive = approvedArchive || componentArchive(id, { platform, source, env });
+  if (
+    archive &&
+    (archive.id !== id ||
+      path.basename(archive.name) !== archive.name ||
+      /[\\/]/.test(archive.name) ||
+      !['sha256', 'sha512'].includes(archive.algorithm) ||
+      !new RegExp('^[a-f0-9]{' + (archive.algorithm === 'sha256' ? 64 : 128) + '}$').test(
+        archive.checksum,
+      ) ||
+      new URL(archive.url).protocol !== 'https:')
+  )
+    throw Object.assign(new Error('安装归档方案无效'), { code: 'ENV_ARCHIVE_INVALID' });
   if (!archive)
     return {
       ok: false,
@@ -164,29 +185,43 @@ export async function installEnvironmentComponent(
       const bin =
         id === 'node'
           ? path.join(home, platform === 'win32' ? 'node.exe' : 'bin/node')
-          : path.join(
-              home,
-              'bin',
-              id === 'maven'
-                ? platform === 'win32'
-                  ? 'mvn.cmd'
-                  : 'mvn'
-                : platform === 'win32'
-                  ? 'javac.exe'
-                  : 'javac',
-            );
+          : id === 'python'
+            ? path.join(home, platform === 'win32' ? 'python.exe' : 'bin/python3')
+            : id === 'go'
+              ? path.join(home, platform === 'win32' ? 'bin/go.exe' : 'bin/go')
+              : path.join(
+                  home,
+                  'bin',
+                  id === 'maven'
+                    ? platform === 'win32'
+                      ? 'mvn.cmd'
+                      : 'mvn'
+                    : platform === 'win32'
+                      ? 'javac.exe'
+                      : 'javac',
+                );
       const output = probeTool(
         bin,
-        [id === 'maven' || id === 'node' ? '-v' : '-version'],
+        [
+          id === 'go'
+            ? 'version'
+            : id === 'python'
+              ? '--version'
+              : id === 'maven' || id === 'node'
+                ? '-v'
+                : '-version',
+        ],
         15000,
         probeEnv,
       );
       const valid =
         id === 'node'
           ? /v22\.22\.0/.test(output)
-          : id === 'maven'
-            ? /Apache Maven 3\.9\.11/.test(output)
-            : new RegExp(`javac (?:1\\.)?${id.slice(3)}[._]`).test(output);
+          : id === 'python' || id === 'go'
+            ? output.includes(archive.version)
+            : id === 'maven'
+              ? /Apache Maven 3\.9\.11/.test(output)
+              : new RegExp(`javac (?:1\\.)?${id.slice(3)}[._]`).test(output);
       if (!valid)
         throw Object.assign(new Error('解压后的真实版本探测失败'), {
           code: 'ENV_VERIFICATION_FAILED',

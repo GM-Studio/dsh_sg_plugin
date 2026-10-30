@@ -1,0 +1,11 @@
+REAL INSTALL win32 go 1.27.3 missing [ 'go' ]
+file:///E:/ai_workflow/specgate/.tmp/env-repair-generic-install.mjs:75
+  if (execution.status !== 0) throw new Error(execution.stderr || execution.error?.message);
+                                    ^
+
+Error: go: creating work dir: mkdir C:\Users\Administrator\AppData\Local\Temp\go-build3555715332: Access is denied.
+
+    at file:///E:/ai_workflow/specgate/.tmp/env-repair-generic-install.mjs:75:37
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+
+Node.js v24.14.0
