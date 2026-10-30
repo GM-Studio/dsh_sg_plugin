@@ -37,9 +37,7 @@ function git(root, args) {
 
 function project(t) {
   const root = temp(t);
-  fs.mkdirSync(path.join(root, 'backend'), { recursive: true });
   fs.mkdirSync(path.join(root, 'frontend'), { recursive: true });
-  fs.writeFileSync(path.join(root, 'backend', 'pom.xml'), '<project/>\n');
   fs.writeFileSync(
     path.join(root, 'frontend', 'package.json'),
     JSON.stringify({
@@ -81,6 +79,13 @@ test('detached baseline worker survives the starter and persists readiness', asy
   assert.equal(started.ok, true, JSON.stringify(started));
   assert.equal(started.status, 'running');
   assert.equal(getBaselineJob(projectRoot).runId, started.runId);
+  const jobSpecification = JSON.parse(
+    fs.readFileSync(
+      path.join(projectRoot, '.git/specgate/baseline-jobs', started.runId, 'job.json'),
+      'utf8',
+    ),
+  );
+  assert.ok(jobSpecification.worktreeRoot.startsWith(path.join(projectRoot, '.git', 'specgate')));
 
   let readiness;
   let job;
@@ -93,6 +98,7 @@ test('detached baseline worker survives the starter and persists readiness', asy
   }
   assert.equal(readiness.ok, true, JSON.stringify({ readiness, job }));
   assert.equal(readiness.canStartChange, true);
+  assert.equal(readiness.baseline.status, 'green');
   assert.equal(
     fs.readFileSync(path.join(projectRoot, 'frontend', 'generated.txt'), 'utf8'),
     'tracked build output\n',

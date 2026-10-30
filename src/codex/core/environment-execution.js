@@ -1,4 +1,31 @@
 import path from 'node:path';
+import fs from 'node:fs';
+import { spawnSync } from 'node:child_process';
+import { matchesVersion } from './env/version-range.js';
+
+function localPython(cwd) {
+  if (!cwd) return null;
+  const home = path.join(cwd, '.venv');
+  const executable = path.join(
+    home,
+    process.platform === 'win32' ? 'Scripts/python.exe' : 'bin/python',
+  );
+  return fs.existsSync(path.join(home, 'pyvenv.cfg')) && fs.existsSync(executable)
+    ? executable
+    : null;
+}
+
+function projectEnvironment(env, cwd) {
+  const python = localPython(cwd);
+  if (python) {
+    env.VIRTUAL_ENV = path.join(cwd, '.venv');
+    env.PYTHONNOUSERSITE = '1';
+    delete env.PYTHONHOME;
+    env.PATH = path.dirname(python) + path.delimiter + (env.PATH || env.Path || '');
+  }
+  env.POETRY_VIRTUALENVS_IN_PROJECT = 'true';
+  return env;
+}
 
 const reserved = [
   'PATH',
@@ -49,7 +76,7 @@ export function environmentExecutionContext(
 }
 
 export function executionEnvironment(context, overrides = {}, cwd = context?.root) {
-  if (!context) return { ...process.env, ...overrides };
+  if (!context) return projectEnvironment({ ...process.env, ...overrides }, cwd);
   const env = { ...context.env, ...overrides };
   for (const key of reserved) {
     if (context.env[key] !== undefined) env[key] = context.env[key];
@@ -74,12 +101,40 @@ export function executionEnvironment(context, overrides = {}, cwd = context?.roo
     Object.assign(env, { JAVA_HOME: java.home, SG_JAVA_HOME: java.home });
     env.PATH = path.join(java.home, 'bin') + path.delimiter + env.PATH;
   }
-  return env;
+  return projectEnvironment(env, cwd);
 }
 
 export function resolveEnvironmentCommand(argv, context, cwd = context?.root) {
-  if (!context || /[\\/]/.test(argv[0])) return [...argv];
+  if (/[\\/]/.test(argv[0])) return [...argv];
   const name = argv[0].replace(/\.(?:exe|cmd|bat)$/i, '').toLowerCase();
+  if (['python', 'python3'].includes(name) && !(argv[1] === '-m' && argv[2] === 'venv')) {
+    const python = localPython(cwd);
+    if (python) {
+      const probe = spawnSync(python, ['--version'], {
+        encoding: 'utf8',
+        windowsHide: true,
+        timeout: 5000,
+        env: executionEnvironment(context, {}, cwd),
+      });
+      const version = /Python\s+(\d+\.\d+\.\d+)/.exec(
+        `${probe.stdout || ''}${probe.stderr || ''}`,
+      )?.[1];
+      const constraints =
+        context?.report?.selection?.requirements
+          ?.filter((entry) => entry.id === 'python')
+          .flatMap((entry) => entry.constraints) || [];
+      if (
+        probe.status !== 0 ||
+        !version ||
+        !constraints.every((constraint) => matchesVersion(version, constraint))
+      )
+        throw new Error(
+          'Project virtual environment is unavailable or incompatible; repair it before retrying',
+        );
+      return [python, ...argv.slice(1)];
+    }
+  }
+  if (!context) return [...argv];
   const tools = context.tools;
   const selectedHome = executionEnvironment(context, {}, cwd).JAVA_HOME;
   const java = Object.entries(tools).find(
@@ -96,7 +151,7 @@ export function resolveEnvironmentCommand(argv, context, cwd = context?.root) {
             ? java?.java
             : name === 'javac'
               ? java?.javac
-              : tools[name]?.path;
+              : tools[name === 'python3' ? 'python' : name]?.path;
   if (!executable) return [...argv];
   if (/\.[cm]?js$/i.test(executable))
     return [tools.node?.node || process.execPath, executable, ...argv.slice(1)];

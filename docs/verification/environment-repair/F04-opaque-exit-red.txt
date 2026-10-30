@@ -1,0 +1,29 @@
+✖ actual timeout, absent executable and failed installation cannot produce a usable baseline (1621.9115ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 0
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1708.1528
+
+✖ failing tests:
+
+test at test\codex-environment-dependencies-e2e.test.js:138:1
+✖ actual timeout, absent executable and failed installation cannot produce a usable baseline (1621.9115ms)
+  AssertionError [ERR_ASSERTION]: {"ok":true,"baseline":{"schemaVersion":2,"baselineId":"baseline-07b851ebdfae1c04","projectId":"project-be656cf12bcd07c2","commit":"33cb992aff5cd38d9b7351be66051952b30d7646","status":"known-failures","knownFailures":[{"id":"known-96e12ea00922bbb8","signature":"failure-proof:failed:exit=2:64d734c9b2a0","commandId":"failure-proof","scope":"test","evidence":"baseline-c503352aa81038ba"}],"unverifiedAreas":[],"commands":["failure-proof"],"evidence":["baseline-c503352aa81038ba"],"environmentFingerprint":"0173c76be415db3b5467d0072d1b6f927b78ee51a09ee24db99ddd25e44c9386","createdAt":"2026-10-30T13:15:45.737Z"},"results":[{"command":{"id":"failure-proof","cwd":".","argv":["D:\\Program Files\\nodejs\\node.exe","-e","console.error(\"opaque process failure\"); process.exit(2)"],"timeoutMs":1000,"kind":"test"},"result":{"commandId":"failure-proof","status":"failed","exitCode":2,"stdout":"","stderr":"opaque process failure\n","durationMs":52,"startedAt":"2026-10-30T13:15:45.737Z","finishedAt":"2026-10-30T13:15:45.789Z","argv":["D:\\Program Files\\nodejs\\node.exe","-e","console.error(\"opaque process failure\"); process.exit(2)"]}}]}
+  
+  true !== false
+  
+      at TestContext.<anonymous> (file:///E:/ai_workflow/specgate/test/codex-environment-dependencies-e2e.test.js:159:12)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1125:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:358:3) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: true,
+    expected: false,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

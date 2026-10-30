@@ -129,7 +129,7 @@ function frontendRoots(root) {
 }
 
 function installCommand({ cwd, directory, manager, prefix }) {
-  if (fs.existsSync(path.join(directory, 'node_modules'))) return null;
+  // A source checkout's ignored dependencies do not exist in a fresh worktree.
   const argv =
     manager === 'pnpm'
       ? ['pnpm', 'install', '--frozen-lockfile']
@@ -325,6 +325,16 @@ export function detectProject({ root: inputRoot } = {}) {
         const uv = fs.existsSync(path.join(directory, 'uv.lock'));
         const poetry = fs.existsSync(path.join(directory, 'poetry.lock'));
         const executable = uv ? 'uv' : poetry ? 'poetry' : 'python';
+        if (!uv && !poetry)
+          commands.install.push({
+            id: prefix + '-python-venv',
+            cwd,
+            argv: [
+              'python',
+              '-c',
+              'import pathlib,venv; target=pathlib.Path(".venv"); venv.EnvBuilder(with_pip=True).create(target) if not (target/"pyvenv.cfg").is_file() else print("Reusing project virtual environment")',
+            ],
+          });
         if (uv || poetry)
           commands.install.push({
             id: prefix + '-python-deps',

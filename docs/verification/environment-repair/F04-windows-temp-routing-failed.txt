@@ -1,0 +1,63 @@
+✔ a real locked local npm dependency is rebuilt in the detached worker despite source node_modules (3907.4758ms)
+✔ a real missing module blocks MCP adoption rather than becoming an accepted known failure (2217.9266ms)
+✔ actual timeout, absent executable and failed installation cannot produce a usable baseline (1611.6768ms)
+✖ Python installs a local wheel into the actual worktree venv and executes its import test (371.1313ms)
+(node:18804) [DEP0190] DeprecationWarning: Passing args to a child process with shell option true can lead to security vulnerabilities, as the arguments are not escaped, only concatenated.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+✖ Go prepares and compiles a real standard-library project in its isolated worktree (815.1957ms)
+✔ a past suite install marker cannot hide deleted dependencies (870.1573ms)
+ℹ tests 6
+ℹ suites 0
+ℹ pass 4
+ℹ fail 2
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 9980.1914
+
+✖ failing tests:
+
+test at test\codex-environment-dependencies-e2e.test.js:156:1
+✖ Python installs a local wheel into the actual worktree venv and executes its import test (371.1313ms)
+  AssertionError [ERR_ASSERTION]: Traceback (most recent call last):
+    File "<string>", line 2, in <module>
+    File "E:\ai_workflow\specgate\.tmp\env-repair-install\python-3.12.16\Lib\zipfile\__init__.py", line 1378, in __init__
+      self.fp = io.open(file, filemode)
+                ^^^^^^^^^^^^^^^^^^^^^^^
+  PermissionError: [Errno 13] Permission denied: 'environment_dependency-1.0.0-py3-none-any.whl'
+  
+  
+  1 !== 0
+  
+      at execute (file:///E:/ai_workflow/specgate/test/codex-environment-dependencies-e2e.test.js:36:10)
+      at TestContext.<anonymous> (file:///E:/ai_workflow/specgate/test/codex-environment-dependencies-e2e.test.js:182:3)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1125:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:787:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 1,
+    expected: 0,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at test\codex-environment-dependencies-e2e.test.js:209:1
+✖ Go prepares and compiles a real standard-library project in its isolated worktree (815.1957ms)
+  AssertionError [ERR_ASSERTION]: {"ok":true,"baseline":{"schemaVersion":2,"baselineId":"baseline-c7f95d71e4811ffa","projectId":"project-4e19771180545a51","commit":"8153cf21158f0fabdb37ede1b524407c2bc2bb21","status":"known-failures","knownFailures":[{"id":"known-a6a41887c2f9e91f","signature":"root-go-build:failed:exit=1:e35f0404bfdc","commandId":"root-go-build","scope":"build","evidence":"baseline-56f338bfa8e86a3b"},{"id":"known-ab833a0c969e78fe","signature":"root-go-test:failed:exit=1:b05c979d944f","commandId":"root-go-test","scope":"test","evidence":"baseline-87a62836dc881a4c"}],"unverifiedAreas":[],"commands":["root-go-deps","root-go-build","root-go-test"],"evidence":["baseline-4ec38d59123944ea","baseline-56f338bfa8e86a3b","baseline-87a62836dc881a4c"],"environmentFingerprint":"37f2aa850f8e0501e3b35bb79b31536199b32eb46b0fd69761a257356ace261d","createdAt":"2026-10-30T12:48:51.648Z"},"results":[{"command":{"id":"root-go-deps","cwd":".","argv":["go","mod","download"],"kind":"install"},"result":{"commandId":"root-go-deps","status":"passed","exitCode":0,"stdout":"","stderr":"go: no module dependencies to download\n","durationMs":23,"startedAt":"2026-10-30T12:48:51.648Z","finishedAt":"2026-10-30T12:48:51.671Z","argv":["E:\\ai_workflow\\specgate\\.tmp\\env-repair-install\\go-1.27.3\\bin\\go.exe","mod","download"]}},{"command":{"id":"root-go-build","cwd":".","argv":["go","build","./..."],"kind":"build"},"result":{"commandId":"root-go-build","status":"failed","exitCode":1,"stdout":"","stderr":"go: creating work dir: mkdir C:\\Users\\Administrator\\.codex\\visualizations\\2026\\10\\30\\01a18c86-3833-7442-9a39-b9f8c958c238\\.tmp\\environment-e2e\\sg-env-dependencies-kAYUp0\\go-build651671233: Access is denied.\n","durationMs":23,"startedAt":"2026-10-30T12:48:51.671Z","finishedAt":"2026-10-30T12:48:51.694Z","argv":["E:\\ai_workflow\\specgate\\.tmp\\env-repair-install\\go-1.27.3\\bin\\go.exe","build","./..."]}},{"command":{"id":"root-go-test","cwd":".","argv":["go","test","./..."],"kind":"test"},"result":{"commandId":"root-go-test","status":"failed","exitCode":1,"stdout":"","stderr":"failed to initialize build cache at C:\\Users\\Administrator\\.codex\\visualizations\\2026\\10\\30\\01a18c86-3833-7442-9a39-b9f8c958c238\\.tmp\\environment-e2e\\sg-env-dependencies-kAYUp0\\go-cache: mkdir C:\\Users\\Administrator\\.codex\\visualizations\\2026\\10\\30\\01a18c86-3833-7442-9a39-b9f8c958c238\\.tmp\\environment-e2e\\sg-env-dependencies-kAYUp0\\go-cache: Access is denied.\n","durationMs":61,"startedAt":"2026-10-30T12:48:51.694Z","finishedAt":"2026-10-30T12:48:51.755Z","argv":["E:\\ai_workflow\\specgate\\.tmp\\env-repair-install\\go-1.27.3\\bin\\go.exe","test","./..."]}}]}
+  + actual - expected
+  
+  + 'known-failures'
+  - 'green'
+  
+      at TestContext.<anonymous> (file:///E:/ai_workflow/specgate/test/codex-environment-dependencies-e2e.test.js:249:12)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1125:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:787:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 'known-failures',
+    expected: 'green',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

@@ -2,8 +2,8 @@ import path from 'node:path';
 import { spawn } from 'node:child_process';
 import { createInterface } from 'node:readline';
 
-export async function mcpClient(t, root) {
-  const env = { ...process.env, SPECGATE_INTERACTIVE_APPROVAL: '1' };
+export async function mcpClient(t, root, { env: environment = {} } = {}) {
+  const env = { ...process.env, ...environment, SPECGATE_INTERACTIVE_APPROVAL: '1' };
   delete env.SPECGATE_OPTIONAL_MODULES;
   const child = spawn(process.execPath, [path.resolve('src/codex/server.js')], {
     cwd: root,

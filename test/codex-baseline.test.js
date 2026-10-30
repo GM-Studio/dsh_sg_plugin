@@ -110,7 +110,7 @@ test('pre-existing failing commands become stable known failures', async (t) => 
       exitCode: command.id === 'frontend-test' ? 1 : 0,
       durationMs: 5,
       stdout: command.id,
-      stderr: command.id === 'frontend-test' ? 'legacy test timeout' : '',
+      stderr: command.id === 'frontend-test' ? 'AssertionError: legacy behavior mismatch' : '',
     }),
   });
   assert.equal(result.ok, true, JSON.stringify(result));

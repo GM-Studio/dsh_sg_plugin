@@ -1,0 +1,44 @@
+[
+  {
+    "exitCode": 0,
+    "command": "node --import ./test/setup-temp.mjs --test --test-concurrency=2 test/codex-baseline-job.test.js test/codex-environment-dependencies-e2e.test.js test/codex-baseline.test.js test/codex-adopted-verification.test.js test/codex-environment-entry-e2e.test.js test/codex-environment-execution-e2e.test.js test/codex-environment-stack-e2e.test.js test/codex-environment.test.js test/codex-plugin-protocol.test.js test/codex-plugin-package.test.js",
+    "name": "focused",
+    "arch": "x64",
+    "platform": "win32"
+  },
+  {
+    "exitCode": 0,
+    "command": "npm test",
+    "name": "test",
+    "arch": "x64",
+    "platform": "win32"
+  },
+  {
+    "exitCode": 0,
+    "command": "npm run lint",
+    "name": "lint",
+    "arch": "x64",
+    "platform": "win32"
+  },
+  {
+    "exitCode": 0,
+    "command": "npm run format:check",
+    "name": "format",
+    "arch": "x64",
+    "platform": "win32"
+  },
+  {
+    "exitCode": 0,
+    "command": "npm run pack:check",
+    "name": "pack",
+    "arch": "x64",
+    "platform": "win32"
+  },
+  {
+    "exitCode": 0,
+    "command": "npm run codex:smoke",
+    "name": "smoke",
+    "arch": "x64",
+    "platform": "win32"
+  }
+]

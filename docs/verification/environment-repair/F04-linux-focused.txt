@@ -1,0 +1,382 @@
+TAP version 13
+# Subtest: adopted verification preserves unchanged known failures and reports no pass claim
+ok 1 - adopted verification preserves unchanged known failures and reports no pass claim
+  ---
+  duration_ms: 5.240403
+  type: 'test'
+  ...
+# Subtest: legacy known-failure signatures never waive infrastructure errors or unexecuted checks
+ok 2 - legacy known-failure signatures never waive infrastructure errors or unexecuted checks
+  ---
+  duration_ms: 1.472116
+  type: 'test'
+  ...
+# Subtest: adopted verification blocks new failures, missing commands and environment drift
+ok 3 - adopted verification blocks new failures, missing commands and environment drift
+  ---
+  duration_ms: 0.852538
+  type: 'test'
+  ...
+# Subtest: new failures include bounded command evidence and never become passed artifacts
+ok 4 - new failures include bounded command evidence and never become passed artifacts
+  ---
+  duration_ms: 0.455337
+  type: 'test'
+  ...
+# Subtest: known failure signatures ignore timestamps, process ids and worktree paths
+ok 5 - known failure signatures ignore timestamps, process ids and worktree paths
+  ---
+  duration_ms: 0.529684
+  type: 'test'
+  ...
+# Subtest: adopted verification executes real ProjectProfile commands in the fixed worktree
+ok 6 - adopted verification executes real ProjectProfile commands in the fixed worktree
+  ---
+  duration_ms: 82.340819
+  type: 'test'
+  ...
+# Subtest: legacy baselines rebuild stable signatures from retained command evidence
+ok 7 - legacy baselines rebuild stable signatures from retained command evidence
+  ---
+  duration_ms: 1.957238
+  type: 'test'
+  ...
+# Subtest: detached baseline worker survives the starter and persists readiness
+ok 8 - detached baseline worker survives the starter and persists readiness
+  ---
+  duration_ms: 955.897569
+  type: 'test'
+  ...
+# Subtest: baseline executes the declared package manager with real timestamps and no shell interpolation
+ok 9 - baseline executes the declared package manager with real timestamps and no shell interpolation
+  ---
+  duration_ms: 297.108089
+  type: 'test'
+  ...
+# Subtest: all passing baseline commands produce a valid green adopted baseline
+ok 10 - all passing baseline commands produce a valid green adopted baseline
+  ---
+  duration_ms: 50.114435
+  type: 'test'
+  ...
+# Subtest: pre-existing failing commands become stable known failures
+ok 11 - pre-existing failing commands become stable known failures
+  ---
+  duration_ms: 32.358649
+  type: 'test'
+  ...
+# Subtest: no discovered commands produce a partial baseline with unverified risk
+ok 12 - no discovered commands produce a partial baseline with unverified risk
+  ---
+  duration_ms: 31.762657
+  type: 'test'
+  ...
+# Subtest: cancelled or malformed baseline runs fail without fabricating a green baseline
+ok 13 - cancelled or malformed baseline runs fail without fabricating a green baseline
+  ---
+  duration_ms: 30.672777
+  type: 'test'
+  ...
+# Subtest: bounded baseline commands use argv arrays and classify observed failure
+ok 14 - bounded baseline commands use argv arrays and classify observed failure
+  ---
+  duration_ms: 151.567669
+  type: 'test'
+  ...
+# Subtest: a real locked local npm dependency is rebuilt in the detached worker despite source node_modules
+ok 15 - a real locked local npm dependency is rebuilt in the detached worker despite source node_modules
+  ---
+  duration_ms: 3533.85204
+  type: 'test'
+  ...
+# Subtest: a real missing module blocks MCP adoption rather than becoming an accepted known failure
+ok 16 - a real missing module blocks MCP adoption rather than becoming an accepted known failure
+  ---
+  duration_ms: 1376.752295
+  type: 'test'
+  ...
+# Subtest: actual timeout, absent executable and failed installation cannot produce a usable baseline
+ok 17 - actual timeout, absent executable and failed installation cannot produce a usable baseline
+  ---
+  duration_ms: 1345.921739
+  type: 'test'
+  ...
+# Subtest: real evidence storage failure keeps an otherwise passing baseline unready
+ok 18 - real evidence storage failure keeps an otherwise passing baseline unready
+  ---
+  duration_ms: 1374.139498
+  type: 'test'
+  ...
+# Subtest: Python installs a local wheel in a worktree venv, reuses it and completes native MCP adoption
+ok 19 - Python installs a local wheel in a worktree venv, reuses it and completes native MCP adoption
+  ---
+  duration_ms: 4311.288242
+  type: 'test'
+  ...
+# Subtest: Go compiles a real project in its isolated worktree and completes native MCP adoption
+ok 20 - Go compiles a real project in its isolated worktree and completes native MCP adoption
+  ---
+  duration_ms: 13467.169599
+  type: 'test'
+  ...
+# Subtest: a past suite install marker cannot hide deleted dependencies
+ok 21 - a past suite install marker cannot hide deleted dependencies
+  ---
+  duration_ms: 4997.268949
+  type: 'test'
+  ...
+# Subtest: default stdio package surface exposes environment preparation and new-project selection
+ok 22 - default stdio package surface exposes environment preparation and new-project selection
+  ---
+  duration_ms: 1536.26707
+  type: 'test'
+  ...
+# Subtest: new-project environment selection is trusted, resumable, and does not generate business code
+ok 23 - new-project environment selection is trusted, resumable, and does not generate business code
+  ---
+  duration_ms: 5.360069
+  type: 'test'
+  ...
+# Subtest: missing or cancelled project form leaves the requested target untouched
+ok 24 - missing or cancelled project form leaves the requested target untouched
+  ---
+  duration_ms: 1.166275
+  type: 'test'
+  ...
+# Subtest: the real checked Node/npm paths are consumed by baseline commands without changing process environment
+ok 25 - the real checked Node/npm paths are consumed by baseline commands without changing process environment
+  ---
+  duration_ms: 653.019302
+  type: 'test'
+  ...
+# Subtest: real MCP adoption carries checked tools into the detached worktree worker and records executed paths
+ok 26 - real MCP adoption carries checked tools into the detached worktree worker and records executed paths
+  ---
+  duration_ms: 1405.363939
+  type: 'test'
+  ...
+# Subtest: checked JDK/Maven compile and execute Java with a corrected child JAVA_HOME
+ok 27 - checked JDK/Maven compile and execute Java with a corrected child JAVA_HOME
+  ---
+  duration_ms: 1303.845012
+  type: 'test'
+  ...
+# Subtest: native formatter and Git control operations reuse actual executables without global PATH edits
+ok 28 - native formatter and Git control operations reuse actual executables without global PATH edits
+  ---
+  duration_ms: 658.407122
+  type: 'test'
+  ...
+# Subtest: existing Node, React, Vue, Python, Go and plain Java derive only their actual tool requirements
+ok 29 - existing Node, React, Vue, Python, Go and plain Java derive only their actual tool requirements
+  ---
+  duration_ms: 1765.112798
+  type: 'test'
+  ...
+# Subtest: version constraints reject lower patch versions and discover nested workspace modules
+ok 30 - version constraints reject lower patch versions and discover nested workspace modules
+  ---
+  duration_ms: 298.249937
+  type: 'test'
+  ...
+# Subtest: new-project stack selection can prepare a pure backend and incompatible runtime remains missing
+ok 31 - new-project stack selection can prepare a pure backend and incompatible runtime remains missing
+  ---
+  duration_ms: 53.225955
+  type: 'test'
+  ...
+# Subtest: initialization checks the selected environment before creating project files
+ok 32 - initialization checks the selected environment before creating project files
+  ---
+  duration_ms: 50.03253
+  type: 'test'
+  ...
+# Subtest: read-only control status verifies the snapshot without repairing corrupt history
+ok 33 - read-only control status verifies the snapshot without repairing corrupt history
+  ---
+  duration_ms: 2.475542
+  type: 'test'
+  ...
+# Subtest: only marked staging owned by an exited process is recovered
+ok 34 - only marked staging owned by an exited process is recovered
+  ---
+  duration_ms: 74.596225
+  type: 'test'
+  ...
+# Subtest: temporary mirrors are scoped to the callback and removed on failure
+ok 35 - temporary mirrors are scoped to the callback and removed on failure
+  ---
+  duration_ms: 1.396235
+  type: 'test'
+  ...
+# Subtest: planning requires a selected stack and installs only selected missing tools
+ok 36 - planning requires a selected stack and installs only selected missing tools
+  ---
+  duration_ms: 0.720685
+  type: 'test'
+  ...
+# Subtest: check is read-only and stack changes invalidate readiness
+ok 37 - check is read-only and stack changes invalidate readiness
+  ---
+  duration_ms: 1.085332
+  type: 'test'
+  ...
+# Subtest: install has no approval argument and needs trusted installation consent
+ok 38 - install has no approval argument and needs trusted installation consent
+  ---
+  duration_ms: 1.703327
+  type: 'test'
+  ...
+# Subtest: installation probes again and rerun reuses tools without asking or installing
+ok 39 - installation probes again and rerun reuses tools without asking or installing
+  ---
+  duration_ms: 1.159793
+  type: 'test'
+  ...
+# Subtest: an installer success without real discovered binaries stays blocked
+ok 40 - an installer success without real discovered binaries stays blocked
+  ---
+  duration_ms: 1.359208
+  type: 'test'
+  ...
+# Subtest: archive integrity rejects corrupted downloads before publication
+ok 41 - archive integrity rejects corrupted downloads before publication
+  ---
+  duration_ms: 1.415347
+  type: 'test'
+  ...
+# Subtest: aggregated status on a bare project never creates files or starts control runtime
+ok 42 - aggregated status on a bare project never creates files or starts control runtime
+  ---
+  duration_ms: 5.155549
+  type: 'test'
+  ...
+# Subtest: all task Skills and generated project copies are declared
+ok 43 - all task Skills and generated project copies are declared
+  ---
+  duration_ms: 0.295637
+  type: 'test'
+  ...
+# Subtest: a corrupt download is cleaned and an existing installation remains untouched
+ok 44 - a corrupt download is cleaned and an existing installation remains untouched
+  ---
+  duration_ms: 40.65171
+  type: 'test'
+  ...
+# Subtest: workflow execution remains blocked without creating runtime state
+ok 45 - workflow execution remains blocked without creating runtime state
+  ---
+  duration_ms: 0.856464
+  type: 'test'
+  ...
+# Subtest: status in supervisor mode does not create the control home
+ok 46 - status in supervisor mode does not create the control home
+  ---
+  duration_ms: 1.213078
+  type: 'test'
+  ...
+# Subtest: default MCP static import graph excludes optional control, notification and installer code
+ok 47 - default MCP static import graph excludes optional control, notification and installer code
+  ---
+  duration_ms: 15.904969
+  type: 'test'
+  ...
+# Subtest: Core v1 installation and lockfile have no MySQL driver dependency
+ok 48 - Core v1 installation and lockfile have no MySQL driver dependency
+  ---
+  duration_ms: 0.863799
+  type: 'test'
+  ...
+# Subtest: Codex manifest and MCP entry stay contained in the shipped plugin
+ok 49 - Codex manifest and MCP entry stay contained in the shipped plugin
+  ---
+  duration_ms: 10.59317
+  type: 'test'
+  ...
+# Subtest: offline tarball install launches the packaged entry from a different project cwd
+ok 50 - offline tarball install launches the packaged entry from a different project cwd
+  ---
+  duration_ms: 18788.700975
+  type: 'test'
+  ...
+# Subtest: smoke evidence rejects stdout pollution after the final reply
+ok 51 - smoke evidence rejects stdout pollution after the final reply
+  ---
+  duration_ms: 156.677985
+  type: 'test'
+  ...
+# Subtest: MCP roots bind tools to the target project instead of the plugin cache
+ok 52 - MCP roots bind tools to the target project instead of the plugin cache
+  ---
+  duration_ms: 5.153327
+  type: 'test'
+  ...
+# Subtest: session cwd wins over ambient roots and environment variables
+ok 53 - session cwd wins over ambient roots and environment variables
+  ---
+  duration_ms: 0.597518
+  type: 'test'
+  ...
+# Subtest: plugin-cache sessions use one unambiguous business root or stay unbound
+ok 54 - plugin-cache sessions use one unambiguous business root or stay unbound
+  ---
+  duration_ms: 1.416688
+  type: 'test'
+  ...
+# Subtest: stdio handshake and diagnostic tools leave a nonempty project unchanged
+ok 55 - stdio handshake and diagnostic tools leave a nonempty project unchanged
+  ---
+  duration_ms: 149.109601
+  type: 'test'
+  ...
+# Subtest: unknown versions negotiate the supported version; invalid initialize can be corrected
+ok 56 - unknown versions negotiate the supported version; invalid initialize can be corrected
+  ---
+  duration_ms: 144.020891
+  type: 'test'
+  ...
+# Subtest: source-only optional mode explicitly adds the historical tool entries
+ok 57 - source-only optional mode explicitly adds the historical tool entries
+  ---
+  duration_ms: 1.916769
+  type: 'test'
+  ...
+# Subtest: lifecycle rejects calls before handshake and repeated initialization
+ok 58 - lifecycle rejects calls before handshake and repeated initialization
+  ---
+  duration_ms: 131.688547
+  type: 'test'
+  ...
+# Subtest: malformed JSON, batch messages and invalid envelopes do not terminate the server
+ok 59 - malformed JSON, batch messages and invalid envelopes do not terminate the server
+  ---
+  duration_ms: 147.307986
+  type: 'test'
+  ...
+# Subtest: tools reject forged approvals, arguments and unknown methods; notifications get no reply
+ok 60 - tools reject forged approvals, arguments and unknown methods; notifications get no reply
+  ---
+  duration_ms: 153.319254
+  type: 'test'
+  ...
+# Subtest: large and truncated frames fail closed; an empty EOF exits cleanly
+ok 61 - large and truncated frames fail closed; an empty EOF exits cleanly
+  ---
+  duration_ms: 426.643204
+  type: 'test'
+  ...
+# Subtest: project root comes from startup options; invalid options cannot start a workflow
+ok 62 - project root comes from startup options; invalid options cannot start a workflow
+  ---
+  duration_ms: 269.639286
+  type: 'test'
+  ...
+1..62
+# tests 62
+# suites 0
+# pass 62
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 31545.720686

@@ -243,7 +243,8 @@ function installMeta(installed) {
 }
 
 export function runPytestSuite({ suite, worktree, root }) {
-  const venv = ensureVenv({ root: root || worktree, suite });
+  const dependencyRoot = path.join(worktree, suite.cwd || '.');
+  const venv = ensureVenv({ root: dependencyRoot, suite });
   if (!venv.ok) {
     return {
       exitCode: -1,
@@ -256,7 +257,7 @@ export function runPytestSuite({ suite, worktree, root }) {
     };
   }
   const installed = installForSuite({
-    root: root || worktree,
+    root: dependencyRoot,
     suite,
     pythonBin: venv.python,
     env: {
@@ -584,7 +585,7 @@ export function runOneSuite({
     }
     runtime.node = { version: nodeEnv.version, tool: nodeEnv.tool, dir: nodeEnv.dir };
     env = nodeEnv.env;
-    const installed = installForSuite({ root, suite, env });
+    const installed = installForSuite({ root: cwd, suite, env });
     runtime.install = installMeta(installed);
     if (!installed.ok) {
       return done({

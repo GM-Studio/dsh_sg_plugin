@@ -1,0 +1,135 @@
+✔ adopted verification preserves unchanged known failures and reports no pass claim (4.1632ms)
+✔ legacy known-failure signatures never waive infrastructure errors or unexecuted checks (1.1434ms)
+✔ adopted verification blocks new failures, missing commands and environment drift (0.4686ms)
+✔ new failures include bounded command evidence and never become passed artifacts (0.3298ms)
+✔ known failure signatures ignore timestamps, process ids and worktree paths (0.3138ms)
+✔ adopted verification executes real ProjectProfile commands in the fixed worktree (102.9059ms)
+✔ legacy baselines rebuild stable signatures from retained command evidence (2.6382ms)
+✔ baseline executes the declared package manager with real timestamps and no shell interpolation (322.4931ms)
+✔ all passing baseline commands produce a valid green adopted baseline (282.2688ms)
+✔ pre-existing failing commands become stable known failures (296.8258ms)
+✔ no discovered commands produce a partial baseline with unverified risk (313.3084ms)
+✔ cancelled or malformed baseline runs fail without fabricating a green baseline (319.2063ms)
+✔ bounded baseline commands use argv arrays and classify observed failure (130.1514ms)
+✔ a real locked local npm dependency is rebuilt in the detached worker despite source node_modules (5035.0048ms)
+✔ a real missing module blocks MCP adoption rather than becoming an accepted known failure (2315.9926ms)
+✔ actual timeout, absent executable and failed installation cannot produce a usable baseline (3291.3192ms)
+✔ Python installs a local wheel into the actual worktree venv and executes its import test (14838.909ms)
+(node:26728) [DEP0190] DeprecationWarning: Passing args to a child process with shell option true can lead to security vulnerabilities, as the arguments are not escaped, only concatenated.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+✔ Go prepares and compiles a real standard-library project in its isolated worktree (9513.4434ms)
+✔ a past suite install marker cannot hide deleted dependencies (2216.2668ms)
+✔ default stdio package surface exposes environment preparation and new-project selection (5912.1567ms)
+✔ new-project environment selection is trusted, resumable, and does not generate business code (4.4866ms)
+✔ missing or cancelled project form leaves the requested target untouched (1.0939ms)
+✖ E:\ai_workflow\specgate\.tmp\env-repair-candidates\F04-c\test\codex-environment-entry-e2e.test.js (0.6926ms)
+[specgate] test temp cleanup failed: Unable to remove temporary directory: C:\Users\Administrator\AppData\Local\Temp\specgate-codex-tests\run-28660-E7mWXf
+✔ the real checked Node/npm paths are consumed by baseline commands without changing process environment (1460.7429ms)
+✔ real MCP adoption carries checked tools into the detached worktree worker and records executed paths (3365.7437ms)
+✖ checked JDK/Maven compile and execute Java with a corrected child JAVA_HOME (5232.9592ms)
+✔ native formatter and Git control operations reuse actual executables without global PATH edits (2127.4868ms)
+✔ existing Node, React, Vue, Python, Go and plain Java derive only their actual tool requirements (7066.1685ms)
+✔ version constraints reject lower patch versions and discover nested workspace modules (398.0675ms)
+✔ new-project stack selection can prepare a pure backend and incompatible runtime remains missing (518.7056ms)
+✔ initialization checks the selected environment before creating project files (166.829ms)
+✔ read-only control status verifies the snapshot without repairing corrupt history (11.6548ms)
+✔ only marked staging owned by an exited process is recovered (64.8325ms)
+✔ temporary mirrors are scoped to the callback and removed on failure (2.228ms)
+✔ planning requires a selected stack and installs only selected missing tools (0.611ms)
+✔ check is read-only and stack changes invalidate readiness (1.0576ms)
+✔ install has no approval argument and needs trusted installation consent (1.8318ms)
+✔ installation probes again and rerun reuses tools without asking or installing (1.6324ms)
+✔ an installer success without real discovered binaries stays blocked (1.6316ms)
+✔ archive integrity rejects corrupted downloads before publication (1.0484ms)
+✔ aggregated status on a bare project never creates files or starts control runtime (4.8454ms)
+✔ all task Skills and generated project copies are declared (0.6027ms)
+✔ a corrupt download is cleaned and an existing installation remains untouched (11.3826ms)
+✔ workflow execution remains blocked without creating runtime state (1.5557ms)
+✔ status in supervisor mode does not create the control home (3.6637ms)
+✔ default MCP static import graph excludes optional control, notification and installer code (27.3555ms)
+✔ Core v1 installation and lockfile have no MySQL driver dependency (1.4214ms)
+✔ Codex manifest and MCP entry stay contained in the shipped plugin (20.1908ms)
+✖ offline tarball install launches the packaged entry from a different project cwd (123103.6825ms)
+✔ smoke evidence rejects stdout pollution after the final reply (347.2658ms)
+✔ MCP roots bind tools to the target project instead of the plugin cache (5.6955ms)
+✔ session cwd wins over ambient roots and environment variables (1.8654ms)
+✔ plugin-cache sessions use one unambiguous business root or stay unbound (7.37ms)
+✔ stdio handshake and diagnostic tools leave a nonempty project unchanged (167.4834ms)
+✔ unknown versions negotiate the supported version; invalid initialize can be corrected (117.8147ms)
+✔ source-only optional mode explicitly adds the historical tool entries (1.8634ms)
+✔ lifecycle rejects calls before handshake and repeated initialization (116.1836ms)
+✔ malformed JSON, batch messages and invalid envelopes do not terminate the server (132.3633ms)
+✔ tools reject forged approvals, arguments and unknown methods; notifications get no reply (132.9529ms)
+✔ large and truncated frames fail closed; an empty EOF exits cleanly (413.1724ms)
+✔ project root comes from startup options; invalid options cannot start a workflow (273.9354ms)
+ℹ tests 61
+ℹ suites 0
+ℹ pass 58
+ℹ fail 3
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 124305.2666
+
+✖ failing tests:
+
+test at test\codex-environment-entry-e2e.test.js:11:6
+✖ E:\ai_workflow\specgate\.tmp\env-repair-candidates\F04-c\test\codex-environment-entry-e2e.test.js (0.6926ms)
+  Error: EPERM, Permission denied: \\?\C:\Users\Administrator\AppData\Local\Temp\specgate-codex-tests\run-28660-E7mWXf\sg-env-entry-z6Owcz '\\?\C:\Users\Administrator\AppData\Local\Temp\specgate-codex-tests\run-28660-E7mWXf\sg-env-entry-z6Owcz'
+      at Object.rmSync (node:fs:1221:18)
+      at TestContext.<anonymous> (file:///E:/ai_workflow/specgate/.tmp/env-repair-candidates/F04-c/test/codex-environment-entry-e2e.test.js:13:8)
+      at TestHook.runInAsyncScope (node:async_hooks:228:14)
+      at TestHook.run (node:internal/test_runner/test:1118:25)
+      at TestHook.run (node:internal/test_runner/test:1442:18)
+      at TestHook.run (node:internal/util:602:20)
+      at Test.runHook (node:internal/test_runner/test:1036:20)
+      at after (node:internal/test_runner/test:1076:20)
+      at Test.run (node:internal/test_runner/test:1144:13)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5) {
+    errno: 1,
+    code: 'EPERM',
+    path: '\\\\?\\C:\\Users\\Administrator\\AppData\\Local\\Temp\\specgate-codex-tests\\run-28660-E7mWXf\\sg-env-entry-z6Owcz',
+    syscall: 'rm'
+  }
+
+test at test\codex-environment-execution-e2e.test.js:96:1
+✖ checked JDK/Maven compile and execute Java with a corrected child JAVA_HOME (5232.9592ms)
+  AssertionError [ERR_ASSERTION]: {"ok":true,"environmentReady":false,"status":"blocked","platform":"win32","arch":"x64","selection":{"stack":"java","requirements":[{"id":"git","constraints":[],"modules":["."]},{"id":"jdk17","constraints":["17"],"modules":["."]},{"id":"maven","constraints":[],"modules":["."]}],"unsupported":[],"modules":[]},"required":["git","jdk17","maven"],"missing":["maven"],"tools":{"git":{"path":"C:\\Program Files\\Git\\cmd\\git.exe","version":"2.45.1"},"jdk17":{"home":"D:\\Program Files\\Java\\Jdk17","java":"D:\\Program Files\\Java\\Jdk17\\bin\\java.exe","javac":"D:\\Program Files\\Java\\Jdk17\\bin\\javac.exe","version":"17.0.18","major":17,"source":"dir"},"maven":null},"fingerprint":"2b85c5a70ce52f3edde889b47e72d935f0750bf74d2a9497f5d36d3a5f7cea13","source":"domestic","plan":[{"id":"git","action":"reuse","current":{"path":"C:\\Program Files\\Git\\cmd\\git.exe","version":"2.45.1"}},{"id":"jdk17","action":"reuse","current":{"home":"D:\\Program Files\\Java\\Jdk17","java":"D:\\Program Files\\Java\\Jdk17\\bin\\java.exe","javac":"D:\\Program Files\\Java\\Jdk17\\bin\\javac.exe","version":"17.0.18","major":17,"source":"dir"}},{"id":"maven","action":"install","current":null,"archive":{"id":"maven","version":"3.9.11","name":"apache-maven-3.9.11-bin.zip","algorithm":"sha512","checksum":"03e2d65d4483a3396980629f260e25cac0d8b6f7f2791e4dc20bc83f9514db8d0f05b0479e699a5f34679250c49c8e52e961262ded468a20de0be254d8207076","url":"https://maven.aliyun.com/repository/public/org/apache/maven/apache-maven/3.9.11/apache-maven-3.9.11-bin.zip","metadata":"https://archive.apache.org/dist/maven/maven-3/3.9.11/binaries/apache-maven-3.9.11-bin.zip.sha512","source":"domestic"}}],"message":"缺少：maven。通过环境准备入口补齐后重新验证。","workflowVerification":"not-run","projectRoot":"C:\\Users\\Administrator\\AppData\\Local\\Temp\\specgate-codex-tests\\run-26196-sNONK9\\sg-env-execution-JLtnbF","checkedAt":"2026-10-30T12:59:08.042Z"}
+  
+  false !== true
+  
+      at TestContext.<anonymous> (file:///E:/ai_workflow/specgate/.tmp/env-repair-candidates/F04-c/test/codex-environment-execution-e2e.test.js:104:10)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1125:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:787:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at test\codex-plugin-package.test.js:111:1
+✖ offline tarball install launches the packaged entry from a different project cwd (123103.6825ms)
+  AssertionError [ERR_ASSERTION]: ifError got unwanted exception: spawnSync D:\Program Files\nodejs\node.exe ETIMEDOUT
+      at TestContext.<anonymous> (file:///E:/ai_workflow/specgate/.tmp/env-repair-candidates/F04-c/test/codex-plugin-package.test.js:233:12)
+      at Object.spawnSync (node:internal/child_process:1119:20)
+      at spawnSync (node:child_process:911:24)
+      at TestContext.<anonymous> (file:///E:/ai_workflow/specgate/.tmp/env-repair-candidates/F04-c/test/codex-plugin-package.test.js:221:27)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1125:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:787:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: Error: spawnSync D:\Program Files\nodejs\node.exe ETIMEDOUT
+        at Object.spawnSync (node:internal/child_process:1119:20)
+        at spawnSync (node:child_process:911:24)
+        at TestContext.<anonymous> (file:///E:/ai_workflow/specgate/.tmp/env-repair-candidates/F04-c/test/codex-plugin-package.test.js:221:27)
+        at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+        at async Test.run (node:internal/test_runner/test:1125:7)
+        at async Test.processPendingSubtests (node:internal/test_runner/test:787:7),
+    expected: null,
+    operator: 'ifError',
+    diff: 'simple'
+  }

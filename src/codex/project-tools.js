@@ -251,7 +251,10 @@ export async function callProjectTool(services, name, args = {}, { signal } = {}
           previewHash: args.previewHash,
           projectId: preview.profile.projectId,
           commit: preview.git.commit,
-          baseline: baselineRun.baseline,
+          baseline: baselineRun.baseline || null,
+          ...(baselineRun.ok
+            ? {}
+            : { failure: { code: baselineRun.code, message: baselineRun.message } }),
           commands: baselineRun.results.map(({ command, result }) => ({
             id: command.id,
             kind: command.kind,

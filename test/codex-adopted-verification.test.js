@@ -82,7 +82,7 @@ test('adopted verification preserves unchanged known failures and reports no pas
     signature: commandFailureSignature(sourceProfile.commands.test[0], {
       status: 'failed',
       exitCode: 1,
-      stderr: 'legacy failure',
+      stderr: 'AssertionError: legacy failure',
     }),
     commandId: 'backend-test',
     scope: 'test',
@@ -97,7 +97,7 @@ test('adopted verification preserves unchanged known failures and reports no pas
       'backend-test': {
         status: 'failed',
         exitCode: 1,
-        stderr: 'legacy failure',
+        stderr: 'AssertionError: legacy failure',
       },
     }),
   });
@@ -106,6 +106,33 @@ test('adopted verification preserves unchanged known failures and reports no pas
   assert.equal(result.report.knownFailures.length, 1);
   assert.equal(result.report.newFailures.length, 0);
   assert.deepEqual(validateAdoptedVerification(result), { ok: true, report: result.report });
+});
+
+test('legacy known-failure signatures never waive infrastructure errors or unexecuted checks', async () => {
+  const sourceProfile = profile(commands());
+  for (const observed of [
+    { status: 'failed', exitCode: 1, stderr: "ModuleNotFoundError: No module named 'missing'" },
+    { status: 'timeout', exitCode: null, stderr: 'operation timed out' },
+    { status: 'skipped', exitCode: null, stderr: '' },
+    { status: 'failed', exitCode: 1, stderr: 'mkdir: Access is denied.' },
+  ]) {
+    const known = {
+      id: 'known-infrastructure',
+      signature: commandFailureSignature(sourceProfile.commands.test[0], observed),
+      commandId: 'backend-test',
+      scope: 'test',
+      evidence: 'old-baseline',
+    };
+    const result = await verifyAdoptedProject({
+      profile: sourceProfile,
+      baseline: baseline(sourceProfile, [known]),
+      worktree: process.cwd(),
+      commit: 'b'.repeat(40),
+      runner: runnerFor({ 'backend-test': observed }),
+    });
+    assert.equal(result.ok, false);
+    assert.equal(result.code, 'BASELINE_INFRASTRUCTURE_FAILED');
+  }
 });
 
 test('adopted verification blocks new failures, missing commands and environment drift', async () => {
@@ -120,7 +147,7 @@ test('adopted verification blocks new failures, missing commands and environment
       'backend-test': {
         status: 'failed',
         exitCode: 1,
-        stderr: 'new regression',
+        stderr: 'AssertionError: new regression',
       },
     }),
   });
@@ -159,7 +186,7 @@ test('new failures include bounded command evidence and never become passed arti
       'backend-test': {
         status: 'failed',
         exitCode: 2,
-        stderr: 'failure detail',
+        stderr: 'AssertionError: failure detail',
       },
     }),
   });
@@ -179,7 +206,7 @@ test('known failure signatures ignore timestamps, process ids and worktree paths
       status: 'failed',
       exitCode: 1,
       stderr:
-        '2026-10-22T10:00:00.000Z PID 100 failed at C:\\worktrees\\first\\backend\\report.log',
+        '2026-10-22T10:00:00.000Z PID 100 AssertionError failed at C:\\worktrees\\first\\backend\\report.log',
     }),
     commandId: 'backend-test',
     scope: 'test',
@@ -195,7 +222,7 @@ test('known failure signatures ignore timestamps, process ids and worktree paths
         status: 'failed',
         exitCode: 1,
         stderr:
-          '2027-11-23T11:22:33.000Z PID 999 failed at C:\\worktrees\\second\\backend\\report.log',
+          '2027-11-23T11:22:33.000Z PID 999 AssertionError failed at C:\\worktrees\\second\\backend\\report.log',
       },
     }),
   });
@@ -243,7 +270,7 @@ test('legacy baselines rebuild stable signatures from retained command evidence'
       signature: legacyCommandFailureSignature(sourceProfile.commands.test[0], {
         status: 'failed',
         exitCode: 1,
-        stderr: 'legacy /home/sc/project/backend/report.log',
+        stderr: 'AssertionError: legacy /home/sc/project/backend/report.log',
       }),
       commandId: 'backend-test',
       scope: 'test',
@@ -268,7 +295,7 @@ test('legacy baselines rebuild stable signatures from retained command evidence'
           status: 'failed',
           exitCode: 1,
           stdout: '',
-          stderr: 'legacy /home/sc/project/backend/report.log',
+          stderr: 'AssertionError: legacy /home/sc/project/backend/report.log',
         },
       ],
     }),
@@ -282,7 +309,7 @@ test('legacy baselines rebuild stable signatures from retained command evidence'
       'backend-test': {
         status: 'failed',
         exitCode: 1,
-        stderr: 'legacy /tmp/other-worktree/backend/report.log',
+        stderr: 'AssertionError: legacy /tmp/other-worktree/backend/report.log',
       },
     }),
   });

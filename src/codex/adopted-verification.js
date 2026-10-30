@@ -7,6 +7,7 @@ import {
   legacyCommandFailureSignature,
   projectEnvironmentFingerprint,
   runBaselineCommand,
+  baselineInfrastructureFailure,
 } from './baseline.js';
 import { validateProjectBaseline, validateProjectProfile } from './project-model.js';
 
@@ -176,6 +177,12 @@ export async function verifyAdoptedProject({
       stderr: String(raw.stderr || '').slice(-4000),
       evidence,
     });
+    const infrastructure = baselineInfrastructureFailure(command, raw);
+    if (infrastructure)
+      return failure('BASELINE_INFRASTRUCTURE_FAILED', `${command.id}: ${infrastructure}`, {
+        infrastructure,
+        results,
+      });
   }
 
   const knownFailures = [];

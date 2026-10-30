@@ -1,6 +1,5 @@
 import { gitExecutable } from './core/git-runtime.js';
 import fs from 'node:fs';
-import os from 'node:os';
 import path from 'node:path';
 import { randomUUID } from 'node:crypto';
 import { spawnSync } from 'node:child_process';
@@ -70,10 +69,13 @@ function recordEvidence(projectRoot, baselineRun, run) {
     schemaVersion: 1,
     runId: run.runId,
     previewHash: run.previewHash,
-    projectId: baselineRun.baseline.projectId,
-    commit: baselineRun.baseline.commit,
-    baseline: baselineRun.baseline,
-    commands: baselineRun.results.map(({ command, result }) => ({
+    projectId: run.preview.profile.projectId,
+    commit: run.preview.git.commit,
+    baseline: baselineRun.baseline || null,
+    ...(baselineRun.ok
+      ? {}
+      : { failure: { code: baselineRun.code, message: baselineRun.message } }),
+    commands: (baselineRun.results || []).map(({ command, result }) => ({
       id: command.id,
       kind: command.kind,
       cwd: command.cwd,
@@ -108,7 +110,7 @@ async function main() {
     pid: process.pid,
   };
   writeStatus(job.statusPath, status);
-  const worktree = path.join(os.tmpdir(), 'specgate-baseline-worktrees', job.runId);
+  const worktree = path.join(job.worktreeRoot, job.runId);
   fs.rmSync(worktree, { recursive: true, force: true });
   fs.mkdirSync(path.dirname(worktree), { recursive: true });
   const added = git(job.projectRoot, [
@@ -125,12 +127,21 @@ async function main() {
     });
   let baselineRun;
   try {
+    const temporary = path.join(worktree, '.specgate', 'baseline-temporary');
+    fs.mkdirSync(temporary, { recursive: true });
+    const env = {
+      ...managedEnvironment(),
+      TEMP: temporary,
+      TMP: temporary,
+      TMPDIR: temporary,
+      GOTMPDIR: temporary,
+    };
     baselineRun = await runAdoptionBaseline({
       preview: { ...job.preview, root: worktree },
       executionContext: job.environmentReport
         ? environmentExecutionContext(job.environmentReport, {
             root: worktree,
-            env: managedEnvironment(),
+            env,
           })
         : undefined,
       createdAt: job.createdAt,
@@ -144,6 +155,7 @@ async function main() {
     git(job.projectRoot, ['worktree', 'prune']);
   }
   if (!baselineRun.ok) {
+    recordEvidence(job.projectRoot, baselineRun, job);
     writeStatus(job.statusPath, {
       ...status,
       status: 'failed',
@@ -171,7 +183,18 @@ async function main() {
     });
     return;
   }
-  recordEvidence(job.projectRoot, baselineRun, job);
+  const recorded = recordEvidence(job.projectRoot, baselineRun, job);
+  if (!recorded.ok) {
+    writeStatus(job.statusPath, {
+      ...status,
+      status: 'failed',
+      code: 'BASELINE_EVIDENCE_FAILED',
+      message: recorded.message || 'Baseline evidence could not be persisted',
+      finishedAt: new Date().toISOString(),
+      currentCommand: null,
+    });
+    return;
+  }
   const stateRoot = path.dirname(path.dirname(job.statusPath));
   const stateParent = path.dirname(stateRoot);
   fs.rmSync(stateRoot, { recursive: true, force: true });

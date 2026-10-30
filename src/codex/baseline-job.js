@@ -66,10 +66,22 @@ function jobRoot(root) {
   return stateRoot;
 }
 
+export function baselineWorktreeRoot(root) {
+  const configured = process.env.SPECGATE_BASELINE_WORKTREE_ROOT;
+  const target = configured || path.join(jobRoot(root), 'worktrees');
+  if (
+    !path.isAbsolute(target) ||
+    path.resolve(target) === path.parse(target).root ||
+    path.resolve(target) === path.resolve(root)
+  )
+    throw new Error('Baseline worktrees require a dedicated absolute directory');
+  return path.resolve(target);
+}
+
 function cleanupStaleWorktrees(root) {
   const listed = git(root, ['worktree', 'list', '--porcelain']);
   if (listed.status !== 0) return;
-  const worktreeParent = path.join(os.tmpdir(), 'specgate-baseline-worktrees');
+  const worktreeParent = baselineWorktreeRoot(root);
   for (const record of listed.stdout.trim().split(/\r?\n\r?\n/)) {
     const line = record.split(/\r?\n/).find((entry) => entry.startsWith('worktree '));
     if (!line) continue;
@@ -167,6 +179,7 @@ export function startBaselineJob({
       projectRoot: root,
       preview,
       environmentReport,
+      worktreeRoot: baselineWorktreeRoot(root),
       statusPath,
       createdAt,
     });

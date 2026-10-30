@@ -130,7 +130,8 @@ export function installForSuite({
     suite: suite?.id || 'default',
   });
   const marker = installMarker(root, key);
-  if (exists(marker)) return { ok: true, skipped: true, reused: true };
+  // A marker records a past command, not current dependencies. Let the package
+  // manager validate this execution directory and reuse its download cache.
 
   if (dryRun) return { ok: true, dryRun: true, command, key };
 

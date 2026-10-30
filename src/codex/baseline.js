@@ -4,6 +4,7 @@ import { hashValue } from './events.js';
 import { validateProjectBaseline } from './project-model.js';
 import { projectCommandSpec } from './core/project-command.js';
 import { executionEnvironment, resolveEnvironmentCommand } from './core/environment-execution.js';
+import { classifyErrorText } from './core/outcome-classification.js';
 
 const failure = (code, message) => ({ ok: false, code, message });
 const STATUSES = new Set(['passed', 'failed', 'skipped', 'not-run', 'timeout', 'cancelled']);
@@ -17,6 +18,22 @@ const COMMAND_ORDER = new Map([
   ['runtime', 5],
 ]);
 const activeRuns = new Map();
+
+export function baselineInfrastructureFailure(command, result) {
+  if (result.status === 'passed') return null;
+  if (result.status === 'timeout') return 'timeout';
+  if (['skipped', 'not-run', 'cancelled'].includes(result.status)) return 'not-run';
+  if (command.kind === 'install') return 'installation-failed';
+  const reason = classifyErrorText(`${result.stderr || ''}\n${result.stdout || ''}`);
+  if (reason) return reason;
+  if (result.exitCode === null || !(result.stderr || result.stdout)) return 'process-error';
+  // Unknown nonzero exits are not evidence of an observed business assertion.
+  return /AssertionError|ERR_ASSERTION|assertion (?:failed|failure)|--- FAIL: Test|There (?:are|were) test failures|Tests run:.*Failures:\s*[1-9]|FAILED \(failures=[1-9]/i.test(
+    `${result.stderr || ''}\n${result.stdout || ''}`,
+  )
+    ? null
+    : 'unclassified-failure';
+}
 
 export function commandsFor(profile) {
   return Object.entries(profile.commands)
@@ -257,6 +274,16 @@ export async function runAdoptionBaseline({
     if (result.status === 'cancelled')
       return failure('BASELINE_CANCELLED', 'Baseline execution was cancelled');
     results.push({ command, result });
+    const infrastructure = baselineInfrastructureFailure(command, result);
+    if (infrastructure)
+      return {
+        ...failure(
+          'BASELINE_INFRASTRUCTURE_FAILED',
+          `${command.id}: ${infrastructure}; repair the environment and rerun the baseline`,
+        ),
+        infrastructure,
+        results,
+      };
     onProgress({
       status: 'running',
       totalCommands: commands.length,
@@ -378,6 +405,13 @@ export function startAdoptionBaseline({
     )
     .then(async (result) => {
       if (!result?.ok) {
+        if (typeof record === 'function' && result?.results) {
+          try {
+            await record(result, run);
+          } catch {
+            /* failure remains blocked */
+          }
+        }
         Object.assign(run, {
           status: 'failed',
           code: result?.code || 'BASELINE_RUN_FAILED',

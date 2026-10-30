@@ -39,12 +39,13 @@ export function classifyErrorText(value) {
   if (!raw) return null;
   if (/\bETIMEDOUT\b|timed?\s*out|超时/i.test(raw)) return 'timeout';
   if (
-    /ENOENT|command not found|not recognized as an internal|Cannot find module|MODULE_NOT_FOUND|missing dependency|未找到模块/i.test(
+    /ENOENT|command not found|not recognized as an internal|Cannot find (?:module|package)|MODULE_NOT_FOUND|ERR_MODULE_NOT_FOUND|ModuleNotFoundError|ImportError|No module named|no required module provides package|missing go\.sum entry|Could not resolve (?:dependencies|artifact)|Could not find artifact|Non-resolvable (?:parent POM|import POM)|PluginResolutionException|DependencyResolutionException|missing dependency|未找到模块/i.test(
       raw,
     )
   )
     return 'missing-dependency';
-  if (/EPERM|EACCES|permission denied|权限/i.test(raw)) return 'process-error';
+  if (/EPERM|EACCES|permission denied|access is denied|权限|拒绝访问/i.test(raw))
+    return 'process-error';
   if (/SIGKILL|SIGTERM|signal|segmentation fault|out of memory|ENOMEM/i.test(raw))
     return 'process-error';
   return null;

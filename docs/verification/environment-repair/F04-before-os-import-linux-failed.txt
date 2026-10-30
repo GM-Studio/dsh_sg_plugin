@@ -1,0 +1,483 @@
+TAP version 13
+# Subtest: adopted verification preserves unchanged known failures and reports no pass claim
+ok 1 - adopted verification preserves unchanged known failures and reports no pass claim
+  ---
+  duration_ms: 4.92789
+  type: 'test'
+  ...
+# Subtest: legacy known-failure signatures never waive infrastructure errors or unexecuted checks
+ok 2 - legacy known-failure signatures never waive infrastructure errors or unexecuted checks
+  ---
+  duration_ms: 2.226415
+  type: 'test'
+  ...
+# Subtest: adopted verification blocks new failures, missing commands and environment drift
+ok 3 - adopted verification blocks new failures, missing commands and environment drift
+  ---
+  duration_ms: 0.757602
+  type: 'test'
+  ...
+# Subtest: new failures include bounded command evidence and never become passed artifacts
+ok 4 - new failures include bounded command evidence and never become passed artifacts
+  ---
+  duration_ms: 0.431276
+  type: 'test'
+  ...
+# Subtest: known failure signatures ignore timestamps, process ids and worktree paths
+ok 5 - known failure signatures ignore timestamps, process ids and worktree paths
+  ---
+  duration_ms: 0.56321
+  type: 'test'
+  ...
+# Subtest: adopted verification executes real ProjectProfile commands in the fixed worktree
+ok 6 - adopted verification executes real ProjectProfile commands in the fixed worktree
+  ---
+  duration_ms: 80.516495
+  type: 'test'
+  ...
+# Subtest: legacy baselines rebuild stable signatures from retained command evidence
+ok 7 - legacy baselines rebuild stable signatures from retained command evidence
+  ---
+  duration_ms: 2.423263
+  type: 'test'
+  ...
+# Subtest: baseline executes the declared package manager with real timestamps and no shell interpolation
+ok 8 - baseline executes the declared package manager with real timestamps and no shell interpolation
+  ---
+  duration_ms: 295.48638
+  type: 'test'
+  ...
+# Subtest: all passing baseline commands produce a valid green adopted baseline
+ok 9 - all passing baseline commands produce a valid green adopted baseline
+  ---
+  duration_ms: 44.374239
+  type: 'test'
+  ...
+# Subtest: pre-existing failing commands become stable known failures
+ok 10 - pre-existing failing commands become stable known failures
+  ---
+  duration_ms: 37.849738
+  type: 'test'
+  ...
+# Subtest: no discovered commands produce a partial baseline with unverified risk
+ok 11 - no discovered commands produce a partial baseline with unverified risk
+  ---
+  duration_ms: 35.735407
+  type: 'test'
+  ...
+# Subtest: cancelled or malformed baseline runs fail without fabricating a green baseline
+ok 12 - cancelled or malformed baseline runs fail without fabricating a green baseline
+  ---
+  duration_ms: 35.894139
+  type: 'test'
+  ...
+# Subtest: bounded baseline commands use argv arrays and classify observed failure
+ok 13 - bounded baseline commands use argv arrays and classify observed failure
+  ---
+  duration_ms: 162.566928
+  type: 'test'
+  ...
+# Subtest: a real locked local npm dependency is rebuilt in the detached worker despite source node_modules
+not ok 14 - a real locked local npm dependency is rebuilt in the detached worker despite source node_modules
+  ---
+  duration_ms: 1260.600878
+  type: 'test'
+  location: '/home/sc/specgate-env-repair/F04-e/test/codex-environment-dependencies-e2e.test.js:61:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    {"ok":false,"code":"BASELINE_JOB_START_FAILED","message":"os is not defined"}
+    
+    false !== true
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  actual: false
+  operator: 'strictEqual'
+  stack: |-
+    adopt (file:///home/sc/specgate-env-repair/F04-e/test/codex-environment-dependencies-e2e.test.js:51:10)
+    process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    async TestContext.<anonymous> (file:///home/sc/specgate-env-repair/F04-e/test/codex-environment-dependencies-e2e.test.js:94:31)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async startSubtestAfterBootstrap (node:internal/test_runner/harness:296:3)
+  ...
+# Subtest: a real missing module blocks MCP adoption rather than becoming an accepted known failure
+not ok 15 - a real missing module blocks MCP adoption rather than becoming an accepted known failure
+  ---
+  duration_ms: 480.754937
+  type: 'test'
+  location: '/home/sc/specgate-env-repair/F04-e/test/codex-environment-dependencies-e2e.test.js:110:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    {"ok":false,"code":"BASELINE_JOB_START_FAILED","message":"os is not defined"}
+    
+    false !== true
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  actual: false
+  operator: 'strictEqual'
+  stack: |-
+    adopt (file:///home/sc/specgate-env-repair/F04-e/test/codex-environment-dependencies-e2e.test.js:51:10)
+    process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    async TestContext.<anonymous> (file:///home/sc/specgate-env-repair/F04-e/test/codex-environment-dependencies-e2e.test.js:122:31)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: actual timeout, absent executable and failed installation cannot produce a usable baseline
+ok 16 - actual timeout, absent executable and failed installation cannot produce a usable baseline
+  ---
+  duration_ms: 1142.981578
+  type: 'test'
+  ...
+# Subtest: real evidence storage failure keeps an otherwise passing baseline unready
+not ok 17 - real evidence storage failure keeps an otherwise passing baseline unready
+  ---
+  duration_ms: 497.293473
+  type: 'test'
+  location: '/home/sc/specgate-env-repair/F04-e/test/codex-environment-dependencies-e2e.test.js:164:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    {"ok":false,"code":"BASELINE_JOB_START_FAILED","message":"os is not defined"}
+    
+    false !== true
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  actual: false
+  operator: 'strictEqual'
+  stack: |-
+    adopt (file:///home/sc/specgate-env-repair/F04-e/test/codex-environment-dependencies-e2e.test.js:51:10)
+    process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    async TestContext.<anonymous> (file:///home/sc/specgate-env-repair/F04-e/test/codex-environment-dependencies-e2e.test.js:181:22)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: Python installs a local wheel in a worktree venv, reuses it and completes native MCP adoption
+not ok 18 - Python installs a local wheel in a worktree venv, reuses it and completes native MCP adoption
+  ---
+  duration_ms: 2214.73049
+  type: 'test'
+  location: '/home/sc/specgate-env-repair/F04-e/test/codex-environment-dependencies-e2e.test.js:187:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    {"ok":false,"code":"BASELINE_JOB_START_FAILED","message":"os is not defined"}
+    
+    false !== true
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  actual: false
+  operator: 'strictEqual'
+  stack: |-
+    adopt (file:///home/sc/specgate-env-repair/F04-e/test/codex-environment-dependencies-e2e.test.js:51:10)
+    process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    async TestContext.<anonymous> (file:///home/sc/specgate-env-repair/F04-e/test/codex-environment-dependencies-e2e.test.js:258:31)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: Go compiles a real project in its isolated worktree and completes native MCP adoption
+not ok 19 - Go compiles a real project in its isolated worktree and completes native MCP adoption
+  ---
+  duration_ms: 4235.350023
+  type: 'test'
+  location: '/home/sc/specgate-env-repair/F04-e/test/codex-environment-dependencies-e2e.test.js:278:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    {"ok":false,"code":"BASELINE_JOB_START_FAILED","message":"os is not defined"}
+    
+    false !== true
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  actual: false
+  operator: 'strictEqual'
+  stack: |-
+    adopt (file:///home/sc/specgate-env-repair/F04-e/test/codex-environment-dependencies-e2e.test.js:51:10)
+    process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    async TestContext.<anonymous> (file:///home/sc/specgate-env-repair/F04-e/test/codex-environment-dependencies-e2e.test.js:329:22)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: a past suite install marker cannot hide deleted dependencies
+ok 20 - a past suite install marker cannot hide deleted dependencies
+  ---
+  duration_ms: 4216.013777
+  type: 'test'
+  ...
+# Subtest: default stdio package surface exposes environment preparation and new-project selection
+ok 21 - default stdio package surface exposes environment preparation and new-project selection
+  ---
+  duration_ms: 1487.299971
+  type: 'test'
+  ...
+# Subtest: new-project environment selection is trusted, resumable, and does not generate business code
+ok 22 - new-project environment selection is trusted, resumable, and does not generate business code
+  ---
+  duration_ms: 4.65367
+  type: 'test'
+  ...
+# Subtest: missing or cancelled project form leaves the requested target untouched
+ok 23 - missing or cancelled project form leaves the requested target untouched
+  ---
+  duration_ms: 1.1389
+  type: 'test'
+  ...
+# Subtest: the real checked Node/npm paths are consumed by baseline commands without changing process environment
+ok 24 - the real checked Node/npm paths are consumed by baseline commands without changing process environment
+  ---
+  duration_ms: 646.097137
+  type: 'test'
+  ...
+# Subtest: real MCP adoption carries checked tools into the detached worktree worker and records executed paths
+not ok 25 - real MCP adoption carries checked tools into the detached worktree worker and records executed paths
+  ---
+  duration_ms: 490.592288
+  type: 'test'
+  location: '/home/sc/specgate-env-repair/F04-e/test/codex-environment-execution-e2e.test.js:50:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    {"ok":false,"code":"BASELINE_JOB_START_FAILED","message":"os is not defined"}
+    
+    false !== true
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  actual: false
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///home/sc/specgate-env-repair/F04-e/test/codex-environment-execution-e2e.test.js:77:10)
+    process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: checked JDK/Maven compile and execute Java with a corrected child JAVA_HOME
+ok 26 - checked JDK/Maven compile and execute Java with a corrected child JAVA_HOME
+  ---
+  duration_ms: 1237.626414
+  type: 'test'
+  ...
+# Subtest: native formatter and Git control operations reuse actual executables without global PATH edits
+ok 27 - native formatter and Git control operations reuse actual executables without global PATH edits
+  ---
+  duration_ms: 645.768615
+  type: 'test'
+  ...
+# Subtest: existing Node, React, Vue, Python, Go and plain Java derive only their actual tool requirements
+ok 28 - existing Node, React, Vue, Python, Go and plain Java derive only their actual tool requirements
+  ---
+  duration_ms: 2136.085182
+  type: 'test'
+  ...
+# Subtest: version constraints reject lower patch versions and discover nested workspace modules
+ok 29 - version constraints reject lower patch versions and discover nested workspace modules
+  ---
+  duration_ms: 626.361829
+  type: 'test'
+  ...
+# Subtest: new-project stack selection can prepare a pure backend and incompatible runtime remains missing
+ok 30 - new-project stack selection can prepare a pure backend and incompatible runtime remains missing
+  ---
+  duration_ms: 124.569956
+  type: 'test'
+  ...
+# Subtest: initialization checks the selected environment before creating project files
+ok 31 - initialization checks the selected environment before creating project files
+  ---
+  duration_ms: 63.17314
+  type: 'test'
+  ...
+# Subtest: read-only control status verifies the snapshot without repairing corrupt history
+ok 32 - read-only control status verifies the snapshot without repairing corrupt history
+  ---
+  duration_ms: 3.719261
+  type: 'test'
+  ...
+# Subtest: only marked staging owned by an exited process is recovered
+ok 33 - only marked staging owned by an exited process is recovered
+  ---
+  duration_ms: 145.580826
+  type: 'test'
+  ...
+# Subtest: temporary mirrors are scoped to the callback and removed on failure
+ok 34 - temporary mirrors are scoped to the callback and removed on failure
+  ---
+  duration_ms: 2.278878
+  type: 'test'
+  ...
+# Subtest: planning requires a selected stack and installs only selected missing tools
+ok 35 - planning requires a selected stack and installs only selected missing tools
+  ---
+  duration_ms: 1.080889
+  type: 'test'
+  ...
+# Subtest: check is read-only and stack changes invalidate readiness
+ok 36 - check is read-only and stack changes invalidate readiness
+  ---
+  duration_ms: 1.611704
+  type: 'test'
+  ...
+# Subtest: install has no approval argument and needs trusted installation consent
+ok 37 - install has no approval argument and needs trusted installation consent
+  ---
+  duration_ms: 2.991721
+  type: 'test'
+  ...
+# Subtest: installation probes again and rerun reuses tools without asking or installing
+ok 38 - installation probes again and rerun reuses tools without asking or installing
+  ---
+  duration_ms: 1.736075
+  type: 'test'
+  ...
+# Subtest: an installer success without real discovered binaries stays blocked
+ok 39 - an installer success without real discovered binaries stays blocked
+  ---
+  duration_ms: 1.633221
+  type: 'test'
+  ...
+# Subtest: archive integrity rejects corrupted downloads before publication
+ok 40 - archive integrity rejects corrupted downloads before publication
+  ---
+  duration_ms: 1.107283
+  type: 'test'
+  ...
+# Subtest: aggregated status on a bare project never creates files or starts control runtime
+ok 41 - aggregated status on a bare project never creates files or starts control runtime
+  ---
+  duration_ms: 5.640674
+  type: 'test'
+  ...
+# Subtest: all task Skills and generated project copies are declared
+ok 42 - all task Skills and generated project copies are declared
+  ---
+  duration_ms: 0.919379
+  type: 'test'
+  ...
+# Subtest: a corrupt download is cleaned and an existing installation remains untouched
+ok 43 - a corrupt download is cleaned and an existing installation remains untouched
+  ---
+  duration_ms: 91.946216
+  type: 'test'
+  ...
+# Subtest: workflow execution remains blocked without creating runtime state
+ok 44 - workflow execution remains blocked without creating runtime state
+  ---
+  duration_ms: 1.899423
+  type: 'test'
+  ...
+# Subtest: status in supervisor mode does not create the control home
+ok 45 - status in supervisor mode does not create the control home
+  ---
+  duration_ms: 2.107201
+  type: 'test'
+  ...
+# Subtest: default MCP static import graph excludes optional control, notification and installer code
+ok 46 - default MCP static import graph excludes optional control, notification and installer code
+  ---
+  duration_ms: 38.696449
+  type: 'test'
+  ...
+# Subtest: Core v1 installation and lockfile have no MySQL driver dependency
+ok 47 - Core v1 installation and lockfile have no MySQL driver dependency
+  ---
+  duration_ms: 3.212318
+  type: 'test'
+  ...
+# Subtest: Codex manifest and MCP entry stay contained in the shipped plugin
+ok 48 - Codex manifest and MCP entry stay contained in the shipped plugin
+  ---
+  duration_ms: 22.460342
+  type: 'test'
+  ...
+# Subtest: offline tarball install launches the packaged entry from a different project cwd
+ok 49 - offline tarball install launches the packaged entry from a different project cwd
+  ---
+  duration_ms: 11389.243012
+  type: 'test'
+  ...
+# Subtest: smoke evidence rejects stdout pollution after the final reply
+ok 50 - smoke evidence rejects stdout pollution after the final reply
+  ---
+  duration_ms: 139.371989
+  type: 'test'
+  ...
+# Subtest: MCP roots bind tools to the target project instead of the plugin cache
+ok 51 - MCP roots bind tools to the target project instead of the plugin cache
+  ---
+  duration_ms: 4.238898
+  type: 'test'
+  ...
+# Subtest: session cwd wins over ambient roots and environment variables
+ok 52 - session cwd wins over ambient roots and environment variables
+  ---
+  duration_ms: 0.651666
+  type: 'test'
+  ...
+# Subtest: plugin-cache sessions use one unambiguous business root or stay unbound
+ok 53 - plugin-cache sessions use one unambiguous business root or stay unbound
+  ---
+  duration_ms: 1.371199
+  type: 'test'
+  ...
+# Subtest: stdio handshake and diagnostic tools leave a nonempty project unchanged
+ok 54 - stdio handshake and diagnostic tools leave a nonempty project unchanged
+  ---
+  duration_ms: 134.074006
+  type: 'test'
+  ...
+# Subtest: unknown versions negotiate the supported version; invalid initialize can be corrected
+ok 55 - unknown versions negotiate the supported version; invalid initialize can be corrected
+  ---
+  duration_ms: 132.417311
+  type: 'test'
+  ...
+# Subtest: source-only optional mode explicitly adds the historical tool entries
+ok 56 - source-only optional mode explicitly adds the historical tool entries
+  ---
+  duration_ms: 1.94944
+  type: 'test'
+  ...
+# Subtest: lifecycle rejects calls before handshake and repeated initialization
+ok 57 - lifecycle rejects calls before handshake and repeated initialization
+  ---
+  duration_ms: 134.182715
+  type: 'test'
+  ...
+# Subtest: malformed JSON, batch messages and invalid envelopes do not terminate the server
+ok 58 - malformed JSON, batch messages and invalid envelopes do not terminate the server
+  ---
+  duration_ms: 134.435367
+  type: 'test'
+  ...
+# Subtest: tools reject forged approvals, arguments and unknown methods; notifications get no reply
+ok 59 - tools reject forged approvals, arguments and unknown methods; notifications get no reply
+  ---
+  duration_ms: 132.99499
+  type: 'test'
+  ...
+# Subtest: large and truncated frames fail closed; an empty EOF exits cleanly
+ok 60 - large and truncated frames fail closed; an empty EOF exits cleanly
+  ---
+  duration_ms: 399.18562
+  type: 'test'
+  ...
+# Subtest: project root comes from startup options; invalid options cannot start a workflow
+ok 61 - project root comes from startup options; invalid options cannot start a workflow
+  ---
+  duration_ms: 254.772793
+  type: 'test'
+  ...
+1..61
+# tests 61
+# suites 0
+# pass 55
+# fail 6
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 20987.906983

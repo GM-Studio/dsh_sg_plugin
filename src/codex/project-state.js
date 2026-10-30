@@ -10,6 +10,8 @@ import { gitSafeDirectory } from './git-path.js';
 import { SPECGATE_GITIGNORE } from './core/runtime-gitignore.js';
 import { resolveGitIdentity } from './core/git-identity.js';
 import { insideSpecGateSource } from './core/project-path.js';
+import { getBaselineJob } from './baseline-job.js';
+import { getAdoptionBaselineRun } from './baseline.js';
 import {
   canStartChange,
   validateProjectBaseline,
@@ -205,6 +207,12 @@ export function loadProjectReadiness({ projectRoot: inputRoot } = {}) {
     if (!profileCheck.ok) return profileCheck;
     const baselineCheck = validateProjectBaseline(baselineRead.value);
     if (!baselineCheck.ok) return baselineCheck;
+    const pending = getAdoptionBaselineRun(root) || getBaselineJob(root);
+    if (pending && (pending.status !== 'completed' || pending.evidenceWarning))
+      return failure(
+        pending.status === 'failed' ? 'BASELINE_RUN_FAILED' : 'BASELINE_RUNNING',
+        'Baseline execution and evidence persistence must complete before project readiness',
+      );
     const branch = git(root, ['rev-parse', '--abbrev-ref', 'HEAD']);
     if (branch.status !== 0)
       return failure('GIT_STATUS_UNAVAILABLE', 'Cannot inspect the project Git branch');
