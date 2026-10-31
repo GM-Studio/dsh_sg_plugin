@@ -1,0 +1,382 @@
+TAP version 13
+# Subtest: creates and validates accepted delivery records with stable local tag names
+ok 1 - creates and validates accepted delivery records with stable local tag names
+  ---
+  duration_ms: 4.465012
+  type: 'test'
+  ...
+# Subtest: invalid acceptance, rollback, push and credentials fail closed
+ok 2 - invalid acceptance, rollback, push and credentials fail closed
+  ---
+  duration_ms: 0.596617
+  type: 'test'
+  ...
+# Subtest: persists immutable delivery artifacts and creates a local annotated tag
+ok 3 - persists immutable delivery artifacts and creates a local annotated tag
+  ---
+  duration_ms: 46.64671
+  type: 'test'
+  ...
+# Subtest: customer packs never expose absolute paths or apparent credentials
+ok 4 - customer packs never expose absolute paths or apparent credentials
+  ---
+  duration_ms: 0.334142
+  type: 'test'
+  ...
+# Subtest: customer summary preserves every known issue from the immutable DeliveryRecord
+ok 5 - customer summary preserves every known issue from the immutable DeliveryRecord
+  ---
+  duration_ms: 0.338055
+  type: 'test'
+  ...
+# Subtest: schema 3 DeliveryRecord keeps release approval separate from customer acceptance
+ok 6 - schema 3 DeliveryRecord keeps release approval separate from customer acceptance
+  ---
+  duration_ms: 3.24352
+  type: 'test'
+  ...
+# Subtest: schema 3 rejects missing verification, H3 and risks when evidence is incomplete
+ok 7 - schema 3 rejects missing verification, H3 and risks when evidence is incomplete
+  ---
+  duration_ms: 0.450533
+  type: 'test'
+  ...
+# Subtest: customer acceptance is explicit and append-only
+ok 8 - customer acceptance is explicit and append-only
+  ---
+  duration_ms: 0.218231
+  type: 'test'
+  ...
+# Subtest: persisted release approval remains separate until a trusted acceptance receipt
+ok 9 - persisted release approval remains separate until a trusted acceptance receipt
+  ---
+  duration_ms: 5.998768
+  type: 'test'
+  ...
+# Subtest: identical persisted customer acceptance is idempotent and returns the original receipt
+ok 10 - identical persisted customer acceptance is idempotent and returns the original receipt
+  ---
+  duration_ms: 1.698769
+  type: 'test'
+  ...
+# Subtest: latest validated schema 3 delivery can be discovered without a local record path
+ok 11 - latest validated schema 3 delivery can be discovered without a local record path
+  ---
+  duration_ms: 2.234961
+  type: 'test'
+  ...
+# Subtest: customer acceptance checks the linked record hash before writing a receipt
+ok 12 - customer acceptance checks the linked record hash before writing a receipt
+  ---
+  duration_ms: 1.013825
+  type: 'test'
+  ...
+# Subtest: synthetic local delivery smoke crosses all gates and archives the formatted commit without pushing
+ok 13 - synthetic local delivery smoke crosses all gates and archives the formatted commit without pushing
+  ---
+  duration_ms: 1378.332541
+  type: 'test'
+  ...
+# Subtest: quality passes only with frozen green cases, real logs, both coverage sides and changed-line coverage
+ok 14 - quality passes only with frozen green cases, real logs, both coverage sides and changed-line coverage
+  ---
+  duration_ms: 529.545908
+  type: 'test'
+  ...
+# Subtest: native frozen verification preserves command logs and rejects invalid evidence: valid
+ok 15 - native frozen verification preserves command logs and rejects invalid evidence: valid
+  ---
+  duration_ms: 530.45205
+  type: 'test'
+  ...
+# Subtest: native frozen verification preserves command logs and rejects invalid evidence: stale-commit
+ok 16 - native frozen verification preserves command logs and rejects invalid evidence: stale-commit
+  ---
+  duration_ms: 508.153856
+  type: 'test'
+  ...
+# Subtest: native frozen verification preserves command logs and rejects invalid evidence: missing-log
+ok 17 - native frozen verification preserves command logs and rejects invalid evidence: missing-log
+  ---
+  duration_ms: 502.630041
+  type: 'test'
+  ...
+# Subtest: native frozen verification preserves command logs and rejects invalid evidence: stale-time
+ok 18 - native frozen verification preserves command logs and rejects invalid evidence: stale-time
+  ---
+  duration_ms: 490.605209
+  type: 'test'
+  ...
+# Subtest: formatter reruns the server quality gate against the formatted integration commit
+ok 19 - formatter reruns the server quality gate against the formatted integration commit
+  ---
+  duration_ms: 694.607646
+  type: 'test'
+  ...
+# Subtest: an idempotent formatter passes when only checkout line endings changed
+ok 20 - an idempotent formatter passes when only checkout line endings changed
+  ---
+  duration_ms: 696.228446
+  type: 'test'
+  ...
+# Subtest: a failed post-format quality run keeps Review closed and records repair evidence
+ok 21 - a failed post-format quality run keeps Review closed and records repair evidence
+  ---
+  duration_ms: 679.624011
+  type: 'test'
+  ...
+# Subtest: adopted quality verification uses ProjectProfile commands and Baseline Delta
+ok 22 - adopted quality verification uses ProjectProfile commands and Baseline Delta
+  ---
+  duration_ms: 550.697334
+  type: 'test'
+  ...
+# Subtest: skipped frozen cases become P1 defects and the third failed attempt blocks without deleting evidence
+ok 23 - skipped frozen cases become P1 defects and the third failed attempt blocks without deleting evidence
+  ---
+  duration_ms: 737.787244
+  type: 'test'
+  ...
+# Subtest: failed verification stages are attributed to the owning implementation role
+ok 24 - failed verification stages are attributed to the owning implementation role
+  ---
+  duration_ms: 558.517345
+  type: 'test'
+  ...
+# Subtest: a Test role writing production code fails closed before quality commands run
+ok 25 - a Test role writing production code fails closed before quality commands run
+  ---
+  duration_ms: 407.427068
+  type: 'test'
+  ...
+# Subtest: insufficient changed-line coverage cannot advance even when aggregate coverage thresholds pass
+ok 26 - insufficient changed-line coverage cannot advance even when aggregate coverage thresholds pass
+  ---
+  duration_ms: 503.141231
+  type: 'test'
+  ...
+# Subtest: a declaration-only Java interface does not become unavailable changed coverage
+ok 27 - a declaration-only Java interface does not become unavailable changed coverage
+  ---
+  duration_ms: 35.566046
+  type: 'test'
+  ...
+# Subtest: frontend changed coverage measures changed unique lines rather than old statements: true
+ok 28 - frontend changed coverage measures changed unique lines rather than old statements: true
+  ---
+  duration_ms: 35.602067
+  type: 'test'
+  ...
+# Subtest: frontend changed coverage measures changed unique lines rather than old statements: false
+ok 29 - frontend changed coverage measures changed unique lines rather than old statements: false
+  ---
+  duration_ms: 32.08658
+  type: 'test'
+  ...
+# Subtest: frontend changed coverage ignores build config outside the measured source tree
+ok 30 - frontend changed coverage ignores build config outside the measured source tree
+  ---
+  duration_ms: 32.858454
+  type: 'test'
+  ...
+# Subtest: a Java class without JaCoCo evidence remains unavailable changed coverage
+ok 31 - a Java class without JaCoCo evidence remains unavailable changed coverage
+  ---
+  duration_ms: 33.673582
+  type: 'test'
+  ...
+# Subtest: aggregate coverage below either side threshold blocks Review
+ok 32 - aggregate coverage below either side threshold blocks Review
+  ---
+  duration_ms: 496.959662
+  type: 'test'
+  ...
+# Subtest: missing Test runner or failed real verification never records a quality pass
+ok 33 - missing Test runner or failed real verification never records a quality pass
+  ---
+  duration_ms: 492.049499
+  type: 'test'
+  ...
+# Subtest: release validates DeliveryRecord before fast-forwarding the real target
+ok 34 - release validates DeliveryRecord before fast-forwarding the real target
+  ---
+  duration_ms: 470.106056
+  type: 'test'
+  ...
+# Subtest: real archive-report storage failure preserves worktrees and safely resumes the same H3
+ok 35 - real archive-report storage failure preserves worktrees and safely resumes the same H3
+  ---
+  duration_ms: 660.777328
+  type: 'test'
+  ...
+# Subtest: an exited real publisher resumes in a new process and the MCP entry reuses its completed H3 delivery
+ok 36 - an exited real publisher resumes in a new process and the MCP entry reuses its completed H3 delivery
+  ---
+  duration_ms: 2127.835877
+  type: 'test'
+  ...
+# Subtest: an existing conflicting annotated tag blocks before fast-forward and remains unchanged
+ok 37 - an existing conflicting annotated tag blocks before fast-forward and remains unchanged
+  ---
+  duration_ms: 460.051859
+  type: 'test'
+  ...
+# Subtest: real state version conflict at intent is recoverable without another H3 or duplicate tag
+ok 38 - real state version conflict at intent is recoverable without another H3 or duplicate tag
+  ---
+  duration_ms: 592.786758
+  type: 'test'
+  ...
+# Subtest: real state version conflict at archive is recoverable without another H3 or duplicate tag
+ok 39 - real state version conflict at archive is recoverable without another H3 or duplicate tag
+  ---
+  duration_ms: 635.684206
+  type: 'test'
+  ...
+# Subtest: real state version conflict at transition is recoverable without another H3 or duplicate tag
+ok 40 - real state version conflict at transition is recoverable without another H3 or duplicate tag
+  ---
+  duration_ms: 674.045399
+  type: 'test'
+  ...
+# Subtest: immutable archive conflict is preserved and changed recovery source or target is rejected
+ok 41 - immutable archive conflict is preserved and changed recovery source or target is rejected
+  ---
+  duration_ms: 546.309553
+  type: 'test'
+  ...
+# Subtest: completed retry verifies packs and cannot acquire implicit push authorization
+ok 42 - completed retry verifies packs and cannot acquire implicit push authorization
+  ---
+  duration_ms: 565.15731
+  type: 'test'
+  ...
+# Subtest: a real received push followed by state CAS failure is recovered by observing the remote commit
+ok 43 - a real received push followed by state CAS failure is recovered by observing the remote commit
+  ---
+  duration_ms: 708.331747
+  type: 'test'
+  ...
+# Subtest: two real publisher processes serialize one release without duplicate Git or delivery artifacts
+ok 44 - two real publisher processes serialize one release without duplicate Git or delivery artifacts
+  ---
+  duration_ms: 668.378864
+  type: 'test'
+  ...
+# Subtest: risk selection escalates public contracts and Review enters H3 only on a valid pass
+ok 45 - risk selection escalates public contracts and Review enters H3 only on a valid pass
+  ---
+  duration_ms: 115.585497
+  type: 'test'
+  ...
+# Subtest: Review and H3 reject quality evidence from another integration commit
+ok 46 - Review and H3 reject quality evidence from another integration commit
+  ---
+  duration_ms: 86.733796
+  type: 'test'
+  ...
+# Subtest: H3 refuses a quality report replaced after Review with a stale commit
+ok 47 - H3 refuses a quality report replaced after Review with a stale commit
+  ---
+  duration_ms: 125.378787
+  type: 'test'
+  ...
+# Subtest: Review reports cannot come from public arguments and missing provider is unavailable
+ok 48 - Review reports cannot come from public arguments and missing provider is unavailable
+  ---
+  duration_ms: 76.838272
+  type: 'test'
+  ...
+# Subtest: server Reviewer receives a read-only challenge and submits a validated report
+ok 49 - server Reviewer receives a read-only challenge and submits a validated report
+  ---
+  duration_ms: 132.387208
+  type: 'test'
+  ...
+# Subtest: server Reviewer must record its execution identity and assignment hash
+ok 50 - server Reviewer must record its execution identity and assignment hash
+  ---
+  duration_ms: 99.361758
+  type: 'test'
+  ...
+# Subtest: severity thresholds differ across lenient, standard and strict modes
+ok 51 - severity thresholds differ across lenient, standard and strict modes
+  ---
+  duration_ms: 0.64443
+  type: 'test'
+  ...
+# Subtest: Review finding field aliases are normalized into the machine contract
+ok 52 - Review finding field aliases are normalized into the machine contract
+  ---
+  duration_ms: 0.183811
+  type: 'test'
+  ...
+# Subtest: Review evidence blockers cite immutable red evidence instead of an invented diff line
+ok 53 - Review evidence blockers cite immutable red evidence instead of an invented diff line
+  ---
+  duration_ms: 0.206119
+  type: 'test'
+  ...
+# Subtest: a Review finding must cite evidence on its reported file and line
+ok 54 - a Review finding must cite evidence on its reported file and line
+  ---
+  duration_ms: 0.134925
+  type: 'test'
+  ...
+# Subtest: Review Agent writes are rejected and no passed report is recorded
+ok 55 - Review Agent writes are rejected and no passed report is recorded
+  ---
+  duration_ms: 101.330411
+  type: 'test'
+  ...
+# Subtest: strict mode blocks P3 findings and preserves the failed report
+ok 56 - strict mode blocks P3 findings and preserves the failed report
+  ---
+  duration_ms: 106.32632
+  type: 'test'
+  ...
+# Subtest: H3 preview changes invalidate approval and H3 cannot be bypassed for archive
+ok 57 - H3 preview changes invalidate approval and H3 cannot be bypassed for archive
+  ---
+  duration_ms: 264.477678
+  type: 'test'
+  ...
+# Subtest: H3-approved archive without a remote becomes ARCHIVED_NOT_PUSHED and says not pushed
+ok 58 - H3-approved archive without a remote becomes ARCHIVED_NOT_PUSHED and says not pushed
+  ---
+  duration_ms: 322.261985
+  type: 'test'
+  ...
+# Subtest: push failure records PUSH_FAILED without retry while a configured remote archives
+ok 59 - push failure records PUSH_FAILED without retry while a configured remote archives
+  ---
+  duration_ms: 690.025313
+  type: 'test'
+  ...
+# Subtest: a configured remote is not pushed unless push=true is explicit
+ok 60 - a configured remote is not pushed unless push=true is explicit
+  ---
+  duration_ms: 332.63414
+  type: 'test'
+  ...
+# Subtest: archive blocks a diverged target and preserves its unreviewed commit
+ok 61 - archive blocks a diverged target and preserves its unreviewed commit
+  ---
+  duration_ms: 286.45318
+  type: 'test'
+  ...
+# Subtest: project-backed archive creates a DeliveryRecord, local tag and separate packs
+ok 62 - project-backed archive creates a DeliveryRecord, local tag and separate packs
+  ---
+  duration_ms: 454.855636
+  type: 'test'
+  ...
+1..62
+# tests 62
+# suites 0
+# pass 62
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 11767.033981

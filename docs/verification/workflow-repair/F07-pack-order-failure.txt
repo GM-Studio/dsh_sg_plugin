@@ -1,0 +1,47 @@
+✔ release validates DeliveryRecord before fast-forwarding the real target (3107.4912ms)
+✖ real archive-report storage failure preserves worktrees and safely resumes the same H3 (3998.0334ms)
+✔ risk selection escalates public contracts and Review enters H3 only on a valid pass (980.7282ms)
+✔ Review and H3 reject quality evidence from another integration commit (775.4951ms)
+✔ H3 refuses a quality report replaced after Review with a stale commit (1012.4402ms)
+✔ Review reports cannot come from public arguments and missing provider is unavailable (680.7663ms)
+✔ server Reviewer receives a read-only challenge and submits a validated report (1117.7926ms)
+✔ server Reviewer must record its execution identity and assignment hash (822.872ms)
+✔ severity thresholds differ across lenient, standard and strict modes (0.4096ms)
+✔ Review finding field aliases are normalized into the machine contract (0.1876ms)
+✔ Review evidence blockers cite immutable red evidence instead of an invented diff line (0.1664ms)
+✔ a Review finding must cite evidence on its reported file and line (0.1584ms)
+✔ Review Agent writes are rejected and no passed report is recorded (888.6072ms)
+✔ strict mode blocks P3 findings and preserves the failed report (926.7262ms)
+✔ H3 preview changes invalidate approval and H3 cannot be bypassed for archive (1983.4335ms)
+✔ H3-approved archive without a remote becomes ARCHIVED_NOT_PUSHED and says not pushed (2261.8939ms)
+✔ push failure records PUSH_FAILED without retry while a configured remote archives (4673.1253ms)
+✔ a configured remote is not pushed unless push=true is explicit (2342.4665ms)
+✔ archive blocks a diverged target and preserves its unreviewed commit (2136.5383ms)
+✔ project-backed archive creates a DeliveryRecord, local tag and separate packs (3256.9078ms)
+ℹ tests 20
+ℹ suites 0
+ℹ pass 19
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 31260.6856
+
+✖ failing tests:
+
+test at test\codex-review-release.test.js:315:1
+✖ real archive-report storage failure preserves worktrees and safely resumes the same H3 (3998.0334ms)
+  AssertionError [ERR_ASSERTION]: {"ok":false,"code":"ARTIFACT_CONFLICT","message":"Immutable artifact already exists with other content"}
+  
+  false !== true
+  
+      at TestContext.<anonymous> (file:///E:/ai_workflow/specgate/test/codex-review-release.test.js:334:10)
+      at async Test.run (node:internal/test_runner/test:1125:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:787:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

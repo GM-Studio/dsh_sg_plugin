@@ -3,7 +3,9 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { execFileSync } from 'node:child_process';
+import { execFileSync, execFile, spawnSync } from 'node:child_process';
+import { promisify } from 'node:util';
+import { mcpClient } from './environment-mcp-client.mjs';
 import { createApprovalAuthority } from '../src/codex/approvals.js';
 import { canonicalJson, hashValue } from '../src/codex/events.js';
 import { createReleaseService } from '../src/codex/release.js';
@@ -49,6 +51,8 @@ async function fixture({ mutateAfterRequest = false, projectBacked = false } = {
       projectId: 'project-release',
       mode: 'new',
       stack: 'java-vue',
+      javaPreset: 'jdk17-boot3.5',
+      frontendFramework: 'vue',
       root: root,
       targetBranch: git(root, ['rev-parse', '--abbrev-ref', 'HEAD']),
       remoteUrl: null,
@@ -273,6 +277,324 @@ function passingProvider(context) {
     };
   };
 }
+
+async function approvedReleaseFixture() {
+  const context = await fixture({ projectBacked: true });
+  const remote = fs.mkdtempSync(path.join(os.tmpdir(), 'sg-release-recovery-remote-'));
+  git(remote, ['init', '--bare', '-q']);
+  git(context.root, ['remote', 'add', 'origin', remote]);
+  git(context.root, ['push', '-u', 'origin', 'main']);
+  const review = createReviewService({
+    projectRoot: context.root,
+    store: context.store,
+    planService: context.planService,
+    roleProvider: passingProvider(context),
+    approvalAuthority: context.authority,
+  });
+  assert.equal((await review.run({ expectedVersion: await context.version() })).ok, true);
+  assert.equal((await review.requestH3({ expectedVersion: await context.version() })).ok, true);
+  return { ...context, remote };
+}
+test('release validates DeliveryRecord before fast-forwarding the real target', async () => {
+  const c = await approvedReleaseFixture();
+  const original = c.planService.inspect;
+  const release = createReleaseService({
+    projectRoot: c.root,
+    store: c.store,
+    planService: {
+      inspect: async () => {
+        const v = await original();
+        return { ...v, ref: { ...v.ref, contract: { ...v.ref.contract, hash: 'invalid' } } };
+      },
+    },
+  });
+  const result = await release.run({ expectedVersion: await c.version() });
+  assert.equal(result.ok, false, JSON.stringify(result));
+  assert.equal(
+    git(c.root, ['rev-parse', 'HEAD']),
+    c.freezeCommit,
+    'invalid delivery must not move target',
+  );
+});
+test('real archive-report storage failure preserves worktrees and safely resumes the same H3', async () => {
+  const c = await approvedReleaseFixture();
+  const blocker = path.join(c.root, '.specgate/codex/archive/change/archive-report.json');
+  fs.mkdirSync(blocker, { recursive: true });
+  const release = createReleaseService({
+    projectRoot: c.root,
+    store: c.store,
+    planService: c.planService,
+  });
+  const result = await release.run({ expectedVersion: await c.version() });
+  assert.equal(result.ok, false, JSON.stringify(result));
+  assert.equal(
+    fs.existsSync(c.integrationPath),
+    true,
+    'retain source until durable archive finalization',
+  );
+  const head = git(c.root, ['rev-parse', 'HEAD']);
+  fs.rmdirSync(blocker);
+  const retry = await release.run({ expectedVersion: await c.version() });
+  assert.equal(retry.ok, true, JSON.stringify(retry));
+  assert.equal(retry.state.phase, 'ARCHIVED_NOT_PUSHED');
+  assert.equal(git(c.root, ['rev-parse', 'HEAD']), c.integrationCommit);
+  assert.equal(head, c.integrationCommit);
+  assert.equal(git(c.remote, ['rev-parse', 'main']), c.freezeCommit, 'no push on retry');
+  const delivery = retry.report.delivery;
+  assert.equal(git(c.root, ['rev-parse', `${delivery.tag}^{commit}`]), c.integrationCommit);
+  const tagObject = git(c.root, ['rev-parse', delivery.tag]);
+  const repeated = await release.run({ expectedVersion: await c.version() });
+  assert.equal(repeated.ok, true, JSON.stringify(repeated));
+  assert.equal(
+    git(c.root, ['rev-parse', delivery.tag]),
+    tagObject,
+    'annotated tag is not recreated',
+  );
+});
+
+test('an exited real publisher resumes in a new process and the MCP entry reuses its completed H3 delivery', async (t) => {
+  const c = await approvedReleaseFixture();
+  const checked = await c.planService.inspect();
+  const publisher = (
+    crash,
+    version,
+  ) => `import {createReleaseService} from ${JSON.stringify(new URL('../src/codex/release.js', import.meta.url).href)};import {createStateStore} from ${JSON.stringify(new URL('../src/codex/state-machine.js', import.meta.url).href)};
+  const root=${JSON.stringify(c.root)},base=createStateStore({projectRoot:root});
+  const store={...base,update:async(args)=>{if(${crash} && args.patch.context.archive)process.exit(73);return base.update(args);}};
+  const result=await createReleaseService({projectRoot:root,store,planService:{inspect:async()=>(${JSON.stringify({ ok: true, plan: checked.plan, ref: checked.ref })})}}).run({expectedVersion:${version}});console.log(JSON.stringify(result));process.exit(result.ok?0:74);`;
+  const crashed = spawnSync(
+    process.execPath,
+    ['--input-type=module', '-e', publisher(true, await c.version())],
+    {
+      cwd: c.root,
+      windowsHide: true,
+      encoding: 'utf8',
+      timeout: 30000,
+    },
+  );
+  assert.equal(crashed.status, 73, crashed.stderr);
+  assert.equal(git(c.root, ['rev-parse', 'HEAD']), c.integrationCommit);
+  const tags = git(c.root, ['show-ref', '--tags']);
+  assert.equal(fs.existsSync(c.integrationPath), true);
+  const continued = spawnSync(
+    process.execPath,
+    ['--input-type=module', '-e', publisher(false, await c.version())],
+    { cwd: c.root, windowsHide: true, encoding: 'utf8', timeout: 30000 },
+  );
+  assert.equal(continued.status, 0, continued.stderr || continued.stdout);
+  const resumed = JSON.parse(continued.stdout.trim());
+  assert.equal(resumed.ok, true, JSON.stringify(resumed));
+  assert.equal(resumed.state.phase, 'ARCHIVED_NOT_PUSHED');
+  assert.equal(git(c.root, ['show-ref', '--tags']), tags);
+  assert.equal(git(c.remote, ['rev-parse', 'main']), c.freezeCommit);
+  const client = await mcpClient(t, c.root);
+  const repeated = (await client.call('sg_release_archive', { expectedVersion: await c.version() }))
+    .structuredContent;
+  assert.equal(repeated.ok, true, JSON.stringify(repeated));
+  assert.equal(repeated.reused, true);
+});
+
+test('an existing conflicting annotated tag blocks before fast-forward and remains unchanged', async () => {
+  const c = await approvedReleaseFixture();
+  const stable =
+    'delivery-' +
+    hashValue({
+      projectId: 'project-release',
+      changeId: 'change',
+      deliveryCommit: c.integrationCommit,
+      parentDeliveryId: null,
+    }).slice(0, 16);
+  const tag = 'specgate-delivery-' + stable;
+  git(c.root, ['tag', '-a', tag, '-m', 'existing user tag', c.freezeCommit]);
+  const prior = git(c.root, ['rev-parse', tag]);
+  const result = await createReleaseService({
+    projectRoot: c.root,
+    store: c.store,
+    planService: c.planService,
+  }).run({ expectedVersion: await c.version() });
+  assert.equal(result.code, 'DELIVERY_TAG_CONFLICT', JSON.stringify(result));
+  assert.equal(git(c.root, ['rev-parse', tag]), prior);
+  assert.equal(git(c.root, ['rev-parse', 'HEAD']), c.freezeCommit);
+});
+
+for (const edge of ['intent', 'archive', 'transition'])
+  test(`real state version conflict at ${edge} is recoverable without another H3 or duplicate tag`, async () => {
+    const c = await approvedReleaseFixture();
+    let injected = false;
+    const wrapped = {
+      ...c.store,
+      update: async (args) => {
+        if (
+          !injected &&
+          (edge === 'intent'
+            ? args.patch.context.archiveOperation
+            : edge === 'archive'
+              ? args.patch.context.archive
+              : false)
+        ) {
+          injected = true;
+          const checkpoint = await c.store.checkpoint({
+            expectedVersion: args.expectedVersion,
+            label: 'actual competing fixture checkpoint',
+          });
+          assert.equal(checkpoint.ok, true, JSON.stringify(checkpoint));
+        }
+        return c.store.update(args);
+      },
+      transition: async (args) => {
+        if (!injected && edge === 'transition' && args.to === 'ARCHIVED_NOT_PUSHED') {
+          injected = true;
+          assert.equal(
+            (
+              await c.store.checkpoint({
+                expectedVersion: args.expectedVersion,
+                label: 'actual competing finalization checkpoint',
+              })
+            ).ok,
+            true,
+          );
+        }
+        return c.store.transition(args);
+      },
+    };
+    const release = createReleaseService({
+      projectRoot: c.root,
+      store: wrapped,
+      planService: c.planService,
+    });
+    const result = await release.run({ expectedVersion: await c.version() });
+    assert.equal(result.code, 'VERSION_CONFLICT', JSON.stringify(result));
+    assert.equal(fs.existsSync(c.integrationPath), true);
+    assert.equal(
+      git(c.root, ['rev-parse', 'HEAD']),
+      edge === 'intent' ? c.freezeCommit : c.integrationCommit,
+    );
+    const beforeTags = edge === 'intent' ? [] : git(c.root, ['show-ref', '--tags']).split('\n');
+    const retry = await createReleaseService({
+      projectRoot: c.root,
+      store: c.store,
+      planService: c.planService,
+    }).run({ expectedVersion: await c.version() });
+    assert.equal(retry.ok, true, JSON.stringify(retry));
+    if (edge !== 'intent')
+      assert.deepEqual(git(c.root, ['show-ref', '--tags']).split('\n'), beforeTags);
+    assert.equal(git(c.remote, ['rev-parse', 'main']), c.freezeCommit);
+  });
+
+test('immutable archive conflict is preserved and changed recovery source or target is rejected', async () => {
+  const c = await approvedReleaseFixture();
+  const source = path.join(c.root, '.specgate/codex/changes/change/red/run-1/evidence.json');
+  const conflict = path.join(c.root, '.specgate/codex/archive/change/red/run-1/evidence.json');
+  fs.mkdirSync(path.dirname(conflict), { recursive: true });
+  fs.writeFileSync(conflict, 'user evidence must survive');
+  const release = createReleaseService({
+    projectRoot: c.root,
+    store: c.store,
+    planService: c.planService,
+  });
+  assert.equal(
+    (await release.run({ expectedVersion: await c.version() })).code,
+    'ARCHIVE_EVIDENCE_CONFLICT',
+  );
+  assert.equal(fs.readFileSync(conflict, 'utf8'), 'user evidence must survive');
+  fs.appendFileSync(source, 'changed after approval');
+  assert.equal(
+    (await release.run({ expectedVersion: await c.version() })).code,
+    'ARCHIVE_RECOVERY_CONFLICT',
+  );
+  assert.equal(fs.readFileSync(conflict, 'utf8'), 'user evidence must survive');
+});
+test('completed retry verifies packs and cannot acquire implicit push authorization', async () => {
+  const c = await approvedReleaseFixture();
+  const release = createReleaseService({
+    projectRoot: c.root,
+    store: c.store,
+    planService: c.planService,
+  });
+  const done = await release.run({ expectedVersion: await c.version() });
+  assert.equal(done.ok, true, JSON.stringify(done));
+  assert.equal(
+    (await release.run({ expectedVersion: await c.version(), push: true })).code,
+    'ARCHIVE_OPTION_CHANGED',
+  );
+  const pack = path.join(
+    c.root,
+    '.specgate/codex/deliveries',
+    done.report.delivery.deliveryId,
+    'customer.md',
+  );
+  fs.appendFileSync(pack, 'tampered pack');
+  assert.equal(
+    (await release.run({ expectedVersion: await c.version() })).code,
+    'ARCHIVE_EVIDENCE_CONFLICT',
+  );
+  assert.match(fs.readFileSync(pack, 'utf8'), /tampered pack$/);
+  assert.equal(git(c.remote, ['rev-parse', 'main']), c.freezeCommit);
+});
+
+test('a real received push followed by state CAS failure is recovered by observing the remote commit', async () => {
+  const c = await approvedReleaseFixture();
+  let injected = false;
+  const store = {
+    ...c.store,
+    update: async (args) => {
+      if (!injected && args.patch.context.archiveOperation?.pushReceipt) {
+        injected = true;
+        assert.equal(
+          (
+            await c.store.checkpoint({
+              expectedVersion: args.expectedVersion,
+              label: 'real push receipt contention',
+            })
+          ).ok,
+          true,
+        );
+      }
+      return c.store.update(args);
+    },
+  };
+  const release = createReleaseService({ projectRoot: c.root, store, planService: c.planService });
+  const first = await release.run({ expectedVersion: await c.version(), push: true });
+  assert.equal(first.code, 'VERSION_CONFLICT', JSON.stringify(first));
+  assert.equal(git(c.remote, ['rev-parse', 'main']), c.integrationCommit);
+  const resumed = await createReleaseService({
+    projectRoot: c.root,
+    store: c.store,
+    planService: c.planService,
+  }).run({ expectedVersion: await c.version(), push: true });
+  assert.equal(resumed.ok, true, JSON.stringify(resumed));
+  assert.equal(resumed.state.phase, 'ARCHIVED');
+  assert.equal(resumed.report.push.observed, true);
+  assert.equal(resumed.report.push.command[1], 'ls-remote');
+  assert.equal(resumed.report.delivery.deliveryCommit, c.integrationCommit);
+});
+
+test('two real publisher processes serialize one release without duplicate Git or delivery artifacts', async () => {
+  const c = await approvedReleaseFixture(),
+    checked = await c.planService.inspect();
+  const script = `import {createReleaseService} from ${JSON.stringify(new URL('../src/codex/release.js', import.meta.url).href)};import {createStateStore} from ${JSON.stringify(new URL('../src/codex/state-machine.js', import.meta.url).href)};const result=await createReleaseService({projectRoot:${JSON.stringify(c.root)},store:createStateStore({projectRoot:${JSON.stringify(c.root)}}),planService:{inspect:async()=>(${JSON.stringify({ ok: true, plan: checked.plan, ref: checked.ref })})}}).run({expectedVersion:${await c.version()}});console.log(JSON.stringify(result));`;
+  const launch = () =>
+    promisify(execFile)(process.execPath, ['--input-type=module', '-e', script], {
+      cwd: c.root,
+      windowsHide: true,
+      encoding: 'utf8',
+      timeout: 30000,
+      maxBuffer: 8 * 1024 * 1024,
+    });
+  const results = (await Promise.all([launch(), launch()])).map((value) =>
+    JSON.parse(value.stdout.trim()),
+  );
+  assert.equal(results.filter((value) => value.ok).length, 1, JSON.stringify(results));
+  assert.ok(
+    results
+      .filter((value) => !value.ok)
+      .every((value) => ['ARCHIVE_BUSY', 'VERSION_CONFLICT'].includes(value.code)),
+    JSON.stringify(results),
+  );
+  assert.equal(git(c.root, ['rev-parse', 'HEAD']), c.integrationCommit);
+  assert.equal(git(c.root, ['show-ref', '--tags']).split('\n').length, 1);
+  assert.equal(git(c.remote, ['rev-parse', 'main']), c.freezeCommit);
+});
 
 test('risk selection escalates public contracts and Review enters H3 only on a valid pass', async () => {
   const context = await fixture();

@@ -1,0 +1,44 @@
+[
+  {
+    "platform": "linux",
+    "arch": "x64",
+    "name": "focused",
+    "command": "node --import ./test/setup-temp.mjs --test --test-concurrency=2 test/codex-review-release.test.js test/codex-delivery-v3.test.js test/codex-delivery-record.test.js test/codex-quality-gate.test.js",
+    "exitCode": 0
+  },
+  {
+    "platform": "linux",
+    "arch": "x64",
+    "name": "test",
+    "command": "npm test",
+    "exitCode": 0
+  },
+  {
+    "platform": "linux",
+    "arch": "x64",
+    "name": "lint",
+    "command": "npm run lint",
+    "exitCode": 0
+  },
+  {
+    "platform": "linux",
+    "arch": "x64",
+    "name": "format",
+    "command": "npm run format:check",
+    "exitCode": 0
+  },
+  {
+    "platform": "linux",
+    "arch": "x64",
+    "name": "pack",
+    "command": "npm run pack:check",
+    "exitCode": 0
+  },
+  {
+    "platform": "linux",
+    "arch": "x64",
+    "name": "smoke",
+    "command": "npm run codex:smoke",
+    "exitCode": 0
+  }
+]

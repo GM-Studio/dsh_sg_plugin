@@ -167,7 +167,12 @@ function git(root, args) {
 }
 
 function ensureTag(root, delivery) {
-  const existing = git(root, ['rev-parse', '--verify', '--quiet', `refs/tags/${delivery.tag}`]);
+  const existing = git(root, [
+    'rev-parse',
+    '--verify',
+    '--quiet',
+    `refs/tags/${delivery.tag}^{commit}`,
+  ]);
   if (existing.status === 0) {
     return existing.stdout.trim() === delivery.deliveryCommit
       ? { ok: true, created: false }

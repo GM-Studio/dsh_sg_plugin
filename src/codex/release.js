@@ -9,6 +9,10 @@ import { persistDelivery } from './delivery.js';
 import { gitSafeDirectory } from './git-path.js';
 import { loadProjectReadiness, PROJECT_PROFILE_PATH } from './project-state.js';
 import { createDeliveryRecordV3 } from './core/delivery-record.js';
+import { acquireBaselineLease, releaseBaselineLease } from './core/baseline-lease.js';
+import { archiveEvidence, copyArchiveEvidence } from './core/archive-evidence.js';
+import { resolveGitIdentity } from './core/git-identity.js';
+import { createArtifactStore } from './core/artifact-store.js';
 
 const SOURCE_ROOT = path.resolve(fileURLToPath(new URL('../..', import.meta.url)));
 const object = (value) => value !== null && typeof value === 'object' && !Array.isArray(value);
@@ -29,13 +33,18 @@ function inside(parent, target) {
 function safeRelative(relative) {
   return (
     typeof relative === 'string' &&
-    /^[A-Za-z0-9.][A-Za-z0-9._/-]{0,399}$/.test(relative) &&
+    relative.length > 0 &&
+    relative.length <= 1024 &&
+    !path.isAbsolute(relative) &&
+    !/[<>:"\\|?*]/.test(relative) &&
+    ![...relative].some((character) => character.charCodeAt(0) < 32) &&
     relative
       .split('/')
       .every(
         (part) =>
           part &&
           !['.', '..'].includes(part) &&
+          !/[. ]$/.test(part) &&
           !/^(?:con|prn|aux|nul|com[1-9]|lpt[1-9])(?:\.|$)/i.test(part),
       )
   );
@@ -106,6 +115,17 @@ function writeEvidence(root, relative, content) {
     }
   }
   if (failure.code !== 'EEXIST') throw failure;
+  const stat = fs.lstatSync(target);
+  if (
+    !stat.isFile() ||
+    stat.isSymbolicLink() ||
+    stat.nlink !== 1 ||
+    !fs.readFileSync(target).equals(Buffer.from(content))
+  )
+    fail(
+      'ARCHIVE_EVIDENCE_CONFLICT',
+      'Existing archive evidence differs; preserved without overwrite',
+    );
 }
 
 function cleanStatus(root) {
@@ -213,7 +233,10 @@ function previewBody(root, state) {
     changeId: state.changeId,
     project,
     targetBranch,
+    targetCommit: git(root, ['rev-parse', 'HEAD']),
     remote,
+    remoteConfigurationHash: remote ? digest(git(root, ['remote', 'get-url', remote])) : null,
+    trackingCommit: tracking ? gitMaybe(root, ['rev-parse', tracking]) : null,
     remoteUrl,
     tracking,
     integrationBranch: integration.branch,
@@ -256,7 +279,11 @@ function verifyH3Event(root, state) {
   const target = path.join(root, relative);
   if (!fs.existsSync(target)) return failure('H3_EVIDENCE_MISSING', 'Audit history is missing');
   const chain = verifyEventChain(fs.readFileSync(target, 'utf8'));
-  if (!chain.ok || chain.events.at(-1)?.state.version !== state.version)
+  if (
+    !chain.ok ||
+    chain.events.at(-1)?.state.version !== state.version ||
+    digest(chain.events.at(-1)?.state) !== digest(state)
+  )
     return failure('H3_EVIDENCE_INVALID', 'State and H3 audit history disagree');
   const transition = chain.events.findLast(
     (event) =>
@@ -274,7 +301,8 @@ function verifyH3Event(root, state) {
     approval.scope !== state.changeId ||
     approval.decision !== 'approve' ||
     !approval.consumedAt ||
-    !/^[a-f0-9]{64}$/.test(approval.nonce || '')
+    !/^[a-f0-9]{64}$/.test(approval.nonce || '') ||
+    approval.artifactHash !== state.context?.artifacts?.h3?.hash
   )
     return failure('H3_EVIDENCE_INVALID', 'A consumed H3 approval is required');
   return { ok: true, transition, approval };
@@ -331,6 +359,23 @@ function pushTarget(root, remote, branch) {
   };
 }
 
+function observeRemoteTarget(root, remote, branch, commit) {
+  const startedAt = new Date().toISOString();
+  const output = gitMaybe(root, ['ls-remote', remote, 'refs/heads/' + branch]);
+  if (!output || output.split(/\s+/)[0] !== commit) return null;
+  return {
+    remote,
+    branch,
+    command: ['git', 'ls-remote', remote, 'refs/heads/' + branch],
+    status: 0,
+    observed: true,
+    startedAt,
+    finishedAt: new Date().toISOString(),
+    stdout: output,
+    stderr: '',
+  };
+}
+
 export function createReleaseService({ projectRoot, store, planService } = {}) {
   if (typeof projectRoot !== 'string' || !projectRoot)
     throw new TypeError('projectRoot is required');
@@ -383,266 +428,471 @@ export function createReleaseService({ projectRoot, store, planService } = {}) {
           'INVALID_ARGUMENT',
           'Only expectedVersion and an optional push boolean are accepted',
         );
-      const loaded = await store.inspect();
-      if (!loaded.ok) return loaded;
-      if (loaded.state.version !== args.expectedVersion)
-        return {
-          ...failure('VERSION_CONFLICT', 'Read the current state before retrying'),
-          actualVersion: loaded.state.version,
-        };
-      if (loaded.state.phase !== 'ARCHIVING')
-        return failure('H3_REQUIRED', 'Archive requires a consumed H3 approval in ARCHIVING');
-      const checked = await planService.inspect();
-      if (!checked.ok) return checked;
+      const directory = path.resolve(
+        root,
+        git(root, ['rev-parse', '--git-common-dir']),
+        'specgate-release.lease',
+      );
+      const acquired = acquireBaselineLease(directory, { operation: 'release' }, () => {});
+      if (!acquired.ok)
+        return failure('ARCHIVE_BUSY', 'Another release operation owns this Git repository');
+      try {
+        return await runLocked(args);
+      } finally {
+        releaseBaselineLease(acquired.lease);
+      }
+    });
+  }
+
+  async function runLocked(args) {
+    let loaded = await store.inspect();
+    if (!loaded.ok) return loaded;
+    if (loaded.state.version !== args.expectedVersion)
+      return failure('VERSION_CONFLICT', 'Read the current state before retrying', {
+        actualVersion: loaded.state.version,
+      });
+    const pushRequested = args.push === true;
+    let intent = loaded.state.context?.archiveOperation;
+    const resuming = !!intent;
+    let observedPush;
+    if (intent && ['ARCHIVED', 'ARCHIVED_NOT_PUSHED', 'PUSH_FAILED'].includes(loaded.state.phase)) {
+      if (intent.pushRequested !== pushRequested)
+        return failure(
+          'ARCHIVE_OPTION_CHANGED',
+          'A completed local archive cannot acquire push authorization from a retry',
+        );
+      const report = loaded.state.context.archive;
       const h3 = verifyH3Event(root, loaded.state);
       if (!h3.ok) return h3;
-      const computed = previewBody(root, loaded.state);
-      if (!computed.ok) return computed;
-      if (loaded.state.context?.archivePreview?.hash !== computed.hash)
+      if (
+        !report ||
+        report.h3?.previewHash !== intent.hash ||
+        git(root, ['rev-parse', 'HEAD']) !== intent.preview.integrationCommit ||
+        currentBranch(root) !== intent.preview.targetBranch
+      )
         return failure(
-          'ARCHIVE_PREVIEW_CHANGED',
-          'Archive preview changed after H3 approval; request new approval',
+          'ARCHIVE_RECOVERY_CONFLICT',
+          'Completed archive or target changed; preserved',
         );
-      if (!computed.preview.clean)
-        return failure('MAIN_DIRTY', 'The target branch worktree is not clean');
-      const development = loaded.state.context.development;
-      const integration = development.worktrees.integration;
-      const merge = mergeIntegration(root, {
-        branch: integration.branch,
-        commit: computed.preview.integrationCommit,
-      });
-      if (!merge.ok) return merge;
-      const recordDelivery = (pushState) => {
-        if (!computed.preview.project) return { ok: true, delivery: null };
-        const readiness = loadProjectReadiness({ projectRoot: root });
-        if (!readiness.ok) return readiness;
-        const assessment =
-          loaded.state.context?.verification || loaded.state.context?.review?.verification;
-        if (!object(assessment))
+      const artifacts = createArtifactStore({ projectRoot: root });
+      const savedReport = artifacts.readText(report.reportPath);
+      const { reportPath: _path, ...savedBody } = report;
+      if (
+        !savedReport.ok ||
+        savedReport.value !== canonicalJson(savedBody) + '\n' ||
+        archiveEvidence(root, loaded.state.changeId, true).hash !== intent.evidenceHash
+      )
+        return failure(
+          'ARCHIVE_EVIDENCE_CONFLICT',
+          'Completed archive evidence changed; preserved',
+        );
+      if (report.delivery) {
+        const base = '.specgate/codex/deliveries/' + report.delivery.deliveryId;
+        const record = artifacts.readJson(base + '/record.json'),
+          internal = artifacts.readText(base + '/internal.md'),
+          customer = artifacts.readText(base + '/customer.md');
+        if (
+          !record.ok ||
+          digest(record.value) !== digest(report.delivery) ||
+          !internal.ok ||
+          !customer.ok ||
+          hashValue(internal.value) !== report.delivery.packs.internalHash ||
+          hashValue(customer.value) !== report.delivery.packs.customerHash ||
+          gitMaybe(root, [
+            'rev-parse',
+            '--verify',
+            '--quiet',
+            'refs/tags/' + report.delivery.tag + '^{commit}',
+          ]) !== report.delivery.deliveryCommit
+        )
           return failure(
-            'VERIFICATION_ASSESSMENT_MISSING',
-            'A current VerificationAssessment is required for DeliveryRecord',
+            'ARCHIVE_EVIDENCE_CONFLICT',
+            'Completed delivery record, packs or tag changed; preserved',
           );
-        const contract = loaded.state.context.changeAdd?.changeContract;
-        const acceptance =
-          contract?.acceptance || (checked.plan?.graph?.acs || []).map((entry) => entry.id);
-        const evidence = [
-          loaded.state.context.quality?.runId,
-          loaded.state.context.quality?.hash,
-          loaded.state.context.artifacts?.review?.hash,
-        ].filter((entry) => typeof entry === 'string' && entry.length > 0);
-        const selectedReviewMode =
-          loaded.state.context.review?.report?.mode ||
-          loaded.state.context.review?.mode ||
-          'evidence';
-        const reviewMode =
-          assessment.reviewMode ||
-          (selectedReviewMode === 'strict'
-            ? 'full-code-review'
-            : selectedReviewMode === 'standard'
-              ? 'evidence-and-diff'
-              : 'evidence');
-        const knownIssues = [
-          ...(assessment.openRisks || []).map((entry) => entry.text),
-          ...(assessment.acCoverage || [])
-            .filter((entry) => entry.sufficiency !== 'sufficient')
-            .map((entry) => `Unverified ${entry.acId}: ${entry.summary}`),
-          ...(readiness.baseline.knownFailures || []).map(
-            (entry) => `${entry.commandId}: ${entry.signature}`,
-          ),
-          ...(readiness.baseline.unverifiedAreas || []).map(
-            (entry) => `Unverified baseline ${entry.id}: ${entry.description} (${entry.risk})`,
-          ),
-        ].filter((entry, index, values) => values.indexOf(entry) === index);
-        const assessmentHash = hashValue(assessment);
-        const contractHash = String(checked.ref.contract.hash || '').replace(/^sha256:/, '');
-        const h3ArtifactHash = String(loaded.state.context.artifacts.h3.hash || '').replace(
-          /^sha256:/,
-          '',
+      }
+      let cleanup;
+      if (loaded.state.phase !== 'PUSH_FAILED') {
+        const cleanupPath = report.archivePath + '/cleanup-report.json';
+        const existing = artifacts.readJson(cleanupPath);
+        if (existing.ok) cleanup = existing.value;
+        else if (existing.code === 'ARTIFACT_MISSING') {
+          cleanup = cleanupArchivedWorkspaces({
+            projectRoot: root,
+            changeId: loaded.state.changeId,
+          });
+          writeEvidence(root, cleanupPath, canonicalJson(cleanup) + '\n');
+        } else return existing;
+      }
+      return {
+        ok: true,
+        state: loaded.state,
+        pushed: loaded.state.phase === 'ARCHIVED',
+        report: { ...report, ...(cleanup ? { cleanup } : {}) },
+        reused: true,
+        message: loaded.state.phase === 'ARCHIVED_NOT_PUSHED' ? '未推送' : report.message,
+      };
+    }
+    if (loaded.state.phase !== 'ARCHIVING')
+      return failure('H3_REQUIRED', 'Archive requires a consumed H3 approval in ARCHIVING');
+    const checked = await planService.inspect();
+    if (!checked.ok) return checked;
+    const h3 = verifyH3Event(root, loaded.state);
+    if (!h3.ok) return h3;
+    const fresh = previewBody(root, loaded.state);
+    if (!fresh.ok) return fresh;
+    const evidence = archiveEvidence(root, loaded.state.changeId);
+    const { archive: _archive, archiveOperation: _operation, ...context } = loaded.state.context;
+    const {
+      archive: _approvedArchive,
+      archiveOperation: _approvedOperation,
+      ...approvedContext
+    } = h3.transition.state.context;
+    if (digest(context) !== digest(approvedContext))
+      return failure(
+        'ARCHIVE_EVIDENCE_STALE',
+        'Workflow facts changed after the consumed H3 approval',
+      );
+    const readiness = fresh.preview.project ? loadProjectReadiness({ projectRoot: root }) : null;
+    if (readiness && !readiness.ok) return readiness;
+    const binding = digest({
+      context,
+      plan: checked.ref,
+      evidence: evidence.hash,
+      project: readiness ? { profile: readiness.profile, baseline: readiness.baseline } : null,
+    });
+    let computed = fresh;
+    const target = git(root, ['rev-parse', 'HEAD']);
+    if (intent) {
+      if (
+        intent.schemaVersion !== 1 ||
+        intent.binding !== binding ||
+        intent.approvalHash !== digest(h3.approval) ||
+        intent.hash !== loaded.state.context.archivePreview?.hash ||
+        intent.pushRequested !== pushRequested ||
+        ![intent.targetBefore, intent.preview.integrationCommit].includes(target)
+      )
+        return failure(
+          'ARCHIVE_RECOVERY_CONFLICT',
+          'Release intent, evidence, approval, options or target changed; preserved',
         );
-        const approvalHash = hashValue(h3.approval);
-        const created = createDeliveryRecordV3({
-          projectId: readiness.profile.projectId,
-          changeId: loaded.state.changeId,
-          parentDeliveryId: contract?.parentDeliveryId ?? null,
-          baselineCommit: development.freezeCommit,
-          deliveryCommit: merge.commit,
-          environmentFingerprint:
-            assessment.environmentFingerprint || readiness.baseline.environmentFingerprint,
-          reviewMode,
-          acceptance,
-          evidence,
-          knownIssues,
-          risks: (assessment.openRisks || []).map((entry) => entry.id),
-          rollback: {
-            code: `From a clean worktree, create a rollback branch, run git restore --source=${development.freezeCommit} --staged --worktree -- . , review the staged diff and commit the rollback. Preserve local delivery evidence.`,
-            data: 'No automatic production data rollback was performed.',
-            forwardFix: 'Apply a new delivery from the accepted base.',
-          },
-          push: pushState,
-          contract: {
-            artifactId: `${loaded.state.changeId}-contract`,
-            hash: contractHash,
-          },
-          verification: {
-            verificationId: assessment.verificationId,
-            assessmentHash,
-            decision: assessment.decision,
-          },
-          h3: {
-            artifactHash: h3ArtifactHash,
-            approvalHash,
-            approvedAt: h3.approval.consumedAt || h3.approval.issuedAt,
-          },
-          customerAcceptance: null,
-          releaseState: pushState.status === 'passed' ? 'pushed' : 'release-approved',
-          approvedAt: h3.approval.consumedAt || h3.approval.issuedAt,
-          packs: null,
-        });
-        if (!created.ok) return created;
-        return persistDelivery({
-          projectRoot: root,
-          delivery: created.delivery,
-          internal: {
-            archive: computed.preview,
-            quality: loaded.state.context.quality,
-            review: loaded.state.context.artifacts?.review,
-          },
-          customer: {
-            title: contract?.request || loaded.state.changeId,
-            summary: `Accepted delivery ${created.delivery.deliveryId}.`,
-            verification: evidence,
-            knownIssues: created.delivery.knownIssues,
-            upgrade: `Deploy commit ${merge.commit}.`,
-            rollback: created.delivery.rollback,
-          },
-        });
+      const normalized = {
+        ...fresh.preview,
+        targetCommit: intent.preview.targetCommit,
+        pendingCommits: intent.preview.pendingCommits,
       };
-      const archiveRelative = `.specgate/codex/archive/${computed.preview.changeId}`;
-      const source = path.resolve(root, `.specgate/codex/changes/${computed.preview.changeId}`);
-      const destination = path.resolve(root, archiveRelative);
-      if (fs.existsSync(source)) {
-        ensureDirectory(root, path.dirname(destination));
-        if (!fs.existsSync(destination)) fs.cpSync(source, destination, { recursive: true });
-      }
-      const report = {
-        schemaVersion: 1,
-        changeId: computed.preview.changeId,
-        status: 'merged',
-        h3: {
-          artifactHash: loaded.state.context.artifacts.h3.hash,
-          reviewHash: computed.preview.review.hash,
-          previewHash: computed.hash,
-          approval: h3.approval,
+      if (
+        fresh.preview.trackingCommit === intent.preview.integrationCommit &&
+        intent.pushRequested &&
+        (intent.pushReceipt?.status === 0 ||
+          (observedPush = observeRemoteTarget(
+            root,
+            intent.preview.remoteUrl || intent.preview.remote,
+            intent.preview.targetBranch,
+            intent.preview.integrationCommit,
+          )))
+      )
+        normalized.trackingCommit = intent.preview.trackingCommit;
+      if (digest(normalized) !== intent.hash)
+        return failure(
+          'ARCHIVE_RECOVERY_CONFLICT',
+          'Release sources changed outside the recorded fast-forward',
+        );
+      computed = { ok: true, preview: intent.preview, hash: intent.hash };
+    } else if (loaded.state.context.archivePreview?.hash !== fresh.hash)
+      return failure(
+        'ARCHIVE_PREVIEW_CHANGED',
+        'Archive preview changed after H3 approval; request new approval',
+      );
+    if (!fresh.preview.clean) return failure('MAIN_DIRTY', 'The target worktree is not clean');
+    // State storage canonicalizes object keys; pack rendering must use identical order on retry.
+    computed = { ...computed, preview: JSON.parse(canonicalJson(computed.preview)) };
+    const development = loaded.state.context.development;
+    const recordDelivery = (pushState, write = true) => {
+      if (!computed.preview.project) return { ok: true, delivery: null };
+      const readiness = loadProjectReadiness({ projectRoot: root });
+      if (!readiness.ok) return readiness;
+      const assessment =
+        loaded.state.context?.verification || loaded.state.context?.review?.verification;
+      if (!object(assessment))
+        return failure(
+          'VERIFICATION_ASSESSMENT_MISSING',
+          'A current VerificationAssessment is required for DeliveryRecord',
+        );
+      const contract = loaded.state.context.changeAdd?.changeContract;
+      const acceptance =
+        contract?.acceptance || (checked.plan?.graph?.acs || []).map((entry) => entry.id);
+      const evidence = [
+        loaded.state.context.quality?.runId,
+        loaded.state.context.quality?.hash,
+        loaded.state.context.artifacts?.review?.hash,
+      ].filter((entry) => typeof entry === 'string' && entry.length > 0);
+      const selectedReviewMode =
+        loaded.state.context.review?.report?.mode ||
+        loaded.state.context.review?.mode ||
+        'evidence';
+      const reviewMode =
+        assessment.reviewMode ||
+        (selectedReviewMode === 'strict'
+          ? 'full-code-review'
+          : selectedReviewMode === 'standard'
+            ? 'evidence-and-diff'
+            : 'evidence');
+      const knownIssues = [
+        ...(assessment.openRisks || []).map((entry) => entry.text),
+        ...(assessment.acCoverage || [])
+          .filter((entry) => entry.sufficiency !== 'sufficient')
+          .map((entry) => `Unverified ${entry.acId}: ${entry.summary}`),
+        ...(readiness.baseline.knownFailures || []).map(
+          (entry) => `${entry.commandId}: ${entry.signature}`,
+        ),
+        ...(readiness.baseline.unverifiedAreas || []).map(
+          (entry) => `Unverified baseline ${entry.id}: ${entry.description} (${entry.risk})`,
+        ),
+      ].filter((entry, index, values) => values.indexOf(entry) === index);
+      const assessmentHash = hashValue(assessment);
+      const contractHash = String(checked.ref.contract.hash || '').replace(/^sha256:/, '');
+      const h3ArtifactHash = String(loaded.state.context.artifacts.h3.hash || '').replace(
+        /^sha256:/,
+        '',
+      );
+      const approvalHash = hashValue(h3.approval);
+      const created = createDeliveryRecordV3({
+        projectId: readiness.profile.projectId,
+        changeId: loaded.state.changeId,
+        parentDeliveryId: contract?.parentDeliveryId ?? null,
+        baselineCommit: development.freezeCommit,
+        deliveryCommit: computed.preview.integrationCommit,
+        environmentFingerprint:
+          assessment.environmentFingerprint || readiness.baseline.environmentFingerprint,
+        reviewMode,
+        acceptance,
+        evidence,
+        knownIssues,
+        risks: (assessment.openRisks || []).map((entry) => entry.id),
+        rollback: {
+          code: `From a clean worktree, create a rollback branch, run git restore --source=${development.freezeCommit} --staged --worktree -- . , review the staged diff and commit the rollback. Preserve local delivery evidence.`,
+          data: 'No automatic production data rollback was performed.',
+          forwardFix: 'Apply a new delivery from the accepted base.',
         },
-        preview: computed.preview,
-        merge,
-        archivePath: archiveRelative,
-        createdAt: new Date().toISOString(),
-      };
-      const pushRequested = args.push === true;
-      const remote = computed.preview.remoteUrl || computed.preview.remote;
-      if (!pushRequested) {
-        const delivery = recordDelivery({
-          requested: false,
-          remoteUrl: null,
-          status: 'not-requested',
-        });
-        if (!delivery.ok) return delivery;
-        if (delivery.delivery) report.delivery = delivery.delivery;
-        report.cleanup = cleanupArchivedWorkspaces({
-          projectRoot: root,
-          changeId: computed.preview.changeId,
-        });
-        report.status = 'archived-not-pushed';
-        report.message = '本地归档完成；目标分支未推送';
-        const reportPath = `${archiveRelative}/archive-report.json`;
-        writeEvidence(root, reportPath, canonicalJson(report) + '\n');
-        const saved = await store.update({
-          expectedVersion: loaded.state.version,
-          patch: { context: { archive: { ...report, reportPath } } },
-        });
-        if (!saved.ok) return saved;
-        const moved = await store.transition({
-          expectedVersion: saved.state.version,
-          to: 'ARCHIVED_NOT_PUSHED',
-        });
-        return moved.ok ? { ...moved, pushed: false, message: '未推送', report } : moved;
-      }
-      if (!remote) {
-        report.status = 'push-remote-required';
-        report.message = '显式 push 请求缺少远程仓库 URL';
-        const reportPath = `${archiveRelative}/archive-report.json`;
-        writeEvidence(root, reportPath, canonicalJson(report) + '\n');
-        const saved = await store.update({
-          expectedVersion: loaded.state.version,
-          patch: { context: { archive: { ...report, reportPath } } },
-        });
-        if (!saved.ok) return saved;
-        const failed = await store.transition({
-          expectedVersion: saved.state.version,
-          to: 'PUSH_FAILED',
-        });
-        return failed.ok
-          ? {
-              ...failed,
-              pushed: false,
-              code: 'PUSH_REMOTE_REQUIRED',
-              message: report.message,
-              report,
-            }
-          : failed;
-      }
-      const pushed = pushTarget(root, remote, computed.preview.targetBranch);
-      report.push = pushed;
-      if (pushed.status !== 0) {
-        const delivery = recordDelivery({
-          requested: true,
-          remoteUrl: remote,
-          status: 'failed',
-        });
-        if (!delivery.ok) return delivery;
-        if (delivery.delivery) report.delivery = delivery.delivery;
-        report.status = 'push_failed';
-        report.message = '推送失败；未自动重试或回滚';
-        const reportPath = `${archiveRelative}/archive-report.json`;
-        writeEvidence(root, reportPath, canonicalJson(report) + '\n');
-        const saved = await store.update({
-          expectedVersion: loaded.state.version,
-          patch: { context: { archive: { ...report, reportPath } } },
-        });
-        if (!saved.ok) return saved;
-        const failed = await store.transition({
-          expectedVersion: saved.state.version,
-          to: 'PUSH_FAILED',
-        });
-        return failed.ok ? { ...failed, pushed: false, report } : failed;
-      }
-      const delivery = recordDelivery({
-        requested: true,
-        remoteUrl: remote,
-        status: 'passed',
+        push: pushState,
+        contract: {
+          artifactId: `${loaded.state.changeId}-contract`,
+          hash: contractHash,
+        },
+        verification: {
+          verificationId: assessment.verificationId,
+          assessmentHash,
+          decision: assessment.decision,
+        },
+        h3: {
+          artifactHash: h3ArtifactHash,
+          approvalHash,
+          approvedAt: h3.approval.consumedAt || h3.approval.issuedAt,
+        },
+        customerAcceptance: null,
+        releaseState: pushState.status === 'passed' ? 'pushed' : 'release-approved',
+        approvedAt: h3.approval.consumedAt || h3.approval.issuedAt,
+        packs: null,
       });
-      if (!delivery.ok) return delivery;
-      if (delivery.delivery) report.delivery = delivery.delivery;
+      if (!created.ok) return created;
+      return persistDelivery({
+        projectRoot: root,
+        write,
+        delivery: created.delivery,
+        internal: {
+          archive: computed.preview,
+          quality: loaded.state.context.quality,
+          review: loaded.state.context.artifacts?.review,
+        },
+        customer: {
+          title: contract?.request || loaded.state.changeId,
+          summary: `Accepted delivery ${created.delivery.deliveryId}.`,
+          verification: evidence,
+          knownIssues: created.delivery.knownIssues,
+          upgrade: `Deploy commit ${computed.preview.integrationCommit}.`,
+          rollback: created.delivery.rollback,
+        },
+      });
+    };
+
+    // Validate every possible DeliveryRecord and render its immutable packs before Git mutation.
+    const remote = computed.preview.remoteUrl || computed.preview.remote;
+    const outcomes = pushRequested && remote ? ['passed', 'failed'] : ['not-requested'];
+    const prepared = [];
+    for (const status of outcomes) {
+      const preflight = recordDelivery(
+        {
+          requested: pushRequested && !!remote,
+          remoteUrl: pushRequested && remote ? remote : null,
+          status,
+        },
+        false,
+      );
+      if (!preflight.ok) return preflight;
+      prepared.push(preflight);
+      if (preflight.delivery) {
+        const identity = resolveGitIdentity({ root });
+        if (!identity.ok) return identity;
+        const tag = gitMaybe(root, [
+          'rev-parse',
+          '--verify',
+          '--quiet',
+          'refs/tags/' + preflight.delivery.tag + '^{commit}',
+        ]);
+        if (tag && tag !== computed.preview.integrationCommit)
+          return failure(
+            'DELIVERY_TAG_CONFLICT',
+            'Existing delivery tag points elsewhere; preserved',
+          );
+      }
+    }
+    const artifacts = createArtifactStore({ projectRoot: root });
+    const compatible = prepared.some(
+      (plan) =>
+        !plan.delivery ||
+        [
+          ['record.json', JSON.stringify(plan.delivery, null, 2) + '\n'],
+          ['internal.md', plan.internal],
+          ['customer.md', plan.customer],
+        ].every(([name, expected]) => {
+          const existing = artifacts.readText(
+            '.specgate/codex/deliveries/' + plan.delivery.deliveryId + '/' + name,
+          );
+          return existing.ok ? existing.value === expected : existing.code === 'ARTIFACT_MISSING';
+        }),
+    );
+    if (!compatible)
+      return failure(
+        'ARCHIVE_EVIDENCE_CONFLICT',
+        'Existing immutable delivery content conflicts with the reviewed delivery; preserved',
+      );
+    if (!intent) {
+      intent = {
+        schemaVersion: 1,
+        hash: computed.hash,
+        preview: computed.preview,
+        targetBefore: target,
+        binding,
+        evidenceHash: evidence.hash,
+        approvalHash: digest(h3.approval),
+        pushRequested,
+        createdAt: new Date().toISOString(),
+        merge: {
+          ok: true,
+          skipped: target === computed.preview.integrationCommit,
+          commit: computed.preview.integrationCommit,
+        },
+      };
+      const saved = await store.update({
+        expectedVersion: loaded.state.version,
+        patch: { context: { archiveOperation: intent } },
+      });
+      if (!saved.ok) return saved;
+      loaded = saved;
+    }
+    const merge = mergeIntegration(root, { commit: computed.preview.integrationCommit });
+    if (!merge.ok) return merge;
+    const archiveRelative = '.specgate/codex/archive/' + computed.preview.changeId;
+    copyArchiveEvidence(root, archiveRelative, evidence, writeEvidence);
+    if (archiveEvidence(root, loaded.state.changeId).hash !== evidence.hash)
+      return failure(
+        'ARCHIVE_RECOVERY_CONFLICT',
+        'Source evidence changed during copy; preserve partial archive',
+      );
+    let pushed = intent.pushReceipt;
+    if (pushRequested && remote && !pushed) {
+      pushed =
+        observedPush ||
+        (resuming
+          ? observeRemoteTarget(
+              root,
+              remote,
+              computed.preview.targetBranch,
+              computed.preview.integrationCommit,
+            )
+          : null) ||
+        pushTarget(root, remote, computed.preview.targetBranch);
+      const saved = await store.update({
+        expectedVersion: loaded.state.version,
+        patch: { context: { archiveOperation: { ...intent, pushReceipt: pushed } } },
+      });
+      if (!saved.ok) return saved;
+      loaded = saved;
+      intent = loaded.state.context.archiveOperation;
+    }
+    let delivery = { ok: true, delivery: null };
+    if (!pushRequested || remote)
+      delivery = recordDelivery({
+        requested: pushRequested,
+        remoteUrl: pushRequested ? remote : null,
+        status: pushRequested ? (pushed.status === 0 ? 'passed' : 'failed') : 'not-requested',
+      });
+    if (!delivery.ok) return delivery;
+    const phase = !pushRequested
+      ? 'ARCHIVED_NOT_PUSHED'
+      : !remote || pushed.status !== 0
+        ? 'PUSH_FAILED'
+        : 'ARCHIVED';
+    const report = {
+      schemaVersion: 1,
+      changeId: computed.preview.changeId,
+      status:
+        phase === 'ARCHIVED_NOT_PUSHED'
+          ? 'archived-not-pushed'
+          : phase === 'ARCHIVED'
+            ? 'archived'
+            : remote
+              ? 'push_failed'
+              : 'push-remote-required',
+      h3: {
+        artifactHash: loaded.state.context.artifacts.h3.hash,
+        reviewHash: computed.preview.review.hash,
+        previewHash: computed.hash,
+        approval: h3.approval,
+      },
+      preview: computed.preview,
+      merge: intent.merge,
+      archivePath: archiveRelative,
+      createdAt: intent.createdAt,
+      cleanup: { status: 'deferred-until-durable-finalization' },
+      ...(delivery.delivery ? { delivery: delivery.delivery } : {}),
+      ...(pushed ? { push: pushed } : {}),
+      message: !pushRequested
+        ? '本地归档完成；目标分支未推送'
+        : !remote
+          ? '显式 push 请求缺少远程仓库 URL'
+          : pushed.status !== 0
+            ? '推送失败；未自动重试或回滚'
+            : '本地归档及显式推送完成',
+    };
+    const reportPath = archiveRelative + '/archive-report.json';
+    writeEvidence(root, reportPath, canonicalJson(report) + '\n');
+    const saved = await store.update({
+      expectedVersion: loaded.state.version,
+      patch: { context: { archive: { ...report, reportPath } } },
+    });
+    if (!saved.ok) return saved;
+    const moved = await store.transition({ expectedVersion: saved.state.version, to: phase });
+    if (!moved.ok) return moved;
+    // Destructive workspace cleanup happens only after record, evidence and state are durable.
+    if (phase !== 'PUSH_FAILED') {
       report.cleanup = cleanupArchivedWorkspaces({
         projectRoot: root,
         changeId: computed.preview.changeId,
       });
-      report.status = 'archived';
-      const reportPath = `${archiveRelative}/archive-report.json`;
-      writeEvidence(root, reportPath, canonicalJson(report) + '\n');
-      const saved = await store.update({
-        expectedVersion: loaded.state.version,
-        patch: { context: { archive: { ...report, reportPath } } },
-      });
-      if (!saved.ok) return saved;
-      const archived = await store.transition({
-        expectedVersion: saved.state.version,
-        to: 'ARCHIVED',
-      });
-      return archived.ok ? { ...archived, pushed: true, report } : archived;
-    });
+      writeEvidence(
+        root,
+        archiveRelative + '/cleanup-report.json',
+        canonicalJson(report.cleanup) + '\n',
+      );
+    }
+    return {
+      ...moved,
+      pushed: phase === 'ARCHIVED',
+      report,
+      ...(!remote && pushRequested ? { code: 'PUSH_REMOTE_REQUIRED' } : {}),
+      message: !pushRequested ? '未推送' : report.message,
+    };
   }
 
   return Object.freeze({

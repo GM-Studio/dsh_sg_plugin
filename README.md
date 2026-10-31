@@ -23,6 +23,8 @@ SpecGate Core 为**已有 Git 项目**提供本地、可审计的需求到交付
 
 格式化按根目录和嵌套模块配置执行：Node 遵循 `packageManager`/锁文件及 format 脚本，Python 使用已声明的 Ruff/Black，Go 使用 gofmt，Maven 使用声明的 Spotless 与已安装 Maven。依赖准备仅离线复用缓存；缺工具、缺配置或版本不匹配会阻断。Gradle 或自定义技术栈可在绑定项目的 `.specgate/format.json` 中配置 `{ "schemaVersion": 1, "commands": [{ "id": "custom", "cwd": ".", "apply": ["tool", "--write"], "check": ["tool", "--check"] }] }`，命令为 argv 数组。该配置优先于同目录 ProjectProfile 命令，工作目录绑定实际格式化 worktree。check 必须有显式命令，且源码前后指纹一致；apply 完成后仍须重新通过完整质量门才进入 Review。扫描超限会明确阻断，不能把未扫描模块视为已格式化。
 
+发布在目标分支快进前预检 DeliveryRecord 和交付包，并持久化绑定 H3、目标提交、配置及证据的操作记录。同一操作遇到存储失败可读取最新状态版本重试；证据、目标或选项发生非预期变化会阻断并保留现场。已有交付文件逐字节复用，冲突不覆盖；本地归档完成后的重试也不能追加推送授权。工作树仅在交付证据与最终状态持久化后清理，清理结果单独记录。显式推送已到达远程但回执保存失败时，恢复流程实际查询远程提交，记录观察结果。
+
 历史业务模板、异步 WorkItem、控制面、Worker、Decision、TOTP、Web 和通知代码仍在源码中；默认工具面和 Core tarball 排除这些能力。源码开发者可显式设置 `SPECGATE_OPTIONAL_MODULES=1` 加载历史工具；该模式及其外部依赖不属于 Core 发行验收。环境安装器按需加载并随包提供；Core 包不包含 `mysql2`。
 
 ## 验证

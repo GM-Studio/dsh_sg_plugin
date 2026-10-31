@@ -1,0 +1,47 @@
+✖ an exited real publisher is resumed by a new MCP process with the same persisted H3 and annotated tag (2867.7605ms)
+✔ an existing conflicting annotated tag blocks before fast-forward and remains unchanged (3401.1955ms)
+✔ real state version conflict at intent is recoverable without another H3 or duplicate tag (4403.1485ms)
+✔ real state version conflict at archive is recoverable without another H3 or duplicate tag (4755.1923ms)
+✔ real state version conflict at transition is recoverable without another H3 or duplicate tag (4702.5351ms)
+ℹ tests 5
+ℹ suites 0
+ℹ pass 4
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 20289.9614
+
+✖ failing tests:
+
+test at test\codex-review-release.test.js:352:1
+✖ an exited real publisher is resumed by a new MCP process with the same persisted H3 and annotated tag (2867.7605ms)
+  AssertionError [ERR_ASSERTION]: file:///C:/Users/Administrator/AppData/Local/Temp/specgate-codex-tests/run-22808-HxU3tG/sg-codex-review-oGeIXI/[eval1]:4
+    const result=await createReleaseService({projectRoot:root,store,planService:{inspect:async()=>{"ok":true,"plan":{"graph":{"acs":[{"id":"AC-1","caseId":"CASE-AC-1","requirementId":"REQ-1","text":"Works"}]}},"ref":{"hash":"sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc","contract":{"path":".specgate/contract.json","hash":"sha256:dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd"},"model":{"path":".specgate/model.json","hash":"sha256:eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"},"tests":{"hash":"sha256:ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff","directory":".specgate/tests"}}}}}).run({expectedVersion:21});console.error(JSON.stringify(result));process.exit(74);
+                                                                                                       ^
+  
+  SyntaxError: Unexpected token ':'
+      at compileSourceTextModule (node:internal/modules/esm/utils:318:16)
+      at ModuleLoader.createModuleWrap (node:internal/modules/esm/loader:253:12)
+      at ModuleLoader.eval (node:internal/modules/esm/loader:292:23)
+      at node:internal/process/execution:77:24
+      at asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:101:11)
+      at Object.runEntryPointWithESMLoader (node:internal/modules/run_main:123:19)
+      at evalModuleEntryPoint (node:internal/process/execution:76:47)
+      at node:internal/main/eval_string:37:3
+  
+  Node.js v24.14.0
+  
+  
+  1 !== 73
+  
+      at TestContext.<anonymous> (file:///E:/ai_workflow/specgate/test/codex-review-release.test.js:365:10)
+      at async Test.run (node:internal/test_runner/test:1125:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:358:3) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 1,
+    expected: 73,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
