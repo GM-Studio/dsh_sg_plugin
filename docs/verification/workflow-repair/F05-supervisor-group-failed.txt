@@ -1,0 +1,61 @@
+CRASH_LEASE_BEFORE {"runId":"baseline-run-311fcc5dbf068211","projectRoot":"C:\\Users\\Administrator\\AppData\\Local\\Temp\\specgate-codex-tests\\run-10544-YzmPMC\\sg-baseline-concurrent-Me9qft","previewHash":"ff69b77681d4d46385478e77d7157fe5ded49bcd5f00be3c1842969e919cbb6a","startedAt":"2026-10-31T11:08:37.226Z","pid":21960,"token":"2e31ef9a-26e7-467c-b198-5371349d6812","workerPid":18868,"alive":true,"ownerAlive":false,"childAlive":true} command {
+  "commandId": "frontend-.-test",
+  "pid": 16188,
+  "stopped": false,
+  "token": "2e31ef9a-26e7-467c-b198-5371349d6812"
+}
+ proof 21052 true
+CRASH_LEASE_AFTER {"runId":"baseline-run-311fcc5dbf068211","projectRoot":"C:\\Users\\Administrator\\AppData\\Local\\Temp\\specgate-codex-tests\\run-10544-YzmPMC\\sg-baseline-concurrent-Me9qft","previewHash":"ff69b77681d4d46385478e77d7157fe5ded49bcd5f00be3c1842969e919cbb6a","startedAt":"2026-10-31T11:08:37.226Z","pid":21960,"token":"2e31ef9a-26e7-467c-b198-5371349d6812","workerPid":18868,"alive":false,"ownerAlive":false,"childAlive":false} proof true exit {"pid":11872,"code":0} {"ok":false,"code":"BASELINE_JOB_START_FAILED","message":"error: failed to delete 'C:/Users/Administrator/AppData/Local/Temp/specgate-codex-tests/run-10544-YzmPMC/sg-baseline-concurrent-Me9qft/.git/specgate/baseline-jobs/worktrees/baseline-run-311fcc5dbf068211': Permission denied\n"}
+✖ a crashed owner cannot reclaim a live child; after exit a fresh run recovers only its own worktree (3174.6468ms)
+✖ E:\ai_workflow\specgate\test\codex-baseline-concurrency-e2e.test.js (3.144ms)
+[specgate] test temp cleanup failed: Unable to remove temporary directory: C:\Users\Administrator\AppData\Local\Temp\specgate-codex-tests\run-10544-YzmPMC
+ℹ tests 2
+ℹ suites 0
+ℹ pass 0
+ℹ fail 2
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 3244.2076
+
+✖ failing tests:
+
+test at test\codex-baseline-concurrency-e2e.test.js:114:1
+✖ a crashed owner cannot reclaim a live child; after exit a fresh run recovers only its own worktree (3174.6468ms)
+  AssertionError [ERR_ASSERTION]: {"ok":false,"code":"BASELINE_JOB_START_FAILED","message":"error: failed to delete 'C:/Users/Administrator/AppData/Local/Temp/specgate-codex-tests/run-10544-YzmPMC/sg-baseline-concurrent-Me9qft/.git/specgate/baseline-jobs/worktrees/baseline-run-311fcc5dbf068211': Permission denied\n"}
+  + actual - expected
+  
+  + 'BASELINE_JOB_START_FAILED'
+  - 'BASELINE_ALREADY_RUNNING'
+              ^
+  
+      at TestContext.<anonymous> (file:///E:/ai_workflow/specgate/test/codex-baseline-concurrency-e2e.test.js:147:10)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1125:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:358:3) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 'BASELINE_JOB_START_FAILED',
+    expected: 'BASELINE_ALREADY_RUNNING',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at test\codex-baseline-concurrency-e2e.test.js:12:6
+✖ E:\ai_workflow\specgate\test\codex-baseline-concurrency-e2e.test.js (3.144ms)
+  Error: EPERM, Permission denied: \\?\C:\Users\Administrator\AppData\Local\Temp\specgate-codex-tests\run-10544-YzmPMC\sg-baseline-concurrent-Me9qft '\\?\C:\Users\Administrator\AppData\Local\Temp\specgate-codex-tests\run-10544-YzmPMC\sg-baseline-concurrent-Me9qft'
+      at Object.rmSync (node:fs:1221:18)
+      at TestContext.<anonymous> (file:///E:/ai_workflow/specgate/test/codex-baseline-concurrency-e2e.test.js:14:8)
+      at TestHook.runInAsyncScope (node:async_hooks:228:14)
+      at TestHook.run (node:internal/test_runner/test:1118:25)
+      at TestHook.run (node:internal/test_runner/test:1442:18)
+      at TestHook.run (node:internal/util:602:20)
+      at Test.runHook (node:internal/test_runner/test:1036:20)
+      at after (node:internal/test_runner/test:1076:20)
+      at Test.run (node:internal/test_runner/test:1144:13)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5) {
+    errno: 1,
+    code: 'EPERM',
+    path: '\\\\?\\C:\\Users\\Administrator\\AppData\\Local\\Temp\\specgate-codex-tests\\run-10544-YzmPMC\\sg-baseline-concurrent-Me9qft',
+    syscall: 'rm'
+  }

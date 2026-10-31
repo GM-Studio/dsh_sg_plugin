@@ -1,7 +1,6 @@
 import { gitExecutable } from './core/git-runtime.js';
 import fs from 'node:fs';
 import path from 'node:path';
-import { randomUUID } from 'node:crypto';
 import { spawnSync } from 'node:child_process';
 import { runAdoptionBaseline } from './baseline.js';
 import { gitSafeDirectory } from './git-path.js';
@@ -9,31 +8,15 @@ import { applyAdoption } from './project-adopt.js';
 import { createArtifactStore } from './core/artifact-store.js';
 import { environmentExecutionContext } from './core/environment-execution.js';
 import { managedEnvironment } from './core/environment.js';
+import {
+  claimBaselineWorker,
+  observeBaselineProcess,
+  writeLeaseJson,
+} from './core/baseline-lease.js';
+import { finishBaselineJob } from './baseline-job.js';
 
 function writeStatus(target, value) {
-  fs.mkdirSync(path.dirname(target), { recursive: true });
-  const temporary = `${target}.${randomUUID()}.tmp`;
-  let promoted = false;
-  try {
-    fs.writeFileSync(temporary, JSON.stringify(value, null, 2) + '\n', { flag: 'wx' });
-    try {
-      fs.renameSync(temporary, target);
-      promoted = true;
-    } catch (error) {
-      if (!['EEXIST', 'EPERM'].includes(error.code)) throw error;
-      fs.rmSync(target, { force: true });
-      fs.renameSync(temporary, target);
-      promoted = true;
-    }
-  } finally {
-    if (!promoted) {
-      try {
-        fs.rmSync(temporary, { force: true, maxRetries: 20, retryDelay: 100 });
-      } catch {
-        // preserve the original write or rename failure; the temp file was never published
-      }
-    }
-  }
+  writeLeaseJson(target, value);
 }
 
 function option(name) {
@@ -99,6 +82,7 @@ async function main() {
       code: 'BASELINE_JOB_INVALID',
     });
   const job = JSON.parse(fs.readFileSync(jobPath, 'utf8'));
+  claimBaselineWorker(job.lease);
   const status = {
     runId: job.runId,
     status: 'running',
@@ -111,7 +95,10 @@ async function main() {
   };
   writeStatus(job.statusPath, status);
   const worktree = path.join(job.worktreeRoot, job.runId);
-  fs.rmSync(worktree, { recursive: true, force: true });
+  if (fs.existsSync(worktree))
+    throw Object.assign(new Error('Baseline worktree already exists; retained'), {
+      code: 'BASELINE_WORKTREE_CONFLICT',
+    });
   fs.mkdirSync(path.dirname(worktree), { recursive: true });
   const added = git(job.projectRoot, [
     'worktree',
@@ -126,7 +113,7 @@ async function main() {
       code: 'BASELINE_WORKTREE_FAILED',
     });
   let baselineRun;
-  try {
+  {
     const temporary = path.join(worktree, '.specgate', 'baseline-temporary');
     fs.mkdirSync(temporary, { recursive: true });
     const env = {
@@ -145,18 +132,18 @@ async function main() {
           })
         : undefined,
       createdAt: job.createdAt,
+      processObserver: (event) => observeBaselineProcess(job.lease, event),
+      commandLease: job.lease,
       onProgress(progress) {
         Object.assign(status, progress);
         writeStatus(job.statusPath, status);
       },
     });
-  } finally {
-    git(job.projectRoot, ['worktree', 'remove', '--force', worktree]);
-    git(job.projectRoot, ['worktree', 'prune']);
   }
+  writeLeaseJson(path.join(path.dirname(job.statusPath), 'results.json'), baselineRun);
   if (!baselineRun.ok) {
     recordEvidence(job.projectRoot, baselineRun, job);
-    writeStatus(job.statusPath, {
+    finishBaselineJob(job, {
       ...status,
       status: 'failed',
       finishedAt: new Date().toISOString(),
@@ -172,7 +159,7 @@ async function main() {
     baseline: baselineRun.baseline,
   });
   if (!persisted.ok) {
-    writeStatus(job.statusPath, {
+    finishBaselineJob(job, {
       ...status,
       status: 'failed',
       finishedAt: new Date().toISOString(),
@@ -185,7 +172,7 @@ async function main() {
   }
   const recorded = recordEvidence(job.projectRoot, baselineRun, job);
   if (!recorded.ok) {
-    writeStatus(job.statusPath, {
+    finishBaselineJob(job, {
       ...status,
       status: 'failed',
       code: 'BASELINE_EVIDENCE_FAILED',
@@ -195,11 +182,12 @@ async function main() {
     });
     return;
   }
-  const stateRoot = path.dirname(path.dirname(job.statusPath));
-  const stateParent = path.dirname(stateRoot);
-  fs.rmSync(stateRoot, { recursive: true, force: true });
-  if (fs.existsSync(stateParent) && fs.readdirSync(stateParent).length === 0)
-    fs.rmdirSync(stateParent);
+  const removed = git(job.projectRoot, ['worktree', 'remove', '--force', worktree]);
+  if (removed.status !== 0)
+    throw Object.assign(new Error(removed.stderr || 'Cannot remove completed worktree'), {
+      code: 'BASELINE_WORKTREE_CLEANUP_FAILED',
+    });
+  finishBaselineJob(job, { success: true });
 }
 
 main().catch((error) => {
@@ -207,7 +195,7 @@ main().catch((error) => {
   if (!jobPath) return;
   try {
     const job = JSON.parse(fs.readFileSync(jobPath, 'utf8'));
-    writeStatus(job.statusPath, {
+    finishBaselineJob(job, {
       runId: job.runId,
       status: 'failed',
       previewHash: job.preview.previewHash,

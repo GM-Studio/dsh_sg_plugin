@@ -1,0 +1,29 @@
+✔ two real MCP servers reuse one active baseline and never remove its live worktree (3841.6277ms)
+✔ a crashed owner cannot reclaim a live child; after exit a fresh run recovers only its own worktree (5578.2613ms)
+✔ a different real Git preview is rejected while the original worktree is running (3374.7538ms)
+✔ simultaneous requests in separate MCP processes create exactly one baseline (3124.9363ms)
+✔ unreadable ownership fails closed without changing or deleting its files (1085.8497ms)
+✔ separate repositories sharing a configured worktree parent never reclaim each other (5831.9936ms)
+✔ detached baseline worker survives the starter and persists readiness (1925.6517ms)
+✔ a real locked local npm dependency is rebuilt in the detached worker despite source node_modules (4386.0202ms)
+✔ a real missing module blocks MCP adoption rather than becoming an accepted known failure (2511.9662ms)
+✔ actual timeout, absent executable and failed installation cannot produce a usable baseline (1946.4427ms)
+✔ real evidence storage failure keeps an otherwise passing baseline unready (2736.3075ms)
+✔ Python installs a local wheel in a worktree venv, reuses it and completes native MCP adoption (9072.2102ms)
+(node:4480) [DEP0190] DeprecationWarning: Passing args to a child process with shell option true can lead to security vulnerabilities, as the arguments are not escaped, only concatenated.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+✔ Go compiles a real project in its isolated worktree and completes native MCP adoption (9458.6523ms)
+✔ a past suite install marker cannot hide deleted dependencies (1482.8528ms)
+✔ project tools expose only bounded project operations and read-only previews (0.7702ms)
+✔ adoption preview, baseline apply and project status use server-owned runner results (1294.9532ms)
+✔ failed background baseline remains observable and never creates readiness (655.6955ms)
+✔ dirty adoption commit calls only the server-owned approval provider (967.381ms)
+✔ unknown tools, extra credentials and unavailable providers fail closed (304.1572ms)
+ℹ tests 19
+ℹ suites 0
+ℹ pass 19
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 33975.7255

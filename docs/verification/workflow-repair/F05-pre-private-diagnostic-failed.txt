@@ -1,0 +1,52 @@
+✔ two real MCP servers reuse one active baseline and never remove its live worktree (3824.2684ms)
+✔ a crashed owner cannot reclaim a live child; after exit a fresh run recovers only its own worktree (5335.8432ms)
+✔ a different real Git preview is rejected while the original worktree is running (3336.1293ms)
+✔ simultaneous requests in separate MCP processes create exactly one baseline (2957.1873ms)
+✔ unreadable ownership fails closed without changing or deleting its files (1074.9999ms)
+✔ separate repositories sharing a configured worktree parent never reclaim each other (6688.0219ms)
+✔ detached baseline worker survives the starter and persists readiness (2009.0661ms)
+✔ a real locked local npm dependency is rebuilt in the detached worker despite source node_modules (4519.0238ms)
+✔ a real missing module blocks MCP adoption rather than becoming an accepted known failure (2496.8799ms)
+✔ actual timeout, absent executable and failed installation cannot produce a usable baseline (1932.9825ms)
+✖ real evidence storage failure keeps an otherwise passing baseline unready (1624.7225ms)
+✔ Python installs a local wheel in a worktree venv, reuses it and completes native MCP adoption (9609.4876ms)
+(node:2092) [DEP0190] DeprecationWarning: Passing args to a child process with shell option true can lead to security vulnerabilities, as the arguments are not escaped, only concatenated.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+✔ Go compiles a real project in its isolated worktree and completes native MCP adoption (10201.2718ms)
+✔ a past suite install marker cannot hide deleted dependencies (1470.3414ms)
+✔ project tools expose only bounded project operations and read-only previews (1.246ms)
+✔ adoption preview, baseline apply and project status use server-owned runner results (1627.6552ms)
+✔ failed background baseline remains observable and never creates readiness (905.5407ms)
+✔ dirty adoption commit calls only the server-owned approval provider (943.456ms)
+✔ unknown tools, extra credentials and unavailable providers fail closed (250.9108ms)
+ℹ tests 19
+ℹ suites 0
+ℹ pass 18
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 34311.0778
+
+✖ failing tests:
+
+test at test\codex-environment-dependencies-e2e.test.js:181:1
+✖ real evidence storage failure keeps an otherwise passing baseline unready (1624.7225ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + 'BASELINE_INFRASTRUCTURE_FAILED'
+  - 'BASELINE_EVIDENCE_FAILED'
+              ^
+  
+      at TestContext.<anonymous> (file:///E:/ai_workflow/specgate/.tmp/env-repair-candidates/F05-c/test/codex-environment-dependencies-e2e.test.js:201:10)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1125:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:787:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'BASELINE_INFRASTRUCTURE_FAILED',
+    expected: 'BASELINE_EVIDENCE_FAILED',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

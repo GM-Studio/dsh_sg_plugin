@@ -1,0 +1,46 @@
+✔ two real MCP servers reuse one active baseline and never remove its live worktree (3703.6802ms)
+✔ a crashed owner cannot reclaim a live child; after exit a fresh run recovers only its own worktree (5360.368ms)
+✔ a different real Git preview is rejected while the original worktree is running (3376.2742ms)
+✖ simultaneous requests in separate MCP processes create exactly one baseline (2956.5525ms)
+✔ unreadable ownership fails closed without changing or deleting its files (1051.498ms)
+✔ separate repositories sharing a configured worktree parent never reclaim each other (5811.0309ms)
+✔ detached baseline worker survives the starter and persists readiness (1975.9461ms)
+✔ a real locked local npm dependency is rebuilt in the detached worker despite source node_modules (4202.1133ms)
+✔ a real missing module blocks MCP adoption rather than becoming an accepted known failure (2315.9542ms)
+✔ actual timeout, absent executable and failed installation cannot produce a usable baseline (1927.397ms)
+✔ real evidence storage failure keeps an otherwise passing baseline unready (2485.0672ms)
+✔ Python installs a local wheel in a worktree venv, reuses it and completes native MCP adoption (8995.3489ms)
+(node:16308) [DEP0190] DeprecationWarning: Passing args to a child process with shell option true can lead to security vulnerabilities, as the arguments are not escaped, only concatenated.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+✔ Go compiles a real project in its isolated worktree and completes native MCP adoption (8818.6729ms)
+✔ a past suite install marker cannot hide deleted dependencies (1380.1196ms)
+✔ project tools expose only bounded project operations and read-only previews (0.7602ms)
+✔ adoption preview, baseline apply and project status use server-owned runner results (1328.8696ms)
+✔ failed background baseline remains observable and never creates readiness (681.193ms)
+✔ dirty adoption commit calls only the server-owned approval provider (930.3788ms)
+✔ unknown tools, extra credentials and unavailable providers fail closed (283.6316ms)
+ℹ tests 19
+ℹ suites 0
+ℹ pass 18
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 32476.3899
+
+✖ failing tests:
+
+test at test\codex-baseline-concurrency-e2e.test.js:224:1
+✖ simultaneous requests in separate MCP processes create exactly one baseline (2956.5525ms)
+  AssertionError [ERR_ASSERTION]: [{"ok":true,"runId":"baseline-run-500012531da4304f","status":"running","previewHash":"b859be8bb93fd616225f094b9ffc79e97663157254a5f8876639849be13b5411","startedAt":"2026-10-31T11:18:02.120Z","finishedAt":null,"totalCommands":2,"completedCommands":0,"currentCommand":null},{"ok":false,"code":"ENOENT","message":"ENOENT: no such file or directory, lstat 'C:\\Users\\Administrator\\AppData\\Local\\Temp\\specgate-codex-tests\\run-4756-Mxqbyn\\sg-baseline-concurrent-dBNQsV\\.git\\specgate\\baseline-lease\\owner.json'"}]
+      at TestContext.<anonymous> (file:///E:/ai_workflow/specgate/.tmp/env-repair-candidates/F05-a/test/codex-baseline-concurrency-e2e.test.js:249:10)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1125:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:787:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }

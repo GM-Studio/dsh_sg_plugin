@@ -9,6 +9,14 @@ import { spawn, spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { hashValue } from './events.js';
 import { gitSafeDirectory } from './git-path.js';
+import {
+  acquireBaselineLease,
+  inspectBaselineLease,
+  claimBaselineWorker,
+  releaseBaselineLease,
+  readLeaseJson,
+  writeLeaseJson,
+} from './core/baseline-lease.js';
 
 const WORKER = fileURLToPath(new URL('./baseline-worker.mjs', import.meta.url));
 const RUN_ID = /^baseline-run-[a-f0-9]{16}$/;
@@ -78,44 +86,37 @@ export function baselineWorktreeRoot(root) {
   return path.resolve(target);
 }
 
-function cleanupStaleWorktrees(root) {
-  const listed = git(root, ['worktree', 'list', '--porcelain']);
-  if (listed.status !== 0) return;
-  const worktreeParent = baselineWorktreeRoot(root);
-  for (const record of listed.stdout.trim().split(/\r?\n\r?\n/)) {
-    const line = record.split(/\r?\n/).find((entry) => entry.startsWith('worktree '));
-    if (!line) continue;
-    const target = path.resolve(line.slice('worktree '.length));
-    if (inside(worktreeParent, target) && target !== worktreeParent)
-      git(root, ['worktree', 'remove', '--force', target]);
+function recoverBaselineJob(root, stateRoot, owner) {
+  const directory = path.join(stateRoot, owner.runId);
+  if (!RUN_ID.test(owner.runId)) throw new Error('Invalid expired baseline run');
+  const file = path.join(directory, 'job.json');
+  if (!fs.existsSync(file)) return;
+  const job = readLeaseJson(file);
+  if (job.lease?.token !== owner.token || job.projectRoot !== owner.projectRoot)
+    throw new Error('Expired baseline ownership does not match its job; retained');
+  const target = path.resolve(job.worktreeRoot, owner.runId);
+  if (!inside(path.resolve(job.worktreeRoot), target) || path.basename(target) !== owner.runId)
+    throw new Error('Expired baseline worktree path is invalid');
+  if (fs.existsSync(target)) {
+    const removed = git(root, ['worktree', 'remove', '--force', target]);
+    if (removed.status !== 0)
+      throw new Error(removed.stderr || 'Expired worktree could not be removed; retained');
   }
-  git(root, ['worktree', 'prune']);
+  const statusPath = path.join(directory, 'status.json');
+  const previous = fs.existsSync(statusPath) ? readLeaseJson(statusPath) : {};
+  writeJson(statusPath, {
+    ...previous,
+    runId: owner.runId,
+    status: 'failed',
+    code: 'BASELINE_WORKER_EXITED',
+    message: 'Owner and tracked child processes exited; worktree reclaimed, job evidence retained',
+    finishedAt: new Date().toISOString(),
+    currentCommand: null,
+  });
 }
 
 function writeJson(target, value) {
-  fs.mkdirSync(path.dirname(target), { recursive: true });
-  const temporary = `${target}.${randomUUID()}.tmp`;
-  let promoted = false;
-  try {
-    fs.writeFileSync(temporary, JSON.stringify(value, null, 2) + '\n', { flag: 'wx' });
-    try {
-      fs.renameSync(temporary, target);
-      promoted = true;
-    } catch (error) {
-      if (!['EEXIST', 'EPERM'].includes(error.code)) throw error;
-      fs.rmSync(target, { force: true });
-      fs.renameSync(temporary, target);
-      promoted = true;
-    }
-  } finally {
-    if (!promoted) {
-      try {
-        fs.rmSync(temporary, { force: true, maxRetries: 20, retryDelay: 100 });
-      } catch {
-        // preserve the original write or rename failure; the temp file was never published
-      }
-    }
-  }
+  writeLeaseJson(target, value);
 }
 
 function visibleStatus(status) {
@@ -135,7 +136,7 @@ function visibleStatus(status) {
   };
 }
 
-export function startBaselineJob({
+export function reserveBaselineJob({
   projectRoot,
   preview,
   createdAt = new Date().toISOString(),
@@ -149,20 +150,68 @@ export function startBaselineJob({
   }
   if (!preview?.ok || !preview.profile || preview.root !== root || !preview.git?.commit)
     return failure('BASELINE_PREVIEW_INVALID', 'A current adoption preview is required');
-  let stateRoot;
+  let stateRoot, heldLease;
   try {
     stateRoot = jobRoot(root);
-    cleanupStaleWorktrees(root);
-    fs.rmSync(stateRoot, { recursive: true, force: true });
+    if (
+      !fs.existsSync(path.join(path.dirname(stateRoot), 'baseline-lease')) &&
+      fs.existsSync(stateRoot)
+    ) {
+      const previous = fs.readdirSync(stateRoot).filter((entry) => RUN_ID.test(entry));
+      if (previous.length > 128)
+        return failure(
+          'BASELINE_HISTORY_LIMIT',
+          'Baseline history requires inspection; no state was deleted',
+        );
+      for (const id of previous) {
+        const status = readLeaseJson(path.join(stateRoot, id, 'status.json'));
+        if (status.status === 'running')
+          return failure(
+            'BASELINE_ALREADY_RUNNING',
+            'A legacy or unconfirmed baseline is present; inspect its owner before recovery',
+          );
+      }
+    }
     const runId = `baseline-run-${hashValue({
       projectId: preview.profile.projectId,
       previewHash: preview.previewHash,
       createdAt,
+      nonce: randomUUID(),
     }).slice(0, 16)}`;
     if (!RUN_ID.test(runId)) return failure('BASELINE_JOB_INVALID', 'Baseline run ID is invalid');
     const directory = path.join(stateRoot, runId);
     const jobPath = path.join(directory, 'job.json');
     const statusPath = path.join(directory, 'status.json');
+    const acquired = acquireBaselineLease(
+      path.join(path.dirname(stateRoot), 'baseline-lease'),
+      {
+        runId,
+        projectRoot: root,
+        previewHash: preview.previewHash,
+        startedAt: createdAt,
+      },
+      (owner) => recoverBaselineJob(root, stateRoot, owner),
+    );
+    if (!acquired.ok) {
+      const same =
+        acquired.owner?.ownerAlive &&
+        acquired.owner?.projectRoot === root &&
+        acquired.owner?.previewHash === preview.previewHash;
+      let active = getBaselineJob(root);
+      if (
+        !active ||
+        (!acquired.owner?.workerPid && ['ENOENT', 'BASELINE_STATUS_INVALID'].includes(active.code))
+      )
+        active = { ...acquired.owner, status: 'running' };
+      return same
+        ? { ok: true, reused: true, ...visibleStatus(active) }
+        : failure(
+            'BASELINE_ALREADY_RUNNING',
+            'Another baseline owns this Git repository; its worktree and evidence were preserved',
+          );
+    }
+    const lease = acquired.lease;
+    heldLease = lease;
     const status = {
       runId,
       status: 'running',
@@ -171,7 +220,7 @@ export function startBaselineJob({
       totalCommands: Object.values(preview.profile.commands).flat().length,
       completedCommands: 0,
       currentCommand: null,
-      pid: null,
+      pid: process.pid,
     };
     writeJson(jobPath, {
       schemaVersion: 1,
@@ -182,22 +231,120 @@ export function startBaselineJob({
       worktreeRoot: baselineWorktreeRoot(root),
       statusPath,
       createdAt,
+      lease,
     });
     writeJson(statusPath, status);
+    writeJson(path.join(path.dirname(stateRoot), 'baseline-current.json'), {
+      runId,
+      projectRoot: root,
+      token: lease.token,
+    });
+    return { ok: true, ...visibleStatus(status), jobPath, statusPath, lease };
+  } catch (error) {
+    if (heldLease) {
+      try {
+        const statusPath = path.join(stateRoot, heldLease.runId, 'status.json');
+        if (fs.existsSync(statusPath))
+          writeJson(statusPath, {
+            ...readLeaseJson(statusPath),
+            status: 'failed',
+            code: 'BASELINE_JOB_START_FAILED',
+            message: error.message,
+          });
+        releaseBaselineLease(heldLease);
+      } catch {
+        /* retain uncertain ownership */
+      }
+    }
+    return failure(error.code || 'BASELINE_JOB_START_FAILED', error.message);
+  }
+}
+
+export function updateBaselineJob(job, patch) {
+  const previous = readLeaseJson(job.statusPath);
+  writeJson(job.statusPath, { ...previous, ...patch });
+}
+
+function removeIfEmpty(directory) {
+  try {
+    if (fs.existsSync(directory) && fs.readdirSync(directory).length === 0) fs.rmdirSync(directory);
+  } catch (error) {
+    if (!['ENOENT', 'ENOTEMPTY', 'EEXIST'].includes(error.code)) throw error;
+  }
+}
+
+export function finishBaselineJob(job, { success = false, ...patch } = {}) {
+  if (!success) {
+    updateBaselineJob(job, {
+      ...patch,
+      status: 'failed',
+      finishedAt: new Date().toISOString(),
+      currentCommand: null,
+    });
+    releaseBaselineLease(job.lease);
+    return;
+  }
+  const owner = inspectBaselineLease(job.lease.directory);
+  if (
+    !owner ||
+    owner.token !== job.lease.token ||
+    (owner.workerPid || owner.pid) !== process.pid ||
+    owner.childAlive
+  )
+    throw new Error('Baseline ownership or child completion is not confirmed');
+  const stateRoot = path.dirname(path.dirname(job.statusPath));
+  const parent = path.dirname(stateRoot);
+  writeJson(path.join(parent, 'baseline-current.json'), {
+    runId: job.runId,
+    token: job.lease.token,
+    status: 'completed',
+  });
+  fs.rmSync(path.dirname(job.statusPath), { recursive: true });
+  removeIfEmpty(path.join(stateRoot, 'worktrees'));
+  removeIfEmpty(stateRoot);
+  if (!fs.existsSync(stateRoot))
+    fs.rmSync(path.join(parent, 'baseline-current.json'), { force: true });
+  releaseBaselineLease(job.lease);
+  removeIfEmpty(parent);
+}
+
+export function startBaselineJob(options = {}) {
+  const reserved = reserveBaselineJob(options);
+  if (!reserved.ok || reserved.reused) return reserved;
+  const { jobPath, statusPath, lease } = reserved;
+  try {
+    const job = readLeaseJson(jobPath);
     const child = spawn(process.execPath, [WORKER, '--job', jobPath], {
-      cwd: root,
+      cwd: job.projectRoot,
       detached: true,
       stdio: 'ignore',
       windowsHide: true,
-      env: environmentReport
-        ? environmentExecutionContext(environmentReport, { root, env: managedEnvironment() }).env
+      env: job.environmentReport
+        ? environmentExecutionContext(job.environmentReport, {
+            root: job.projectRoot,
+            env: managedEnvironment(),
+          }).env
         : process.env,
     });
-    status.pid = child.pid || null;
-    writeJson(statusPath, status);
+    child.once('error', (error) => {
+      writeJson(statusPath, {
+        ...reserved,
+        status: 'failed',
+        code: 'BASELINE_WORKER_SPAWN_FAILED',
+        message: error.message,
+      });
+      releaseBaselineLease(lease);
+    });
+    if (child.pid) claimBaselineWorker(lease, child.pid);
     child.unref();
-    return { ok: true, ...visibleStatus(status) };
+    return { ok: true, ...visibleStatus(reserved) };
   } catch (error) {
+    writeJson(statusPath, {
+      ...reserved,
+      status: 'failed',
+      code: error.code || 'BASELINE_JOB_START_FAILED',
+      message: error.message,
+    });
     return failure(error.code || 'BASELINE_JOB_START_FAILED', error.message);
   }
 }
@@ -211,25 +358,39 @@ export function getBaselineJob(projectRoot) {
   } catch {
     return null;
   }
-  if (!fs.existsSync(stateRoot)) return null;
-  let directories;
+  let runId;
   try {
-    directories = fs
-      .readdirSync(stateRoot, { withFileTypes: true })
-      .filter((entry) => entry.isDirectory() && RUN_ID.test(entry.name));
-  } catch {
-    return null;
+    const lease = inspectBaselineLease(path.join(path.dirname(stateRoot), 'baseline-lease'));
+    const pointer = fs.existsSync(path.join(path.dirname(stateRoot), 'baseline-current.json'))
+      ? readLeaseJson(path.join(path.dirname(stateRoot), 'baseline-current.json'))
+      : null;
+    if (pointer?.status === 'completed' && !lease) return null;
+    if (pointer?.status === 'completed' && lease)
+      return visibleStatus({ ...lease, status: 'running' });
+    runId = lease?.runId || pointer?.runId;
+    if (!RUN_ID.test(runId || '')) return null;
+  } catch (error) {
+    return {
+      status: 'failed',
+      code: error.code || 'BASELINE_LEASE_INVALID',
+      message: 'Baseline ownership is unreadable; state retained',
+    };
   }
-  if (directories.length !== 1) return null;
   try {
-    const statusPath = path.join(stateRoot, directories[0].name, 'status.json');
+    const statusPath = path.join(stateRoot, runId, 'status.json');
     const status = JSON.parse(fs.readFileSync(statusPath, 'utf8'));
-    if (status?.runId !== directories[0].name || !['running', 'failed'].includes(status.status))
-      return null;
+    if (status?.runId !== runId || !['running', 'failed'].includes(status.status))
+      return {
+        status: 'failed',
+        runId,
+        code: 'BASELINE_STATUS_INVALID',
+        message: 'Baseline status is incomplete; state retained',
+      };
     if (status.status === 'running' && Number.isSafeInteger(status.pid)) {
+      const lease = inspectBaselineLease(path.join(path.dirname(stateRoot), 'baseline-lease'));
       let alive = true;
       try {
-        process.kill(status.pid, 0);
+        process.kill(lease?.workerPid || status.pid, 0);
       } catch (error) {
         alive = error.code === 'EPERM';
       }
@@ -241,11 +402,15 @@ export function getBaselineJob(projectRoot) {
           finishedAt: new Date().toISOString(),
           currentCommand: null,
         });
-        writeJson(statusPath, status);
       }
     }
     return visibleStatus(status);
-  } catch {
-    return null;
+  } catch (error) {
+    return {
+      status: 'failed',
+      runId,
+      code: error.code || 'BASELINE_STATUS_INVALID',
+      message: 'Baseline status is unreadable; state retained',
+    };
   }
 }

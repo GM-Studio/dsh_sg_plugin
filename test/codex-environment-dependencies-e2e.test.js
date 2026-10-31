@@ -198,7 +198,17 @@ test('real evidence storage failure keeps an otherwise passing baseline unready'
   const { status } = await adopt(t, root);
   assert.equal(status.projectReady, false, JSON.stringify(status));
   assert.equal(status.baselineRun.status, 'failed');
-  assert.equal(status.baselineRun.code, 'BASELINE_EVIDENCE_FAILED');
+  const diagnostic = JSON.parse(
+    fs.readFileSync(
+      path.join(root, '.git/specgate/baseline-jobs', status.baselineRun.runId, 'results.json'),
+      'utf8',
+    ),
+  );
+  assert.equal(
+    status.baselineRun.code,
+    'BASELINE_EVIDENCE_FAILED',
+    JSON.stringify({ status, diagnostic }),
+  );
 });
 
 test('Python installs a local wheel in a worktree venv, reuses it and completes native MCP adoption', async (t) => {

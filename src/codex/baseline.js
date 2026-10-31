@@ -1,10 +1,19 @@
 import { spawn } from 'node:child_process';
 import path from 'node:path';
+import fs from 'node:fs';
+import { fileURLToPath } from 'node:url';
 import { hashValue } from './events.js';
 import { validateProjectBaseline } from './project-model.js';
 import { projectCommandSpec } from './core/project-command.js';
 import { executionEnvironment, resolveEnvironmentCommand } from './core/environment-execution.js';
 import { classifyErrorText } from './core/outcome-classification.js';
+import {
+  reserveBaselineJob,
+  updateBaselineJob,
+  finishBaselineJob,
+  getBaselineJob,
+} from './baseline-job.js';
+import { observeBaselineProcess, releaseBaselineLease } from './core/baseline-lease.js';
 
 const failure = (code, message) => ({ ok: false, code, message });
 const STATUSES = new Set(['passed', 'failed', 'skipped', 'not-run', 'timeout', 'cancelled']);
@@ -99,6 +108,8 @@ export function runBaselineCommand({
   timeoutMs = 15 * 60 * 1000,
   signal,
   executionContext,
+  processObserver,
+  commandLease,
 } = {}) {
   return new Promise((resolve) => {
     let argv = command?.argv || [];
@@ -149,19 +160,32 @@ export function runBaselineCommand({
     }
     let child;
     try {
+      processObserver?.({ commandId: command.id, pid: null, stopped: false });
       argv = resolveEnvironmentCommand(command.argv, executionContext, cwd);
       const env = executionEnvironment(executionContext, {}, cwd);
       const resolved = projectCommandSpec(argv[0], argv.slice(1), { env });
-      child = spawn(resolved.command, resolved.args, {
+      const supervised = commandLease
+        ? {
+            command: process.execPath,
+            args: [
+              fileURLToPath(new URL('./baseline-command-worker.mjs', import.meta.url)),
+              JSON.stringify({ ...resolved, lease: commandLease }),
+            ],
+          }
+        : resolved;
+      child = spawn(supervised.command, supervised.args, {
         cwd,
         env,
         shell: false,
         windowsHide: true,
-        windowsVerbatimArguments: resolved.windowsVerbatimArguments,
-        detached: process.platform !== 'win32',
+        windowsVerbatimArguments: commandLease ? false : resolved.windowsVerbatimArguments,
+        detached: !!commandLease || process.platform !== 'win32',
         stdio: ['ignore', 'pipe', 'pipe'],
       });
+      if (child.pid) processObserver?.({ commandId: command.id, pid: child.pid, stopped: false });
     } catch (error) {
+      if (child?.pid) stopProcess(child);
+      else processObserver?.({ commandId: command.id, pid: null, stopped: true });
       stderr = String(error.message || error).slice(-4096);
       finish('failed', null);
       return;
@@ -185,10 +209,12 @@ export function runBaselineCommand({
       Math.max(1000, Math.min(timeoutMs, 30 * 60 * 1000)),
     );
     child.once('error', (error) => {
+      processObserver?.({ commandId: command.id, pid: child.pid || null, stopped: true });
       stderr = (stderr + '\n' + String(error.message || error)).slice(-MAX_OUTPUT);
       finish('failed', null);
     });
     child.once('close', (code) => {
+      processObserver?.({ commandId: command.id, pid: child.pid || null, stopped: true });
       finish(code === 0 ? 'passed' : 'failed', Number.isInteger(code) ? code : null);
     });
   });
@@ -201,6 +227,8 @@ export async function runAdoptionBaseline({
   createdAt = new Date().toISOString(),
   onProgress = () => {},
   executionContext,
+  processObserver,
+  commandLease,
 } = {}) {
   if (!preview?.ok || !preview.profile || !preview.git?.commit)
     return failure('BASELINE_PREVIEW_INVALID', 'A valid adoption preview is required');
@@ -255,6 +283,8 @@ export async function runAdoptionBaseline({
         timeoutMs: command.timeoutMs,
         signal,
         executionContext,
+        processObserver,
+        commandLease,
       });
     } catch (error) {
       if (signal?.aborted || error?.code === 'ABORT_ERR')
@@ -376,12 +406,10 @@ export function startAdoptionBaseline({
       'A baseline for another project preview is already running',
     );
   }
+  const reserved = reserveBaselineJob({ projectRoot: preview.root, preview, createdAt });
+  if (!reserved.ok || reserved.reused) return reserved;
   const run = {
-    runId: `baseline-run-${hashValue({
-      projectId: preview.profile.projectId,
-      previewHash: preview.previewHash,
-      createdAt,
-    }).slice(0, 16)}`,
+    runId: reserved.runId,
     status: 'running',
     previewHash: preview.previewHash,
     root: preview.root,
@@ -398,8 +426,14 @@ export function startAdoptionBaseline({
         runner,
         executionContext,
         createdAt,
+        commandLease: reserved.lease,
+        processObserver(event) {
+          observeBaselineProcess(reserved.lease, event);
+          if (event.stopped && run.status === 'failed') releaseBaselineLease(reserved.lease);
+        },
         onProgress(progress) {
           Object.assign(run, progress);
+          updateBaselineJob(reserved, progress);
         },
       }),
     )
@@ -475,11 +509,37 @@ export function startAdoptionBaseline({
         finishedAt: new Date().toISOString(),
         currentCommand: null,
       });
+    })
+    .finally(() => {
+      try {
+        finishBaselineJob(reserved, {
+          ...visibleRun(run),
+          success: run.status === 'completed' && !run.evidenceWarning,
+        });
+      } catch (error) {
+        Object.assign(run, {
+          status: 'failed',
+          code: error.code || 'BASELINE_JOB_FINALIZATION_FAILED',
+          message: error.message,
+        });
+      }
     });
   return { ok: true, ...visibleRun(run) };
 }
 
 export function getAdoptionBaselineRun(root) {
   const run = activeRuns.get(root);
+  if (run && run.status !== 'running') {
+    const current = getBaselineJob(root);
+    if (current && current.runId !== run.runId) return current;
+    if (
+      !current &&
+      run.status === 'failed' &&
+      fs.existsSync(path.join(root, '.specgate/codex/project.json'))
+    ) {
+      activeRuns.delete(root);
+      return null;
+    }
+  }
   return run ? visibleRun(run) : null;
 }

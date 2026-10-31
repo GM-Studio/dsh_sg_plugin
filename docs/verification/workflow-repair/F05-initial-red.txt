@@ -1,0 +1,29 @@
+✖ two real MCP servers reuse one active baseline and never remove its live worktree (3836.369ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 0
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 3921.9069
+
+✖ failing tests:
+
+test at test\codex-baseline-concurrency-e2e.test.js:37:1
+✖ two real MCP servers reuse one active baseline and never remove its live worktree (3836.369ms)
+  AssertionError [ERR_ASSERTION]: {"ok":false,"code":"EPERM","message":"EPERM, Permission denied: \\\\?\\C:\\Users\\Administrator\\AppData\\Local\\Temp\\specgate-codex-tests\\run-5740-89xY7q\\sg-baseline-concurrent-lIGGy0\\.git\\specgate\\baseline-jobs '\\\\?\\C:\\Users\\Administrator\\AppData\\Local\\Temp\\specgate-codex-tests\\run-5740-89xY7q\\sg-baseline-concurrent-lIGGy0\\.git\\specgate\\baseline-jobs'"}
+  
+  false !== true
+  
+      at TestContext.<anonymous> (file:///E:/ai_workflow/specgate/test/codex-baseline-concurrency-e2e.test.js:54:10)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1125:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:358:3) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
