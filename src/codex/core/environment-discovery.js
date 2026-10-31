@@ -116,7 +116,11 @@ export function discoverRequiredEnvironment({ root, selection, env, platform, ca
       .slice(0, 16);
     for (const bin of binaries) {
       const args = id === 'go' ? ['version'] : id === 'git' ? ['--version'] : ['--version'];
-      const output = probeTool(bin, args, 2500, env);
+      const output = probeTool(bin, args, 2500, {
+        ...env,
+        COREPACK_ENABLE_NETWORK: '0',
+        COREPACK_ENABLE_AUTO_PIN: '0',
+      });
       const version =
         id === 'go'
           ? /go(\d+\.\d+(?:\.\d+)?)/.exec(output)?.[1]

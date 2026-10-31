@@ -1,0 +1,35 @@
+[
+  {
+    "id": "yarn",
+    "version": "1.22.22",
+    "url": "https://registry.npmjs.org/yarn/-/yarn-1.22.22.tgz",
+    "algorithm": "sha512",
+    "checksum": "a6b2f7906b721bba3d67d4aff083df04dad64c399707841b7acf00f6b133b7ac24255f2652fa22ae3534329dc6180534e98d17432037ff6fd140556e2bb3137e",
+    "location": "/home/sc/specgate-env-repair/formatter-tools/yarn-1.22.22",
+    "shim": "/home/sc/specgate-env-repair/formatter-tools/yarn-1.22.22/yarn",
+    "command": "/usr/bin/node",
+    "args": [
+      "/home/sc/specgate-env-repair/formatter-tools/yarn-1.22.22/package/bin/yarn.js",
+      "--version"
+    ],
+    "output": "1.22.22",
+    "approval": "Explicit current-chat approval of the exact four isolated installations on 2026-10-31",
+    "reused": true
+  },
+  {
+    "id": "ruff",
+    "version": "0.15.10",
+    "url": "https://files.pythonhosted.org/packages/bc/bb/7ddb00a83760ff4a83c4e2fc231fd63937cc7317c10c82f583302e0f6586/ruff-0.15.10-py3-none-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
+    "algorithm": "sha256",
+    "checksum": "51cb8cc943e891ba99989dd92d61e29b1d231e14811db9be6440ecf25d5c1609",
+    "location": "/home/sc/specgate-env-repair/formatter-tools/ruff-0.15.10",
+    "shim": "/home/sc/specgate-env-repair/formatter-tools/ruff-0.15.10/ruff",
+    "command": "/home/sc/specgate-env-repair/formatter-tools/ruff-0.15.10/package/ruff-0.15.10.data/scripts/ruff",
+    "args": [
+      "--version"
+    ],
+    "output": "ruff 0.15.10",
+    "approval": "Explicit current-chat approval of the exact four isolated installations on 2026-10-31",
+    "reused": false
+  }
+]

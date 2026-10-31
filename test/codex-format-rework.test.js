@@ -4,6 +4,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { execFileSync } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
 import {
   createDevelopmentService,
   createPrecompletedRoleProvider,
@@ -47,7 +48,7 @@ test('native formatter uses a declared Maven formatter without requiring a wrapp
   assert.equal(result.ok, true, JSON.stringify(result));
   assert.deepEqual(
     calls.map((entry) => entry.args),
-    [['spotless:apply']],
+    [['--offline', 'spotless:apply']],
   );
 });
 
@@ -237,6 +238,69 @@ function fixturePostFormatQuality(context) {
     },
   };
 }
+
+for (const pass of [true, false])
+  test(`real Prettier changes integration and post-format command ${pass ? 'passes before Review' : 'failure keeps Review closed'}`, async () => {
+    const context = await fixture();
+    fs.writeFileSync(
+      path.join(context.integrationPath, 'frontend/src/App.ts'),
+      'export const n={value:2}',
+    );
+    commit(context.integrationPath, 'change needing formatting');
+    fs.mkdirSync(path.join(context.formatPath, '.specgate'), { recursive: true });
+    const prettier = fileURLToPath(
+      new URL('../node_modules/prettier/bin/prettier.cjs', import.meta.url),
+    );
+    fs.writeFileSync(
+      path.join(context.formatPath, '.specgate/format.json'),
+      JSON.stringify({
+        schemaVersion: 1,
+        commands: [
+          {
+            id: 'typescript',
+            cwd: '.',
+            apply: [process.execPath, prettier, '--write', 'frontend/src/App.ts'],
+          },
+        ],
+      }),
+    );
+    const saved = fixturePostFormatQuality(context);
+    let actualQuality = false;
+    const service = createFormatService({
+      projectRoot: context.root,
+      store: context.store,
+      planService: context.planService,
+      formatter: createNativeFormatter(),
+      qualityService: {
+        run: async (args, options) => {
+          assert.equal(options.postFormat, true);
+          try {
+            execFileSync(
+              process.execPath,
+              [
+                '-e',
+                `const fs=require('node:fs'),a=require('node:assert/strict');a.match(fs.readFileSync('frontend/src/App.ts','utf8'),/n = \\{ value: 2 \\}/);process.exit(${pass ? 0 : 7});`,
+              ],
+              { cwd: context.integrationPath, windowsHide: true, stdio: 'pipe' },
+            );
+            actualQuality = true;
+            return saved.run(args, options);
+          } catch (error) {
+            return { ok: false, code: 'REAL_POST_FORMAT_TEST_FAILED', exitCode: error.status };
+          }
+        },
+      },
+    });
+    const result = await service.run({ expectedVersion: await context.version() });
+    assert.equal(result.ok, pass, JSON.stringify(result));
+    assert.equal(actualQuality, pass);
+    const current = await context.store.inspect();
+    assert.equal(current.state.phase, pass ? 'REVIEWING' : 'FORMATTING');
+    assert.match(
+      fs.readFileSync(path.join(context.integrationPath, 'frontend/src/App.ts'), 'utf8'),
+      /n =/,
+    );
+  });
 
 test('failed quality returns defects to a new development round', async () => {
   const context = await fixture({ through: 'TESTING' });

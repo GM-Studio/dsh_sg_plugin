@@ -1,0 +1,280 @@
+TAP version 13
+# Subtest: the real checked Node/npm paths are consumed by baseline commands without changing process environment
+ok 1 - the real checked Node/npm paths are consumed by baseline commands without changing process environment
+  ---
+  duration_ms: 652.467266
+  type: 'test'
+  ...
+# Subtest: real MCP adoption carries checked tools into the detached worktree worker and records executed paths
+ok 2 - real MCP adoption carries checked tools into the detached worktree worker and records executed paths
+  ---
+  duration_ms: 1689.847342
+  type: 'test'
+  ...
+# Subtest: checked JDK/Maven compile and execute Java with a corrected child JAVA_HOME
+ok 3 - checked JDK/Maven compile and execute Java with a corrected child JAVA_HOME
+  ---
+  duration_ms: 1355.5298
+  type: 'test'
+  ...
+# Subtest: native formatter and Git control operations reuse actual executables without global PATH edits
+ok 4 - native formatter and Git control operations reuse actual executables without global PATH edits
+  ---
+  duration_ms: 681.173826
+  type: 'test'
+  ...
+# Subtest: native formatter executes the project package manager from a real worktree
+ok 5 - native formatter executes the project package manager from a real worktree
+  ---
+  duration_ms: 362.062116
+  type: 'test'
+  ...
+# Subtest: native formatter uses a declared Maven formatter without requiring a wrapper
+ok 6 - native formatter uses a declared Maven formatter without requiring a wrapper
+  ---
+  duration_ms: 1.844634
+  type: 'test'
+  ...
+# Subtest: repair summaries are bounded, redact credentials and keep full-input hash references
+ok 7 - repair summaries are bounded, redact credentials and keep full-input hash references
+  ---
+  duration_ms: 14.682681
+  type: 'test'
+  ...
+# Subtest: real Prettier changes integration and post-format command passes before Review
+ok 8 - real Prettier changes integration and post-format command passes before Review
+  ---
+  duration_ms: 488.443628
+  type: 'test'
+  ...
+# Subtest: real Prettier changes integration and post-format command failure keeps Review closed
+ok 9 - real Prettier changes integration and post-format command failure keeps Review closed
+  ---
+  duration_ms: 485.015593
+  type: 'test'
+  ...
+# Subtest: failed quality returns defects to a new development round
+ok 10 - failed quality returns defects to a new development round
+  ---
+  duration_ms: 231.778905
+  type: 'test'
+  ...
+# Subtest: Formatter runs only after tests, commits in its worktree and merges before Review
+ok 11 - Formatter runs only after tests, commits in its worktree and merges before Review
+  ---
+  duration_ms: 154.350385
+  type: 'test'
+  ...
+# Subtest: Formatter cannot modify tests or files outside the development delta
+ok 12 - Formatter cannot modify tests or files outside the development delta
+  ---
+  duration_ms: 134.440451
+  type: 'test'
+  ...
+# Subtest: blocking Review starts a new round with fresh frontend/backend/format worktrees
+ok 13 - blocking Review starts a new round with fresh frontend/backend/format worktrees
+  ---
+  duration_ms: 398.48454
+  type: 'test'
+  ...
+# Subtest: quality repair refuses to guess a missing failed command
+ok 14 - quality repair refuses to guess a missing failed command
+  ---
+  duration_ms: 82.979055
+  type: 'test'
+  ...
+# Subtest: real yarn formats a nested module using its declared package manager
+ok 15 - real yarn formats a nested module using its declared package manager
+  ---
+  duration_ms: 1293.461771
+  type: 'test'
+  ...
+# Subtest: real pnpm formats a nested module using its declared package manager
+ok 16 - real pnpm formats a nested module using its declared package manager
+  ---
+  duration_ms: 438.388333
+  type: 'test'
+  ...
+# Subtest: real Ruff formats Python and an unformatted check is read-only
+ok 17 - real Ruff formats Python and an unformatted check is read-only
+  ---
+  duration_ms: 49.688099
+  type: 'test'
+  ...
+# Subtest: real checked Go SDK supplies gofmt and treats nonempty -l output as failure
+ok 18 - real checked Go SDK supplies gofmt and treats nonempty -l output as failure
+  ---
+  duration_ms: 54.570156
+  type: 'test'
+  ...
+# Subtest: real cached Maven Spotless formats root Java and checks the formatted source
+ok 19 - real cached Maven Spotless formats root Java and checks the formatted source
+  ---
+  duration_ms: 5092.124331
+  type: 'test'
+  ...
+# Subtest: missing configuration, missing executable, conflicting locks and absent check mode block
+ok 20 - missing configuration, missing executable, conflicting locks and absent check mode block
+  ---
+  duration_ms: 4.772334
+  type: 'test'
+  ...
+# Subtest: root npm formatter actually formats JSX/Vue and check leaves bytes unchanged
+ok 21 - root npm formatter actually formats JSX/Vue and check leaves bytes unchanged
+  ---
+  duration_ms: 1503.409055
+  type: 'test'
+  ...
+# Subtest: an explicit check command which changes source is rejected even with exit zero
+ok 22 - an explicit check command which changes source is rejected even with exit zero
+  ---
+  duration_ms: 86.460513
+  type: 'test'
+  ...
+# Subtest: the server reads ignored project configuration from its bound root and executes in the worktree
+ok 23 - the server reads ignored project configuration from its bound root and executes in the worktree
+  ---
+  duration_ms: 146.541095
+  type: 'test'
+  ...
+# Subtest: ProjectProfile formatter commands are all retained and run in their declared module
+ok 24 - ProjectProfile formatter commands are all retained and run in their declared module
+  ---
+  duration_ms: 148.018233
+  type: 'test'
+  ...
+# Subtest: synthetic local delivery smoke crosses all gates and archives the formatted commit without pushing
+ok 25 - synthetic local delivery smoke crosses all gates and archives the formatted commit without pushing
+  ---
+  duration_ms: 1500.762248
+  type: 'test'
+  ...
+# Subtest: quality passes only with frozen green cases, real logs, both coverage sides and changed-line coverage
+ok 26 - quality passes only with frozen green cases, real logs, both coverage sides and changed-line coverage
+  ---
+  duration_ms: 670.366
+  type: 'test'
+  ...
+# Subtest: native frozen verification preserves command logs and rejects invalid evidence: valid
+ok 27 - native frozen verification preserves command logs and rejects invalid evidence: valid
+  ---
+  duration_ms: 583.513307
+  type: 'test'
+  ...
+# Subtest: native frozen verification preserves command logs and rejects invalid evidence: stale-commit
+ok 28 - native frozen verification preserves command logs and rejects invalid evidence: stale-commit
+  ---
+  duration_ms: 552.060147
+  type: 'test'
+  ...
+# Subtest: native frozen verification preserves command logs and rejects invalid evidence: missing-log
+ok 29 - native frozen verification preserves command logs and rejects invalid evidence: missing-log
+  ---
+  duration_ms: 601.21103
+  type: 'test'
+  ...
+# Subtest: native frozen verification preserves command logs and rejects invalid evidence: stale-time
+ok 30 - native frozen verification preserves command logs and rejects invalid evidence: stale-time
+  ---
+  duration_ms: 614.06371
+  type: 'test'
+  ...
+# Subtest: formatter reruns the server quality gate against the formatted integration commit
+ok 31 - formatter reruns the server quality gate against the formatted integration commit
+  ---
+  duration_ms: 802.941646
+  type: 'test'
+  ...
+# Subtest: an idempotent formatter passes when only checkout line endings changed
+ok 32 - an idempotent formatter passes when only checkout line endings changed
+  ---
+  duration_ms: 728.318112
+  type: 'test'
+  ...
+# Subtest: a failed post-format quality run keeps Review closed and records repair evidence
+ok 33 - a failed post-format quality run keeps Review closed and records repair evidence
+  ---
+  duration_ms: 721.126713
+  type: 'test'
+  ...
+# Subtest: adopted quality verification uses ProjectProfile commands and Baseline Delta
+ok 34 - adopted quality verification uses ProjectProfile commands and Baseline Delta
+  ---
+  duration_ms: 522.560657
+  type: 'test'
+  ...
+# Subtest: skipped frozen cases become P1 defects and the third failed attempt blocks without deleting evidence
+ok 35 - skipped frozen cases become P1 defects and the third failed attempt blocks without deleting evidence
+  ---
+  duration_ms: 741.711473
+  type: 'test'
+  ...
+# Subtest: failed verification stages are attributed to the owning implementation role
+ok 36 - failed verification stages are attributed to the owning implementation role
+  ---
+  duration_ms: 547.627949
+  type: 'test'
+  ...
+# Subtest: a Test role writing production code fails closed before quality commands run
+ok 37 - a Test role writing production code fails closed before quality commands run
+  ---
+  duration_ms: 410.080758
+  type: 'test'
+  ...
+# Subtest: insufficient changed-line coverage cannot advance even when aggregate coverage thresholds pass
+ok 38 - insufficient changed-line coverage cannot advance even when aggregate coverage thresholds pass
+  ---
+  duration_ms: 511.497155
+  type: 'test'
+  ...
+# Subtest: a declaration-only Java interface does not become unavailable changed coverage
+ok 39 - a declaration-only Java interface does not become unavailable changed coverage
+  ---
+  duration_ms: 36.173726
+  type: 'test'
+  ...
+# Subtest: frontend changed coverage measures changed unique lines rather than old statements: true
+ok 40 - frontend changed coverage measures changed unique lines rather than old statements: true
+  ---
+  duration_ms: 35.728207
+  type: 'test'
+  ...
+# Subtest: frontend changed coverage measures changed unique lines rather than old statements: false
+ok 41 - frontend changed coverage measures changed unique lines rather than old statements: false
+  ---
+  duration_ms: 31.454216
+  type: 'test'
+  ...
+# Subtest: frontend changed coverage ignores build config outside the measured source tree
+ok 42 - frontend changed coverage ignores build config outside the measured source tree
+  ---
+  duration_ms: 32.691007
+  type: 'test'
+  ...
+# Subtest: a Java class without JaCoCo evidence remains unavailable changed coverage
+ok 43 - a Java class without JaCoCo evidence remains unavailable changed coverage
+  ---
+  duration_ms: 34.465085
+  type: 'test'
+  ...
+# Subtest: aggregate coverage below either side threshold blocks Review
+ok 44 - aggregate coverage below either side threshold blocks Review
+  ---
+  duration_ms: 485.846129
+  type: 'test'
+  ...
+# Subtest: missing Test runner or failed real verification never records a quality pass
+ok 45 - missing Test runner or failed real verification never records a quality pass
+  ---
+  duration_ms: 502.09395
+  type: 'test'
+  ...
+1..45
+# tests 45
+# suites 0
+# pass 45
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 15410.589105

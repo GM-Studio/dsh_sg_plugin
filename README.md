@@ -21,6 +21,8 @@ SpecGate Core 为**已有 Git 项目**提供本地、可审计的需求到交付
 
 存量环境按真实构建文件识别 Node/React/Vue、Python、Go、Maven/Gradle Java，并校验声明的版本约束；新项目可选择纯前端、纯后端或带 Vue/React 的组合。Go 与 Python portable 安装仅在显式选择官方源后解析确切版本/校验并申请批准；没有适配器或匹配归档时明确阻断，不冒充已支持。
 
+格式化按根目录和嵌套模块配置执行：Node 遵循 `packageManager`/锁文件及 format 脚本，Python 使用已声明的 Ruff/Black，Go 使用 gofmt，Maven 使用声明的 Spotless 与已安装 Maven。依赖准备仅离线复用缓存；缺工具、缺配置或版本不匹配会阻断。Gradle 或自定义技术栈可在绑定项目的 `.specgate/format.json` 中配置 `{ "schemaVersion": 1, "commands": [{ "id": "custom", "cwd": ".", "apply": ["tool", "--write"], "check": ["tool", "--check"] }] }`，命令为 argv 数组。该配置优先于同目录 ProjectProfile 命令，工作目录绑定实际格式化 worktree。check 必须有显式命令，且源码前后指纹一致；apply 完成后仍须重新通过完整质量门才进入 Review。扫描超限会明确阻断，不能把未扫描模块视为已格式化。
+
 历史业务模板、异步 WorkItem、控制面、Worker、Decision、TOTP、Web 和通知代码仍在源码中；默认工具面和 Core tarball 排除这些能力。源码开发者可显式设置 `SPECGATE_OPTIONAL_MODULES=1` 加载历史工具；该模式及其外部依赖不属于 Core 发行验收。环境安装器按需加载并随包提供；Core 包不包含 `mysql2`。
 
 ## 验证

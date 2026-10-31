@@ -151,7 +151,12 @@ export function resolveEnvironmentCommand(argv, context, cwd = context?.root) {
             ? java?.java
             : name === 'javac'
               ? java?.javac
-              : tools[name === 'python3' ? 'python' : name]?.path;
+              : name === 'gofmt' && tools.go?.path
+                ? path.join(
+                    path.dirname(tools.go.path),
+                    process.platform === 'win32' ? 'gofmt.exe' : 'gofmt',
+                  )
+                : tools[name === 'python3' ? 'python' : name]?.path;
   if (!executable) return [...argv];
   if (/\.[cm]?js$/i.test(executable))
     return [tools.node?.node || process.execPath, executable, ...argv.slice(1)];

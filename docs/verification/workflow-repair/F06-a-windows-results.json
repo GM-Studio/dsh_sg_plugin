@@ -1,0 +1,44 @@
+[
+  {
+    "platform": "win32",
+    "command": "node --import ./test/setup-temp.mjs --test --test-concurrency=2 test/codex-formatter-stacks-e2e.test.js test/codex-format-rework.test.js test/codex-quality-gate.test.js test/codex-environment-execution-e2e.test.js",
+    "name": "focused",
+    "arch": "x64",
+    "exitCode": 0
+  },
+  {
+    "platform": "win32",
+    "command": "npm test",
+    "name": "test",
+    "arch": "x64",
+    "exitCode": 0
+  },
+  {
+    "platform": "win32",
+    "command": "npm run lint",
+    "name": "lint",
+    "arch": "x64",
+    "exitCode": 0
+  },
+  {
+    "platform": "win32",
+    "command": "npm run format:check",
+    "name": "format",
+    "arch": "x64",
+    "exitCode": 0
+  },
+  {
+    "platform": "win32",
+    "command": "npm run pack:check",
+    "name": "pack",
+    "arch": "x64",
+    "exitCode": 0
+  },
+  {
+    "platform": "win32",
+    "command": "npm run codex:smoke",
+    "name": "smoke",
+    "arch": "x64",
+    "exitCode": 0
+  }
+]

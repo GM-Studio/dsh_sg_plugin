@@ -1,0 +1,37 @@
+{
+  "purpose": "F06真实跨平台格式化验收缺失工具，仅测试用隔离安装",
+  "plans": [
+    {
+      "version": "1.22.22",
+      "locations": [
+        "E:/ai_workflow/specgate/.tmp/workflow-repair-tools/yarn-1.22.22",
+        "/home/sc/specgate-env-repair/formatter-tools/yarn-1.22.22"
+      ],
+      "checksum": "a6b2f7906b721bba3d67d4aff083df04dad64c399707841b7acf00f6b133b7ac24255f2652fa22ae3534329dc6180534e98d17432037ff6fd140556e2bb3137e",
+      "url": "https://registry.npmjs.org/yarn/-/yarn-1.22.22.tgz",
+      "id": "yarn",
+      "algorithm": "sha512",
+      "verify": "Node运行归档内Yarn CLI --version及本地fixture格式化"
+    },
+    {
+      "version": "12.14.0",
+      "locations": ["/home/sc/specgate-env-repair/formatter-tools/pnpm-12.14.0"],
+      "checksum": "c18ba6d87993d3d164cb5e8948f32b2c06ee854487e06cd8d86781342fb3e5bb4634367034711e86802baa9c37bea906ce1929ad08d70884c97d801df13389a6",
+      "url": "https://registry.npmjs.org/pnpm/-/pnpm-12.14.0.tgz",
+      "id": "pnpm",
+      "algorithm": "sha512",
+      "verify": "Node运行归档内pnpm CLI --version及本地fixture格式化"
+    },
+    {
+      "version": "0.15.10",
+      "locations": ["/home/sc/specgate-env-repair/formatter-tools/ruff-0.15.10"],
+      "checksum": "51cb8cc943e891ba99989dd92d61e29b1d231e14811db9be6440ecf25d5c1609",
+      "url": "https://files.pythonhosted.org/packages/bc/bb/7ddb00a83760ff4a83c4e2fc231fd63937cc7317c10c82f583302e0f6586/ruff-0.15.10-py3-none-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
+      "id": "ruff",
+      "algorithm": "sha256",
+      "verify": "解压whl后运行Ruff Linux二进制--version及Python源码格式化"
+    }
+  ],
+  "configuration": "只在测试子进程PATH/PYTHONPATH中使用；不修改用户/系统环境、profile、注册表或全局包；不使用sudo",
+  "behavior": "批准前不下载payload；逐项校验匹配才解压，任何差异停止；只复用已装Node/Python/Go/JDK/Maven及现有Windows pnpm/Ruff"
+}

@@ -1,0 +1,16 @@
+{
+  "id": "pnpm-native-linux",
+  "purpose": "F06真实pnpm格式化验收，原npm包为安装器壳，不执行其preinstall/postinstall，不允许隐式下载",
+  "url": "https://github.com/pnpm/pnpm/releases/download/v12.14.0/pnpm-linux-x64.tar.gz",
+  "configuration": "仅原获批版本目录内解压和配置测试子进程入口，不提权、不改全局环境",
+  "platform": "linux",
+  "arch": "x64",
+  "algorithm": "sha256",
+  "version": "12.14.0",
+  "checksum": "3910c3852136bed5bc1511b9137a45fd4357ed6b3970d9d08893641e9005867e",
+  "location": "/home/sc/specgate-env-repair/formatter-tools/pnpm-12.14.0/native",
+  "verify": "直接运行归档中pnpm原生Linux二进制--version及本地fixture格式化",
+  "command": "/home/sc/specgate-env-repair/formatter-tools/pnpm-12.14.0/native/pnpm",
+  "output": "12.14.0",
+  "approval": "Explicit supplemental exact-plan approval in current chat"
+}

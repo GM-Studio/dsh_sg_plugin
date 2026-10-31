@@ -1,3 +1,4 @@
+import { resolveFormatPolicy, formatSourceSnapshot } from './core/format-policy.js';
 import { gitExecutable } from './core/git-runtime.js';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -153,7 +154,7 @@ function command(specification, worktree) {
     stdio: ['ignore', 'pipe', 'pipe'],
     windowsHide: true,
     windowsVerbatimArguments: resolved.windowsVerbatimArguments,
-    timeout: 10 * 60 * 1000,
+    timeout: specification.timeoutMs || 10 * 60 * 1000,
     maxBuffer: 8 * 1024 * 1024,
   });
   const record = {
@@ -177,70 +178,66 @@ function command(specification, worktree) {
       };
 }
 
-export function createNativeFormatter({ run = command, environmentContext } = {}) {
-  return async ({ worktree }) => {
-    const commands = [];
-    const backend = path.join(worktree, 'backend');
-    const frontend = path.join(worktree, 'frontend');
-    if (fs.existsSync(path.join(backend, 'pom.xml'))) {
-      const wrapper = path.join(backend, process.platform === 'win32' ? 'mvnw.cmd' : 'mvnw');
-      if (fs.existsSync(wrapper)) {
-        const executable = process.platform === 'win32' ? wrapper : 'bash';
-        commands.push({
-          command: executable,
-          args: process.platform === 'win32' ? ['spotless:apply'] : [wrapper, 'spotless:apply'],
-          cwd: backend,
-        });
-      } else {
-        const pom = path.join(backend, 'pom.xml');
-        if (
-          fs.statSync(pom).size <= 1024 * 1024 &&
-          /<artifactId>\s*spotless-maven-plugin\s*<\/artifactId>/.test(fs.readFileSync(pom, 'utf8'))
-        ) {
-          commands.push({
-            command: process.platform === 'win32' ? 'mvn.cmd' : 'mvn',
-            args: ['spotless:apply'],
-            cwd: backend,
+export function createNativeFormatter({
+  run = command,
+  environmentContext,
+  env = {},
+  projectRoot,
+} = {}) {
+  return async ({ worktree, mode = 'apply' }) => {
+    try {
+      const plan = resolveFormatPolicy(worktree, mode, { projectRoot: projectRoot || worktree });
+      const executionContext = environmentContext
+        ? await environmentContext({ worktree })
+        : undefined;
+      if (executionContext && !executionContext.ok)
+        return failure(executionContext.code || 'ENV_NOT_READY', '格式化执行环境未就绪');
+      const results = [];
+      for (const entry of plan.commands) {
+        const before = entry.mode === 'check' ? formatSourceSnapshot(worktree).hash : null;
+        const result = await run(
+          {
+            ...entry,
+            executionContext,
+            env: {
+              ...env,
+              COREPACK_ENABLE_NETWORK: '0',
+              COREPACK_ENABLE_AUTO_PIN: '0',
+              npm_config_offline: 'true',
+              YARN_ENABLE_NETWORK: '0',
+              PIP_NO_INDEX: '1',
+              GOTOOLCHAIN: 'local',
+            },
+          },
+          worktree,
+        );
+        results.push({ ...result, mode: entry.mode });
+        if (before && before !== formatSourceSnapshot(worktree).hash)
+          return failure('FORMAT_CHECK_MUTATION', 'A check-only formatter modified project files', {
+            commands: results,
           });
-        }
-      }
-    }
-    if (fs.existsSync(path.join(frontend, 'package.json'))) {
-      let pkg;
-      try {
-        pkg = JSON.parse(fs.readFileSync(path.join(frontend, 'package.json'), 'utf8'));
-      } catch {
-        return failure('FORMAT_CONFIGURATION_INVALID', 'frontend/package.json is invalid');
-      }
-      if (typeof pkg.scripts?.format === 'string') {
-        if (!fs.existsSync(path.join(frontend, 'node_modules'))) {
-          commands.push({
-            command: process.platform === 'win32' ? 'npm.cmd' : 'npm',
-            args: ['ci', '--no-audit', '--no-fund'],
-            cwd: frontend,
+        if (!result.ok) return { ...result, commands: results };
+        if (entry.expectedVersion && String(result.stdout || '').trim() !== entry.expectedVersion)
+          return failure(
+            'FORMAT_VERSION_MISMATCH',
+            'Installed package manager differs from packageManager; prepare the exact approved version',
+            { commands: results },
+          );
+        if (entry.nonemptyFails && String(result.stdout || '').trim())
+          return failure('FORMAT_CHECK_FAILED', 'gofmt reported unformatted source files', {
+            commands: results,
           });
-        }
-        commands.push({
-          command: process.platform === 'win32' ? 'npm.cmd' : 'npm',
-          args: ['run', 'format'],
-          cwd: frontend,
-        });
       }
+      return {
+        ok: true,
+        mode,
+        commands: results,
+        policySourceHash: plan.sourceHash,
+        configurationHash: plan.configurationHash,
+      };
+    } catch (error) {
+      return failure(error.code || 'FORMAT_CONFIGURATION_INVALID', error.message);
     }
-    if (!commands.length)
-      return failure('FORMAT_COMMAND_MISSING', 'No project formatter command is configured');
-    const results = [];
-    const executionContext = environmentContext
-      ? await environmentContext({ worktree })
-      : undefined;
-    if (executionContext && !executionContext.ok)
-      return failure(executionContext.code || 'ENV_NOT_READY', '格式化执行环境未就绪');
-    for (const entry of commands) {
-      const result = run({ ...entry, executionContext }, worktree);
-      results.push(result);
-      if (!result.ok) return { ...result, commands: results };
-    }
-    return { ok: true, commands: results };
   };
 }
 
@@ -414,6 +411,8 @@ export function createFormatService({
         formatCommit,
         changedFiles: changed,
         commands: result.commands || [],
+        policySourceHash: result.policySourceHash || null,
+        configurationHash: result.configurationHash || null,
         checkedAt: new Date().toISOString(),
       };
       const hash = digest(body);

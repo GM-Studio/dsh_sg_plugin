@@ -1,0 +1,19 @@
+[
+  {
+    "id": "yarn",
+    "version": "1.22.22",
+    "url": "https://registry.npmjs.org/yarn/-/yarn-1.22.22.tgz",
+    "algorithm": "sha512",
+    "checksum": "a6b2f7906b721bba3d67d4aff083df04dad64c399707841b7acf00f6b133b7ac24255f2652fa22ae3534329dc6180534e98d17432037ff6fd140556e2bb3137e",
+    "location": "E:/ai_workflow/specgate/.tmp/workflow-repair-tools/yarn-1.22.22",
+    "shim": "E:\\ai_workflow\\specgate\\.tmp\\workflow-repair-tools\\yarn-1.22.22\\yarn.cmd",
+    "command": "D:\\Program Files\\nodejs\\node.exe",
+    "args": [
+      "E:\\ai_workflow\\specgate\\.tmp\\workflow-repair-tools\\yarn-1.22.22\\package\\bin\\yarn.js",
+      "--version"
+    ],
+    "output": "1.22.22",
+    "approval": "Explicit current-chat approval of the exact four isolated installations on 2026-10-31",
+    "reused": false
+  }
+]

@@ -1,0 +1,49 @@
+✖ root npm formatter actually formats JSX/Vue and check leaves bytes unchanged (2.4895ms)
+✖ an explicit check command which changes source is rejected even with exit zero (1.105ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 0
+ℹ fail 2
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 70.1576
+
+✖ failing tests:
+
+test at test\codex-formatter-stacks-e2e.test.js:24:1
+✖ root npm formatter actually formats JSX/Vue and check leaves bytes unchanged (2.4895ms)
+  AssertionError [ERR_ASSERTION]: {"ok":false,"code":"FORMAT_COMMAND_MISSING","message":"No project formatter command is configured"}
+  
+  false !== true
+  
+      at TestContext.<anonymous> (file:///E:/ai_workflow/specgate/test/codex-formatter-stacks-e2e.test.js:32:10)
+      at async Test.run (node:internal/test_runner/test:1125:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:358:3) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at test\codex-formatter-stacks-e2e.test.js:40:1
+✖ an explicit check command which changes source is rejected even with exit zero (1.105ms)
+  AssertionError [ERR_ASSERTION]: {"ok":false,"code":"FORMAT_COMMAND_MISSING","message":"No project formatter command is configured"}
+  + actual - expected
+  
+  + 'FORMAT_COMMAND_MISSING'
+  - 'FORMAT_CHECK_MUTATION'
+             ^
+  
+      at TestContext.<anonymous> (file:///E:/ai_workflow/specgate/test/codex-formatter-stacks-e2e.test.js:46:10)
+      at async Test.run (node:internal/test_runner/test:1125:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:787:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 'FORMAT_COMMAND_MISSING',
+    expected: 'FORMAT_CHECK_MUTATION',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

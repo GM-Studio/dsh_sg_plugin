@@ -421,7 +421,8 @@ function createBoundToolRegistry({
         }
       : undefined);
   const effectiveFormatter =
-    formatter || (nativeAgents ? createNativeFormatter({ environmentContext }) : undefined);
+    formatter ||
+    (nativeAgents ? createNativeFormatter({ projectRoot: root, environmentContext }) : undefined);
   let store;
   const stateStore = () =>
     (store ||= createStateStore({ projectRoot: root, authorizeGate: authority.authorizeGate }));
