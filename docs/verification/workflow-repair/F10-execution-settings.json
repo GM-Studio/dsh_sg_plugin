@@ -1,0 +1,8 @@
+{
+  "candidate": "F10-d",
+  "scope": "test subprocess only; no global changes",
+  "GOMAXPROCS": "2",
+  "JAVA_TOOL_OPTIONS": "-XX:ActiveProcessorCount=2",
+  "platformScheduling": "Windows all six gates before native Linux all six gates",
+  "SDKs": "Existing approved Node/Python/Go/Java and Yarn/pnpm only; no downloads"
+}

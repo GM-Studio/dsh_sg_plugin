@@ -1,0 +1,31 @@
+✔ explicit startup binding wins over workspace roots and environment (1.9886ms)
+✔ plugin cache fallback stays unbound instead of becoming the business project (1.2132ms)
+✔ binding switches every subsequent project tool without writing either tree (52.662ms)
+✔ new project requires explicit stack and missing form support never writes (2.9861ms)
+✔ native creation form preserves selected React stack, user identity, auto setup and project binding (5155.5081ms)
+✔ cancelled project form is attempted again instead of degrading to text (87.071ms)
+✔ project verification alias remains equivalent to sg_verify (11.8586ms)
+✔ identity resolver reuses explicit Git author environment and never supplies a fake identity (1.8584ms)
+✔ missing identity stops initialization before any target files or commit are created (95.9976ms)
+✔ H1 document shows requirements, acceptance criteria, user answers, critique and pending risks (0.4683ms)
+✔ deep declared workspace and Go workspace facts are found with bounded explicit scope (12.3792ms)
+✔ entry, directory and depth exhaustion are visible and never described as complete (2.9923ms)
+✔ unsupported, escaping and missing workspace declarations block environment readiness (73.4047ms)
+✔ pnpm workspace patterns and inherited package manager remain explicit facts (2.4909ms)
+✔ native npm workspace installs once at its lock root and real MCP adoption tests local workspace links (4359.928ms)
+✔ discovered Go and Python test commands really execute with the checked SDKs (5560.1256ms)
+✔ linked and oversized metadata are rejected without following external content (2.9157ms)
+✔ Go workspace minimum version participates in the real environment gate (189.8916ms)
+✔ workspace matching treats literal punctuation literally and globstar exclusions include zero levels (0.4111ms)
+✔ native rootless pnpm workspace installs at the workspace root and completes real MCP adoption (2528.2009ms)
+✔ scan counters do not invalidate actual environment identity or approved install scope (1035.9165ms)
+✔ Go workspace ownership never substitutes a Node package manager in a mixed module (399.3863ms)
+✔ an explicitly selected new stack prepares existing SDKs before its directory exists without claiming a scan (341.0056ms)
+ℹ tests 23
+ℹ suites 0
+ℹ pass 23
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 14717.8967

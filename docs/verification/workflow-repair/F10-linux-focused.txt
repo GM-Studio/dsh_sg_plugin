@@ -1,0 +1,478 @@
+TAP version 13
+# Subtest: existing Node, React, Vue, Python, Go and plain Java derive only their actual tool requirements
+ok 1 - existing Node, React, Vue, Python, Go and plain Java derive only their actual tool requirements
+  ---
+  duration_ms: 3211.624765
+  type: 'test'
+  ...
+# Subtest: version constraints reject lower patch versions and discover nested workspace modules
+ok 2 - version constraints reject lower patch versions and discover nested workspace modules
+  ---
+  duration_ms: 635.747
+  type: 'test'
+  ...
+# Subtest: new-project stack selection can prepare a pure backend and incompatible runtime remains missing
+ok 3 - new-project stack selection can prepare a pure backend and incompatible runtime remains missing
+  ---
+  duration_ms: 90.478724
+  type: 'test'
+  ...
+# Subtest: standalone defaults infer project tools and never opt in to global environment writes
+ok 4 - standalone defaults infer project tools and never opt in to global environment writes
+  ---
+  duration_ms: 6.632808
+  type: 'test'
+  ...
+# Subtest: help is independent of discovery, metadata and filesystem mutations
+ok 5 - help is independent of discovery, metadata and filesystem mutations
+  ---
+  duration_ms: 1.284231
+  type: 'test'
+  ...
+# Subtest: native wrapper and shared MCP catalog use the same exact official Node archives
+ok 6 - native wrapper and shared MCP catalog use the same exact official Node archives
+  ---
+  duration_ms: 2.155941
+  type: 'test'
+  ...
+# Subtest: a real project check reuses compatible Node/npm without creating cache or changing caller environment
+ok 7 - a real project check reuses compatible Node/npm without creating cache or changing caller environment
+  ---
+  duration_ms: 593.210166
+  type: 'test'
+  ...
+# Subtest: a nonexistent required Node version blocks before consent, metadata download or installation
+ok 8 - a nonexistent required Node version blocks before consent, metadata download or installation
+  ---
+  duration_ms: 79.678214
+  type: 'test'
+  ...
+# Subtest: exact-plan decline and a mismatched expected hash install nothing
+ok 9 - exact-plan decline and a mismatched expected hash install nothing
+  ---
+  duration_ms: 136.21411
+  type: 'test'
+  ...
+# Subtest: a real noninteractive CLI produces an exact plan but cannot self-approve it
+ok 10 - a real noninteractive CLI produces an exact plan but cannot self-approve it
+  ---
+  duration_ms: 557.835125
+  type: 'test'
+  ...
+# Subtest: empty new project requires user stack selection and does not install unrelated JDKs
+ok 11 - empty new project requires user stack selection and does not install unrelated JDKs
+  ---
+  duration_ms: 590.707442
+  type: 'test'
+  ...
+# Subtest: standalone scripts remain outside the Core tarball and have no default npm lifecycle install hook
+ok 12 - standalone scripts remain outside the Core tarball and have no default npm lifecycle install hook
+  ---
+  duration_ms: 1.46645
+  type: 'test'
+  ...
+# Subtest: new-project standalone react selection really reuses its available SDK without installing unrelated tools
+ok 13 - new-project standalone react selection really reuses its available SDK without installing unrelated tools
+  ---
+  duration_ms: 602.042144
+  type: 'test'
+  ...
+# Subtest: new-project standalone vue selection really reuses its available SDK without installing unrelated tools
+ok 14 - new-project standalone vue selection really reuses its available SDK without installing unrelated tools
+  ---
+  duration_ms: 616.11505
+  type: 'test'
+  ...
+# Subtest: new-project standalone python selection really reuses its available SDK without installing unrelated tools
+ok 15 - new-project standalone python selection really reuses its available SDK without installing unrelated tools
+  ---
+  duration_ms: 10.893911
+  type: 'test'
+  ...
+# Subtest: new-project standalone go selection really reuses its available SDK without installing unrelated tools
+ok 16 - new-project standalone go selection really reuses its available SDK without installing unrelated tools
+  ---
+  duration_ms: 14.732482
+  type: 'test'
+  ...
+# Subtest: new-project standalone java selection really reuses its available SDK without installing unrelated tools
+ok 17 - new-project standalone java selection really reuses its available SDK without installing unrelated tools
+  ---
+  duration_ms: 1405.368428
+  type: 'test'
+  ...
+# Subtest: directory names alone never create a module
+ok 18 - directory names alone never create a module
+  ---
+  duration_ms: 10.186174
+  type: 'test'
+  ...
+# Subtest: a single-module CLI is not turned into backend or frontend
+ok 19 - a single-module CLI is not turned into backend or frontend
+  ---
+  duration_ms: 2.736468
+  type: 'test'
+  ...
+# Subtest: a Maven multi-module repository reports every submodule
+ok 20 - a Maven multi-module repository reports every submodule
+  ---
+  duration_ms: 4.145248
+  type: 'test'
+  ...
+# Subtest: npm workspaces are reported per workspace, not merged
+ok 21 - npm workspaces are reported per workspace, not merged
+  ---
+  duration_ms: 2.552599
+  type: 'test'
+  ...
+# Subtest: a single python project is classified from its build facts
+ok 22 - a single python project is classified from its build facts
+  ---
+  duration_ms: 2.458557
+  type: 'test'
+  ...
+# Subtest: every module carries source evidence for its classification
+ok 23 - every module carries source evidence for its classification
+  ---
+  duration_ms: 1.379056
+  type: 'test'
+  ...
+# Subtest: a module without a conventional entry point is reported as a gap
+ok 24 - a module without a conventional entry point is reported as a gap
+  ---
+  duration_ms: 1.382691
+  type: 'test'
+  ...
+# Subtest: role inference never defaults to backend or frontend
+ok 25 - role inference never defaults to backend or frontend
+  ---
+  duration_ms: 0.342192
+  type: 'test'
+  ...
+# Subtest: discovery is read-only and bounded
+ok 26 - discovery is read-only and bounded
+  ---
+  duration_ms: 2.194772
+  type: 'test'
+  ...
+# Subtest: an invalid root is refused instead of thrown
+ok 27 - an invalid root is refused instead of thrown
+  ---
+  duration_ms: 0.589388
+  type: 'test'
+  ...
+# Subtest: a python project without pyproject.toml is still recognised
+ok 28 - a python project without pyproject.toml is still recognised
+  ---
+  duration_ms: 2.978158
+  type: 'test'
+  ...
+# Subtest: the stack detector agrees with module discovery on python build files
+ok 29 - the stack detector agrees with module discovery on python build files
+  ---
+  duration_ms: 21.9949
+  type: 'test'
+  ...
+# Subtest: explicit startup binding wins over workspace roots and environment
+ok 30 - explicit startup binding wins over workspace roots and environment
+  ---
+  duration_ms: 6.545836
+  type: 'test'
+  ...
+# Subtest: plugin cache fallback stays unbound instead of becoming the business project
+ok 31 - plugin cache fallback stays unbound instead of becoming the business project
+  ---
+  duration_ms: 3.529898
+  type: 'test'
+  ...
+# Subtest: binding switches every subsequent project tool without writing either tree
+ok 32 - binding switches every subsequent project tool without writing either tree
+  ---
+  duration_ms: 33.34125
+  type: 'test'
+  ...
+# Subtest: new project requires explicit stack and missing form support never writes
+ok 33 - new project requires explicit stack and missing form support never writes
+  ---
+  duration_ms: 8.282792
+  type: 'test'
+  ...
+# Subtest: native creation form preserves selected React stack, user identity, auto setup and project binding
+ok 34 - native creation form preserves selected React stack, user identity, auto setup and project binding
+  ---
+  duration_ms: 3930.942214
+  type: 'test'
+  ...
+# Subtest: cancelled project form is attempted again instead of degrading to text
+ok 35 - cancelled project form is attempted again instead of degrading to text
+  ---
+  duration_ms: 22.283786
+  type: 'test'
+  ...
+# Subtest: project verification alias remains equivalent to sg_verify
+ok 36 - project verification alias remains equivalent to sg_verify
+  ---
+  duration_ms: 25.812616
+  type: 'test'
+  ...
+# Subtest: identity resolver reuses explicit Git author environment and never supplies a fake identity
+ok 37 - identity resolver reuses explicit Git author environment and never supplies a fake identity
+  ---
+  duration_ms: 1.082239
+  type: 'test'
+  ...
+# Subtest: missing identity stops initialization before any target files or commit are created
+ok 38 - missing identity stops initialization before any target files or commit are created
+  ---
+  duration_ms: 60.28342
+  type: 'test'
+  ...
+# Subtest: H1 document shows requirements, acceptance criteria, user answers, critique and pending risks
+ok 39 - H1 document shows requirements, acceptance criteria, user answers, critique and pending risks
+  ---
+  duration_ms: 1.754745
+  type: 'test'
+  ...
+# Subtest: adoption preview is read-only for clean and dirty Java/Vue projects
+ok 40 - adoption preview is read-only for clean and dirty Java/Vue projects
+  ---
+  duration_ms: 186.467745
+  type: 'test'
+  ...
+# Subtest: approved dirty-baseline commit stages only the exact approved file set
+ok 41 - approved dirty-baseline commit stages only the exact approved file set
+  ---
+  duration_ms: 190.616261
+  type: 'test'
+  ...
+# Subtest: dirty commit fails closed for missing approval, changed preview, incomplete paths and secrets
+ok 42 - dirty commit fails closed for missing approval, changed preview, incomplete paths and secrets
+  ---
+  duration_ms: 212.651808
+  type: 'test'
+  ...
+# Subtest: applies an adopted profile and baseline only after a clean preview
+ok 43 - applies an adopted profile and baseline only after a clean preview
+  ---
+  duration_ms: 176.550923
+  type: 'test'
+  ...
+# Subtest: detects a Java/Vue monorepo and derives argv-only commands without writes
+ok 44 - detects a Java/Vue monorepo and derives argv-only commands without writes
+  ---
+  duration_ms: 101.173995
+  type: 'test'
+  ...
+# Subtest: detects the frontend framework from package dependencies
+ok 45 - detects the frontend framework from package dependencies
+  ---
+  duration_ms: 55.62507
+  type: 'test'
+  ...
+# Subtest: reports dirty files and package-manager choice without committing or staging
+ok 46 - reports dirty files and package-manager choice without committing or staging
+  ---
+  duration_ms: 64.374893
+  type: 'test'
+  ...
+# Subtest: a repository without Maven or a frontend is analysed instead of rejected
+ok 47 - a repository without Maven or a frontend is analysed instead of rejected
+  ---
+  duration_ms: 32.169677
+  type: 'test'
+  ...
+# Subtest: symlinked project entries are rejected before command discovery
+ok 48 - symlinked project entries are rejected before command discovery
+  ---
+  duration_ms: 31.336067
+  type: 'test'
+  ...
+# Subtest: discovers hyphenated front-end roots and multiple frontend applications
+ok 49 - discovers hyphenated front-end roots and multiple frontend applications
+  ---
+  duration_ms: 93.997216
+  type: 'test'
+  ...
+# Subtest: discovers package-manager-specific install commands before build
+ok 50 - discovers package-manager-specific install commands before build
+  ---
+  duration_ms: 15.683379
+  type: 'test'
+  ...
+# Subtest: a backend-only Maven repository is detected instead of rejected
+ok 51 - a backend-only Maven repository is detected instead of rejected
+  ---
+  duration_ms: 11.836858
+  type: 'test'
+  ...
+# Subtest: a frontend-only repository is detected instead of rejected
+ok 52 - a frontend-only repository is detected instead of rejected
+  ---
+  duration_ms: 2.308216
+  type: 'test'
+  ...
+# Subtest: a pure python repository is detected without java or npm
+ok 53 - a pure python repository is detected without java or npm
+  ---
+  duration_ms: 11.571577
+  type: 'test'
+  ...
+# Subtest: an empty directory yields a result with explicit gaps rather than a refusal
+ok 54 - an empty directory yields a result with explicit gaps rather than a refusal
+  ---
+  duration_ms: 1.257901
+  type: 'test'
+  ...
+# Subtest: a monorepo reports every module that actually has a build file
+ok 55 - a monorepo reports every module that actually has a build file
+  ---
+  duration_ms: 6.477092
+  type: 'test'
+  ...
+# Subtest: module roles are never invented from directory names alone
+ok 56 - module roles are never invented from directory names alone
+  ---
+  duration_ms: 2.545612
+  type: 'test'
+  ...
+# Subtest: lockfiles determine the package manager and are reported with their module
+ok 57 - lockfiles determine the package manager and are reported with their module
+  ---
+  duration_ms: 2.464467
+  type: 'test'
+  ...
+# Subtest: npm scripts become capabilities and argv-only commands
+ok 58 - npm scripts become capabilities and argv-only commands
+  ---
+  duration_ms: 1.288414
+  type: 'test'
+  ...
+# Subtest: detection is read-only: no file is created or modified
+ok 59 - detection is read-only: no file is created or modified
+  ---
+  duration_ms: 2.68067
+  type: 'test'
+  ...
+# Subtest: an invalid root is refused with a bounded error, not thrown
+ok 60 - an invalid root is refused with a bounded error, not thrown
+  ---
+  duration_ms: 0.472974
+  type: 'test'
+  ...
+# Subtest: directory scanning is bounded rather than unbounded
+ok 61 - directory scanning is bounded rather than unbounded
+  ---
+  duration_ms: 86.983491
+  type: 'test'
+  ...
+# Subtest: detection output plugs into the v3 profile shape without a java-vue assumption
+ok 62 - detection output plugs into the v3 profile shape without a java-vue assumption
+  ---
+  duration_ms: 3.152463
+  type: 'test'
+  ...
+# Subtest: deep declared workspace and Go workspace facts are found with bounded explicit scope
+ok 63 - deep declared workspace and Go workspace facts are found with bounded explicit scope
+  ---
+  duration_ms: 24.212474
+  type: 'test'
+  ...
+# Subtest: entry, directory and depth exhaustion are visible and never described as complete
+ok 64 - entry, directory and depth exhaustion are visible and never described as complete
+  ---
+  duration_ms: 2.838908
+  type: 'test'
+  ...
+# Subtest: unsupported, escaping and missing workspace declarations block environment readiness
+ok 65 - unsupported, escaping and missing workspace declarations block environment readiness
+  ---
+  duration_ms: 93.262489
+  type: 'test'
+  ...
+# Subtest: pnpm workspace patterns and inherited package manager remain explicit facts
+ok 66 - pnpm workspace patterns and inherited package manager remain explicit facts
+  ---
+  duration_ms: 2.860836
+  type: 'test'
+  ...
+# Subtest: native npm workspace installs once at its lock root and real MCP adoption tests local workspace links
+ok 67 - native npm workspace installs once at its lock root and real MCP adoption tests local workspace links
+  ---
+  duration_ms: 5035.738989
+  type: 'test'
+  ...
+# Subtest: discovered Go and Python test commands really execute with the checked SDKs
+ok 68 - discovered Go and Python test commands really execute with the checked SDKs
+  ---
+  duration_ms: 10919.079963
+  type: 'test'
+  ...
+# Subtest: linked and oversized metadata are rejected without following external content
+ok 69 - linked and oversized metadata are rejected without following external content
+  ---
+  duration_ms: 5.306352
+  type: 'test'
+  ...
+# Subtest: Go workspace minimum version participates in the real environment gate
+ok 70 - Go workspace minimum version participates in the real environment gate
+  ---
+  duration_ms: 21.232342
+  type: 'test'
+  ...
+# Subtest: workspace matching treats literal punctuation literally and globstar exclusions include zero levels
+ok 71 - workspace matching treats literal punctuation literally and globstar exclusions include zero levels
+  ---
+  duration_ms: 2.157313
+  type: 'test'
+  ...
+# Subtest: native rootless pnpm workspace installs at the workspace root and completes real MCP adoption
+ok 72 - native rootless pnpm workspace installs at the workspace root and completes real MCP adoption
+  ---
+  duration_ms: 2215.1646
+  type: 'test'
+  ...
+# Subtest: scan counters do not invalidate actual environment identity or approved install scope
+ok 73 - scan counters do not invalidate actual environment identity or approved install scope
+  ---
+  duration_ms: 1751.556177
+  type: 'test'
+  ...
+# Subtest: Go workspace ownership never substitutes a Node package manager in a mixed module
+ok 74 - Go workspace ownership never substitutes a Node package manager in a mixed module
+  ---
+  duration_ms: 599.870614
+  type: 'test'
+  ...
+# Subtest: an explicitly selected new stack prepares existing SDKs before its directory exists without claiming a scan
+ok 75 - an explicitly selected new stack prepares existing SDKs before its directory exists without claiming a scan
+  ---
+  duration_ms: 584.058396
+  type: 'test'
+  ...
+# Subtest: partial invalid-manifest analysis remains readable while actual adoption stays blocked
+ok 76 - partial invalid-manifest analysis remains readable while actual adoption stays blocked
+  ---
+  duration_ms: 72.052131
+  type: 'test'
+  ...
+# Subtest: native Yarn workspace inherits the root lock manager and rebuilds local workspace links through MCP
+ok 77 - native Yarn workspace inherits the root lock manager and rebuilds local workspace links through MCP
+  ---
+  duration_ms: 4054.983655
+  type: 'test'
+  ...
+# Subtest: colliding Node module path slugs produce distinct bounded command identities in real adoption
+ok 78 - colliding Node module path slugs produce distinct bounded command identities in real adoption
+  ---
+  duration_ms: 4969.35888
+  type: 'test'
+  ...
+1..78
+# tests 78
+# suites 0
+# pass 78
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 37613.438388

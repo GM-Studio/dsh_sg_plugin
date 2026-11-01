@@ -2,6 +2,7 @@ import { gitExecutable } from './core/git-runtime.js';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import { createHash } from 'node:crypto';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { gitSafeDirectory } from './git-path.js';
@@ -141,9 +142,9 @@ function installCommand({ cwd, directory, manager, prefix }) {
   return { id: `${prefix}-install`, cwd, argv };
 }
 
-function frontendCommands(root, directory, risks) {
+function frontendCommands(root, directory, risks, module) {
   const packageJson = path.join(root, directory, 'package.json');
-  const manager = packageManager(path.dirname(packageJson));
+  const manager = module?.packageManager || packageManager(path.dirname(packageJson));
   let scripts;
   try {
     scripts = JSON.parse(fs.readFileSync(packageJson, 'utf8'))?.scripts;
@@ -170,9 +171,12 @@ function frontendCommands(root, directory, risks) {
         }
       : null;
   return {
-    install: [
-      installCommand({ cwd, directory: path.dirname(packageJson), manager, prefix }),
-    ].filter(Boolean),
+    install:
+      module?.workspaceRoot !== undefined && module.workspaceRoot !== cwd
+        ? []
+        : [installCommand({ cwd, directory: path.dirname(packageJson), manager, prefix })].filter(
+            Boolean,
+          ),
     build: [command(`${prefix}-build`, 'build')].filter(Boolean),
     test: [command(`${prefix}-test`, 'test')].filter(Boolean),
     lint: [command(`${prefix}-lint`, 'lint')].filter(Boolean),
@@ -299,9 +303,40 @@ export function detectProject({ root: inputRoot } = {}) {
       runtime: [],
     };
     for (const frontend of frontends) {
-      const found = frontendCommands(root, frontend, risks);
+      const found = frontendCommands(
+        root,
+        frontend,
+        risks,
+        stack.modules.find((m) => m.root === frontend),
+      );
       for (const key of Object.keys(frontendFound)) frontendFound[key].push(...found[key]);
     }
+    for (const workspace of stack.workspaces || []) {
+      if (
+        workspace.kind === 'go' ||
+        !frontends.some(
+          (frontend) =>
+            stack.modules.find((m) => m.root === frontend)?.workspaceRoot === workspace.root,
+        )
+      )
+        continue;
+      if (!frontendFound.install.some((command) => command.cwd === workspace.root))
+        frontendFound.install.push(
+          installCommand({
+            cwd: workspace.root,
+            directory: path.join(root, workspace.root),
+            manager: workspace.packageManager,
+            prefix: 'workspace-' + workspace.root.replace(/[^A-Za-z0-9._-]/g, '-'),
+          }),
+        );
+    }
+    const managers = new Set(
+      frontends.map(
+        (frontend) =>
+          stack.modules.find((m) => m.root === frontend)?.packageManager ||
+          packageManager(path.join(root, frontend)),
+      ),
+    );
     const backendFound = backendCommands(root);
     const detectedPackage = backendPackage(root, java);
     const commands = {
@@ -395,6 +430,37 @@ export function detectProject({ root: inputRoot } = {}) {
         });
       }
     }
+    const idCounts = new Map();
+    for (const command of Object.values(commands).flat())
+      idCounts.set(command.id, (idCounts.get(command.id) || 0) + 1);
+    const usedIds = new Set();
+    for (const [kind, records] of Object.entries(commands)) {
+      for (const command of records) {
+        if (
+          idCounts.get(command.id) > 1 ||
+          !/^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$/.test(command.id) ||
+          usedIds.has(command.id)
+        ) {
+          const stem =
+            String(command.id)
+              .replace(/[^A-Za-z0-9._-]/g, '-')
+              .replace(/^[^A-Za-z0-9]+/, '')
+              .slice(0, 100) || 'command';
+          const seed = JSON.stringify([kind, command.cwd, command.argv]);
+          let nonce = 0;
+          do {
+            command.id =
+              stem +
+              '-' +
+              createHash('sha256')
+                .update(seed + ':' + nonce++)
+                .digest('hex')
+                .slice(0, 16);
+          } while (usedIds.has(command.id));
+        }
+        usedIds.add(command.id);
+      }
+    }
     if (commands.test.length === 0) risks.push('No test command was discovered.');
     if (status?.status === 0 && status.stdout.trim())
       risks.push('The worktree has uncommitted or untracked files.');
@@ -432,8 +498,9 @@ export function detectProject({ root: inputRoot } = {}) {
       moduleObservations: discovered.observations,
       gaps: [...stack.gaps, ...discovered.gaps],
       lockfiles: stack.lockfiles,
-      packageManager:
-        frontends.length === 1 ? packageManager(path.join(root, frontends[0])) : 'mixed',
+      scan: stack.scan,
+      workspaces: stack.workspaces,
+      packageManager: managers.size === 1 ? [...managers][0] : 'mixed',
       conventions,
       commands,
       protectedPaths: fs.existsSync(path.join(root, '.env')) ? ['.env'] : [],

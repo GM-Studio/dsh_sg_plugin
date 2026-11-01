@@ -22,9 +22,28 @@ const json = (file) => {
 };
 
 export function projectToolRequirements(root, input = {}) {
-  const detected = detectStack({ root });
+  let detected = detectStack({ root });
+  if (!detected.ok && typeof root === 'string' && path.isAbsolute(root)) {
+    try {
+      fs.lstatSync(root);
+    } catch (error) {
+      if (error.code === 'ENOENT')
+        detected = {
+          ok: true,
+          modules: [],
+          workspaces: [],
+          stack: null,
+          scan: { complete: null, status: 'not-created', issues: [] },
+        };
+    }
+  }
   const requirements = [{ id: 'git', constraints: [], modules: ['.'] }];
   const unsupported = [];
+  if (!detected.ok) unsupported.push('扫描失败：' + detected.code);
+  if (detected.scan?.complete === false)
+    unsupported.push(
+      '扫描不完整：' + detected.scan.issues.map((i) => i.code + ' ' + i.path).join('；'),
+    );
   const add = (id, constraint, module = '.') => {
     let entry = requirements.find((item) => item.id === id);
     if (!entry) {
@@ -116,11 +135,21 @@ export function projectToolRequirements(root, input = {}) {
     if (['vue', 'react'].includes(input.frontend)) add('node', input.nodeVersion || '');
     if (['pnpm', 'yarn'].includes(input.packageManager)) add(input.packageManager, '');
   }
-  if (requirements.length === 1) return {};
+  for (const workspace of detected.workspaces || []) {
+    if (workspace.kind !== 'go') continue;
+    const text = read(path.join(root, workspace.source));
+    const version = /^\s*go\s+(\d+\.\d+(?:\.\d+)?)(?:\s|$)/m.exec(text)?.[1];
+    const toolchain = /^\s*toolchain\s+go(\d+\.\d+(?:\.\d+)?)(?:\s|$)/m.exec(text)?.[1];
+    add('go', version ? '>=' + version : '', workspace.root);
+    if (toolchain) add('go', '>=' + toolchain, workspace.root);
+  }
+  const scan = detected.scan || { complete: false, issues: [{ code: detected.code, path: '.' }] };
+  if (requirements.length === 1 && unsupported.length === 0) return { scan };
   return {
     stack: modules.length ? detected.stack : input.stack,
     requirements,
     unsupported,
     modules,
+    scan,
   };
 }

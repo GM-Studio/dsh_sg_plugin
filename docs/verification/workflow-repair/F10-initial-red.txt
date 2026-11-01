@@ -1,0 +1,90 @@
+✖ deep declared workspace and Go workspace facts are found with bounded explicit scope (7.2304ms)
+✖ entry, directory and depth exhaustion are visible and never described as complete (2.9762ms)
+✖ unsupported, escaping and missing workspace declarations block environment readiness (1.204ms)
+✖ pnpm workspace patterns and inherited package manager remain explicit facts (3.4976ms)
+✖ native npm workspace installs once at its lock root and real MCP adoption tests local workspace links (934.043ms)
+✖ discovered Go and Python test commands really execute with the checked SDKs (3.52ms)
+ℹ tests 6
+ℹ suites 0
+ℹ pass 0
+ℹ fail 6
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1068.0795
+
+✖ failing tests:
+
+test at test\codex-workspace-scan-e2e.test.js:9:1
+✖ deep declared workspace and Go workspace facts are found with bounded explicit scope (7.2304ms)
+  TypeError: Cannot read properties of undefined (reading 'complete')
+      at TestContext.<anonymous> (file:///E:/ai_workflow/specgate/test/codex-workspace-scan-e2e.test.js:11:60)
+      at Test.runInAsyncScope (node:async_hooks:228:14)
+      at Test.run (node:internal/test_runner/test:1118:25)
+      at Test.start (node:internal/test_runner/test:1015:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:358:17)
+
+test at test\codex-workspace-scan-e2e.test.js:13:1
+✖ entry, directory and depth exhaustion are visible and never described as complete (2.9762ms)
+  TypeError: Cannot read properties of undefined (reading 'complete')
+      at TestContext.<anonymous> (file:///E:/ai_workflow/specgate/test/codex-workspace-scan-e2e.test.js:15:156)
+      at Test.runInAsyncScope (node:async_hooks:228:14)
+      at Test.run (node:internal/test_runner/test:1118:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:787:18)
+      at Test.postRun (node:internal/test_runner/test:1247:19)
+      at Test.run (node:internal/test_runner/test:1175:12)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:358:3)
+
+test at test\codex-workspace-scan-e2e.test.js:17:1
+✖ unsupported, escaping and missing workspace declarations block environment readiness (1.204ms)
+  TypeError: Cannot read properties of undefined (reading 'complete')
+      at TestContext.<anonymous> (file:///E:/ai_workflow/specgate/test/codex-workspace-scan-e2e.test.js:18:208)
+      at Test.runInAsyncScope (node:async_hooks:228:14)
+      at Test.run (node:internal/test_runner/test:1118:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:787:18)
+      at Test.postRun (node:internal/test_runner/test:1247:19)
+      at Test.run (node:internal/test_runner/test:1175:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:787:7)
+
+test at test\codex-workspace-scan-e2e.test.js:21:1
+✖ pnpm workspace patterns and inherited package manager remain explicit facts (3.4976ms)
+  TypeError: Cannot read properties of undefined (reading 'complete')
+      at TestContext.<anonymous> (file:///E:/ai_workflow/specgate/test/codex-workspace-scan-e2e.test.js:23:52)
+      at Test.runInAsyncScope (node:async_hooks:228:14)
+      at Test.run (node:internal/test_runner/test:1118:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:787:18)
+      at Test.postRun (node:internal/test_runner/test:1247:19)
+      at Test.run (node:internal/test_runner/test:1175:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:787:7)
+
+test at test\codex-workspace-scan-e2e.test.js:25:1
+✖ native npm workspace installs once at its lock root and real MCP adoption tests local workspace links (934.043ms)
+  AssertionError [ERR_ASSERTION]: [{"id":"frontend-.-install","cwd":".","argv":["npm","ci"]},{"id":"frontend-packages-lib-install","cwd":"packages/lib","argv":["npm","install","--no-package-lock"]},{"id":"frontend-packages-web-install","cwd":"packages/web","argv":["npm","install","--no-package-lock"]}]
+  
+  3 !== 1
+  
+      at TestContext.<anonymous> (file:///E:/ai_workflow/specgate/test/codex-workspace-scan-e2e.test.js:27:110)
+      at Test.runInAsyncScope (node:async_hooks:228:14)
+      at Test.run (node:internal/test_runner/test:1118:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:787:18)
+      at Test.postRun (node:internal/test_runner/test:1247:19)
+      at Test.run (node:internal/test_runner/test:1175:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:787:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 3,
+    expected: 1,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at test\codex-workspace-scan-e2e.test.js:32:1
+✖ discovered Go and Python test commands really execute with the checked SDKs (3.52ms)
+  TypeError: Cannot read properties of undefined (reading 'complete')
+      at TestContext.<anonymous> (file:///E:/ai_workflow/specgate/test/codex-workspace-scan-e2e.test.js:34:60)
+      at Test.runInAsyncScope (node:async_hooks:228:14)
+      at Test.run (node:internal/test_runner/test:1118:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:787:18)
+      at Test.postRun (node:internal/test_runner/test:1247:19)
+      at Test.run (node:internal/test_runner/test:1175:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:787:7)

@@ -144,6 +144,11 @@ export function validateProjectProfile(value) {
     )
   )
     return failure('PROJECT_COMMANDS_INVALID', 'Project commands must be bounded argv records');
+  const commandIds = Object.values(value.commands)
+    .flat()
+    .map((entry) => entry.id);
+  if (new Set(commandIds).size !== commandIds.length)
+    return failure('PROJECT_COMMANDS_INVALID', 'Project command ids must be globally unique');
   if (
     !Array.isArray(value.protectedPaths) ||
     value.protectedPaths.length > 500 ||

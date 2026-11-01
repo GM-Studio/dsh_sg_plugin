@@ -1,0 +1,27 @@
+✖ discovered Go and Python test commands really execute with the checked SDKs (10.434ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 0
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 87.2225
+
+✖ failing tests:
+
+test at test\codex-workspace-scan-e2e.test.js:175:1
+✖ discovered Go and Python test commands really execute with the checked SDKs (10.434ms)
+  AssertionError [ERR_ASSERTION]: [{"id":"services/api-go-test","cwd":"services/api","argv":["go","test","./..."]},{"id":"services/worker-python-test","cwd":"services/worker","argv":["python","-m","unittest","discover"]}]
+      at TestContext.<anonymous> (file:///E:/ai_workflow/specgate/test/codex-workspace-scan-e2e.test.js:195:10)
+      at Test.runInAsyncScope (node:async_hooks:228:14)
+      at Test.run (node:internal/test_runner/test:1118:25)
+      at Test.start (node:internal/test_runner/test:1015:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:358:17) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }

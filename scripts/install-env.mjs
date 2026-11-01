@@ -7,6 +7,7 @@ import { createInterface } from 'node:readline/promises';
 import {
   createEnvironmentService,
   projectEnvironmentSelection,
+  environmentSelectionIdentity,
 } from '../src/codex/core/environment.js';
 import { canonicalJson } from '../src/codex/events.js';
 
@@ -129,7 +130,7 @@ export function approvalPlan(report, cacheRoot) {
     platform: report.platform,
     arch: report.arch,
     cacheRoot,
-    selection: report.selection,
+    selection: environmentSelectionIdentity(report.selection),
     source: report.source,
     actions: report.plan.map((entry) => ({
       id: entry.id,

@@ -74,7 +74,9 @@ export function projectEnvironmentSelection(root, selection = {}) {
     (configured.frontend && selection.frontend && configured.frontend !== selection.frontend)
   )
     return { conflict: true };
-  if (!configured.preset && !selection.preset) return projectToolRequirements(root, selection);
+  const requirements = projectToolRequirements(root, selection);
+  if (requirements.scan?.complete === false) return requirements;
+  if (!configured.preset && !selection.preset) return requirements;
   return {
     preset: configured.preset || selection.preset,
     frontend: configured.frontend || selection.frontend,
@@ -142,6 +144,11 @@ export function discoverEnvironment({
   };
 }
 
+export function environmentSelectionIdentity(selection) {
+  // Traversal counters are diagnostics, not stack constraints or install scope.
+  return Object.fromEntries(Object.entries(selection).filter(([key]) => key !== 'scan'));
+}
+
 export function planEnvironment({
   selection = {},
   tools = {},
@@ -179,7 +186,9 @@ export function planEnvironment({
       };
   const missing = required.filter((id) => !found[id]);
   const fingerprint = createHash('sha256')
-    .update(JSON.stringify({ selection, platform, arch, found }))
+    .update(
+      JSON.stringify({ selection: environmentSelectionIdentity(selection), platform, arch, found }),
+    )
     .digest('hex');
   return {
     ok: true,
@@ -293,7 +302,10 @@ export function createEnvironmentService({
           if (signal?.aborted)
             throw Object.assign(new Error('环境准备已取消'), { code: 'CANCELLED' });
           const current = await check(input);
-          if (JSON.stringify(current.selection) !== JSON.stringify(before.selection))
+          if (
+            JSON.stringify(environmentSelectionIdentity(current.selection)) !==
+            JSON.stringify(environmentSelectionIdentity(before.selection))
+          )
             return {
               ...current,
               ok: false,

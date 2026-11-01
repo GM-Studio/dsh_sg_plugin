@@ -1,0 +1,29 @@
+✖ native Yarn workspace inherits the root lock manager and rebuilds local workspace links through MCP (2963.2817ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 0
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 3047.2545
+
+✖ failing tests:
+
+test at test\codex-workspace-scan-e2e.test.js:406:1
+✖ native Yarn workspace inherits the root lock manager and rebuilds local workspace links through MCP (2963.2817ms)
+  AssertionError [ERR_ASSERTION]: {"ok":true,"projectReady":false,"projectRoot":"C:\\Users\\Administrator\\AppData\\Local\\Temp\\specgate-codex-tests\\run-18800-dXPfpV\\sg-workspace-scan-qt6AYL","initialization":null,"readiness":"BASELINE_RUNNING","verification":{"status":"not-run","ok":false,"runId":null,"checkedAt":null,"report":".specgate/codex-verify-report.json","lock":null,"nextAction":"RUN_SG_VERIFY","message":"尚未完成真实验证；执行 sg_project_verify（或 sg_verify）写入验证证据。"},"baselineRun":{"runId":"baseline-run-f1e16924490eaed1","status":"failed","previewHash":"be93a7b2c6a225c94c121ec4a33c35a2360205f0fc1ae649cc17cb9372866b2a","startedAt":"2026-11-01T14:18:33.479Z","finishedAt":"2026-11-01T14:18:34.769Z","totalCommands":2,"completedCommands":2,"currentCommand":null,"code":"BASELINE_WORKTREE_CLEANUP_FAILED","message":"error: failed to delete 'C:/Users/Administrator/AppData/Local/Temp/specgate-codex-tests/run-18800-dXPfpV/sg-workspace-scan-qt6AYL/.git/specgate/baseline-jobs/worktrees/baseline-run-f1e16924490eaed1': Filename too long\n"},"detection":{"stack":"javascript-npm","git":{"repository":true,"branch":"main","clean":true,"dirtyFiles":[],"remoteUrl":null},"commands":{"install":[{"id":"frontend-.-install","cwd":".","argv":["yarn","install","--frozen-lockfile"]}],"build":[],"test":[{"id":"frontend-packages-web-test","cwd":"packages/web","argv":["yarn","test"]}],"lint":[],"format":[],"runtime":[]}},"workflow":{"ok":true,"code":null,"phase":null,"version":0,"changeId":null}}
+  
+  false !== true
+  
+      at TestContext.<anonymous> (file:///E:/ai_workflow/specgate/test/codex-workspace-scan-e2e.test.js:475:10)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1125:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:358:3) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

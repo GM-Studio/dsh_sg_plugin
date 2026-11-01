@@ -81,6 +81,15 @@ export function previewAdoption({
       return failure('PROJECT_ALREADY_READY', 'ProjectProfile already exists');
     const detected = detectProject({ root });
     if (!detected.ok) return detected;
+    if (detected.scan?.complete === false)
+      return {
+        ...failure(
+          'STACK_SCAN_INCOMPLETE',
+          'Project discovery was incomplete; inspect scan limits and declarations',
+        ),
+        scan: detected.scan,
+        gaps: detected.gaps,
+      };
     if (!detected.git.repository)
       return failure('GIT_REPOSITORY_REQUIRED', 'Adoption requires a Git repository');
     if (!detected.git.branch)

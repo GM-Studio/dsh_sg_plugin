@@ -11,6 +11,8 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
+import { createHash } from 'node:crypto';
+import { scanDirectories, workspaceOwner, SCAN_LIMITS } from './scan.js';
 
 const SKIP_DIRECTORIES = new Set([
   '.git',
@@ -30,8 +32,8 @@ const SKIP_DIRECTORIES = new Set([
 
 /** 单次探测的条目上限（不遍历整盘）。 */
 export const MAX_SCAN_ENTRIES = 25000;
-/** 顶层目录探查上限。 */
-export const MAX_TOP_LEVEL_DIRECTORIES = 32;
+/** 默认仓库目录探查预算（包含根目录及嵌套目录）。 */
+export const MAX_TOP_LEVEL_DIRECTORIES = SCAN_LIMITS.maxDirectories;
 
 /** 构建文件 → 构建系统。 */
 const BUILD_MARKERS = Object.freeze([
@@ -39,6 +41,7 @@ const BUILD_MARKERS = Object.freeze([
   { file: 'build.gradle', buildSystem: 'gradle', language: 'java' },
   { file: 'build.gradle.kts', buildSystem: 'gradle', language: 'kotlin' },
   { file: 'settings.gradle', buildSystem: 'gradle', language: 'java' },
+  { file: 'settings.gradle.kts', buildSystem: 'gradle', language: 'kotlin' },
   { file: 'package.json', buildSystem: 'npm', language: 'javascript' },
   { file: 'pyproject.toml', buildSystem: 'python', language: 'python' },
   { file: 'setup.py', buildSystem: 'python', language: 'python' },
@@ -71,14 +74,6 @@ const LOCKFILES = Object.freeze([
 
 const object = (value) => value !== null && typeof value === 'object' && !Array.isArray(value);
 
-function safeExists(target) {
-  try {
-    return fs.existsSync(target);
-  } catch {
-    return false;
-  }
-}
-
 function isDirectory(target) {
   try {
     return fs.lstatSync(target).isDirectory();
@@ -87,38 +82,21 @@ function isDirectory(target) {
   }
 }
 
-/** 有界读取目录条目：返回目录名上限内且非跳过的子目录。 */
-function childDirectories(directory) {
-  if (!isDirectory(directory)) return [];
-  let entries;
-  try {
-    entries = fs.readdirSync(directory, { withFileTypes: true });
-  } catch {
-    return [];
-  }
-  const result = [];
-  for (const entry of entries) {
-    if (!entry.isDirectory() || SKIP_DIRECTORIES.has(entry.name)) continue;
-    if (entry.name.startsWith('.') && entry.name !== '.github') continue;
-    result.push(entry.name);
-    if (result.length >= MAX_TOP_LEVEL_DIRECTORIES) break;
-  }
-  return result;
-}
-
 /**
- * 探测一个目录（root 或 root 的直接子目录）中的构建事实。
+ * 探测有界扫描选中的仓库目录中的构建事实。
  * 返回该目录的 markers、lockfiles 与 package scripts。
  */
-function inspectDirectory(root, relative) {
-  const directory = relative === '.' ? root : path.join(root, relative);
+function inspectDirectory(root, relative, discovery) {
+  const entries = discovery.entries.get(relative) || [];
+  const files = new Set(entries.filter((e) => e.isFile()).map((e) => e.name));
+  const read = (file) => discovery.readText(relative === '.' ? file : relative + '/' + file);
   const markers = [];
   const locks = [];
   let scripts = null;
   let manifest = null;
   for (const marker of BUILD_MARKERS) {
     if (marker.file.includes('*')) continue; // 通配在下面单独处理
-    if (safeExists(path.join(directory, marker.file)))
+    if (files.has(marker.file))
       markers.push({
         file: marker.file,
         buildSystem: marker.buildSystem,
@@ -127,7 +105,7 @@ function inspectDirectory(root, relative) {
   }
   // 通配型标记（如 *.csproj）：只看目录直接子项，不递归。
   try {
-    for (const entry of fs.readdirSync(directory, { withFileTypes: true }).slice(0, 256)) {
+    for (const entry of entries) {
       if (entry.isFile() && entry.name.endsWith('.csproj'))
         markers.push({ file: entry.name, buildSystem: 'dotnet', language: 'csharp' });
     }
@@ -135,12 +113,11 @@ function inspectDirectory(root, relative) {
     /* 目录不可读：按缺口处理，不抛错 */
   }
   for (const lock of LOCKFILES) {
-    if (safeExists(path.join(directory, lock.file)))
-      locks.push({ file: lock.file, packageManager: lock.packageManager });
+    if (files.has(lock.file)) locks.push({ file: lock.file, packageManager: lock.packageManager });
   }
   if (markers.some((marker) => marker.buildSystem === 'npm')) {
     try {
-      manifest = JSON.parse(fs.readFileSync(path.join(directory, 'package.json'), 'utf8'));
+      manifest = JSON.parse(read('package.json'));
       scripts = object(manifest?.scripts) ? manifest.scripts : null;
     } catch {
       markers.push({
@@ -151,6 +128,7 @@ function inspectDirectory(root, relative) {
       });
     }
   }
+  for (const marker of markers) read(marker.file);
   return { relative, markers, locks, scripts, manifest };
 }
 
@@ -168,7 +146,7 @@ function frontendFrameworkFrom(manifest) {
 }
 
 /** npm 脚本 → 能力与命令。 */
-function npmCapabilities(scripts, relative) {
+function npmCapabilities(scripts, relative, manager = 'npm') {
   const capabilities = [];
   const commands = { build: [], test: [], lint: [], format: [], runtime: [] };
   if (!object(scripts)) return { capabilities, commands };
@@ -185,7 +163,7 @@ function npmCapabilities(scripts, relative) {
     const id =
       (relative === '.' ? 'root' : relative.replace(/[^A-Za-z0-9._-]+/g, '-')) + '-' + script;
     capabilities.push({ id, kind, module: relative });
-    commands[kind].push({ id, cwd: relative, argv: ['npm', 'run', script] });
+    commands[kind].push({ id, cwd: relative, argv: [manager, 'run', script] });
   }
   return { capabilities, commands };
 }
@@ -194,7 +172,7 @@ function npmCapabilities(scripts, relative) {
  * 探测仓库技术栈。
  * 返回值中的 `stack` 只是描述性标签，不参与准入判断。
  */
-export function detectStack({ root, maxDirectories = MAX_TOP_LEVEL_DIRECTORIES } = {}) {
+export function detectStack({ root, maxDirectories = MAX_TOP_LEVEL_DIRECTORIES, ...limits } = {}) {
   if (typeof root !== 'string' || !path.isAbsolute(root))
     return { ok: false, code: 'STACK_DETECT_INVALID', message: 'root 必须是绝对路径' };
   if (!isDirectory(root))
@@ -208,24 +186,47 @@ export function detectStack({ root, maxDirectories = MAX_TOP_LEVEL_DIRECTORIES }
   const commands = { install: [], build: [], test: [], lint: [], format: [], runtime: [] };
   const lockfiles = [];
 
-  // 扫描范围 = root + 至多 maxDirectories-1 个顶层子目录，保证总数不超过上限。
-  const candidates = ['.'];
-  for (let index = 0; index < candidates.length && candidates.length < maxDirectories; index++) {
-    const relative = candidates[index];
-    if (relative !== '.' && relative.split('/').length >= 4) continue;
-    for (const child of childDirectories(path.join(root, relative))) {
-      candidates.push(relative === '.' ? child : relative + '/' + child);
-      if (candidates.length >= maxDirectories) break;
-    }
+  let discovery;
+  try {
+    discovery = scanDirectories({ root, skip: SKIP_DIRECTORIES, maxDirectories, ...limits });
+  } catch (error) {
+    return { ok: false, code: error.code || 'STACK_DETECT_INVALID', message: error.message };
   }
+  const { candidates, workspaces, scan } = discovery;
   for (const relative of candidates) {
-    const found = inspectDirectory(root, relative);
+    const found = inspectDirectory(root, relative, discovery);
     scanned.push(relative);
+    lockfiles.push(...found.locks.map((lock) => ({ ...lock, relative })));
     if (found.markers.length === 0) continue;
     const buildSystems = [...new Set(found.markers.map((marker) => marker.buildSystem))];
     const languages = [...new Set(found.markers.map((marker) => marker.language))];
-    const packageManager = found.locks.length > 0 ? found.locks[0].packageManager : '';
-    lockfiles.push(...found.locks.map((lock) => ({ ...lock, relative })));
+    const commandPrefix =
+      relative === '.'
+        ? 'root'
+        : relative
+            .replace(/[^A-Za-z0-9._-]/g, '-')
+            .replace(/^[^A-Za-z0-9]+/, 'module-')
+            .slice(0, 100) +
+          '-' +
+          createHash('sha256').update(relative).digest('hex').slice(0, 12);
+    const owner = buildSystems.includes('npm')
+      ? workspaceOwner(
+          workspaces.filter((workspace) => workspace.kind !== 'go'),
+          relative,
+        )
+      : null;
+    const ownManager =
+      String(found.manifest?.packageManager || '').split('@')[0] ||
+      found.locks.find(
+        (lock) =>
+          !buildSystems.includes('npm') ||
+          ['npm', 'pnpm', 'yarn', 'bun'].includes(lock.packageManager),
+      )?.packageManager ||
+      '';
+    const packageManager =
+      ownManager || (buildSystems.includes('npm') ? owner?.packageManager : '') || '';
+    if (buildSystems.includes('npm') && owner && ownManager && ownManager !== owner.packageManager)
+      discovery.issue('WORKSPACE_MANAGER_CONFLICT', relative);
     if (found.markers.some((marker) => marker.invalid))
       gaps.push(relative + '/package.json 无法解析，前端命令未被发现');
     modules.push({
@@ -234,9 +235,49 @@ export function detectStack({ root, maxDirectories = MAX_TOP_LEVEL_DIRECTORIES }
       buildSystems,
       languages,
       packageManager,
+      ...(owner ? { workspaceRoot: owner.root } : {}),
     });
+    if (buildSystems.includes('go')) {
+      commands.install.push({
+        id: commandPrefix + '-go-deps',
+        cwd: relative,
+        argv: ['go', 'mod', 'download'],
+      });
+      commands.build.push({
+        id: commandPrefix + '-go-build',
+        cwd: relative,
+        argv: ['go', 'build', './...'],
+      });
+      commands.test.push({
+        id: commandPrefix + '-go-test',
+        cwd: relative,
+        argv: ['go', 'test', './...'],
+      });
+    }
+    if (buildSystems.includes('python')) {
+      const manager = found.locks.find((lock) =>
+        ['uv', 'poetry'].includes(lock.packageManager),
+      )?.packageManager;
+      const prefix =
+        manager === 'uv'
+          ? ['uv', 'run', '--frozen', 'python']
+          : manager === 'poetry'
+            ? ['poetry', 'run', 'python']
+            : ['python'];
+      const names = new Set((discovery.entries.get(relative) || []).map((e) => e.name));
+      const pytest = names.has('pytest.ini') || names.has('conftest.py');
+      commands.test.push({
+        id: commandPrefix + '-python-test',
+        cwd: relative,
+        argv: [...prefix, '-m', pytest ? 'pytest' : 'unittest', ...(pytest ? [] : ['discover'])],
+      });
+    }
     const moduleId = relative === '.' ? 'root' : relative;
-    const npm = npmCapabilities(found.scripts, relative);
+    const npm = npmCapabilities(
+      found.scripts,
+      relative,
+      ['npm', 'pnpm', 'yarn'].includes(packageManager) ? packageManager : 'npm',
+    );
     // 构建能力：npm 有显式脚本时以脚本为准（更具体，含真实命令）；
     // 否则按构建系统声明一项。两者不在同一模块上重复计数。
     const npmBuildCapability = npm.capabilities.some((entry) => entry.kind === 'build');
@@ -273,6 +314,8 @@ export function detectStack({ root, maxDirectories = MAX_TOP_LEVEL_DIRECTORIES }
       '未发现任何已知构建文件（pom.xml/build.gradle/package.json/pyproject.toml/go.mod/Cargo.toml 等）',
     );
 
+  if (!scan.complete)
+    gaps.push('扫描不完整：' + scan.issues.map((i) => i.code + ' ' + i.path).join('；'));
   const languages = [...new Set(modules.flatMap((entry) => entry.languages))];
   const buildSystems = [...new Set(modules.flatMap((entry) => entry.buildSystems))];
   // stack 仅作描述：单构建设计系统且各模块一致时给出可读标签。
@@ -293,5 +336,7 @@ export function detectStack({ root, maxDirectories = MAX_TOP_LEVEL_DIRECTORIES }
     commands,
     lockfiles,
     scanned,
+    scan,
+    workspaces,
   };
 }

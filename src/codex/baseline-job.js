@@ -43,6 +43,8 @@ function git(root, args) {
       '-c',
       'core.filemode=false',
       '-c',
+      'core.longpaths=true',
+      '-c',
       'core.autocrlf=true',
       ...args,
     ],
