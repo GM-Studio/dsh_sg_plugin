@@ -1,0 +1,72 @@
+{
+  "reuse": {
+    "ok": true,
+    "environmentReady": true,
+    "status": "ready",
+    "platform": "linux",
+    "arch": "x64",
+    "selection": {
+      "stack": "javascript-npm",
+      "requirements": [
+        {
+          "id": "node",
+          "constraints": [
+            "22.22.0"
+          ],
+          "modules": [
+            "."
+          ]
+        }
+      ],
+      "unsupported": [],
+      "modules": [
+        {
+          "id": "root",
+          "root": ".",
+          "buildSystems": [
+            "npm"
+          ],
+          "languages": [
+            "javascript"
+          ],
+          "packageManager": ""
+        }
+      ]
+    },
+    "required": [
+      "node"
+    ],
+    "missing": [],
+    "tools": {
+      "node": {
+        "node": "/home/sc/specgate-env-repair/bootstrap-tools/node-22.22.0/bin/node",
+        "npm": "/home/sc/specgate-env-repair/bootstrap-tools/node-22.22.0/bin/npm",
+        "version": "22.22.0",
+        "npmVersion": "10.9.4"
+      }
+    },
+    "fingerprint": "44db569d3f21075f0b290c18be4be52da303a346f2d2cf6d5cd7ac0d696c9e7d",
+    "source": "official",
+    "plan": [
+      {
+        "id": "node",
+        "action": "reuse",
+        "current": {
+          "node": "/home/sc/specgate-env-repair/bootstrap-tools/node-22.22.0/bin/node",
+          "npm": "/home/sc/specgate-env-repair/bootstrap-tools/node-22.22.0/bin/npm",
+          "version": "22.22.0",
+          "npmVersion": "10.9.4"
+        }
+      }
+    ],
+    "message": "\u5f53\u524d\u9879\u76ee\u6240\u9700\u5de5\u5177\u94fe\u771f\u5b9e\u7248\u672c\u63a2\u6d4b\u901a\u8fc7\u3002\u9879\u76ee\u57fa\u7ebf\u548c\u4e1a\u52a1\u9a8c\u8bc1\u9700\u5206\u522b\u6267\u884c\u3002",
+    "workflowVerification": "not-run",
+    "projectRoot": "/home/sc/specgate-env-repair/bootstrap-project",
+    "checkedAt": "2026-10-31T13:29:19.599Z",
+    "scope": "selected-tools",
+    "cacheRoot": "/home/sc/specgate-env-repair/bootstrap-tools",
+    "installation": "not-run"
+  },
+  "approval": "Exact current-chat approval; confirmation relayed only for the approved plan",
+  "source": "F08-e"
+}

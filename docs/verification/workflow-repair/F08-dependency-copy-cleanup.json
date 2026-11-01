@@ -1,0 +1,227 @@
+[
+  {
+    "kind": "rebuildable candidate dependency copy only",
+    "stage": "F01-a",
+    "preserved": [
+      "E:\\ai_workflow\\specgate\\.tmp\\env-repair-candidates\\F01-a-files.json",
+      "E:\\ai_workflow\\specgate\\.tmp\\env-repair-candidates\\F01-a.tar"
+    ],
+    "path": "E:\\ai_workflow\\specgate\\.tmp\\env-repair-candidates\\F01-a\\node_modules"
+  },
+  {
+    "kind": "rebuildable candidate dependency copy only",
+    "stage": "F01-b",
+    "preserved": [
+      "E:\\ai_workflow\\specgate\\.tmp\\env-repair-candidates\\F01-b-files.json",
+      "E:\\ai_workflow\\specgate\\.tmp\\env-repair-candidates\\F01-b.tar"
+    ],
+    "path": "E:\\ai_workflow\\specgate\\.tmp\\env-repair-candidates\\F01-b\\node_modules"
+  },
+  {
+    "kind": "rebuildable candidate dependency copy only",
+    "stage": "F02-a",
+    "preserved": [
+      "E:\\ai_workflow\\specgate\\.tmp\\env-repair-candidates\\F02-a-files.json",
+      "E:\\ai_workflow\\specgate\\.tmp\\env-repair-candidates\\F02-a.tar"
+    ],
+    "path": "E:\\ai_workflow\\specgate\\.tmp\\env-repair-candidates\\F02-a\\node_modules"
+  },
+  {
+    "kind": "rebuildable candidate dependency copy only",
+    "stage": "F02-b",
+    "preserved": [
+      "E:\\ai_workflow\\specgate\\.tmp\\env-repair-candidates\\F02-b-files.json",
+      "E:\\ai_workflow\\specgate\\.tmp\\env-repair-candidates\\F02-b.tar"
+    ],
+    "path": "E:\\ai_workflow\\specgate\\.tmp\\env-repair-candidates\\F02-b\\node_modules"
+  },
+  {
+    "kind": "rebuildable candidate dependency copy only",
+    "stage": "F03-a",
+    "preserved": [
+      "E:\\ai_workflow\\specgate\\.tmp\\env-repair-candidates\\F03-a-files.json",
+      "E:\\ai_workflow\\specgate\\.tmp\\env-repair-candidates\\F03-a.tar"
+    ],
+    "path": "E:\\ai_workflow\\specgate\\.tmp\\env-repair-candidates\\F03-a\\node_modules"
+  },
+  {
+    "kind": "rebuildable candidate dependency copy only",
+    "stage": "F03-b",
+    "preserved": [
+      "E:\\ai_workflow\\specgate\\.tmp\\env-repair-candidates\\F03-b-files.json",
+      "E:\\ai_workflow\\specgate\\.tmp\\env-repair-candidates\\F03-b.tar"
+    ],
+    "path": "E:\\ai_workflow\\specgate\\.tmp\\env-repair-candidates\\F03-b\\node_modules"
+  },
+  {
+    "kind": "rebuildable candidate dependency copy only",
+    "stage": "F04-a",
+    "preserved": [
+      "E:\\ai_workflow\\specgate\\.tmp\\env-repair-candidates\\F04-a-files.json",
+      "E:\\ai_workflow\\specgate\\.tmp\\env-repair-candidates\\F04-a.tar"
+    ],
+    "path": "E:\\ai_workflow\\specgate\\.tmp\\env-repair-candidates\\F04-a\\node_modules"
+  },
+  {
+    "kind": "rebuildable candidate dependency copy only",
+    "stage": "F04-b",
+    "preserved": [
+      "E:\\ai_workflow\\specgate\\.tmp\\env-repair-candidates\\F04-b-files.json",
+      "E:\\ai_workflow\\specgate\\.tmp\\env-repair-candidates\\F04-b.tar"
+    ],
+    "path": "E:\\ai_workflow\\specgate\\.tmp\\env-repair-candidates\\F04-b\\node_modules"
+  },
+  {
+    "kind": "rebuildable candidate dependency copy only",
+    "stage": "F04-c",
+    "preserved": [
+      "E:\\ai_workflow\\specgate\\.tmp\\env-repair-candidates\\F04-c-files.json",
+      "E:\\ai_workflow\\specgate\\.tmp\\env-repair-candidates\\F04-c.tar"
+    ],
+    "path": "E:\\ai_workflow\\specgate\\.tmp\\env-repair-candidates\\F04-c\\node_modules"
+  },
+  {
+    "kind": "rebuildable candidate dependency copy only",
+    "stage": "F04-d",
+    "preserved": [
+      "E:\\ai_workflow\\specgate\\.tmp\\env-repair-candidates\\F04-d-files.json",
+      "E:\\ai_workflow\\specgate\\.tmp\\env-repair-candidates\\F04-d.tar"
+    ],
+    "path": "E:\\ai_workflow\\specgate\\.tmp\\env-repair-candidates\\F04-d\\node_modules"
+  },
+  {
+    "kind": "rebuildable candidate dependency copy only",
+    "stage": "F04-e",
+    "preserved": [
+      "E:\\ai_workflow\\specgate\\.tmp\\env-repair-candidates\\F04-e-files.json",
+      "E:\\ai_workflow\\specgate\\.tmp\\env-repair-candidates\\F04-e.tar"
+    ],
+    "path": "E:\\ai_workflow\\specgate\\.tmp\\env-repair-candidates\\F04-e\\node_modules"
+  },
+  {
+    "kind": "rebuildable candidate dependency copy only",
+    "stage": "F04-f",
+    "preserved": [
+      "E:\\ai_workflow\\specgate\\.tmp\\env-repair-candidates\\F04-f-files.json",
+      "E:\\ai_workflow\\specgate\\.tmp\\env-repair-candidates\\F04-f.tar"
+    ],
+    "path": "E:\\ai_workflow\\specgate\\.tmp\\env-repair-candidates\\F04-f\\node_modules"
+  },
+  {
+    "kind": "rebuildable candidate dependency copy only",
+    "stage": "F04-g",
+    "preserved": [
+      "E:\\ai_workflow\\specgate\\.tmp\\env-repair-candidates\\F04-g-files.json",
+      "E:\\ai_workflow\\specgate\\.tmp\\env-repair-candidates\\F04-g.tar"
+    ],
+    "path": "E:\\ai_workflow\\specgate\\.tmp\\env-repair-candidates\\F04-g\\node_modules"
+  },
+  {
+    "kind": "rebuildable candidate dependency copy only",
+    "stage": "F04-h",
+    "preserved": [
+      "E:\\ai_workflow\\specgate\\.tmp\\env-repair-candidates\\F04-h-files.json",
+      "E:\\ai_workflow\\specgate\\.tmp\\env-repair-candidates\\F04-h.tar"
+    ],
+    "path": "E:\\ai_workflow\\specgate\\.tmp\\env-repair-candidates\\F04-h\\node_modules"
+  },
+  {
+    "kind": "rebuildable candidate dependency copy only",
+    "stage": "F05-a",
+    "preserved": [
+      "E:\\ai_workflow\\specgate\\.tmp\\env-repair-candidates\\F05-a-files.json",
+      "E:\\ai_workflow\\specgate\\.tmp\\env-repair-candidates\\F05-a.tar"
+    ],
+    "path": "E:\\ai_workflow\\specgate\\.tmp\\env-repair-candidates\\F05-a\\node_modules"
+  },
+  {
+    "kind": "rebuildable candidate dependency copy only",
+    "stage": "F05-b",
+    "preserved": [
+      "E:\\ai_workflow\\specgate\\.tmp\\env-repair-candidates\\F05-b-files.json",
+      "E:\\ai_workflow\\specgate\\.tmp\\env-repair-candidates\\F05-b.tar"
+    ],
+    "path": "E:\\ai_workflow\\specgate\\.tmp\\env-repair-candidates\\F05-b\\node_modules"
+  },
+  {
+    "kind": "rebuildable candidate dependency copy only",
+    "stage": "F05-c",
+    "preserved": [
+      "E:\\ai_workflow\\specgate\\.tmp\\env-repair-candidates\\F05-c-files.json",
+      "E:\\ai_workflow\\specgate\\.tmp\\env-repair-candidates\\F05-c.tar"
+    ],
+    "path": "E:\\ai_workflow\\specgate\\.tmp\\env-repair-candidates\\F05-c\\node_modules"
+  },
+  {
+    "kind": "rebuildable candidate dependency copy only",
+    "stage": "F05-d",
+    "preserved": [
+      "E:\\ai_workflow\\specgate\\.tmp\\env-repair-candidates\\F05-d-files.json",
+      "E:\\ai_workflow\\specgate\\.tmp\\env-repair-candidates\\F05-d.tar"
+    ],
+    "path": "E:\\ai_workflow\\specgate\\.tmp\\env-repair-candidates\\F05-d\\node_modules"
+  },
+  {
+    "kind": "rebuildable candidate dependency copy only",
+    "stage": "F06-a",
+    "preserved": [
+      "E:\\ai_workflow\\specgate\\.tmp\\env-repair-candidates\\F06-a-files.json",
+      "E:\\ai_workflow\\specgate\\.tmp\\env-repair-candidates\\F06-a.tar"
+    ],
+    "path": "E:\\ai_workflow\\specgate\\.tmp\\env-repair-candidates\\F06-a\\node_modules"
+  },
+  {
+    "kind": "rebuildable candidate dependency copy only",
+    "stage": "F06-b",
+    "preserved": [
+      "E:\\ai_workflow\\specgate\\.tmp\\env-repair-candidates\\F06-b-files.json",
+      "E:\\ai_workflow\\specgate\\.tmp\\env-repair-candidates\\F06-b.tar"
+    ],
+    "path": "E:\\ai_workflow\\specgate\\.tmp\\env-repair-candidates\\F06-b\\node_modules"
+  },
+  {
+    "kind": "rebuildable candidate dependency copy only",
+    "stage": "F06-c",
+    "preserved": [
+      "E:\\ai_workflow\\specgate\\.tmp\\env-repair-candidates\\F06-c-files.json",
+      "E:\\ai_workflow\\specgate\\.tmp\\env-repair-candidates\\F06-c.tar"
+    ],
+    "path": "E:\\ai_workflow\\specgate\\.tmp\\env-repair-candidates\\F06-c\\node_modules"
+  },
+  {
+    "kind": "rebuildable candidate dependency copy only",
+    "stage": "F07-a",
+    "preserved": [
+      "E:\\ai_workflow\\specgate\\.tmp\\env-repair-candidates\\F07-a-files.json",
+      "E:\\ai_workflow\\specgate\\.tmp\\env-repair-candidates\\F07-a.tar"
+    ],
+    "path": "E:\\ai_workflow\\specgate\\.tmp\\env-repair-candidates\\F07-a\\node_modules"
+  },
+  {
+    "kind": "rebuildable candidate dependency copy only",
+    "stage": "F08-a",
+    "preserved": [
+      "E:\\ai_workflow\\specgate\\.tmp\\env-repair-candidates\\F08-a-files.json",
+      "E:\\ai_workflow\\specgate\\.tmp\\env-repair-candidates\\F08-a.tar"
+    ],
+    "path": "E:\\ai_workflow\\specgate\\.tmp\\env-repair-candidates\\F08-a\\node_modules"
+  },
+  {
+    "kind": "rebuildable candidate dependency copy only",
+    "stage": "F08-b",
+    "preserved": [
+      "E:\\ai_workflow\\specgate\\.tmp\\env-repair-candidates\\F08-b-files.json",
+      "E:\\ai_workflow\\specgate\\.tmp\\env-repair-candidates\\F08-b.tar"
+    ],
+    "path": "E:\\ai_workflow\\specgate\\.tmp\\env-repair-candidates\\F08-b\\node_modules"
+  },
+  {
+    "kind": "rebuildable candidate dependency copy only",
+    "stage": "F08-c",
+    "preserved": [
+      "E:\\ai_workflow\\specgate\\.tmp\\env-repair-candidates\\F08-c-files.json",
+      "E:\\ai_workflow\\specgate\\.tmp\\env-repair-candidates\\F08-c.tar"
+    ],
+    "path": "E:\\ai_workflow\\specgate\\.tmp\\env-repair-candidates\\F08-c\\node_modules"
+  }
+]

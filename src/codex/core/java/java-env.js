@@ -509,6 +509,28 @@ export function discoverMaven({
   return null;
 }
 
+export function isVoltaShim(
+  file,
+  { env = process.env, platform = process.platform, homedir } = {},
+) {
+  const directory = path.resolve(path.dirname(file));
+  const home = envHome(env, homedir);
+  const bins = [
+    env.VOLTA_HOME && path.join(env.VOLTA_HOME, 'bin'),
+    path.join(home, '.volta', 'bin'),
+    platform === 'win32' &&
+      path.join(env.LOCALAPPDATA || path.join(home, 'AppData', 'Local'), 'Volta', 'bin'),
+  ].filter(Boolean);
+  return (
+    /(?:^|[\\/])\.?volta[\\/]bin$/i.test(directory) ||
+    bins.some((bin) =>
+      platform === 'win32'
+        ? path.resolve(bin).toLowerCase() === directory.toLowerCase()
+        : path.resolve(bin) === directory,
+    )
+  );
+}
+
 export function discoverNode({
   env = process.env,
   platform = process.platform,
@@ -520,6 +542,15 @@ export function discoverNode({
   const home = envHome(env, homedir);
   const seen = new Set();
   const candidates = [];
+  const voltaRoots = [
+    env.VOLTA_HOME,
+    path.join(home, '.volta'),
+    platform === 'win32' &&
+      path.join(env.LOCALAPPDATA || path.join(home, 'AppData', 'Local'), 'Volta'),
+  ].filter(Boolean);
+  for (const root of [...new Set(voltaRoots)])
+    for (const version of listDirs(path.join(root, 'tools', 'image', 'node')).slice(0, 16))
+      candidates.push(path.join(version, platform === 'win32' ? 'node.exe' : 'bin/node'));
   for (const directory of extraRoots.slice(0, 32))
     candidates.push(path.join(directory, platform === 'win32' ? 'node.exe' : 'bin/node'));
   for (const dir of listDirs(path.join(home, '.specgate', 'toolchains')).slice(0, 32))
@@ -547,7 +578,13 @@ export function discoverNode({
   }
   if (fallbackNode) candidates.push(fallbackNode);
   for (const node of candidates) {
-    if (!node || seen.has(node) || !exists(node)) continue;
+    if (
+      !node ||
+      seen.has(node) ||
+      !exists(node) ||
+      isVoltaShim(node, { env, platform, homedir: home })
+    )
+      continue;
     seen.add(node);
     const version = /v?([\d.]+)/.exec(probeTool(node, ['-v'], 3000, env))?.[1] || null;
     if (!version) continue;
@@ -555,6 +592,10 @@ export function discoverNode({
     if (!(acceptVersion ? acceptVersion(version) : (major === 22 && minor >= 12) || major === 24))
       continue;
     const dir = path.dirname(node);
+    const probeEnv = Object.fromEntries(
+      Object.entries(env).filter(([key]) => key.toUpperCase() !== 'PATH'),
+    );
+    probeEnv.PATH = [dir, ...pathEntries(env, platform)].join(platform === 'win32' ? ';' : ':');
     let npm = null;
     for (const name of platform === 'win32' ? ['npm.cmd', 'npm.exe', 'npm'] : ['npm']) {
       if (exists(path.join(dir, name))) {
@@ -572,7 +613,7 @@ export function discoverNode({
             /\.[cm]?js$/i.test(npm) ? node : npm,
             /\.[cm]?js$/i.test(npm) ? [npm, '-v'] : ['-v'],
             3000,
-            env,
+            probeEnv,
           ),
         )
       : null;

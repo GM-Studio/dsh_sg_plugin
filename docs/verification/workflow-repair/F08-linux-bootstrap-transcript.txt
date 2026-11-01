@@ -1,0 +1,73 @@
+{"ok":false,"environmentReady":false,"kind":"node-runtime-bootstrap","code":"NODE_RUNTIME_REQUIRED","platform":"linux","arch":"x64","version":"22.22.0","url":"https://nodejs.org/dist/v22.22.0/node-v22.22.0-linux-x64.tar.gz","algorithm":"sha256","checksum":"c33c39ed9c80deddde77c960d00119918b9e352426fd604ba41638d6526a4744","location":"/home/sc/specgate-env-repair/bootstrap-tools/node-22.22.0","planHash":"b5cf7cda02348c9b107978b06067d446f84367933996c7166f32fe7fafc8f951","workflowVerification":"not-run"}
+Type INSTALL b5cf7cda02348c9b107978b06067d446f84367933996c7166f32fe7fafc8f951 to approve, or press Enter to decline: INSTALL b5cf7cda02348c9b107978b06067d446f84367933996c7166f32fe7fafc8f951
+  % Total    % Received % Xferd  Average Speed  Time    Time    Time   Current
+                                 Dload  Upload  Total   Spent   Left   Speed
+  0      0   0      0   0      0      0      0                              0  0      0   0      0   0      0      0      0           00:01              0  1 54.04M   1 807.8k   0      0 385.5k      0   02:23   00:02   02:21 385.6k 17 54.04M  17  9.35M   0      0  2.99M      0   00:18   00:03   00:15  2.99M 40 54.04M  40 22.06M   0      0  5.34M      0   00:10   00:04   00:06  5.34M 56 54.04M  56 30.76M   0      0  5.97M      0   00:09   00:05   00:04  5.97M 75 54.04M  75 40.58M   0      0  6.59M      0   00:08   00:06   00:02  8.02M 83 54.04M  83 44.92M   0      0  6.27M      0   00:08   00:07   00:01  8.72M 85 54.04M  85 46.44M   0      0  5.55M      0   00:09   00:08   00:01  7.08M100 54.04M 100 54.04M   0      0  6.18M      0   00:08   00:08          7.08M100 54.04M 100 54.04M   0      0  6.18M      0   00:08   00:08          7.08M100 54.04M 100 54.04M   0      0  6.18M      0   00:08   00:08          7.08M
+{
+  "ok": true,
+  "environmentReady": true,
+  "status": "ready",
+  "platform": "linux",
+  "arch": "x64",
+  "selection": {
+    "stack": "javascript-npm",
+    "requirements": [
+      {
+        "id": "node",
+        "constraints": [
+          "22.22.0"
+        ],
+        "modules": [
+          "."
+        ]
+      }
+    ],
+    "unsupported": [],
+    "modules": [
+      {
+        "id": "root",
+        "root": ".",
+        "buildSystems": [
+          "npm"
+        ],
+        "languages": [
+          "javascript"
+        ],
+        "packageManager": ""
+      }
+    ]
+  },
+  "required": [
+    "node"
+  ],
+  "missing": [],
+  "tools": {
+    "node": {
+      "node": "/home/sc/specgate-env-repair/bootstrap-tools/node-22.22.0/bin/node",
+      "npm": "/home/sc/specgate-env-repair/bootstrap-tools/node-22.22.0/bin/npm",
+      "version": "22.22.0",
+      "npmVersion": "10.9.4"
+    }
+  },
+  "fingerprint": "44db569d3f21075f0b290c18be4be52da303a346f2d2cf6d5cd7ac0d696c9e7d",
+  "source": "official",
+  "plan": [
+    {
+      "id": "node",
+      "action": "reuse",
+      "current": {
+        "node": "/home/sc/specgate-env-repair/bootstrap-tools/node-22.22.0/bin/node",
+        "npm": "/home/sc/specgate-env-repair/bootstrap-tools/node-22.22.0/bin/npm",
+        "version": "22.22.0",
+        "npmVersion": "10.9.4"
+      }
+    }
+  ],
+  "message": "当前项目所需工具链真实版本探测通过。项目基线和业务验证需分别执行。",
+  "workflowVerification": "not-run",
+  "projectRoot": "/home/sc/specgate-env-repair/bootstrap-project",
+  "checkedAt": "2026-10-31T13:29:19.442Z",
+  "scope": "selected-tools",
+  "cacheRoot": "/home/sc/specgate-env-repair/bootstrap-tools",
+  "installation": "not-needed-or-not-approved"
+}

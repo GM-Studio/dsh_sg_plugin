@@ -117,5 +117,10 @@ export function projectToolRequirements(root, input = {}) {
     if (['pnpm', 'yarn'].includes(input.packageManager)) add(input.packageManager, '');
   }
   if (requirements.length === 1) return {};
-  return { stack: detected.stack || input.stack, requirements, unsupported, modules };
+  return {
+    stack: modules.length ? detected.stack : input.stack,
+    requirements,
+    unsupported,
+    modules,
+  };
 }

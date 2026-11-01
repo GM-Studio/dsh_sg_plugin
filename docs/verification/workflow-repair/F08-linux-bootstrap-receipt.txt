@@ -1,0 +1,8 @@
+id=node
+version=22.22.0
+url=https://nodejs.org/dist/v22.22.0/node-v22.22.0-linux-x64.tar.gz
+sha256=c33c39ed9c80deddde77c960d00119918b9e352426fd604ba41638d6526a4744
+location=/home/sc/specgate-env-repair/bootstrap-tools/node-22.22.0
+planHash=b5cf7cda02348c9b107978b06067d446f84367933996c7166f32fe7fafc8f951
+consent=interactive-confirmation-of-plan-hash
+output=v22.22.0

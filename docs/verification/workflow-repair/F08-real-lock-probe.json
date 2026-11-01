@@ -1,0 +1,20 @@
+[
+  {
+    "hresult": -2147024864,
+    "blocked": true,
+    "message": "Exception calling \"Move\" with \"2\" argument(s): \"The process cannot access the file because it is being used by another process.\"",
+    "kind": "dir-read"
+  },
+  {
+    "hresult": -2147024864,
+    "blocked": true,
+    "message": "Exception calling \"Move\" with \"2\" argument(s): \"The process cannot access the file because it is being used by another process.\"",
+    "kind": "dir-delete"
+  },
+  {
+    "hresult": -2147024891,
+    "blocked": true,
+    "message": "Exception calling \"Move\" with \"2\" argument(s): \"Access to the path 'E:\\ai_workflow\\specgate\\.tmp\\workflow-repair-lock-probe-f58441dc38ef4f8bb7af2a996d6beb8d\\file-read' is denied.\"",
+    "kind": "file-read"
+  }
+]

@@ -25,6 +25,10 @@ SpecGate Core 为**已有 Git 项目**提供本地、可审计的需求到交付
 
 发布在目标分支快进前预检 DeliveryRecord 和交付包，并持久化绑定 H3、目标提交、配置及证据的操作记录。同一操作遇到存储失败可读取最新状态版本重试；证据、目标或选项发生非预期变化会阻断并保留现场。已有交付文件逐字节复用，冲突不覆盖；本地归档完成后的重试也不能追加推送授权。工作树仅在交付证据与最终状态持久化后清理，清理结果单独记录。显式推送已到达远程但回执保存失败时，恢复流程实际查询远程提交，记录观察结果。
 
+源码中的历史独立环境入口已改为共用环境服务和校验安装器：`node scripts/install-env.mjs --check --project=<绝对路径>` 只读检测；空项目用 `--stack=node|react|vue|python|go|java` 选择，`--only=...` 仅处理显式工具范围，默认按项目推断。`--plan` 生成确切方案，`--expected-plan-hash=...` 拒绝变化的方案；此参数不授予安装许可。实际缺项必须在交互终端输入完整方案确认，非交互调用保持阻断，Codex 中应使用 `sg_env_prepare` 的宿主审批。环境变量变更仅影响子进程，无系统包管理器或用户配置写入。
+
+缺少 Node 运行时时，`scripts/install-env.ps1` / `.sh` 的 `--check` 仍只读、`--plan` 仅输出运行时方案；可用 `SPECGATE_NODE` 指定已有运行时，或显式 `--bootstrap` 查看并交互确认固定官方 Node 归档、SHA-256 和隔离目录。原生入口与 MCP 共用 `src/codex/core/node-bootstrap.tsv`，不覆盖未知安装。运行时准备后继续检测所选技术栈，缺少其它工具仍须分别确认。原生 bootstrap 适配 Windows/Linux x64；Bash 入口需要已有 GNU timeout/realpath/sha256sum，安装时还需 curl/tar/gzip 等工具，缺少时明确阻断，不自动执行 apt/sudo。这些历史脚本仍不随 Core 插件分发。
+
 历史业务模板、异步 WorkItem、控制面、Worker、Decision、TOTP、Web 和通知代码仍在源码中；默认工具面和 Core tarball 排除这些能力。源码开发者可显式设置 `SPECGATE_OPTIONAL_MODULES=1` 加载历史工具；该模式及其外部依赖不属于 Core 发行验收。环境安装器按需加载并随包提供；Core 包不包含 `mysql2`。
 
 ## 验证

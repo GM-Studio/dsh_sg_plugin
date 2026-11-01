@@ -216,10 +216,11 @@ export function createEnvironmentService({
   resolveArchive = resolveToolArchive,
   consent,
   cacheRoot = environmentCacheRoot(env),
+  select = projectEnvironmentSelection,
 } = {}) {
   let latest = null;
   const check = async (input = {}) => {
-    const selection = projectEnvironmentSelection(root, input);
+    const selection = select(root, input);
     const source = input.source || 'domestic';
     // 参数/平台不合法时，不能先进行系统发现或创建目录。
     const initial = planEnvironment({ selection, platform, arch, source });

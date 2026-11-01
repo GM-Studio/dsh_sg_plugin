@@ -1,0 +1,19 @@
+param([Parameter(Mandatory=$true)][string]$CacheRoot,[Parameter(Mandatory=$true)][string]$RecordPath)
+$ErrorActionPreference='Stop'
+[IO.File]::WriteAllText($RecordPath+'.ready','ready')
+$deadline=[DateTime]::UtcNow.AddMinutes(4)
+while([DateTime]::UtcNow -lt $deadline){
+ foreach($stage in (Get-ChildItem -LiteralPath $CacheRoot -Directory -Filter 'sg-bootstrap-*')){
+  $binary=Join-Path $stage.FullName 'extracted/node-v22.22.0-win-x64/node.exe'
+  if(-not(Test-Path -LiteralPath $binary -PathType Leaf)){continue}
+  $resolved=[IO.Path]::GetFullPath($binary)
+  if(-not $resolved.StartsWith([IO.Path]::GetFullPath($CacheRoot).TrimEnd('\')+'\',[StringComparison]::OrdinalIgnoreCase)){throw 'Unsafe lock test path'}
+  try{$handle=[IO.File]::Open($resolved,[IO.FileMode]::Open,[IO.FileAccess]::Read,[IO.FileShare]::ReadWrite)}catch [IO.IOException]{continue}
+  $held=[DateTime]::UtcNow.ToString('o')
+  try{Start-Sleep -Seconds 8}finally{$handle.Dispose()}
+  [IO.File]::WriteAllText($RecordPath,(@{mechanism='real read handle without FILE_SHARE_DELETE';file=$resolved;heldAt=$held;releasedAt=[DateTime]::UtcNow.ToString('o');pid=$PID}|ConvertTo-Json))
+  exit 0
+ }
+ Start-Sleep -Milliseconds 20
+}
+throw 'No approved bootstrap stage appeared'

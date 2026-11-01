@@ -1,0 +1,35 @@
+{
+  "purpose": "F08 缺Node只读检查及获批后原生SDK准备的双平台真实端到端验收",
+  "plans": [
+    {
+      "id": "node",
+      "version": "22.22.0",
+      "name": "node-v22.22.0-win-x64.zip",
+      "url": "https://nodejs.org/dist/v22.22.0/node-v22.22.0-win-x64.zip",
+      "algorithm": "sha256",
+      "checksum": "c97fa376d2becdc8863fcd3ca2dd9a83a9f3468ee7ccf7a6d076ec66a645c77a",
+      "metadata": "https://nodejs.org/dist/v22.22.0/SHASUMS256.txt",
+      "source": "official",
+      "platform": "win32",
+      "arch": "x64",
+      "cacheRoot": "E:/ai_workflow/specgate/.tmp/workflow-repair-bootstrap",
+      "location": "E:/ai_workflow/specgate/.tmp/workflow-repair-bootstrap/node-22.22.0",
+      "scope": "仅对应平台原生包装脚本 bootstrap 和隔离子进程验证，先复用已安装运行时，不提权、不修改全局环境，不运行系统包管理器。若已有有效目录则复验复用，不覆盖删除。"
+    },
+    {
+      "id": "node",
+      "version": "22.22.0",
+      "name": "node-v22.22.0-linux-x64.tar.gz",
+      "url": "https://nodejs.org/dist/v22.22.0/node-v22.22.0-linux-x64.tar.gz",
+      "algorithm": "sha256",
+      "checksum": "c33c39ed9c80deddde77c960d00119918b9e352426fd604ba41638d6526a4744",
+      "metadata": "https://nodejs.org/dist/v22.22.0/SHASUMS256.txt",
+      "source": "official",
+      "platform": "linux",
+      "arch": "x64",
+      "cacheRoot": "/home/sc/specgate-env-repair/bootstrap-tools",
+      "location": "/home/sc/specgate-env-repair/bootstrap-tools/node-22.22.0",
+      "scope": "仅对应平台原生包装脚本 bootstrap 和隔离子进程验证，先复用已安装运行时，不提权、不修改全局环境，不运行系统包管理器。若已有有效目录则复验复用，不覆盖删除。"
+    }
+  ]
+}

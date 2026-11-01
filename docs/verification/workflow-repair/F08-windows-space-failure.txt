@@ -1,0 +1,77 @@
+✔ a real locked local npm dependency is rebuilt in the detached worker despite source node_modules (4563.4015ms)
+✔ a real missing module blocks MCP adoption rather than becoming an accepted known failure (2391.3986ms)
+✔ actual timeout, absent executable and failed installation cannot produce a usable baseline (2020.1056ms)
+✔ real evidence storage failure keeps an otherwise passing baseline unready (2747.1664ms)
+✔ Python installs a local wheel in a worktree venv, reuses it and completes native MCP adoption (9417.9831ms)
+(node:24960) [DEP0190] DeprecationWarning: Passing args to a child process with shell option true can lead to security vulnerabilities, as the arguments are not escaped, only concatenated.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+✖ Go compiles a real project in its isolated worktree and completes native MCP adoption (3927.765ms)
+✔ a past suite install marker cannot hide deleted dependencies (1410.5641ms)
+✔ default stdio package surface exposes environment preparation and new-project selection (2420.4523ms)
+✔ new-project environment selection is trusted, resumable, and does not generate business code (4.6606ms)
+✔ missing or cancelled project form leaves the requested target untouched (1.1606ms)
+✔ initialization checks the selected environment before creating project files (108.197ms)
+✔ read-only control status verifies the snapshot without repairing corrupt history (20.5481ms)
+✔ only marked staging owned by an exited process is recovered (55.482ms)
+✔ temporary mirrors are scoped to the callback and removed on failure (1.8832ms)
+✔ planning requires a selected stack and installs only selected missing tools (0.5351ms)
+✔ check is read-only and stack changes invalidate readiness (1.4552ms)
+✔ install has no approval argument and needs trusted installation consent (1.6871ms)
+✔ installation probes again and rerun reuses tools without asking or installing (1.5512ms)
+✔ an installer success without real discovered binaries stays blocked (2.0802ms)
+✔ archive integrity rejects corrupted downloads before publication (1.1177ms)
+✔ aggregated status on a bare project never creates files or starts control runtime (4.2251ms)
+✔ all task Skills and generated project copies are declared (0.3821ms)
+✔ a corrupt download is cleaned and an existing installation remains untouched (8.9601ms)
+✔ workflow execution remains blocked without creating runtime state (1.6489ms)
+✔ status in supervisor mode does not create the control home (2.6352ms)
+✔ native win32 missing-Node launcher --check never downloads or writes before consent (840.7349ms)
+✔ native win32 missing-Node launcher --check --bootstrap never downloads or writes before consent (792.9278ms)
+✔ native win32 missing-Node launcher --plan never downloads or writes before consent (791.895ms)
+✔ native win32 missing-Node launcher --bootstrap never downloads or writes before consent (793.548ms)
+✔ native win32 wrapper actually reuses an explicitly configured runtime and returns the real selected tool (1146.6381ms)
+✔ native win32 changed runtime hash and unsupported methods never start installation (2516.6234ms)
+✔ native win32 invocation preserves its calling shell PATH (1082.3198ms)
+✔ native win32 and shared discovery reuse a real Node SDK under a manager image directory (1333.9166ms)
+✔ standalone defaults infer project tools and never opt in to global environment writes (1.5267ms)
+✔ help is independent of discovery, metadata and filesystem mutations (0.5558ms)
+✔ native wrapper and shared MCP catalog use the same exact official Node archives (0.833ms)
+✔ a real project check reuses compatible Node/npm without creating cache or changing caller environment (386.3644ms)
+✔ a nonexistent required Node version blocks before consent, metadata download or installation (181.2146ms)
+✔ exact-plan decline and a mismatched expected hash install nothing (377.3713ms)
+✔ a real noninteractive CLI produces an exact plan but cannot self-approve it (538.2559ms)
+✔ empty new project requires user stack selection and does not install unrelated JDKs (417.8423ms)
+✔ standalone scripts remain outside the Core tarball and have no default npm lifecycle install hook (0.3332ms)
+✔ new-project standalone react selection really reuses its available SDK without installing unrelated tools (372.5191ms)
+✔ new-project standalone vue selection really reuses its available SDK without installing unrelated tools (378.4705ms)
+✔ new-project standalone python selection really reuses its available SDK without installing unrelated tools (172.2573ms)
+✔ new-project standalone go selection really reuses its available SDK without installing unrelated tools (172.4068ms)
+✔ new-project standalone java selection really reuses its available SDK without installing unrelated tools (1658.7001ms)
+ℹ tests 47
+ℹ suites 0
+ℹ pass 46
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 26862.4181
+
+✖ failing tests:
+
+test at test\codex-environment-dependencies-e2e.test.js:305:1
+✖ Go compiles a real project in its isolated worktree and completes native MCP adoption (3927.765ms)
+  AssertionError [ERR_ASSERTION]: {"ok":false,"code":"BASELINE_INFRASTRUCTURE_FAILED","message":"root-go-test: unclassified-failure; repair the environment and rerun the baseline","infrastructure":"unclassified-failure","results":[{"command":{"id":"root-go-deps","cwd":".","argv":["go","mod","download"],"kind":"install"},"result":{"commandId":"root-go-deps","status":"passed","exitCode":0,"stdout":"","stderr":"go: no module dependencies to download\n","durationMs":23,"startedAt":"2026-10-31T13:27:33.252Z","finishedAt":"2026-10-31T13:27:33.275Z","argv":["E:\\ai_workflow\\specgate\\.tmp\\env-repair-install\\go-1.27.3\\bin\\go.exe","mod","download"]}},{"command":{"id":"root-go-build","cwd":".","argv":["go","build","./..."],"kind":"build"},"result":{"commandId":"root-go-build","status":"passed","exitCode":0,"stdout":"","stderr":"","durationMs":70,"startedAt":"2026-10-31T13:27:33.275Z","finishedAt":"2026-10-31T13:27:33.345Z","argv":["E:\\ai_workflow\\specgate\\.tmp\\env-repair-install\\go-1.27.3\\bin\\go.exe","build","./..."]}},{"command":{"id":"root-go-test","cwd":".","argv":["go","test","./..."],"kind":"test"},"result":{"commandId":"root-go-test","status":"failed","exitCode":1,"stdout":"FAIL\texample.com/environment-proof [build failed]\nFAIL\n","stderr":"# example.com/environment-proof.test\nE:\\ai_workflow\\specgate\\.tmp\\env-repair-install\\go-1.27.3\\pkg\\tool\\windows_amd64\\link.exe: resize output file failed: truncate $WORK\\b001\\environment-proof.test.exe: There is not enough space on the disk.\n","durationMs":3097,"startedAt":"2026-10-31T13:27:33.345Z","finishedAt":"2026-10-31T13:27:36.442Z","argv":["E:\\ai_workflow\\specgate\\.tmp\\env-repair-install\\go-1.27.3\\bin\\go.exe","test","./..."]}}]}
+  
+  false !== true
+  
+      at TestContext.<anonymous> (file:///E:/ai_workflow/specgate/.tmp/env-repair-candidates/F08-e/test/codex-environment-dependencies-e2e.test.js:347:12)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1125:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:787:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

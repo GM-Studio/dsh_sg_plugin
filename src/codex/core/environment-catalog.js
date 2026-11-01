@@ -1,4 +1,5 @@
 // 固定版本与校验值来自 Node/Adoptium/Apache 官方元数据，更新时必须重新核验。
+import { nodeBootstrapArchive } from './node-bootstrap.js';
 const java = {
   win32: {
     8: [
@@ -56,14 +57,10 @@ export function componentArchive(
     domestic,
     metadata;
   if (id === 'node') {
-    version = '22.22.0';
-    name = `node-v${version}-${windows ? 'win' : 'linux'}-x64.${ext}`;
-    checksum = windows
-      ? 'c97fa376d2becdc8863fcd3ca2dd9a83a9f3468ee7ccf7a6d076ec66a645c77a'
-      : 'c33c39ed9c80deddde77c960d00119918b9e352426fd604ba41638d6526a4744';
-    official = `https://nodejs.org/dist/v${version}/${name}`;
+    const archive = nodeBootstrapArchive({ platform, arch: 'x64' });
+    ({ version, name, checksum, metadata } = archive);
+    official = archive.url;
     domestic = `https://npmmirror.com/mirrors/node/v${version}/${name}`;
-    metadata = `https://nodejs.org/dist/v${version}/SHASUMS256.txt`;
   } else if (id === 'maven') {
     version = '3.9.11';
     name = `apache-maven-${version}-bin.${ext}`;

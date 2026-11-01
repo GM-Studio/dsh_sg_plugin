@@ -1,0 +1,292 @@
+TAP version 13
+# Subtest: a real locked local npm dependency is rebuilt in the detached worker despite source node_modules
+ok 1 - a real locked local npm dependency is rebuilt in the detached worker despite source node_modules
+  ---
+  duration_ms: 5623.737449
+  type: 'test'
+  ...
+# Subtest: a real missing module blocks MCP adoption rather than becoming an accepted known failure
+ok 2 - a real missing module blocks MCP adoption rather than becoming an accepted known failure
+  ---
+  duration_ms: 1428.647402
+  type: 'test'
+  ...
+# Subtest: actual timeout, absent executable and failed installation cannot produce a usable baseline
+ok 3 - actual timeout, absent executable and failed installation cannot produce a usable baseline
+  ---
+  duration_ms: 1655.037313
+  type: 'test'
+  ...
+# Subtest: real evidence storage failure keeps an otherwise passing baseline unready
+ok 4 - real evidence storage failure keeps an otherwise passing baseline unready
+  ---
+  duration_ms: 3399.275909
+  type: 'test'
+  ...
+# Subtest: Python installs a local wheel in a worktree venv, reuses it and completes native MCP adoption
+ok 5 - Python installs a local wheel in a worktree venv, reuses it and completes native MCP adoption
+  ---
+  duration_ms: 7766.365129
+  type: 'test'
+  ...
+# Subtest: Go compiles a real project in its isolated worktree and completes native MCP adoption
+ok 6 - Go compiles a real project in its isolated worktree and completes native MCP adoption
+  ---
+  duration_ms: 21264.152052
+  type: 'test'
+  ...
+# Subtest: a past suite install marker cannot hide deleted dependencies
+ok 7 - a past suite install marker cannot hide deleted dependencies
+  ---
+  duration_ms: 4439.048661
+  type: 'test'
+  ...
+# Subtest: default stdio package surface exposes environment preparation and new-project selection
+ok 8 - default stdio package surface exposes environment preparation and new-project selection
+  ---
+  duration_ms: 1490.267578
+  type: 'test'
+  ...
+# Subtest: new-project environment selection is trusted, resumable, and does not generate business code
+ok 9 - new-project environment selection is trusted, resumable, and does not generate business code
+  ---
+  duration_ms: 4.280646
+  type: 'test'
+  ...
+# Subtest: missing or cancelled project form leaves the requested target untouched
+ok 10 - missing or cancelled project form leaves the requested target untouched
+  ---
+  duration_ms: 1.143403
+  type: 'test'
+  ...
+# Subtest: initialization checks the selected environment before creating project files
+ok 11 - initialization checks the selected environment before creating project files
+  ---
+  duration_ms: 47.57934
+  type: 'test'
+  ...
+# Subtest: read-only control status verifies the snapshot without repairing corrupt history
+ok 12 - read-only control status verifies the snapshot without repairing corrupt history
+  ---
+  duration_ms: 2.273564
+  type: 'test'
+  ...
+# Subtest: only marked staging owned by an exited process is recovered
+ok 13 - only marked staging owned by an exited process is recovered
+  ---
+  duration_ms: 75.694328
+  type: 'test'
+  ...
+# Subtest: temporary mirrors are scoped to the callback and removed on failure
+ok 14 - temporary mirrors are scoped to the callback and removed on failure
+  ---
+  duration_ms: 1.536527
+  type: 'test'
+  ...
+# Subtest: planning requires a selected stack and installs only selected missing tools
+ok 15 - planning requires a selected stack and installs only selected missing tools
+  ---
+  duration_ms: 0.784344
+  type: 'test'
+  ...
+# Subtest: check is read-only and stack changes invalidate readiness
+ok 16 - check is read-only and stack changes invalidate readiness
+  ---
+  duration_ms: 1.757492
+  type: 'test'
+  ...
+# Subtest: install has no approval argument and needs trusted installation consent
+ok 17 - install has no approval argument and needs trusted installation consent
+  ---
+  duration_ms: 2.562204
+  type: 'test'
+  ...
+# Subtest: installation probes again and rerun reuses tools without asking or installing
+ok 18 - installation probes again and rerun reuses tools without asking or installing
+  ---
+  duration_ms: 1.495447
+  type: 'test'
+  ...
+# Subtest: an installer success without real discovered binaries stays blocked
+ok 19 - an installer success without real discovered binaries stays blocked
+  ---
+  duration_ms: 2.449248
+  type: 'test'
+  ...
+# Subtest: archive integrity rejects corrupted downloads before publication
+ok 20 - archive integrity rejects corrupted downloads before publication
+  ---
+  duration_ms: 1.189735
+  type: 'test'
+  ...
+# Subtest: aggregated status on a bare project never creates files or starts control runtime
+ok 21 - aggregated status on a bare project never creates files or starts control runtime
+  ---
+  duration_ms: 3.739068
+  type: 'test'
+  ...
+# Subtest: all task Skills and generated project copies are declared
+ok 22 - all task Skills and generated project copies are declared
+  ---
+  duration_ms: 0.273283
+  type: 'test'
+  ...
+# Subtest: a corrupt download is cleaned and an existing installation remains untouched
+ok 23 - a corrupt download is cleaned and an existing installation remains untouched
+  ---
+  duration_ms: 42.555635
+  type: 'test'
+  ...
+# Subtest: workflow execution remains blocked without creating runtime state
+ok 24 - workflow execution remains blocked without creating runtime state
+  ---
+  duration_ms: 0.939827
+  type: 'test'
+  ...
+# Subtest: status in supervisor mode does not create the control home
+ok 25 - status in supervisor mode does not create the control home
+  ---
+  duration_ms: 1.287319
+  type: 'test'
+  ...
+# Subtest: native linux missing-Node launcher --check never downloads or writes before consent
+ok 26 - native linux missing-Node launcher --check never downloads or writes before consent
+  ---
+  duration_ms: 14.818496
+  type: 'test'
+  ...
+# Subtest: native linux missing-Node launcher --check --bootstrap never downloads or writes before consent
+ok 27 - native linux missing-Node launcher --check --bootstrap never downloads or writes before consent
+  ---
+  duration_ms: 10.935976
+  type: 'test'
+  ...
+# Subtest: native linux missing-Node launcher --plan never downloads or writes before consent
+ok 28 - native linux missing-Node launcher --plan never downloads or writes before consent
+  ---
+  duration_ms: 10.481558
+  type: 'test'
+  ...
+# Subtest: native linux missing-Node launcher --bootstrap never downloads or writes before consent
+ok 29 - native linux missing-Node launcher --bootstrap never downloads or writes before consent
+  ---
+  duration_ms: 11.369894
+  type: 'test'
+  ...
+# Subtest: native linux wrapper actually reuses an explicitly configured runtime and returns the real selected tool
+ok 30 - native linux wrapper actually reuses an explicitly configured runtime and returns the real selected tool
+  ---
+  duration_ms: 441.886757
+  type: 'test'
+  ...
+# Subtest: native linux changed runtime hash and unsupported methods never start installation
+ok 31 - native linux changed runtime hash and unsupported methods never start installation
+  ---
+  duration_ms: 32.813945
+  type: 'test'
+  ...
+# Subtest: native linux invocation preserves its calling shell PATH
+ok 32 - native linux invocation preserves its calling shell PATH
+  ---
+  duration_ms: 430.218246
+  type: 'test'
+  ...
+# Subtest: native linux and shared discovery reuse a real Node SDK under a manager image directory
+ok 33 - native linux and shared discovery reuse a real Node SDK under a manager image directory
+  ---
+  duration_ms: 733.175567
+  type: 'test'
+  ...
+# Subtest: standalone defaults infer project tools and never opt in to global environment writes
+ok 34 - standalone defaults infer project tools and never opt in to global environment writes
+  ---
+  duration_ms: 2.968011
+  type: 'test'
+  ...
+# Subtest: help is independent of discovery, metadata and filesystem mutations
+ok 35 - help is independent of discovery, metadata and filesystem mutations
+  ---
+  duration_ms: 0.654118
+  type: 'test'
+  ...
+# Subtest: native wrapper and shared MCP catalog use the same exact official Node archives
+ok 36 - native wrapper and shared MCP catalog use the same exact official Node archives
+  ---
+  duration_ms: 1.349538
+  type: 'test'
+  ...
+# Subtest: a real project check reuses compatible Node/npm without creating cache or changing caller environment
+ok 37 - a real project check reuses compatible Node/npm without creating cache or changing caller environment
+  ---
+  duration_ms: 274.411279
+  type: 'test'
+  ...
+# Subtest: a nonexistent required Node version blocks before consent, metadata download or installation
+ok 38 - a nonexistent required Node version blocks before consent, metadata download or installation
+  ---
+  duration_ms: 33.400508
+  type: 'test'
+  ...
+# Subtest: exact-plan decline and a mismatched expected hash install nothing
+ok 39 - exact-plan decline and a mismatched expected hash install nothing
+  ---
+  duration_ms: 69.364602
+  type: 'test'
+  ...
+# Subtest: a real noninteractive CLI produces an exact plan but cannot self-approve it
+ok 40 - a real noninteractive CLI produces an exact plan but cannot self-approve it
+  ---
+  duration_ms: 258.836306
+  type: 'test'
+  ...
+# Subtest: empty new project requires user stack selection and does not install unrelated JDKs
+ok 41 - empty new project requires user stack selection and does not install unrelated JDKs
+  ---
+  duration_ms: 277.89143
+  type: 'test'
+  ...
+# Subtest: standalone scripts remain outside the Core tarball and have no default npm lifecycle install hook
+ok 42 - standalone scripts remain outside the Core tarball and have no default npm lifecycle install hook
+  ---
+  duration_ms: 0.577443
+  type: 'test'
+  ...
+# Subtest: new-project standalone react selection really reuses its available SDK without installing unrelated tools
+ok 43 - new-project standalone react selection really reuses its available SDK without installing unrelated tools
+  ---
+  duration_ms: 291.446434
+  type: 'test'
+  ...
+# Subtest: new-project standalone vue selection really reuses its available SDK without installing unrelated tools
+ok 44 - new-project standalone vue selection really reuses its available SDK without installing unrelated tools
+  ---
+  duration_ms: 269.133822
+  type: 'test'
+  ...
+# Subtest: new-project standalone python selection really reuses its available SDK without installing unrelated tools
+ok 45 - new-project standalone python selection really reuses its available SDK without installing unrelated tools
+  ---
+  duration_ms: 5.070632
+  type: 'test'
+  ...
+# Subtest: new-project standalone go selection really reuses its available SDK without installing unrelated tools
+ok 46 - new-project standalone go selection really reuses its available SDK without installing unrelated tools
+  ---
+  duration_ms: 6.432363
+  type: 'test'
+  ...
+# Subtest: new-project standalone java selection really reuses its available SDK without installing unrelated tools
+ok 47 - new-project standalone java selection really reuses its available SDK without installing unrelated tools
+  ---
+  duration_ms: 752.780918
+  type: 'test'
+  ...
+1..47
+# tests 47
+# suites 0
+# pass 47
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 45854.67481

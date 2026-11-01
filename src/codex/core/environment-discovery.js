@@ -7,6 +7,7 @@ import {
   javaRoots,
   mavenRoots,
   probeTool,
+  isVoltaShim,
 } from './java/java-env.js';
 import { matchesVersion } from './env/version-range.js';
 
@@ -115,6 +116,7 @@ export function discoverRequiredEnvironment({ root, selection, env, platform, ca
       .flatMap((name) => executableCandidates(name, { env, platform, roots }))
       .slice(0, 16);
     for (const bin of binaries) {
+      if (isVoltaShim(bin, { env, platform })) continue;
       const args = id === 'go' ? ['version'] : id === 'git' ? ['--version'] : ['--version'];
       const output = probeTool(bin, args, 2500, {
         ...env,

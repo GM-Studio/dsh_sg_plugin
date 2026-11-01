@@ -1,0 +1,84 @@
+{
+  "approval": "Exact current-chat approval; interactive confirmation relayed by agent only for that approved plan",
+  "receipt": {
+    "url": "https://nodejs.org/dist/v22.22.0/node-v22.22.0-win-x64.zip",
+    "id": "node",
+    "consent": "interactive-confirmation-of-plan-hash",
+    "method": "native-bootstrap",
+    "version": "22.22.0",
+    "algorithm": "sha256",
+    "output": "v22.22.0",
+    "promotionAttempts": 63,
+    "location": "E:\\ai_workflow\\specgate\\.tmp\\workflow-repair-bootstrap\\node-22.22.0",
+    "planHash": "6916e3147dd8a12aaab4e355a1e0711e5c1ded209ff5557f328223f6c0f81a63",
+    "checksum": "c97fa376d2becdc8863fcd3ca2dd9a83a9f3468ee7ccf7a6d076ec66a645c77a"
+  },
+  "reuse": {
+    "ok": true,
+    "environmentReady": true,
+    "status": "ready",
+    "platform": "win32",
+    "arch": "x64",
+    "selection": {
+      "stack": "javascript-npm",
+      "requirements": [
+        {
+          "id": "node",
+          "constraints": [
+            "22.22.0"
+          ],
+          "modules": [
+            "."
+          ]
+        }
+      ],
+      "unsupported": [],
+      "modules": [
+        {
+          "id": "root",
+          "root": ".",
+          "buildSystems": [
+            "npm"
+          ],
+          "languages": [
+            "javascript"
+          ],
+          "packageManager": ""
+        }
+      ]
+    },
+    "required": [
+      "node"
+    ],
+    "missing": [],
+    "tools": {
+      "node": {
+        "node": "E:\\ai_workflow\\specgate\\.tmp\\workflow-repair-bootstrap\\node-22.22.0\\node.exe",
+        "npm": "E:\\ai_workflow\\specgate\\.tmp\\workflow-repair-bootstrap\\node-22.22.0\\npm.cmd",
+        "version": "22.22.0",
+        "npmVersion": "10.9.4"
+      }
+    },
+    "fingerprint": "e2d5adc8c652e64a16525b54c8de03ac686b9d3933b08bb766b1667784bc9315",
+    "source": "official",
+    "plan": [
+      {
+        "id": "node",
+        "action": "reuse",
+        "current": {
+          "node": "E:\\ai_workflow\\specgate\\.tmp\\workflow-repair-bootstrap\\node-22.22.0\\node.exe",
+          "npm": "E:\\ai_workflow\\specgate\\.tmp\\workflow-repair-bootstrap\\node-22.22.0\\npm.cmd",
+          "version": "22.22.0",
+          "npmVersion": "10.9.4"
+        }
+      }
+    ],
+    "message": "当前项目所需工具链真实版本探测通过。项目基线和业务验证需分别执行。",
+    "workflowVerification": "not-run",
+    "projectRoot": "C:\\Users\\Administrator\\AppData\\Local\\Temp\\sg-real-node-bootstrap-e2a13eab386f42e8a443a5421c16282b",
+    "checkedAt": "2026-11-01T12:53:42.293Z",
+    "scope": "selected-tools",
+    "cacheRoot": "E:\\ai_workflow\\specgate\\.tmp\\workflow-repair-bootstrap",
+    "installation": "not-run"
+  }
+}

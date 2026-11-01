@@ -1,0 +1,152 @@
+[
+  {
+    "removedCopy": "E:\\ai_workflow\\specgate\\.tmp\\env-repair-candidates\\F01-a",
+    "stage": "F01-a",
+    "retainedSourceTar": "E:\\ai_workflow\\specgate\\.tmp\\env-repair-candidates\\F01-a.tar",
+    "retainedManifest": "E:\\ai_workflow\\specgate\\.tmp\\env-repair-candidates\\F01-a-files.json"
+  },
+  {
+    "removedCopy": "E:\\ai_workflow\\specgate\\.tmp\\env-repair-candidates\\F01-b",
+    "stage": "F01-b",
+    "retainedSourceTar": "E:\\ai_workflow\\specgate\\.tmp\\env-repair-candidates\\F01-b.tar",
+    "retainedManifest": "E:\\ai_workflow\\specgate\\.tmp\\env-repair-candidates\\F01-b-files.json"
+  },
+  {
+    "removedCopy": "E:\\ai_workflow\\specgate\\.tmp\\env-repair-candidates\\F02-a",
+    "stage": "F02-a",
+    "retainedSourceTar": "E:\\ai_workflow\\specgate\\.tmp\\env-repair-candidates\\F02-a.tar",
+    "retainedManifest": "E:\\ai_workflow\\specgate\\.tmp\\env-repair-candidates\\F02-a-files.json"
+  },
+  {
+    "removedCopy": "E:\\ai_workflow\\specgate\\.tmp\\env-repair-candidates\\F02-b",
+    "stage": "F02-b",
+    "retainedSourceTar": "E:\\ai_workflow\\specgate\\.tmp\\env-repair-candidates\\F02-b.tar",
+    "retainedManifest": "E:\\ai_workflow\\specgate\\.tmp\\env-repair-candidates\\F02-b-files.json"
+  },
+  {
+    "removedCopy": "E:\\ai_workflow\\specgate\\.tmp\\env-repair-candidates\\F03-a",
+    "stage": "F03-a",
+    "retainedSourceTar": "E:\\ai_workflow\\specgate\\.tmp\\env-repair-candidates\\F03-a.tar",
+    "retainedManifest": "E:\\ai_workflow\\specgate\\.tmp\\env-repair-candidates\\F03-a-files.json"
+  },
+  {
+    "removedCopy": "E:\\ai_workflow\\specgate\\.tmp\\env-repair-candidates\\F03-b",
+    "stage": "F03-b",
+    "retainedSourceTar": "E:\\ai_workflow\\specgate\\.tmp\\env-repair-candidates\\F03-b.tar",
+    "retainedManifest": "E:\\ai_workflow\\specgate\\.tmp\\env-repair-candidates\\F03-b-files.json"
+  },
+  {
+    "removedCopy": "E:\\ai_workflow\\specgate\\.tmp\\env-repair-candidates\\F04-a",
+    "stage": "F04-a",
+    "retainedSourceTar": "E:\\ai_workflow\\specgate\\.tmp\\env-repair-candidates\\F04-a.tar",
+    "retainedManifest": "E:\\ai_workflow\\specgate\\.tmp\\env-repair-candidates\\F04-a-files.json"
+  },
+  {
+    "removedCopy": "E:\\ai_workflow\\specgate\\.tmp\\env-repair-candidates\\F04-b",
+    "stage": "F04-b",
+    "retainedSourceTar": "E:\\ai_workflow\\specgate\\.tmp\\env-repair-candidates\\F04-b.tar",
+    "retainedManifest": "E:\\ai_workflow\\specgate\\.tmp\\env-repair-candidates\\F04-b-files.json"
+  },
+  {
+    "removedCopy": "E:\\ai_workflow\\specgate\\.tmp\\env-repair-candidates\\F04-c",
+    "stage": "F04-c",
+    "retainedSourceTar": "E:\\ai_workflow\\specgate\\.tmp\\env-repair-candidates\\F04-c.tar",
+    "retainedManifest": "E:\\ai_workflow\\specgate\\.tmp\\env-repair-candidates\\F04-c-files.json"
+  },
+  {
+    "removedCopy": "E:\\ai_workflow\\specgate\\.tmp\\env-repair-candidates\\F04-d",
+    "stage": "F04-d",
+    "retainedSourceTar": "E:\\ai_workflow\\specgate\\.tmp\\env-repair-candidates\\F04-d.tar",
+    "retainedManifest": "E:\\ai_workflow\\specgate\\.tmp\\env-repair-candidates\\F04-d-files.json"
+  },
+  {
+    "removedCopy": "E:\\ai_workflow\\specgate\\.tmp\\env-repair-candidates\\F04-e",
+    "stage": "F04-e",
+    "retainedSourceTar": "E:\\ai_workflow\\specgate\\.tmp\\env-repair-candidates\\F04-e.tar",
+    "retainedManifest": "E:\\ai_workflow\\specgate\\.tmp\\env-repair-candidates\\F04-e-files.json"
+  },
+  {
+    "removedCopy": "E:\\ai_workflow\\specgate\\.tmp\\env-repair-candidates\\F04-f",
+    "stage": "F04-f",
+    "retainedSourceTar": "E:\\ai_workflow\\specgate\\.tmp\\env-repair-candidates\\F04-f.tar",
+    "retainedManifest": "E:\\ai_workflow\\specgate\\.tmp\\env-repair-candidates\\F04-f-files.json"
+  },
+  {
+    "removedCopy": "E:\\ai_workflow\\specgate\\.tmp\\env-repair-candidates\\F04-g",
+    "stage": "F04-g",
+    "retainedSourceTar": "E:\\ai_workflow\\specgate\\.tmp\\env-repair-candidates\\F04-g.tar",
+    "retainedManifest": "E:\\ai_workflow\\specgate\\.tmp\\env-repair-candidates\\F04-g-files.json"
+  },
+  {
+    "removedCopy": "E:\\ai_workflow\\specgate\\.tmp\\env-repair-candidates\\F04-h",
+    "stage": "F04-h",
+    "retainedSourceTar": "E:\\ai_workflow\\specgate\\.tmp\\env-repair-candidates\\F04-h.tar",
+    "retainedManifest": "E:\\ai_workflow\\specgate\\.tmp\\env-repair-candidates\\F04-h-files.json"
+  },
+  {
+    "removedCopy": "E:\\ai_workflow\\specgate\\.tmp\\env-repair-candidates\\F05-a",
+    "stage": "F05-a",
+    "retainedSourceTar": "E:\\ai_workflow\\specgate\\.tmp\\env-repair-candidates\\F05-a.tar",
+    "retainedManifest": "E:\\ai_workflow\\specgate\\.tmp\\env-repair-candidates\\F05-a-files.json"
+  },
+  {
+    "removedCopy": "E:\\ai_workflow\\specgate\\.tmp\\env-repair-candidates\\F05-b",
+    "stage": "F05-b",
+    "retainedSourceTar": "E:\\ai_workflow\\specgate\\.tmp\\env-repair-candidates\\F05-b.tar",
+    "retainedManifest": "E:\\ai_workflow\\specgate\\.tmp\\env-repair-candidates\\F05-b-files.json"
+  },
+  {
+    "removedCopy": "E:\\ai_workflow\\specgate\\.tmp\\env-repair-candidates\\F05-c",
+    "stage": "F05-c",
+    "retainedSourceTar": "E:\\ai_workflow\\specgate\\.tmp\\env-repair-candidates\\F05-c.tar",
+    "retainedManifest": "E:\\ai_workflow\\specgate\\.tmp\\env-repair-candidates\\F05-c-files.json"
+  },
+  {
+    "removedCopy": "E:\\ai_workflow\\specgate\\.tmp\\env-repair-candidates\\F05-d",
+    "stage": "F05-d",
+    "retainedSourceTar": "E:\\ai_workflow\\specgate\\.tmp\\env-repair-candidates\\F05-d.tar",
+    "retainedManifest": "E:\\ai_workflow\\specgate\\.tmp\\env-repair-candidates\\F05-d-files.json"
+  },
+  {
+    "removedCopy": "E:\\ai_workflow\\specgate\\.tmp\\env-repair-candidates\\F06-a",
+    "stage": "F06-a",
+    "retainedSourceTar": "E:\\ai_workflow\\specgate\\.tmp\\env-repair-candidates\\F06-a.tar",
+    "retainedManifest": "E:\\ai_workflow\\specgate\\.tmp\\env-repair-candidates\\F06-a-files.json"
+  },
+  {
+    "removedCopy": "E:\\ai_workflow\\specgate\\.tmp\\env-repair-candidates\\F06-b",
+    "stage": "F06-b",
+    "retainedSourceTar": "E:\\ai_workflow\\specgate\\.tmp\\env-repair-candidates\\F06-b.tar",
+    "retainedManifest": "E:\\ai_workflow\\specgate\\.tmp\\env-repair-candidates\\F06-b-files.json"
+  },
+  {
+    "removedCopy": "E:\\ai_workflow\\specgate\\.tmp\\env-repair-candidates\\F06-c",
+    "stage": "F06-c",
+    "retainedSourceTar": "E:\\ai_workflow\\specgate\\.tmp\\env-repair-candidates\\F06-c.tar",
+    "retainedManifest": "E:\\ai_workflow\\specgate\\.tmp\\env-repair-candidates\\F06-c-files.json"
+  },
+  {
+    "removedCopy": "E:\\ai_workflow\\specgate\\.tmp\\env-repair-candidates\\F07-a",
+    "stage": "F07-a",
+    "retainedSourceTar": "E:\\ai_workflow\\specgate\\.tmp\\env-repair-candidates\\F07-a.tar",
+    "retainedManifest": "E:\\ai_workflow\\specgate\\.tmp\\env-repair-candidates\\F07-a-files.json"
+  },
+  {
+    "removedCopy": "E:\\ai_workflow\\specgate\\.tmp\\env-repair-candidates\\F08-a",
+    "stage": "F08-a",
+    "retainedSourceTar": "E:\\ai_workflow\\specgate\\.tmp\\env-repair-candidates\\F08-a.tar",
+    "retainedManifest": "E:\\ai_workflow\\specgate\\.tmp\\env-repair-candidates\\F08-a-files.json"
+  },
+  {
+    "removedCopy": "E:\\ai_workflow\\specgate\\.tmp\\env-repair-candidates\\F08-b",
+    "stage": "F08-b",
+    "retainedSourceTar": "E:\\ai_workflow\\specgate\\.tmp\\env-repair-candidates\\F08-b.tar",
+    "retainedManifest": "E:\\ai_workflow\\specgate\\.tmp\\env-repair-candidates\\F08-b-files.json"
+  },
+  {
+    "removedCopy": "E:\\ai_workflow\\specgate\\.tmp\\env-repair-candidates\\F08-c",
+    "stage": "F08-c",
+    "retainedSourceTar": "E:\\ai_workflow\\specgate\\.tmp\\env-repair-candidates\\F08-c.tar",
+    "retainedManifest": "E:\\ai_workflow\\specgate\\.tmp\\env-repair-candidates\\F08-c-files.json"
+  }
+]
