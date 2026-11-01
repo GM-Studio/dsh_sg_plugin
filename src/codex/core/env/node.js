@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { exists, readText } from '../util/fsx.js';
+import { matchesVersion } from './version-range.js';
 
 export function readNodeRequirement(root, { suite, config } = {}) {
   if (suite?.node) return String(suite.node);
@@ -41,42 +42,10 @@ function compareVersions(a, b) {
 }
 
 export function pickVersion(requirement, versions) {
-  const alternatives = String(requirement || '')
-    .split('||')
-    .map((item) => item.trim())
-    .filter(Boolean);
-  if (alternatives.length > 1) {
-    const matches = alternatives
-      .map((alternative) => pickVersion(alternative, versions))
-      .filter(Boolean);
-    matches.sort(compareVersions);
-    return matches.length ? matches[matches.length - 1] : null;
-  }
   if (!requirement) return null;
-  const cleaned = String(requirement).trim().replace(/^v/, '');
-  if (versions.includes(cleaned)) return cleaned;
-
-  const numbers = [...cleaned.matchAll(/(\d+)/g)].map((match) => Number(match[1]));
-  if (numbers.length === 0) return null;
-
-  const lowerMajor = numbers[0];
-  const upperMatch = /<\s*(\d+)/.exec(cleaned);
-  const upperMajor = upperMatch ? Number(upperMatch[1]) : null;
-  const caretOrTilde = /[\^~]/.test(cleaned);
-
-  let matching = versions.filter((version) => {
-    const major = Number(String(version).split('.')[0]);
-    if (major < lowerMajor) return false;
-    if (upperMajor !== null && major >= upperMajor) return false;
-    return true;
-  });
-
-  if (!/[<>=^~]/.test(cleaned) || caretOrTilde) {
-    matching = matching.filter((version) => Number(String(version).split('.')[0]) === lowerMajor);
-  }
-
+  const matching = versions.filter((version) => matchesVersion(version, requirement));
   matching.sort(compareVersions);
-  return matching.length > 0 ? matching[matching.length - 1] : null;
+  return matching.length ? matching[matching.length - 1] : null;
 }
 
 function nvmRoots(env) {
@@ -213,11 +182,15 @@ export function resolveNode({ root, suite, config, env = process.env, verify = t
   if (!verify)
     return { ok: true, requirement, version, tool: candidate.tool, dir: binDir, env: nextEnv };
 
-  const result = spawnSync('node', ['-v'], { env: nextEnv, encoding: 'utf8', windowsHide: true });
+  const result = spawnSync(
+    path.join(binDir, process.platform === 'win32' ? 'node.exe' : 'node'),
+    ['-v'],
+    { env: nextEnv, encoding: 'utf8', windowsHide: true, timeout: 5000 },
+  );
   const printed = String(result.stdout || '')
     .trim()
     .replace(/^v/, '');
-  if (result.status !== 0 || !printed.startsWith(version)) {
+  if (result.status !== 0 || printed !== version) {
     return {
       ok: false,
       code: 'NODE_VERSION_MISMATCH',

@@ -1,0 +1,44 @@
+✔ detached baseline worker survives the starter and persists readiness (2113.4784ms)
+✔ completion during a status read does not become a false failed baseline (323.8694ms)
+✔ persistent missing status under an active lease still fails closed after bounded rereads (375.5951ms)
+✔ Web step-up Decision consumes one AttentionRequest and queues automatic resume (57.8847ms)
+✔ Web customer acceptance atomically links a DeliveryRecord receipt and Control Decision (61.2966ms)
+✔ three compatibility states exist and unknown is one of them (0.8538ms)
+✔ an existing tool with an unusable version is incompatible, not ok (0.2777ms)
+✔ a tool below the minimum version is incompatible (0.4946ms)
+✔ an architecture mismatch is incompatible (0.0763ms)
+✔ a probe that exited non-zero keeps its stderr and is incompatible (0.0961ms)
+✔ a probe timeout is unknown, never a pass (0.1083ms)
+✔ a tool with no real executable path is incompatible (0.09ms)
+✔ an unreadable version is unknown rather than compatible (0.0824ms)
+✔ a matching tool with a real path and version is compatible (0.0721ms)
+✔ unknown and incompatible both keep the environment not ready (0.3153ms)
+✔ the environment is ready only when every tool is compatible (0.1149ms)
+✔ environment readiness never implies build, test or review results (0.0779ms)
+✔ an empty probe set is never reported as ready (0.0556ms)
+✔ project requirements follow the actual build systems present (0.1313ms)
+✔ version parsing handles the common shapes (0.0578ms)
+✔ all version entry points reject the audit counterexamples and unsupported syntax (1.3429ms)
+✔ compatibility minimums compare complete release tuples and unreadable versions are unknown (0.2297ms)
+✔ real current Node is executed for matching constraints and a higher patch is blocked (104.757ms)
+✔ real checked Python venv reuse rejects a different exact patch without modifying it (533.8128ms)
+✔ a real locked local npm dependency is rebuilt in the detached worker despite source node_modules (4209.0812ms)
+✔ a real missing module blocks MCP adoption rather than becoming an accepted known failure (2357.3766ms)
+✔ actual timeout, absent executable and failed installation cannot produce a usable baseline (1945.3117ms)
+✔ real evidence storage failure keeps an otherwise passing baseline unready (2520.3117ms)
+✔ Python installs a local wheel in a worktree venv, reuses it and completes native MCP adoption (8970.7731ms)
+(node:19144) [DEP0190] DeprecationWarning: Passing args to a child process with shell option true can lead to security vulnerabilities, as the arguments are not escaped, only concatenated.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+✔ Go compiles a real project in its isolated worktree and completes native MCP adoption (13301.5402ms)
+✔ a past suite install marker cannot hide deleted dependencies (1350.4524ms)
+✔ existing Node, React, Vue, Python, Go and plain Java derive only their actual tool requirements (3112.0519ms)
+✔ version constraints reject lower patch versions and discover nested workspace modules (365.9918ms)
+✔ new-project stack selection can prepare a pure backend and incompatible runtime remains missing (402.8098ms)
+ℹ tests 34
+ℹ suites 0
+ℹ pass 34
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 35906.0009

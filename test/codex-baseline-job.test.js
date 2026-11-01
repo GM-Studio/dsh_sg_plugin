@@ -112,3 +112,47 @@ test('detached baseline worker survives the starter and persists readiness', asy
     true,
   );
 });
+
+test('completion during a status read does not become a false failed baseline', async (t) => {
+  const { reserveBaselineJob, finishBaselineJob } = await import('../src/codex/baseline-job.js');
+  const root = project(t),
+    preview = previewAdoption({ projectRoot: root });
+  const reserved = reserveBaselineJob({ projectRoot: root, preview });
+  assert.equal(reserved.ok, true, JSON.stringify(reserved));
+  const job = JSON.parse(fs.readFileSync(reserved.jobPath, 'utf8'));
+  const original = fs.readFileSync;
+  let intercepted = false;
+  fs.readFileSync = function (file, ...args) {
+    if (!intercepted && path.resolve(String(file)) === path.resolve(job.statusPath)) {
+      intercepted = true;
+      finishBaselineJob(job, { success: true });
+    }
+    return original.call(this, file, ...args);
+  };
+  let result;
+  try {
+    result = getBaselineJob(root);
+  } finally {
+    fs.readFileSync = original;
+  }
+  assert.equal(intercepted, true);
+  assert.equal(result, null, JSON.stringify(result));
+  assert.equal(
+    loadProjectReadiness({ projectRoot: root }).ok,
+    false,
+    'absence of a job never fabricates readiness',
+  );
+});
+
+test('persistent missing status under an active lease still fails closed after bounded rereads', async (t) => {
+  const { reserveBaselineJob } = await import('../src/codex/baseline-job.js');
+  const root = project(t),
+    preview = previewAdoption({ projectRoot: root });
+  const reserved = reserveBaselineJob({ projectRoot: root, preview });
+  assert.equal(reserved.ok, true, JSON.stringify(reserved));
+  fs.unlinkSync(reserved.statusPath);
+  const result = getBaselineJob(root);
+  assert.equal(result.status, 'failed');
+  assert.equal(result.code, 'ENOENT');
+  assert.equal(fs.existsSync(path.join(root, '.git/specgate/baseline-lease/owner.json')), true);
+});

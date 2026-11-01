@@ -1,3 +1,4 @@
+import { matchesVersion, versionTuple } from './version-range.js';
 // 兼容性与可运行性判定（M3 / SNA-0302）。
 //
 // 目标（AC-09）：工具存在但不兼容时必须列为不兼容，
@@ -78,17 +79,16 @@ export function assessTool({ tool, probe, requirement = {} } = {}) {
 
   // 6. 最低版本约束。
   if (requirement.minVersion !== undefined) {
-    const major = majorOf(probe.version);
-    const expected = majorOf(requirement.minVersion);
-    if (major === null || expected === null)
+    const expected = String(requirement.minVersion);
+    if (!versionTuple(probe.version) || !versionTuple(expected))
       return { ok: true, tool, state: 'unknown', reason: 'version-unreadable' };
-    if (major < expected)
+    if (!matchesVersion(probe.version, '>=' + expected))
       return {
         ok: true,
         tool,
         state: 'incompatible',
         reason: 'version-below-minimum',
-        detail: 'requires >= ' + expected + ', got ' + major,
+        detail: 'requires >= ' + expected + ', got ' + probe.version,
       };
   }
 

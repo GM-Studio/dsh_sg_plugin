@@ -1,0 +1,214 @@
+TAP version 13
+# Subtest: detached baseline worker survives the starter and persists readiness
+ok 1 - detached baseline worker survives the starter and persists readiness
+  ---
+  duration_ms: 2154.267144
+  type: 'test'
+  ...
+# Subtest: completion during a status read does not become a false failed baseline
+ok 2 - completion during a status read does not become a false failed baseline
+  ---
+  duration_ms: 91.008199
+  type: 'test'
+  ...
+# Subtest: persistent missing status under an active lease still fails closed after bounded rereads
+ok 3 - persistent missing status under an active lease still fails closed after bounded rereads
+  ---
+  duration_ms: 101.589473
+  type: 'test'
+  ...
+# Subtest: Web step-up Decision consumes one AttentionRequest and queues automatic resume
+ok 4 - Web step-up Decision consumes one AttentionRequest and queues automatic resume
+  ---
+  duration_ms: 103.360581
+  type: 'test'
+  ...
+# Subtest: Web customer acceptance atomically links a DeliveryRecord receipt and Control Decision
+ok 5 - Web customer acceptance atomically links a DeliveryRecord receipt and Control Decision
+  ---
+  duration_ms: 47.764184
+  type: 'test'
+  ...
+# Subtest: three compatibility states exist and unknown is one of them
+ok 6 - three compatibility states exist and unknown is one of them
+  ---
+  duration_ms: 5.25634
+  type: 'test'
+  ...
+# Subtest: an existing tool with an unusable version is incompatible, not ok
+ok 7 - an existing tool with an unusable version is incompatible, not ok
+  ---
+  duration_ms: 0.833132
+  type: 'test'
+  ...
+# Subtest: a tool below the minimum version is incompatible
+ok 8 - a tool below the minimum version is incompatible
+  ---
+  duration_ms: 1.596186
+  type: 'test'
+  ...
+# Subtest: an architecture mismatch is incompatible
+ok 9 - an architecture mismatch is incompatible
+  ---
+  duration_ms: 0.249296
+  type: 'test'
+  ...
+# Subtest: a probe that exited non-zero keeps its stderr and is incompatible
+ok 10 - a probe that exited non-zero keeps its stderr and is incompatible
+  ---
+  duration_ms: 0.368069
+  type: 'test'
+  ...
+# Subtest: a probe timeout is unknown, never a pass
+ok 11 - a probe timeout is unknown, never a pass
+  ---
+  duration_ms: 0.308584
+  type: 'test'
+  ...
+# Subtest: a tool with no real executable path is incompatible
+ok 12 - a tool with no real executable path is incompatible
+  ---
+  duration_ms: 0.427201
+  type: 'test'
+  ...
+# Subtest: an unreadable version is unknown rather than compatible
+ok 13 - an unreadable version is unknown rather than compatible
+  ---
+  duration_ms: 0.26817
+  type: 'test'
+  ...
+# Subtest: a matching tool with a real path and version is compatible
+ok 14 - a matching tool with a real path and version is compatible
+  ---
+  duration_ms: 0.775294
+  type: 'test'
+  ...
+# Subtest: unknown and incompatible both keep the environment not ready
+ok 15 - unknown and incompatible both keep the environment not ready
+  ---
+  duration_ms: 1.445526
+  type: 'test'
+  ...
+# Subtest: the environment is ready only when every tool is compatible
+ok 16 - the environment is ready only when every tool is compatible
+  ---
+  duration_ms: 0.479025
+  type: 'test'
+  ...
+# Subtest: environment readiness never implies build, test or review results
+ok 17 - environment readiness never implies build, test or review results
+  ---
+  duration_ms: 0.275552
+  type: 'test'
+  ...
+# Subtest: an empty probe set is never reported as ready
+ok 18 - an empty probe set is never reported as ready
+  ---
+  duration_ms: 0.175576
+  type: 'test'
+  ...
+# Subtest: project requirements follow the actual build systems present
+ok 19 - project requirements follow the actual build systems present
+  ---
+  duration_ms: 0.510269
+  type: 'test'
+  ...
+# Subtest: version parsing handles the common shapes
+ok 20 - version parsing handles the common shapes
+  ---
+  duration_ms: 0.227513
+  type: 'test'
+  ...
+# Subtest: all version entry points reject the audit counterexamples and unsupported syntax
+ok 21 - all version entry points reject the audit counterexamples and unsupported syntax
+  ---
+  duration_ms: 7.332228
+  type: 'test'
+  ...
+# Subtest: compatibility minimums compare complete release tuples and unreadable versions are unknown
+ok 22 - compatibility minimums compare complete release tuples and unreadable versions are unknown
+  ---
+  duration_ms: 0.532875
+  type: 'test'
+  ...
+# Subtest: real current Node is executed for matching constraints and a higher patch is blocked
+ok 23 - real current Node is executed for matching constraints and a higher patch is blocked
+  ---
+  duration_ms: 195.284732
+  type: 'test'
+  ...
+# Subtest: real checked Python venv reuse rejects a different exact patch without modifying it
+ok 24 - real checked Python venv reuse rejects a different exact patch without modifying it
+  ---
+  duration_ms: 88.451559
+  type: 'test'
+  ...
+# Subtest: a real locked local npm dependency is rebuilt in the detached worker despite source node_modules
+ok 25 - a real locked local npm dependency is rebuilt in the detached worker despite source node_modules
+  ---
+  duration_ms: 6519.149432
+  type: 'test'
+  ...
+# Subtest: a real missing module blocks MCP adoption rather than becoming an accepted known failure
+ok 26 - a real missing module blocks MCP adoption rather than becoming an accepted known failure
+  ---
+  duration_ms: 3013.573695
+  type: 'test'
+  ...
+# Subtest: actual timeout, absent executable and failed installation cannot produce a usable baseline
+ok 27 - actual timeout, absent executable and failed installation cannot produce a usable baseline
+  ---
+  duration_ms: 1652.330683
+  type: 'test'
+  ...
+# Subtest: real evidence storage failure keeps an otherwise passing baseline unready
+ok 28 - real evidence storage failure keeps an otherwise passing baseline unready
+  ---
+  duration_ms: 3036.816062
+  type: 'test'
+  ...
+# Subtest: Python installs a local wheel in a worktree venv, reuses it and completes native MCP adoption
+ok 29 - Python installs a local wheel in a worktree venv, reuses it and completes native MCP adoption
+  ---
+  duration_ms: 7184.510189
+  type: 'test'
+  ...
+# Subtest: Go compiles a real project in its isolated worktree and completes native MCP adoption
+ok 30 - Go compiles a real project in its isolated worktree and completes native MCP adoption
+  ---
+  duration_ms: 23700.729734
+  type: 'test'
+  ...
+# Subtest: a past suite install marker cannot hide deleted dependencies
+ok 31 - a past suite install marker cannot hide deleted dependencies
+  ---
+  duration_ms: 5219.366754
+  type: 'test'
+  ...
+# Subtest: existing Node, React, Vue, Python, Go and plain Java derive only their actual tool requirements
+ok 32 - existing Node, React, Vue, Python, Go and plain Java derive only their actual tool requirements
+  ---
+  duration_ms: 3200.651819
+  type: 'test'
+  ...
+# Subtest: version constraints reject lower patch versions and discover nested workspace modules
+ok 33 - version constraints reject lower patch versions and discover nested workspace modules
+  ---
+  duration_ms: 602.95536
+  type: 'test'
+  ...
+# Subtest: new-project stack selection can prepare a pure backend and incompatible runtime remains missing
+ok 34 - new-project stack selection can prepare a pure backend and incompatible runtime remains missing
+  ---
+  duration_ms: 93.252591
+  type: 'test'
+  ...
+1..34
+# tests 34
+# suites 0
+# pass 34
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 51982.712328

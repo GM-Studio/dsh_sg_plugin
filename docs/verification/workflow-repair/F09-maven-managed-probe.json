@@ -1,0 +1,50 @@
+{
+  "found": {
+    "path": "C:\\Users\\Administrator\\.m2\\wrapper\\dists\\apache-maven-3.9.11\\03d7e36a140982eea48e22c1dcac01d8862b2550b2939e09a0809bbc5182a5bc\\bin\\mvn.cmd",
+    "home": "C:\\Users\\Administrator\\.m2\\wrapper\\dists\\apache-maven-3.9.11\\03d7e36a140982eea48e22c1dcac01d8862b2550b2939e09a0809bbc5182a5bc",
+    "version": "3.9.11"
+  },
+  "elapsed": 323,
+  "roots": [
+    "E:\\ai_workflow\\specgate\\.tmp\\env-repair-install",
+    "C:\\Users\\Administrator\\AppData\\Local\\Temp\\absent-specgate-toolchains",
+    "C:\\Program Files",
+    "C:\\Program Files\\apache-maven",
+    "C:\\Program Files\\Maven",
+    "C:\\Program Files (x86)",
+    "C:\\Program Files (x86)\\apache-maven",
+    "C:\\Program Files (x86)\\Maven",
+    "C:\\Program Files",
+    "C:\\Program Files\\apache-maven",
+    "C:\\Program Files\\Maven",
+    "C:\\Program Files",
+    "C:\\Program Files\\apache-maven",
+    "C:\\Program Files\\Maven",
+    "D:\\Program Files",
+    "D:\\Program Files\\apache-maven",
+    "D:\\Program Files\\Maven",
+    "E:\\Program Files",
+    "E:\\Program Files\\apache-maven",
+    "E:\\Program Files\\Maven",
+    "C:\\Users\\Administrator\\.specgate\\toolchains",
+    "C:\\apache-maven",
+    "D:\\apache-maven",
+    "C:\\maven",
+    "D:\\maven",
+    "C:\\Users\\Administrator\\.m2\\wrapper\\dists",
+    "C:\\Users\\Administrator\\.sdkman\\candidates\\maven",
+    "C:\\Users\\Administrator\\scoop\\apps",
+    "C:\\ProgramData\\chocolatey\\lib"
+  ],
+  "probes": [
+    {
+      "bin": "C:\\Users\\Administrator\\.m2\\wrapper\\dists\\apache-maven-3.9.11\\03d7e36a140982eea48e22c1dcac01d8862b2550b2939e09a0809bbc5182a5bc\\bin\\mvn.cmd",
+      "args": [
+        "-v"
+      ],
+      "timeout": 3000,
+      "elapsed": 238,
+      "output": "Apache Maven 3.9.11 (3e54c93a704957b63ee3494413a2b544fd3d825b)\r\nMaven home: C:\\Users\\Administrator\\.m2\\wrapper\\dists\\apache-maven-3.9.11\\03d7e36a140982eea48e22c1dcac01d8862b2550b2939e09a0809bbc5182a5bc\r\nJava version: 17.0.18, vendor: Azul Systems, Inc., runtime: D:\\Program Files\\Java\\Jdk17\r\nDefault locale: zh_CN, platform encoding: GBK\r\nOS name: \"windows 10\", version: \"10.0\", arch: \"amd64\", family: \"windows\"\r\n"
+    }
+  ]
+}

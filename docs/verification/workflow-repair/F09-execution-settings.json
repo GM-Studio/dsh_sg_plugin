@@ -1,0 +1,8 @@
+{
+  "candidate": "F09-b",
+  "scope": "test subprocess only; no global configuration changes",
+  "GOMAXPROCS": "2",
+  "JAVA_TOOL_OPTIONS": "-XX:ActiveProcessorCount=2",
+  "platformScheduling": "Windows all six gates completed before Linux all six gates",
+  "realSDKs": "Reuse existing approved SDKs; no downloads"
+}

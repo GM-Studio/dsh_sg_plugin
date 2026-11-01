@@ -1,0 +1,44 @@
+[
+  {
+    "command": "node --import ./test/setup-temp.mjs --test --test-concurrency=2 test/codex-env-version-e2e.test.js test/codex-env-compatibility.test.js test/codex-environment-stack-e2e.test.js test/codex-environment-dependencies-e2e.test.js test/codex-baseline-job.test.js test/codex-control-web-integration.test.js",
+    "exitCode": 0,
+    "arch": "x64",
+    "name": "focused",
+    "platform": "win32"
+  },
+  {
+    "command": "npm test",
+    "exitCode": 0,
+    "arch": "x64",
+    "name": "test",
+    "platform": "win32"
+  },
+  {
+    "command": "npm run lint",
+    "exitCode": 0,
+    "arch": "x64",
+    "name": "lint",
+    "platform": "win32"
+  },
+  {
+    "command": "npm run format:check",
+    "exitCode": 0,
+    "arch": "x64",
+    "name": "format",
+    "platform": "win32"
+  },
+  {
+    "command": "npm run pack:check",
+    "exitCode": 0,
+    "arch": "x64",
+    "name": "pack",
+    "platform": "win32"
+  },
+  {
+    "command": "npm run codex:smoke",
+    "exitCode": 0,
+    "arch": "x64",
+    "name": "smoke",
+    "platform": "win32"
+  }
+]

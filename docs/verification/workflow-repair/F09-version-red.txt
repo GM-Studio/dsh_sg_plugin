@@ -1,0 +1,75 @@
+✖ all version entry points reject the audit counterexamples and unsupported syntax (2.1045ms)
+✖ compatibility minimums compare complete release tuples and unreadable versions are unknown (0.3501ms)
+✔ real current Node is executed for matching constraints and a higher patch is blocked (226.3206ms)
+✖ real checked Python venv reuse rejects a different exact patch without modifying it (440.942ms)
+ℹ tests 4
+ℹ suites 0
+ℹ pass 1
+ℹ fail 3
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 736.3241
+
+✖ failing tests:
+
+test at test\codex-env-version-e2e.test.js:24:1
+✖ all version entry points reject the audit counterexamples and unsupported syntax (2.1045ms)
+  AssertionError [ERR_ASSERTION]: node 22.22.0/>=22.24.0
+  
+  true !== false
+  
+      at TestContext.<anonymous> (file:///E:/ai_workflow/specgate/test/codex-env-version-e2e.test.js:27:10)
+      at Test.runInAsyncScope (node:async_hooks:228:14)
+      at Test.run (node:internal/test_runner/test:1118:25)
+      at Test.start (node:internal/test_runner/test:1015:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:358:17) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: true,
+    expected: false,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at test\codex-env-version-e2e.test.js:32:1
+✖ compatibility minimums compare complete release tuples and unreadable versions are unknown (0.3501ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + 'compatible'
+  - 'incompatible'
+  
+      at TestContext.<anonymous> (file:///E:/ai_workflow/specgate/test/codex-env-version-e2e.test.js:34:10)
+      at Test.runInAsyncScope (node:async_hooks:228:14)
+      at Test.run (node:internal/test_runner/test:1118:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:787:18)
+      at Test.postRun (node:internal/test_runner/test:1247:19)
+      at Test.run (node:internal/test_runner/test:1175:12)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:358:3) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'compatible',
+    expected: 'incompatible',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at test\codex-env-version-e2e.test.js:46:1
+✖ real checked Python venv reuse rejects a different exact patch without modifying it (440.942ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + undefined
+  - 'PYTHON_VERSION_MISMATCH'
+  
+      at TestContext.<anonymous> (file:///E:/ai_workflow/specgate/test/codex-env-version-e2e.test.js:56:9)
+      at async Test.run (node:internal/test_runner/test:1125:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:787:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: 'PYTHON_VERSION_MISMATCH',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

@@ -1,0 +1,37 @@
+✔ detached baseline worker survives the starter and persists readiness (1907.1708ms)
+✖ completion during a status read does not become a false failed baseline (321.3865ms)
+✔ persistent missing status under an active lease still fails closed after bounded rereads (283.3074ms)
+ℹ tests 3
+ℹ suites 0
+ℹ pass 2
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2626.1461
+
+✖ failing tests:
+
+test at test\codex-baseline-job.test.js:116:1
+✖ completion during a status read does not become a false failed baseline (321.3865ms)
+  AssertionError [ERR_ASSERTION]: {"status":"failed","runId":"baseline-run-5fa269854abc026c","code":"ENOENT","message":"Baseline status is unreadable; state retained"}
+  + actual - expected
+  
+  + {
+  +   code: 'ENOENT',
+  +   message: 'Baseline status is unreadable; state retained',
+  +   runId: 'baseline-run-5fa269854abc026c',
+  +   status: 'failed'
+  + }
+  - null
+  
+      at TestContext.<anonymous> (file:///E:/ai_workflow/specgate/test/codex-baseline-job.test.js:128:41)
+      at async Test.run (node:internal/test_runner/test:1125:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:787:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: { status: 'failed', runId: 'baseline-run-5fa269854abc026c', code: 'ENOENT', message: 'Baseline status is unreadable; state retained' },
+    expected: null,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

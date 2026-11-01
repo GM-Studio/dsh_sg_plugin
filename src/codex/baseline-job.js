@@ -350,6 +350,19 @@ export function startBaselineJob(options = {}) {
 }
 
 export function getBaselineJob(projectRoot) {
+  // The worker publishes completion before removing its transient job files.
+  // Reread the whole snapshot if cleanup crossed a read; persistent missing
+  // state under an active lease remains a failure, never an inferred success.
+  let result;
+  for (let attempt = 0; attempt < 3; attempt++) {
+    result = readBaselineJob(projectRoot);
+    if (result?.code !== 'ENOENT') return result;
+    if (attempt < 2) Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 10);
+  }
+  return result;
+}
+
+function readBaselineJob(projectRoot) {
   let root;
   let stateRoot;
   try {

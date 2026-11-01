@@ -1,0 +1,26 @@
+✔ detached baseline worker survives the starter and persists readiness (1989.7782ms)
+✔ completion during a status read does not become a false failed baseline (328.7067ms)
+✔ persistent missing status under an active lease still fails closed after bounded rereads (395.6822ms)
+✔ Web step-up Decision consumes one AttentionRequest and queues automatic resume (72.6044ms)
+✔ Web customer acceptance atomically links a DeliveryRecord receipt and Control Decision (56.7949ms)
+✔ all version entry points reject the audit counterexamples and unsupported syntax (1.2804ms)
+✔ compatibility minimums compare complete release tuples and unreadable versions are unknown (0.2095ms)
+✔ real current Node is executed for matching constraints and a higher patch is blocked (92.4017ms)
+✔ real checked Python venv reuse rejects a different exact patch without modifying it (441.8921ms)
+✔ a real locked local npm dependency is rebuilt in the detached worker despite source node_modules (4212.2562ms)
+✔ a real missing module blocks MCP adoption rather than becoming an accepted known failure (2342.2748ms)
+✔ actual timeout, absent executable and failed installation cannot produce a usable baseline (1980.6554ms)
+✔ real evidence storage failure keeps an otherwise passing baseline unready (2544.1599ms)
+✔ Python installs a local wheel in a worktree venv, reuses it and completes native MCP adoption (9065.7353ms)
+(node:10452) [DEP0190] DeprecationWarning: Passing args to a child process with shell option true can lead to security vulnerabilities, as the arguments are not escaped, only concatenated.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+✔ Go compiles a real project in its isolated worktree and completes native MCP adoption (13410.9811ms)
+✔ a past suite install marker cannot hide deleted dependencies (1356.8742ms)
+ℹ tests 16
+ℹ suites 0
+ℹ pass 16
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 36024.7536

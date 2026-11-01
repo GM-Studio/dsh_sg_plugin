@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { exists, readText } from '../util/fsx.js';
+import { matchesVersion } from './version-range.js';
 
 export function readPythonRequirement(root, { suite, config } = {}) {
   if (suite?.python) return String(suite.python);
@@ -27,36 +28,8 @@ export function readPythonRequirement(root, { suite, config } = {}) {
   return null;
 }
 
-function minorOf(version) {
-  const match = /^(\d+)\.(\d+)/.exec(String(version).trim());
-  return match ? { major: Number(match[1]), minor: Number(match[2]) } : null;
-}
-
 export function satisfiesPython(version, requirement) {
-  if (!requirement) return true;
-  const current = minorOf(version);
-  if (!current) return false;
-  const text = String(requirement).trim();
-
-  const exact = /^3\.(\d+)$/.exec(text);
-  if (exact) return current.major === 3 && current.minor === Number(exact[1]);
-
-  const bounds = [...text.matchAll(/([<>]=?)?\s*3\.(\d+)/g)].map((match) => ({
-    op: match[1] || '',
-    minor: Number(match[2]),
-  }));
-  if (bounds.length === 0) return current.major === 3;
-
-  let min = 0;
-  let max = 99;
-  for (const bound of bounds) {
-    if (bound.op === '>' || bound.op === '>=')
-      min = Math.max(min, bound.minor + (bound.op === '>' ? 1 : 0));
-    else if (bound.op === '<' || bound.op === '<=')
-      max = Math.min(max, bound.minor - (bound.op === '<' ? 1 : 0));
-    else if (bound.op === '') min = Math.max(min, bound.minor);
-  }
-  return current.major === 3 && current.minor >= min && current.minor <= max;
+  return matchesVersion(version, requirement);
 }
 
 export function venvPythonPath(root) {

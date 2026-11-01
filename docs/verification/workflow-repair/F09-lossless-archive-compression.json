@@ -1,0 +1,191 @@
+[
+  {
+    "source": "E:\\ai_workflow\\specgate\\.tmp\\env-repair-candidates\\F01-a.tar",
+    "target": "E:\\ai_workflow\\specgate\\.tmp\\env-repair-candidates\\F01-a.tar.gz",
+    "sha256": "1112b66c2f34faa0091983102fdd04c922fc53b3c1eb7e3a446c0d5dca528f00",
+    "bytes": 16808448,
+    "compressedBytes": 2964218
+  },
+  {
+    "source": "E:\\ai_workflow\\specgate\\.tmp\\env-repair-candidates\\F01-b.tar",
+    "target": "E:\\ai_workflow\\specgate\\.tmp\\env-repair-candidates\\F01-b.tar.gz",
+    "sha256": "9e11859015eb00cdf3b76196552ed6b8c1d8e516cb37a9fe957d49afb8687392",
+    "bytes": 16808448,
+    "compressedBytes": 2964230
+  },
+  {
+    "source": "E:\\ai_workflow\\specgate\\.tmp\\env-repair-candidates\\F02-a.tar",
+    "target": "E:\\ai_workflow\\specgate\\.tmp\\env-repair-candidates\\F02-a.tar.gz",
+    "sha256": "a4c74e3a935ca48a95f8ab85d840cb84381bb9aef0bb4cb3c58c29aa563b10cb",
+    "bytes": 17549312,
+    "compressedBytes": 3134803
+  },
+  {
+    "source": "E:\\ai_workflow\\specgate\\.tmp\\env-repair-candidates\\F02-b.tar",
+    "target": "E:\\ai_workflow\\specgate\\.tmp\\env-repair-candidates\\F02-b.tar.gz",
+    "sha256": "1c49f62d9bffc6203441b07733b57927729aecf5739408c502a0a9e4cc8fa022",
+    "bytes": 17550848,
+    "compressedBytes": 3135739
+  },
+  {
+    "source": "E:\\ai_workflow\\specgate\\.tmp\\env-repair-candidates\\F03-a.tar",
+    "target": "E:\\ai_workflow\\specgate\\.tmp\\env-repair-candidates\\F03-a.tar.gz",
+    "sha256": "5d7c98e79af459cb19171d27a1e6d54c15ad5f292c9333d698161a6a05675cfc",
+    "bytes": 18322944,
+    "compressedBytes": 3307407
+  },
+  {
+    "source": "E:\\ai_workflow\\specgate\\.tmp\\env-repair-candidates\\F03-b.tar",
+    "target": "E:\\ai_workflow\\specgate\\.tmp\\env-repair-candidates\\F03-b.tar.gz",
+    "sha256": "3698bf41cb7b3f34bcfe4278a14f21c7ec43f243f172e9ac7b464fc8fd2f0e1a",
+    "bytes": 18323456,
+    "compressedBytes": 3307544
+  },
+  {
+    "source": "E:\\ai_workflow\\specgate\\.tmp\\env-repair-candidates\\F04-a.tar",
+    "target": "E:\\ai_workflow\\specgate\\.tmp\\env-repair-candidates\\F04-a.tar.gz",
+    "sha256": "3ce62284656f69495e624098ead3700eec76551c45443bff0d19508726b03aec",
+    "bytes": 19048448,
+    "compressedBytes": 3471562
+  },
+  {
+    "source": "E:\\ai_workflow\\specgate\\.tmp\\env-repair-candidates\\F04-b.tar",
+    "target": "E:\\ai_workflow\\specgate\\.tmp\\env-repair-candidates\\F04-b.tar.gz",
+    "sha256": "fb840593b0d52f87f55ea2f5ad43a62682060776a8b8f77c6c03a6d380bb9584",
+    "bytes": 19050496,
+    "compressedBytes": 3472001
+  },
+  {
+    "source": "E:\\ai_workflow\\specgate\\.tmp\\env-repair-candidates\\F04-c.tar",
+    "target": "E:\\ai_workflow\\specgate\\.tmp\\env-repair-candidates\\F04-c.tar.gz",
+    "sha256": "b6ad580235809000bce5e27d27407024e20a095eafa0b0926ccb0880ef69d7be",
+    "bytes": 19051008,
+    "compressedBytes": 3472021
+  },
+  {
+    "source": "E:\\ai_workflow\\specgate\\.tmp\\env-repair-candidates\\F04-d.tar",
+    "target": "E:\\ai_workflow\\specgate\\.tmp\\env-repair-candidates\\F04-d.tar.gz",
+    "sha256": "ba99bb5e72e6e6b31f323b9ed745845d2f86dc32eec06c38d67f63b4450969a3",
+    "bytes": 19061248,
+    "compressedBytes": 3474255
+  },
+  {
+    "source": "E:\\ai_workflow\\specgate\\.tmp\\env-repair-candidates\\F04-e.tar",
+    "target": "E:\\ai_workflow\\specgate\\.tmp\\env-repair-candidates\\F04-e.tar.gz",
+    "sha256": "1ec2213008b36966e3e0ba0fe50f05cfe9f5fb7765187487e8de53e0606d5c43",
+    "bytes": 19063296,
+    "compressedBytes": 3474633
+  },
+  {
+    "source": "E:\\ai_workflow\\specgate\\.tmp\\env-repair-candidates\\F04-f.tar",
+    "target": "E:\\ai_workflow\\specgate\\.tmp\\env-repair-candidates\\F04-f.tar.gz",
+    "sha256": "0d74384160272600970369de5ba541f6da140aa01ce4c86e466816fc4f77f9c0",
+    "bytes": 19063296,
+    "compressedBytes": 3474633
+  },
+  {
+    "source": "E:\\ai_workflow\\specgate\\.tmp\\env-repair-candidates\\F04-g.tar",
+    "target": "E:\\ai_workflow\\specgate\\.tmp\\env-repair-candidates\\F04-g.tar.gz",
+    "sha256": "95e3bf980d8ed1f7358a574df0d00a58d953c5cc04389ad6f3e149573689b311",
+    "bytes": 19064832,
+    "compressedBytes": 3474845
+  },
+  {
+    "source": "E:\\ai_workflow\\specgate\\.tmp\\env-repair-candidates\\F04-h.tar",
+    "target": "E:\\ai_workflow\\specgate\\.tmp\\env-repair-candidates\\F04-h.tar.gz",
+    "sha256": "0857a4d1ec85ef85cbefbed1be39ab2e36c3f66c813cb2923a15983027d8a43f",
+    "bytes": 19064832,
+    "compressedBytes": 3474834
+  },
+  {
+    "source": "E:\\ai_workflow\\specgate\\.tmp\\env-repair-candidates\\F05-a.tar",
+    "target": "E:\\ai_workflow\\specgate\\.tmp\\env-repair-candidates\\F05-a.tar.gz",
+    "sha256": "e1b23033dba8ee061f2c75ec5213b014a6def42f569d54208c64c4b6c988e19e",
+    "bytes": 20563456,
+    "compressedBytes": 3819166
+  },
+  {
+    "source": "E:\\ai_workflow\\specgate\\.tmp\\env-repair-candidates\\F05-b.tar",
+    "target": "E:\\ai_workflow\\specgate\\.tmp\\env-repair-candidates\\F05-b.tar.gz",
+    "sha256": "03996ebd7bfdb7d8c85468d21a4f35b4c65423137cc36e4c8e53ab92419ce970",
+    "bytes": 20563968,
+    "compressedBytes": 3819315
+  },
+  {
+    "source": "E:\\ai_workflow\\specgate\\.tmp\\env-repair-candidates\\F05-c.tar",
+    "target": "E:\\ai_workflow\\specgate\\.tmp\\env-repair-candidates\\F05-c.tar.gz",
+    "sha256": "f1c9970e559ca81bb4526f690ee860f4f74f10d423fc6e787bad75649917d1ff",
+    "bytes": 20563968,
+    "compressedBytes": 3819273
+  },
+  {
+    "source": "E:\\ai_workflow\\specgate\\.tmp\\env-repair-candidates\\F05-d.tar",
+    "target": "E:\\ai_workflow\\specgate\\.tmp\\env-repair-candidates\\F05-d.tar.gz",
+    "sha256": "e25c1efa41eb4bc09965b36e4c4375e1968bb5bab1cb2a4f4a76acc305a02d25",
+    "bytes": 20563456,
+    "compressedBytes": 3819229
+  },
+  {
+    "source": "E:\\ai_workflow\\specgate\\.tmp\\env-repair-candidates\\F06-a.tar",
+    "target": "E:\\ai_workflow\\specgate\\.tmp\\env-repair-candidates\\F06-a.tar.gz",
+    "sha256": "3fe4111bb14844f6c8adfde874475ae8d69fc5719080ce02b4abf258f17f5095",
+    "bytes": 21571072,
+    "compressedBytes": 4045405
+  },
+  {
+    "source": "E:\\ai_workflow\\specgate\\.tmp\\env-repair-candidates\\F06-b.tar",
+    "target": "E:\\ai_workflow\\specgate\\.tmp\\env-repair-candidates\\F06-b.tar.gz",
+    "sha256": "bc0626145b6de38591b52bb8165d8854651f618f85738b3b6c6f077d9c616d5a",
+    "bytes": 21573632,
+    "compressedBytes": 4046107
+  },
+  {
+    "source": "E:\\ai_workflow\\specgate\\.tmp\\env-repair-candidates\\F06-c.tar",
+    "target": "E:\\ai_workflow\\specgate\\.tmp\\env-repair-candidates\\F06-c.tar.gz",
+    "sha256": "3d73020be107adbf18e61b0f94cb0a5cafa186dd0363eab7b0e91cc21b8fe5ea",
+    "bytes": 21575168,
+    "compressedBytes": 4046258
+  },
+  {
+    "source": "E:\\ai_workflow\\specgate\\.tmp\\env-repair-candidates\\F07-a.tar",
+    "target": "E:\\ai_workflow\\specgate\\.tmp\\env-repair-candidates\\F07-a.tar.gz",
+    "sha256": "0beed0518ff8692fcc8d68daf7a77823b9434736daf93899496ea673fc692969",
+    "bytes": 22366720,
+    "compressedBytes": 4224570
+  },
+  {
+    "source": "E:\\ai_workflow\\specgate\\.tmp\\env-repair-candidates\\F08-a.tar",
+    "target": "E:\\ai_workflow\\specgate\\.tmp\\env-repair-candidates\\F08-a.tar.gz",
+    "sha256": "28128a13b1ee92afa42f9a6f237ea6f69ed6a6aa872a8f664c22159bd915e6bf",
+    "bytes": 23149568,
+    "compressedBytes": 4403216
+  },
+  {
+    "source": "E:\\ai_workflow\\specgate\\.tmp\\env-repair-candidates\\F08-b.tar",
+    "target": "E:\\ai_workflow\\specgate\\.tmp\\env-repair-candidates\\F08-b.tar.gz",
+    "sha256": "8a7f62a672f374bb06cda9880edcec078cf964e26218fd8afae405124b10abe0",
+    "bytes": 23149568,
+    "compressedBytes": 4403298
+  },
+  {
+    "source": "E:\\ai_workflow\\specgate\\.tmp\\env-repair-candidates\\F08-c.tar",
+    "target": "E:\\ai_workflow\\specgate\\.tmp\\env-repair-candidates\\F08-c.tar.gz",
+    "sha256": "08d40551995db3de0faedd66b440007600874eab525852cd1af325c2d0e1c54e",
+    "bytes": 23156224,
+    "compressedBytes": 4406743
+  },
+  {
+    "source": "E:\\ai_workflow\\specgate\\.tmp\\env-repair-candidates\\F08-d.tar",
+    "target": "E:\\ai_workflow\\specgate\\.tmp\\env-repair-candidates\\F08-d.tar.gz",
+    "sha256": "fc168d25e3cf6ec7ecdb52d484d7c19d803da26e2310d1b5a5c9f5c99b9b0973",
+    "bytes": 23162368,
+    "compressedBytes": 4409088
+  },
+  {
+    "source": "E:\\ai_workflow\\specgate\\.tmp\\env-repair-candidates\\F08-e.tar",
+    "target": "E:\\ai_workflow\\specgate\\.tmp\\env-repair-candidates\\F08-e.tar.gz",
+    "sha256": "c9b257416dd9a059db9f0cc608e2ac7257a7380a8f20c2588560341ea366676e",
+    "bytes": 23162880,
+    "compressedBytes": 4409361
+  }
+]
