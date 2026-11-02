@@ -27,6 +27,8 @@ SpecGate Core 为**已有 Git 项目**提供本地、可审计的需求到交付
 
 H3 的“要求修改”会记录绑定评审证据的决定，创建新的前端、后端和格式化工作树，并将实现角色重置为待执行；必须重新经过开发、质量验证、格式化、复审和 H3 才能归档。返工准备失败会保留决定和现场，按返回的最新版本执行 `sg_development_rework` 恢复，准备完成前不能再次评审。“取消变更”进入正式取消状态并保留代码和证据；关闭或拒绝表单只保留待审批状态。审批期间相位或证据变化时，不应用旧决定。
 
+新建需求时可通过 `sg_change` 或 `sg_change_add` 显式选择 `validationProfile: "scenario-v1"`；省略时保持 `legacy` 全红策略。场景档案下，modify/fix 的冻结测试须用 `baseline.targetCaseIds` 与 `baseline.regressionCaseIds` 完整分组，目标失败、回归通过才可开发；refactor 必须声明内部调整、保持的对外行为和约束，并真实执行全部冻结用例的全绿行为基线。档案与类型写入 H1 文档并绑定审批，进入 H1 待审批后不能静默更改；开发后的质量验证仍必须全部通过。
+
 源码中的历史独立环境入口已改为共用环境服务和校验安装器：`node scripts/install-env.mjs --check --project=<绝对路径>` 只读检测；空项目用 `--stack=node|react|vue|python|go|java` 选择，`--only=...` 仅处理显式工具范围，默认按项目推断。`--plan` 生成确切方案，`--expected-plan-hash=...` 拒绝变化的方案；此参数不授予安装许可。实际缺项必须在交互终端输入完整方案确认，非交互调用保持阻断，Codex 中应使用 `sg_env_prepare` 的宿主审批。环境变量变更仅影响子进程，无系统包管理器或用户配置写入。
 
 缺少 Node 运行时时，`scripts/install-env.ps1` / `.sh` 的 `--check` 仍只读、`--plan` 仅输出运行时方案；可用 `SPECGATE_NODE` 指定已有运行时，或显式 `--bootstrap` 查看并交互确认固定官方 Node 归档、SHA-256 和隔离目录。原生入口与 MCP 共用 `src/codex/core/node-bootstrap.tsv`，不覆盖未知安装。运行时准备后继续检测所选技术栈，缺少其它工具仍须分别确认。原生 bootstrap 适配 Windows/Linux x64；Bash 入口需要已有 GNU timeout/realpath/sha256sum，安装时还需 curl/tar/gzip 等工具，缺少时明确阻断，不自动执行 apt/sudo。这些历史脚本仍不随 Core 插件分发。

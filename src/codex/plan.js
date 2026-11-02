@@ -6,6 +6,12 @@ import { fileURLToPath } from 'node:url';
 import { canonicalJson, hashValue, verifyEventChain } from './events.js';
 import { readProjectConventions } from './project-conventions.js';
 import { validFilePatterns, validDependencyChanges } from './core/task-policy.js';
+import {
+  resolveProfile,
+  resolveScenario,
+  policyFor,
+  completeBaselinePartition,
+} from './core/validation-profile.js';
 
 const SOURCE_ROOT = path.resolve(fileURLToPath(new URL('../..', import.meta.url)));
 const object = (value) => value !== null && typeof value === 'object' && !Array.isArray(value);
@@ -17,6 +23,24 @@ const failure = (code, message) => ({ ok: false, code, message });
 const fail = (code, message) => {
   throw Object.assign(new Error(message), { code });
 };
+function validationChallenge(state) {
+  const profile = resolveProfile(state),
+    scenario = resolveScenario(state);
+  if (!profile.ok) fail(profile.code, profile.message);
+  if (!scenario.ok) fail(scenario.code, scenario.message);
+  const policy = policyFor(profile.profile, scenario.scenario);
+  if (!policy.ok) fail(policy.code, policy.message);
+  return {
+    validationProfile: profile.profile,
+    scenario: scenario.scenario,
+    policy,
+    baselineRequirements: ['target-only-red', 'reproduce-red'].includes(policy.redBaseline)
+      ? 'Declare baseline.targetCaseIds and baseline.regressionCaseIds as a complete disjoint partition of frozen cases; targets must fail and regressions pass.'
+      : policy.redBaseline === 'none'
+        ? 'Run every frozen case successfully before refactoring and preserve the same behavior afterwards.'
+        : 'Every frozen case must fail before implementation.',
+  };
+}
 const kinds = [
   'contract',
   'model',
@@ -804,6 +828,15 @@ export function createPlanService({
         'TEST_ASSETS_INVALID',
         'Test assets require valid AC mappings, executable code, fixtures and coverage targets',
       );
+    const validation = validationChallenge(loaded.state);
+    if (
+      ['target-only-red', 'reproduce-red'].includes(validation.policy.redBaseline) &&
+      !completeBaselinePartition(assets.cases, assets.baseline)
+    )
+      return failure(
+        'TEST_ASSETS_INVALID',
+        'baseline.targetCaseIds and baseline.regressionCaseIds must partition every frozen case',
+      );
     const files = {
       ...assets.code,
       ...assets.fixtures,
@@ -1013,6 +1046,7 @@ export function createPlanService({
         try {
           assets = await roleProvider('test', {
             operation: 'freeze-tests',
+            ...validationChallenge(loaded.state),
             changeId: loaded.state.changeId,
             plan: checked.plan,
             contract: verifyRef(checked.ref.contract),
@@ -1057,6 +1091,7 @@ export function createPlanService({
           preparedAt: new Date().toISOString(),
         };
         const challenge = {
+          ...validationChallenge(loaded.state),
           requirements: checked.plan.graph,
           contract: verifyRef(checked.ref.contract),
           model: verifyRef(checked.ref.model),
@@ -1187,11 +1222,19 @@ export function createPlanService({
         const checked = await inspect();
         if (!checked.ok) return checked;
         const red = loaded.state.context.development?.red;
+        const profile = resolveProfile(loaded.state),
+          scenario = resolveScenario(loaded.state);
+        if (!profile.ok) return profile;
+        if (!scenario.ok) return scenario;
+        const policy = policyFor(profile.profile, scenario.scenario);
+        if (!policy.ok) return policy;
         if (
           !red?.path ||
           digest(json(red.path)) !== red.hash ||
           json(red.path).testsHash !== checked.ref.tests?.hash ||
-          json(red.path).exitCode === 0
+          (policy.redBaseline === 'none'
+            ? json(red.path).exitCode !== 0
+            : json(red.path).exitCode === 0)
         )
           return failure(
             'RED_EVIDENCE_REQUIRED',

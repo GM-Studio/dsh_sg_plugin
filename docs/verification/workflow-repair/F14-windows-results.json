@@ -1,0 +1,44 @@
+[
+  {
+    "exitCode": 0,
+    "name": "focused",
+    "platform": "win32",
+    "command": "node --import ./test/setup-temp.mjs --test --test-concurrency=2 test/codex-validation-policy-e2e.test.js test/codex-validation-profile.test.js test/codex-scenario-policy.test.js test/codex-development-flow.test.js test/codex-change-add-flow.test.js test/codex-change-tools.test.js test/codex-state-kernel.test.js test/codex-plan-roles.test.js test/codex-project-model.test.js test/codex-change-policy.test.js",
+    "arch": "x64"
+  },
+  {
+    "exitCode": 0,
+    "name": "test",
+    "platform": "win32",
+    "command": "npm test",
+    "arch": "x64"
+  },
+  {
+    "exitCode": 0,
+    "name": "lint",
+    "platform": "win32",
+    "command": "npm run lint",
+    "arch": "x64"
+  },
+  {
+    "exitCode": 0,
+    "name": "format",
+    "platform": "win32",
+    "command": "npm run format:check",
+    "arch": "x64"
+  },
+  {
+    "exitCode": 0,
+    "name": "pack",
+    "platform": "win32",
+    "command": "npm run pack:check",
+    "arch": "x64"
+  },
+  {
+    "exitCode": 0,
+    "name": "smoke",
+    "platform": "win32",
+    "command": "npm run codex:smoke",
+    "arch": "x64"
+  }
+]

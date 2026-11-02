@@ -72,6 +72,9 @@ async function fixture({
   dependencyChanges,
   testAssets,
   redReport,
+  scenario,
+  validationProfile,
+  skipFreezeTests = false,
   requirementList = requirements(),
 } = {}) {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'sg-codex-development-'));
@@ -99,6 +102,8 @@ async function fixture({
     requirements: requirementList.map((req) =>
       dependencyChanges ? { ...req, dependencyChanges } : req,
     ),
+    ...(scenario ? { change: { type: scenario } } : {}),
+    ...(validationProfile ? { validationProfile } : {}),
     fixture: 'synthetic-unit-test-not-runtime',
   };
   fs.mkdirSync(path.dirname(path.join(root, relative)), { recursive: true });
@@ -133,8 +138,10 @@ async function fixture({
     expectedVersion: 0,
     changeId: 'example',
     context: {
+      ...(validationProfile ? { validationProfile } : {}),
       artifacts: { requirements: { hash: requirementsHash, revision: 1 } },
       changeAdd: {
+        ...(scenario ? { change: { type: scenario } } : {}),
         frozen: {
           path: relative,
           hash: requirementsHash,
@@ -169,7 +176,15 @@ async function fixture({
   const planService = createPlanService({
     projectRoot: root,
     store,
-    roleProvider: async () => testAssets || assets(),
+    approvalAuthority: authority,
+    roleProvider: async (_role, challenge) => {
+      if (validationProfile) {
+        assert.equal(challenge.validationProfile.profileId, validationProfile);
+        assert.equal(challenge.scenario, scenario);
+        assert.ok(challenge.baselineRequirements);
+      }
+      return testAssets || assets();
+    },
   });
   assert.equal(
     (
@@ -189,10 +204,12 @@ async function fixture({
     ).ok,
     true,
   );
-  assert.equal(
-    (await planService.freezeTests({ expectedVersion: (await store.inspect()).state.version })).ok,
-    true,
-  );
+  if (!skipFreezeTests)
+    assert.equal(
+      (await planService.freezeTests({ expectedVersion: (await store.inspect()).state.version }))
+        .ok,
+      true,
+    );
 
   const runnerPath = path.join(root, '.specgate', 'red-runner.mjs');
   const reportPath = '.specgate/red-report.json';
@@ -241,6 +258,110 @@ function roleProvider(overrides = {}) {
     return { ok: true, summary: `${role} implemented AC-1` };
   };
 }
+
+test('context scenario refactor persists a real all-green behavior baseline and executes development', async () => {
+  const c = await fixture({
+    scenario: 'refactor',
+    validationProfile: 'scenario-v1',
+    redPasses: true,
+  });
+  const service = createDevelopmentService({
+    projectRoot: c.root,
+    store: c.store,
+    planService: c.planService,
+    redRunner: c.redRunner,
+    roleProvider: roleProvider(),
+  });
+  const prepared = await service.prepare({ expectedVersion: await c.version() });
+  assert.equal(prepared.ok, true, JSON.stringify(prepared));
+  const red = prepared.state.context.development.red;
+  const evidence = JSON.parse(fs.readFileSync(path.join(c.root, red.path), 'utf8'));
+  assert.equal(evidence.exitCode, 0);
+  assert.equal(evidence.policy.redBaseline, 'none');
+  assert.equal(evidence.scenario, 'refactor');
+  assert.equal(evidence.cases[0].status, 'pass');
+  assert.equal(red.hash, 'sha256:' + hashValue(evidence));
+  assert.equal(fs.existsSync(path.join(c.root, evidence.logs.stdout)), true);
+  const developed = await service.run({ expectedVersion: await c.version() });
+  assert.equal(developed.ok, true, JSON.stringify(developed));
+  assert.equal(developed.state.phase, 'TESTING');
+  const reopened = await c.planService.reopenTests({
+    expectedVersion: await c.version(),
+    reason: 'Add a frozen behavior-preservation case after native H1 review.',
+  });
+  assert.equal(reopened.ok, true, JSON.stringify(reopened));
+  assert.equal(reopened.state.phase, 'TEST_DESIGN');
+});
+
+for (const scenario of ['modify', 'fix']) {
+  for (const inverted of [false, true]) {
+    test(`context ${scenario} requires its frozen target red and regression green: inverted=${inverted}`, async () => {
+      const selected = assets();
+      selected.cases.push({ ...selected.cases[0], id: 'CASE-AC-2', acIds: ['AC-2'] });
+      selected.baseline = { targetCaseIds: ['CASE-AC-1'], regressionCaseIds: ['CASE-AC-2'] };
+      const reqs = requirements();
+      reqs[0].acceptanceCriteria.push({ id: 'AC-2', text: 'Existing behavior still works.' });
+      const c = await fixture({
+        scenario,
+        validationProfile: 'scenario-v1',
+        testAssets: selected,
+        requirementList: reqs,
+        redReport: {
+          cases: [
+            { id: 'CASE-AC-1', status: inverted ? 'pass' : 'fail' },
+            { id: 'CASE-AC-2', status: inverted ? 'fail' : 'pass' },
+          ],
+        },
+      });
+      const service = createDevelopmentService({
+        projectRoot: c.root,
+        store: c.store,
+        planService: c.planService,
+        redRunner: c.redRunner,
+      });
+      const result = await service.prepare({ expectedVersion: await c.version() });
+      assert.equal(result.ok, !inverted, JSON.stringify(result));
+      if (inverted) assert.equal(result.code, 'RED_REPORT_INVALID');
+      else assert.equal(result.state.context.development.red.cases.length, 2);
+    });
+  }
+}
+
+test('refactor success without a complete passing report cannot create role worktrees', async () => {
+  for (const report of [
+    { cases: [] },
+    { cases: [{ id: 'CASE-AC-1', status: 'fail' }] },
+    { cases: [{ id: 'CASE-AC-1', status: 'pass' }], infrastructureErrors: ['missing module'] },
+  ]) {
+    const c = await fixture({
+      scenario: 'refactor',
+      validationProfile: 'scenario-v1',
+      redPasses: true,
+      redReport: report,
+    });
+    const service = createDevelopmentService({
+      projectRoot: c.root,
+      store: c.store,
+      planService: c.planService,
+      redRunner: c.redRunner,
+    });
+    const result = await service.prepare({ expectedVersion: await c.version() });
+    assert.equal(result.ok, false, JSON.stringify(result));
+    assert.equal(result.code, 'RED_REPORT_INVALID');
+    assert.equal(fs.existsSync(path.join(c.root, '.specgate/codex/worktrees/example')), false);
+  }
+});
+
+test('scenario target groups must be complete before executable tests can freeze', async () => {
+  const c = await fixture({
+    scenario: 'fix',
+    validationProfile: 'scenario-v1',
+    skipFreezeTests: true,
+  });
+  const rejected = await c.planService.freezeTests({ expectedVersion: await c.version() });
+  assert.equal(rejected.code, 'TEST_ASSETS_INVALID');
+  assert.equal((await c.store.inspect()).state.phase, 'TEST_DESIGN');
+});
 
 test('red baseline requires a real failing command mapped to every frozen case before worktrees', async () => {
   const rejected = await fixture({ redPasses: true });

@@ -1,0 +1,851 @@
+TAP version 13
+# Subtest: stable names support multilingual requests and explicit valid names
+ok 1 - stable names support multilingual requests and explicit valid names
+  ---
+  duration_ms: 1.882564
+  type: 'test'
+  ...
+# Subtest: synthetic prerequisite fixture permits intake but real default verifier rejects it
+ok 2 - synthetic prerequisite fixture permits intake but real default verifier rejects it
+  ---
+  duration_ms: 52.04866
+  type: 'test'
+  ...
+# Subtest: generated-only initialization, dirty tracked files, and untracked files refuse intake without state writes
+ok 3 - generated-only initialization, dirty tracked files, and untracked files refuse intake without state writes
+  ---
+  duration_ms: 43.880014
+  type: 'test'
+  ...
+# Subtest: only one active change can be created and model text cannot forge user provenance
+ok 4 - only one active change can be created and model text cannot forge user provenance
+  ---
+  duration_ms: 36.310376
+  type: 'test'
+  ...
+# Subtest: draft revisions preserve history and label inferred content as model proposals
+ok 5 - draft revisions preserve history and label inferred content as model proposals
+  ---
+  duration_ms: 30.79504
+  type: 'test'
+  ...
+# Subtest: clarification enforces three rounds and five questions and records only trusted-provider answers
+ok 6 - clarification enforces three rounds and five questions and records only trusted-provider answers
+  ---
+  duration_ms: 41.554799
+  type: 'test'
+  ...
+# Subtest: without a trusted input source, the pending intake is preserved and tool answers are refused
+ok 7 - without a trusted input source, the pending intake is preserved and tool answers are refused
+  ---
+  duration_ms: 24.509444
+  type: 'test'
+  ...
+# Subtest: choice answers preserve arrays and reject unavailable options before recording user input
+ok 8 - choice answers preserve arrays and reject unavailable options before recording user input
+  ---
+  duration_ms: 32.497825
+  type: 'test'
+  ...
+# Subtest: critique requires structured categories and valid requirement references
+ok 9 - critique requires structured categories and valid requirement references
+  ---
+  duration_ms: 24.813542
+  type: 'test'
+  ...
+# Subtest: duplicate IDs, incomplete restatements and unmapped dependencies are rejected before H1
+ok 10 - duplicate IDs, incomplete restatements and unmapped dependencies are rejected before H1
+  ---
+  duration_ms: 36.940222
+  type: 'test'
+  ...
+# Subtest: blocking issues or critique findings cannot freeze at H1
+ok 11 - blocking issues or critique findings cannot freeze at H1
+  ---
+  duration_ms: 79.725034
+  type: 'test'
+  ...
+# Subtest: actual default approval remains unavailable and never freezes requirements
+ok 12 - actual default approval remains unavailable and never freezes requirements
+  ---
+  duration_ms: 42.293872
+  type: 'test'
+  ...
+# Subtest: critique writes a reviewable requirements document before any approval and unified entry can request H1
+ok 13 - critique writes a reviewable requirements document before any approval and unified entry can request H1
+  ---
+  duration_ms: 62.903739
+  type: 'test'
+  ...
+# Subtest: H1 opens immediately for an existing pending change without a review document
+ok 14 - H1 opens immediately for an existing pending change without a review document
+  ---
+  duration_ms: 72.007651
+  type: 'test'
+  ...
+# Subtest: H1 form contains a bounded change summary rather than the full requirements document
+ok 15 - H1 form contains a bounded change summary rather than the full requirements document
+  ---
+  duration_ms: 61.324937
+  type: 'test'
+  ...
+# Subtest: closing H1 keeps the change pending and rejecting it returns to clarification
+ok 16 - closing H1 keeps the change pending and rejecting it returns to clarification
+  ---
+  duration_ms: 103.839643
+  type: 'test'
+  ...
+# Subtest: H1 upgrades an untouched old renderer document and preserves edited legacy documents
+ok 17 - H1 upgrades an untouched old renderer document and preserves edited legacy documents
+  ---
+  duration_ms: 109.500547
+  type: 'test'
+  ...
+# Subtest: editing a review document prevents approval until a new proposal and critique are written
+ok 18 - editing a review document prevents approval until a new proposal and critique are written
+  ---
+  duration_ms: 95.603152
+  type: 'test'
+  ...
+# Subtest: simulated native H1 approval creates a versioned immutable snapshot bound to the approval hash
+ok 19 - simulated native H1 approval creates a versioned immutable snapshot bound to the approval hash
+  ---
+  duration_ms: 62.436908
+  type: 'test'
+  ...
+# Subtest: revised requirements invalidate the old candidate and require a fresh critique
+ok 20 - revised requirements invalidate the old candidate and require a fresh critique
+  ---
+  duration_ms: 54.249206
+  type: 'test'
+  ...
+# Subtest: CAS conflicts, invalid schema and apparent secrets refuse modification
+ok 21 - CAS conflicts, invalid schema and apparent secrets refuse modification
+  ---
+  duration_ms: 21.766556
+  type: 'test'
+  ...
+# Subtest: native modify and cancel decisions control H1 without freezing a snapshot
+ok 22 - native modify and cancel decisions control H1 without freezing a snapshot
+  ---
+  duration_ms: 93.319302
+  type: 'test'
+  ...
+# Subtest: a failed automatic clarification resumes the same round without accepting tool answers
+ok 23 - a failed automatic clarification resumes the same round without accepting tool answers
+  ---
+  duration_ms: 23.876737
+  type: 'test'
+  ...
+# Subtest: the final snapshot is rehashed during gate consumption and tampering refuses freeze
+ok 24 - the final snapshot is rehashed during gate consumption and tampering refuses freeze
+  ---
+  duration_ms: 57.596328
+  type: 'test'
+  ...
+# Subtest: source repository guard is read-only and refuses to create an active product change
+ok 25 - source repository guard is read-only and refuses to create an active product change
+  ---
+  duration_ms: 0.30392
+  type: 'test'
+  ...
+# Subtest: explicit assumptions are required for nonblocking unresolved issues
+ok 26 - explicit assumptions are required for nonblocking unresolved issues
+  ---
+  duration_ms: 22.737845
+  type: 'test'
+  ...
+# Subtest: concurrent intake creates one active change without queueing another
+ok 27 - concurrent intake creates one active change without queueing another
+  ---
+  duration_ms: 43.856248
+  type: 'test'
+  ...
+# Subtest: tampered immutable candidates fail closed instead of overwriting a revision
+ok 28 - tampered immutable candidates fail closed instead of overwriting a revision
+  ---
+  duration_ms: 35.130173
+  type: 'test'
+  ...
+# Subtest: native answers containing apparent credentials are never persisted
+ok 29 - native answers containing apparent credentials are never persisted
+  ---
+  duration_ms: 25.280862
+  type: 'test'
+  ...
+# Subtest: null schema entries return structured refusals instead of throwing
+ok 30 - null schema entries return structured refusals instead of throwing
+  ---
+  duration_ms: 23.384482
+  type: 'test'
+  ...
+# Subtest: aborting native clarification retains the pending round and discards late provider answers
+ok 31 - aborting native clarification retains the pending round and discards late provider answers
+  ---
+  duration_ms: 32.088799
+  type: 'test'
+  ...
+# Subtest: aborting H1 terminates an unresponsive native peer and cannot apply a late approval
+ok 32 - aborting H1 terminates an unresponsive native peer and cannot apply a late approval
+  ---
+  duration_ms: 50.336461
+  type: 'test'
+  ...
+# Subtest: an already aborted server context creates no clarification round or H1 artifact
+ok 33 - an already aborted server context creates no clarification round or H1 artifact
+  ---
+  duration_ms: 34.540213
+  type: 'test'
+  ...
+# Subtest: a parent change without impact still validates the parent before requiring impact
+ok 34 - a parent change without impact still validates the parent before requiring impact
+  ---
+  duration_ms: 71.162165
+  type: 'test'
+  ...
+# Subtest: a parent change with a valid impact persists an auditable incremental plan
+ok 35 - a parent change with a valid impact persists an auditable incremental plan
+  ---
+  duration_ms: 52.703659
+  type: 'test'
+  ...
+# Subtest: unknown acceptance criteria and inconsistent reuse are rejected with the library codes
+ok 36 - unknown acceptance criteria and inconsistent reuse are rejected with the library codes
+  ---
+  duration_ms: 63.950978
+  type: 'test'
+  ...
+# Subtest: impact is strictly validated and cannot be smuggled to the sg_change_add alias
+ok 37 - impact is strictly validated and cannot be smuggled to the sg_change_add alias
+  ---
+  duration_ms: 50.220884
+  type: 'test'
+  ...
+# Subtest: a change without a parent is unaffected and carries no incremental plan
+ok 38 - a change without a parent is unaffected and carries no incremental plan
+  ---
+  duration_ms: 101.141808
+  type: 'test'
+  ...
+# Subtest: normalizes a feature alias and validates feature input
+ok 39 - normalizes a feature alias and validates feature input
+  ---
+  duration_ms: 2.51114
+  type: 'test'
+  ...
+# Subtest: fix requires observed and expected behavior while retaining optional evidence
+ok 40 - fix requires observed and expected behavior while retaining optional evidence
+  ---
+  duration_ms: 0.209847
+  type: 'test'
+  ...
+# Subtest: modify requires the current behavior, target change and compatibility statement
+ok 41 - modify requires the current behavior, target change and compatibility statement
+  ---
+  duration_ms: 0.111208
+  type: 'test'
+  ...
+# Subtest: unsupported types, unknown fields and apparent credentials fail closed
+ok 42 - unsupported types, unknown fields and apparent credentials fail closed
+  ---
+  duration_ms: 0.098674
+  type: 'test'
+  ...
+# Subtest: builds a contract from confirmed requirement acceptance IDs
+ok 43 - builds a contract from confirmed requirement acceptance IDs
+  ---
+  duration_ms: 0.578788
+  type: 'test'
+  ...
+# Subtest: every layer shares one change-type vocabulary
+ok 44 - every layer shares one change-type vocabulary
+  ---
+  duration_ms: 9.63332
+  type: 'test'
+  ...
+# Subtest: remove and refactor are both in the vocabulary from M5 on
+ok 45 - remove and refactor are both in the vocabulary from M5 on
+  ---
+  duration_ms: 3.199404
+  type: 'test'
+  ...
+# Subtest: the type vocabulary is not duplicated as inline literals in source
+ok 46 - the type vocabulary is not duplicated as inline literals in source
+  ---
+  duration_ms: 1.030438
+  type: 'test'
+  ...
+# Subtest: a refactor must declare internal structure, preserved behaviour and constraints
+ok 47 - a refactor must declare internal structure, preserved behaviour and constraints
+  ---
+  duration_ms: 0.481654
+  type: 'test'
+  ...
+# Subtest: a refactor may not also declare a behaviour change
+ok 48 - a refactor may not also declare a behaviour change
+  ---
+  duration_ms: 0.384731
+  type: 'test'
+  ...
+# Subtest: a refactor does not require the fix or modify specific fields
+ok 49 - a refactor does not require the fix or modify specific fields
+  ---
+  duration_ms: 0.157318
+  type: 'test'
+  ...
+# Subtest: tool schemas declare strict nested structures and guarded versioned mutations
+ok 50 - tool schemas declare strict nested structures and guarded versioned mutations
+  ---
+  duration_ms: 2.493864
+  type: 'test'
+  ...
+# Subtest: declared examples dispatch through the actual controlled service and fail closed at default H1
+ok 51 - declared examples dispatch through the actual controlled service and fail closed at default H1
+  ---
+  duration_ms: 76.858735
+  type: 'test'
+  ...
+# Subtest: tool wrappers refuse unknown fields and never accept approval or user provenance
+ok 52 - tool wrappers refuse unknown fields and never accept approval or user provenance
+  ---
+  duration_ms: 23.825868
+  type: 'test'
+  ...
+# Subtest: dispatch neither constructs a service nor invokes inherited or unavailable methods
+ok 53 - dispatch neither constructs a service nor invokes inherited or unavailable methods
+  ---
+  duration_ms: 0.422245
+  type: 'test'
+  ...
+# Subtest: server cancellation context is forwarded separately and cannot be submitted as a tool argument
+ok 54 - server cancellation context is forwarded separately and cannot be submitted as a tool argument
+  ---
+  duration_ms: 0.307509
+  type: 'test'
+  ...
+# Subtest: unified sg_change accepts feature, modify and fix while rejecting invalid details
+ok 55 - unified sg_change accepts feature, modify and fix while rejecting invalid details
+  ---
+  duration_ms: 33.340559
+  type: 'test'
+  ...
+# Subtest: unified H1 entry is advertised, schema-validated and cannot mix intake or approval arguments
+ok 56 - unified H1 entry is advertised, schema-validated and cannot mix intake or approval arguments
+  ---
+  duration_ms: 42.300143
+  type: 'test'
+  ...
+# Subtest: context scenario refactor persists a real all-green behavior baseline and executes development
+ok 57 - context scenario refactor persists a real all-green behavior baseline and executes development
+  ---
+  duration_ms: 395.570057
+  type: 'test'
+  ...
+# Subtest: context modify requires its frozen target red and regression green: inverted=false
+ok 58 - context modify requires its frozen target red and regression green: inverted=false
+  ---
+  duration_ms: 218.63043
+  type: 'test'
+  ...
+# Subtest: context modify requires its frozen target red and regression green: inverted=true
+ok 59 - context modify requires its frozen target red and regression green: inverted=true
+  ---
+  duration_ms: 114.952123
+  type: 'test'
+  ...
+# Subtest: context fix requires its frozen target red and regression green: inverted=false
+ok 60 - context fix requires its frozen target red and regression green: inverted=false
+  ---
+  duration_ms: 215.371028
+  type: 'test'
+  ...
+# Subtest: context fix requires its frozen target red and regression green: inverted=true
+ok 61 - context fix requires its frozen target red and regression green: inverted=true
+  ---
+  duration_ms: 117.114245
+  type: 'test'
+  ...
+# Subtest: refactor success without a complete passing report cannot create role worktrees
+ok 62 - refactor success without a complete passing report cannot create role worktrees
+  ---
+  duration_ms: 345.662568
+  type: 'test'
+  ...
+# Subtest: scenario target groups must be complete before executable tests can freeze
+ok 63 - scenario target groups must be complete before executable tests can freeze
+  ---
+  duration_ms: 36.437358
+  type: 'test'
+  ...
+# Subtest: red baseline requires a real failing command mapped to every frozen case before worktrees
+ok 64 - red baseline requires a real failing command mapped to every frozen case before worktrees
+  ---
+  duration_ms: 347.061132
+  type: 'test'
+  ...
+# Subtest: red baseline cannot relax per-case failure or accept infrastructure failures
+    # Subtest: verification metadata cannot excuse a passing frozen case
+    ok 1 - verification metadata cannot excuse a passing frozen case
+      ---
+      duration_ms: 109.547259
+      type: 'test'
+      ...
+    # Subtest: a baseline hint cannot excuse a passing frozen case
+    ok 2 - a baseline hint cannot excuse a passing frozen case
+      ---
+      duration_ms: 113.796855
+      type: 'test'
+      ...
+    # Subtest: infrastructureErrors cannot stand in for failed assertions
+    ok 3 - infrastructureErrors cannot stand in for failed assertions
+      ---
+      duration_ms: 111.308787
+      type: 'test'
+      ...
+    # Subtest: an infrastructure stage cannot stand in for failed assertions
+    ok 4 - an infrastructure stage cannot stand in for failed assertions
+      ---
+      duration_ms: 113.366728
+      type: 'test'
+      ...
+    # Subtest: a skipped frozen case is never a red assertion
+    ok 5 - a skipped frozen case is never a red assertion
+      ---
+      duration_ms: 112.084603
+      type: 'test'
+      ...
+    # Subtest: every frozen case failing remains valid with verification metadata
+    ok 6 - every frozen case failing remains valid with verification metadata
+      ---
+      duration_ms: 247.108329
+      type: 'test'
+      ...
+    1..6
+ok 65 - red baseline cannot relax per-case failure or accept infrastructure failures
+  ---
+  duration_ms: 808.679016
+  type: 'test'
+  ...
+# Subtest: frontend and backend run serially in isolated worktrees and merge only through integration
+ok 66 - frontend and backend run serially in isolated worktrees and merge only through integration
+  ---
+  duration_ms: 574.965238
+  type: 'test'
+  ...
+# Subtest: server accepts native-role precompleted commits only when they descend from freeze
+ok 67 - server accepts native-role precompleted commits only when they descend from freeze
+  ---
+  duration_ms: 339.355513
+  type: 'test'
+  ...
+# Subtest: cross-role or test-file changes fail closed, exhaust the shared retry ceiling and preserve branches
+ok 68 - cross-role or test-file changes fail closed, exhaust the shared retry ceiling and preserve branches
+  ---
+  duration_ms: 354.255448
+  type: 'test'
+  ...
+# Subtest: merge conflicts return to the owning role with conflict paths before integration continues
+ok 69 - merge conflicts return to the owning role with conflict paths before integration continues
+  ---
+  duration_ms: 398.602723
+  type: 'test'
+  ...
+# Subtest: same-role changes outside task allowlists and inside forbiddenFiles are blocked
+ok 70 - same-role changes outside task allowlists and inside forbiddenFiles are blocked
+  ---
+  duration_ms: 691.283069
+  type: 'test'
+  ...
+# Subtest: dependency manifests require the exact H1-approved content hash and AC
+ok 71 - dependency manifests require the exact H1-approved content hash and AC
+  ---
+  duration_ms: 766.503602
+  type: 'test'
+  ...
+# Subtest: without module information the legacy both-role behaviour is kept
+ok 72 - without module information the legacy both-role behaviour is kept
+  ---
+  duration_ms: 4.291145
+  type: 'test'
+  ...
+# Subtest: a backend-only project gets no frontend implementation task
+ok 73 - a backend-only project gets no frontend implementation task
+  ---
+  duration_ms: 1.531719
+  type: 'test'
+  ...
+# Subtest: a frontend-only project gets no backend implementation task
+ok 74 - a frontend-only project gets no backend implementation task
+  ---
+  duration_ms: 0.266008
+  type: 'test'
+  ...
+# Subtest: a single-module CLI produces exactly one implementation role
+ok 75 - a single-module CLI produces exactly one implementation role
+  ---
+  duration_ms: 0.635542
+  type: 'test'
+  ...
+# Subtest: a fullstack project still gets both roles
+ok 76 - a fullstack project still gets both roles
+  ---
+  duration_ms: 0.252864
+  type: 'test'
+  ...
+# Subtest: a library-only project does not gain a second implementation role
+ok 77 - a library-only project does not gain a second implementation role
+  ---
+  duration_ms: 0.083146
+  type: 'test'
+  ...
+# Subtest: an unknown module role set still yields at least one implementation role
+ok 78 - an unknown module role set still yields at least one implementation role
+  ---
+  duration_ms: 0.253244
+  type: 'test'
+  ...
+# Subtest: the generated graph remains valid when roles are narrowed
+ok 79 - the generated graph remains valid when roles are narrowed
+  ---
+  duration_ms: 0.766742
+  type: 'test'
+  ...
+# Subtest: no unrelated frontend, http or data-model task is invented for a pure module change
+ok 80 - no unrelated frontend, http or data-model task is invented for a pure module change
+  ---
+  duration_ms: 0.508563
+  type: 'test'
+  ...
+# Subtest: ProjectProfile accepts new and adopted Java/Vue modes and rejects unsafe configuration
+ok 81 - ProjectProfile accepts new and adopted Java/Vue modes and rejects unsafe configuration
+  ---
+  duration_ms: 3.528106
+  type: 'test'
+  ...
+# Subtest: ProjectProfile no longer carries the dead pushApproved field
+ok 82 - ProjectProfile no longer carries the dead pushApproved field
+  ---
+  duration_ms: 0.224286
+  type: 'test'
+  ...
+# Subtest: ProjectProfile accepts an optional frontend framework and Java preset and rejects invalid ones
+ok 83 - ProjectProfile accepts an optional frontend framework and Java preset and rejects invalid ones
+  ---
+  duration_ms: 0.287214
+  type: 'test'
+  ...
+# Subtest: ProjectBaseline permits adopted known failures but never allows an unknown start
+ok 84 - ProjectBaseline permits adopted known failures but never allows an unknown start
+  ---
+  duration_ms: 0.393965
+  type: 'test'
+  ...
+# Subtest: canStartChange requires a valid matching profile and a non-unknown baseline
+ok 85 - canStartChange requires a valid matching profile and a non-unknown baseline
+  ---
+  duration_ms: 0.475805
+  type: 'test'
+  ...
+# Subtest: ChangeContract allows only feature, modify and fix with observable acceptance IDs
+ok 86 - ChangeContract allows only feature, modify and fix with observable acceptance IDs
+  ---
+  duration_ms: 0.517073
+  type: 'test'
+  ...
+# Subtest: Evidence cannot convert skipped, not-run, timeout or cancelled into passed
+ok 87 - Evidence cannot convert skipped, not-run, timeout or cancelled into passed
+  ---
+  duration_ms: 0.560516
+  type: 'test'
+  ...
+# Subtest: VerificationAssessment requires sufficient current evidence before H3
+ok 88 - VerificationAssessment requires sufficient current evidence before H3
+  ---
+  duration_ms: 0.278334
+  type: 'test'
+  ...
+# Subtest: VerificationAssessment records not-run, flaky and unresolved risk without claiming a pass
+ok 89 - VerificationAssessment records not-run, flaky and unresolved risk without claiming a pass
+  ---
+  duration_ms: 0.353362
+  type: 'test'
+  ...
+# Subtest: DeliveryRecord state never conflates verification, acceptance, push and deployment
+ok 90 - DeliveryRecord state never conflates verification, acceptance, push and deployment
+  ---
+  duration_ms: 0.59988
+  type: 'test'
+  ...
+# Subtest: Delivery state transitions are append-only and require acceptance before push
+ok 91 - Delivery state transitions are append-only and require acceptance before push
+  ---
+  duration_ms: 0.37077
+  type: 'test'
+  ...
+# Subtest: the four core scenarios each have their own policy
+ok 92 - the four core scenarios each have their own policy
+  ---
+  duration_ms: 1.269308
+  type: 'test'
+  ...
+# Subtest: feature and modify do not require the existing regression to fail
+ok 93 - feature and modify do not require the existing regression to fail
+  ---
+  duration_ms: 0.220348
+  type: 'test'
+  ...
+# Subtest: a fix reproduces the target fault rather than reddening everything
+ok 94 - a fix reproduces the target fault rather than reddening everything
+  ---
+  duration_ms: 0.14495
+  type: 'test'
+  ...
+# Subtest: a refactor neither demands red nor breaks working behaviour
+ok 95 - a refactor neither demands red nor breaks working behaviour
+  ---
+  duration_ms: 0.086707
+  type: 'test'
+  ...
+# Subtest: an old state with no profile keeps the exact legacy behaviour
+ok 96 - an old state with no profile keeps the exact legacy behaviour
+  ---
+  duration_ms: 0.215421
+  type: 'test'
+  ...
+# Subtest: a stored scenario profile is honoured
+ok 97 - a stored scenario profile is honoured
+  ---
+  duration_ms: 0.209394
+  type: 'test'
+  ...
+# Subtest: an unknown scenario is refused instead of silently defaulting
+ok 98 - an unknown scenario is refused instead of silently defaulting
+  ---
+  duration_ms: 1.002129
+  type: 'test'
+  ...
+# Subtest: the legacy profile is self-consistent and unchanged
+ok 99 - the legacy profile is self-consistent and unchanged
+  ---
+  duration_ms: 0.126944
+  type: 'test'
+  ...
+# Subtest: the development path resolves a policy per scenario before the red baseline
+ok 100 - the development path resolves a policy per scenario before the red baseline
+  ---
+  duration_ms: 0.592785
+  type: 'test'
+  ...
+# Subtest: an unknown stored policy is rejected rather than treated as legacy
+ok 101 - an unknown stored policy is rejected rather than treated as legacy
+  ---
+  duration_ms: 0.396167
+  type: 'test'
+  ...
+# Subtest: project facts share the authoritative WAL and cannot mutate a legacy phase
+ok 102 - project facts share the authoritative WAL and cannot mutate a legacy phase
+  ---
+  duration_ms: 8.411931
+  type: 'test'
+  ...
+# Subtest: public phases cover every internal value and legacy state has no writer exports
+ok 103 - public phases cover every internal value and legacy state has no writer exports
+  ---
+  duration_ms: 1.216135
+  type: 'test'
+  ...
+# Subtest: legacy state edits after the first authoritative write fail closed
+ok 104 - legacy state edits after the first authoritative write fail closed
+  ---
+  duration_ms: 2.57566
+  type: 'test'
+  ...
+# Subtest: fresh load is read-only, isolated from legacy state, and mutations require CAS
+ok 105 - fresh load is read-only, isolated from legacy state, and mutations require CAS
+  ---
+  duration_ms: 3.270212
+  type: 'test'
+  ...
+# Subtest: inspect validates and rebuilds only in memory without creating locks or repairing files
+ok 106 - inspect validates and rebuilds only in memory without creating locks or repairing files
+  ---
+  duration_ms: 3.558315
+  type: 'test'
+  ...
+# Subtest: legal migrations and opaque server gate hook protect H1 and H3
+ok 107 - legal migrations and opaque server gate hook protect H1 and H3
+  ---
+  duration_ms: 25.018275
+  type: 'test'
+  ...
+# Subtest: concurrent clients and distinct processes cannot overwrite the same state version
+ok 108 - concurrent clients and distinct processes cannot overwrite the same state version
+  ---
+  duration_ms: 136.356157
+  type: 'test'
+  ...
+# Subtest: every committed write is append-only and verifies as a hash chain
+ok 109 - every committed write is append-only and verifies as a hash chain
+  ---
+  duration_ms: 2.758078
+  type: 'test'
+  ...
+# Subtest: audit tampering, incomplete writes and tail truncation fail closed without replacing evidence
+ok 110 - audit tampering, incomplete writes and tail truncation fail closed without replacing evidence
+  ---
+  duration_ms: 5.445108
+  type: 'test'
+  ...
+# Subtest: crashed process after durable WAL commit is recovered and its stale lock is reclaimed
+ok 111 - crashed process after durable WAL commit is recovered and its stale lock is reclaimed
+  ---
+  duration_ms: 90.021685
+  type: 'test'
+  ...
+# Subtest: snapshot write failure returns the committed version and never repeats the WAL operation
+ok 112 - snapshot write failure returns the committed version and never repeats the WAL operation
+  ---
+  duration_ms: 92.07036
+  type: 'test'
+  ...
+# Subtest: snapshot ahead of audit and rewritten snapshot state are rejected
+ok 113 - snapshot ahead of audit and rewritten snapshot state are rejected
+  ---
+  duration_ms: 1.282225
+  type: 'test'
+  ...
+# Subtest: pause, stable checkpoint resume and cancellation preserve worktree and evidence references
+ok 114 - pause, stable checkpoint resume and cancellation preserve worktree and evidence references
+  ---
+  duration_ms: 6.788285
+  type: 'test'
+  ...
+# Subtest: development, test and review tasks share the two-retry ceiling and preserve failure evidence
+ok 115 - development, test and review tasks share the two-retry ceiling and preserve failure evidence
+  ---
+  duration_ms: 10.688554
+  type: 'test'
+  ...
+# Subtest: a Change cannot multiply its automatic repair budget by changing task categories
+ok 116 - a Change cannot multiply its automatic repair budget by changing task categories
+  ---
+  duration_ms: 3.156938
+  type: 'test'
+  ...
+# Subtest: live lock is bounded and symlink storage cannot write outside the bound project
+ok 117 - live lock is bounded and symlink storage cannot write outside the bound project
+  ---
+  duration_ms: 82.76845
+  type: 'test'
+  ...
+# Subtest: native MCP adopts a real Node project and freezes an explicit refactor policy through H1
+ok 118 - native MCP adopts a real Node project and freezes an explicit refactor policy through H1
+  ---
+  duration_ms: 1927.429784
+  type: 'test'
+  ...
+# Subtest: a profile without a version field is rejected
+ok 119 - a profile without a version field is rejected
+  ---
+  duration_ms: 1.441244
+  type: 'test'
+  ...
+# Subtest: a non-integer or wrong profileVersion is rejected
+ok 120 - a non-integer or wrong profileVersion is rejected
+  ---
+  duration_ms: 0.20533
+  type: 'test'
+  ...
+# Subtest: legacy profile keeps the current all-frozen-cases-red behaviour
+ok 121 - legacy profile keeps the current all-frozen-cases-red behaviour
+  ---
+  duration_ms: 0.179685
+  type: 'test'
+  ...
+# Subtest: a non-legacy profile may differ per scenario
+ok 122 - a non-legacy profile may differ per scenario
+  ---
+  duration_ms: 0.116523
+  type: 'test'
+  ...
+# Subtest: an unknown scenario id is rejected with the legal set
+ok 123 - an unknown scenario id is rejected with the legal set
+  ---
+  duration_ms: 1.270038
+  type: 'test'
+  ...
+# Subtest: policyFor refuses an unknown scenario and lists allowed ids
+ok 124 - policyFor refuses an unknown scenario and lists allowed ids
+  ---
+  duration_ms: 0.143678
+  type: 'test'
+  ...
+# Subtest: an invalid red or regression policy is rejected
+ok 125 - an invalid red or regression policy is rejected
+  ---
+  duration_ms: 0.2921
+  type: 'test'
+  ...
+# Subtest: declaring all frozen cases red while a scenario differs is self-contradictory
+ok 126 - declaring all frozen cases red while a scenario differs is self-contradictory
+  ---
+  duration_ms: 0.108194
+  type: 'test'
+  ...
+# Subtest: declaring no global red requirement while every scenario is all-red is self-contradictory
+ok 127 - declaring no global red requirement while every scenario is all-red is self-contradictory
+  ---
+  duration_ms: 0.297196
+  type: 'test'
+  ...
+# Subtest: an unknown extra profile field is rejected
+ok 128 - an unknown extra profile field is rejected
+  ---
+  duration_ms: 0.3325
+  type: 'test'
+  ...
+# Subtest: every declared red policy is accepted at least once
+ok 129 - every declared red policy is accepted at least once
+  ---
+  duration_ms: 0.158369
+  type: 'test'
+  ...
+# Subtest: an old state without a profile resolves to the legacy interpretation
+ok 130 - an old state without a profile resolves to the legacy interpretation
+  ---
+  duration_ms: 0.460547
+  type: 'test'
+  ...
+# Subtest: a stored profile id or object is resolved and marked as stored
+ok 131 - a stored profile id or object is resolved and marked as stored
+  ---
+  duration_ms: 0.09317
+  type: 'test'
+  ...
+# Subtest: an unknown stored profile id is rejected rather than silently defaulted
+ok 132 - an unknown stored profile id is rejected rather than silently defaulted
+  ---
+  duration_ms: 0.058052
+  type: 'test'
+  ...
+# Subtest: a corrupt stored profile object is rejected
+ok 133 - a corrupt stored profile object is rejected
+  ---
+  duration_ms: 0.057629
+  type: 'test'
+  ...
+# Subtest: the profile is wired into development only, and only from M5 on
+ok 134 - the profile is wired into development only, and only from M5 on
+  ---
+  duration_ms: 1.410844
+  type: 'test'
+  ...
+1..134
+# tests 140
+# suites 0
+# pass 140
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 6385.960289

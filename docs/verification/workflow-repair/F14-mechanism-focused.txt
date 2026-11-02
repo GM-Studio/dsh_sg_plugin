@@ -1,0 +1,16 @@
+✔ context scenario refactor persists a real all-green behavior baseline and executes development (2375.5942ms)
+✔ context modify requires its frozen target red and regression green: inverted=false (1304.0599ms)
+✔ context modify requires its frozen target red and regression green: inverted=true (485.6757ms)
+✔ context fix requires its frozen target red and regression green: inverted=false (1272.0518ms)
+✔ context fix requires its frozen target red and regression green: inverted=true (480.0593ms)
+✔ refactor success without a complete passing report cannot create role worktrees (1477.8013ms)
+✔ scenario target groups must be complete before executable tests can freeze (369.9652ms)
+✔ native MCP adopts a real Node project and freezes an explicit refactor policy through H1 (3778.1956ms)
+ℹ tests 8
+ℹ suites 0
+ℹ pass 8
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 7904.0929

@@ -2,6 +2,7 @@ import { createStorage } from './storage.js';
 import { canonicalJson, createEvent } from './events.js';
 import { makeCheckpoint, countFailure, RETRY_CATEGORIES } from './checkpoints.js';
 import { randomUUID } from 'node:crypto';
+import { resolveProfile, resolveScenario } from './core/validation-profile.js';
 
 export const MAIN_PHASES = Object.freeze([
   'REQ_INTAKE',
@@ -259,6 +260,8 @@ export function createStateStore({
       }),
     create: (args) =>
       mutate(args, (state, _audit, events) => {
+        const profile = resolveProfile({ context: args.context });
+        if (!profile.ok) return profile;
         if (!validId(args.changeId) || (args.context !== undefined && !object(args.context)))
           return errorResult(
             'INVALID_ARGUMENT',
@@ -298,6 +301,32 @@ export function createStateStore({
           return errorResult('INVALID_ARGUMENT', 'Only a context object can be updated');
         if (!writable(state))
           return errorResult('INVALID_TRANSITION', 'This phase does not accept context updates');
+        const next = { ...state, context: { ...state.context, ...args.patch.context } };
+        const nextProfile = resolveProfile(next);
+        if (!nextProfile.ok) return nextProfile;
+        if (
+          !['REQ_INTAKE', 'REQ_CLARIFYING', 'REQ_CRITIQUE'].includes(state.phase) ||
+          state.context.changeAdd?.frozen
+        ) {
+          const currentProfile = resolveProfile(state);
+          const scenario = resolveScenario(state),
+            nextScenario = resolveScenario(next);
+          if (
+            !currentProfile.ok ||
+            !scenario.ok ||
+            !nextScenario.ok ||
+            canonicalJson(currentProfile.profile) !== canonicalJson(nextProfile.profile) ||
+            canonicalJson(state.context.validationProfile ?? null) !==
+              canonicalJson(next.context.validationProfile ?? null) ||
+            (state.context.changeAdd?.change?.type ?? null) !==
+              (next.context.changeAdd?.change?.type ?? null) ||
+            scenario.scenario !== nextScenario.scenario
+          )
+            return errorResult(
+              'VALIDATION_POLICY_FROZEN',
+              'Change type and validation profile cannot change after H1 is requested',
+            );
+        }
         try {
           state.context = { ...state.context, ...clone(args.patch.context) };
         } catch {

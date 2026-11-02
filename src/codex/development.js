@@ -9,7 +9,12 @@ import { frontendFrameworkViolation, readProjectConventions } from './project-co
 import { taskFilePolicy, dependencyFile } from './core/task-policy.js';
 import { createHash } from 'node:crypto';
 import { buildRepairContext } from './core/repair-context.js';
-import { resolveProfile, policyFor } from './core/validation-profile.js';
+import {
+  resolveProfile,
+  resolveScenario,
+  policyFor,
+  completeBaselinePartition,
+} from './core/validation-profile.js';
 import { executionEnvironment } from './core/environment-execution.js';
 
 const SOURCE_ROOT = path.resolve(fileURLToPath(new URL('../..', import.meta.url)));
@@ -402,7 +407,7 @@ function ensureFreezeCommit(root, checked, redEvidence) {
 
 // policy.redBaseline 决定「实现前必须观察到什么」（M5 / SNA-0502，AC-19/AC-20）。
 // 默认 all-frozen-cases-red 与旧行为完全等价；其他策略由验证档案显式选择。
-function validateRedReport(root, specification, cases, policy = null) {
+function validateRedReport(root, specification, cases, policy = null, baseline = {}) {
   const redBaselinePolicy = policy?.redBaseline ?? 'all-frozen-cases-red';
   if (!safeRelative(specification.reportPath))
     fail('RED_RUNNER_INVALID', 'The red baseline must declare a safe JSON report path');
@@ -460,9 +465,22 @@ function validateRedReport(root, specification, cases, policy = null) {
         'The target case must be observed as failing before development starts',
       );
     if (skippedCount > 0) fail('RED_REPORT_INVALID', 'The red baseline must not skip frozen cases');
+    const targets = baseline?.targetCaseIds,
+      regressions = baseline?.regressionCaseIds;
+    if (
+      !completeBaselinePartition(cases, baseline) ||
+      targets.some((id) => seen.get(id) !== 'fail') ||
+      regressions.some((id) => seen.get(id) !== 'pass')
+    )
+      fail(
+        'RED_REPORT_INVALID',
+        'Frozen targetCaseIds must fail and regressionCaseIds must pass; both lists must partition every frozen case',
+      );
   } else if (redBaselinePolicy === 'none') {
     // 重构（AC-19）：不要求红基线；行为保持证据由后续阶段提供。
     if (skippedCount > 0) fail('RED_REPORT_INVALID', 'The red baseline must not skip frozen cases');
+    if (failing > 0)
+      fail('RED_REPORT_INVALID', 'Refactor behavior baseline requires every frozen case to pass');
   } else {
     fail('RED_REPORT_INVALID', 'Unknown red baseline policy: ' + String(redBaselinePolicy));
   }
@@ -505,6 +523,8 @@ async function redBaseline({
   timeoutMs,
   policy = null,
   environmentContext,
+  scenario,
+  profile,
 }) {
   if (typeof redRunner !== 'function')
     return failure(
@@ -521,6 +541,9 @@ async function redBaseline({
       contract: details.contract,
       model: details.model,
       tests: details.tests,
+      scenario,
+      validationProfile: profile,
+      policy,
     });
   } catch (error) {
     return failure(error.code || 'RED_RUNNER_FAILED', errorText(error));
@@ -554,18 +577,17 @@ async function redBaseline({
       'RED_BASELINE_NOT_FAILING',
       'The frozen tests passed before implementation; strict TDD requires an observed failure',
     );
-  if (run.exitCode === 0 && (policy?.redBaseline ?? 'all-frozen-cases-red') === 'none')
-    // 重构仍需一份可读报告作为行为保持基线，不能因为命令成功就跳过证据。
-    return {
-      ok: true,
-      policy: policy?.redBaseline ?? 'none',
-      observed: 'all-passing',
-      exitCode: 0,
-      evidence: { stdout: run.stdout, stderr: run.stderr, report: null },
-    };
+  if (run.exitCode !== 0 && policy?.redBaseline === 'none')
+    return failure('RED_REPORT_INVALID', 'Refactor baseline command must succeed');
   let report;
   try {
-    report = validateRedReport(root, specification, details.tests.cases, policy);
+    report = validateRedReport(
+      root,
+      specification,
+      details.tests.cases,
+      policy,
+      details.tests.baseline,
+    );
   } catch (error) {
     return failure(error.code || 'RED_REPORT_INVALID', error.message);
   }
@@ -587,6 +609,9 @@ async function redBaseline({
     args: specification.args,
     cwd: path.relative(root, specification.cwd).replace(/\\/g, '/') || '.',
     exitCode: run.exitCode,
+    policy,
+    scenario,
+    validationProfile: profile,
     observedAt: new Date().toISOString(),
     cases: report.cases,
     logs: { stdout: stdoutPath, stderr: stderrPath, report: reportPath },
@@ -704,7 +729,9 @@ export function createDevelopmentService({
       // 与既有「每个冻结用例必须真实失败」完全等价。
       const resolvedProfile = resolveProfile(loaded.state);
       if (!resolvedProfile.ok) return resolvedProfile;
-      const scenario = loaded.state.type || 'feature';
+      const selectedScenario = resolveScenario(loaded.state);
+      if (!selectedScenario.ok) return selectedScenario;
+      const scenario = selectedScenario.scenario;
       const policy = policyFor(resolvedProfile.profile, scenario);
       if (!policy.ok) return policy;
       const red = await redBaseline({
@@ -714,6 +741,8 @@ export function createDevelopmentService({
         signal,
         timeoutMs,
         policy,
+        scenario,
+        profile: resolvedProfile.profile,
         environmentContext,
       });
       if (!red.ok) return red;

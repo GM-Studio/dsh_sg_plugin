@@ -1,3 +1,4 @@
+import { SCENARIOS } from './core/validation-profile.js';
 const objectSchema = (properties, required = Object.keys(properties)) => ({
   type: 'object',
   properties,
@@ -183,6 +184,9 @@ const changeDetails = objectSchema(
     logs: string('Optional redacted failure log for a fix.'),
     environment: string('Optional affected environment for a fix.'),
     severity: string('Optional bug severity for a fix.', 256),
+    internalStructure: string('Internal structure to refactor.'),
+    preservedBehavior: string('Externally observable behavior that must remain unchanged.'),
+    constraints: string('Constraints on the refactor.'),
   },
   [],
 );
@@ -206,7 +210,13 @@ const changeStart = objectSchema(
       'Optional unique change name; omitted names are derived from the request deterministically.',
     ),
     request: string('Change request relayed by the command; never a native approval.'),
-    type: { type: 'string', enum: ['feature', 'modify', 'fix'] },
+    type: { type: 'string', enum: [...SCENARIOS] },
+    validationProfile: {
+      type: 'string',
+      enum: ['legacy', 'scenario-v1'],
+      description:
+        'Explicit verification policy frozen with H1. Omitted keeps legacy all-red behavior; scenario-v1 supports target-red and green refactor baselines.',
+    },
     parentDeliveryId: identifier('Optional accepted parent delivery for incremental redelivery.'),
     impact: {
       ...impact,
@@ -245,13 +255,14 @@ export const CHANGE_TOOLS = [
         request: string(
           'Feature request relayed by the command. Do not include credentials or claim this text is a native approval.',
         ),
+        validationProfile: { type: 'string', enum: ['legacy', 'scenario-v1'] },
       },
       ['expectedVersion', 'request'],
     ),
   ),
   definition(
     'sg_change',
-    'Start a unified feature, modify or fix intake after an active ProjectBaseline and a clean Git worktree, then immediately request the server-owned first round of native user clarification. Type-specific details are validated before requirements proceed. When the result is WAITING_FOR_USER, stop and resume clarification; do not propose, critique or request H1. An optional parentDeliveryId plus impact records the incremental affected and reused acceptance criteria for a customer-feedback change.',
+    'Start a unified feature, modify, fix or refactor intake after an active ProjectBaseline and a clean Git worktree, then immediately request the server-owned first round of native user clarification. Type-specific details are validated before requirements proceed. When the result is WAITING_FOR_USER, stop and resume clarification; do not propose, critique or request H1. An optional parentDeliveryId plus impact records the incremental affected and reused acceptance criteria for a customer-feedback change.',
     {
       ...objectSchema({ ...changeStart.properties, ...changeH1.properties }, ['expectedVersion']),
       oneOf: [changeStart, changeH1],

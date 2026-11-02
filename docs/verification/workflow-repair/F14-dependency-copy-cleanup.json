@@ -1,0 +1,98 @@
+[
+  {
+    "preserved": [
+      "candidate source",
+      "tar archive",
+      "SHA-256 manifest",
+      "logs",
+      "SDKs"
+    ],
+    "path": "E:\\ai_workflow\\specgate\\.tmp\\env-repair-candidates\\F10-d\\node_modules",
+    "stage": "F10-d",
+    "removedBytes": 21781462.0
+  },
+  {
+    "preserved": [
+      "candidate source",
+      "tar archive",
+      "SHA-256 manifest",
+      "logs",
+      "SDKs"
+    ],
+    "path": "E:\\ai_workflow\\specgate\\.tmp\\env-repair-candidates\\F11-a\\node_modules",
+    "stage": "F11-a",
+    "removedBytes": 21781462.0
+  },
+  {
+    "preserved": [
+      "candidate source",
+      "tar archive",
+      "SHA-256 manifest",
+      "logs",
+      "SDKs"
+    ],
+    "path": "E:\\ai_workflow\\specgate\\.tmp\\env-repair-candidates\\F12-a\\node_modules",
+    "stage": "F12-a",
+    "removedBytes": 21781462.0
+  },
+  {
+    "preserved": [
+      "candidate source",
+      "tar archive",
+      "SHA-256 manifest",
+      "logs",
+      "SDKs"
+    ],
+    "path": "E:\\ai_workflow\\specgate\\.tmp\\env-repair-candidates\\F13-a\\node_modules",
+    "stage": "F13-a",
+    "removedBytes": 21781462.0
+  },
+  {
+    "preserved": [
+      "candidate source",
+      "tar archive",
+      "SHA-256 manifest",
+      "logs",
+      "SDKs"
+    ],
+    "path": "E:\\ai_workflow\\specgate\\.tmp\\env-repair-candidates\\F13-b\\node_modules",
+    "stage": "F13-b",
+    "removedBytes": 21781462.0
+  },
+  {
+    "preserved": [
+      "candidate source",
+      "tar archive",
+      "SHA-256 manifest",
+      "logs",
+      "SDKs"
+    ],
+    "path": "E:\\ai_workflow\\specgate\\.tmp\\env-repair-candidates\\F13-c\\node_modules",
+    "stage": "F13-c",
+    "removedBytes": 21781462.0
+  },
+  {
+    "preserved": [
+      "candidate source",
+      "tar archive",
+      "SHA-256 manifest",
+      "logs",
+      "SDKs"
+    ],
+    "path": "E:\\ai_workflow\\specgate\\.tmp\\env-repair-candidates\\F13-d\\node_modules",
+    "stage": "F13-d",
+    "removedBytes": 21781462.0
+  },
+  {
+    "preserved": [
+      "candidate source",
+      "tar archive",
+      "SHA-256 manifest",
+      "logs",
+      "SDKs"
+    ],
+    "path": "E:\\ai_workflow\\specgate\\.tmp\\env-repair-candidates\\F14-a\\node_modules",
+    "stage": "F14-a",
+    "removedBytes": 21781462.0
+  }
+]

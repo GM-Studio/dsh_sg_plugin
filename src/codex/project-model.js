@@ -1,3 +1,4 @@
+import { SCENARIOS } from './core/validation-profile.js';
 const ID = /^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$/;
 const COMMIT = /^[a-f0-9]{40,64}$/i;
 const HASH = /^[a-f0-9]{64}$/i;
@@ -281,7 +282,7 @@ export function validateChangeContract(value) {
     value.schemaVersion !== 2 ||
     !id(value.changeId) ||
     (value.parentDeliveryId !== null && !id(value.parentDeliveryId)) ||
-    !['feature', 'modify', 'fix'].includes(value.type) ||
+    !SCENARIOS.includes(value.type) ||
     !nonEmpty(value.request) ||
     !listOfText(value.scope) ||
     value.scope.length === 0 ||

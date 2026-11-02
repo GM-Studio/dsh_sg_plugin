@@ -1,0 +1,91 @@
+✖ context scenario refactor persists a real all-green behavior baseline and executes development (528.0388ms)
+✖ context modify requires its frozen target red and regression green: inverted=false (495.3488ms)
+✔ context modify requires its frozen target red and regression green: inverted=true (470.7379ms)
+✖ context fix requires its frozen target red and regression green: inverted=false (472.6432ms)
+✔ context fix requires its frozen target red and regression green: inverted=true (478.0213ms)
+✖ refactor success without a complete passing report cannot create role worktrees (486.127ms)
+ℹ tests 6
+ℹ suites 0
+ℹ pass 2
+ℹ fail 4
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 3028.6984
+
+✖ failing tests:
+
+test at test\codex-development-flow.test.js:251:1
+✖ context scenario refactor persists a real all-green behavior baseline and executes development (528.0388ms)
+  AssertionError [ERR_ASSERTION]: {"ok":false,"code":"RED_BASELINE_NOT_FAILING","message":"The frozen tests passed before implementation; strict TDD requires an observed failure"}
+  
+  false !== true
+  
+      at TestContext.<anonymous> (file:///E:/ai_workflow/specgate/test/codex-development-flow.test.js:255:10)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1125:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:358:3) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at test\codex-development-flow.test.js:271:5
+✖ context modify requires its frozen target red and regression green: inverted=false (495.3488ms)
+  AssertionError [ERR_ASSERTION]: {"ok":false,"code":"RED_REPORT_INVALID","message":"Every frozen case must be observed as failing before development starts"}
+  
+  false !== true
+  
+      at TestContext.<anonymous> (file:///E:/ai_workflow/specgate/test/codex-development-flow.test.js:281:14)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1125:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:787:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at test\codex-development-flow.test.js:271:5
+✖ context fix requires its frozen target red and regression green: inverted=false (472.6432ms)
+  AssertionError [ERR_ASSERTION]: {"ok":false,"code":"RED_REPORT_INVALID","message":"Every frozen case must be observed as failing before development starts"}
+  
+  false !== true
+  
+      at TestContext.<anonymous> (file:///E:/ai_workflow/specgate/test/codex-development-flow.test.js:281:14)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1125:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:787:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at test\codex-development-flow.test.js:288:1
+✖ refactor success without a complete passing report cannot create role worktrees (486.127ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + 'RED_BASELINE_NOT_FAILING'
+  - 'RED_REPORT_INVALID'
+         ^
+  
+      at TestContext.<anonymous> (file:///E:/ai_workflow/specgate/test/codex-development-flow.test.js:294:12)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1125:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:787:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'RED_BASELINE_NOT_FAILING',
+    expected: 'RED_REPORT_INVALID',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

@@ -13,6 +13,7 @@ import { gitSafeDirectory } from './git-path.js';
 import { categoryLabel, renderChineseData } from './locale.js';
 import { readDeliveryRecord } from './delivery.js';
 import { loadProjectReadiness, PROJECT_PROFILE_PATH } from './project-state.js';
+import { resolveProfile } from './core/validation-profile.js';
 
 const SOURCE_ROOT = fileURLToPath(new URL('../..', import.meta.url));
 const TERMINAL = new Set(['ARCHIVED', 'ARCHIVED_NOT_PUSHED', 'CANCELLED']);
@@ -436,6 +437,9 @@ function snapshot(state, data) {
     critique: data.critique,
     change: data.change,
     changeContract: data.changeContract,
+    ...(state.context.validationProfile
+      ? { validationProfile: state.context.validationProfile }
+      : {}),
   };
 }
 
@@ -475,7 +479,11 @@ function renderRequirements(candidate, legacyRequest = false) {
   lines.push('\n## 反向复述与批判分析', renderChineseData(candidate.critique));
   lines.push(
     '\n## 变更范围与约束契约',
-    renderChineseData({ change: candidate.change, changeContract: candidate.changeContract }),
+    renderChineseData({
+      change: candidate.change,
+      changeContract: candidate.changeContract,
+      ...(candidate.validationProfile ? { validationProfile: candidate.validationProfile } : {}),
+    }),
   );
   return lines.join('\n');
 }
@@ -499,8 +507,9 @@ export function renderH1Summary(candidate, documentPath) {
   const target =
     candidate.request?.text || details.desiredBehavior || details.expectedBehavior || '';
   const type =
-    { feature: '新增功能', modify: '修改功能', fix: '修复问题' }[candidate.change?.type] ||
-    '需求变更';
+    { feature: '新增功能', modify: '修改功能', fix: '修复问题', refactor: '内部重构' }[
+      candidate.change?.type
+    ] || '需求变更';
   const lines = [
     `变更类型：${type} · ${brief(candidate.changeId, 48)}`,
     `变更目标：${brief(target) || '详见需求文档'}`,
@@ -687,6 +696,18 @@ export function createChangeAddService({
   ) {
     const validation = validateChangeInput({ type, request: args.request, details });
     if (!validation.ok) return validation;
+    if (
+      args.validationProfile !== undefined &&
+      !['legacy', 'scenario-v1'].includes(args.validationProfile)
+    )
+      return failure(
+        'VALIDATION_PROFILE_UNKNOWN',
+        'Select legacy or scenario-v1 before requirements intake',
+      );
+    const selectedProfile = resolveProfile({
+      context: { validationProfile: args.validationProfile ?? 'legacy' },
+    });
+    if (!selectedProfile.ok) return selectedProfile;
     const ready = await inspectPrerequisites();
     if (!ready.ok) return ready;
     const changeId = args.name ?? stableChangeName(args.request);
@@ -746,6 +767,7 @@ export function createChangeAddService({
       expectedVersion: args.expectedVersion,
       changeId,
       context: {
+        validationProfile: selectedProfile.profile,
         changeAdd: {
           request: { text: args.request, source: 'command-input', at: now() },
           change: {
@@ -801,7 +823,7 @@ export function createChangeAddService({
 
   async function start(args = {}, { signal } = {}) {
     if (
-      !keys(args, ['name', 'request', 'expectedVersion']) ||
+      !keys(args, ['name', 'request', 'expectedVersion', 'validationProfile']) ||
       !text(args.request) ||
       (args.name !== undefined && !id(args.name))
     )
@@ -831,6 +853,7 @@ export function createChangeAddService({
         'details',
         'parentDeliveryId',
         'impact',
+        'validationProfile',
       ]) ||
       !text(args.request) ||
       (args.name !== undefined && !id(args.name))

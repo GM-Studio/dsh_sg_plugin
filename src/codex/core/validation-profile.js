@@ -129,7 +129,9 @@ export function scenarioProfile(profileId = 'scenario-v1') {
  * 状态没有档案字段（旧状态）时返回 legacy 解释并标记来源，供审计区分。
  */
 export function resolveProfile(state) {
-  const stored = object(state) ? state.validationProfile : undefined;
+  const stored = object(state)
+    ? (state.context?.validationProfile ?? state.validationProfile)
+    : undefined;
   if (stored === undefined || stored === null) {
     const profile = legacyProfile();
     return { ok: true, profile, source: 'legacy-default' };
@@ -146,6 +148,25 @@ export function resolveProfile(state) {
   return { ok: true, profile: stored, source: 'stored' };
 }
 
+/** Codex Change type is persisted in context; top-level type is retained for historical core states. */
+export function resolveScenario(state) {
+  const change = state?.context?.changeAdd;
+  if (
+    change?.change?.type &&
+    change?.changeContract?.type &&
+    change.change.type !== change.changeContract.type
+  )
+    return failure('VALIDATION_PROFILE_UNKNOWN', '变更类型与冻结契约不一致');
+  const scenario =
+    state?.context?.changeAdd?.change?.type ??
+    state?.context?.changeAdd?.changeContract?.type ??
+    state?.type ??
+    'feature';
+  return SCENARIOS.includes(scenario)
+    ? { ok: true, scenario }
+    : failure('VALIDATION_PROFILE_UNKNOWN', '未知变更场景', { scenario, allowed: SCENARIOS });
+}
+
 /** 读取某场景的验证要求；未知场景显式拒绝并给出合法集合。 */
 export function policyFor(profile, scenario) {
   if (!object(profile) || !object(profile.scenarios))
@@ -154,4 +175,16 @@ export function policyFor(profile, scenario) {
   if (!entry)
     return failure('VALIDATION_PROFILE_UNKNOWN', '未知场景', { scenario, allowed: SCENARIOS });
   return { ok: true, redBaseline: entry.redBaseline, regression: entry.regression };
+}
+
+export function completeBaselinePartition(cases, baseline) {
+  const targets = baseline?.targetCaseIds,
+    regressions = baseline?.regressionCaseIds;
+  if (!Array.isArray(targets) || !targets.length || !Array.isArray(regressions)) return false;
+  const ids = new Set(cases.map((entry) => entry.id));
+  return (
+    targets.length + regressions.length === ids.size &&
+    new Set([...targets, ...regressions]).size === ids.size &&
+    [...targets, ...regressions].every((id) => ids.has(id))
+  );
 }
