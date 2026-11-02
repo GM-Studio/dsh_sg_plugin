@@ -28,6 +28,7 @@ function businessProjectRoot(value, pluginRoot) {
     if (
       root === pluginRoot ||
       (relativeToPlugin &&
+        !path.isAbsolute(relativeToPlugin) &&
         !relativeToPlugin.startsWith('..' + path.sep) &&
         relativeToPlugin !== '..')
     )

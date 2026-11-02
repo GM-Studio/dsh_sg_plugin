@@ -1,0 +1,118 @@
+✖ actual working-tree portable MCP entries are enabled and identical (1.4223ms)
+✖ both actual MCP configuration files launch the declared Node command from a different cwd (110.1464ms)
+✖ empty, disabled, malformed and escaping MCP configurations fail before server startup (2.7198ms)
+✖ configuration environment reaches a real MCP child without changing the parent environment (116.9246ms)
+ℹ tests 4
+ℹ suites 0
+ℹ pass 0
+ℹ fail 4
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 290.9064
+
+✖ failing tests:
+
+test at test\codex-mcp-entry-e2e.test.js:11:1
+✖ actual working-tree portable MCP entries are enabled and identical (1.4223ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+  
+  + {}
+  - {
+  -   specgate: {
+  -     args: [
+  -       '${PLUGIN_ROOT}/src/codex/server.js'
+  -     ],
+  -     command: 'node',
+  -     env: {
+  -       SPECGATE_INTERACTIVE_APPROVAL: '1',
+  -       SPECGATE_NATIVE_AGENTS: '1'
+  -     },
+  -     type: 'stdio'
+  -   }
+  - }
+  
+      at TestContext.<anonymous> (file:///E:/ai_workflow/specgate/test/codex-mcp-entry-e2e.test.js:14:10)
+      at Test.runInAsyncScope (node:async_hooks:228:14)
+      at Test.run (node:internal/test_runner/test:1118:25)
+      at Test.start (node:internal/test_runner/test:1015:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:358:17) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: {},
+    expected: { specgate: { type: 'stdio', command: 'node', args: [Array], env: [Object] } },
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+
+test at test\codex-mcp-entry-e2e.test.js:22:1
+✖ both actual MCP configuration files launch the declared Node command from a different cwd (110.1464ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + undefined
+  - 'mcp.json'
+  
+      at TestContext.<anonymous> (file:///E:/ai_workflow/specgate/test/codex-mcp-entry-e2e.test.js:28:12)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1125:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:787:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: 'mcp.json',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at test\codex-mcp-entry-e2e.test.js:42:1
+✖ empty, disabled, malformed and escaping MCP configurations fail before server startup (2.7198ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+  
+  + Comparison {}
+  - Comparison {
+  -   code: 'MCP_CONFIGURATION_INVALID'
+  - }
+  
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async TestContext.<anonymous> (file:///E:/ai_workflow/specgate/test/codex-mcp-entry-e2e.test.js:48:5)
+      at async Test.run (node:internal/test_runner/test:1125:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:787:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: TypeError: Cannot read properties of undefined (reading 'command')
+        at smokePlugin (file:///E:/ai_workflow/specgate/scripts/codex-plugin-smoke.mjs:18:13)
+        at TestContext.<anonymous> (file:///E:/ai_workflow/specgate/test/codex-mcp-entry-e2e.test.js:48:26)
+        at Test.runInAsyncScope (node:async_hooks:228:14)
+        at Test.run (node:internal/test_runner/test:1118:25)
+        at Test.processPendingSubtests (node:internal/test_runner/test:787:18)
+        at Test.postRun (node:internal/test_runner/test:1247:19)
+        at Test.run (node:internal/test_runner/test:1175:12)
+        at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+        at async Test.processPendingSubtests (node:internal/test_runner/test:787:7),
+    expected: { code: 'MCP_CONFIGURATION_INVALID' },
+    operator: 'rejects',
+    diff: 'simple'
+  }
+
+test at test\codex-mcp-entry-e2e.test.js:53:1
+✖ configuration environment reaches a real MCP child without changing the parent environment (116.9246ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + undefined
+  - 'from-configuration'
+  
+      at TestContext.<anonymous> (file:///E:/ai_workflow/specgate/test/codex-mcp-entry-e2e.test.js:60:10)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1125:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:787:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: 'from-configuration',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

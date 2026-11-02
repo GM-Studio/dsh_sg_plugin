@@ -31,6 +31,8 @@ H3 的“要求修改”会记录绑定评审证据的决定，创建新的前�
 
 协议和启动异常返回 `code`、`stage`、安全的 `cause` 与 `retryAction`，用于区分依赖、权限、存储、网络、认证、超时和宿主通道问题。原始错误对象、自由文本、堆栈和宿主错误数据不公开；未知原因明确记为 UNKNOWN。Node 能执行入口时，启动配置与模块加载失败写入 stderr 的单行 JSON，stdout 保持 MCP 协议；缺少 Node、宿主无法创建进程、Node 装载器在执行入口之前失败或宿主配置未能启动进程，仍需宿主侧处理，不能由尚未启动的 MCP 自修复。
 
+`mcp.json` 与 `.mcp.json` 的 SpecGate stdio 配置保持一致。`npm run codex:smoke` 现在分别装载两份实际配置，展开插件路径并执行声明的 `node` 命令，将配置环境变量仅传给测试子进程；任一配置为空、禁用或无效都会失败。冒烟只证明协议和只读诊断可运行，不代表桌面插件已重载、人工审批或业务验收已完成。
+
 源码中的历史独立环境入口已改为共用环境服务和校验安装器：`node scripts/install-env.mjs --check --project=<绝对路径>` 只读检测；空项目用 `--stack=node|react|vue|python|go|java` 选择，`--only=...` 仅处理显式工具范围，默认按项目推断。`--plan` 生成确切方案，`--expected-plan-hash=...` 拒绝变化的方案；此参数不授予安装许可。实际缺项必须在交互终端输入完整方案确认，非交互调用保持阻断，Codex 中应使用 `sg_env_prepare` 的宿主审批。环境变量变更仅影响子进程，无系统包管理器或用户配置写入。
 
 缺少 Node 运行时时，`scripts/install-env.ps1` / `.sh` 的 `--check` 仍只读、`--plan` 仅输出运行时方案；可用 `SPECGATE_NODE` 指定已有运行时，或显式 `--bootstrap` 查看并交互确认固定官方 Node 归档、SHA-256 和隔离目录。原生入口与 MCP 共用 `src/codex/core/node-bootstrap.tsv`，不覆盖未知安装。运行时准备后继续检测所选技术栈，缺少其它工具仍须分别确认。原生 bootstrap 适配 Windows/Linux x64；Bash 入口需要已有 GNU timeout/realpath/sha256sum，安装时还需 curl/tar/gzip 等工具，缺少时明确阻断，不自动执行 apt/sudo。这些历史脚本仍不随 Core 插件分发。

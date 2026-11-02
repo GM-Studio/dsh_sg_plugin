@@ -1,0 +1,184 @@
+TAP version 13
+# Subtest: real unadvertised installation channel receives decline and writes no SDK
+ok 1 - real unadvertised installation channel receives decline and writes no SDK
+  ---
+  duration_ms: 210.67878
+  type: 'test'
+  ...
+# Subtest: real unadvertised installation channel receives cancel and writes no SDK
+ok 2 - real unadvertised installation channel receives cancel and writes no SDK
+  ---
+  duration_ms: 209.505856
+  type: 'test'
+  ...
+# Subtest: native unadvertised accept is bound to the unchanged stack and cannot install a changed plan
+ok 3 - native unadvertised accept is bound to the unchanged stack and cannot install a changed plan
+  ---
+  duration_ms: 246.908048
+  type: 'test'
+  ...
+# Subtest: an actual MCP method-not-supported reply keeps installation blocked
+ok 4 - an actual MCP method-not-supported reply keeps installation blocked
+  ---
+  duration_ms: 210.066595
+  type: 'test'
+  ...
+# Subtest: without host operator identity opt-in no installation confirmation is requested
+ok 5 - without host operator identity opt-in no installation confirmation is requested
+  ---
+  duration_ms: 209.572907
+  type: 'test'
+  ...
+# Subtest: optional native initialization probes an unadvertised channel and honors cancel
+ok 6 - optional native initialization probes an unadvertised channel and honors cancel
+  ---
+  duration_ms: 178.150989
+  type: 'test'
+  ...
+# Subtest: optional native initialization probes an unadvertised channel and honors approve
+ok 7 - optional native initialization probes an unadvertised channel and honors approve
+  ---
+  duration_ms: 2021.286997
+  type: 'test'
+  ...
+# Subtest: optional native initialization probes an unadvertised channel and honors invalid
+ok 8 - optional native initialization probes an unadvertised channel and honors invalid
+  ---
+  duration_ms: 174.5534
+  type: 'test'
+  ...
+# Subtest: optional native initialization probes an unadvertised channel and honors unsupported
+ok 9 - optional native initialization probes an unadvertised channel and honors unsupported
+  ---
+  duration_ms: 171.677324
+  type: 'test'
+  ...
+# Subtest: actual working-tree portable MCP entries are enabled and identical
+ok 10 - actual working-tree portable MCP entries are enabled and identical
+  ---
+  duration_ms: 1.964322
+  type: 'test'
+  ...
+# Subtest: both actual MCP configuration files launch the declared Node command from a different cwd
+ok 11 - both actual MCP configuration files launch the declared Node command from a different cwd
+  ---
+  duration_ms: 256.696613
+  type: 'test'
+  ...
+# Subtest: empty, disabled, malformed and escaping MCP configurations fail before server startup
+ok 12 - empty, disabled, malformed and escaping MCP configurations fail before server startup
+  ---
+  duration_ms: 1.802574
+  type: 'test'
+  ...
+# Subtest: configuration environment reaches a real MCP child without changing the parent environment
+ok 13 - configuration environment reaches a real MCP child without changing the parent environment
+  ---
+  duration_ms: 124.599898
+  type: 'test'
+  ...
+# Subtest: default MCP runtime import graph excludes optional control, notification and installer code
+ok 14 - default MCP runtime import graph excludes optional control, notification and installer code
+  ---
+  duration_ms: 188.947995
+  type: 'test'
+  ...
+# Subtest: Core v1 installation and lockfile have no MySQL driver dependency
+ok 15 - Core v1 installation and lockfile have no MySQL driver dependency
+  ---
+  duration_ms: 0.817909
+  type: 'test'
+  ...
+# Subtest: Codex manifest and MCP entry stay contained in the shipped plugin
+ok 16 - Codex manifest and MCP entry stay contained in the shipped plugin
+  ---
+  duration_ms: 11.486428
+  type: 'test'
+  ...
+# Subtest: offline tarball install launches the packaged entry from a different project cwd
+ok 17 - offline tarball install launches the packaged entry from a different project cwd
+  ---
+  duration_ms: 13608.062334
+  type: 'test'
+  ...
+# Subtest: smoke evidence rejects stdout pollution after the final reply
+ok 18 - smoke evidence rejects stdout pollution after the final reply
+  ---
+  duration_ms: 139.627452
+  type: 'test'
+  ...
+# Subtest: MCP roots bind tools to the target project instead of the plugin cache
+ok 19 - MCP roots bind tools to the target project instead of the plugin cache
+  ---
+  duration_ms: 3.609599
+  type: 'test'
+  ...
+# Subtest: session cwd wins over ambient roots and environment variables
+ok 20 - session cwd wins over ambient roots and environment variables
+  ---
+  duration_ms: 0.445671
+  type: 'test'
+  ...
+# Subtest: plugin-cache sessions use one unambiguous business root or stay unbound
+ok 21 - plugin-cache sessions use one unambiguous business root or stay unbound
+  ---
+  duration_ms: 1.007607
+  type: 'test'
+  ...
+# Subtest: stdio handshake and diagnostic tools leave a nonempty project unchanged
+ok 22 - stdio handshake and diagnostic tools leave a nonempty project unchanged
+  ---
+  duration_ms: 133.276399
+  type: 'test'
+  ...
+# Subtest: unknown versions negotiate the supported version; invalid initialize can be corrected
+ok 23 - unknown versions negotiate the supported version; invalid initialize can be corrected
+  ---
+  duration_ms: 121.958377
+  type: 'test'
+  ...
+# Subtest: source-only optional mode explicitly adds the historical tool entries
+ok 24 - source-only optional mode explicitly adds the historical tool entries
+  ---
+  duration_ms: 1.622466
+  type: 'test'
+  ...
+# Subtest: lifecycle rejects calls before handshake and repeated initialization
+ok 25 - lifecycle rejects calls before handshake and repeated initialization
+  ---
+  duration_ms: 122.43753
+  type: 'test'
+  ...
+# Subtest: malformed JSON, batch messages and invalid envelopes do not terminate the server
+ok 26 - malformed JSON, batch messages and invalid envelopes do not terminate the server
+  ---
+  duration_ms: 124.479664
+  type: 'test'
+  ...
+# Subtest: tools reject forged approvals, arguments and unknown methods; notifications get no reply
+ok 27 - tools reject forged approvals, arguments and unknown methods; notifications get no reply
+  ---
+  duration_ms: 126.858785
+  type: 'test'
+  ...
+# Subtest: large and truncated frames fail closed; an empty EOF exits cleanly
+ok 28 - large and truncated frames fail closed; an empty EOF exits cleanly
+  ---
+  duration_ms: 387.750117
+  type: 'test'
+  ...
+# Subtest: project root comes from startup options; invalid options cannot start a workflow
+ok 29 - project root comes from startup options; invalid options cannot start a workflow
+  ---
+  duration_ms: 206.84233
+  type: 'test'
+  ...
+1..29
+# tests 29
+# suites 0
+# pass 29
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 14617.967447

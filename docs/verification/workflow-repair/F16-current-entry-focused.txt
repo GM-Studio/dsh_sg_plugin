@@ -1,0 +1,12 @@
+✔ actual working-tree portable MCP entries are enabled and identical (0.8846ms)
+✔ both actual MCP configuration files launch the declared Node command from a different cwd (220.5974ms)
+✔ empty, disabled, malformed and escaping MCP configurations fail before server startup (2.0338ms)
+✔ configuration environment reaches a real MCP child without changing the parent environment (118.1501ms)
+ℹ tests 4
+ℹ suites 0
+ℹ pass 4
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 402.9671

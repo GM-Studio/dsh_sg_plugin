@@ -1,0 +1,37 @@
+✔ real unadvertised installation channel receives decline and writes no SDK (736.2496ms)
+✔ real unadvertised installation channel receives cancel and writes no SDK (726.4104ms)
+✔ native unadvertised accept is bound to the unchanged stack and cannot install a changed plan (1045.8128ms)
+✔ an actual MCP method-not-supported reply keeps installation blocked (723.0609ms)
+✔ without host operator identity opt-in no installation confirmation is requested (727.738ms)
+✔ optional native initialization probes an unadvertised channel and honors cancel (192.7356ms)
+✔ optional native initialization probes an unadvertised channel and honors approve (4994.7782ms)
+✔ optional native initialization probes an unadvertised channel and honors invalid (176.9637ms)
+✔ optional native initialization probes an unadvertised channel and honors unsupported (179.034ms)
+✔ actual working-tree portable MCP entries are enabled and identical (0.9146ms)
+✔ both actual MCP configuration files launch the declared Node command from a different cwd (208.0987ms)
+✔ empty, disabled, malformed and escaping MCP configurations fail before server startup (2.825ms)
+✔ configuration environment reaches a real MCP child without changing the parent environment (100.6838ms)
+✔ default MCP runtime import graph excludes optional control, notification and installer code (191.85ms)
+✔ Core v1 installation and lockfile have no MySQL driver dependency (0.6168ms)
+✔ Codex manifest and MCP entry stay contained in the shipped plugin (13.0507ms)
+✔ offline tarball install launches the packaged entry from a different project cwd (66043.5283ms)
+✔ smoke evidence rejects stdout pollution after the final reply (103.7157ms)
+✔ MCP roots bind tools to the target project instead of the plugin cache (3.8463ms)
+✔ session cwd wins over ambient roots and environment variables (1.1063ms)
+✔ plugin-cache sessions use one unambiguous business root or stay unbound (3.6241ms)
+✔ stdio handshake and diagnostic tools leave a nonempty project unchanged (99.0684ms)
+✔ unknown versions negotiate the supported version; invalid initialize can be corrected (96.7973ms)
+✔ source-only optional mode explicitly adds the historical tool entries (1.5313ms)
+✔ lifecycle rejects calls before handshake and repeated initialization (99.5849ms)
+✔ malformed JSON, batch messages and invalid envelopes do not terminate the server (103.1381ms)
+✔ tools reject forged approvals, arguments and unknown methods; notifications get no reply (98.0382ms)
+✔ large and truncated frames fail closed; an empty EOF exits cleanly (300.986ms)
+✔ project root comes from startup options; invalid options cannot start a workflow (154.2648ms)
+ℹ tests 29
+ℹ suites 0
+ℹ pass 29
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 67114.9551

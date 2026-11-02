@@ -8,20 +8,71 @@ const repository = fileURLToPath(new URL('../', import.meta.url));
 
 // A real client: wait for each reply before sending the next request. It also
 // runs against an unpacked/installed package, independently of repository cwd.
-export async function smokePlugin({ pluginRoot = repository, projectRoot = process.cwd() } = {}) {
+export async function smokePlugin({
+  pluginRoot = repository,
+  projectRoot = process.cwd(),
+  mcpFile,
+} = {}) {
   const startedAt = new Date().toISOString();
-  const manifest = JSON.parse(
-    fs.readFileSync(path.join(pluginRoot, '.codex-plugin/plugin.json'), 'utf8'),
-  );
-  const config = JSON.parse(fs.readFileSync(path.join(pluginRoot, manifest.mcpServers), 'utf8'));
-  const entry = config.mcpServers.specgate;
-  if (entry.command !== 'node') throw new Error('Expected a local Node stdio server');
+  pluginRoot = fs.realpathSync(path.resolve(pluginRoot));
+  const invalid = () =>
+    Object.assign(
+      new Error(
+        'MCP_CONFIGURATION_INVALID: expected an enabled local Node stdio configuration inside the plugin',
+      ),
+      { code: 'MCP_CONFIGURATION_INVALID' },
+    );
+  let config, configurationFile;
+  try {
+    const manifest = JSON.parse(
+      fs.readFileSync(path.join(pluginRoot, '.codex-plugin/plugin.json'), 'utf8'),
+    );
+    const selected = mcpFile ?? manifest.mcpServers;
+    if (typeof selected !== 'string' || path.isAbsolute(selected)) throw invalid();
+    const target = path.resolve(pluginRoot, selected);
+    const relative = path.relative(pluginRoot, target);
+    if (
+      !relative ||
+      relative === '..' ||
+      relative.startsWith('..' + path.sep) ||
+      path.isAbsolute(relative)
+    )
+      throw invalid();
+    const stat = fs.lstatSync(target);
+    if (!stat.isFile() || stat.isSymbolicLink() || stat.size > 1024 * 1024) throw invalid();
+    const physical = path.relative(pluginRoot, fs.realpathSync(target));
+    if (path.isAbsolute(physical) || physical === '..' || physical.startsWith('..' + path.sep))
+      throw invalid();
+    config = JSON.parse(fs.readFileSync(target, 'utf8'));
+    configurationFile = relative.replaceAll('\\', '/');
+  } catch {
+    throw invalid();
+  }
+  const entry = config?.mcpServers?.specgate;
+  if (
+    !entry ||
+    entry.command !== 'node' ||
+    entry.enabled === false ||
+    (entry.type !== undefined && entry.type !== 'stdio') ||
+    !Array.isArray(entry.args) ||
+    !entry.args.length ||
+    !entry.args.every((arg) => typeof arg === 'string') ||
+    (entry.env !== undefined &&
+      (!entry.env ||
+        typeof entry.env !== 'object' ||
+        Array.isArray(entry.env) ||
+        !Object.entries(entry.env).every(
+          ([key, value]) => /^[A-Za-z_][A-Za-z0-9_]*$/.test(key) && typeof value === 'string',
+        )))
+  )
+    throw invalid();
   const argv = entry.args.map((arg) => arg.replaceAll('${PLUGIN_ROOT}', pluginRoot));
-  const command = [process.execPath, ...argv];
+  const command = [entry.command, ...argv];
   const child = spawn(command[0], command.slice(1), {
     cwd: projectRoot,
     stdio: ['pipe', 'pipe', 'pipe'],
     windowsHide: true,
+    env: { ...process.env, ...entry.env, PLUGIN_ROOT: pluginRoot },
   });
   const stdin = [];
   const stdout = [];
@@ -124,6 +175,8 @@ export async function smokePlugin({ pluginRoot = repository, projectRoot = proce
     return {
       status: 'passed',
       scope: 'stdio-diagnostics',
+      configurationFile,
+      configuredEnvironmentKeys: Object.keys(entry.env || {}).sort(),
       command,
       cwd: path.resolve(projectRoot),
       startedAt,
@@ -152,6 +205,23 @@ async function main() {
   if (args.length !== 0 && (args.length !== 2 || args[0] !== '--output'))
     throw new Error('Usage: node scripts/codex-plugin-smoke.mjs [--output <evidence.json>]');
   const result = await smokePlugin();
+  result.configurationChecks = [
+    {
+      file: result.configurationFile,
+      status: result.status,
+      command: result.command,
+      exitCode: result.exitCode,
+    },
+  ];
+  if (fs.existsSync(path.join(repository, '.mcp.json'))) {
+    const workspace = await smokePlugin({ mcpFile: '.mcp.json' });
+    result.configurationChecks.push({
+      file: workspace.configurationFile,
+      status: workspace.status,
+      command: workspace.command,
+      exitCode: workspace.exitCode,
+    });
+  }
   if (args[1]) {
     fs.mkdirSync(path.dirname(path.resolve(args[1])), { recursive: true });
     fs.writeFileSync(args[1], JSON.stringify(result, null, 2) + '\n');

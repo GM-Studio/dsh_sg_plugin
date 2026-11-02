@@ -1,0 +1,34 @@
+✔ actual working-tree portable MCP entries are enabled and identical (0.8779ms)
+✖ both actual MCP configuration files launch the declared Node command from a different cwd (107.6294ms)
+✔ empty, disabled, malformed and escaping MCP configurations fail before server startup (2.2838ms)
+✔ configuration environment reaches a real MCP child without changing the parent environment (101.4142ms)
+ℹ tests 4
+ℹ suites 0
+ℹ pass 3
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 271.3392
+
+✖ failing tests:
+
+test at test\codex-mcp-entry-e2e.test.js:22:1
+✖ both actual MCP configuration files launch the declared Node command from a different cwd (107.6294ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + null
+  - 'C:\\Users\\Administrator\\AppData\\Local\\Temp\\specgate-codex-tests\\run-17444-e0dMcq\\sg-config-launch-9AkiTm'
+  
+      at TestContext.<anonymous> (file:///E:/ai_workflow/specgate/test/codex-mcp-entry-e2e.test.js:34:12)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1125:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:787:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: null,
+    expected: 'C:\\Users\\Administrator\\AppData\\Local\\Temp\\specgate-codex-tests\\run-17444-e0dMcq\\sg-config-launch-9AkiTm',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

@@ -1,0 +1,50 @@
+[
+  {
+    "platform": "win32",
+    "name": "focused",
+    "exitCode": 0,
+    "command": "node --import ./test/setup-temp.mjs --test --test-concurrency=2 test/codex-mcp-entry-e2e.test.js test/codex-plugin-package.test.js test/codex-plugin-protocol.test.js test/codex-environment-consent-e2e.test.js",
+    "cwd": "E:\\ai_workflow\\specgate",
+    "arch": "x64"
+  },
+  {
+    "platform": "win32",
+    "name": "test",
+    "exitCode": 0,
+    "command": "npm test",
+    "cwd": "E:\\ai_workflow\\specgate",
+    "arch": "x64"
+  },
+  {
+    "platform": "win32",
+    "name": "lint",
+    "exitCode": 0,
+    "command": "npm run lint",
+    "cwd": "E:\\ai_workflow\\specgate\\.tmp\\env-repair-candidates\\F16-a",
+    "arch": "x64"
+  },
+  {
+    "platform": "win32",
+    "name": "format",
+    "exitCode": 0,
+    "command": "npm run format:check",
+    "cwd": "E:\\ai_workflow\\specgate\\.tmp\\env-repair-candidates\\F16-a",
+    "arch": "x64"
+  },
+  {
+    "platform": "win32",
+    "name": "pack",
+    "exitCode": 0,
+    "command": "npm run pack:check",
+    "cwd": "E:\\ai_workflow\\specgate\\.tmp\\env-repair-candidates\\F16-a",
+    "arch": "x64"
+  },
+  {
+    "platform": "win32",
+    "name": "smoke",
+    "exitCode": 0,
+    "command": "npm run codex:smoke",
+    "cwd": "E:\\ai_workflow\\specgate\\.tmp\\env-repair-candidates\\F16-a",
+    "arch": "x64"
+  }
+]

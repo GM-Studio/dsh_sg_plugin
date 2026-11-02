@@ -241,6 +241,16 @@ test(
     assert.equal(evidence.projectStatus.verification.status, 'not-run');
     assert.equal(evidence.projectStatus.projectRoot, projectRoot);
     assert.deepEqual(fs.readdirSync(projectRoot), []);
+    const workspaceEvidence = await smokePlugin({ pluginRoot, projectRoot, mcpFile: '.mcp.json' });
+    assert.equal(workspaceEvidence.status, 'passed');
+    assert.equal(workspaceEvidence.configurationFile, '.mcp.json');
+    assert.equal(workspaceEvidence.command[0], 'node');
+    assert.deepEqual(workspaceEvidence.configuredEnvironmentKeys.sort(), [
+      'SPECGATE_INTERACTIVE_APPROVAL',
+      'SPECGATE_NATIVE_AGENTS',
+    ]);
+    assert.equal(workspaceEvidence.projectStatus.projectRoot, projectRoot);
+    assert.deepEqual(fs.readdirSync(projectRoot), []);
     const { createToolRegistry } = await import(
       pathToFileURL(path.join(pluginRoot, 'src/codex/workflow-tools.js')).href
     );
