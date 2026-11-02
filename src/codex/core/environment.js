@@ -237,12 +237,14 @@ export function createEnvironmentService({
       return (latest = {
         ...initial,
         projectRoot: path.resolve(root),
+        cacheRoot: path.resolve(cacheRoot),
         checkedAt: new Date().toISOString(),
       });
     const tools = await discover({ root, selection, env, platform, cacheRoot });
     latest = {
       ...planEnvironment({ selection, tools, platform, arch, source }),
       projectRoot: path.resolve(root),
+      cacheRoot: path.resolve(cacheRoot),
       checkedAt: new Date().toISOString(),
     };
     return latest;

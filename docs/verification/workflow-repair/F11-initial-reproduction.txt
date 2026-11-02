@@ -1,0 +1,53 @@
+✔ real unadvertised installation channel receives decline and writes no SDK (838.1538ms)
+✔ real unadvertised installation channel receives cancel and writes no SDK (734.2139ms)
+✔ native unadvertised accept is bound to the unchanged stack and cannot install a changed plan (1103.2338ms)
+✔ an actual MCP method-not-supported reply keeps installation blocked (754.8763ms)
+✔ without host operator identity opt-in no installation confirmation is requested (758.1258ms)
+✖ optional native initialization probes an unadvertised channel and honors cancel (220.1707ms)
+✖ optional native initialization probes an unadvertised channel and honors approve (175.3903ms)
+ℹ tests 7
+ℹ suites 0
+ℹ pass 5
+ℹ fail 2
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 4654.0418
+
+✖ failing tests:
+
+test at test\codex-environment-consent-e2e.test.js:122:3
+✖ optional native initialization probes an unadvertised channel and honors cancel (220.1707ms)
+  AssertionError [ERR_ASSERTION]: {"ok":false,"code":"INIT_APPROVAL_DENIED","message":"目录非空，初始化未执行：审批未批准"}
+  
+  0 !== 1
+  
+      at TestContext.<anonymous> (file:///E:/ai_workflow/specgate/test/codex-environment-consent-e2e.test.js:146:12)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1125:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:787:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 0,
+    expected: 1,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at test\codex-environment-consent-e2e.test.js:122:3
+✖ optional native initialization probes an unadvertised channel and honors approve (175.3903ms)
+  AssertionError [ERR_ASSERTION]: {"ok":false,"code":"INIT_APPROVAL_DENIED","message":"目录非空，初始化未执行：审批未批准"}
+  
+  0 !== 1
+  
+      at TestContext.<anonymous> (file:///E:/ai_workflow/specgate/test/codex-environment-consent-e2e.test.js:146:12)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1125:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:787:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 0,
+    expected: 1,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

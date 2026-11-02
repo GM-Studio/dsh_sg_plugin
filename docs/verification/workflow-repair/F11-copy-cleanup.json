@@ -1,0 +1,44 @@
+[
+  {
+    "candidate": "E:\\ai_workflow\\specgate\\.tmp\\env-repair-candidates\\F08-d",
+    "files": 1245,
+    "source": "removed only after every byte matched retained manifest",
+    "archive": "E:\\ai_workflow\\specgate\\.tmp\\env-repair-candidates\\F08-d.tar.gz"
+  },
+  {
+    "candidate": "E:\\ai_workflow\\specgate\\.tmp\\env-repair-candidates\\F08-e",
+    "files": 1245,
+    "source": "removed only after every byte matched retained manifest",
+    "archive": "E:\\ai_workflow\\specgate\\.tmp\\env-repair-candidates\\F08-e.tar.gz"
+  },
+  {
+    "candidate": "E:\\ai_workflow\\specgate\\.tmp\\env-repair-candidates\\F09-a",
+    "files": 1277,
+    "source": "removed only after every byte matched retained manifest",
+    "archive": "E:\\ai_workflow\\specgate\\.tmp\\env-repair-candidates\\F09-a.tar"
+  },
+  {
+    "candidate": "E:\\ai_workflow\\specgate\\.tmp\\env-repair-candidates\\F09-b",
+    "files": 1277,
+    "source": "removed only after every byte matched retained manifest",
+    "archive": "E:\\ai_workflow\\specgate\\.tmp\\env-repair-candidates\\F09-b.tar"
+  },
+  {
+    "candidate": "E:\\ai_workflow\\specgate\\.tmp\\env-repair-candidates\\F10-a",
+    "files": 1308,
+    "source": "removed only after every byte matched retained manifest",
+    "archive": "E:\\ai_workflow\\specgate\\.tmp\\env-repair-candidates\\F10-a.tar"
+  },
+  {
+    "candidate": "E:\\ai_workflow\\specgate\\.tmp\\env-repair-candidates\\F10-b",
+    "files": 1308,
+    "source": "removed only after every byte matched retained manifest",
+    "archive": "E:\\ai_workflow\\specgate\\.tmp\\env-repair-candidates\\F10-b.tar"
+  },
+  {
+    "candidate": "E:\\ai_workflow\\specgate\\.tmp\\env-repair-candidates\\F10-c",
+    "files": 1308,
+    "source": "removed only after every byte matched retained manifest",
+    "archive": "E:\\ai_workflow\\specgate\\.tmp\\env-repair-candidates\\F10-c.tar"
+  }
+]

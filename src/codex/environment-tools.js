@@ -1,3 +1,5 @@
+import path from 'node:path';
+
 const selection = {
   stack: { type: 'string', enum: ['node', 'react', 'vue', 'python', 'go', 'java'] },
   nodeVersion: { type: 'string', minLength: 1, maxLength: 160 },
@@ -65,6 +67,18 @@ export const ENVIRONMENT_TOOLS = [
 export function environmentConsent({ requestPeer, trustedUserIdentity } = {}) {
   return async (plan, { signal } = {}) => {
     if (!trustedUserIdentity || typeof requestPeer !== 'function') return false;
+    const installations = plan.plan.filter((entry) => entry.action === 'install');
+    if (
+      typeof plan.cacheRoot !== 'string' ||
+      !path.isAbsolute(plan.cacheRoot) ||
+      !installations.length ||
+      installations.some((entry) => !entry.archive?.version)
+    )
+      return false;
+    const exactInstallations = installations.map((entry) => ({
+      ...entry,
+      location: path.join(plan.cacheRoot, entry.id + '-' + entry.archive.version),
+    }));
     const response = await requestPeer(
       'elicitation/create',
       {
@@ -73,7 +87,7 @@ export function environmentConsent({ requestPeer, trustedUserIdentity } = {}) {
           .map((entry) => entry.id)
           .join(
             '、',
-          )}\n缺项安装计划：${JSON.stringify(plan.plan.filter((entry) => entry.action === 'install'))}\n安装到当前用户 .specgate/toolchains，不修改全局环境。确认后安装并重新验证；系统或宿主权限仍需正常授权。`,
+          )}\n安装根目录：${plan.cacheRoot}\n缺项安装计划：${JSON.stringify(exactInstallations)}\n仅在以上隔离目录安装，不修改全局环境变量。确认后安装并重新验证；系统或宿主权限仍需正常授权。`,
         requestedSchema: {
           type: 'object',
           properties: {

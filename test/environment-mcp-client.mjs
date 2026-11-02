@@ -2,9 +2,23 @@ import path from 'node:path';
 import { spawn } from 'node:child_process';
 import { createInterface } from 'node:readline';
 
-export async function mcpClient(t, root, { env: environment = {} } = {}) {
-  const env = { ...process.env, ...environment, SPECGATE_INTERACTIVE_APPROVAL: '1' };
-  delete env.SPECGATE_OPTIONAL_MODULES;
+export async function mcpClient(
+  t,
+  root,
+  {
+    env: environment = {},
+    capabilities = { elicitation: {} },
+    interactiveApproval = true,
+    optionalModules = false,
+  } = {},
+) {
+  const env = {
+    ...process.env,
+    ...environment,
+    SPECGATE_INTERACTIVE_APPROVAL: interactiveApproval ? '1' : '0',
+  };
+  if (optionalModules) env.SPECGATE_OPTIONAL_MODULES = '1';
+  else delete env.SPECGATE_OPTIONAL_MODULES;
   const child = spawn(process.execPath, [path.resolve('src/codex/server.js')], {
     cwd: root,
     env,
@@ -21,7 +35,11 @@ export async function mcpClient(t, root, { env: environment = {} } = {}) {
     const message = JSON.parse(line);
     if (message.method === 'elicitation/create') {
       Promise.resolve(onForm(message.params)).then((result) =>
-        send({ jsonrpc: '2.0', id: message.id, result }),
+        send(
+          result?.protocolError
+            ? { jsonrpc: '2.0', id: message.id, error: result.protocolError }
+            : { jsonrpc: '2.0', id: message.id, result },
+        ),
       );
     } else if (pending.has(message.id)) {
       const entry = pending.get(message.id);
@@ -70,7 +88,7 @@ export async function mcpClient(t, root, { env: environment = {} } = {}) {
   });
   await request('initialize', {
     protocolVersion: '2025-06-18',
-    capabilities: { elicitation: {} },
+    capabilities,
     clientInfo: { name: 'environment-e2e-protocol-fixture', version: '1' },
   });
   send({ jsonrpc: '2.0', method: 'notifications/initialized' });

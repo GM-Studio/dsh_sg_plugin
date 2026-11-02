@@ -549,7 +549,6 @@ function createBoundToolRegistry({
     (trustedUserIdentity && requestPeer
       ? {
           async requestApproval(challenge) {
-            if (peerCapabilities?.().elicitationSupported !== true) return { approved: false };
             const response = await requestPeer(
               'elicitation/create',
               {
@@ -566,7 +565,7 @@ function createBoundToolRegistry({
                   required: ['decision'],
                 },
               },
-              { signal: challenge.signal },
+              { signal: challenge.signal, allowUnadvertised: true },
             );
             return {
               approved: response?.action === 'accept' && response.content?.decision === 'approve',
