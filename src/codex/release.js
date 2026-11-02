@@ -611,6 +611,35 @@ export function createReleaseService({ projectRoot, store, planService } = {}) {
       if (!computed.preview.project) return { ok: true, delivery: null };
       const readiness = loadProjectReadiness({ projectRoot: root });
       if (!readiness.ok) return readiness;
+      const reviewRef = loaded.state.context.artifacts?.review;
+      const reviewRead = createArtifactStore({ projectRoot: root }).readJson(reviewRef?.path);
+      if (!reviewRead.ok) return reviewRead;
+      const approvedReview = reviewRead.value;
+      if (
+        digest(approvedReview) !== reviewRef.hash ||
+        loaded.state.context.artifacts.h3.reviewHash !== reviewRef.hash
+      )
+        return failure('REVIEW_EVIDENCE_CHANGED', 'Approved Review evidence changed; preserved');
+      if (
+        approvedReview.valid !== true ||
+        approvedReview.report?.verdict !== 'pass' ||
+        !Array.isArray(approvedReview.blocking) ||
+        approvedReview.blocking.length ||
+        !Array.isArray(approvedReview.report.findings)
+      )
+        return failure('REVIEW_REQUIRED', 'Only a valid passed Review may enter a delivery');
+      // Use the immutable H3-bound report, never a mutable summary in state.
+      // Source evidence stays in the referenced report; customer packs keep actionable issues.
+      const reviewIssues = [
+        ...new Map(approvedReview.report.findings.map((finding) => [finding.id, finding])).values(),
+      ]
+        .sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0))
+        .map(
+          (finding) =>
+            `[${finding.id}] ${finding.severity} ${finding.file}:${finding.line}: ` +
+            (finding.message ? `${finding.message}; ` : '') +
+            finding.recommendation,
+        );
       const assessment =
         loaded.state.context?.verification || loaded.state.context?.review?.verification;
       if (!object(assessment))
@@ -626,10 +655,7 @@ export function createReleaseService({ projectRoot, store, planService } = {}) {
         loaded.state.context.quality?.hash,
         loaded.state.context.artifacts?.review?.hash,
       ].filter((entry) => typeof entry === 'string' && entry.length > 0);
-      const selectedReviewMode =
-        loaded.state.context.review?.report?.mode ||
-        loaded.state.context.review?.mode ||
-        'evidence';
+      const selectedReviewMode = approvedReview.mode;
       const reviewMode =
         assessment.reviewMode ||
         (selectedReviewMode === 'strict'
@@ -638,6 +664,7 @@ export function createReleaseService({ projectRoot, store, planService } = {}) {
             ? 'evidence-and-diff'
             : 'evidence');
       const knownIssues = [
+        ...reviewIssues,
         ...(assessment.openRisks || []).map((entry) => entry.text),
         ...(assessment.acCoverage || [])
           .filter((entry) => entry.sufficiency !== 'sufficient')

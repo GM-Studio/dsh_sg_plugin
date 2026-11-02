@@ -1210,3 +1210,79 @@ test('project-backed archive creates a DeliveryRecord, local tag and separate pa
     true,
   );
 });
+
+for (const [mode, severity] of [
+  ['standard', 'P3'],
+  ['lenient', 'P2'],
+]) {
+  test(`${mode} release preserves approved ${severity} findings in the record and customer pack`, async () => {
+    const context = await fixture({ projectBacked: true });
+    const finding = {
+      id: 'F-KNOWN-1',
+      severity,
+      file: 'backend/src/main/java/Controller.java',
+      line: 1,
+      acIds: ['AC-1'],
+      evidence: 'public class Controller',
+      recommendation: 'Extract account deletion into a service.',
+    };
+    const review = createReviewService({
+      projectRoot: context.root,
+      store: context.store,
+      planService: context.planService,
+      roleProvider: async (...args) => ({
+        ...(await passingProvider(context)(...args)),
+        findings: [finding],
+      }),
+      approvalAuthority: context.authority,
+    });
+    const reviewed = await review.run({ expectedVersion: await context.version(), mode });
+    assert.equal(reviewed.ok, true, JSON.stringify(reviewed));
+    const approved = await review.requestH3({ expectedVersion: await context.version() });
+    assert.equal(approved.ok, true, JSON.stringify(approved));
+    const release = createReleaseService({
+      projectRoot: context.root,
+      store: context.store,
+      planService: context.planService,
+    });
+    const archived = await release.run({ expectedVersion: await context.version(), push: false });
+    assert.equal(archived.ok, true, JSON.stringify(archived));
+    const delivery = archived.report.delivery;
+    assert.equal(delivery.knownIssues.length, 1);
+    for (const value of [finding.id, severity, `${finding.file}:1`, finding.recommendation])
+      assert.ok(delivery.knownIssues[0].includes(value), value);
+    const base = path.join(context.root, '.specgate/codex/deliveries', delivery.deliveryId);
+    const pack = fs.readFileSync(path.join(base, 'customer.md'), 'utf8');
+    assert.ok(pack.includes(delivery.knownIssues[0]));
+    assert.ok(delivery.evidence.includes(reviewed.review.hash));
+    const record = readDeliveryRecord({
+      projectRoot: context.root,
+      deliveryId: delivery.deliveryId,
+    });
+    assert.deepEqual(record.delivery.knownIssues, delivery.knownIssues);
+    const retry = await release.run({ expectedVersion: await context.version(), push: false });
+    assert.equal(retry.ok, true, JSON.stringify(retry));
+    assert.equal(retry.reused, true);
+    assert.deepEqual(retry.report.delivery, delivery);
+    assert.equal(fs.readFileSync(path.join(base, 'customer.md'), 'utf8'), pack);
+  });
+}
+
+test('changed approved review cannot publish known issues or move the target', async () => {
+  const context = await approvedReleaseFixture();
+  const current = await context.store.inspect();
+  const ref = current.state.context.artifacts.review;
+  const file = path.join(context.root, ref.path);
+  const body = JSON.parse(fs.readFileSync(file, 'utf8'));
+  body.report.findings = [{ id: 'unapproved' }];
+  fs.writeFileSync(file, canonicalJson(body) + '\n');
+  const release = createReleaseService({
+    projectRoot: context.root,
+    store: context.store,
+    planService: context.planService,
+  });
+  const result = await release.run({ expectedVersion: await context.version() });
+  assert.equal(result.ok, false, JSON.stringify(result));
+  assert.equal(git(context.root, ['rev-parse', 'HEAD']), context.freezeCommit);
+  assert.equal(fs.existsSync(path.join(context.root, '.specgate/codex/deliveries')), false);
+});
