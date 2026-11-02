@@ -1,0 +1,16 @@
+[
+  {
+    "exitCode": 0,
+    "arch": "x64",
+    "name": "focused",
+    "command": "node --import ./test/setup-temp.mjs --test --test-concurrency=2 test/codex-review-release.test.js test/codex-quality-gate.test.js test/codex-format-rework.test.js test/codex-development-flow.test.js test/codex-approval-state.test.js test/codex-delivery-record.test.js test/codex-delivery-v3.test.js test/codex-control-approval-bridge.test.js",
+    "platform": "win32"
+  },
+  {
+    "exitCode": 1,
+    "arch": "x64",
+    "name": "test",
+    "command": "npm test",
+    "platform": "win32"
+  }
+]

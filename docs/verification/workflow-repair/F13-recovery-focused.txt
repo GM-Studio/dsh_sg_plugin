@@ -1,0 +1,14 @@
+✔ native H3 modify starts a fresh round and requires new quality, review and H3 before archive (12842.8318ms)
+✔ H3 rework preparation failure preserves an audited request that can resume once (2548.1906ms)
+✔ H3 rework resumes its already persisted round after a real transition version conflict (2599.0644ms)
+✔ persisted control H3 request_changes applies the same workflow decision and binding (3195.6622ms)
+✔ persisted control H3 cancel applies the same workflow decision and binding (2597.3161ms)
+✔ persisted control H3 approve applies the same workflow decision and binding (3399.922ms)
+ℹ tests 6
+ℹ suites 0
+ℹ pass 6
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 14528.6089

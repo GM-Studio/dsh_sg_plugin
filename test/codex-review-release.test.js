@@ -7,6 +7,10 @@ import { execFileSync, execFile, spawnSync } from 'node:child_process';
 import { promisify } from 'node:util';
 import { mcpClient } from './environment-mcp-client.mjs';
 import { createApprovalAuthority } from '../src/codex/approvals.js';
+import { createDevelopmentService } from '../src/codex/development.js';
+import { createControlApprovalAuthority } from '../src/codex/control/approval-bridge.js';
+import { createControlService } from '../src/codex/control/service.js';
+import { createControlStore } from '../src/codex/control/store.js';
 import { canonicalJson, hashValue } from '../src/codex/events.js';
 import { createReleaseService } from '../src/codex/release.js';
 import { readDeliveryRecord } from '../src/codex/delivery.js';
@@ -33,7 +37,13 @@ function commitAll(cwd, message) {
   return git(cwd, ['rev-parse', 'HEAD']);
 }
 
-async function fixture({ mutateAfterRequest = false, projectBacked = false } = {}) {
+async function fixture({
+  mutateAfterRequest = false,
+  projectBacked = false,
+  h3Response,
+  duringH3,
+  authorityFactory,
+} = {}) {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'sg-codex-review-'));
   git(root, ['init', '-q', '-b', 'main']);
   git(root, ['config', 'user.email', 'test@example.com']);
@@ -154,18 +164,21 @@ async function fixture({ mutateAfterRequest = false, projectBacked = false } = {
   });
   authority = createApprovalAuthority({
     request: async (_method, params) => {
+      if (duringH3) await duringH3({ root, store });
       if (mutateAfterRequest) {
         const reportFile = path.join(root, '.specgate/codex/changes/change/review');
         const file = fs.readdirSync(reportFile).find((name) => name.endsWith('.json'));
         fs.appendFileSync(path.join(reportFile, file), 'tampered');
       }
-      return {
-        action: 'accept',
-        content: {
-          decision: 'approve',
-          comment: `fixture H3: ${String(params?.message || '').slice(0, 20)}`,
-        },
-      };
+      return (
+        h3Response || {
+          action: 'accept',
+          content: {
+            decision: 'approve',
+            comment: `fixture H3: ${String(params?.message || '').slice(0, 20)}`,
+          },
+        }
+      );
     },
     trustedPeerIdentity: {
       id: 'fixture-user',
@@ -189,6 +202,7 @@ async function fixture({ mutateAfterRequest = false, projectBacked = false } = {
           : state?.context?.artifacts?.h3?.hash,
     }),
   });
+  if (authorityFactory) authority = await authorityFactory({ root, store });
   const requirementsHash = 'sha256:' + 'b'.repeat(64);
   await store.create({
     expectedVersion: 0,
@@ -242,7 +256,11 @@ async function fixture({ mutateAfterRequest = false, projectBacked = false } = {
           hash: 'sha256:' + 'c'.repeat(64),
           contract: { path: '.specgate/contract.json', hash: 'sha256:' + 'd'.repeat(64) },
           model: { path: '.specgate/model.json', hash: 'sha256:' + 'e'.repeat(64) },
-          tests: { hash: 'sha256:' + 'f'.repeat(64), directory: '.specgate/tests' },
+          tests: {
+            hash: 'sha256:' + 'f'.repeat(64),
+            directory: '.specgate/tests',
+            path: '.specgate/tests/manifest.json',
+          },
         },
       };
     },
@@ -316,6 +334,322 @@ test('release validates DeliveryRecord before fast-forwarding the real target', 
     'invalid delivery must not move target',
   );
 });
+
+for (const [response, phase, code] of [
+  [
+    { action: 'accept', content: { decision: 'cancel', comment: 'Cancel this change.' } },
+    'CANCELLED',
+    'APPROVAL_CANCELLED',
+  ],
+  [{ action: 'cancel' }, 'H3_PENDING', 'APPROVAL_DISMISSED'],
+  [{ action: 'decline' }, 'H3_PENDING', 'APPROVAL_DISMISSED'],
+  [
+    { action: 'accept', content: { decision: 'invalid' } },
+    'H3_PENDING',
+    'APPROVAL_RESPONSE_INVALID',
+  ],
+]) {
+  test(`H3 ${JSON.stringify(response)} ends in ${phase} with the current version`, async () => {
+    const c = await fixture({ h3Response: response });
+    const service = createReviewService({
+      projectRoot: c.root,
+      store: c.store,
+      planService: c.planService,
+      roleProvider: passingProvider(c),
+      approvalAuthority: c.authority,
+    });
+    assert.equal((await service.run({ expectedVersion: await c.version() })).ok, true);
+    const result = await service.requestH3({ expectedVersion: await c.version() });
+    assert.equal(result.code, code, JSON.stringify(result));
+    assert.equal(result.state.phase, phase);
+    assert.equal(result.state.version, await c.version());
+    assert.equal(git(c.root, ['rev-parse', 'HEAD']), c.freezeCommit);
+    assert.equal(fs.existsSync(c.integrationPath), true);
+    assert.equal(
+      fs.existsSync(
+        path.join(c.root, (await c.store.inspect()).state.context.artifacts.review.path),
+      ),
+      true,
+    );
+    assert.equal(fs.existsSync(path.join(c.root, '.specgate/codex/deliveries')), false);
+  });
+}
+
+for (const decision of ['modify', 'cancel']) {
+  test(`changed Review evidence invalidates H3 ${decision} without applying it`, async () => {
+    const c = await fixture({
+      mutateAfterRequest: true,
+      h3Response: { action: 'accept', content: { decision } },
+    });
+    const service = createReviewService({
+      projectRoot: c.root,
+      store: c.store,
+      planService: c.planService,
+      roleProvider: passingProvider(c),
+      approvalAuthority: c.authority,
+    });
+    assert.equal((await service.run({ expectedVersion: await c.version() })).ok, true);
+    const result = await service.requestH3({ expectedVersion: await c.version() });
+    assert.equal(result.ok, false);
+    assert.match(result.code, /^APPROVAL_ARTIFACT_/);
+    assert.equal((await c.store.inspect()).state.phase, 'H3_PENDING');
+    assert.equal(git(c.root, ['rev-parse', 'HEAD']), c.freezeCommit);
+    assert.equal(
+      fs.existsSync(path.join(c.root, '.specgate/codex/worktrees/change/round-1')),
+      false,
+    );
+  });
+  test(`stale H3 ${decision} cannot override a concurrent pause`, async () => {
+    const c = await fixture({
+      h3Response: { action: 'accept', content: { decision, comment: 'Fixture decision' } },
+      duringH3: async ({ store }) => {
+        const now = await store.inspect();
+        assert.equal((await store.pause({ expectedVersion: now.state.version })).ok, true);
+      },
+    });
+    const service = createReviewService({
+      projectRoot: c.root,
+      store: c.store,
+      planService: c.planService,
+      roleProvider: passingProvider(c),
+      approvalAuthority: c.authority,
+    });
+    assert.equal((await service.run({ expectedVersion: await c.version() })).ok, true);
+    const result = await service.requestH3({ expectedVersion: await c.version() });
+    assert.equal(result.ok, false);
+    assert.equal((await c.store.inspect()).state.phase, 'PAUSED');
+    assert.equal(git(c.root, ['rev-parse', 'HEAD']), c.freezeCommit);
+    assert.equal(
+      fs.existsSync(path.join(c.root, '.specgate/codex/worktrees/change/round-1')),
+      false,
+    );
+  });
+}
+
+test('H3 rework preparation failure preserves an audited request that can resume once', async () => {
+  const c = await fixture({
+    h3Response: {
+      action: 'accept',
+      content: { decision: 'modify', comment: 'Extract account logic.' },
+    },
+  });
+  const service = createReviewService({
+    projectRoot: c.root,
+    store: c.store,
+    planService: c.planService,
+    roleProvider: passingProvider(c),
+    approvalAuthority: c.authority,
+  });
+  assert.equal((await service.run({ expectedVersion: await c.version() })).ok, true);
+  const result = await service.requestH3({ expectedVersion: await c.version() });
+  assert.equal(result.ok, false);
+  assert.equal(result.state.phase, 'REVIEWING');
+  assert.equal(result.nextAction, 'PREPARE_REWORK');
+  assert.equal(
+    (await service.run({ expectedVersion: await c.version() })).code,
+    'H3_REWORK_REQUIRED',
+  );
+  fs.mkdirSync(path.join(c.root, '.specgate/tests'), { recursive: true });
+  fs.writeFileSync(path.join(c.root, '.specgate/contract.json'), '{}\n');
+  fs.writeFileSync(path.join(c.root, '.specgate/model.json'), '{}\n');
+  fs.writeFileSync(
+    path.join(c.root, '.specgate/tests/manifest.json'),
+    JSON.stringify({ cases: [{ id: 'CASE-AC-1' }] }),
+  );
+  const development = createDevelopmentService({
+    projectRoot: c.root,
+    store: c.store,
+    planService: c.planService,
+  });
+  const resumed = await development.prepareRework({ expectedVersion: await c.version() });
+  assert.equal(resumed.ok, true, JSON.stringify(resumed));
+  assert.equal(resumed.state.phase, 'DEVELOPING');
+  assert.equal(resumed.rework.round, 1);
+  assert.equal((await development.prepareRework({ expectedVersion: await c.version() })).ok, false);
+  assert.equal((await c.store.inspect()).state.context.development.reworkRound, 1);
+});
+
+test('unaudited H3 rework marker cannot create implementation worktrees', async () => {
+  const c = await fixture();
+  const service = createReviewService({
+    projectRoot: c.root,
+    store: c.store,
+    planService: c.planService,
+    roleProvider: passingProvider(c),
+    approvalAuthority: c.authority,
+  });
+  assert.equal((await service.run({ expectedVersion: await c.version() })).ok, true);
+  const state = (await c.store.inspect()).state;
+  const h3Hash = 'sha256:' + 'a'.repeat(64);
+  assert.equal(
+    (
+      await c.store.update({
+        expectedVersion: state.version,
+        patch: {
+          context: {
+            artifacts: { ...state.context.artifacts, h3: { hash: h3Hash } },
+            h3Rework: {
+              reviewHash: state.context.artifacts.review.hash,
+              record: {
+                gate: 'H3',
+                scope: state.changeId,
+                artifactHash: h3Hash,
+                nonce: 'b'.repeat(64),
+                decision: 'modify',
+              },
+            },
+          },
+        },
+      })
+    ).ok,
+    true,
+  );
+  assert.equal(
+    (await c.store.transition({ expectedVersion: await c.version(), to: 'REVIEWING' })).ok,
+    true,
+  );
+  const development = createDevelopmentService({
+    projectRoot: c.root,
+    store: c.store,
+    planService: c.planService,
+  });
+  const result = await development.prepareRework({ expectedVersion: await c.version() });
+  assert.equal(result.code, 'H3_EVIDENCE_INVALID');
+  assert.equal(fs.existsSync(path.join(c.root, '.specgate/codex/worktrees/change/round-1')), false);
+});
+
+test('H3 rework resumes its already persisted round after a real transition version conflict', async () => {
+  const c = await fixture({
+    h3Response: {
+      action: 'accept',
+      content: { decision: 'modify', comment: 'Extract account logic.' },
+    },
+  });
+  fs.mkdirSync(path.join(c.root, '.specgate/tests'), { recursive: true });
+  fs.writeFileSync(path.join(c.root, '.specgate/contract.json'), '{}\n');
+  fs.writeFileSync(path.join(c.root, '.specgate/model.json'), '{}\n');
+  fs.writeFileSync(
+    path.join(c.root, '.specgate/tests/manifest.json'),
+    JSON.stringify({ cases: [{ id: 'CASE-AC-1' }] }),
+  );
+  let injected = false;
+  const store = {
+    ...c.store,
+    transition: async (args) => {
+      if (args.to === 'DEVELOPING' && !injected) {
+        injected = true;
+        assert.equal(
+          (
+            await c.store.recordEvent({
+              expectedVersion: args.expectedVersion,
+              type: 'fixture.concurrent_update',
+              payload: {},
+            })
+          ).ok,
+          true,
+        );
+      }
+      return c.store.transition(args);
+    },
+  };
+  const service = createReviewService({
+    projectRoot: c.root,
+    store,
+    planService: c.planService,
+    roleProvider: passingProvider(c),
+    approvalAuthority: c.authority,
+  });
+  assert.equal((await service.run({ expectedVersion: await c.version() })).ok, true);
+  const result = await service.requestH3({ expectedVersion: await c.version() });
+  assert.equal(result.code, 'VERSION_CONFLICT');
+  assert.equal(result.state.phase, 'REVIEWING');
+  const prepared = result.state.context.development;
+  assert.equal(prepared.reworkRound, 1);
+  assert.equal(
+    (await service.run({ expectedVersion: await c.version() })).code,
+    'H3_REWORK_REQUIRED',
+  );
+  const development = createDevelopmentService({
+    projectRoot: c.root,
+    store: c.store,
+    planService: c.planService,
+  });
+  const resumed = await development.prepareRework({ expectedVersion: await c.version() });
+  assert.equal(resumed.ok, true, JSON.stringify(resumed));
+  assert.equal(resumed.state.phase, 'DEVELOPING');
+  assert.deepEqual(resumed.state.context.development.worktrees, prepared.worktrees);
+  assert.equal(resumed.state.context.development.reworkRound, 1);
+  assert.equal(fs.existsSync(path.join(c.root, '.specgate/codex/worktrees/change/round-2')), false);
+});
+
+for (const [action, phase] of [
+  ['request_changes', 'DEVELOPING'],
+  ['cancel', 'CANCELLED'],
+  ['approve', 'ARCHIVING'],
+]) {
+  test(`persisted control H3 ${action} applies the same workflow decision and binding`, async () => {
+    let control, workItemId;
+    const c = await fixture({
+      projectBacked: true,
+      authorityFactory: async ({ root }) => {
+        control = createControlService({
+          store: createControlStore({
+            root: fs.mkdtempSync(path.join(os.tmpdir(), 'sg-h3-control-')),
+          }),
+        });
+        const created = await control.createWorkItem({
+          title: 'H3 route fixture',
+          request: 'Apply a reviewed change',
+          projectRoot: root,
+        });
+        assert.equal(created.ok, true, JSON.stringify(created));
+        workItemId = created.workItem.workItemId;
+        return createControlApprovalAuthority({ service: control, workItemId });
+      },
+    });
+    fs.mkdirSync(path.join(c.root, '.specgate/tests'), { recursive: true });
+    fs.writeFileSync(path.join(c.root, '.specgate/contract.json'), '{}\n');
+    fs.writeFileSync(path.join(c.root, '.specgate/model.json'), '{}\n');
+    fs.writeFileSync(
+      path.join(c.root, '.specgate/tests/manifest.json'),
+      JSON.stringify({ cases: [{ id: 'CASE-AC-1' }] }),
+    );
+    const review = createReviewService({
+      projectRoot: c.root,
+      store: c.store,
+      planService: c.planService,
+      roleProvider: passingProvider(c),
+      approvalAuthority: c.authority,
+    });
+    assert.equal((await review.run({ expectedVersion: await c.version() })).ok, true);
+    const waiting = await review.requestH3({ expectedVersion: await c.version() });
+    assert.equal(waiting.code, 'WAITING_FOR_USER', JSON.stringify(waiting));
+    const decided = await control.decide({
+      workItemId,
+      attentionId: waiting.attention.requestId,
+      attentionRevision: waiting.attention.revision,
+      expectedWorkItemVersion: waiting.workItem.revision,
+      artifactHash: waiting.attention.artifactHash,
+      action,
+      idempotencyKey: `h3-${action}`,
+      actorId: 'fixture-owner',
+      source: 'web',
+      authLevel: 'step-up',
+      payload: { comment: 'Extract account logic.' },
+    });
+    assert.equal(decided.ok, true, JSON.stringify(decided));
+    const applied = await review.requestH3({ expectedVersion: await c.version() });
+    assert.equal(applied.state?.phase, phase, JSON.stringify(applied));
+    const release = createReleaseService({
+      projectRoot: c.root,
+      store: c.store,
+      planService: c.planService,
+    });
+    const archived = await release.run({ expectedVersion: await c.version(), push: false });
+    assert.equal(archived.ok, action === 'approve', JSON.stringify(archived));
+    if (action !== 'approve') assert.equal(git(c.root, ['rev-parse', 'HEAD']), c.freezeCommit);
+  });
+}
 test('real archive-report storage failure preserves worktrees and safely resumes the same H3', async () => {
   const c = await approvedReleaseFixture();
   const blocker = path.join(c.root, '.specgate/codex/archive/change/archive-report.json');

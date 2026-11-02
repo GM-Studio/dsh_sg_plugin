@@ -1,0 +1,29 @@
+✖ native H3 modify starts a fresh round and requires new quality, review and H3 before archive (10351.7513ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 0
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 10470.5257
+
+✖ failing tests:
+
+test at test\codex-quality-gate.test.js:111:1
+✖ native H3 modify starts a fresh round and requires new quality, review and H3 before archive (10351.7513ms)
+  AssertionError [ERR_ASSERTION]: {"ok":false,"environmentReady":false,"code":"ENV_STACK_REQUIRED","message":"请先选择或确认当前项目的 JDK/Spring Boot 和 Vue/React 技术栈","projectRoot":"C:\\Users\\Administrator\\AppData\\Local\\Temp\\specgate-codex-tests\\run-18728-pwCdBF\\sg-codex-quality-rKugPj","cacheRoot":"C:\\Users\\Administrator\\.specgate\\toolchains","checkedAt":"2026-11-02T02:22:45.997Z"}
+  
+  false !== true
+  
+      at TestContext.<anonymous> (file:///E:/ai_workflow/specgate/test/codex-quality-gate.test.js:234:10)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1125:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:358:3) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

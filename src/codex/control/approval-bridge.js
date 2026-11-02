@@ -23,7 +23,7 @@ function decisionRecord(decision, gate, scope, artifactHash) {
   return {
     gate,
     scope,
-    artifactHash,
+    artifactHash: `sha256:${artifactHash}`,
     actor: {
       kind: 'user',
       id: decision.actor.id,

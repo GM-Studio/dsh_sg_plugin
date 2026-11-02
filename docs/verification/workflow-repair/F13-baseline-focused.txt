@@ -1,0 +1,14 @@
+✔ two real MCP servers reuse one active baseline and never remove its live worktree (3954.8547ms)
+✔ a crashed owner cannot reclaim a live child; after exit a fresh run recovers only its own worktree (5551.266ms)
+✔ a different real Git preview is rejected while the original worktree is running (3444.8007ms)
+✔ simultaneous requests in separate MCP processes create exactly one baseline (2924.0181ms)
+✔ unreadable ownership fails closed without changing or deleting its files (1065.6892ms)
+✔ separate repositories sharing a configured worktree parent never reclaim each other (5813.3962ms)
+ℹ tests 6
+ℹ suites 0
+ℹ pass 6
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 22846.8277

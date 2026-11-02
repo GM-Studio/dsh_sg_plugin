@@ -4,7 +4,7 @@ import path from 'node:path';
 import { spawn, execFileSync } from 'node:child_process';
 import { randomUUID } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
-import { canonicalJson, hashValue } from './events.js';
+import { canonicalJson, hashValue, verifyEventChain } from './events.js';
 import { frontendFrameworkViolation, readProjectConventions } from './project-conventions.js';
 import { taskFilePolicy, dependencyFile } from './core/task-policy.js';
 import { createHash } from 'node:crypto';
@@ -1248,7 +1248,7 @@ export function createDevelopmentService({
 
   async function prepareRound(
     args,
-    { phase, findings, source, eventKey, activeRoles = DEVELOPMENT_ROLES },
+    { phase, findings, source, eventKey, activeRoles = DEVELOPMENT_ROLES, h3Decision },
   ) {
     return protect(async () => {
       const loaded = await current(args, [phase]);
@@ -1328,6 +1328,7 @@ export function createDevelopmentService({
       );
       const reworkPatch = JSON.parse(
         JSON.stringify({
+          ...(h3Decision ? { h3ReworkNonce: h3Decision.nonce } : {}),
           worktrees,
           roles,
           rounds: [],
@@ -1369,18 +1370,125 @@ export function createDevelopmentService({
   }
 
   async function prepareRework(args = {}) {
-    const loaded = await store.inspect();
-    if (!loaded.ok) return loaded;
-    const blocking = Array.isArray(loaded.state.context?.review?.blocking)
-      ? loaded.state.context.review.blocking
-      : [];
-    if (loaded.state.context?.review?.status !== 'failed' || !blocking.length)
-      return failure('REWORK_NOT_REQUIRED', 'Review has no blocking findings to rework');
-    return prepareRound(args, {
-      phase: 'REVIEWING',
-      findings: blocking,
-      source: 'review',
-      eventKey: 'rework',
+    return protect(async () => {
+      const loaded = await store.inspect();
+      if (!loaded.ok) return loaded;
+      const request = loaded.state.context?.h3Rework;
+      const record = request?.record;
+      if (
+        loaded.state.phase === 'REVIEWING' &&
+        record?.decision === 'modify' &&
+        record.gate === 'H3' &&
+        record.scope === loaded.state.changeId &&
+        !record.invalidatedAt &&
+        record.artifactHash === loaded.state.context?.artifacts?.h3?.hash &&
+        request.reviewHash === loaded.state.context?.artifacts?.review?.hash &&
+        (record.nonce !== loaded.state.context?.development?.h3ReworkNonce ||
+          DEVELOPMENT_ROLES.every(
+            (role) => loaded.state.context.development?.roles?.[role]?.status === 'pending',
+          ))
+      ) {
+        // Only replay an actual audited native decision; caller-supplied findings cannot authorize H3 rework.
+        const chain = verifyEventChain(readFile(root, '.specgate/codex/events.jsonl'));
+        if (
+          !chain.ok ||
+          !chain.events.some(
+            (event) =>
+              event.type === 'h3.decision' &&
+              event.changeId === loaded.state.changeId &&
+              object(event.payload?.record) &&
+              digest(event.payload?.record) === digest(record),
+          )
+        )
+          return failure(
+            'H3_EVIDENCE_INVALID',
+            'H3 revision decision has no matching audit record',
+          );
+        const reviewed = readJson(root, loaded.state.context.artifacts.review.path);
+        if (
+          digest(reviewed) !== request.reviewHash ||
+          runGit(loaded.state.context.development.worktrees.integration.path, [
+            'rev-parse',
+            'HEAD',
+          ]) !== reviewed.reviewedCommit
+        )
+          return failure(
+            'H3_EVIDENCE_CHANGED',
+            'H3 rework sources changed; preserve them for inspection',
+          );
+        const previous = loaded.state.context.development;
+        if (previous.h3ReworkNonce === record.nonce) {
+          const ready = await current(args, ['REVIEWING']);
+          if (!ready.ok) return ready;
+          for (const role of [...DEVELOPMENT_ROLES, 'format']) {
+            const worktree = previous.worktrees[role];
+            if (!worktree || !fs.existsSync(worktree.path))
+              return failure('WORKTREE_MISSING', 'Prepared H3 rework worktree is missing');
+            cleanWorktree(worktree.path, 'The prepared H3 rework worktree');
+            if (
+              runGit(worktree.path, ['rev-parse', 'HEAD']) !== previous.reworkBaseCommit ||
+              runGit(worktree.path, ['rev-parse', '--abbrev-ref', 'HEAD']) !== worktree.branch
+            )
+              return failure('WORKTREE_BROKEN', 'Prepared H3 rework worktree changed; preserved');
+          }
+          const moved = await store.transition({
+            expectedVersion: args.expectedVersion,
+            to: 'DEVELOPING',
+          });
+          return moved.ok
+            ? {
+                ...moved,
+                development: moved.state.context.development,
+                rework: {
+                  round: previous.reworkRound,
+                  baseCommit: previous.reworkBaseCommit,
+                  findings: previous.reworkFindings,
+                  worktrees: Object.fromEntries(
+                    [...DEVELOPMENT_ROLES, 'format'].map((role) => [
+                      role,
+                      previous.worktrees[role],
+                    ]),
+                  ),
+                },
+              }
+            : moved;
+        }
+        const checked = await checkedPlan();
+        if (!checked.ok) return checked;
+        return prepareRound(args, {
+          phase: 'REVIEWING',
+          source: 'review',
+          eventKey: 'rework',
+          h3Decision: record,
+          findings: [
+            {
+              id: `H3-${record.nonce}`,
+              severity: 'P2',
+              file: loaded.state.context.artifacts.review.path,
+              line: 1,
+              acIds: checked.plan.graph.acs.map((entry) => entry.id),
+              expected:
+                'Address the native H3 revision request and repeat verification and review.',
+              actual: record.comment || 'User requested changes at H3.',
+              evidence: `Native H3 ${record.nonce}; Review ${request.reviewHash}`,
+              recommendation:
+                record.comment?.trim() ||
+                'Clarify the requested changes with the user before implementing.',
+            },
+          ],
+        });
+      }
+      const blocking = Array.isArray(loaded.state.context?.review?.blocking)
+        ? loaded.state.context.review.blocking
+        : [];
+      if (loaded.state.context?.review?.status !== 'failed' || !blocking.length)
+        return failure('REWORK_NOT_REQUIRED', 'Review has no blocking findings to rework');
+      return prepareRound(args, {
+        phase: 'REVIEWING',
+        findings: blocking,
+        source: 'review',
+        eventKey: 'rework',
+      });
     });
   }
 

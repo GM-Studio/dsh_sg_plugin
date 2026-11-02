@@ -1,0 +1,719 @@
+TAP version 13
+# Subtest: a sync fault after a complete audit append cannot reuse its sequence
+ok 1 - a sync fault after a complete audit append cannot reuse its sequence
+  ---
+  duration_ms: 20.178702
+  type: 'test'
+  ...
+# Subtest: pending authorization releases the writer lock and expires without a residual reservation
+ok 2 - pending authorization releases the writer lock and expires without a residual reservation
+  ---
+  duration_ms: 87.010559
+  type: 'test'
+  ...
+# Subtest: a real state transaction durably audits and consumes the opaque handle without recursive locking
+ok 3 - a real state transaction durably audits and consumes the opaque handle without recursive locking
+  ---
+  duration_ms: 15.907541
+  type: 'test'
+  ...
+# Subtest: forged handles are rejected with durable failure evidence and a fresh actual version
+ok 4 - forged handles are rejected with durable failure evidence and a fresh actual version
+  ---
+  duration_ms: 10.759828
+  type: 'test'
+  ...
+# Subtest: failed consumption audit denies transition and permanently invalidates its handle
+ok 5 - failed consumption audit denies transition and permanently invalidates its handle
+  ---
+  duration_ms: 11.440109
+  type: 'test'
+  ...
+# Subtest: a state WAL failure after approval consumption keeps the phase pending and rejects reuse
+ok 6 - a state WAL failure after approval consumption keeps the phase pending and rejects reuse
+  ---
+  duration_ms: 12.106816
+  type: 'test'
+  ...
+# Subtest: two real MCP servers reuse one active baseline and never remove its live worktree
+ok 7 - two real MCP servers reuse one active baseline and never remove its live worktree
+  ---
+  duration_ms: 2014.612023
+  type: 'test'
+  ...
+# Subtest: a crashed owner cannot reclaim a live child; after exit a fresh run recovers only its own worktree
+ok 8 - a crashed owner cannot reclaim a live child; after exit a fresh run recovers only its own worktree
+  ---
+  duration_ms: 3486.583685
+  type: 'test'
+  ...
+# Subtest: a different real Git preview is rejected while the original worktree is running
+ok 9 - a different real Git preview is rejected while the original worktree is running
+  ---
+  duration_ms: 1799.803928
+  type: 'test'
+  ...
+# Subtest: simultaneous requests in separate MCP processes create exactly one baseline
+ok 10 - simultaneous requests in separate MCP processes create exactly one baseline
+  ---
+  duration_ms: 1704.674676
+  type: 'test'
+  ...
+# Subtest: unreadable ownership fails closed without changing or deleting its files
+ok 11 - unreadable ownership fails closed without changing or deleting its files
+  ---
+  duration_ms: 476.774384
+  type: 'test'
+  ...
+# Subtest: separate repositories sharing a configured worktree parent never reclaim each other
+ok 12 - separate repositories sharing a configured worktree parent never reclaim each other
+  ---
+  duration_ms: 2960.265783
+  type: 'test'
+  ...
+# Subtest: H1 control bridge waits without holding an approval and later authorizes once
+ok 13 - H1 control bridge waits without holding an approval and later authorizes once
+  ---
+  duration_ms: 12.441741
+  type: 'test'
+  ...
+# Subtest: changed artifact and missing step-up cannot reach the native gate
+ok 14 - changed artifact and missing step-up cannot reach the native gate
+  ---
+  duration_ms: 1.772558
+  type: 'test'
+  ...
+# Subtest: creates and validates accepted delivery records with stable local tag names
+ok 15 - creates and validates accepted delivery records with stable local tag names
+  ---
+  duration_ms: 2.976761
+  type: 'test'
+  ...
+# Subtest: invalid acceptance, rollback, push and credentials fail closed
+ok 16 - invalid acceptance, rollback, push and credentials fail closed
+  ---
+  duration_ms: 0.375823
+  type: 'test'
+  ...
+# Subtest: persists immutable delivery artifacts and creates a local annotated tag
+ok 17 - persists immutable delivery artifacts and creates a local annotated tag
+  ---
+  duration_ms: 38.003071
+  type: 'test'
+  ...
+# Subtest: customer packs never expose absolute paths or apparent credentials
+ok 18 - customer packs never expose absolute paths or apparent credentials
+  ---
+  duration_ms: 0.328561
+  type: 'test'
+  ...
+# Subtest: customer summary preserves every known issue from the immutable DeliveryRecord
+ok 19 - customer summary preserves every known issue from the immutable DeliveryRecord
+  ---
+  duration_ms: 0.659253
+  type: 'test'
+  ...
+# Subtest: schema 3 DeliveryRecord keeps release approval separate from customer acceptance
+ok 20 - schema 3 DeliveryRecord keeps release approval separate from customer acceptance
+  ---
+  duration_ms: 3.032871
+  type: 'test'
+  ...
+# Subtest: schema 3 rejects missing verification, H3 and risks when evidence is incomplete
+ok 21 - schema 3 rejects missing verification, H3 and risks when evidence is incomplete
+  ---
+  duration_ms: 0.362789
+  type: 'test'
+  ...
+# Subtest: customer acceptance is explicit and append-only
+ok 22 - customer acceptance is explicit and append-only
+  ---
+  duration_ms: 0.17631
+  type: 'test'
+  ...
+# Subtest: persisted release approval remains separate until a trusted acceptance receipt
+ok 23 - persisted release approval remains separate until a trusted acceptance receipt
+  ---
+  duration_ms: 5.756435
+  type: 'test'
+  ...
+# Subtest: identical persisted customer acceptance is idempotent and returns the original receipt
+ok 24 - identical persisted customer acceptance is idempotent and returns the original receipt
+  ---
+  duration_ms: 2.222424
+  type: 'test'
+  ...
+# Subtest: latest validated schema 3 delivery can be discovered without a local record path
+ok 25 - latest validated schema 3 delivery can be discovered without a local record path
+  ---
+  duration_ms: 2.073317
+  type: 'test'
+  ...
+# Subtest: customer acceptance checks the linked record hash before writing a receipt
+ok 26 - customer acceptance checks the linked record hash before writing a receipt
+  ---
+  duration_ms: 2.416822
+  type: 'test'
+  ...
+# Subtest: red baseline requires a real failing command mapped to every frozen case before worktrees
+ok 27 - red baseline requires a real failing command mapped to every frozen case before worktrees
+  ---
+  duration_ms: 387.014856
+  type: 'test'
+  ...
+# Subtest: red baseline cannot relax per-case failure or accept infrastructure failures
+    # Subtest: verification metadata cannot excuse a passing frozen case
+    ok 1 - verification metadata cannot excuse a passing frozen case
+      ---
+      duration_ms: 121.148086
+      type: 'test'
+      ...
+    # Subtest: a baseline hint cannot excuse a passing frozen case
+    ok 2 - a baseline hint cannot excuse a passing frozen case
+      ---
+      duration_ms: 117.014961
+      type: 'test'
+      ...
+    # Subtest: infrastructureErrors cannot stand in for failed assertions
+    ok 3 - infrastructureErrors cannot stand in for failed assertions
+      ---
+      duration_ms: 117.846003
+      type: 'test'
+      ...
+    # Subtest: an infrastructure stage cannot stand in for failed assertions
+    ok 4 - an infrastructure stage cannot stand in for failed assertions
+      ---
+      duration_ms: 115.47378
+      type: 'test'
+      ...
+    # Subtest: a skipped frozen case is never a red assertion
+    ok 5 - a skipped frozen case is never a red assertion
+      ---
+      duration_ms: 119.915185
+      type: 'test'
+      ...
+    # Subtest: every frozen case failing remains valid with verification metadata
+    ok 6 - every frozen case failing remains valid with verification metadata
+      ---
+      duration_ms: 221.723025
+      type: 'test'
+      ...
+    1..6
+ok 28 - red baseline cannot relax per-case failure or accept infrastructure failures
+  ---
+  duration_ms: 814.59452
+  type: 'test'
+  ...
+# Subtest: frontend and backend run serially in isolated worktrees and merge only through integration
+ok 29 - frontend and backend run serially in isolated worktrees and merge only through integration
+  ---
+  duration_ms: 581.385599
+  type: 'test'
+  ...
+# Subtest: server accepts native-role precompleted commits only when they descend from freeze
+ok 30 - server accepts native-role precompleted commits only when they descend from freeze
+  ---
+  duration_ms: 351.074197
+  type: 'test'
+  ...
+# Subtest: cross-role or test-file changes fail closed, exhaust the shared retry ceiling and preserve branches
+ok 31 - cross-role or test-file changes fail closed, exhaust the shared retry ceiling and preserve branches
+  ---
+  duration_ms: 360.772864
+  type: 'test'
+  ...
+# Subtest: merge conflicts return to the owning role with conflict paths before integration continues
+ok 32 - merge conflicts return to the owning role with conflict paths before integration continues
+  ---
+  duration_ms: 408.589302
+  type: 'test'
+  ...
+# Subtest: same-role changes outside task allowlists and inside forbiddenFiles are blocked
+ok 33 - same-role changes outside task allowlists and inside forbiddenFiles are blocked
+  ---
+  duration_ms: 711.990742
+  type: 'test'
+  ...
+# Subtest: dependency manifests require the exact H1-approved content hash and AC
+ok 34 - dependency manifests require the exact H1-approved content hash and AC
+  ---
+  duration_ms: 705.885815
+  type: 'test'
+  ...
+# Subtest: native formatter executes the project package manager from a real worktree
+ok 35 - native formatter executes the project package manager from a real worktree
+  ---
+  duration_ms: 346.295601
+  type: 'test'
+  ...
+# Subtest: native formatter uses a declared Maven formatter without requiring a wrapper
+ok 36 - native formatter uses a declared Maven formatter without requiring a wrapper
+  ---
+  duration_ms: 1.677721
+  type: 'test'
+  ...
+# Subtest: repair summaries are bounded, redact credentials and keep full-input hash references
+ok 37 - repair summaries are bounded, redact credentials and keep full-input hash references
+  ---
+  duration_ms: 13.772332
+  type: 'test'
+  ...
+# Subtest: real Prettier changes integration and post-format command passes before Review
+ok 38 - real Prettier changes integration and post-format command passes before Review
+  ---
+  duration_ms: 435.027262
+  type: 'test'
+  ...
+# Subtest: real Prettier changes integration and post-format command failure keeps Review closed
+ok 39 - real Prettier changes integration and post-format command failure keeps Review closed
+  ---
+  duration_ms: 384.471655
+  type: 'test'
+  ...
+# Subtest: failed quality returns defects to a new development round
+ok 40 - failed quality returns defects to a new development round
+  ---
+  duration_ms: 197.389231
+  type: 'test'
+  ...
+# Subtest: Formatter runs only after tests, commits in its worktree and merges before Review
+ok 41 - Formatter runs only after tests, commits in its worktree and merges before Review
+  ---
+  duration_ms: 125.662941
+  type: 'test'
+  ...
+# Subtest: Formatter cannot modify tests or files outside the development delta
+ok 42 - Formatter cannot modify tests or files outside the development delta
+  ---
+  duration_ms: 97.475163
+  type: 'test'
+  ...
+# Subtest: blocking Review starts a new round with fresh frontend/backend/format worktrees
+ok 43 - blocking Review starts a new round with fresh frontend/backend/format worktrees
+  ---
+  duration_ms: 312.025031
+  type: 'test'
+  ...
+# Subtest: quality repair refuses to guess a missing failed command
+ok 44 - quality repair refuses to guess a missing failed command
+  ---
+  duration_ms: 75.90104
+  type: 'test'
+  ...
+# Subtest: synthetic local delivery smoke crosses all gates and archives the formatted commit without pushing
+ok 45 - synthetic local delivery smoke crosses all gates and archives the formatted commit without pushing
+  ---
+  duration_ms: 1272.169989
+  type: 'test'
+  ...
+# Subtest: native H3 modify starts a fresh round and requires new quality, review and H3 before archive
+ok 46 - native H3 modify starts a fresh round and requires new quality, review and H3 before archive
+  ---
+  duration_ms: 3036.984055
+  type: 'test'
+  ...
+# Subtest: quality passes only with frozen green cases, real logs, both coverage sides and changed-line coverage
+ok 47 - quality passes only with frozen green cases, real logs, both coverage sides and changed-line coverage
+  ---
+  duration_ms: 489.931263
+  type: 'test'
+  ...
+# Subtest: native frozen verification preserves command logs and rejects invalid evidence: valid
+ok 48 - native frozen verification preserves command logs and rejects invalid evidence: valid
+  ---
+  duration_ms: 484.991851
+  type: 'test'
+  ...
+# Subtest: native frozen verification preserves command logs and rejects invalid evidence: stale-commit
+ok 49 - native frozen verification preserves command logs and rejects invalid evidence: stale-commit
+  ---
+  duration_ms: 466.866064
+  type: 'test'
+  ...
+# Subtest: native frozen verification preserves command logs and rejects invalid evidence: missing-log
+ok 50 - native frozen verification preserves command logs and rejects invalid evidence: missing-log
+  ---
+  duration_ms: 464.420379
+  type: 'test'
+  ...
+# Subtest: native frozen verification preserves command logs and rejects invalid evidence: stale-time
+ok 51 - native frozen verification preserves command logs and rejects invalid evidence: stale-time
+  ---
+  duration_ms: 470.815077
+  type: 'test'
+  ...
+# Subtest: formatter reruns the server quality gate against the formatted integration commit
+ok 52 - formatter reruns the server quality gate against the formatted integration commit
+  ---
+  duration_ms: 677.882892
+  type: 'test'
+  ...
+# Subtest: an idempotent formatter passes when only checkout line endings changed
+ok 53 - an idempotent formatter passes when only checkout line endings changed
+  ---
+  duration_ms: 653.643471
+  type: 'test'
+  ...
+# Subtest: a failed post-format quality run keeps Review closed and records repair evidence
+ok 54 - a failed post-format quality run keeps Review closed and records repair evidence
+  ---
+  duration_ms: 619.358377
+  type: 'test'
+  ...
+# Subtest: adopted quality verification uses ProjectProfile commands and Baseline Delta
+ok 55 - adopted quality verification uses ProjectProfile commands and Baseline Delta
+  ---
+  duration_ms: 494.695481
+  type: 'test'
+  ...
+# Subtest: skipped frozen cases become P1 defects and the third failed attempt blocks without deleting evidence
+ok 56 - skipped frozen cases become P1 defects and the third failed attempt blocks without deleting evidence
+  ---
+  duration_ms: 684.072464
+  type: 'test'
+  ...
+# Subtest: failed verification stages are attributed to the owning implementation role
+ok 57 - failed verification stages are attributed to the owning implementation role
+  ---
+  duration_ms: 512.881025
+  type: 'test'
+  ...
+# Subtest: a Test role writing production code fails closed before quality commands run
+ok 58 - a Test role writing production code fails closed before quality commands run
+  ---
+  duration_ms: 373.835818
+  type: 'test'
+  ...
+# Subtest: insufficient changed-line coverage cannot advance even when aggregate coverage thresholds pass
+ok 59 - insufficient changed-line coverage cannot advance even when aggregate coverage thresholds pass
+  ---
+  duration_ms: 491.612963
+  type: 'test'
+  ...
+# Subtest: a declaration-only Java interface does not become unavailable changed coverage
+ok 60 - a declaration-only Java interface does not become unavailable changed coverage
+  ---
+  duration_ms: 36.866427
+  type: 'test'
+  ...
+# Subtest: frontend changed coverage measures changed unique lines rather than old statements: true
+ok 61 - frontend changed coverage measures changed unique lines rather than old statements: true
+  ---
+  duration_ms: 33.849879
+  type: 'test'
+  ...
+# Subtest: frontend changed coverage measures changed unique lines rather than old statements: false
+ok 62 - frontend changed coverage measures changed unique lines rather than old statements: false
+  ---
+  duration_ms: 35.349698
+  type: 'test'
+  ...
+# Subtest: frontend changed coverage ignores build config outside the measured source tree
+ok 63 - frontend changed coverage ignores build config outside the measured source tree
+  ---
+  duration_ms: 34.644374
+  type: 'test'
+  ...
+# Subtest: a Java class without JaCoCo evidence remains unavailable changed coverage
+ok 64 - a Java class without JaCoCo evidence remains unavailable changed coverage
+  ---
+  duration_ms: 33.53723
+  type: 'test'
+  ...
+# Subtest: aggregate coverage below either side threshold blocks Review
+ok 65 - aggregate coverage below either side threshold blocks Review
+  ---
+  duration_ms: 494.223372
+  type: 'test'
+  ...
+# Subtest: missing Test runner or failed real verification never records a quality pass
+ok 66 - missing Test runner or failed real verification never records a quality pass
+  ---
+  duration_ms: 507.075681
+  type: 'test'
+  ...
+# Subtest: release validates DeliveryRecord before fast-forwarding the real target
+ok 67 - release validates DeliveryRecord before fast-forwarding the real target
+  ---
+  duration_ms: 445.605571
+  type: 'test'
+  ...
+# Subtest: H3 {"action":"accept","content":{"decision":"cancel","comment":"Cancel this change."}} ends in CANCELLED with the current version
+ok 68 - H3 {"action":"accept","content":{"decision":"cancel","comment":"Cancel this change."}} ends in CANCELLED with the current version
+  ---
+  duration_ms: 224.366728
+  type: 'test'
+  ...
+# Subtest: H3 {"action":"cancel"} ends in H3_PENDING with the current version
+ok 69 - H3 {"action":"cancel"} ends in H3_PENDING with the current version
+  ---
+  duration_ms: 186.475917
+  type: 'test'
+  ...
+# Subtest: H3 {"action":"decline"} ends in H3_PENDING with the current version
+ok 70 - H3 {"action":"decline"} ends in H3_PENDING with the current version
+  ---
+  duration_ms: 191.1033
+  type: 'test'
+  ...
+# Subtest: H3 {"action":"accept","content":{"decision":"invalid"}} ends in H3_PENDING with the current version
+ok 71 - H3 {"action":"accept","content":{"decision":"invalid"}} ends in H3_PENDING with the current version
+  ---
+  duration_ms: 168.843495
+  type: 'test'
+  ...
+# Subtest: changed Review evidence invalidates H3 modify without applying it
+ok 72 - changed Review evidence invalidates H3 modify without applying it
+  ---
+  duration_ms: 172.022581
+  type: 'test'
+  ...
+# Subtest: stale H3 modify cannot override a concurrent pause
+ok 73 - stale H3 modify cannot override a concurrent pause
+  ---
+  duration_ms: 177.961018
+  type: 'test'
+  ...
+# Subtest: changed Review evidence invalidates H3 cancel without applying it
+ok 74 - changed Review evidence invalidates H3 cancel without applying it
+  ---
+  duration_ms: 175.919955
+  type: 'test'
+  ...
+# Subtest: stale H3 cancel cannot override a concurrent pause
+ok 75 - stale H3 cancel cannot override a concurrent pause
+  ---
+  duration_ms: 175.666741
+  type: 'test'
+  ...
+# Subtest: H3 rework preparation failure preserves an audited request that can resume once
+ok 76 - H3 rework preparation failure preserves an audited request that can resume once
+  ---
+  duration_ms: 324.762437
+  type: 'test'
+  ...
+# Subtest: unaudited H3 rework marker cannot create implementation worktrees
+ok 77 - unaudited H3 rework marker cannot create implementation worktrees
+  ---
+  duration_ms: 125.481116
+  type: 'test'
+  ...
+# Subtest: H3 rework resumes its already persisted round after a real transition version conflict
+ok 78 - H3 rework resumes its already persisted round after a real transition version conflict
+  ---
+  duration_ms: 359.703245
+  type: 'test'
+  ...
+# Subtest: persisted control H3 request_changes applies the same workflow decision and binding
+ok 79 - persisted control H3 request_changes applies the same workflow decision and binding
+  ---
+  duration_ms: 400.812281
+  type: 'test'
+  ...
+# Subtest: persisted control H3 cancel applies the same workflow decision and binding
+ok 80 - persisted control H3 cancel applies the same workflow decision and binding
+  ---
+  duration_ms: 307.38714
+  type: 'test'
+  ...
+# Subtest: persisted control H3 approve applies the same workflow decision and binding
+ok 81 - persisted control H3 approve applies the same workflow decision and binding
+  ---
+  duration_ms: 410.869169
+  type: 'test'
+  ...
+# Subtest: real archive-report storage failure preserves worktrees and safely resumes the same H3
+ok 82 - real archive-report storage failure preserves worktrees and safely resumes the same H3
+  ---
+  duration_ms: 601.047471
+  type: 'test'
+  ...
+# Subtest: an exited real publisher resumes in a new process and the MCP entry reuses its completed H3 delivery
+ok 83 - an exited real publisher resumes in a new process and the MCP entry reuses its completed H3 delivery
+  ---
+  duration_ms: 2004.850752
+  type: 'test'
+  ...
+# Subtest: an existing conflicting annotated tag blocks before fast-forward and remains unchanged
+ok 84 - an existing conflicting annotated tag blocks before fast-forward and remains unchanged
+  ---
+  duration_ms: 438.594193
+  type: 'test'
+  ...
+# Subtest: real state version conflict at intent is recoverable without another H3 or duplicate tag
+ok 85 - real state version conflict at intent is recoverable without another H3 or duplicate tag
+  ---
+  duration_ms: 603.269851
+  type: 'test'
+  ...
+# Subtest: real state version conflict at archive is recoverable without another H3 or duplicate tag
+ok 86 - real state version conflict at archive is recoverable without another H3 or duplicate tag
+  ---
+  duration_ms: 570.520645
+  type: 'test'
+  ...
+# Subtest: real state version conflict at transition is recoverable without another H3 or duplicate tag
+ok 87 - real state version conflict at transition is recoverable without another H3 or duplicate tag
+  ---
+  duration_ms: 574.896778
+  type: 'test'
+  ...
+# Subtest: immutable archive conflict is preserved and changed recovery source or target is rejected
+ok 88 - immutable archive conflict is preserved and changed recovery source or target is rejected
+  ---
+  duration_ms: 468.0742
+  type: 'test'
+  ...
+# Subtest: completed retry verifies packs and cannot acquire implicit push authorization
+ok 89 - completed retry verifies packs and cannot acquire implicit push authorization
+  ---
+  duration_ms: 497.662445
+  type: 'test'
+  ...
+# Subtest: a real received push followed by state CAS failure is recovered by observing the remote commit
+ok 90 - a real received push followed by state CAS failure is recovered by observing the remote commit
+  ---
+  duration_ms: 606.723403
+  type: 'test'
+  ...
+# Subtest: two real publisher processes serialize one release without duplicate Git or delivery artifacts
+ok 91 - two real publisher processes serialize one release without duplicate Git or delivery artifacts
+  ---
+  duration_ms: 596.447775
+  type: 'test'
+  ...
+# Subtest: risk selection escalates public contracts and Review enters H3 only on a valid pass
+ok 92 - risk selection escalates public contracts and Review enters H3 only on a valid pass
+  ---
+  duration_ms: 110.243935
+  type: 'test'
+  ...
+# Subtest: Review and H3 reject quality evidence from another integration commit
+ok 93 - Review and H3 reject quality evidence from another integration commit
+  ---
+  duration_ms: 82.228082
+  type: 'test'
+  ...
+# Subtest: H3 refuses a quality report replaced after Review with a stale commit
+ok 94 - H3 refuses a quality report replaced after Review with a stale commit
+  ---
+  duration_ms: 108.221142
+  type: 'test'
+  ...
+# Subtest: Review reports cannot come from public arguments and missing provider is unavailable
+ok 95 - Review reports cannot come from public arguments and missing provider is unavailable
+  ---
+  duration_ms: 69.979055
+  type: 'test'
+  ...
+# Subtest: server Reviewer receives a read-only challenge and submits a validated report
+ok 96 - server Reviewer receives a read-only challenge and submits a validated report
+  ---
+  duration_ms: 121.835841
+  type: 'test'
+  ...
+# Subtest: server Reviewer must record its execution identity and assignment hash
+ok 97 - server Reviewer must record its execution identity and assignment hash
+  ---
+  duration_ms: 90.859879
+  type: 'test'
+  ...
+# Subtest: severity thresholds differ across lenient, standard and strict modes
+ok 98 - severity thresholds differ across lenient, standard and strict modes
+  ---
+  duration_ms: 0.659003
+  type: 'test'
+  ...
+# Subtest: Review finding field aliases are normalized into the machine contract
+ok 99 - Review finding field aliases are normalized into the machine contract
+  ---
+  duration_ms: 0.187417
+  type: 'test'
+  ...
+# Subtest: Review evidence blockers cite immutable red evidence instead of an invented diff line
+ok 100 - Review evidence blockers cite immutable red evidence instead of an invented diff line
+  ---
+  duration_ms: 0.214417
+  type: 'test'
+  ...
+# Subtest: a Review finding must cite evidence on its reported file and line
+ok 101 - a Review finding must cite evidence on its reported file and line
+  ---
+  duration_ms: 0.197887
+  type: 'test'
+  ...
+# Subtest: Review Agent writes are rejected and no passed report is recorded
+ok 102 - Review Agent writes are rejected and no passed report is recorded
+  ---
+  duration_ms: 94.500421
+  type: 'test'
+  ...
+# Subtest: strict mode blocks P3 findings and preserves the failed report
+ok 103 - strict mode blocks P3 findings and preserves the failed report
+  ---
+  duration_ms: 102.427606
+  type: 'test'
+  ...
+# Subtest: H3 preview changes invalidate approval and H3 cannot be bypassed for archive
+ok 104 - H3 preview changes invalidate approval and H3 cannot be bypassed for archive
+  ---
+  duration_ms: 236.378796
+  type: 'test'
+  ...
+# Subtest: H3-approved archive without a remote becomes ARCHIVED_NOT_PUSHED and says not pushed
+ok 105 - H3-approved archive without a remote becomes ARCHIVED_NOT_PUSHED and says not pushed
+  ---
+  duration_ms: 292.198394
+  type: 'test'
+  ...
+# Subtest: push failure records PUSH_FAILED without retry while a configured remote archives
+ok 106 - push failure records PUSH_FAILED without retry while a configured remote archives
+  ---
+  duration_ms: 628.707032
+  type: 'test'
+  ...
+# Subtest: a configured remote is not pushed unless push=true is explicit
+ok 107 - a configured remote is not pushed unless push=true is explicit
+  ---
+  duration_ms: 303.744134
+  type: 'test'
+  ...
+# Subtest: archive blocks a diverged target and preserves its unreviewed commit
+ok 108 - archive blocks a diverged target and preserves its unreviewed commit
+  ---
+  duration_ms: 265.218421
+  type: 'test'
+  ...
+# Subtest: project-backed archive creates a DeliveryRecord, local tag and separate packs
+ok 109 - project-backed archive creates a DeliveryRecord, local tag and separate packs
+  ---
+  duration_ms: 422.133139
+  type: 'test'
+  ...
+# Subtest: standard release preserves approved P3 findings in the record and customer pack
+ok 110 - standard release preserves approved P3 findings in the record and customer pack
+  ---
+  duration_ms: 419.503011
+  type: 'test'
+  ...
+# Subtest: lenient release preserves approved P2 findings in the record and customer pack
+ok 111 - lenient release preserves approved P2 findings in the record and customer pack
+  ---
+  duration_ms: 416.175233
+  type: 'test'
+  ...
+# Subtest: changed approved review cannot publish known issues or move the target
+ok 112 - changed approved review cannot publish known issues or move the target
+  ---
+  duration_ms: 399.361038
+  type: 'test'
+  ...
+1..112
+# tests 118
+# suites 0
+# pass 118
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 27824.036

@@ -7,6 +7,7 @@ import { canonicalJson, hashValue } from './events.js';
 import { loadProjectReadiness, PROJECT_PROFILE_PATH } from './project-state.js';
 import { computeArchivePreview } from './release.js';
 import { assessVerification } from './verification.js';
+import { createDevelopmentService } from './development.js';
 
 const SOURCE_ROOT = path.resolve(fileURLToPath(new URL('../..', import.meta.url)));
 const MODES = Object.freeze(['lenient', 'standard', 'strict']);
@@ -436,6 +437,21 @@ export function createReviewService({
       };
     if (!phases.includes(loaded.state.phase))
       return failure('INVALID_TRANSITION', 'This phase cannot perform the requested review action');
+    if (
+      loaded.state.phase === 'REVIEWING' &&
+      loaded.state.context?.h3Rework?.record?.decision === 'modify' &&
+      loaded.state.context.h3Rework.reviewHash === loaded.state.context.artifacts?.review?.hash &&
+      (loaded.state.context.h3Rework.record.nonce !==
+        loaded.state.context.development?.h3ReworkNonce ||
+        ['frontend', 'backend'].every(
+          (role) => loaded.state.context.development?.roles?.[role]?.status === 'pending',
+        ))
+    )
+      return failure(
+        'H3_REWORK_REQUIRED',
+        'Prepare the requested H3 rework before reviewing again',
+        { state: loaded.state },
+      );
     return loaded;
   }
 
@@ -808,7 +824,12 @@ export function createReviewService({
           artifactHash: compositeHash,
           readArtifactHash: async () => {
             const current = await store.inspect();
-            if (!current.ok || current.state.changeId !== loaded.state.changeId)
+            if (
+              !current.ok ||
+              current.state.changeId !== loaded.state.changeId ||
+              current.state.phase !== 'H3_PENDING' ||
+              current.state.context?.artifacts?.h3?.hash !== compositeHash
+            )
               throw new Error('State changed');
             const currentReview = readJson(root, current.state.context.artifacts.review.path);
             if (digest(currentReview) !== current.state.context.artifacts.review.hash)
@@ -829,19 +850,107 @@ export function createReviewService({
       } catch (error) {
         return failure(error.code || 'H3_APPROVAL_FAILED', error.message);
       }
-      if (!issued.ok) return { ...issued, state: saved.state, archivePreview: computed.preview };
-      if (signal?.aborted)
-        return failure('CANCELLED', 'H3 approval was cancelled', { state: saved.state });
       const beforeTransition = await store.inspect();
       if (!beforeTransition.ok) return beforeTransition;
+      if (signal?.aborted)
+        return failure('CANCELLED', 'H3 approval was cancelled', { state: beforeTransition.state });
       if (
+        beforeTransition.state.changeId !== loaded.state.changeId ||
         beforeTransition.state.phase !== 'H3_PENDING' ||
         beforeTransition.state.context?.artifacts?.h3?.hash !== compositeHash
       )
         return failure(
           'H3_EVIDENCE_CHANGED',
           'H3 artifact changed after approval; request new approval',
+          { state: beforeTransition.state },
         );
+      if (!issued.ok) {
+        const response = {
+          ...issued,
+          state: beforeTransition.state,
+          actualVersion: beforeTransition.state.version,
+          status: 'WAITING_FOR_USER',
+          nextAction: 'REQUEST_H3_APPROVAL',
+          archivePreview: computed.preview,
+        };
+        const record = issued.record && {
+          ...issued.record,
+          artifactHash: `sha256:${String(issued.record.artifactHash).replace(/^sha256:/, '')}`,
+        };
+        if (!['modify', 'cancel'].includes(record?.decision)) return response;
+        if (
+          record.gate !== 'H3' ||
+          record.scope !== loaded.state.changeId ||
+          record.artifactHash !== compositeHash ||
+          record.invalidatedAt ||
+          record.actor?.kind !== 'user'
+        )
+          return failure('H3_EVIDENCE_CHANGED', 'H3 decision is not bound to this change', {
+            state: beforeTransition.state,
+          });
+        const finalReview = readJson(root, beforeTransition.state.context.artifacts.review.path);
+        const finalPreview = computeArchivePreview({
+          projectRoot: root,
+          state: beforeTransition.state,
+        });
+        if (
+          !finalPreview.ok ||
+          digest(finalReview) !== review.hash ||
+          finalPreview.hash !== computed.hash
+        )
+          return failure('H3_EVIDENCE_CHANGED', 'H3 sources changed before applying the decision', {
+            state: beforeTransition.state,
+          });
+        // Keep a workflow-local receipt for every trusted provider, including control-store decisions.
+        const decided = await store.recordEvent({
+          expectedVersion: beforeTransition.state.version,
+          type: 'h3.decision',
+          payload: { record },
+        });
+        if (!decided.ok) return decided;
+        if (record.decision === 'cancel') {
+          const cancelled = await store.cancel({
+            expectedVersion: decided.state.version,
+            reason: 'Native user cancelled H3',
+          });
+          return cancelled.ok
+            ? {
+                ...response,
+                state: cancelled.state,
+                actualVersion: cancelled.state.version,
+                status: 'CANCELLED',
+                nextAction: 'NONE',
+              }
+            : cancelled;
+        }
+        const noted = await store.update({
+          expectedVersion: decided.state.version,
+          patch: { context: { h3Rework: { record, reviewHash: review.hash } } },
+        });
+        if (!noted.ok) return noted;
+        const revising = await store.transition({
+          expectedVersion: noted.state.version,
+          to: 'REVIEWING',
+        });
+        if (!revising.ok) return revising;
+        const rework = await createDevelopmentService({
+          projectRoot: root,
+          store,
+          planService,
+        }).prepareRework({ expectedVersion: revising.state.version });
+        if (!rework.ok)
+          return { ...rework, state: (await store.inspect()).state, nextAction: 'PREPARE_REWORK' };
+        return {
+          ...response,
+          state: rework.state,
+          actualVersion: rework.state.version,
+          rework: rework.rework,
+          status: 'REWORK_READY',
+          message:
+            'H3要求修改，已准备新的返工轮次；开发、质量验证、格式化和复审通过后重新请求H3审批。',
+          nextAction: 'RUN_DEVELOPMENT',
+        };
+      }
       const moved = await store.transition({
         expectedVersion: beforeTransition.state.version,
         to: 'ARCHIVING',

@@ -1,0 +1,107 @@
+✖ native H3 modify starts a fresh round and requires new quality, review and H3 before archive (5238.6966ms)
+✖ H3 {"action":"accept","content":{"decision":"cancel","comment":"Cancel this change."}} ends in CANCELLED with the current version (1660.3698ms)
+✖ H3 {"action":"cancel"} ends in H3_PENDING with the current version (1525.9173ms)
+✖ H3 {"action":"decline"} ends in H3_PENDING with the current version (1547.6895ms)
+✖ H3 {"action":"accept","content":{"decision":"invalid"}} ends in H3_PENDING with the current version (1361.9916ms)
+✔ stale H3 modify cannot override a concurrent pause (1621.8076ms)
+✔ stale H3 cancel cannot override a concurrent pause (1719.6745ms)
+ℹ tests 7
+ℹ suites 0
+ℹ pass 2
+ℹ fail 5
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 9677.0235
+
+✖ failing tests:
+
+test at test\codex-quality-gate.test.js:110:1
+✖ native H3 modify starts a fresh round and requires new quality, review and H3 before archive (5238.6966ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + 'H3_PENDING'
+  - 'DEVELOPING'
+  
+      at TestContext.<anonymous> (file:///E:/ai_workflow/specgate/test/codex-quality-gate.test.js:156:10)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1125:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:358:3) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'H3_PENDING',
+    expected: 'DEVELOPING',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at test\codex-review-release.test.js:327:3
+✖ H3 {"action":"accept","content":{"decision":"cancel","comment":"Cancel this change."}} ends in CANCELLED with the current version (1660.3698ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + 'H3_PENDING'
+  - 'CANCELLED'
+  
+      at TestContext.<anonymous> (file:///E:/ai_workflow/specgate/test/codex-review-release.test.js:333:12)
+      at async Test.run (node:internal/test_runner/test:1125:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:358:3) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'H3_PENDING',
+    expected: 'CANCELLED',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at test\codex-review-release.test.js:327:3
+✖ H3 {"action":"cancel"} ends in H3_PENDING with the current version (1525.9173ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  17 !== 19
+  
+      at TestContext.<anonymous> (file:///E:/ai_workflow/specgate/test/codex-review-release.test.js:334:12)
+      at async Test.run (node:internal/test_runner/test:1125:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:787:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 17,
+    expected: 19,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at test\codex-review-release.test.js:327:3
+✖ H3 {"action":"decline"} ends in H3_PENDING with the current version (1547.6895ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  17 !== 19
+  
+      at TestContext.<anonymous> (file:///E:/ai_workflow/specgate/test/codex-review-release.test.js:334:12)
+      at async Test.run (node:internal/test_runner/test:1125:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:787:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 17,
+    expected: 19,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at test\codex-review-release.test.js:327:3
+✖ H3 {"action":"accept","content":{"decision":"invalid"}} ends in H3_PENDING with the current version (1361.9916ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  17 !== 19
+  
+      at TestContext.<anonymous> (file:///E:/ai_workflow/specgate/test/codex-review-release.test.js:334:12)
+      at async Test.run (node:internal/test_runner/test:1125:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:787:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 17,
+    expected: 19,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

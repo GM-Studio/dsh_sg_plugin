@@ -1,6 +1,7 @@
 import path from 'node:path';
 import { spawn } from 'node:child_process';
 import { createInterface } from 'node:readline';
+import { fileURLToPath } from 'node:url';
 
 export async function mcpClient(
   t,
@@ -19,7 +20,9 @@ export async function mcpClient(
   };
   if (optionalModules) env.SPECGATE_OPTIONAL_MODULES = '1';
   else delete env.SPECGATE_OPTIONAL_MODULES;
-  const child = spawn(process.execPath, [path.resolve('src/codex/server.js')], {
+  const pluginRoot =
+    process.env.SPECGATE_PACKAGE_SMOKE_ROOT || fileURLToPath(new URL('../', import.meta.url));
+  const child = spawn(process.execPath, [path.join(pluginRoot, 'src/codex/server.js')], {
     cwd: root,
     env,
     windowsHide: true,

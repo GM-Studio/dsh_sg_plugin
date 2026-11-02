@@ -49,7 +49,7 @@ export const REVIEW_TOOLS = Object.freeze([
   ),
   definition(
     'sg_review_request_h3',
-    'Show the Review, tests and archive preview through the trusted native H3 approval channel, then consume H3 and enter ARCHIVING only when approved.',
+    'Show Review, tests and archive preview through trusted H3. Approval enters ARCHIVING; requested changes prepare a fresh development round; explicit cancellation ends the change; closing keeps H3 pending. Use the returned current version and nextAction.',
     { expectedVersion },
     ['expectedVersion'],
   ),

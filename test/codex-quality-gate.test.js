@@ -5,6 +5,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { pathToFileURL } from 'node:url';
+import { mcpClient } from './environment-mcp-client.mjs';
 const runtimeRoot = process.env.SPECGATE_PACKAGE_SMOKE_ROOT
   ? pathToFileURL(path.join(process.env.SPECGATE_PACKAGE_SMOKE_ROOT, 'src/codex/'))
   : new URL('../src/codex/', import.meta.url);
@@ -107,6 +108,135 @@ function git(cwd, args) {
   }).trim();
 }
 
+test('native H3 modify starts a fresh round and requires new quality, review and H3 before archive', async (t) => {
+  let decisions = 0;
+  const c = await fixture({ projectBacked: true, nodeMetadata: true });
+  const client = await mcpClient(t, c.root);
+  client.form((params) => {
+    assert.match(params.message, /SpecGate H3/);
+    return {
+      action: 'accept',
+      content: {
+        decision: decisions++ === 0 ? 'modify' : 'approve',
+        comment: 'Add an H3 revision marker to both implementation files; protocol fixture.',
+      },
+    };
+  });
+  let requireRevision = false;
+  let executions = 0;
+  const quality = createQualityService({
+    projectRoot: c.root,
+    store: c.store,
+    planService: c.planService,
+    testRunner: async ({ worktree }) => {
+      executions++;
+      const script = path.join(worktree, '.specgate/h3-case.mjs');
+      fs.mkdirSync(path.dirname(script), { recursive: true });
+      fs.writeFileSync(
+        script,
+        [
+          "import fs from 'node:fs'; import assert from 'node:assert/strict';",
+          `for (const file of ['backend/src/TaskApi.java','frontend/src/App.ts']) { const text=fs.readFileSync(file,'utf8'); assert.match(text,/integrated title/); ${requireRevision ? 'assert.match(text,/H3 revision/);' : ''} }`,
+          `fs.writeFileSync('.specgate/h3-case.json', ${JSON.stringify(report())});`,
+        ].join('\n'),
+      );
+      return {
+        command: process.execPath,
+        args: [script],
+        cwd: worktree,
+        reportPath: '.specgate/h3-case.json',
+      };
+    },
+    // Coverage is an explicit fixture; the case above executes real assertions against both files.
+    verifier: coverageVerifier(),
+  });
+  const formatter = createFormatService({
+    projectRoot: c.root,
+    store: c.store,
+    planService: c.planService,
+    qualityService: quality,
+    formatter: async () => ({ ok: true }),
+  });
+  const review = createReviewService({
+    projectRoot: c.root,
+    store: c.store,
+    planService: c.planService,
+    approvalAuthority: c.authority,
+    roleProvider: async (_role, challenge) => ({
+      agent: 'specgate_reviewer',
+      assignmentHash: 'a'.repeat(64),
+      mode: challenge.mode,
+      reviewedCommit: challenge.integrationCommit,
+      qualityHash: challenge.qualityHash,
+      verdict: 'pass',
+      findings: [],
+      summary: 'Read-only protocol fixture reviewer.',
+    }),
+  });
+  const release = createReleaseService({
+    projectRoot: c.root,
+    store: c.store,
+    planService: c.planService,
+  });
+  async function verifyAndReview() {
+    const verified = await quality.run({ expectedVersion: await c.version() });
+    assert.equal(verified.ok, true, JSON.stringify(verified));
+    assert.equal((await formatter.run({ expectedVersion: await c.version() })).ok, true);
+    const reviewed = await review.run({ expectedVersion: await c.version() });
+    assert.equal(reviewed.ok, true, JSON.stringify(reviewed));
+    return reviewed;
+  }
+  const first = await verifyAndReview();
+  const firstQuality = (await c.store.inspect()).state.context.quality;
+  const revised = (
+    await client.call('sg_review_request_h3', { expectedVersion: await c.version() })
+  ).structuredContent;
+  assert.equal(revised.code, 'APPROVAL_MODIFY_REQUESTED', JSON.stringify(revised));
+  assert.equal(revised.state.phase, 'IMPLEMENTING');
+  assert.equal((await c.store.inspect()).state.phase, 'DEVELOPING');
+  assert.equal(revised.state.version, await c.version());
+  for (const role of ['frontend', 'backend', 'format']) {
+    assert.match(revised.state.context.development.worktrees[role].path, /round-1/);
+    assert.equal(fs.existsSync(revised.state.context.development.worktrees[role].path), true);
+  }
+  for (const role of ['frontend', 'backend'])
+    assert.equal(revised.state.context.development.roles[role].status, 'pending');
+  assert.equal((await release.run({ expectedVersion: await c.version() })).code, 'H3_REQUIRED');
+  requireRevision = true;
+  const development = createDevelopmentService({
+    projectRoot: c.root,
+    store: c.store,
+    planService: c.planService,
+    roleProvider: async (role, challenge) => {
+      assert.equal(challenge.operation, 'rework');
+      assert.match(challenge.findings[0].recommendation, /H3 revision marker/);
+      const relative = role === 'frontend' ? 'frontend/src/App.ts' : 'backend/src/TaskApi.java';
+      fs.appendFileSync(path.join(challenge.worktree, relative), '// H3 revision\n');
+      commitAll(challenge.worktree, 'Apply native H3 revision');
+      return { ok: true };
+    },
+  });
+  const fixed = await development.run({ expectedVersion: await c.version() });
+  assert.equal(fixed.ok, true, JSON.stringify(fixed));
+  const second = await verifyAndReview();
+  assert.notEqual(second.review.hash, first.review.hash);
+  const secondQuality = (await c.store.inspect()).state.context.quality;
+  assert.notEqual(secondQuality.runId, firstQuality.runId);
+  assert.notEqual(secondQuality.integrationCommit, firstQuality.integrationCommit);
+  assert.equal((await release.run({ expectedVersion: await c.version() })).code, 'H3_REQUIRED');
+  const approved = (
+    await client.call('sg_review_request_h3', { expectedVersion: await c.version() })
+  ).structuredContent;
+  assert.equal(approved.ok, true, JSON.stringify(approved));
+  const delivered = (
+    await client.call('sg_release_archive', { expectedVersion: await c.version(), push: false })
+  ).structuredContent;
+  assert.equal(delivered.ok, true, JSON.stringify(delivered));
+  assert.equal(delivered.report.delivery.deliveryCommit, secondQuality.integrationCommit);
+  assert.equal(decisions, 2);
+  assert.equal(executions, 4, 'quality actually executed before and after each format round');
+});
+
 function commitAll(cwd, message) {
   git(cwd, ['add', '-A']);
   git(cwd, ['commit', '-q', '-m', message]);
@@ -202,7 +332,7 @@ function verificationReport(root) {
   };
 }
 
-async function fixture({ projectBacked = false } = {}) {
+async function fixture({ projectBacked = false, nodeMetadata = false } = {}) {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'sg-codex-quality-'));
   git(root, ['init', '-q']);
   git(root, ['config', 'user.email', 'test@example.com']);
@@ -212,6 +342,11 @@ async function fixture({ projectBacked = false } = {}) {
     '.specgate/\nbackend/target/\nfrontend/coverage/\n',
   );
   fs.mkdirSync(path.join(root, 'backend', 'src'), { recursive: true });
+  if (nodeMetadata)
+    fs.writeFileSync(
+      path.join(root, 'package.json'),
+      JSON.stringify({ name: 'h3-protocol-fixture', private: true, engines: { node: '>=22' } }),
+    );
   fs.mkdirSync(path.join(root, 'frontend', 'src'), { recursive: true });
   fs.writeFileSync(
     path.join(root, 'backend', 'src', 'TaskApi.java'),

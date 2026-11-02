@@ -152,8 +152,23 @@ test('a crashed owner cannot reclaim a live child; after exit a fresh run recove
     () => inspectBaselineLease(leaseRoot).alive,
     (alive) => !alive,
   );
-  const restarted = (await second.call('sg_adopt_apply', { previewHash: preview.previewHash }))
-    .structuredContent;
+  // Observing a dead lease and issuing a new MCP request are not atomic.
+  // Discovery may observe a live/uncertain PID again; require eventual fresh ownership,
+  // while allowing the public busy/reuse response to preserve the old worktree.
+  const restarted = await until(
+    async () => {
+      const result = (await second.call('sg_adopt_apply', { previewHash: preview.previewHash }))
+        .structuredContent;
+      assert.ok(result.ok || result.code === 'BASELINE_ALREADY_RUNNING', JSON.stringify(result));
+      if (result.runId === initial.runId)
+        console.log(
+          'baseline restart awaiting fresh ownership',
+          JSON.stringify({ result, lease: inspectBaselineLease(leaseRoot) }),
+        );
+      return result;
+    },
+    (result) => result.ok && result.runId !== initial.runId,
+  );
   assert.equal(restarted.ok, true, JSON.stringify(restarted));
   assert.notEqual(restarted.runId, initial.runId);
   const finished = await until(
