@@ -1,4 +1,5 @@
 import { SCENARIOS } from './core/validation-profile.js';
+import { diagnosticFailure } from './core/diagnostics.js';
 const objectSchema = (properties, required = Object.keys(properties)) => ({
   type: 'object',
   properties,
@@ -366,11 +367,7 @@ export async function callChangeTool(service, name, args = {}, context = {}) {
       };
     }
     return response;
-  } catch {
-    return {
-      ok: false,
-      code: 'CHANGE_TOOL_FAILED',
-      message: 'The controlled change operation did not complete',
-    };
+  } catch (error) {
+    return diagnosticFailure(error, { stage: 'tool.change', code: 'CHANGE_TOOL_FAILED' });
   }
 }

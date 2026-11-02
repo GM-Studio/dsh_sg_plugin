@@ -14,6 +14,7 @@ import { categoryLabel, renderChineseData } from './locale.js';
 import { readDeliveryRecord } from './delivery.js';
 import { loadProjectReadiness, PROJECT_PROFILE_PATH } from './project-state.js';
 import { resolveProfile } from './core/validation-profile.js';
+import { diagnosticFailure } from './core/diagnostics.js';
 
 const SOURCE_ROOT = fileURLToPath(new URL('../..', import.meta.url));
 const TERMINAL = new Set(['ARCHIVED', 'ARCHIVED_NOT_PUSHED', 'CANCELLED']);
@@ -144,10 +145,20 @@ const INPUT_ERROR_CODES = Object.freeze({
 });
 
 const inputFailure = (error, actualVersion) => {
-  const code = INPUT_ERROR_CODES[error?.code] ?? 'USER_INPUT_FAILED';
+  const code =
+    error?.rpcCode === -32601
+      ? 'USER_INPUT_UNAVAILABLE'
+      : (INPUT_ERROR_CODES[error?.code] ?? 'USER_INPUT_FAILED');
+  const diagnosis = diagnosticFailure(error, { stage: 'host.clarification', code });
+  const details = {
+    stage: diagnosis.stage,
+    cause: diagnosis.cause,
+    retryAction: diagnosis.retryAction,
+  };
   if (code === 'CANCELLED')
     return failure('CANCELLED', 'The server cancelled this requirements operation', {
       actualVersion,
+      ...details,
     });
   const messages = {
     USER_INPUT_UNAVAILABLE:
@@ -162,6 +173,7 @@ const inputFailure = (error, actualVersion) => {
     status: 'WAITING_FOR_USER',
     nextAction: 'RESUME_CLARIFICATION',
     actualVersion,
+    ...details,
   });
 };
 

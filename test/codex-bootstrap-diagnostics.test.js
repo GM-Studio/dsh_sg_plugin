@@ -50,6 +50,11 @@ test('an old Node version is reported with the required and actual major', () =>
   assert.match(diagnosis.detail, /18.20.0/);
 });
 
+test('startup compares the entire required runtime version rather than only its major', () => {
+  assert.equal(diagnoseBootstrap({ engines, nodeVersion: '20.18.99' }).ready, false);
+  assert.equal(diagnoseBootstrap({ engines, nodeVersion: '20.19.0' }).ready, true);
+});
+
 test('a host that cannot run MCP at all is reported as runtime-unsupported', () => {
   const diagnosis = diagnoseBootstrap({ ...healthy, hostSupportsMcp: false });
   assert.equal(diagnosis.reason, 'host-runtime-unsupported');

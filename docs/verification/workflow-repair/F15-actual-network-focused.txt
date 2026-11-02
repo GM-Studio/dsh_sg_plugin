@@ -1,0 +1,22 @@
+✔ protocol retains safe EACCES diagnosis for sync and async exceptions (1.1331ms)
+✔ protocol retains safe MODULE_NOT_FOUND diagnosis for sync and async exceptions (0.1547ms)
+✔ protocol retains safe ECONNREFUSED diagnosis for sync and async exceptions (0.1636ms)
+✔ protocol retains safe AUTH_REQUIRED diagnosis for sync and async exceptions (0.1208ms)
+✔ protocol retains safe ETIMEDOUT diagnosis for sync and async exceptions (0.1315ms)
+✔ real stdio filesystem failure returns structured diagnosis without stdout pollution (98.2731ms)
+✔ initialize failure has a safe diagnosis and permits a fresh handshake (0.2179ms)
+✔ unknown errors, hostile getters and cycles never expose raw provider data (0.1994ms)
+✔ real loopback connection failure travels through stdio as a network diagnostic (105.3716ms)
+✔ actual startup reports an invalid explicit project without creating it (52.3435ms)
+✔ actual entry catches malformed plugin metadata before loading the runtime (54.434ms)
+✔ actual entry reports a real runtime/engines mismatch before importing dependencies (54.5338ms)
+✔ actual entry reports a missing runtime module without exposing the Node stack (54.4759ms)
+✔ actual Node permission boundary is reported before touching the explicit project (53.3609ms)
+ℹ tests 14
+ℹ suites 0
+ℹ pass 14
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 577.9012

@@ -275,7 +275,7 @@ export function createApprovalAuthority({
         ['PEER_CANCELLED', 'APPROVAL_CANCELLED'],
         ['APPROVAL_CANCELLED', 'APPROVAL_CANCELLED'],
       ]);
-      const code = aliases.get(error?.code) ?? 'APPROVAL_REQUEST_FAILED';
+      const code = aliases.get(error?.rpcCode ?? error?.code) ?? 'APPROVAL_REQUEST_FAILED';
       const detail = {
         APPROVAL_CHANNEL_UNSUPPORTED:
           '当前宿主不支持审批表单（elicitation）：请重新加载 SpecGate 插件连接或改用支持表单的宿主；保持待审批状态，不能用聊天文字代替。',

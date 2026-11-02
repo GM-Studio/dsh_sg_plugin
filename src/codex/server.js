@@ -1,277 +1,80 @@
-import path from 'node:path';
 import fs from 'node:fs';
-import { fileURLToPath, pathToFileURL } from 'node:url';
-import { createProtocol, rpcError } from './protocol.js';
-import { createMcpPeer } from './peer.js';
-import { createToolRegistry } from './workflow-tools.js';
-import { interactiveHostIdentity } from './host-input.js';
-import { insideSpecGateSource } from './core/project-path.js';
+import path from 'node:path';
+import { pathToFileURL } from 'node:url';
+import { diagnosticFailure } from './core/diagnostics.js';
+import { diagnoseBootstrap, hostGuidance } from './core/bootstrap-diagnostics.js';
 
-export const MAX_MESSAGE_BYTES = 1024 * 1024;
-
-function ordinaryProjectRoot(value) {
-  if (typeof value !== 'string' || !value) return null;
-  try {
-    const root = fs.realpathSync(path.resolve(value));
-    return fs.lstatSync(root).isDirectory() ? root : null;
-  } catch {
-    return null;
-  }
-}
-
-function businessProjectRoot(value, pluginRoot) {
-  const root = ordinaryProjectRoot(value);
-  if (!root || insideSpecGateSource(root)) return null;
-  if (pluginRoot) {
-    const relativeToPlugin = path.relative(pluginRoot, root);
-    if (
-      root === pluginRoot ||
-      (relativeToPlugin &&
-        !relativeToPlugin.startsWith('..' + path.sep) &&
-        relativeToPlugin !== '..')
-    )
-      return null;
-  }
-  return root;
-}
-
-/**
- * Resolve the business project without ever falling back to the plugin cache.
- * Returns null when the host exposes no usable project: callers must bind or
- * create one explicitly instead of operating on the plugin source tree.
- *
- * The server launch directory belongs to this MCP session, so it must win over
- * ambient shell variables. Only a plugin-cache launch may consult roots/list,
- * and only when exactly one business root is exposed.
- */
-export async function resolveProjectRoot(
-  peer,
-  fallback,
-  { env = process.env, timeoutMs = 5000, explicit = false } = {},
-) {
-  const fallbackRoot = ordinaryProjectRoot(fallback);
-  const configuredPluginRoot = ordinaryProjectRoot(env.PLUGIN_ROOT);
-  const pluginRoot =
-    configuredPluginRoot ||
-    (fallbackRoot && insideSpecGateSource(fallbackRoot) ? fallbackRoot : null);
-  if (explicit) return businessProjectRoot(fallback, pluginRoot);
-  const sessionRoot = businessProjectRoot(fallbackRoot, pluginRoot);
-  if (sessionRoot) return sessionRoot;
-  if (env.SPECGATE_PROJECT_ROOT !== undefined && env.SPECGATE_PROJECT_ROOT !== '')
-    return businessProjectRoot(env.SPECGATE_PROJECT_ROOT, pluginRoot);
-  if (peer.capabilities().rootsSupported === true) {
-    try {
-      const result = await peer.request('roots/list', {}, { timeoutMs });
-      const roots = Array.isArray(result?.roots) ? result.roots : [];
-      const candidates = new Set();
-      for (const entry of roots) {
-        if (typeof entry?.uri !== 'string') continue;
-        let candidate = entry.uri;
-        if (candidate.startsWith('file:')) {
-          try {
-            candidate = fileURLToPath(candidate);
-          } catch {
-            continue;
-          }
-        }
-        const root = businessProjectRoot(candidate, pluginRoot);
-        if (root) candidates.add(root);
-      }
-      if (candidates.size === 1) return candidates.values().next().value;
-    } catch {
-      // Roots are optional; an unbound session is safer than guessing.
-    }
-  }
-  return null;
-}
-
-export function serveStdio({
-  projectRoot = process.cwd(),
-  explicitProjectRoot = false,
-  trustedUserIdentity = interactiveHostIdentity(),
-  nativeAgents = process.env.SPECGATE_NATIVE_AGENTS === '1',
-  input = process.stdin,
-  output = process.stdout,
-  onFailure = () => {},
-  toolRegistryFactory = createToolRegistry,
-} = {}) {
-  let pending = '';
-  let failed = false;
-  let queue = Promise.resolve();
-  let queuedToolActive = false;
-  const running = new Map();
-  const send = (message) => {
-    if (message !== null) output.write(`${JSON.stringify(message)}\n`);
-  };
-  const peer = createMcpPeer({ send });
-  const registryOptions = {
-    requestPeer: peer.request,
-    peerCapabilities: peer.capabilities,
-    trustedUserIdentity,
-    nativeAgents,
-  };
-  const initialProjectRoot = path.resolve(projectRoot);
-  const configuredPluginRoot = ordinaryProjectRoot(process.env.PLUGIN_ROOT);
-  const initialBusinessRoot = businessProjectRoot(
-    initialProjectRoot,
-    configuredPluginRoot || (insideSpecGateSource(initialProjectRoot) ? initialProjectRoot : null),
+// Keep the portable entry outside the runtime import graph so malformed plugin
+// metadata or a missing module can still produce a safe host-readable diagnosis.
+const isMain =
+  process.argv[1] && pathToFileURL(path.resolve(process.argv[1])).href === import.meta.url;
+let runtime;
+let stage = 'bootstrap.config';
+let guidance;
+try {
+  const pkg = JSON.parse(fs.readFileSync(new URL('../../package.json', import.meta.url), 'utf8'));
+  const manifest = JSON.parse(
+    fs.readFileSync(new URL('../../.codex-plugin/plugin.json', import.meta.url), 'utf8'),
   );
-  const makeRegistry = (root, projectBound) =>
-    toolRegistryFactory({ ...registryOptions, projectRoot: root, projectBound });
-  let registry = makeRegistry(
-    initialBusinessRoot || initialProjectRoot,
-    Boolean(initialBusinessRoot),
-  );
-  const dynamicRegistry = {
-    get definitions() {
-      return registry.definitions;
-    },
-    validate(name, args) {
-      return typeof registry.validate === 'function' ? registry.validate(name, args) : true;
-    },
-    call(name, args, context) {
-      return registry.call(name, args, context);
-    },
-  };
-  const dispatch = createProtocol({
-    projectRoot: path.resolve(projectRoot),
-    registry: dynamicRegistry,
-    onInitialize: async (capabilities) => {
-      peer.initialize(capabilities);
-      const resolved = await resolveProjectRoot(peer, projectRoot, {
-        explicit: explicitProjectRoot,
-      });
-      registry = makeRegistry(resolved || initialProjectRoot, Boolean(resolved));
-    },
-  });
-  const close = () => {
-    peer.close();
-    for (const controller of running.values()) controller.abort();
-  };
-  const accept = (message) => {
-    if (
-      message &&
-      typeof message === 'object' &&
-      !Array.isArray(message) &&
-      message.jsonrpc === '2.0' &&
-      !Object.hasOwn(message, 'method') &&
-      (Object.hasOwn(message, 'result') || Object.hasOwn(message, 'error'))
-    ) {
-      peer.receive(message);
-      return;
-    }
-    if (message?.jsonrpc === '2.0' && message.method === 'notifications/cancelled') {
-      running.get(message.params?.requestId)?.abort();
-      return;
-    }
-    if (message && Object.hasOwn(message, 'id') && running.has(message.id)) {
-      send(rpcError(message.id, -32600, 'Duplicate in-flight request id'));
-      return;
-    }
-    const controller = new AbortController();
-    const tracked =
-      message?.method === 'tools/call' &&
-      (typeof message.id === 'string' || Number.isSafeInteger(message.id));
-    if (tracked) running.set(message.id, controller);
-    const execute = async (queued = false) => {
-      if (queued && tracked) queuedToolActive = true;
-      try {
-        const response = await dispatch(message, { signal: controller.signal });
-        send(response);
-        if (
-          response?.result?.structuredContent?.state &&
-          ['PAUSED', 'CANCELLED'].includes(response.result.structuredContent.state.phase)
-        ) {
-          for (const active of running.values()) if (active !== controller) active.abort();
-        }
-      } catch {
-        send(rpcError(message?.id ?? null, -32603, 'Internal protocol error'));
-      } finally {
-        if (tracked && running.get(message.id) === controller) running.delete(message.id);
-        if (queued && tracked) queuedToolActive = false;
-      }
-    };
-    // Peer responses and cancellation notifications bypass this queue, so an
-    // elicitation or long command cannot deadlock the response channel.
-    const readOnlyWhileBusy =
-      queuedToolActive &&
-      (message?.method === 'ping' ||
-        (message?.method === 'tools/call' &&
-          dynamicRegistry.definitions.some(
-            (tool) => tool.name === message.params?.name && tool.annotations?.readOnlyHint === true,
-          )));
-    if (
-      readOnlyWhileBusy ||
-      (message?.method === 'tools/call' && ['sg_pause', 'sg_cancel'].includes(message.params?.name))
-    )
-      void execute();
-    else queue = queue.then(() => execute(true));
-  };
-  const fail = (message) => {
-    if (failed) return;
-    failed = true;
-    close();
-    send(rpcError(null, -32700, message));
-    onFailure();
-    // Drain stdin until EOF without retaining further bytes. Avoid closing the
-    // pipe while a client is still writing a rejected oversized frame.
-    pending = '';
-  };
-  input.setEncoding('utf8');
-  input.on('data', (chunk) => {
-    if (failed) return;
-    pending += chunk;
-    let newline;
-    while ((newline = pending.indexOf('\n')) !== -1) {
-      const line = pending.slice(0, newline);
-      pending = pending.slice(newline + 1);
-      if (Buffer.byteLength(line, 'utf8') > MAX_MESSAGE_BYTES) {
-        fail('MCP message exceeds 1 MiB');
-        return;
-      }
-      let message;
-      try {
-        message = JSON.parse(line);
-      } catch {
-        send(rpcError(null, -32700, 'Parse error'));
-        continue;
-      }
-      accept(message);
-    }
-    if (Buffer.byteLength(pending, 'utf8') > MAX_MESSAGE_BYTES) fail('MCP message exceeds 1 MiB');
-  });
-  input.on('end', () => {
-    if (pending.length) fail('Truncated MCP message: newline required');
-    close();
-  });
-  input.on('error', () => {
-    failed = true;
-    close();
-    onFailure();
-  });
-  output.on('error', () => {
-    failed = true;
-    close();
-    input.destroy();
-    onFailure();
-  });
-}
-
-function main() {
+  if (
+    typeof manifest.name !== 'string' ||
+    typeof manifest.version !== 'string' ||
+    !pkg.engines ||
+    typeof pkg.engines.node !== 'string'
+  )
+    throw Object.assign(new Error('Invalid plugin metadata'), { code: 'HOST_CONFIG_INVALID' });
+  stage = 'bootstrap.runtime';
+  const diagnosis = diagnoseBootstrap({ engines: pkg.engines, projectBound: false });
+  if (diagnosis.reason === 'host-runtime-unsupported') {
+    guidance = hostGuidance(diagnosis).lines;
+    throw Object.assign(new Error('Unsupported Node runtime'), {
+      code: 'HOST_RUNTIME_UNSUPPORTED',
+    });
+  }
   const args = process.argv.slice(2);
-  if (args.length !== 0 && (args.length !== 2 || args[0] !== '--project-root' || !args[1])) {
-    process.stderr.write('Usage: node src/codex/server.js [--project-root <project>]\n');
-    process.exitCode = 1;
-    return;
+  if (
+    isMain &&
+    args.length !== 0 &&
+    (args.length !== 2 || args[0] !== '--project-root' || !args[1])
+  ) {
+    stage = 'bootstrap.config';
+    throw Object.assign(new Error('Invalid startup options'), {
+      code: 'HOST_CONFIG_INVALID',
+      usage: true,
+    });
   }
-  serveStdio({
-    projectRoot: args[1] || process.cwd(),
-    explicitProjectRoot: Boolean(args[1]),
-    onFailure: () => {
-      process.exitCode = 1;
-    },
+  if (isMain && args[1]) {
+    stage = 'bootstrap.project-binding';
+    const resolved = fs.realpathSync(path.resolve(args[1]));
+    if (!fs.statSync(resolved).isDirectory())
+      throw Object.assign(new Error('Project is not a directory'), { code: 'ENOTDIR' });
+  }
+  stage = 'bootstrap.load';
+  runtime = await import('./stdio-server.js');
+  if (isMain)
+    runtime.serveStdio({
+      projectRoot: args[1] || process.cwd(),
+      explicitProjectRoot: Boolean(args[1]),
+      onFailure: () => {
+        process.exitCode = 1;
+      },
+    });
+} catch (error) {
+  if (!isMain) throw error;
+  const diagnosis = diagnosticFailure(error, {
+    stage,
+    code: 'BOOTSTRAP_FAILED',
+    ...(error?.usage
+      ? { message: 'Usage: node src/codex/server.js [--project-root <project>]' }
+      : {}),
   });
+  if (stage === 'bootstrap.config')
+    guidance = hostGuidance(diagnoseBootstrap({ configValid: false, projectBound: false })).lines;
+  if (guidance) diagnosis.hostGuidance = guidance;
+  process.stderr.write(JSON.stringify(diagnosis) + '\n');
+  process.exitCode = 1;
 }
 
-if (process.argv[1] && pathToFileURL(path.resolve(process.argv[1])).href === import.meta.url)
-  main();
+export const MAX_MESSAGE_BYTES = runtime?.MAX_MESSAGE_BYTES ?? 1024 * 1024;
+export const serveStdio = (...args) => runtime.serveStdio(...args);
+export const resolveProjectRoot = (...args) => runtime.resolveProjectRoot(...args);

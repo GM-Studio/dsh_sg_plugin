@@ -138,7 +138,7 @@ export const TOOL_DESCRIPTIONS = {
     '仅在完整且当前有效的验证证据存在时建立新项目基线，然后等待用户业务需求。',
   sg_change_preflight: '只读检查项目基线、验证证据、工作区及活动变更，尚不创建需求。',
   sg_change:
-    '创建新增/修改/修复需求；已有需求用 action=request_h1 和 expectedVersion 打开可信 H1 审批（sg_request_h1 未暴露时也可使用），先查看生成的需求文档。',
+    '创建新增/修改/修复/重构需求；新建时可显式选择 validationProfile=scenario-v1，省略保持 legacy。已有需求用 action=request_h1 和 expectedVersion 打开可信 H1 审批（sg_request_h1 未暴露时也可使用），先查看生成的需求文档。',
   sg_change_add: '记录用户提出的新增功能需求，不冻结需求或自动批准。',
   sg_change_propose: '记录需求提案、验收标准、假设、风险和未决问题，保留历次修订。',
   sg_change_questions:

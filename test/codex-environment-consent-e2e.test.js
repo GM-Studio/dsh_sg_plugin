@@ -107,6 +107,9 @@ test('an actual MCP method-not-supported reply keeps installation blocked', asyn
   const response = await client.call('sg_env_prepare', { source: 'official' });
   assert.equal(forms, 1);
   assert.equal(response.structuredContent?.ok, false, JSON.stringify(response));
+  assert.equal(response.structuredContent.cause.rpcCode, -32601);
+  assert.equal(response.structuredContent.cause.category, 'unsupported');
+  assert.ok(response.structuredContent.retryAction);
   assert.notEqual(response.structuredContent?.environmentReady, true);
   assert.equal(fs.existsSync(f.cache), false);
 });

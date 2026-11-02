@@ -29,6 +29,8 @@ H3 的“要求修改”会记录绑定评审证据的决定，创建新的前�
 
 新建需求时可通过 `sg_change` 或 `sg_change_add` 显式选择 `validationProfile: "scenario-v1"`；省略时保持 `legacy` 全红策略。场景档案下，modify/fix 的冻结测试须用 `baseline.targetCaseIds` 与 `baseline.regressionCaseIds` 完整分组，目标失败、回归通过才可开发；refactor 必须声明内部调整、保持的对外行为和约束，并真实执行全部冻结用例的全绿行为基线。档案与类型写入 H1 文档并绑定审批，进入 H1 待审批后不能静默更改；开发后的质量验证仍必须全部通过。
 
+协议和启动异常返回 `code`、`stage`、安全的 `cause` 与 `retryAction`，用于区分依赖、权限、存储、网络、认证、超时和宿主通道问题。原始错误对象、自由文本、堆栈和宿主错误数据不公开；未知原因明确记为 UNKNOWN。Node 能执行入口时，启动配置与模块加载失败写入 stderr 的单行 JSON，stdout 保持 MCP 协议；缺少 Node、宿主无法创建进程、Node 装载器在执行入口之前失败或宿主配置未能启动进程，仍需宿主侧处理，不能由尚未启动的 MCP 自修复。
+
 源码中的历史独立环境入口已改为共用环境服务和校验安装器：`node scripts/install-env.mjs --check --project=<绝对路径>` 只读检测；空项目用 `--stack=node|react|vue|python|go|java` 选择，`--only=...` 仅处理显式工具范围，默认按项目推断。`--plan` 生成确切方案，`--expected-plan-hash=...` 拒绝变化的方案；此参数不授予安装许可。实际缺项必须在交互终端输入完整方案确认，非交互调用保持阻断，Codex 中应使用 `sg_env_prepare` 的宿主审批。环境变量变更仅影响子进程，无系统包管理器或用户配置写入。
 
 缺少 Node 运行时时，`scripts/install-env.ps1` / `.sh` 的 `--check` 仍只读、`--plan` 仅输出运行时方案；可用 `SPECGATE_NODE` 指定已有运行时，或显式 `--bootstrap` 查看并交互确认固定官方 Node 归档、SHA-256 和隔离目录。原生入口与 MCP 共用 `src/codex/core/node-bootstrap.tsv`，不覆盖未知安装。运行时准备后继续检测所选技术栈，缺少其它工具仍须分别确认。原生 bootstrap 适配 Windows/Linux x64；Bash 入口需要已有 GNU timeout/realpath/sha256sum，安装时还需 curl/tar/gzip 等工具，缺少时明确阻断，不自动执行 apt/sudo。这些历史脚本仍不随 Core 插件分发。

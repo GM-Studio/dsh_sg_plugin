@@ -1,0 +1,7 @@
+{
+  "platform": "win32",
+  "command": "node --import ./test/setup-temp.mjs --test --test-concurrency=2 test/codex-diagnostic-e2e.test.js test/codex-bootstrap-diagnostics.test.js test/codex-environment-consent-e2e.test.js test/codex-change-tools.test.js test/codex-change-add-flow.test.js test/codex-peer-transport.test.js test/codex-peer-server.test.js test/codex-plugin-protocol.test.js test/codex-onboarding.test.js test/codex-plugin-package.test.js",
+  "name": "focused",
+  "arch": "x64",
+  "exitCode": 1
+}

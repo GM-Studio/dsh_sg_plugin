@@ -7,6 +7,7 @@
 // 前置条件。缺少启动依赖时，诊断必须以宿主可读的形式表达，而不是要求尚未
 // 启动的 MCP 自修复。
 
+import { matchesVersion } from './env/version-range.js';
 /** 可区分的启动诊断原因。 */
 export const BOOTSTRAP_REASONS = Object.freeze([
   'host-runtime-unsupported',
@@ -60,7 +61,10 @@ export function diagnoseBootstrap({
 
   const required = requiredNodeMajor(engines);
   const current = nodeMajor(nodeVersion);
-  if (required !== null && (current === null || current < required))
+  if (
+    (required !== null && (current === null || current < required)) ||
+    (engines?.node && !matchesVersion(nodeVersion, engines.node))
+  )
     return {
       ok: true,
       reason: 'host-runtime-unsupported',

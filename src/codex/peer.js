@@ -86,7 +86,9 @@ export function createMcpPeer({ send, timeoutMs = 120000 } = {}) {
       if (Object.hasOwn(message, 'result') === Object.hasOwn(message, 'error')) {
         finish(peerError('PEER_INVALID_RESPONSE', 'Expected exactly one result or error'));
       } else if (Object.hasOwn(message, 'error')) {
-        finish(peerError('PEER_REJECTED', 'MCP client rejected user interaction'));
+        const error = peerError('PEER_REJECTED', 'MCP client rejected user interaction');
+        if (Number.isSafeInteger(message.error?.code)) error.rpcCode = message.error.code;
+        finish(error);
       } else finish(null, message.result);
       return true;
     },

@@ -1,11 +1,16 @@
 import { SERVER_INFO } from './tools.js';
 import { createToolRegistry } from './workflow-tools.js';
+import { diagnosticFailure, diagnosticToolResult } from './core/diagnostics.js';
 
 // Workflow mutations are registered explicitly. No generic state writer,
 // transition method, approval issuer or model-supplied approval is exposed.
 export const PROTOCOL_VERSION = '2025-06-18';
 const isObject = (value) => value !== null && typeof value === 'object' && !Array.isArray(value);
-export const rpcError = (id, code, message) => ({ jsonrpc: '2.0', id, error: { code, message } });
+export const rpcError = (id, code, message, data) => ({
+  jsonrpc: '2.0',
+  id,
+  error: { code, message, ...(data ? { data } : {}) },
+});
 
 export function createProtocol({
   projectRoot,
@@ -46,15 +51,26 @@ export function createProtocol({
         return rpcError(id, -32602, 'protocolVersion, capabilities and clientInfo are required');
       }
       lifecycle = 'initializing';
-      return Promise.resolve(onInitialize?.(params.capabilities, params.clientInfo)).then(() =>
-        success({
-          protocolVersion: PROTOCOL_VERSION,
-          capabilities: { tools: { listChanged: false } },
-          serverInfo: SERVER_INFO,
-          instructions:
-            'SpecGate 统一导航使用 $sg-codex；环境自检、复用、按需安装使用 $sg-codex-env；初始化或接入项目使用 $sg-codex-project；新增/修改/修复及任务控制和验收交付使用 $sg-codex-change；只读项目信息与状态使用 $sg-codex-status。旧 $sg-codex-setup 仅转接准备能力。先识别业务项目与技术栈，sg_env_check 只读预检，缺项由 sg_env_prepare 请求可信确认并真实验证；不提供外部安装脚本。sg_status 不触发安装、初始化、恢复或审批。环境通过后才能生成或实现，项目基线就绪且用户未提供需求时等待。真实用户选择技术栈，需求澄清、反述、批判分析后请求 H1，H1/H3 未获可信审批不得推进。真实子代理串行实现，独立测试、格式化和固定提交评审；不得模拟角色或伪造证据。异步 WAITING_FOR_USER 后停止，真实 Decision 后重读状态。用户明确 push=true 才推送。全程中文，保留已有技术栈与目录选择，不重复新建。',
-        }),
-      );
+      return Promise.resolve()
+        .then(() => onInitialize?.(params.capabilities, params.clientInfo))
+        .then(() =>
+          success({
+            protocolVersion: PROTOCOL_VERSION,
+            capabilities: { tools: { listChanged: false } },
+            serverInfo: SERVER_INFO,
+            instructions:
+              'SpecGate 统一导航使用 $sg-codex；环境自检、复用、按需安装使用 $sg-codex-env；初始化或接入项目使用 $sg-codex-project；新增/修改/修复及任务控制和验收交付使用 $sg-codex-change；只读项目信息与状态使用 $sg-codex-status。旧 $sg-codex-setup 仅转接准备能力。先识别业务项目与技术栈，sg_env_check 只读预检，缺项由 sg_env_prepare 请求可信确认并真实验证；不提供外部安装脚本。sg_status 不触发安装、初始化、恢复或审批。环境通过后才能生成或实现，项目基线就绪且用户未提供需求时等待。真实用户选择技术栈，需求澄清、反述、批判分析后请求 H1，H1/H3 未获可信审批不得推进。真实子代理串行实现，独立测试、格式化和固定提交评审；不得模拟角色或伪造证据。异步 WAITING_FOR_USER 后停止，真实 Decision 后重读状态。用户明确 push=true 才推送。全程中文，保留已有技术栈与目录选择，不重复新建。',
+          }),
+        )
+        .catch((error) => {
+          lifecycle = 'new';
+          return rpcError(
+            id,
+            -32603,
+            'MCP initialization failed',
+            diagnosticFailure(error, { stage: 'protocol.initialize', code: 'INITIALIZE_FAILED' }),
+          );
+        });
     }
     if (lifecycle !== 'ready')
       return rpcError(id, -32002, 'Complete the MCP initialize handshake first');
@@ -75,17 +91,9 @@ export function createProtocol({
       try {
         return Promise.resolve(registry.call(params.name, args, context))
           .then(success)
-          .catch(() =>
-            success({
-              isError: true,
-              content: [{ type: 'text', text: 'TOOL_FAILED: operation did not complete' }],
-            }),
-          );
-      } catch {
-        return success({
-          isError: true,
-          content: [{ type: 'text', text: 'DIAGNOSTIC_FAILED: cannot inspect the bound project' }],
-        });
+          .catch((error) => success(diagnosticToolResult(error, { stage: 'tool.call' })));
+      } catch (error) {
+        return success(diagnosticToolResult(error, { stage: 'tool.call' }));
       }
     }
     return rpcError(id, -32601, 'Method not found');

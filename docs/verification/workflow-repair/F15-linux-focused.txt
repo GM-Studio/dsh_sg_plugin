@@ -1,0 +1,730 @@
+TAP version 13
+# Subtest: the diagnosable reasons form a closed set
+ok 1 - the diagnosable reasons form a closed set
+  ---
+  duration_ms: 2.054668
+  type: 'test'
+  ...
+# Subtest: a healthy host reports ready
+ok 2 - a healthy host reports ready
+  ---
+  duration_ms: 0.800769
+  type: 'test'
+  ...
+# Subtest: an unsupported runtime, insufficient permission and missing auth are distinguishable
+ok 3 - an unsupported runtime, insufficient permission and missing auth are distinguishable
+  ---
+  duration_ms: 0.311458
+  type: 'test'
+  ...
+# Subtest: an old Node version is reported with the required and actual major
+ok 4 - an old Node version is reported with the required and actual major
+  ---
+  duration_ms: 0.187466
+  type: 'test'
+  ...
+# Subtest: startup compares the entire required runtime version rather than only its major
+ok 5 - startup compares the entire required runtime version rather than only its major
+  ---
+  duration_ms: 0.266453
+  type: 'test'
+  ...
+# Subtest: a host that cannot run MCP at all is reported as runtime-unsupported
+ok 6 - a host that cannot run MCP at all is reported as runtime-unsupported
+  ---
+  duration_ms: 0.100967
+  type: 'test'
+  ...
+# Subtest: an unbound project is distinguishable and self-repairable
+ok 7 - an unbound project is distinguishable and self-repairable
+  ---
+  duration_ms: 0.148169
+  type: 'test'
+  ...
+# Subtest: no diagnosis except ready ever claims readiness
+ok 8 - no diagnosis except ready ever claims readiness
+  ---
+  duration_ms: 0.385513
+  type: 'test'
+  ...
+# Subtest: host guidance is actionable and states that MCP cannot self-repair
+ok 9 - host guidance is actionable and states that MCP cannot self-repair
+  ---
+  duration_ms: 0.435172
+  type: 'test'
+  ...
+# Subtest: every reason has guidance text
+ok 10 - every reason has guidance text
+  ---
+  duration_ms: 0.363505
+  type: 'test'
+  ...
+# Subtest: a user-facing status never renders blocked as ready
+ok 11 - a user-facing status never renders blocked as ready
+  ---
+  duration_ms: 0.316556
+  type: 'test'
+  ...
+# Subtest: an unknown reason does not crash the guidance
+ok 12 - an unknown reason does not crash the guidance
+  ---
+  duration_ms: 0.102551
+  type: 'test'
+  ...
+# Subtest: an invalid diagnosis is refused
+ok 13 - an invalid diagnosis is refused
+  ---
+  duration_ms: 0.062441
+  type: 'test'
+  ...
+# Subtest: version parsing handles engines and node_version shapes
+ok 14 - version parsing handles engines and node_version shapes
+  ---
+  duration_ms: 0.079293
+  type: 'test'
+  ...
+# Subtest: a missing engines requirement never blocks on version
+ok 15 - a missing engines requirement never blocks on version
+  ---
+  duration_ms: 0.060755
+  type: 'test'
+  ...
+# Subtest: stable names support multilingual requests and explicit valid names
+ok 16 - stable names support multilingual requests and explicit valid names
+  ---
+  duration_ms: 1.884587
+  type: 'test'
+  ...
+# Subtest: synthetic prerequisite fixture permits intake but real default verifier rejects it
+ok 17 - synthetic prerequisite fixture permits intake but real default verifier rejects it
+  ---
+  duration_ms: 46.11617
+  type: 'test'
+  ...
+# Subtest: generated-only initialization, dirty tracked files, and untracked files refuse intake without state writes
+ok 18 - generated-only initialization, dirty tracked files, and untracked files refuse intake without state writes
+  ---
+  duration_ms: 40.044642
+  type: 'test'
+  ...
+# Subtest: only one active change can be created and model text cannot forge user provenance
+ok 19 - only one active change can be created and model text cannot forge user provenance
+  ---
+  duration_ms: 32.0621
+  type: 'test'
+  ...
+# Subtest: draft revisions preserve history and label inferred content as model proposals
+ok 20 - draft revisions preserve history and label inferred content as model proposals
+  ---
+  duration_ms: 28.717755
+  type: 'test'
+  ...
+# Subtest: clarification enforces three rounds and five questions and records only trusted-provider answers
+ok 21 - clarification enforces three rounds and five questions and records only trusted-provider answers
+  ---
+  duration_ms: 39.178816
+  type: 'test'
+  ...
+# Subtest: without a trusted input source, the pending intake is preserved and tool answers are refused
+ok 22 - without a trusted input source, the pending intake is preserved and tool answers are refused
+  ---
+  duration_ms: 24.018748
+  type: 'test'
+  ...
+# Subtest: choice answers preserve arrays and reject unavailable options before recording user input
+ok 23 - choice answers preserve arrays and reject unavailable options before recording user input
+  ---
+  duration_ms: 30.702925
+  type: 'test'
+  ...
+# Subtest: critique requires structured categories and valid requirement references
+ok 24 - critique requires structured categories and valid requirement references
+  ---
+  duration_ms: 25.019596
+  type: 'test'
+  ...
+# Subtest: duplicate IDs, incomplete restatements and unmapped dependencies are rejected before H1
+ok 25 - duplicate IDs, incomplete restatements and unmapped dependencies are rejected before H1
+  ---
+  duration_ms: 35.633434
+  type: 'test'
+  ...
+# Subtest: blocking issues or critique findings cannot freeze at H1
+ok 26 - blocking issues or critique findings cannot freeze at H1
+  ---
+  duration_ms: 75.887704
+  type: 'test'
+  ...
+# Subtest: actual default approval remains unavailable and never freezes requirements
+ok 27 - actual default approval remains unavailable and never freezes requirements
+  ---
+  duration_ms: 40.636834
+  type: 'test'
+  ...
+# Subtest: critique writes a reviewable requirements document before any approval and unified entry can request H1
+ok 28 - critique writes a reviewable requirements document before any approval and unified entry can request H1
+  ---
+  duration_ms: 60.315615
+  type: 'test'
+  ...
+# Subtest: H1 opens immediately for an existing pending change without a review document
+ok 29 - H1 opens immediately for an existing pending change without a review document
+  ---
+  duration_ms: 68.324437
+  type: 'test'
+  ...
+# Subtest: H1 form contains a bounded change summary rather than the full requirements document
+ok 30 - H1 form contains a bounded change summary rather than the full requirements document
+  ---
+  duration_ms: 58.01369
+  type: 'test'
+  ...
+# Subtest: closing H1 keeps the change pending and rejecting it returns to clarification
+ok 31 - closing H1 keeps the change pending and rejecting it returns to clarification
+  ---
+  duration_ms: 100.221896
+  type: 'test'
+  ...
+# Subtest: H1 upgrades an untouched old renderer document and preserves edited legacy documents
+ok 32 - H1 upgrades an untouched old renderer document and preserves edited legacy documents
+  ---
+  duration_ms: 102.774965
+  type: 'test'
+  ...
+# Subtest: editing a review document prevents approval until a new proposal and critique are written
+ok 33 - editing a review document prevents approval until a new proposal and critique are written
+  ---
+  duration_ms: 92.359619
+  type: 'test'
+  ...
+# Subtest: simulated native H1 approval creates a versioned immutable snapshot bound to the approval hash
+ok 34 - simulated native H1 approval creates a versioned immutable snapshot bound to the approval hash
+  ---
+  duration_ms: 57.948149
+  type: 'test'
+  ...
+# Subtest: revised requirements invalidate the old candidate and require a fresh critique
+ok 35 - revised requirements invalidate the old candidate and require a fresh critique
+  ---
+  duration_ms: 53.023767
+  type: 'test'
+  ...
+# Subtest: CAS conflicts, invalid schema and apparent secrets refuse modification
+ok 36 - CAS conflicts, invalid schema and apparent secrets refuse modification
+  ---
+  duration_ms: 22.109332
+  type: 'test'
+  ...
+# Subtest: native modify and cancel decisions control H1 without freezing a snapshot
+ok 37 - native modify and cancel decisions control H1 without freezing a snapshot
+  ---
+  duration_ms: 88.179806
+  type: 'test'
+  ...
+# Subtest: a failed automatic clarification resumes the same round without accepting tool answers
+ok 38 - a failed automatic clarification resumes the same round without accepting tool answers
+  ---
+  duration_ms: 22.937221
+  type: 'test'
+  ...
+# Subtest: the final snapshot is rehashed during gate consumption and tampering refuses freeze
+ok 39 - the final snapshot is rehashed during gate consumption and tampering refuses freeze
+  ---
+  duration_ms: 54.15735
+  type: 'test'
+  ...
+# Subtest: source repository guard is read-only and refuses to create an active product change
+ok 40 - source repository guard is read-only and refuses to create an active product change
+  ---
+  duration_ms: 0.323026
+  type: 'test'
+  ...
+# Subtest: explicit assumptions are required for nonblocking unresolved issues
+ok 41 - explicit assumptions are required for nonblocking unresolved issues
+  ---
+  duration_ms: 21.853006
+  type: 'test'
+  ...
+# Subtest: concurrent intake creates one active change without queueing another
+ok 42 - concurrent intake creates one active change without queueing another
+  ---
+  duration_ms: 41.454934
+  type: 'test'
+  ...
+# Subtest: tampered immutable candidates fail closed instead of overwriting a revision
+ok 43 - tampered immutable candidates fail closed instead of overwriting a revision
+  ---
+  duration_ms: 33.609067
+  type: 'test'
+  ...
+# Subtest: native answers containing apparent credentials are never persisted
+ok 44 - native answers containing apparent credentials are never persisted
+  ---
+  duration_ms: 24.925443
+  type: 'test'
+  ...
+# Subtest: null schema entries return structured refusals instead of throwing
+ok 45 - null schema entries return structured refusals instead of throwing
+  ---
+  duration_ms: 22.969476
+  type: 'test'
+  ...
+# Subtest: aborting native clarification retains the pending round and discards late provider answers
+ok 46 - aborting native clarification retains the pending round and discards late provider answers
+  ---
+  duration_ms: 29.795205
+  type: 'test'
+  ...
+# Subtest: aborting H1 terminates an unresponsive native peer and cannot apply a late approval
+ok 47 - aborting H1 terminates an unresponsive native peer and cannot apply a late approval
+  ---
+  duration_ms: 48.134101
+  type: 'test'
+  ...
+# Subtest: an already aborted server context creates no clarification round or H1 artifact
+ok 48 - an already aborted server context creates no clarification round or H1 artifact
+  ---
+  duration_ms: 33.515109
+  type: 'test'
+  ...
+# Subtest: a parent change without impact still validates the parent before requiring impact
+ok 49 - a parent change without impact still validates the parent before requiring impact
+  ---
+  duration_ms: 62.948023
+  type: 'test'
+  ...
+# Subtest: a parent change with a valid impact persists an auditable incremental plan
+ok 50 - a parent change with a valid impact persists an auditable incremental plan
+  ---
+  duration_ms: 66.493619
+  type: 'test'
+  ...
+# Subtest: unknown acceptance criteria and inconsistent reuse are rejected with the library codes
+ok 51 - unknown acceptance criteria and inconsistent reuse are rejected with the library codes
+  ---
+  duration_ms: 61.107272
+  type: 'test'
+  ...
+# Subtest: impact is strictly validated and cannot be smuggled to the sg_change_add alias
+ok 52 - impact is strictly validated and cannot be smuggled to the sg_change_add alias
+  ---
+  duration_ms: 47.173499
+  type: 'test'
+  ...
+# Subtest: a change without a parent is unaffected and carries no incremental plan
+ok 53 - a change without a parent is unaffected and carries no incremental plan
+  ---
+  duration_ms: 94.68219
+  type: 'test'
+  ...
+# Subtest: tool schemas declare strict nested structures and guarded versioned mutations
+ok 54 - tool schemas declare strict nested structures and guarded versioned mutations
+  ---
+  duration_ms: 2.607527
+  type: 'test'
+  ...
+# Subtest: declared examples dispatch through the actual controlled service and fail closed at default H1
+ok 55 - declared examples dispatch through the actual controlled service and fail closed at default H1
+  ---
+  duration_ms: 68.518716
+  type: 'test'
+  ...
+# Subtest: tool wrappers refuse unknown fields and never accept approval or user provenance
+ok 56 - tool wrappers refuse unknown fields and never accept approval or user provenance
+  ---
+  duration_ms: 22.455764
+  type: 'test'
+  ...
+# Subtest: dispatch neither constructs a service nor invokes inherited or unavailable methods
+ok 57 - dispatch neither constructs a service nor invokes inherited or unavailable methods
+  ---
+  duration_ms: 0.711969
+  type: 'test'
+  ...
+# Subtest: server cancellation context is forwarded separately and cannot be submitted as a tool argument
+ok 58 - server cancellation context is forwarded separately and cannot be submitted as a tool argument
+  ---
+  duration_ms: 0.242707
+  type: 'test'
+  ...
+# Subtest: unified sg_change accepts feature, modify and fix while rejecting invalid details
+ok 59 - unified sg_change accepts feature, modify and fix while rejecting invalid details
+  ---
+  duration_ms: 32.971389
+  type: 'test'
+  ...
+# Subtest: unified H1 entry is advertised, schema-validated and cannot mix intake or approval arguments
+ok 60 - unified H1 entry is advertised, schema-validated and cannot mix intake or approval arguments
+  ---
+  duration_ms: 40.607073
+  type: 'test'
+  ...
+# Subtest: protocol retains safe EACCES diagnosis for sync and async exceptions
+ok 61 - protocol retains safe EACCES diagnosis for sync and async exceptions
+  ---
+  duration_ms: 2.238961
+  type: 'test'
+  ...
+# Subtest: protocol retains safe ENOSPC diagnosis for sync and async exceptions
+ok 62 - protocol retains safe ENOSPC diagnosis for sync and async exceptions
+  ---
+  duration_ms: 0.926694
+  type: 'test'
+  ...
+# Subtest: protocol retains safe MODULE_NOT_FOUND diagnosis for sync and async exceptions
+ok 63 - protocol retains safe MODULE_NOT_FOUND diagnosis for sync and async exceptions
+  ---
+  duration_ms: 0.241549
+  type: 'test'
+  ...
+# Subtest: protocol retains safe ECONNREFUSED diagnosis for sync and async exceptions
+ok 64 - protocol retains safe ECONNREFUSED diagnosis for sync and async exceptions
+  ---
+  duration_ms: 0.318535
+  type: 'test'
+  ...
+# Subtest: protocol retains safe AUTH_REQUIRED diagnosis for sync and async exceptions
+ok 65 - protocol retains safe AUTH_REQUIRED diagnosis for sync and async exceptions
+  ---
+  duration_ms: 0.23975
+  type: 'test'
+  ...
+# Subtest: protocol retains safe ETIMEDOUT diagnosis for sync and async exceptions
+ok 66 - protocol retains safe ETIMEDOUT diagnosis for sync and async exceptions
+  ---
+  duration_ms: 0.098711
+  type: 'test'
+  ...
+# Subtest: real stdio filesystem failure returns structured diagnosis without stdout pollution
+ok 67 - real stdio filesystem failure returns structured diagnosis without stdout pollution
+  ---
+  duration_ms: 122.607003
+  type: 'test'
+  ...
+# Subtest: initialize failure has a safe diagnosis and permits a fresh handshake
+ok 68 - initialize failure has a safe diagnosis and permits a fresh handshake
+  ---
+  duration_ms: 0.358671
+  type: 'test'
+  ...
+# Subtest: unknown errors, hostile getters and cycles never expose raw provider data
+ok 69 - unknown errors, hostile getters and cycles never expose raw provider data
+  ---
+  duration_ms: 0.393044
+  type: 'test'
+  ...
+# Subtest: real loopback connection failure travels through stdio as a network diagnostic
+ok 70 - real loopback connection failure travels through stdio as a network diagnostic
+  ---
+  duration_ms: 129.755859
+  type: 'test'
+  ...
+# Subtest: actual startup reports an invalid explicit project without creating it
+ok 71 - actual startup reports an invalid explicit project without creating it
+  ---
+  duration_ms: 75.643659
+  type: 'test'
+  ...
+# Subtest: actual entry catches malformed plugin metadata before loading the runtime
+ok 72 - actual entry catches malformed plugin metadata before loading the runtime
+  ---
+  duration_ms: 77.552363
+  type: 'test'
+  ...
+# Subtest: actual entry reports a real runtime/engines mismatch before importing dependencies
+ok 73 - actual entry reports a real runtime/engines mismatch before importing dependencies
+  ---
+  duration_ms: 77.2141
+  type: 'test'
+  ...
+# Subtest: actual entry reports a missing runtime module without exposing the Node stack
+ok 74 - actual entry reports a missing runtime module without exposing the Node stack
+  ---
+  duration_ms: 80.66991
+  type: 'test'
+  ...
+# Subtest: actual Node permission boundary is reported before touching the explicit project
+ok 75 - actual Node permission boundary is reported before touching the explicit project
+  ---
+  duration_ms: 77.979574
+  type: 'test'
+  ...
+# Subtest: real unadvertised installation channel receives decline and writes no SDK
+ok 76 - real unadvertised installation channel receives decline and writes no SDK
+  ---
+  duration_ms: 206.178076
+  type: 'test'
+  ...
+# Subtest: real unadvertised installation channel receives cancel and writes no SDK
+ok 77 - real unadvertised installation channel receives cancel and writes no SDK
+  ---
+  duration_ms: 223.019409
+  type: 'test'
+  ...
+# Subtest: native unadvertised accept is bound to the unchanged stack and cannot install a changed plan
+ok 78 - native unadvertised accept is bound to the unchanged stack and cannot install a changed plan
+  ---
+  duration_ms: 247.518005
+  type: 'test'
+  ...
+# Subtest: an actual MCP method-not-supported reply keeps installation blocked
+ok 79 - an actual MCP method-not-supported reply keeps installation blocked
+  ---
+  duration_ms: 210.981984
+  type: 'test'
+  ...
+# Subtest: without host operator identity opt-in no installation confirmation is requested
+ok 80 - without host operator identity opt-in no installation confirmation is requested
+  ---
+  duration_ms: 207.758719
+  type: 'test'
+  ...
+# Subtest: optional native initialization probes an unadvertised channel and honors cancel
+ok 81 - optional native initialization probes an unadvertised channel and honors cancel
+  ---
+  duration_ms: 171.923212
+  type: 'test'
+  ...
+# Subtest: optional native initialization probes an unadvertised channel and honors approve
+ok 82 - optional native initialization probes an unadvertised channel and honors approve
+  ---
+  duration_ms: 1925.382932
+  type: 'test'
+  ...
+# Subtest: optional native initialization probes an unadvertised channel and honors invalid
+ok 83 - optional native initialization probes an unadvertised channel and honors invalid
+  ---
+  duration_ms: 171.233648
+  type: 'test'
+  ...
+# Subtest: optional native initialization probes an unadvertised channel and honors unsupported
+ok 84 - optional native initialization probes an unadvertised channel and honors unsupported
+  ---
+  duration_ms: 170.57105
+  type: 'test'
+  ...
+# Subtest: explicit startup binding wins over workspace roots and environment
+ok 85 - explicit startup binding wins over workspace roots and environment
+  ---
+  duration_ms: 2.981376
+  type: 'test'
+  ...
+# Subtest: plugin cache fallback stays unbound instead of becoming the business project
+ok 86 - plugin cache fallback stays unbound instead of becoming the business project
+  ---
+  duration_ms: 1.525587
+  type: 'test'
+  ...
+# Subtest: binding switches every subsequent project tool without writing either tree
+ok 87 - binding switches every subsequent project tool without writing either tree
+  ---
+  duration_ms: 14.689933
+  type: 'test'
+  ...
+# Subtest: new project requires explicit stack and missing form support never writes
+ok 88 - new project requires explicit stack and missing form support never writes
+  ---
+  duration_ms: 3.578757
+  type: 'test'
+  ...
+# Subtest: native creation form preserves selected React stack, user identity, auto setup and project binding
+ok 89 - native creation form preserves selected React stack, user identity, auto setup and project binding
+  ---
+  duration_ms: 1856.912249
+  type: 'test'
+  ...
+# Subtest: cancelled project form is attempted again instead of degrading to text
+ok 90 - cancelled project form is attempted again instead of degrading to text
+  ---
+  duration_ms: 11.311691
+  type: 'test'
+  ...
+# Subtest: project verification alias remains equivalent to sg_verify
+ok 91 - project verification alias remains equivalent to sg_verify
+  ---
+  duration_ms: 11.582552
+  type: 'test'
+  ...
+# Subtest: identity resolver reuses explicit Git author environment and never supplies a fake identity
+ok 92 - identity resolver reuses explicit Git author environment and never supplies a fake identity
+  ---
+  duration_ms: 0.542113
+  type: 'test'
+  ...
+# Subtest: missing identity stops initialization before any target files or commit are created
+ok 93 - missing identity stops initialization before any target files or commit are created
+  ---
+  duration_ms: 29.380928
+  type: 'test'
+  ...
+# Subtest: H1 document shows requirements, acceptance criteria, user answers, critique and pending risks
+ok 94 - H1 document shows requirements, acceptance criteria, user answers, critique and pending risks
+  ---
+  duration_ms: 0.736928
+  type: 'test'
+  ...
+# Subtest: real stdio can receive a simulated peer response while a tool waits for elicitation
+ok 95 - real stdio can receive a simulated peer response while a tool waits for elicitation
+  ---
+  duration_ms: 134.432797
+  type: 'test'
+  ...
+# Subtest: stdio cancellation bypasses the tool queue and aborts an outstanding peer request
+ok 96 - stdio cancellation bypasses the tool queue and aborts an outstanding peer request
+  ---
+  duration_ms: 127.7716
+  type: 'test'
+  ...
+# Subtest: ping remains responsive while an interactive tool waits
+ok 97 - ping remains responsive while an interactive tool waits
+  ---
+  duration_ms: 128.459642
+  type: 'test'
+  ...
+# Subtest: duplicate in-flight tool ids cannot replace the original cancellation controller
+ok 98 - duplicate in-flight tool ids cannot replace the original cancellation controller
+  ---
+  duration_ms: 124.128115
+  type: 'test'
+  ...
+# Subtest: empty native H1 confirm and dialog cancel both complete over real stdio
+ok 99 - empty native H1 confirm and dialog cancel both complete over real stdio
+  ---
+  duration_ms: 256.486575
+  type: 'test'
+  ...
+# Subtest: server-initiated responses are correlated privately and cannot be supplied as tool arguments
+ok 100 - server-initiated responses are correlated privately and cannot be supplied as tool arguments
+  ---
+  duration_ms: 2.53972
+  type: 'test'
+  ...
+# Subtest: unsupported elicitation and arbitrary server methods fail before sending
+ok 101 - unsupported elicitation and arbitrary server methods fail before sending
+  ---
+  duration_ms: 0.542788
+  type: 'test'
+  ...
+# Subtest: a bounded form-first request can probe a host that omitted the capability flag
+ok 102 - a bounded form-first request can probe a host that omitted the capability flag
+  ---
+  duration_ms: 0.251916
+  type: 'test'
+  ...
+# Subtest: timeouts, aborts, peer errors and disconnects reject pending requests
+ok 103 - timeouts, aborts, peer errors and disconnects reject pending requests
+  ---
+  duration_ms: 26.693695
+  type: 'test'
+  ...
+# Subtest: an already aborted request and a send failure leave no pending approval
+ok 104 - an already aborted request and a send failure leave no pending approval
+  ---
+  duration_ms: 0.51863
+  type: 'test'
+  ...
+# Subtest: default MCP runtime import graph excludes optional control, notification and installer code
+ok 105 - default MCP runtime import graph excludes optional control, notification and installer code
+  ---
+  duration_ms: 186.480317
+  type: 'test'
+  ...
+# Subtest: Core v1 installation and lockfile have no MySQL driver dependency
+ok 106 - Core v1 installation and lockfile have no MySQL driver dependency
+  ---
+  duration_ms: 0.783468
+  type: 'test'
+  ...
+# Subtest: Codex manifest and MCP entry stay contained in the shipped plugin
+ok 107 - Codex manifest and MCP entry stay contained in the shipped plugin
+  ---
+  duration_ms: 10.840904
+  type: 'test'
+  ...
+# Subtest: offline tarball install launches the packaged entry from a different project cwd
+ok 108 - offline tarball install launches the packaged entry from a different project cwd
+  ---
+  duration_ms: 13016.968566
+  type: 'test'
+  ...
+# Subtest: smoke evidence rejects stdout pollution after the final reply
+ok 109 - smoke evidence rejects stdout pollution after the final reply
+  ---
+  duration_ms: 133.306269
+  type: 'test'
+  ...
+# Subtest: MCP roots bind tools to the target project instead of the plugin cache
+ok 110 - MCP roots bind tools to the target project instead of the plugin cache
+  ---
+  duration_ms: 3.324623
+  type: 'test'
+  ...
+# Subtest: session cwd wins over ambient roots and environment variables
+ok 111 - session cwd wins over ambient roots and environment variables
+  ---
+  duration_ms: 0.421985
+  type: 'test'
+  ...
+# Subtest: plugin-cache sessions use one unambiguous business root or stay unbound
+ok 112 - plugin-cache sessions use one unambiguous business root or stay unbound
+  ---
+  duration_ms: 0.972599
+  type: 'test'
+  ...
+# Subtest: stdio handshake and diagnostic tools leave a nonempty project unchanged
+ok 113 - stdio handshake and diagnostic tools leave a nonempty project unchanged
+  ---
+  duration_ms: 130.573279
+  type: 'test'
+  ...
+# Subtest: unknown versions negotiate the supported version; invalid initialize can be corrected
+ok 114 - unknown versions negotiate the supported version; invalid initialize can be corrected
+  ---
+  duration_ms: 121.332753
+  type: 'test'
+  ...
+# Subtest: source-only optional mode explicitly adds the historical tool entries
+ok 115 - source-only optional mode explicitly adds the historical tool entries
+  ---
+  duration_ms: 1.882362
+  type: 'test'
+  ...
+# Subtest: lifecycle rejects calls before handshake and repeated initialization
+ok 116 - lifecycle rejects calls before handshake and repeated initialization
+  ---
+  duration_ms: 124.993303
+  type: 'test'
+  ...
+# Subtest: malformed JSON, batch messages and invalid envelopes do not terminate the server
+ok 117 - malformed JSON, batch messages and invalid envelopes do not terminate the server
+  ---
+  duration_ms: 122.225416
+  type: 'test'
+  ...
+# Subtest: tools reject forged approvals, arguments and unknown methods; notifications get no reply
+ok 118 - tools reject forged approvals, arguments and unknown methods; notifications get no reply
+  ---
+  duration_ms: 124.013144
+  type: 'test'
+  ...
+# Subtest: large and truncated frames fail closed; an empty EOF exits cleanly
+ok 119 - large and truncated frames fail closed; an empty EOF exits cleanly
+  ---
+  duration_ms: 376.00472
+  type: 'test'
+  ...
+# Subtest: project root comes from startup options; invalid options cannot start a workflow
+ok 120 - project root comes from startup options; invalid options cannot start a workflow
+  ---
+  duration_ms: 201.927491
+  type: 'test'
+  ...
+1..120
+# tests 120
+# suites 0
+# pass 120
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 18435.805127

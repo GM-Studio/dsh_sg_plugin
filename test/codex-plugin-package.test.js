@@ -9,25 +9,60 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 const root = fileURLToPath(new URL('../', import.meta.url));
 const readJson = (file) => JSON.parse(fs.readFileSync(file, 'utf8'));
 
-test('default MCP static import graph excludes optional control, notification and installer code', () => {
-  const pending = [path.join(root, 'src/codex/server.js')];
-  const seen = new Set();
-  while (pending.length) {
-    const file = pending.pop();
-    if (seen.has(file)) continue;
-    seen.add(file);
-    const source = fs.readFileSync(file, 'utf8');
-    const imports = [
-      ...source.matchAll(/(?:^|\n)\s*import\s+(?:[^;]*?\s+from\s+)?['"](\.[^'"]+)['"]/gm),
-      ...source.matchAll(/(?:^|\n)\s*export\s+[^;]*?\s+from\s+['"](\.[^'"]+)['"]/gm),
-    ];
-    for (const match of imports) {
-      const target = path.resolve(path.dirname(file), match[1]);
-      assert.equal(fs.existsSync(target), true, `${file} -> ${match[1]}`);
-      pending.push(target);
-    }
-  }
-  const graph = [...seen].map((file) => path.relative(root, file).replace(/\\/g, '/'));
+test('default MCP runtime import graph excludes optional control, notification and installer code', () => {
+  const project = fs.mkdtempSync(path.join(os.tmpdir(), 'sg-import-graph-'));
+  const log = path.join(project, 'resolved.jsonl');
+  const loader = path.join(project, 'trace.mjs');
+  fs.writeFileSync(
+    loader,
+    `import fs from 'node:fs';export async function resolve(specifier,context,next){const result=await next(specifier,context);if(result.url.startsWith('file:'))fs.appendFileSync(${JSON.stringify(log)},JSON.stringify(result.url)+'\\n');return result;}`,
+  );
+  const driver = path.join(project, 'driver.mjs');
+  fs.writeFileSync(
+    driver,
+    `import {register} from 'node:module';register(${JSON.stringify(pathToFileURL(loader).href)},import.meta.url);const {serveStdio}=await import(${JSON.stringify(pathToFileURL(path.join(root, 'src/codex/server.js')).href)});serveStdio({projectRoot:${JSON.stringify(project)},nativeAgents:false});`,
+  );
+  const execution = spawnSync(process.execPath, [driver], {
+    cwd: project,
+    encoding: 'utf8',
+    timeout: 30000,
+    windowsHide: true,
+    env: {
+      ...process.env,
+      SPECGATE_OPTIONAL_MODULES: '0',
+      SPECGATE_CONTROL_MODE: '0',
+      SPECGATE_NATIVE_AGENTS: '0',
+    },
+    input:
+      JSON.stringify({
+        jsonrpc: '2.0',
+        id: 1,
+        method: 'initialize',
+        params: {
+          protocolVersion: '2025-06-18',
+          capabilities: {},
+          clientInfo: { name: 'runtime-graph-fixture', version: '1' },
+        },
+      }) +
+      '\n' +
+      JSON.stringify({ jsonrpc: '2.0', method: 'notifications/initialized' }) +
+      '\n',
+  });
+  assert.equal(execution.status, 0, execution.stderr);
+  assert.equal(execution.stderr, '');
+  assert.equal(JSON.parse(execution.stdout.trim()).result.protocolVersion, '2025-06-18');
+  const graph = [
+    ...new Set(
+      fs
+        .readFileSync(log, 'utf8')
+        .trim()
+        .split('\n')
+        .map((line) => path.relative(root, fileURLToPath(JSON.parse(line))).replaceAll('\\', '/'))
+        .filter((file) => file.startsWith('src/codex/')),
+    ),
+  ];
+  assert.ok(graph.includes('src/codex/stdio-server.js'));
+  assert.ok(graph.includes('src/codex/workflow-tools.js'));
   assert.ok(graph.length > 20, 'the assertion must traverse the real MCP graph');
   assert.ok(
     graph.every((file) => !/(?:^|\/)(?:control|management|channels)(?:\/|$)/.test(file)),

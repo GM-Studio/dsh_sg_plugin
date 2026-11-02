@@ -11,6 +11,7 @@ import { JAVA_PRESETS } from './core/java/java-versions.js';
 import { CHANGE_TOOLS, CHANGE_METHODS, callChangeTool } from './change-tools.js';
 import { createChangeAddService } from './change-add.js';
 import { createDevelopmentService } from './development.js';
+import { diagnosticFailure } from './core/diagnostics.js';
 import { createNativeCodexRoleProvider } from './native-role-agent.js';
 import { createPlanService } from './plan.js';
 import { PLAN_TOOLS, callPlanTool } from './plan-tools.js';
@@ -864,12 +865,8 @@ function createBoundToolRegistry({
           );
         }
         return result({ ok: false, code: 'UNKNOWN_TOOL', message: 'Tool is not available' });
-      } catch {
-        return result({
-          ok: false,
-          code: 'TOOL_FAILED',
-          message: 'The operation failed; no success was recorded',
-        });
+      } catch (error) {
+        return result(diagnosticFailure(error, { stage: 'tool.bound' }));
       }
     },
   };
@@ -1120,11 +1117,13 @@ export function createToolRegistry(options = {}) {
         }
         return response;
       } catch (error) {
-        return result({
-          ok: false,
-          code: error.code || 'PROJECT_OPERATION_FAILED',
-          message: error.message,
-        });
+        return result(
+          diagnosticFailure(error, {
+            stage: 'tool.project',
+            code: 'PROJECT_OPERATION_FAILED',
+            preserveCode: true,
+          }),
+        );
       }
     },
   };
